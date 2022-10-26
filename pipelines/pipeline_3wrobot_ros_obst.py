@@ -49,14 +49,14 @@ class PipelineROS3wrobotNI(Pipeline3WRobotNI):
             control_mode=self.control_mode,
             state_init=[0, 0, 0],
             state_goal=self.state_init,
-            my_ctrl_nominal=self.my_ctrl_nominal,
-            my_sys=self.my_sys,
-            my_ctrl_benchm=self.my_ctrl_benchm,
+            nominal_controller=self.nominal_controller,
+            system=self.system,
+            controller=self.controller,
             action_manual=self.action_manual,
             running_objective=self.running_objective,
-            my_logger=self.my_logger,
+            logger=self.logger,
             datafiles=self.datafiles,
-            dt=self.dt,
+            sampling_time=self.sampling_time,
             pred_step_size=self.pred_step_size,
         )
 
@@ -65,7 +65,7 @@ class PipelineROS3wrobotNI(Pipeline3WRobotNI):
         self.setup_env()
         self.__dict__.update(kwargs)
         self.initialize_system()
-        self.initialize_state_predictor()
+        self.initialize_predictor()
         self.initialize_objectives()
         self.initialize_optimizers()
         self.initialize_actor_critic()

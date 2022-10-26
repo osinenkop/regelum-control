@@ -32,20 +32,20 @@ class ROSHarness:
         control_mode,
         state_init,
         state_goal,
-        my_ctrl_nominal,
-        my_sys,
-        my_ctrl_benchm,
+        nominal_controller,
+        system,
+        controller,
         action_manual,
         running_objective,
-        my_logger=None,
+        logger=None,
         datafiles=None,
-        dt=0.05,
+        sampling_time=0.05,
         pred_step_size=1.0,
     ):
-        self.accum_obj_val = 0
+        self.outcome_value = 0
         self.running_objective = running_objective
         self.action_manual = action_manual
-        self.RATE = rospy.get_param("/rate", 1.0 / dt)
+        self.RATE = rospy.get_param("/rate", 1.0 / sampling_time)
 
         self.odom_lock = threading.Lock()
         self.lidar_lock = threading.Lock()
@@ -53,10 +53,10 @@ class ROSHarness:
         # initialization
         self.state_init = state_init
         self.state_goal = state_goal
-        self.system = my_sys
+        self.system = system
 
-        self.ctrl_nominal = my_ctrl_nominal
-        self.ctrl_benchm = my_ctrl_benchm
+        self.nominal_controller = nominal_controller
+        self.controller = controller
 
         self.time_start = 0.0
 
@@ -84,7 +84,7 @@ class ROSHarness:
         self.new_dstate = np.zeros((3))
 
         self.datafiles = datafiles
-        self.logger = my_logger
+        self.logger = logger
         self.control_mode = control_mode
 
         self.rotation_counter = 0
@@ -103,16 +103,16 @@ class ROSHarness:
 
         self.obstacles_parser = Obstacles_parser(safe_margin_mult=1.5)
 
-    def upd_accum_obj(self, observation, action, delta):
+    def update_outcome(self, observation, action, delta):
 
         """
         Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
-        If the agent succeeded to stabilize the system, ``accum_obj`` would converge to a finite value which is the performance mark.
+        If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
-        
+
         """
 
-        self.accum_obj_val += self.running_objective(observation, action) * delta
+        self.outcome_value += self.running_objective(observation, action) * delta
 
     def odometry_callback(self, msg):
 
@@ -187,12 +187,12 @@ class ROSHarness:
 
         self.lidar_lock.release()
 
-    def laser_scan_callback(self, dt):
+    def laser_scan_callback(self, sampling_time):
         self.lidar_lock.acquire()
         timer = rospy.get_time()
-        # dt.ranges -> parser.get_obstacles(dt.ranges) -> get_functions(obstacles) -> self.constraints_functions
+        # sampling_time.ranges -> parser.get_obstacles(sampling_time.ranges) -> get_functions(obstacles) -> self.constraints_functions
         try:
-            self.ranges_t0 = np.array(dt.ranges)
+            self.ranges_t0 = np.array(sampling_time.ranges)
             if self.ranges_t1 is None and self.ranges_t2 is None:
                 self.ranges_t1 = self.ranges_t0
                 self.ranges_t2 = self.ranges_t0
@@ -206,7 +206,7 @@ class ROSHarness:
                 self.ranges_t2 = self.ranges_t1
                 self.ranges_t1 = self.ranges_t0
             new_blocks, LL, CC, x, y = self.obstacles_parser.get_obstacles(
-                np.array(dt.ranges), fillna="else", state=self.new_state
+                np.array(sampling_time.ranges), fillna="else", state=self.new_state
             )
             self.lines = LL
             self.circles = CC
@@ -222,7 +222,7 @@ class ROSHarness:
                 Point(i.center[0], i.center[1]).buffer(i.r) for i in CC
             ]
             self.constraints = self.obstacles_parser(
-                np.array(dt.ranges), np.array(self.new_state)
+                np.array(sampling_time.ranges), np.array(self.new_state)
             )
 
             self.polygonal_constraints = self.line_constrs + self.circle_constrs
@@ -236,50 +236,50 @@ class ROSHarness:
         self.odom_lock.release()
 
     def spin(self, is_print_sim_step=False, is_log_data=True):
-        rospy.loginfo("ROS-preset has been activated!")
+        rospy.loginfo("ROS-pipeline has been activated!")
         start_time = time_lib.time()
         rate = rospy.Rate(self.RATE)
         self.time_start = rospy.get_time()
-        t = t_prev = 0
+        time = time_old = 0
 
         while not rospy.is_shutdown() and (rospy.get_time() - self.time_start) < 240:
             timer = rospy.get_time()
-            t = rospy.get_time() - self.time_start
-            self.t = t
+            time = rospy.get_time() - self.time_start
+            self.time = time
 
-            delta_t = t - t_prev
+            delta_t = time - time_old
 
-            t_prev = t
+            time_old = time
 
             velocity = Twist()
-            action = self.ctrl_benchm.compute_action_sampled(
-                self.t, self.new_state, self.constraints
+            action = self.controller.compute_action_sampled(
+                self.time, self.new_state, self.constraints
             )
 
             self.system.receive_action(action)
 
             xCoord = self.new_state[0]
             yCoord = self.new_state[1]
-            alpha = self.new_state[2]
+            angle = self.new_state[2]
 
-            running_obj = self.running_objective(self.new_state, action)
-            self.upd_accum_obj(self.new_state, action, delta_t)
-            accum_obj = self.accum_obj_val
+            running_objective = self.running_objective(self.new_state, action)
+            self.update_outcome(self.new_state, action, delta_t)
+            outcome = self.outcome_value
 
             if is_print_sim_step:
                 self.logger.print_sim_step(
-                    t, xCoord, yCoord, alpha, running_obj, accum_obj, action
+                    time, xCoord, yCoord, angle, running_objective, outcome, action
                 )
 
             if is_log_data:
                 self.logger.log_data_row(
                     self.datafiles[0],
-                    t,
+                    time,
                     xCoord,
                     yCoord,
-                    alpha,
-                    running_obj,
-                    accum_obj,
+                    angle,
+                    running_objective,
+                    outcome,
                     action,
                 )
 
@@ -293,14 +293,14 @@ class ROSHarness:
                 )
                 < 0.1
                 and (
-                    (np.abs(np.degrees(alpha - self.state_init[2])) % 360 < 15)
+                    (np.abs(np.degrees(angle - self.state_init[2])) % 360 < 15)
                     or (
-                        345 < np.abs(np.degrees(alpha - self.state_init[2])) % 360 < 360
+                        345 < np.abs(np.degrees(angle - self.state_init[2])) % 360 < 360
                     )
                 )
-            ) and t > 10.0:
+            ) and time > 10.0:
                 print("FINAL RESULTS!!!")
-                print(t, xCoord, yCoord, alpha, running_obj, accum_obj, action)
+                print(time, xCoord, yCoord, angle, running_objective, outcome, action)
                 velocity.linear.x = 0
                 velocity.angular.z = 0
                 break
@@ -315,4 +315,4 @@ class ROSHarness:
         velocity.angular.z = 0.0
         self.pub_cmd_vel.publish(velocity)
 
-        rospy.loginfo("ROS-preset has finished working")
+        rospy.loginfo("ROS-pipeline has finished working")

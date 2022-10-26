@@ -39,8 +39,8 @@ class Obstacles_parser:
         self.constraints = self.get_functions()
         return self.constraints
 
-    def d(self, R_i, R_i1, delta_alpha=np.radians(1)):
-        answ = np.sqrt(R_i ** 2 + R_i1 ** 2 - 2 * R_i * R_i1 * np.cos(delta_alpha))
+    def d(self, R_i, R_i1, delta_angle=np.radians(1)):
+        answ = np.sqrt(R_i ** 2 + R_i1 ** 2 - 2 * R_i * R_i1 * np.cos(delta_angle))
         return answ
 
     def k(self, R_i, R_i1):
@@ -393,9 +393,9 @@ class Obstacles_parser:
             """
             return [-(p2[1] - p1[1]), (p2[0] - p1[0]), -p2[0] * p1[1] + p1[0] * p2[1]]
 
-        def check_ineq_sign(line, ctrl_point):
+        def check_ineq_sign(line, control_point):
             straight_line = lambda x, y: line[0] * x + line[1] * y + line[2]
-            if straight_line(ctrl_point[0], ctrl_point[1]) >= 0:
+            if straight_line(control_point[0], control_point[1]) >= 0:
                 return line
             else:
                 for i in range(len(line)):

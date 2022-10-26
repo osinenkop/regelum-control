@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 This module contains the logger interface along with concrete realizations for each separate system.
 
@@ -26,23 +24,60 @@ class Logger:
         | print a row of data of a single simulation step, typically into the console (required).
         | :func:`~loggers.Logger.log_data_row` :
         | same as above, but write to a file (required).
-    
+
     """
 
-    def __init__(self, state_components_strings, action_components_strings):
+    def __init__(
+        self,
+        state_components_strings,
+        action_components_strings,
+        row_format_list=None,
+        N_episodes=1,
+        N_iterations=1,
+    ):
         self.state_components_strings = state_components_strings
         self.action_components_strings = action_components_strings
+        self.N_episodes = N_episodes
+        self.episodes_passed = 0
+        self.N_iterations = N_iterations
+        self.iterations_passed = 0
+        self.is_next_episode = False
+        self.time_old = 0
+
         self.row_header = [
+            "iterations_passed",
+            "episodes_passed",
             "t [s]",
             *self.state_components_strings,
             *self.action_components_strings,
-            "running_obj",
-            "accum_obj",
+            "running_objective",
+            "outcome",
         ]
-        self.row_format = tuple(["8.3f" for _ in self.row_header])
+        if row_format_list is None:
+            self.row_format = tuple(["8.3f" for _ in self.row_header])
+        else:
+            self.row_format = row_format_list
 
-    def print_sim_step(self, t, state_full, action, running_obj, accum_obj):
-        row_data = [t, *np.array(state_full), *np.array(action), running_obj, accum_obj]
+    def print_sim_step(self, time, state_full, action, running_objective, outcome):
+        self.is_next_episode = time < self.time_old
+
+        if self.is_next_episode:
+            self.episodes_passed += 1
+            if self.N_episodes == self.episodes_passed:
+                self.iterations_passed += 1
+                self.episodes_passed = 0
+
+        self.time_old = time
+
+        row_data = [
+            self.iterations_passed,
+            self.episodes_passed,
+            time,
+            *np.array(state_full),
+            *np.array(action),
+            running_objective,
+            outcome,
+        ]
 
         table = tabulate(
             [self.row_header, row_data],
@@ -53,94 +88,49 @@ class Logger:
 
         print(table)
 
-    def log_data_row(self, datafile, t, state_full, action, running_obj, accum_obj):
+    def log_data_row(
+        self, datafile, time, state_full, action, running_objective, outcome
+    ):
+        if self.is_next_episode:
+            self.episodes_passed += 1
+            if self.N_episodes == self.episodes_passed:
+                self.iterations_passed += 1
+                self.episodes_passed = 0
+
+        self.time_old = time
+
         with open(datafile, "a", newline="") as outfile:
             writer = csv.writer(outfile)
             writer.writerow(
-                [t, *state_full, *action, running_obj, accum_obj,]
+                [
+                    self.iterations_passed,
+                    self.episodes_passed,
+                    time,
+                    *state_full,
+                    *action,
+                    running_objective,
+                    outcome,
+                ]
             )
+
+    def reset(self):
+        self.time_old = 0
+        self.episodes_passed = 0
+        self.iterations_passed = 0
 
 
 logger3WRobot = Logger(
-    ["x [m]", "y [m]", "alpha [rad]", "v [m/s]", "omega [rad/s]"], ["F [N]", "M [N m]"]
+    ["x [m]", "y [m]", "angle [rad]", "v [m/s]", "omega [rad/s]"], ["F [N]", "M [N m]"]
 )
 
 logger3WRobotNI = Logger(
-    ["x [m]", "y [m]", "alpha [rad]"], ["v [m/s]", "omega [rad/s]"]
+    ["x [m]", "y [m]", "angle [rad]"],
+    ["v [m/s]", "omega [rad/s]"],
+    ["8.3f", "8.3f", "8.3f", "8.3f", "8.1f", "8.1f", "8.3f", "8.3f"],
 )
 
+logger2Tank = Logger(
+    ["h1", "h2"], ["p"], ["8.1f", "8.4f", "8.4f", "8.4f", "8.4f", "8.2f"]
+)
 
-class Logger3WRobotNI(Logger):
-    """
-    Data logger for a 3-wheel robot with static actuators.
-    
-    """
-
-    def print_sim_step(self, t, xCoord, yCoord, alpha, running_obj, accum_obj, action):
-        # alphaDeg = alpha/np.pi*180
-
-        row_header = [
-            "t [s]",
-            "x [m]",
-            "y [m]",
-            "alpha [rad]",
-            "running_obj",
-            "accum_obj",
-            "v [m/s]",
-            "omega [rad/s]",
-        ]
-        row_data = [
-            t,
-            xCoord,
-            yCoord,
-            alpha,
-            running_obj,
-            accum_obj,
-            action[0],
-            action[1],
-        ]
-        row_format = ("8.3f", "8.3f", "8.3f", "8.3f", "8.1f", "8.1f", "8.3f", "8.3f")
-        table = tabulate(
-            [row_header, row_data],
-            floatfmt=row_format,
-            headers="firstrow",
-            tablefmt="grid",
-        )
-
-        print(table)
-
-    def log_data_row(
-        self, datafile, t, xCoord, yCoord, alpha, running_obj, accum_obj, action
-    ):
-        with open(datafile, "a", newline="") as outfile:
-            writer = csv.writer(outfile)
-            writer.writerow(
-                [t, xCoord, yCoord, alpha, running_obj, accum_obj, action[0], action[1]]
-            )
-
-
-class Logger2Tank(Logger):
-    """
-    Data logger for a 2-tank system.
-    
-    """
-
-    def print_sim_step(self, t, h1, h2, p, running_obj, accum_obj):
-        # alphaDeg = alpha/np.pi*180
-
-        row_header = ["t [s]", "h1", "h2", "p", "running_obj", "accum_obj"]
-        row_data = [t, h1, h2, p, running_obj, accum_obj]
-        row_format = ("8.1f", "8.4f", "8.4f", "8.4f", "8.4f", "8.2f")
-        table = tabulate(
-            [row_header, row_data],
-            floatfmt=row_format,
-            headers="firstrow",
-            tablefmt="grid",
-        )
-
-        print(table)
-
-    def log_data_row(self, datafile, t, h1, h2, p, running_obj, accum_obj):
-        with open(datafile, "a", newline="") as outfile:
-            writer = csv.writer(outfile)
-            writer.writerow([t, h1, h2, p, running_obj, accum_obj])
+loggerInvertedPendulum = Logger(["angle [rad]", "angle_dot [rad/s]"], ["M [N m]"])

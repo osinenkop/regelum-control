@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-This module contains auxiliary functions.
+This module contains auxiliary tools.
 
 Remarks: 
 
@@ -24,7 +22,6 @@ from numpy.matlib import repmat
 import scipy.stats as st
 from scipy import signal
 import matplotlib.pyplot as plt
-import casadi
 
 import inspect
 import warnings
@@ -43,7 +40,7 @@ except ModuleNotFoundError:
         __file__,
         42,
     )
-    CASADI_TYPES = []
+    CASADI_TYPES = tuple()
 import types
 
 try:
@@ -58,7 +55,7 @@ except ModuleNotFoundError:
         __file__,
         42,
     )
-    TORCH_TYPES = []
+    TORCH_TYPES = tuple()
 
 
 class RCType(IntEnum):
@@ -237,13 +234,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             elif isinstance(argin, (tuple, list)):
                 return casadi_constructor.zeros(*argin)
 
-    def concatenate(self, argin, rc_type=NUMPY):
+    def concatenate(self, argin, rc_type=NUMPY, **kwargs):
         rc_type = type_inference(*safe_unpack(argin))
 
         if rc_type == NUMPY:
-            return np.concatenate(argin)
+            return np.concatenate(argin, **kwargs)
         elif rc_type == TORCH:
-            return torch.cat(argin)
+            return torch.cat(argin, **kwargs)
         elif rc_type == CASADI:
             if isinstance(argin, (list, tuple)):
                 if len(argin) > 1:
@@ -331,6 +328,17 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.max(*safe_unpack(array))
 
+    def mean(self, array, rc_type=NUMPY):
+        if isinstance(array, (list, tuple)):
+            rc_type = type_inference(*array)
+
+        if rc_type == NUMPY:
+            return np.mean(array)
+        elif rc_type == TORCH:
+            return torch.mean(array)
+        elif rc_type == CASADI:
+            return casadi.mean(*safe_unpack(array))
+
     def to_col(self, argin, rc_type=NUMPY):
         arin_shape = self.shape(argin)
 
@@ -383,9 +391,9 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
                 return lambda x: func(x)
         else:
             try:
-                x_symb = casadi.SX.sym("x", self.shape(var_prototype))
+                x_symb = casadi.MX.sym("x", self.shape(var_prototype))
             except NotImplementedError:
-                x_symb = casadi.SX.sym("x", *safe_unpack(self.shape(var_prototype)), 1)
+                x_symb = casadi.MX.sym("x", *safe_unpack(self.shape(var_prototype)), 1)
 
             if params:
                 return func(x_symb, *safe_unpack(params)), x_symb
@@ -490,6 +498,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             return vec
 
+    def append(self, array, to_append, rc_type=NUMPY):
+        if rc_type == NUMPY:
+            return np.append(array, to_append)
+
     @staticmethod
     def DM(mat):
         return casadi.DM(mat)
@@ -509,7 +521,7 @@ rc = RCTypeHandler()
 def rej_sampling_rvs(dim, pdf, M):
     """
     Random variable (pseudo)-realizations via rejection sampling.
-    
+
     Parameters
     ----------
     dim : : integer
@@ -548,17 +560,10 @@ def push_vec(matrix, vec):
     return rc.vstack([matrix[1:, :], vec.T])
 
 
-def uptria2vec(mat):
-    """
-    Convert upper triangular square sub-matrix to column vector.
-    
-    """
-
-
 class ZOH:
     """
     Zero-order hold.
-    
+
     """
 
     def __init__(self, init_time=0, init_val=0, sample_time=1):
@@ -566,10 +571,10 @@ class ZOH:
         self.sample_time = sample_time
         self.currVal = init_val
 
-    def hold(self, signal_val, t):
-        timeInSample = t - self.time_step
+    def hold(self, signal_val, time):
+        timeInSample = time - self.time_step
         if timeInSample >= self.sample_time:  # New sample
-            self.time_step = t
+            self.time_step = time
             self.currVal = signal_val
 
         return self.currVal
@@ -578,14 +583,14 @@ class ZOH:
 class DFilter:
     """
     Real-time digital filter.
-    
+
     """
 
     def __init__(
         self,
         filter_num,
         filter_den,
-        buffer_size=16,
+        data_buffer_size=16,
         init_time=0,
         init_val=0,
         sample_time=1,
@@ -598,14 +603,14 @@ class DFilter:
 
         self.time_step = init_time
         self.sample_time = sample_time
-        self.buffer = rc.rep_mat(init_val, 1, buffer_size)
+        self.buffer = rc.rep_mat(init_val, 1, data_buffer_size)
 
-    def filt(self, signal_val, t=None):
+    def filt(self, signal_val, time=None):
         # Sample only if time is specified
-        if t is not None:
-            timeInSample = t - self.time_step
+        if time is not None:
+            timeInSample = time - self.time_step
             if timeInSample >= self.sample_time:  # New sample
-                self.time_step = t
+                self.time_step = time
                 self.buffer = push_vec(self.buffer, signal_val)
         else:
             self.buffer = push_vec(self.buffer, signal_val)
@@ -619,18 +624,18 @@ class DFilter:
         return bufferFiltered[-1, :]
 
 
-def dss_sim(A, B, C, D, uSqn, x0, y0):
+def dss_sim(A, B, C, D, uSqn, initial_guess, y0):
     """
     Simulate output response of a discrete-time state-space model.
     """
     if uSqn.ndim == 1:
-        return y0, x0
+        return y0, initial_guess
     else:
         ySqn = np.zeros([uSqn.shape[0], C.shape[0]])
         xSqn = np.zeros([uSqn.shape[0], A.shape[0]])
-        x = x0
+        x = initial_guess
         ySqn[0, :] = y0
-        xSqn[0, :] = x0
+        xSqn[0, :] = initial_guess
         for k in range(1, uSqn.shape[0]):
             x = A @ x + B @ uSqn[k - 1, :]
             xSqn[k, :] = x
@@ -639,7 +644,7 @@ def dss_sim(A, B, C, D, uSqn, x0, y0):
         return ySqn, xSqn
 
 
-def upd_line(line, newX, newY):
+def update_line(line, newX, newY):
     line.set_xdata(np.append(line.get_xdata(), newX))
     line.set_ydata(np.append(line.get_ydata(), newY))
 
@@ -648,12 +653,16 @@ def reset_line(line):
     line.set_data([], [])
 
 
-def upd_scatter(scatter, newX, newY):
+def update_scatter(scatter, newX, newY):
     scatter.set_offsets(np.vstack([scatter.get_offsets().data, np.c_[newX, newY]]))
 
 
-def upd_text(textHandle, newText):
+def update_text(textHandle, newText):
     textHandle.set_text(newText)
+
+
+def update_patch(patchHandle, new_color):
+    patchHandle.set_color(str(new_color))
 
 
 def on_key_press(event, anm):

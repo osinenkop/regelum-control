@@ -1,0 +1,1 @@
+--no_visual --is_playback --t1 5 --speedup 80 --N_iterations_actor 20 --N_episodes_actor 7 --dt 0.1 --learning_rate_actor 0.001 --learning_rate_critic 0.0000001 --initial_weights 1. 0. 1. --N_iterations_critic 20 --N_episodes_critic 1 --t1_critic 0.1 

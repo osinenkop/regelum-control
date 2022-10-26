@@ -34,11 +34,11 @@ print("INFO:", info)
 
 from rcognita import (
     controllers,
-    visuals,
+    animators,
     simulator,
     systems,
     loggers,
-    state_predictors,
+    predictors,
     optimizers,
     objectives,
     models,
@@ -51,27 +51,27 @@ class Pipeline3WRobot(PipelineWithDefaults):
     config = Config3WRobot
 
     def initialize_system(self):
-        self.my_sys = systems.Sys3WRobot(
+        self.system = systems.Sys3WRobot(
             sys_type="diff_eqn",
             dim_state=self.dim_state,
             dim_input=self.dim_input,
             dim_output=self.dim_output,
             dim_disturb=self.dim_disturb,
             pars=[self.m, self.I],
-            control_bounds=self.control_bounds,
-            is_dyn_ctrl=self.is_dyn_ctrl,
+            action_bounds=self.action_bounds,
+            is_dynamic_controller=self.is_dynamic_controller,
             is_disturb=self.is_disturb,
             pars_disturb=[],
         )
 
     def initialize_safe_controller(self):
-        self.my_ctrl_nominal = controllers.CtrlNominal3WRobot(
+        self.nominal_controller = controllers.NominalController3WRobot(
             self.m,
             self.I,
-            ctrl_gain=0.5,
-            control_bounds=self.control_bounds,
-            t0=self.t0,
-            sampling_time=self.dt,
+            controller_gain=0.5,
+            action_bounds=self.action_bounds,
+            time_start=self.time_start,
+            sampling_time=self.sampling_time,
         )
 
     def initialize_logger(self):
@@ -93,7 +93,7 @@ class Pipeline3WRobot(PipelineWithDefaults):
             self.datafiles[k] = (
                 self.data_folder
                 + "/"
-                + self.my_sys.name
+                + self.system.name
                 + "__"
                 + self.control_mode
                 + "__"
@@ -108,9 +108,9 @@ class Pipeline3WRobot(PipelineWithDefaults):
 
                 with open(self.datafiles[k], "w", newline="") as outfile:
                     writer = csv.writer(outfile)
-                    writer.writerow(["System", self.my_sys.name])
+                    writer.writerow(["System", self.system.name])
                     writer.writerow(["Controller", self.control_mode])
-                    writer.writerow(["dt", str(self.dt)])
+                    writer.writerow(["sampling_time", str(self.sampling_time)])
                     writer.writerow(["state_init", str(self.state_init)])
                     writer.writerow(["is_est_model", str(self.is_est_model)])
                     writer.writerow(["model_est_stage", str(self.model_est_stage)])
@@ -122,21 +122,22 @@ class Pipeline3WRobot(PipelineWithDefaults):
                     )
                     writer.writerow(["model_order", str(self.model_order)])
                     writer.writerow(["prob_noise_pow", str(self.prob_noise_pow)])
-                    writer.writerow(["Nactor", str(self.Nactor)])
+                    writer.writerow(
+                        ["prediction_horizon", str(self.prediction_horizon)]
+                    )
                     writer.writerow(
                         [
                             "pred_step_size_multiplier",
                             str(self.pred_step_size_multiplier),
                         ]
                     )
-                    writer.writerow(["buffer_size", str(self.buffer_size)])
+                    writer.writerow(["data_buffer_size", str(self.data_buffer_size)])
                     writer.writerow(
                         ["running_obj_struct", str(self.running_obj_struct)]
                     )
                     writer.writerow(["R1_diag", str(self.R1_diag)])
                     writer.writerow(["R2_diag", str(self.R2_diag)])
-                    writer.writerow(["Ncritic", str(self.Ncritic)])
-                    writer.writerow(["gamma", str(self.gamma)])
+                    writer.writerow(["discount_factor", str(self.discount_factor)])
                     writer.writerow(
                         ["critic_period_multiplier", str(self.critic_period_multiplier)]
                     )
@@ -147,11 +148,11 @@ class Pipeline3WRobot(PipelineWithDefaults):
                             "t [s]",
                             "x [m]",
                             "y [m]",
-                            "alpha [rad]",
+                            "angle [rad]",
                             "v [m/s]",
                             "omega [rad/s]",
-                            "running_obj",
-                            "accum_obj",
+                            "running_objective",
+                            "outcome",
                             "F [N]",
                             "M [N m]",
                         ]
@@ -161,19 +162,19 @@ class Pipeline3WRobot(PipelineWithDefaults):
         if not self.no_print:
             warnings.filterwarnings("ignore")
 
-        self.my_logger = loggers.Logger3WRobot()
+        self.logger = loggers.Logger3WRobot()
 
     def main_loop_visual(self):
-        self.state_full_init = self.my_simulator.state_full
+        self.state_full_init = self.simulator.state_full
 
-        my_animator = visuals.Animator3WRobot(
+        animator = animators.Animator3WRobot(
             objects=(
-                self.my_simulator,
-                self.my_sys,
-                self.my_ctrl_nominal,
-                self.my_ctrl_benchm,
+                self.simulator,
+                self.system,
+                self.nominal_controller,
+                self.controller,
                 self.datafiles,
-                self.my_logger,
+                self.logger,
                 self.actor_optimizer,
                 self.critic_optimizer,
                 self.running_objective,
@@ -181,8 +182,8 @@ class Pipeline3WRobot(PipelineWithDefaults):
             pars=(
                 self.state_init,
                 self.action_init,
-                self.t0,
-                self.t1,
+                self.time_start,
+                self.time_final,
                 self.state_full_init,
                 self.xMin,
                 self.xMax,
@@ -203,22 +204,22 @@ class Pipeline3WRobot(PipelineWithDefaults):
         )
 
         anm = animation.FuncAnimation(
-            my_animator.fig_sim,
-            my_animator.animate,
-            init_func=my_animator.init_anim,
+            animator.fig_sim,
+            animator.animate,
+            init_func=animator.init_anim,
             blit=False,
-            interval=self.dt / 1e6,
+            interval=self.sampling_time / 1e6,
             repeat=False,
         )
 
-        my_animator.get_anm(anm)
+        animator.get_anm(anm)
 
-        cId = my_animator.fig_sim.canvas.mpl_connect(
+        cId = animator.fig_sim.canvas.mpl_connect(
             "key_press_event", lambda event: on_key_press(event, anm)
         )
 
         anm.running = True
-        my_animator.fig_sim.tight_layout()
+        animator.fig_sim.tight_layout()
 
         plt.show()
 

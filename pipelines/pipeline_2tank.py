@@ -34,11 +34,11 @@ print("INFO:", info)
 
 from rcognita import (
     controllers,
-    visuals,
+    animators,
     simulator,
     systems,
     loggers,
-    state_predictors,
+    predictors,
     optimizers,
     models,
     objectives,
@@ -60,28 +60,28 @@ from rcognita.critics import (
 
 class Pipeline2Tank(AbstractPipeline):
     def initialize_system(self):
-        self.my_sys = systems.Sys2Tank(
+        self.system = systems.Sys2Tank(
             sys_type="diff_eqn",
             dim_state=self.dim_state,
             dim_input=self.dim_input,
             dim_output=self.dim_output,
             dim_disturb=self.dim_disturb,
             pars=[self.tau1, self.tau2, self.K1, self.K2, self.K3],
-            control_bounds=self.control_bounds,
+            action_bounds=self.action_bounds,
         )
 
     def initialize_state_predictor(self):
-        self.state_predictor = state_predictors.EulerStatePredictor(
+        self.predictor = predictors.EulerPredictor(
             self.pred_step_size,
-            self.my_sys._state_dyn,
-            self.my_sys.out,
+            self.system._state_dyn,
+            self.system.out,
             self.dim_output,
-            self.Nactor,
+            self.prediction_horizon,
         )
 
     def initialize_objectives(self):
         self.objective = objectives.RunningObjective(
-            running_obj_model=models.ModelQuadForm(R1=self.R1, R2=self.R2)
+            model=models.ModelQuadForm(R1=self.R1, R2=self.R2)
         )
 
     def initialize_optimizers(self):
@@ -97,18 +97,19 @@ class Pipeline2Tank(AbstractPipeline):
             opt_method="SLSQP", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.SciPyOptimizer(
-            opt_method="SLSQP", opt_options=opt_options,
+            opt_method="SLSQP",
+            opt_options=opt_options,
         )
 
     def initialize_actor_critic(self):
-        self.my_ctrl_nominal = controllers.CtrlNominal3WRobotNI(
-            ctrl_gain=0.5,
-            control_bounds=self.control_bounds,
-            t0=self.t0,
-            sampling_time=self.dt,
+        self.nominal_controller = controllers.NominalController3WRobotNI(
+            controller_gain=0.5,
+            action_bounds=self.action_bounds,
+            time_start=self.time_start,
+            sampling_time=self.sampling_time,
         )
 
-        if self.control_mode == "RLSTAB":
+        if self.control_mode == "STAG":
             Critic = CriticSTAG
             Actor = ActorSTAG
 
@@ -122,42 +123,41 @@ class Pipeline2Tank(AbstractPipeline):
                 Actor = ActorSQL
 
         self.critic = Critic(
-            Ncritic=self.Ncritic,
             dim_input=self.dim_input,
             dim_output=self.dim_output,
-            buffer_size=self.buffer_size,
-            running_obj=self.running_objective,
-            gamma=self.gamma,
+            data_buffer_size=self.data_buffer_size,
+            running_objective=self.running_objective,
+            discount_factor=self.discount_factor,
             optimizer=self.critic_optimizer,
             model=models.ModelPolynomial(model_name=self.critic_struct),
-            safe_ctrl=self.my_ctrl_nominal,
-            state_predictor=self.state_predictor,
+            safe_controller=self.nominal_controller,
+            predictor=self.predictor,
         )
         self.actor = Actor(
-            self.Nactor,
+            self.prediction_horizon,
             self.dim_input,
             self.dim_output,
             self.control_mode,
-            self.control_bounds,
-            state_predictor=self.state_predictor,
+            self.action_bounds,
+            predictor=self.predictor,
             optimizer=self.actor_optimizer,
             critic=self.critic,
-            running_obj=self.running_objective,
+            running_objective=self.running_objective,
         )
 
     def initialize_controller(self):
-        self.my_ctrl_benchm = controllers.RLController(
+        self.controller = controllers.RLController(
             action_init=self.action_init,
-            t0=self.t0,
-            sampling_time=self.dt,
+            time_start=self.time_start,
+            sampling_time=self.sampling_time,
             pred_step_size=self.pred_step_size,
-            state_dyn=self.my_sys._state_dyn,
-            sys_out=self.my_sys.out,
+            compute_state_dynamics=self.system._state_dyn,
+            sys_out=self.system.out,
             prob_noise_pow=self.prob_noise_pow,
             is_est_model=self.is_est_model,
             model_est_stage=self.model_est_stage,
             model_est_period=self.model_est_period,
-            buffer_size=self.buffer_size,
+            data_buffer_size=self.data_buffer_size,
             model_order=self.model_order,
             model_est_checks=self.model_est_checks,
             critic_period=self.critic_period,
@@ -168,22 +168,22 @@ class Pipeline2Tank(AbstractPipeline):
         )
 
     def initialize_simulator(self):
-        self.my_simulator = simulator.Simulator(
+        self.simulator = simulator.Simulator(
             sys_type="diff_eqn",
-            closed_loop_rhs=self.my_sys.closed_loop_rhs,
-            sys_out=self.my_sys.out,
+            compute_closed_loop_rhs=self.system.compute_closed_loop_rhs,
+            sys_out=self.system.out,
             state_init=self.state_init,
             disturb_init=[],
             action_init=self.action_init,
-            t0=self.t0,
-            t1=self.t1,
-            dt=self.dt,
-            max_step=self.dt / 2,
+            time_start=self.time_start,
+            time_final=self.time_final,
+            sampling_time=self.sampling_time,
+            max_step=self.sampling_time / 2,
             first_step=1e-6,
             atol=self.atol,
             rtol=self.rtol,
             is_disturb=self.is_disturb,
-            is_dyn_ctrl=self.is_dyn_ctrl,
+            is_dynamic_controller=self.is_dynamic_controller,
         )
 
     def initialize_logger(self):
@@ -205,7 +205,7 @@ class Pipeline2Tank(AbstractPipeline):
             self.datafiles[k] = (
                 self.data_folder
                 + "/"
-                + self.my_sys.name
+                + self.system.name
                 + "__"
                 + self.control_mode
                 + "__"
@@ -220,9 +220,9 @@ class Pipeline2Tank(AbstractPipeline):
 
                 with open(self.datafiles[k], "w", newline="") as outfile:
                     writer = csv.writer(outfile)
-                    writer.writerow(["System", self.my_sys.name])
+                    writer.writerow(["System", self.system.name])
                     writer.writerow(["Controller", self.control_mode])
-                    writer.writerow(["dt", str(self.dt)])
+                    writer.writerow(["sampling_time", str(self.sampling_time)])
                     writer.writerow(["state_init", str(self.state_init)])
                     writer.writerow(["is_est_model", str(self.is_est_model)])
                     writer.writerow(["model_est_stage", str(self.model_est_stage)])
@@ -234,53 +234,54 @@ class Pipeline2Tank(AbstractPipeline):
                     )
                     writer.writerow(["model_order", str(self.model_order)])
                     writer.writerow(["prob_noise_pow", str(self.prob_noise_pow)])
-                    writer.writerow(["Nactor", str(self.Nactor)])
+                    writer.writerow(
+                        ["prediction_horizon", str(self.prediction_horizon)]
+                    )
                     writer.writerow(
                         [
                             "pred_step_size_multiplier",
                             str(self.pred_step_size_multiplier),
                         ]
                     )
-                    writer.writerow(["buffer_size", str(self.buffer_size)])
+                    writer.writerow(["data_buffer_size", str(self.data_buffer_size)])
                     writer.writerow(
                         ["running_obj_struct", str(self.running_obj_struct)]
                     )
                     writer.writerow(["R1_diag", str(self.R1_diag)])
                     writer.writerow(["R2_diag", str(self.R2_diag)])
-                    writer.writerow(["Ncritic", str(self.Ncritic)])
-                    writer.writerow(["gamma", str(self.gamma)])
+                    writer.writerow(["discount_factor", str(self.discount_factor)])
                     writer.writerow(
                         ["critic_period_multiplier", str(self.critic_period_multiplier)]
                     )
                     writer.writerow(["critic_struct", str(self.critic_struct)])
                     writer.writerow(["actor_struct", str(self.actor_struct)])
                     writer.writerow(
-                        ["t [s]", "h1", "h2", "p", "running_obj", "accum_obj"]
+                        ["t [s]", "h1", "h2", "p", "running_objective", "outcome"]
                     )
 
         # Do not display annoying warnings when print is on
         if not self.no_print:
             warnings.filterwarnings("ignore")
 
-        self.my_logger = loggers.Logger2Tank()
+        self.logger = loggers.Logger2Tank()
 
     def main_loop_visual(self):
-        self.state_full_init = self.my_simulator.state_full
+        self.state_full_init = self.simulator.state_full
 
-        my_animator = visuals.Animator2Tank(
+        animator = animators.Animator2Tank(
             objects=(
-                self.my_simulator,
-                self.my_sys,
+                self.simulator,
+                self.system,
                 [],
-                self.my_ctrl_benchm,
+                self.controller,
                 self.datafiles,
-                self.my_logger,
+                self.logger,
             ),
             pars=(
                 self.state_init,
                 self.action_init,
-                self.t0,
-                self.t1,
+                self.time_start,
+                self.time_final,
                 self.state_full_init,
                 self.control_mode,
                 self.action_manual,
@@ -296,23 +297,23 @@ class Pipeline2Tank(AbstractPipeline):
         )
 
         anm = animation.FuncAnimation(
-            my_animator.fig_sim,
-            my_animator.animate,
-            init_func=my_animator.init_anim,
+            animator.fig_sim,
+            animator.animate,
+            init_func=animator.init_anim,
             blit=False,
-            interval=self.dt / 1e6,
+            interval=self.sampling_time / 1e6,
             repeat=False,
         )
 
-        my_animator.get_anm(anm)
+        animator.get_anm(anm)
 
-        cId = my_animator.fig_sim.canvas.mpl_connect(
+        cId = animator.fig_sim.canvas.mpl_connect(
             "key_press_event", lambda event: on_key_press(event, anm)
         )
 
         anm.running = True
 
-        my_animator.fig_sim.tight_layout()
+        animator.fig_sim.tight_layout()
 
         plt.show()
 
@@ -321,34 +322,34 @@ class Pipeline2Tank(AbstractPipeline):
         datafile = self.datafiles[0]
 
         while True:
-            self.my_simulator.sim_step()
+            self.simulator.do_sim_step()
 
-            t, state, observation, state_full = self.my_simulator.get_sim_step_data()
+            time, state, observation, state_full = self.simulator.get_sim_step_data()
 
             if self.save_trajectory:
                 self.trajectory.append(state_full)
 
-            action = self.my_ctrl_benchm.compute_action(t, observation)
+            action = self.controller.compute_action(time, observation)
 
-            self.my_sys.receive_action(action)
-            self.my_ctrl_benchm.upd_accum_obj(observation, action)
+            self.system.receive_action(action)
+            self.controller.update_outcome(observation, action)
 
             h1 = state_full[0]
             h2 = state_full[1]
             p = action
 
-            running_obj = self.my_ctrl_benchm.running_obj(observation, action)
-            accum_obj = self.my_ctrl_benchm.accum_obj_val
+            running_objective = self.controller.running_objective(observation, action)
+            outcome = self.controller.outcome_value
 
             if not self.no_print:
-                self.my_logger.print_sim_step(t, h1, h2, p, running_obj, accum_obj)
+                self.logger.print_sim_step(time, h1, h2, p, running_objective, outcome)
 
             if self.is_log:
-                self.my_logger.log_data_row(
-                    datafile, t, h1, h2, p, running_obj, accum_obj
+                self.logger.log_data_row(
+                    datafile, time, h1, h2, p, running_objective, outcome
                 )
 
-            if t >= self.t1:
+            if time >= self.time_final:
                 if not self.no_print:
                     print(
                         ".....................................Run {run:2d} done.....................................".format(
@@ -365,16 +366,16 @@ class Pipeline2Tank(AbstractPipeline):
                     datafile = self.datafiles[run_curr - 1]
 
                 # Reset simulator
-                self.my_simulator.status = "running"
-                self.my_simulator.t = self.t0
-                self.my_simulator.observation = self.state_full_init
+                self.simulator.status = "running"
+                self.simulator.time = self.time_start
+                self.simulator.observation = self.state_full_init
 
                 if self.control_mode != "nominal":
-                    self.my_ctrl_benchm.reset(self.t0)
+                    self.controller.reset(self.time_start)
                 else:
-                    self.my_ctrl_nominal.reset(self.t0)
+                    self.nominal_controller.reset(self.time_start)
 
-                accum_obj = 0
+                outcome = 0
 
     def execute_pipeline(self, **kwargs):
         self.load_config(Config2Tank)

@@ -30,9 +30,9 @@ from pipeline_3wrobot_NI import Pipeline3WRobotNI
 class Pipeline3WRobotNITorch(Pipeline3WRobotNI):
     def initialize_optimizers(self):
 
-        opt_options_torch = {"lr": 0.000005, "momentum": 0.9}
+        opt_options_torch = {"lr": 0.000001}
         opt_options_scipy = {
-            "maxiter": 500,
+            "maxiter": 1250,
             "maxfev": 5000,
             "disp": False,
             "adaptive": True,

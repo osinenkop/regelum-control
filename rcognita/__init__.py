@@ -5,7 +5,7 @@ from . import systems
 from . import simulator
 from . import systems
 from . import loggers
-from . import visuals
+from . import animators
 from . import utilities
 from . import models
-from . import state_predictors
+from . import predictors

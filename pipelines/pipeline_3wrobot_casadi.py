@@ -52,18 +52,18 @@ def main():
     pipeline = Pipeline3WRobotCasadi()
     pipeline.execute_pipeline()
     # DEBUG ===================================================================
-    # if pipeline.control_mode == "RLSTAB":
+    # if pipeline.control_mode == "STAG":
     #     plt.figure(figsize=(10, 10))
     #     plt.subplot(2, 2, 1)
     #     plt.plot(
-    #         np.array(pipeline.my_ctrl_benchm.critic_values, dtype="float")[:, 2],
-    #         np.array(pipeline.my_ctrl_benchm.critic_values, dtype="float")[:, 0],
+    #         np.array(pipeline.controller.critic_values, dtype="float")[:, 2],
+    #         np.array(pipeline.controller.critic_values, dtype="float")[:, 0],
     #         "g",
     #         label="critic values",
     #     )
     #     plt.plot(
-    #         np.array(pipeline.my_ctrl_benchm.critic_values, dtype="float")[:, 2],
-    #         np.array(pipeline.my_ctrl_benchm.critic_values, dtype="float")[:, 1],
+    #         np.array(pipeline.controller.critic_values, dtype="float")[:, 2],
+    #         np.array(pipeline.controller.critic_values, dtype="float")[:, 1],
     #         "r",
     #         label="critic_diff_factual",
     #     )
@@ -71,15 +71,15 @@ def main():
     #     plt.legend()
     # plt.subplot(2, 2, 3)
     # plt.plot(
-    #     np.array(pipeline.my_ctrl_benchm.actor.g_actor_values, dtype="float")[:, 1],
-    #     np.array(pipeline.my_ctrl_benchm.actor.g_actor_values, dtype="float")[:, 0],
+    #     np.array(pipeline.controller.actor.g_actor_values, dtype="float")[:, 1],
+    #     np.array(pipeline.controller.actor.g_actor_values, dtype="float")[:, 0],
     #     label="g_actor",
     # )
     # plt.plot(
-    #     np.array(pipeline.my_ctrl_benchm.critic.g_critic_values, dtype="float")[
+    #     np.array(pipeline.controller.critic.g_critic_values, dtype="float")[
     #         :, 1
     #     ],
-    #     np.array(pipeline.my_ctrl_benchm.critic.g_critic_values, dtype="float")[
+    #     np.array(pipeline.controller.critic.g_critic_values, dtype="float")[
     #         :, 0
     #     ],
     #     label="g_critic",
@@ -88,13 +88,13 @@ def main():
     # plt.legend()
     # plt.subplot(2, 2, 3)
     # plt.plot(
-    #     np.array(pipeline.my_ctrl_benchm.g_actor_values, dtype="float")[:, 1],
-    #     np.array(pipeline.my_ctrl_benchm.g_actor_values, dtype="float")[:, 0],
+    #     np.array(pipeline.controller.g_actor_values, dtype="float")[:, 1],
+    #     np.array(pipeline.controller.g_actor_values, dtype="float")[:, 0],
     #     label="g_actor",
     # )
     # plt.plot(
-    #     np.array(pipeline.my_ctrl_benchm.g_critic_values, dtype="float")[:, 1],
-    #     np.array(pipeline.my_ctrl_benchm.g_critic_values, dtype="float")[:, 0],
+    #     np.array(pipeline.controller.g_critic_values, dtype="float")[:, 1],
+    #     np.array(pipeline.controller.g_critic_values, dtype="float")[:, 0],
     #     label="g_critic",
     # )
     # plt.xlabel("t [s]")
@@ -102,20 +102,20 @@ def main():
 
     # plt.subplot(2, 2, 4)
     # plt.plot(
-    #     np.array(pipeline.my_ctrl_benchm.g_emergency_critic_deriv, dtype="float")[
+    #     np.array(pipeline.controller.g_emergency_critic_deriv, dtype="float")[
     #         :, 1
     #     ],
-    #     np.array(pipeline.my_ctrl_benchm.g_emergency_critic_deriv, dtype="float")[
+    #     np.array(pipeline.controller.g_emergency_critic_deriv, dtype="float")[
     #         :, 0
     #     ],
     #     label="g_critic_deriv",
     # )
     # plt.plot(
     #     np.array(
-    #         pipeline.my_ctrl_benchm.g_emerency_critic_diff_weights, dtype="float"
+    #         pipeline.controller.g_emerency_critic_diff_weights, dtype="float"
     #     )[:, 1],
     #     np.array(
-    #         pipeline.my_ctrl_benchm.g_emerency_critic_diff_weights, dtype="float"
+    #         pipeline.controller.g_emerency_critic_diff_weights, dtype="float"
     #     )[:, 0],
     #     label="g_critic_diff_weights",
     # )

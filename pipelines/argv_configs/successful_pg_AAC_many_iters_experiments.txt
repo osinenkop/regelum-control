@@ -1,0 +1,1 @@
+--no_visual --is_playback --t1 7 --speedup 80 --N_iterations 50 --N_episodes 5 --dt 0.1 --learning_rate 0.000001 --initial_weights 100. 0. 0.

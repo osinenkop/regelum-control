@@ -1,7 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-This module contains controllers (agents).
+This module contains high-level structures of controllers (agents).
 
 Remarks: 
 
@@ -12,133 +10,63 @@ Remarks:
 """
 
 from .utilities import rc
-from . import models
 import numpy as np
 
 import scipy as sp
 from numpy.random import rand
 from scipy.optimize import minimize
 from abc import ABC, abstractmethod
-from casadi import nlpsol
-
-from casadi import Function
-from optimizers import GradientOptimizer
-
-# For debugging purposes
-from tabulate import tabulate
 
 
 class OptimalController(ABC):
+    """
+    A blueprint of optimal controllers.
+    """
+
     def __init__(
         self,
-        action_init=[],
-        t0=0,
+        time_start=0,
         sampling_time=0.1,
-        pred_step_size=0.1,
-        state_dyn=[],
-        sys_out=[],
-        prob_noise_pow=1,
-        is_est_model=0,
-        model_est_stage=1,
-        model_est_period=0.1,
-        buffer_size=20,
-        model_order=3,
-        model_est_checks=0,
-        critic_period=0.1,
-        actor=[],
-        critic=[],
         observation_target=[],
+        is_fixed_critic_weights=False,
     ):
 
-        self.actor = actor
-
-        self.dim_input = self.actor.dim_input
-        self.dim_output = self.actor.dim_output
-
-        self.ctrl_clock = t0
+        self.controller_clock = time_start
         self.sampling_time = sampling_time
 
-        # Controller: common
-        self.pred_step_size = pred_step_size
-
-        if isinstance(self.actor.control_bounds, (list, np.ndarray)):
-            self.action_min = self.actor.control_bounds[0][: self.dim_input]
-
-        else:
-            self.action_min = self.actor.control_bounds.lb[: self.dim_input]
-
-        if len(action_init) == 0:
-            self.action_prev = self.action_min / 10
-            self.action_sqn_init = rc.rep_mat(
-                self.action_min / 10, 1, self.actor.Nactor
-            )
-        else:
-            self.action_prev = action_init
-            self.action_sqn_init = rc.rep_mat(action_init, 1, self.actor.Nactor)
-
-        self.action_buffer = rc.zeros([buffer_size, self.dim_input])
-        self.observation_buffer = rc.zeros([buffer_size, self.dim_output])
-
-        # Exogeneous model's things
-        self.state_dyn = state_dyn
-        self.sys_out = sys_out
-        # Model estimator's things
-        self.is_est_model = is_est_model
-        self.est_clock = t0
-        self.is_prob_noise = 1
-        self.prob_noise_pow = prob_noise_pow
-        self.model_est_stage = model_est_stage
-        self.model_est_period = model_est_period
-        self.buffer_size = buffer_size
-        self.model_order = model_order
-        self.model_est_checks = model_est_checks
-
-        # RL elements
-        self.critic_clock = t0
-        self.critic_period = critic_period
-        self.critic = critic
         self.observation_target = observation_target
+        self.is_fixed_critic_weights = is_fixed_critic_weights
+        self.new_cycle_eps_tollerance = 1e-6
 
-        self.accum_obj_val = 0
-
-        self.control_mode = self.actor.control_mode
-
-    def estimate_model(self, observation, t):
+    def estimate_model(self, observation, time):
         if self.is_est_model or self.mode in ["RQL", "SQL"]:
-            self.estimator.estimate_model(observation, t)
+            self.estimator.estimate_model(observation, time)
 
-    def reset(self, t0):
-        """
-        Resets agent for use in multi-episode simulation.
-        Only internal clock and current actions are reset.
-        All the learned parameters are retained.
-        
-        """
-        self.ctrl_clock = t0
-        self.action_prev = self.action_min / 10
+    def compute_action_sampled(self, time, observation, constraints=()):
 
-    def compute_action_sampled(self, t, observation, constraints=()):
+        time_in_sample = time - self.controller_clock
+        timeInCriticPeriod = time - self.critic_clock
+        is_critic_update = (
+            timeInCriticPeriod >= self.critic_period - self.new_cycle_eps_tollerance
+        ) and not self.is_fixed_critic_weights
 
-        time_in_sample = t - self.ctrl_clock
-        timeInCriticPeriod = t - self.critic_clock
-        is_critic_update = timeInCriticPeriod >= self.critic_period
+        if is_critic_update:
+            self.critic_clock = time
 
-        if time_in_sample >= self.sampling_time:  # New sample
-            if self.is_est_model:
-                self.estimate_model(observation, t)
+        if (
+            time_in_sample >= self.sampling_time - self.new_cycle_eps_tollerance
+        ):  # New sample
             # Update controller's internal clock
-            self.ctrl_clock = t
-            # DEBUG ==============================
-            # print(self.ctrl_clock)
-            # /DEBUG =============================
+            self.controller_clock = time
+
             action = self.compute_action(
-                t, observation, is_critic_update=is_critic_update
+                time, observation, is_critic_update=is_critic_update
             )
 
             return action
 
         else:
-            return self.actor.action_prev
+            return self.actor.action_old
 
     @abstractmethod
     def compute_action(self):
@@ -146,111 +74,122 @@ class OptimalController(ABC):
 
 
 class RLController(OptimalController):
-    def __init__(self, *args, **kwargs):
+    """
+    Reinforcement learning controller class.
+    Takes instances of `actor` and `critic` to operate.
+    Action computation is sampled, i.e., actions are computed at discrete, equi-distant moments in time.
+    `critic` in turn is updated every `critic_period` units of time.
+    """
+
+    def __init__(
+        self, *args, critic_period=0.1, actor=[], critic=[], time_start=0, **kwargs
+    ):
         super().__init__(*args, **kwargs)
+        self.actor = actor
+        self.critic = critic
+
+        self.dim_input = self.actor.dim_input
+        self.dim_output = self.actor.dim_output
+
+        self.critic_clock = time_start
+        self.critic_period = critic_period
+
+    def reset(self, time_start):
+        """
+        Resets agent for use in multi-episode simulation.
+        Only internal clock and current actions are reset.
+        All the learned parameters are retained.
+
+        """
+        self.controller_clock = time_start
+        self.critic_clock = time_start
+        self.actor.action_old = self.actor.action_init
 
     def compute_action(
-        self, t, observation, is_critic_update=False,
+        self, time, observation, is_critic_update=False,
     ):
         # Critic
 
         # Update data buffers
-        self.critic.update_buffers(observation, self.actor.action_prev)
+        self.critic.update_buffers(observation, self.actor.action_old)
 
         if is_critic_update:
             # Update critic's internal clock
-            self.critic_clock = t
-            self.critic.update(t=t)
+            self.critic_clock = time
+            self.critic.update(time=time)
 
         self.actor.update(observation)
-        action = self.actor.get_action()
+        action = self.actor.action
 
         return action
 
 
-class CtrlNominal3WRobot:
+class NominalController3WRobot:
     """
     This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
-    
+
     The controller is sampled.
-    
+
     For a 3-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended non-holonomic double integrator) [[1]_], we use here
     a controller designed by non-smooth backstepping (read more in [[2]_], [[3]_]).
-  
+
     Attributes
     ----------
     m, I : : numbers
         Mass and moment of inertia around vertical axis of the robot.
-    ctrl_gain : : number
-        Controller gain.       
-    t0 : : number
+    controller_gain : : number
+        Controller gain.
+    time_start : : number
         Initial value of the controller's internal clock.
     sampling_time : : number
-        Controller's sampling time (in seconds).       
-    
+        Controller's sampling time (in seconds).
+
     References
     ----------
     .. [1] W. Abbasi, F. urRehman, and I. Shah. “Backstepping based nonlinear adaptive control for the extended
            nonholonomic double integrator”. In: Kybernetika 53.4 (2017), pp. 578–594
-        
+
     ..   [2] Matsumoto, R., Nakamura, H., Satoh, Y., and Kimura, S. (2015). Position control of two-wheeled mobile robot
              via semiconcave function backstepping. In 2015 IEEE Conference on Control Applications (CCA), 882–887
-       
+
     ..   [3] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational aspects." arXiv preprint arXiv:2006.14013 (2020)
-    
+
     """
 
     def __init__(
-        self, m, I, ctrl_gain=10, control_bounds=[], t0=0, sampling_time=0.1,
+        self,
+        m,
+        I,
+        controller_gain=10,
+        action_bounds=[],
+        time_start=0,
+        sampling_time=0.1,
     ):
 
         self.m = m
         self.I = I
-        self.ctrl_gain = ctrl_gain
-        self.control_bounds = control_bounds
-        self.ctrl_clock = t0
+        self.controller_gain = controller_gain
+        self.action_bounds = action_bounds
+        self.controller_clock = time_start
         self.sampling_time = sampling_time
 
-        self.action_prev = rc.zeros(2)
+        self.action_old = rc.zeros(2)
 
-    def reset(self, t0):
+    def reset(self, time_start):
 
         """
         Resets controller for use in multi-episode simulation.
-        
+
         """
-        self.ctrl_clock = t0
-        self.action_prev = rc.zeros(2)
+        self.controller_clock = time_start
+        self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI, theta):
 
         """
-        Generic, i.e., theta-dependent, subgradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators).
+        Generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators).
 
         """
-
-        #                                 3
-        #                             |x |
-        #         4     4             | 3|
-        # L(x) = x  +  x  +  ----------------------------------=   min F(x)
-        #         1     2                                        theta
-        #                     /     / 2   2 \             \ 2
-        #                    | sqrt| x + x   | + sqrt|x |  |
-        #                     \     \ 1   2 /        | 3| /
-        #                        \_________  __________/
-        #                                 \/
-        #                               sigma
-        #                                         3
-        #                                     |x |
-        #            4     4                     | 3|
-        # F(x; theta) = x  +  x  +  ----------------------------------------
-        #            1     2
-        #                        /                                     \ 2
-        #                        | x cos theta + x sin theta + sqrt|x | |
-        #                        \ 1             2                | 3| /
-        #                           \_______________  ______________/
-        #                                            \/
-        #                                            sigma~
 
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
@@ -342,9 +281,9 @@ class CtrlNominal3WRobot:
         """
         Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
         See Section VIII.A in [[1]_].
-        
+
         The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
-        
+
         References
         ----------
         .. [1] Watanabe, K., Yamamoto, T., Izumi, K., & Maeyama, S. (2010, October). Underactuated control for nonholonomic mobile robots by using double
@@ -357,18 +296,18 @@ class CtrlNominal3WRobot:
 
         xc = coords_Cart[0]
         yc = coords_Cart[1]
-        alpha = coords_Cart[2]
+        angle = coords_Cart[2]
         v = coords_Cart[3]
         omega = coords_Cart[4]
 
-        xNI[0] = alpha
-        xNI[1] = xc * rc.cos(alpha) + yc * rc.sin(alpha)
-        xNI[2] = -2 * (yc * rc.cos(alpha) - xc * rc.sin(alpha)) - alpha * (
-            xc * rc.cos(alpha) + yc * rc.sin(alpha)
+        xNI[0] = angle
+        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
+        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
+            xc * rc.cos(angle) + yc * rc.sin(angle)
         )
 
         eta[0] = omega
-        eta[1] = (yc * rc.cos(alpha) - xc * rc.sin(alpha)) * omega + v
+        eta[1] = (yc * rc.cos(angle) - xc * rc.sin(angle)) * omega + v
 
         return [xNI, eta]
 
@@ -377,14 +316,14 @@ class CtrlNominal3WRobot:
         """
         Get control for Cartesian NI from NH coordinates.
         See Section VIII.A in [[1]_].
-        
+
         The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
-        
+
         References
         ----------
         .. [1] Watanabe, K., Yamamoto, T., Izumi, K., & Maeyama, S. (2010, October). Underactuated control for nonholonomic mobile robots by using double
                integrator model and invariant manifold theory. In 2010 IEEE/RSJ International Conference on Intelligent Robots and Systems (pp. 2862-2867)
-        
+
 
         """
 
@@ -399,37 +338,37 @@ class CtrlNominal3WRobot:
 
         return uCart
 
-    def compute_action_sampled(self, t, observation):
+    def compute_action_sampled(self, time, observation):
         """
         See algorithm description in [[1]_], [[2]_].
-        
+
         **This algorithm needs full-state measurement of the robot**.
-        
+
         References
         ----------
         .. [1] Matsumoto, R., Nakamura, H., Satoh, Y., and Kimura, S. (2015). Position control of two-wheeled mobile robot
                via semiconcave function backstepping. In 2015 IEEE Conference on Control Applications (CCA), 882–887
-           
+
         .. [2] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational aspects." arXiv preprint arXiv:2006.14013 (2020)
-        
+
         """
 
-        time_in_sample = t - self.ctrl_clock
+        time_in_sample = time - self.controller_clock
 
         if time_in_sample >= self.sampling_time:  # New sample
             # Update internal clock
-            self.ctrl_clock = t
+            self.controller_clock = time
 
             # This controller needs full-state measurement
             action = self.compute_action(observation)
 
-            if self.control_bounds.any():
+            if self.action_bounds.any():
                 for k in range(2):
                     action[k] = np.clip(
-                        action[k], self.control_bounds[k, 0], self.control_bounds[k, 1]
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
                     )
 
-            self.action_prev = action
+            self.action_old = action
 
             # DEBUG ===================================================================
             # ================================LF debugger
@@ -445,11 +384,11 @@ class CtrlNominal3WRobot:
             return action
 
         else:
-            return self.action_prev
+            return self.action_old
 
     def compute_action(self, observation):
         """
-        Same as :func:`~CtrlNominal3WRobot.compute_action`, but without invoking the internal clock.
+        Same as :func:`~NominalController3WRobot.compute_action`, but without invoking the internal clock.
 
         """
 
@@ -457,10 +396,10 @@ class CtrlNominal3WRobot:
         theta_star = self._minimizer_theta(xNI, eta)
         kappa_val = self._kappa(xNI, theta_star)
         z = eta - kappa_val
-        uNI = -self.ctrl_gain * z
+        uNI = -self.controller_gain * z
         action = self._NH2ctrl_Cart(xNI, eta, uNI)
 
-        self.action_prev = action
+        self.action_old = action
 
         return action
 
@@ -472,59 +411,38 @@ class CtrlNominal3WRobot:
         return self._Fc(xNI, eta, theta_star)
 
 
-class CtrlNominal3WRobotNI:
+class NominalController3WRobotNI:
     """
-    Nominal parking controller for NI using disassembled subgradients.
-    
+    Nominal parking controller for NI using disassembled supper_bound_constraintradients.
+
     """
 
-    def __init__(self, ctrl_gain=10, control_bounds=[], t0=0, sampling_time=0.1):
+    def __init__(
+        self, controller_gain=10, action_bounds=[], time_start=0, sampling_time=0.1
+    ):
 
-        self.ctrl_gain = ctrl_gain
-        self.control_bounds = control_bounds
-        self.ctrl_clock = t0
+        self.controller_gain = controller_gain
+        self.action_bounds = action_bounds
+        self.controller_clock = time_start
         self.sampling_time = sampling_time
 
-        self.action_prev = rc.zeros(2)
+        self.action_old = rc.zeros(2)
 
-    def reset(self, t0):
+    def reset(self, time_start):
 
         """
         Resets controller for use in multi-episode simulation.
-        
+
         """
-        self.ctrl_clock = t0
-        self.action_prev = rc.zeros(2)
+        self.controller_clock = time_start
+        self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI):
 
         """
-        Analytic disassembled subgradient, without finding minimizer theta.
+        Analytic disassembled supper_bound_constraintradient, without finding minimizer theta.
 
         """
-
-        #                                 3
-        #                             |x |
-        #         4     4             | 3|
-        # L(x) = x  +  x  +  ----------------------------------=   min F(x)
-        #         1     2                                        theta
-        #                     /     / 2   2 \             \ 2
-        #                     | sqrt| x + x   | + sqrt|x | |
-        #                     \     \ 1   2 /        | 3| /
-        #                        \_________  __________/
-        #                                 \/
-        #                               sigma
-        #                                                3
-        #                                            |x |
-        #                4     4                     | 3|
-        # F(x; theta) = x  +  x  +  ----------------------------------------
-        #                1     2
-        #                           /                                      \ 2
-        #                           | x cos theta + x sin theta + sqrt|x | |
-        #                           \ 1             2                | 3|  /
-        #                              \_______________  ______________/
-        #                                              \/
-        #                                             sigma~
 
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
 
@@ -633,12 +551,12 @@ class CtrlNominal3WRobotNI:
 
         xc = coords_Cart[0]
         yc = coords_Cart[1]
-        alpha = coords_Cart[2]
+        angle = coords_Cart[2]
 
-        xNI[0] = alpha
-        xNI[1] = xc * rc.cos(alpha) + yc * rc.sin(alpha)
-        xNI[2] = -2 * (yc * rc.cos(alpha) - xc * rc.sin(alpha)) - alpha * (
-            xc * rc.cos(alpha) + yc * rc.sin(alpha)
+        xNI[0] = angle
+        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
+        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
+            xc * rc.cos(angle) + yc * rc.sin(angle)
         )
 
         return xNI
@@ -646,7 +564,7 @@ class CtrlNominal3WRobotNI:
     def _NH2ctrl_Cart(self, xNI, uNI):
 
         """
-        Get control for Cartesian NI from NH coordinates.       
+        Get control for Cartesian NI from NH coordinates.
 
         """
 
@@ -657,27 +575,27 @@ class CtrlNominal3WRobotNI:
 
         return uCart
 
-    def compute_action_sampled(self, t, observation):
+    def compute_action_sampled(self, time, observation):
         """
         Compute sampled action.
-        
+
         """
 
-        time_in_sample = t - self.ctrl_clock
+        time_in_sample = time - self.controller_clock
 
         if time_in_sample >= self.sampling_time:  # New sample
             # Update internal clock
-            self.ctrl_clock = t
+            self.controller_clock = time
 
             action = self.compute_action(observation)
 
-            if self.control_bounds.any():
+            if self.action_bounds.any():
                 for k in range(2):
                     action[k] = np.clip(
-                        action[k], self.control_bounds[k, 0], self.control_bounds[k, 1]
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
                     )
 
-            self.action_prev = action
+            self.action_old = action
 
             # DEBUG ===================================================================
             # ================================LF debugger
@@ -693,20 +611,20 @@ class CtrlNominal3WRobotNI:
             return action
 
         else:
-            return self.action_prev
+            return self.action_old
 
     def compute_action(self, observation):
         """
-        Same as :func:`~CtrlNominal3WRobotNI.compute_action`, but without invoking the internal clock.
+        Same as :func:`~NominalController3WRobotNI.compute_action`, but without invoking the internal clock.
 
         """
 
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
-        uNI = self.ctrl_gain * kappa_val
+        uNI = self.controller_gain * kappa_val
         action = self._NH2ctrl_Cart(xNI, uNI)
 
-        self.action_prev = action
+        self.action_old = action
 
         return action
 
@@ -717,3 +635,39 @@ class CtrlNominal3WRobotNI:
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
 
         return xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma ** 2
+
+
+class NominalControllerInvertedPendulum:
+    def __init__(self, action_bounds, controller_gain):
+        self.action_bounds = action_bounds
+        self.controller_gain = controller_gain
+        self.observation = np.array([np.pi, 0])
+
+    def __call__(self, observation):
+        return self.compute_action(observation)
+
+    def compute_action(self, observation):
+        self.observation = observation
+        return np.array([-((observation[0]) + (observation[1])) * self.controller_gain])
+        # return np.array(
+        #     [
+        #         np.clip(
+        #             -((observation[0]) + (observation[1])) * self.controller_gain,
+        #             self.action_bounds[0][0],
+        #             self.action_bounds[0][1],
+        #         )
+        #     ]
+        # )
+        # return np.array(
+        #     [
+        #         np.clip(
+        #             -np.sign(observation[0])
+        #             * np.exp(
+        #                 observation[0] + observation[1] * np.sign(observation[1]) ** 2
+        #             )
+        #             * self.controller_gain,
+        #             self.action_bounds[0][0],
+        #             self.action_bounds[0][1],
+        #         )
+        #     ]
+        # )

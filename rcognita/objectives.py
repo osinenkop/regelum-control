@@ -1,3 +1,9 @@
+"""
+Module that contains general objectives functions that can be used by various entities of the framework.
+For instance, a running objective can be used commonly by a generic optimal controller, an actor, a critic, a logger, an animator, a pipeline etc.
+
+"""
+
 from .utilities import rc
 from abc import ABC, abstractmethod
 from torch.nn import Module
@@ -14,27 +20,16 @@ class Objective(ABC):
 
 
 class RunningObjective(Objective):
-    def __init__(self, running_obj_model):
-        self.running_obj_model = running_obj_model
+    """
+    This is what is usually treated as reward or unitlity in maximization problems.
+    In minimzations problems, it is called cost or loss, say.
+    """
+
+    def __init__(self, model):
+        self.model = model
 
     def __call__(self, observation, action):
-        """
-        Stage (equivalently, instantaneous or running) objective. Depending on the context, it is also called utility, reward, running objective etc.
-        
-        See class documentation.
-        """
-        observation = rc.to_col(observation)
-        action = rc.to_col(action)
 
-        chi = rc.concatenate([observation, action])
+        running_objective = self.model(observation, action)
 
-        running_obj = self.running_obj_model(chi, chi)
-
-        return running_obj
-
-class TabularObjective(Objective):
-
-    def __init__(self, dim_state_space):
-
-
-
+        return running_objective

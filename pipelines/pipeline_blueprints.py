@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from rcognita import controllers, simulator, state_predictors, optimizers, objectives
+from rcognita import controllers, simulator, predictors, optimizers, objectives
 
 from rcognita.utilities import rc
 from rcognita.actors import (
@@ -9,7 +9,7 @@ from rcognita.actors import (
     ActorSQL,
 )
 
-from rcognita.critics import CriticActionValue, CriticSTAG, CriticMPC
+from rcognita.critics import CriticActionValue, CriticSTAG, CriticTrivial
 
 from rcognita.models import (
     ModelQuadLin,
@@ -18,7 +18,13 @@ from rcognita.models import (
     ModelNN,
     ModelQuadForm,
     ModelSS,
+    ModelWeightContainer,
 )
+
+from rcognita.scenarios import OnlineScenario
+import matplotlib.animation as animation
+from rcognita.utilities import on_key_press
+import matplotlib.pyplot as plt
 
 # from rcognita.estimators import Estimator
 
@@ -44,7 +50,7 @@ class AbstractPipeline(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def initialize_state_predictor(self):
+    def initialize_predictor(self):
         pass
 
     @abstractmethod
@@ -63,7 +69,6 @@ class AbstractPipeline(metaclass=ABCMeta):
     def initialize_logger(self):
         pass
 
-    @abstractmethod
     def main_loop_raw(self):
         pass
 
@@ -71,26 +76,15 @@ class AbstractPipeline(metaclass=ABCMeta):
     def execute_pipeline(self):
         pass
 
-    def upd_accum_obj(self, observation, action, delta):
-
-        """
-        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
-        If the agent succeeded to stabilize the system, ``accum_obj`` would converge to a finite value which is the performance mark.
-        The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
-        
-        """
-
-        self.accum_obj_val += self.running_objective(observation, action) * delta
-
 
 class PipelineWithDefaults(AbstractPipeline):
-    def initialize_state_predictor(self):
-        self.state_predictor = state_predictors.EulerStatePredictor(
+    def initialize_predictor(self):
+        self.predictor = predictors.EulerPredictor(
             self.pred_step_size,
-            self.my_sys._state_dyn,
-            self.my_sys.out,
+            self.system._compute_state_dynamics,
+            self.system.out,
             self.dim_output,
-            self.Nactor,
+            self.prediction_horizon,
         )
 
     def initialize_models(self):
@@ -118,16 +112,18 @@ class PipelineWithDefaults(AbstractPipeline):
                 self.actor_model = ModelQuadNoMix(self.dim_output)
             elif self.actor_struct == "quadratic":
                 self.actor_model = ModelQuadratic(self.dim_output)
+            else:
+                self.actor_model = ModelWeightContainer(weights_init=self.action_init)
 
-        self.running_obj_model = ModelQuadForm(R1=self.R1, R2=self.R2)
+        self.model_running_objective = ModelQuadForm(weights=self.R1)
 
         A = rc.zeros([self.model_order, self.model_order])
         B = rc.zeros([self.model_order, self.dim_input])
         C = rc.zeros([self.dim_output, self.model_order])
         D = rc.zeros([self.dim_output, self.dim_input])
-        x0est = rc.zeros(self.model_order)
+        initial_guessest = rc.zeros(self.model_order)
 
-        self.model_SS = ModelSS(A, B, C, D, x0est)
+        self.model_SS = ModelSS(A, B, C, D, initial_guessest)
 
     # def estimator_initialization(self):
     #     self.estimator = Estimator(
@@ -137,12 +133,12 @@ class PipelineWithDefaults(AbstractPipeline):
     def initialize_objectives(self):
 
         self.running_objective = objectives.RunningObjective(
-            running_obj_model=self.running_obj_model
+            model=self.model_running_objective
         )
 
     def initialize_optimizers(self):
         opt_options = {
-            "maxiter": 500,
+            "maxiter": 120,
             "maxfev": 5000,
             "disp": False,
             "adaptive": True,
@@ -158,35 +154,34 @@ class PipelineWithDefaults(AbstractPipeline):
 
     def initialize_actor_critic(self):
 
-        if self.control_mode == "RLSTAB":
+        if self.control_mode == "STAG":
             self.critic = CriticSTAG(
-                Ncritic=self.Ncritic,
                 dim_input=self.dim_input,
                 dim_output=self.dim_output,
-                buffer_size=self.buffer_size,
-                running_obj=self.running_objective,
-                gamma=self.gamma,
+                data_buffer_size=self.data_buffer_size,
+                running_objective=self.running_objective,
+                discount_factor=self.discount_factor,
                 optimizer=self.critic_optimizer,
                 model=self.critic_model,
-                safe_ctrl=self.my_ctrl_nominal,
-                state_predictor=self.state_predictor,
+                safe_controller=self.nominal_controller,
+                predictor=self.predictor,
             )
             Actor = ActorSTAG
 
         else:
             if self.control_mode == "MPC":
                 Actor = ActorMPC
-                self.critic = CriticMPC()
+                self.critic = CriticTrivial(self.running_objective, self.sampling_time)
             else:
                 self.critic = CriticActionValue(
-                    Ncritic=self.Ncritic,
                     dim_input=self.dim_input,
                     dim_output=self.dim_output,
-                    buffer_size=self.buffer_size,
-                    running_obj=self.running_objective,
-                    gamma=self.gamma,
+                    data_buffer_size=self.data_buffer_size,
+                    running_objective=self.running_objective,
+                    discount_factor=self.discount_factor,
                     optimizer=self.critic_optimizer,
                     model=self.critic_model,
+                    sampling_time=self.sampling_time,
                 )
                 if self.control_mode == "RQL":
                     Actor = ActorRQL
@@ -194,33 +189,23 @@ class PipelineWithDefaults(AbstractPipeline):
                     Actor = ActorSQL
 
         self.actor = Actor(
-            self.Nactor,
+            self.prediction_horizon,
             self.dim_input,
             self.dim_output,
             self.control_mode,
-            self.control_bounds,
-            state_predictor=self.state_predictor,
+            self.action_bounds,
+            action_init=self.action_init,
+            predictor=self.predictor,
             optimizer=self.actor_optimizer,
             critic=self.critic,
-            running_obj=self.running_objective,
+            running_objective=self.running_objective,
             model=self.actor_model,
         )
 
     def initialize_controller(self):
-        self.my_ctrl_benchm = controllers.RLController(
-            action_init=self.action_init,
-            t0=self.t0,
-            sampling_time=self.dt,
-            pred_step_size=self.pred_step_size,
-            state_dyn=self.my_sys._state_dyn,
-            sys_out=self.my_sys.out,
-            prob_noise_pow=self.prob_noise_pow,
-            is_est_model=self.is_est_model,
-            model_est_stage=self.model_est_stage,
-            model_est_period=self.model_est_period,
-            buffer_size=self.buffer_size,
-            model_order=self.model_order,
-            model_est_checks=self.model_est_checks,
+        self.controller = controllers.RLController(
+            time_start=self.time_start,
+            sampling_time=self.sampling_time,
             critic_period=self.critic_period,
             actor=self.actor,
             critic=self.critic,
@@ -228,88 +213,79 @@ class PipelineWithDefaults(AbstractPipeline):
         )
 
     def initialize_simulator(self):
-        self.my_simulator = simulator.Simulator(
+        self.simulator = simulator.Simulator(
             sys_type="diff_eqn",
-            closed_loop_rhs=self.my_sys.closed_loop_rhs,
-            sys_out=self.my_sys.out,
+            compute_closed_loop_rhs=self.system.compute_closed_loop_rhs,
+            sys_out=self.system.out,
             state_init=self.state_init,
             disturb_init=[],
             action_init=self.action_init,
-            t0=self.t0,
-            t1=self.t1,
-            dt=self.dt,
-            max_step=self.dt / 10,
+            time_start=self.time_start,
+            time_final=self.time_final,
+            sampling_time=self.sampling_time,
+            max_step=self.sampling_time / 10,
             first_step=1e-6,
             atol=self.atol,
             rtol=self.rtol,
             is_disturb=self.is_disturb,
-            is_dyn_ctrl=self.is_dyn_ctrl,
+            is_dynamic_controller=self.is_dynamic_controller,
         )
 
-    def main_loop_raw(self):
+    def initialize_scenario(self):
+        self.scenario = OnlineScenario(
+            self.system,
+            self.simulator,
+            self.controller,
+            self.actor,
+            self.critic,
+            self.logger,
+            self.datafiles,
+            self.time_final,
+            self.running_objective,
+            no_print=self.no_print,
+            is_log=self.is_log,
+        )
 
-        run_curr = 1
-        self.accum_obj_val = 0
-        datafile = self.datafiles[0]
-        t = t_prev = 0
+    def main_loop_visual(self):
 
-        while True:
+        anm = animation.FuncAnimation(
+            self.animator.fig_sim,
+            self.animator.animate,
+            init_func=self.animator.init_anim,
+            blit=False,
+            interval=self.sampling_time / 1e6,
+            repeat=False,
+        )
 
-            self.my_simulator.sim_step()
+        self.animator.get_anm(anm)
 
-            t_prev = t
+        cId = self.animator.fig_sim.canvas.mpl_connect(
+            "key_press_event", lambda event: on_key_press(event, anm)
+        )
 
-            (t, _, observation, state_full,) = self.my_simulator.get_sim_step_data()
+        anm.running = True
 
-            delta_t = t - t_prev
+        self.animator.fig_sim.tight_layout()
 
-            if self.save_trajectory:
-                self.trajectory.append(rc.concatenate((state_full, t), axis=None))
-            if self.control_mode == "nominal":
-                action = self.my_ctrl_nominal.compute_action_sampled(t, observation)
-            else:
-                action = self.my_ctrl_benchm.compute_action_sampled(t, observation)
-
-            self.my_sys.receive_action(action)
-
-            running_obj = self.running_objective(observation, action)
-            self.upd_accum_obj(observation, action, delta_t)
-            accum_obj = self.accum_obj_val
-
-            if not self.no_print:
-                self.my_logger.print_sim_step(
-                    t, state_full, action, running_obj, accum_obj
-                )
-
-            if self.is_log:
-                self.my_logger.log_data_row(
-                    datafile, t, state_full, action, running_obj, accum_obj,
-                )
-
-            if t >= self.t1:
-                if not self.no_print:
-                    print(
-                        ".....................................Run {run:2d} done.....................................".format(
-                            run=run_curr
-                        )
-                    )
+        plt.show()
 
     def execute_pipeline(self, **kwargs):
         self.load_config()
         self.setup_env()
         self.__dict__.update(kwargs)
         self.initialize_system()
-        self.initialize_state_predictor()
+        self.initialize_predictor()
+        self.initialize_safe_controller()
         self.initialize_models()
         self.initialize_objectives()
         self.initialize_optimizers()
-        self.initialize_safe_controller()
         self.initialize_actor_critic()
         self.initialize_controller()
         self.initialize_simulator()
         self.initialize_logger()
+        self.initialize_scenario()
         if not self.no_visual and not self.save_trajectory:
+            self.initialize_visualizer()
             self.main_loop_visual()
         else:
-            self.main_loop_raw()
-
+            self.scenario.run()

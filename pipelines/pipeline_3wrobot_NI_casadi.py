@@ -32,7 +32,7 @@ class Pipeline3WRobotNICasadi(Pipeline3WRobotNI):
 
         opt_options = {
             "print_time": 0,
-            "ipopt.max_iter": 100,
+            "ipopt.max_iter": 200,
             "ipopt.print_level": 0,
             "ipopt.acceptable_tol": 1e-7,
             "ipopt.acceptable_obj_change_tol": 1e-2,
