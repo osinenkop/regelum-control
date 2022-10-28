@@ -23,7 +23,7 @@ import matplotlib.patheffects as PathEffects
 import time
 import sys
 
-import matplotlib as mpl
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage
 import matplotlib.patches as patches
@@ -38,15 +38,16 @@ from collections import namedtuple
 
 from typing import List
 import numbers
+from abc import ABC, abstractmethod
 
 
-class MPLHandleWrapper:
-    def __init__(self, mpl_handle):
-        self.mpl_handle = mpl_handle
+class MatplotlibHandleWrapper:
+    def __init__(self, matplotlib_handle):
+        self.matplotlib_handle = matplotlib_handle
 
     def update_line(self, newX, newY):
-        old_xdata = self.mpl_handle.get_xdata()
-        old_ydata = self.mpl_handle.get_ydata()
+        old_xdata = self.matplotlib_handle.get_xdata()
+        old_ydata = self.matplotlib_handle.get_ydata()
         if all(isinstance(coord, numbers.Number) for coord in [newX, newY]):
             new_xdata = rc.append(old_xdata, newX)
             new_ydata = rc.append(old_ydata, newY)
@@ -54,69 +55,69 @@ class MPLHandleWrapper:
             new_xdata = rc.concatenate((old_xdata, newX))
             new_ydata = rc.concatenate((old_ydata, newY))
 
-        self.mpl_handle.set_xdata(new_xdata)
-        self.mpl_handle.set_ydata(new_ydata)
+        self.matplotlib_handle.set_xdata(new_xdata)
+        self.matplotlib_handle.set_ydata(new_ydata)
 
     def reset_line(self):
-        self.mpl_handle.set_data([], [])
+        self.matplotlib_handle.set_data([], [])
 
     def update_text(self, new_text):
-        self.mpl_handle.set_text(new_text)
+        self.matplotlib_handle.set_text(new_text)
 
     def update_patch_color(self, new_color):
-        self.mpl_handle.set_color(str(new_color))
+        self.matplotlib_handle.set_color(str(new_color))
+
+    def init_data_cursor(self):
+        datacursor(self.matplotlib_handle)
 
 
-class Dashboard:
+class Dashboard(ABC):
     def __init__(self):
         pass
 
-    def perform_episodic_update(self):
-        raise NotImplementedError(
-            f"episodic update not implemented for dashboard {self.__class__.__name__}"
-        )
+    @abstractmethod
+    def init_dashboard(self):
+        pass
 
-    def perform_iterative_update(self):
-        raise NotImplementedError(
-            f"iterative update method not implemented for dashboard {self.__class__.__name__}"
-        )
+    def wrap_handle(self, handle):
+        return MatplotlibHandleWrapper(handle)
 
     def perform_step_update(self):
-        raise NotImplementedError(
-            f"step update method is not implemented for dashboard {self.__class__.__name__}"
-        )
+        pass
+        # raise NotImplementedError(
+        #     f"step update method is not implemented for dashboard {self.__class__.__name__}"
+        # )
+
+    def perform_episodic_update(self):
+        pass
+        # raise NotImplementedError(
+        #     f"episodic update not implemented for dashboard {self.__class__.__name__}"
+        # )
+
+    def perform_iterative_update(self):
+        pass
+        # raise NotImplementedError(
+        #     f"iterative update method not implemented for dashboard {self.__class__.__name__}"
+        # )
 
     def update(self, update_variant):
         if update_variant == "step":
             self.perform_step_update()
-        elif update_variant == "episodiс":
+        elif update_variant == "episode":
             self.perform_episodical_update()
-        elif update_variant == "iterative":
+        elif update_variant == "iteration":
             self.perform_iterative_update()
 
 
-class DashboardHarness:
-    def __init__(self, dashboards: List[Dashboard]):
-        self.dashboards = dashboards
-
-    def update_dashboards(self, update_variant):
-        for dashboard in self.dashboards:
-            dashboard.update(update_variant)
-
-    def init_dashboards(self):
-        for dashboard in self.dashboards:
-            dashboard.init_dashboard()
-
-
 class InvPendulumTrackingDashboard(Dashboard):
-    def __init__(self, fig_sim, time_start, rod_length):
-        self.fig_sim = fig_sim
+    def __init__(self, time_start, rod_length, state_init, scenario):
         self.time_start = time_start
         self.rod_length = rod_length
+        self.state_init = state_init
+        self.scenario = scenario
 
     def init_dashboard(self):
-        self.axs_xy_plane = self.fig_sim.add_subplot(
-            221,
+        self.axs_xy_plane = plt.plot(
             autoscale_on=False,
             xlim=(-self.rod_length - 0.2, self.rod_length + 0.2),
             ylim=(-self.rod_length - 0.2, self.rod_length + 0.2),
@@ -144,6 +145,152 @@ class InvPendulumTrackingDashboard(Dashboard):
             state,
             observation,
         )
+
+        xCoord0 = self.rod_length * rc.sin(self.state_init[0])
+        yCoord0 = self.rod_length * rc.cos(self.state_init[0])
+
+        self.scatter_sol = self.axs_xy_plane.scatter(
+            xCoord0, yCoord0, marker="o", s=400, c="b"
+        )
+        (self.line_rod,) = self.axs_xy_plane.plot(
+            [0, xCoord0], [0, yCoord0], "b", lw=1.5,
+        )
+        self.line_rod = self.wrap_handle(self.line_rod)
+
+    def update_step(self):
+        state_full = self.scenario.observation
+        angle = state_full[0]
+
+        xCoord = self.rod_length * rc.sin(angle)
+        yCoord = self.rod_length * rc.cos(angle)
+        time = self.scenario.time
+
+        text_time = "Time = {time:2.3f}".format(time=self.scenario.time)
+        update_text(self.text_time_handle, text_time)
+
+        self.line_rod.set_xdata([0, xCoord])
+        self.line_rod.set_ydata([0, yCoord])
+
+        self.scatter_sol.remove()
+        self.scatter_sol = self.axs_xy_plane.scatter(
+            xCoord, yCoord, marker="o", s=400, c="b"
+        )
+        update_line(self.line_angle, time, angle)
+
+
+class EpisodicTrajectoryDashboard(Dashboard):
+    def __init__(self, time_start, time_final, angle_0, scenario):
+        self.time_start = time_start
+        self.time_final = time_final
+        self.angle_0 = angle_0
+        self.N_episodes = scenario.N_episodes
+        self.scenario = scenario
+
+    def init_dashboard(self):
+        self.axs_sol = plt.plot(
+            autoscale_on=False,
+            xlim=(self.time_start, self.time_final),
+            ylim=(-2 * np.pi, 2 * np.pi),
+            xlabel="Time [s]",
+        )
+
+        self.episodic_line_handles = []
+        for _ in range(self.N_episodes):
+            (new_handle,) = self.axs_sol.plot([self.time_start], [0], "r--")
+            new_handle = self.wrap_handle(new_handle)
+            self.episodic_line_handles.append(new_handle)
+
+        self.axs_sol.plot(
+            [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
+        )  # Help line
+        (self.line_angle,) = self.axs_sol.plot(
+            self.time_start, self.angle_0, "r", lw=0.5, label=r"$\angle$ [rad]"
+        )
+        self.line_angle = self.wrap_handle(self.line_angle)
+        self.line_angle.init_data_cursor()
+
+        self.axs_sol.legend(fancybox=True, loc="upper right")
+        self.axs_sol.format_coord = lambda state, observation: "%2.2f, %2.2f" % (
+            state,
+            observation,
+        )
+
+    def perform_episodic_update(self):
+        x_data = self.line_angle.get_xdata()
+        y_data = self.line_angle.get_ydata()
+        handle = self.episodic_line_handles[self.scenario.episode_counter - 1]
+        handle.set_xdata(x_data[:-1])
+        handle.set_ydata(y_data[:-1])
+        self.line_angle.set_xdata([self.time_start])
+        self.line_angle.set_ydata([self.state_full_init[0]])
+
+    def perform_iterative_update(self):
+        for handle in self.episodic_line_handles:
+            handle.set_xdata([self.time_start])
+            handle.set_ydata([self.state_full_init[0]])
+
+
+class MeanEpisodicOutcomesDashboard(Dashboard):
+    def __init__(self, N_iterations, scenario):
+        self.N_iterations = N_iterations
+        self.scenario = scenario
+
+    def init_dashboard(self):
+        self.axs_cost = plt.plot(
+            autoscale_on=True,
+            xlim=(1, self.scenario.N_iterations),
+            ylim=(-1e4, 0),
+            ylabel="Outcome",
+            xlabel="Iteration number",
+        )
+
+        (self.line_outcome_episodic_mean,) = self.axs_cost.plot(
+            [], [], "r-", lw=0.5, label="Iteration mean outcome"
+        )
+        self.line_outcome_episodic_mean = self.wrap_handle(
+            self.line_outcome_episodic_mean
+        )
+        self.line_outcome_episodic_mean.init_data_cursor()
+        self.axs_cost.legend(fancybox=True, loc="upper right")
+        self.axs_cost.grid()
+
+    def perform_iterative_update(self):
+        update_line(
+            self.line_outcome_episodic_mean,
+            self.scenario.iteration_counter,
+            self.scenario.outcome_episodic_means[-1],
+        )
+
+
+class WeightsEpisodicDashboard(Dashboard):
+    def __init__(self, N_iterations, weights_init, scenario):
+        self.N_iterations = N_iterations
+        self.weights_init = weights_init
+        self.scenario = scenario
+
+    def init_dashboard(self):
+        self.axs_action_params = plt.plot(
+            autoscale_on=True,
+            xlim=(0, self.N_iterations),
+            ylim=(0, 100),
+            xlabel="Iteration number",
+        )
+
+        self.policy_line_handles_pack = [
+            self.axs_action_params.plot(
+                [0], [self.scenario.actor.model.weights_init[i]], label=f"w_{i+1}",
+            )[0]
+            for i in range(len(self.weights_init))
+        ]
+        plt.legend()
+
+    def perform_iterative_update(self):
+        for i, handle in enumerate(self.policy_line_handles_pack):
+            update_line(
+                handle,
+                self.scenario.iteration_counter,
+                self.scenario.actor.model.weights[i],
+            )
 
 
 class Animator:
@@ -199,6 +346,9 @@ class Animator:
         """
         self.__dict__.update(kwargs)
 
+    def collect_dashboards(self, *dashboards):
+        self.dashboards = dashboards
+
 
 class AnimatorInvertedPendulum(Animator):
     def __init__(self, objects=[], pars=[]):
@@ -226,134 +376,83 @@ class AnimatorInvertedPendulum(Animator):
         self.control_mode = control_mode
         self.no_print = True
 
-        angle_0 = state_init[0]
-        angle_dot_0 = state_init[1]
-
+        self.angle_0 = state_init[0]
         self.rod_length = self.system.pars[2]
 
-        plt.close("all")
-
-        self.fig_sim = plt.figure(figsize=(10, 10))
-
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ################
-        self.axs_xy_plane = self.fig_sim.add_subplot(
-            221,
-            autoscale_on=False,
-            xlim=(-self.rod_length - 0.2, self.rod_length + 0.2),
-            ylim=(-self.rod_length - 0.2, self.rod_length + 0.2),
-            xlabel="x [m]",
-            ylabel="y [m]",
-            title="Pause - space, q - quit, click - data cursor",
+        pendulum_tracking_dashboard = InvPendulumTrackingDashboard(
+            self.time_start, self.rod_length, state_init, self.scenario
         )
-        self.axs_xy_plane.set_aspect("equal", adjustable="box")
-        self.axs_xy_plane.plot(
-            [-self.rod_length - 0.2, self.rod_length + 0.2], [0, 0], "k--", lw=0.75
-        )  # Help line
-        self.axs_xy_plane.plot(
-            [0, 0], [-self.rod_length - 0.2, self.rod_length + 0.2], "k-", lw=0.75
-        )  # Help line
-        text_time = "Time = {time:2.3f}".format(time=time_start)
-        self.text_time_handle = self.axs_xy_plane.text(
-            0.05,
-            0.95,
-            text_time,
-            horizontalalignment="left",
-            verticalalignment="center",
-            transform=self.axs_xy_plane.transAxes,
-        )
-        self.axs_xy_plane.format_coord = lambda state, observation: "%2.2f, %2.2f" % (
-            state,
-            observation,
-        )
-
         ########### SUBPLOT 2  --------- STEP-BY-STEP-SOLUTION ################
-        self.axs_sol = self.fig_sim.add_subplot(
-            222,
-            autoscale_on=False,
-            xlim=(time_start, time_final),
-            ylim=(-2 * np.pi, 2 * np.pi),
-            xlabel="Time [s]",
+        episodic_trajectory_dashboard = EpisodicTrajectoryDashboard(
+            self.time_start, self.time_final, self.angle_0, self.scenario
         )
-        self.episodic_line_handles = []
-        for _ in range(self.scenario.N_episodes):
-            (new_handle,) = self.axs_sol.plot([self.time_start], [0], "r--")
-            self.episodic_line_handles.append(new_handle)
-
-        self.axs_sol.plot([time_start, time_final], [0, 0], "k--", lw=0.75)  # Help line
-        (self.line_angle,) = self.axs_sol.plot(
-            time_start, angle_0, "r", lw=0.5, label=r"$\angle$ [rad]"
-        )
-        self.axs_sol.legend(fancybox=True, loc="upper right")
-        self.axs_sol.format_coord = lambda state, observation: "%2.2f, %2.2f" % (
-            state,
-            observation,
-        )
-
-        # Cost
-
         ########### SUBPLOT 3  --------- Episode mean ################
-        self.axs_cost = self.fig_sim.add_subplot(
-            223,
-            autoscale_on=True,
-            xlim=(1, self.scenario.N_iterations),
-            ylim=(-1e3, 0),
-            ylabel="Outcome",
-            xlabel="Iteration number",
+        mean_outcomes_dashboard = MeanEpisodicOutcomesDashboard(
+            self.scenario.N_iterations, self.scenario
         )
-
-        (self.line_outcome_episodic_mean,) = self.axs_cost.plot(
-            [], [], "r-", lw=0.5, label="Iteration mean outcome"
-        )
-        self.axs_cost.legend(fancybox=True, loc="upper right")
-        self.axs_cost.grid()
 
         ########### SUBPLOT 4  --------- POLICY PARAMETERS ################
-        self.axs_action_params = self.fig_sim.add_subplot(
-            224,
-            autoscale_on=True,
-            xlim=(0, self.scenario.N_iterations),
-            ylim=(0, 100),
-            xlabel="Iteration number",
+        weights_episodic_dashboard = WeightsEpisodicDashboard(
+            self.scenario.N_iterations, self.actor.model.weights_init, self.scenario
         )
-
-        self.policy_line_handles_pack = [
-            self.axs_action_params.plot(
-                [0], [self.scenario.actor.model.weights_init[i]], label=f"w_{i+1}",
-            )[0]
-            for i in range(len(self.scenario.actor.model.weights_init))
-        ]
-        plt.legend()
         ###################################################################
 
-        # Pack all lines together
-        cLines = namedtuple("lines", ["line_angle", "line_outcome_episodic_mean"],)
-        self.lines = cLines(
-            line_angle=self.line_angle,
-            line_outcome_episodic_mean=self.line_outcome_episodic_mean,
-        )
-
-        # Enable data cursor
-        for item in self.lines:
-            if isinstance(item, list):
-                for subitem in item:
-                    datacursor(subitem)
-            else:
-                datacursor(item)
-
-    def init_anim(self):
-        state_init, *_ = self.pars
-
-        xCoord0 = self.rod_length * rc.sin(state_init[0])
-        yCoord0 = self.rod_length * rc.cos(state_init[0])
-
-        self.scatter_sol = self.axs_xy_plane.scatter(
-            xCoord0, yCoord0, marker="o", s=400, c="b"
-        )
-        (self.line_rod,) = self.axs_xy_plane.plot(
-            [0, xCoord0], [0, yCoord0], "b", lw=1.5,
+        self.grid = [2, 2]
+        self.collect_dashboards(
+            pendulum_tracking_dashboard,
+            episodic_trajectory_dashboard,
+            mean_outcomes_dashboard,
+            weights_episodic_dashboard,
         )
         self.run_curr = 1
         self.datafile_curr = self.datafiles[0]
+
+    def init_anim(self):
+        plt.close("all")
+        self.main_figure, self.axes_array = plt.subplots(*self.grid)
+        for r in range(self.grid[0]):
+            for c in range(self.grid[1]):
+                plt.sca(self.axes_array[r, c])  ####---Set current axes
+                self.dashboards[r + c].init_dashboard()
+
+    def update_dashboards(self, update_variant):
+        for r in range(self.grid[0]):
+            for c in range(self.grid[1]):
+                plt.sca(self.axes_array[r, c])
+                self.dashboards[r + c].update(update_variant)
+
+    def animate(self, k):
+        sim_status = self.scenario.step()
+        if sim_status == "simulation_ended":
+            print("Simulation ended")
+            self.anm.event_source.stop()
+        self.update_dashboards("step")
+        if sim_status == "episode_ended":
+            self.update_dashboards("episode")
+        elif sim_status == "iteration_ended":
+            self.update_dashboards("episode")
+            self.update_dashboards("iteration")
+
+    def reset(self):
+        self.current_step = 0
+
+        self.line_angle.set_xdata([])
+        self.line_angle.set_ydata([])
+        for handle in self.episodic_line_handles:
+            handle.set_xdata([self.time_start])
+            handle.set_ydata([self.state_full_init[0]])
+
+        for i, handle in enumerate(self.policy_line_handles_pack):
+            handle.set_xdata(self.iters[self.current_step])
+            handle.set_ydata(self.weights[self.current_step][i])
+
+        self.line_outcome_episodic_mean.set_xdata([])
+        self.line_outcome_episodic_mean.set_ydata([])
+        self.episodic_outcomes = []
+        self.iteration_counter = 0
+        self.episode_counter = 0
+        self.scenario.logger.reset()
 
     def set_sim_data(
         self, iters, episodes, ts, angles, angle_dots, Ms, rs, outcomes, weights,
@@ -390,85 +489,6 @@ class AnimatorInvertedPendulum(Animator):
         self.iteration_counter = 0
         self.scenario.logger.reset()
         self.episodic_outcomes = []
-
-    def update_step(self):
-        state_full = self.scenario.observation
-        angle = state_full[0]
-
-        xCoord = self.rod_length * rc.sin(angle)
-        yCoord = self.rod_length * rc.cos(angle)
-        time = self.scenario.time
-
-        text_time = "Time = {time:2.3f}".format(time=self.scenario.time)
-        update_text(self.text_time_handle, text_time)
-
-        self.line_rod.set_xdata([0, xCoord])
-        self.line_rod.set_ydata([0, yCoord])
-
-        self.scatter_sol.remove()
-        self.scatter_sol = self.axs_xy_plane.scatter(
-            xCoord, yCoord, marker="o", s=400, c="b"
-        )
-        update_line(self.line_angle, time, angle)
-
-    def update_episode(self):
-        x_data = self.line_angle.get_xdata()
-        y_data = self.line_angle.get_ydata()
-        handle = self.episodic_line_handles[self.scenario.episode_counter - 1]
-        handle.set_xdata(x_data[:-1])
-        handle.set_ydata(y_data[:-1])
-        self.line_angle.set_xdata([self.time_start])
-        self.line_angle.set_ydata([self.state_full_init[0]])
-
-    def update_iteration(self):
-        for handle in self.episodic_line_handles:
-            handle.set_xdata([self.time_start])
-            handle.set_ydata([self.state_full_init[0]])
-
-        for i, handle in enumerate(self.policy_line_handles_pack):
-            update_line(
-                handle,
-                self.scenario.iteration_counter,
-                self.scenario.actor.model.weights[i],
-            )
-
-        update_line(
-            self.line_outcome_episodic_mean,
-            self.scenario.iteration_counter,
-            self.scenario.outcome_episodic_means[-1],
-        )
-
-    def animate(self, k):
-        sim_status = self.scenario.step()
-        if sim_status == "simulation_ended":
-            print("Simulation ended")
-            self.anm.event_source.stop()
-        self.update_step()
-        if sim_status == "episode_ended":
-            self.update_episode()
-        elif sim_status == "iteration_ended":
-            self.update_episode()
-            self.update_iteration()
-
-    def reset(self):
-        self.current_step = 0
-
-        self.line_angle.set_xdata([])
-        self.line_angle.set_ydata([])
-        for handle in self.episodic_line_handles:
-            handle.set_xdata([self.time_start])
-            handle.set_ydata([self.state_full_init[0]])
-
-        for i, handle in enumerate(self.policy_line_handles_pack):
-            handle.set_xdata(self.iters[self.current_step])
-            handle.set_ydata(self.weights[self.current_step][i])
-
-        self.line_outcome_episodic_mean.set_xdata([])
-        self.line_outcome_episodic_mean.set_ydata([])
-        self.episodic_outcomes = []
-        self.iteration_counter = 0
-        self.episode_counter = 0
-        self.scenario.logger.reset()
 
     def playback(self, k):
         if self.current_step >= len(self.times) - self.speedup - 1:
@@ -800,7 +820,7 @@ class RobotMarker:
         )
         self.path = parse_path(self.path_string)
         self.path.vertices -= self.path.vertices.mean(axis=0)
-        self.marker = mpl.markers.MarkerStyle(marker=self.path)
+        self.marker = matplotlib.markers.MarkerStyle(marker=self.path)
         self.marker._transform = self.marker.get_transform().rotate_deg(angle)
 
     def rotate(self, angle=0):
