@@ -226,7 +226,7 @@ class System:
             Current closed-loop system state
 
         """
-        rhs_full_state = np.zeros(self._dim_full_state)
+        rhs_full_state = rc.zeros(self._dim_full_state)
 
         state = state_full[0 : self.dim_state]
 
@@ -238,13 +238,18 @@ class System:
         if self.is_dynamic_controller:
             action = state_full[-self.dim_input :]
             observation = self.out(state)
-            rhs_full_state[-self.dim_input :] = self._ctrlDyn(time, action, observation)
+            rhs_full_state[-self.dim_input :] = rc.array(
+                self._ctrlDyn(time, action, observation)
+            )
         else:
             # Fetch the control action stored in the system
             action = self.action
 
-        rhs_full_state[0 : self.dim_state] = self._compute_state_dynamics(
-            time, state, action, disturb
+        rhs_full_state[0 : self.dim_state] = rc.squeeze(
+            rc.array(
+                self._compute_state_dynamics(time, state, action, disturb),
+                prototype=rhs_full_state,
+            )
         )
 
         if self.is_disturb:

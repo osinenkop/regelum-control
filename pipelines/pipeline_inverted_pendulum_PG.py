@@ -1,10 +1,12 @@
 import os, sys
 
+
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
+from rcognita.visualization.vis_inverted_pendulum import AnimatorInvertedPendulum
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -36,7 +38,6 @@ print("INFO:", info)
 
 from rcognita import (
     controllers,
-    animators,
     systems,
     predictors,
     objectives,
@@ -51,7 +52,7 @@ from rcognita.critics import CriticTrivial
 
 from rcognita.utilities import rc
 
-from rcognita.scenarios import EpisodicScenario, OnlineScenario
+from rcognita.scenarios import EpisodicScenarioREINFORCE
 
 
 class PipelineInvertedPendulumPG(PipelineWithDefaults):
@@ -140,7 +141,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
         )
 
     def initialize_scenario(self):
-        self.scenario = EpisodicScenario(
+        self.scenario = EpisodicScenarioREINFORCE(
             system=self.system,
             simulator=self.simulator,
             controller=self.controller,
@@ -163,7 +164,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
     def initialize_visualizer(self):
         state_full_init = self.simulator.state_full
         self.scenario.is_playback = False
-        self.animator = animators.AnimatorInvertedPendulum(
+        self.animator = AnimatorInvertedPendulum(
             objects=(
                 self.simulator,
                 self.system,
@@ -242,4 +243,4 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
 
 if __name__ == "__main__":
 
-    PipelineInvertedPendulum().execute_pipeline()
+    PipelineInvertedPendulumPG().execute_pipeline()

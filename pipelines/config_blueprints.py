@@ -19,7 +19,7 @@ class RcognitaArgParser(argparse.ArgumentParser):
             "--control_mode",
             metavar="control_mode",
             type=str,
-            choices=["manual", "nominal", "MPC", "RQL", "SQL", "STAG"],
+            choices=["manual", "nominal", "MPC", "RQL", "SQL", "STAG", "PG"],
             default="MPC",
             help="Control mode. Currently available: "
             + "----manual: manual constant control specified by action_manual; "
@@ -27,7 +27,8 @@ class RcognitaArgParser(argparse.ArgumentParser):
             + "----MPC:model-predictive control; "
             + "----RQL: Q-learning actor-critic with prediction_horizon-1 roll-outs of stage objective; "
             + "----SQL: stacked Q-learning; "
-            + "----STAG: joint actor-critic (stabilizing), system-specific, needs proper setup.",
+            + "----STAG: joint actor-critic (stabilizing), system-specific, needs proper setup."
+            + "----PG: Standard Policy Gradient alorithm.",
         )
         self.add_argument(
             "--is_log",
@@ -79,6 +80,11 @@ class RcognitaArgParser(argparse.ArgumentParser):
             "-f",
             "--file",
             help="Path for input file. First line should contain number of lines to search in",
+        )
+        self.add_argument(
+            "--save_animation",
+            action="store_true",
+            help="Flag to save animation after the visualization is over.",
         )
 
 
@@ -335,11 +341,13 @@ class Config3WRobot(AbstractConfig):
         self.model_est_checks = 0
 
         # Control constraints
-        self.Fmin = -300
-        self.Fmax = 300
-        self.Mmin = -100
-        self.Mmax = 100
-        self.action_bounds = np.array([[self.Fmin, self.Fmax], [self.Mmin, self.Mmax]])
+        self.F_min = -300
+        self.F_max = 300
+        self.M_min = -100
+        self.M_max = 100
+        self.action_bounds = np.array(
+            [[self.F_min, self.F_max], [self.M_min, self.M_max]]
+        )
 
         # System parameters
         self.m = 10  # [kg]
@@ -869,7 +877,7 @@ class ConfigInvertedPendulum(AbstractConfig):
             "--initial_weights",
             type=float,
             nargs="+",
-            default=np.array([30, 0.0, 9]),
+            default=np.array([0.0, 0.0, 0.0]),
             help="Parameters of the gaussian model for prior mean computation",
         )
         parser.add_argument(
@@ -924,8 +932,11 @@ class ConfigInvertedPendulum(AbstractConfig):
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
+
         if self.control_mode == "STAG":
             self.prediction_horizon = 1
+        elif self.control_mode == "PG":
+            self.prediction_horizon = 0
 
         self.R1 = np.diag(np.array(self.R1_diag))
         self.R2 = np.diag(np.array(self.R2_diag))
@@ -942,9 +953,9 @@ class ConfigInvertedPendulum(AbstractConfig):
         self.rtol = 1e-3
 
         # Control constraints
-        self.Mmin = -30
-        self.Mmax = 30
-        self.action_bounds = np.array([[self.Mmin, self.Mmax]])
+        self.M_min = -30
+        self.M_max = 30
+        self.action_bounds = np.array([[self.M_min, self.M_max]])
 
         # System parameters
         self.m = 1  # [kg]
@@ -1164,9 +1175,9 @@ class ConfigInvertedPendulumAC(AbstractConfig):
         self.rtol = 1e-3
 
         # Control constraints
-        self.Mmin = -30
-        self.Mmax = 30
-        self.action_bounds = np.array([[self.Mmin, self.Mmax]])
+        self.M_min = -30
+        self.M_max = 30
+        self.action_bounds = np.array([[self.M_min, self.M_max]])
         self.prediction_horizon = 0
 
         # System parameters

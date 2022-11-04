@@ -8,9 +8,10 @@ from re import S
 from rcognita.utilities import rc
 from rcognita.optimizers import TorchOptimizer
 from abc import ABC, abstractmethod
-from copy import deepcopy
+import os
 import matplotlib.pyplot as plt
 import sys
+from itertools import cycle, islice
 
 
 class TabularScenarioBase:
@@ -104,11 +105,34 @@ class OnlineScenario:
         if self.is_playback:
             self.episodic_playback_table = []
 
+    def memorize(step_function):
+        cache = dict()
+
+        def memorized_step_function(self):
+            if self.time in cache.keys():
+                self.current_scenario_snapshot = cache(self.time)
+                self.time
+                return cache(self.time)
+            is_episode_ended = step_function()
+            self.current_scenario_snapshot = ()
+            cache[self.time] = ()
+            return is_episode_ended
+
+        return memorized_step_function
+
     def perform_post_step_operations(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
         self.update_outcome(self.observation, self.action, self.delta_time)
+
+        self.current_scenario_snapshot = (
+            self.state_full,
+            self.action,
+            self.observation,
+            self.running_objective_value,
+            self.outcome,
+        )
 
         if not self.no_print:
             self.logger.print_sim_step(
@@ -140,37 +164,41 @@ class OnlineScenario:
             )
 
     def run(self):
-        while True:
-            is_episode_ended = self.step() == 1
 
-            if is_episode_ended:
-                print("Episode ended successfully.")
-                break
+        while self.step():
+            pass
+        print("Episode ended successfully.")
 
     def step(self):
         sim_status = self.simulator.do_sim_step()
         is_episode_ended = sim_status == -1
 
         if is_episode_ended:
-            return -1
+            return False
+        else:
 
-        (
-            self.time,
-            _,
-            self.observation,
-            self.state_full,
-        ) = self.simulator.get_sim_step_data()
-        self.trajectory.append(rc.concatenate((self.state_full, self.time), axis=None))
+            (
+                self.time,
+                _,
+                self.observation,
+                self.state_full,
+            ) = self.simulator.get_sim_step_data()
 
-        self.delta_time = self.time - self.time_old
-        self.time_old = self.time
+            self.trajectory.append(
+                rc.concatenate((self.state_full, self.time), axis=None)
+            )
 
-        self.action = self.controller.compute_action_sampled(
-            self.time, self.observation
-        )
-        self.system.receive_action(self.action)
+            self.delta_time = self.time - self.time_old
+            self.time_old = self.time
 
-        self.perform_post_step_operations()
+            self.action = self.controller.compute_action_sampled(
+                self.time, self.observation
+            )
+            self.system.receive_action(self.action)
+
+            self.perform_post_step_operations()
+
+            return True
 
     def update_outcome(self, observation, action, delta):
 
@@ -292,13 +320,13 @@ class EpisodicScenarioBase(OnlineScenario):
                 return "episode_ended"
 
 
-class EpisodicScenario(EpisodicScenarioBase):
+class EpisodicScenarioREINFORCE(EpisodicScenarioBase):
     def __init__(
         self,
         *args,
         learning_rate=0.001,
         is_fixed_actor_weights=False,
-        is_plot_critic=True,
+        is_plot_critic=False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -358,7 +386,7 @@ class EpisodicScenario(EpisodicScenarioBase):
         return sum(array) / len(array)
 
 
-class EpisodicScenarioAsyncAC(EpisodicScenario):
+class EpisodicScenarioAsyncAC(EpisodicScenarioREINFORCE):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.critic_optimizer = TorchOptimizer({"lr": 0.01})
@@ -392,7 +420,7 @@ class EpisodicScenarioAsyncAC(EpisodicScenario):
         super().reset_iteration()
 
 
-class EpisodicScenarioCriticLearn(EpisodicScenario):
+class EpisodicScenarioCriticLearn(EpisodicScenarioREINFORCE):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         import numpy as np
@@ -464,6 +492,7 @@ class EpisodicScenarioCriticLearn(EpisodicScenario):
             else:
                 self.episode_tables = rc.array(self.episode_tables[0])
 
+        os.makedirs("critic", exist_ok=True)
         self.plot_critic_learn_results()
 
     def plot_critic_learn_results(self):

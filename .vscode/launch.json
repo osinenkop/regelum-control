@@ -5,12 +5,54 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File with profiler",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "args": [
+                "-o",
+                "/tmp/tmp.prof",
+                "${file}",
+                "--no_visual",
+                "--t1",
+                "1",
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Current File with profiler",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "args": [
+                "-o",
+                "/tmp/tmp.prof",
+                "${file}",
+                "--no_visual",
+                "--t1",
+                "1",
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
+            "args": [
+                "--control_mode",
+                "PG"
+            ]
         },
         {
             "name": "basic debug",

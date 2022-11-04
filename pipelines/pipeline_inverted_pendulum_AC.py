@@ -15,7 +15,7 @@ import pathlib
 import csv
 
 from config_blueprints import ConfigInvertedPendulumAC
-from pipeline_inverted_pendulum_PG import PipelineInvertedPendulum
+from pipeline_inverted_pendulum_PG import PipelineInvertedPendulumPG
 
 if os.path.abspath(rcognita.__file__ + "/../..") == PARENT_DIR:
     info = (
@@ -40,12 +40,12 @@ from rcognita.actors import ActorProbabilisticEpisodic
 
 from rcognita.utilities import rc
 
-from rcognita.scenarios import EpisodicScenarioCriticLearn, EpisodicScenario
+from rcognita.scenarios import EpisodicScenarioCriticLearn, EpisodicScenarioREINFORCE
 from rcognita import models, optimizers, loggers, simulator
 from copy import deepcopy
 
 
-class PipelineInvertedPendulumAC(PipelineInvertedPendulum):
+class PipelineInvertedPendulumAC(PipelineInvertedPendulumPG):
     config = ConfigInvertedPendulumAC
 
     def initialize_logger(self):
@@ -149,7 +149,7 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulum):
             learning_rate=self.learning_rate_critic,
         )
 
-        self.scenario = EpisodicScenario(
+        self.scenario = EpisodicScenarioREINFORCE(
             system=self.system,
             simulator=self.simulator_actor,
             controller=self.controller,

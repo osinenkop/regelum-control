@@ -1,5 +1,7 @@
 import os, sys
 
+from rcognita.visualization import animators
+
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
@@ -34,7 +36,6 @@ print("INFO:", info)
 
 from rcognita import (
     controllers,
-    animators,
     simulator,
     systems,
     loggers,

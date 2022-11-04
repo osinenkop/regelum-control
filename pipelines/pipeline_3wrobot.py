@@ -5,6 +5,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
+from rcognita.visualization.vis_3wrobot import Animator3WRobot
 import pathlib
 import warnings
 import matplotlib.animation as animation
@@ -34,7 +35,6 @@ print("INFO:", info)
 
 from rcognita import (
     controllers,
-    animators,
     simulator,
     systems,
     loggers,
@@ -58,7 +58,6 @@ class Pipeline3WRobot(PipelineWithDefaults):
             dim_output=self.dim_output,
             dim_disturb=self.dim_disturb,
             pars=[self.m, self.I],
-            action_bounds=self.action_bounds,
             is_dynamic_controller=self.is_dynamic_controller,
             is_disturb=self.is_disturb,
             pars_disturb=[],
@@ -162,12 +161,11 @@ class Pipeline3WRobot(PipelineWithDefaults):
         if not self.no_print:
             warnings.filterwarnings("ignore")
 
-        self.logger = loggers.Logger3WRobot()
+        self.logger = loggers.logger3WRobot
 
-    def main_loop_visual(self):
-        self.state_full_init = self.simulator.state_full
+    def initialize_visualizer(self):
 
-        animator = animators.Animator3WRobot(
+        self.animator = Animator3WRobot(
             objects=(
                 self.simulator,
                 self.system,
@@ -178,23 +176,24 @@ class Pipeline3WRobot(PipelineWithDefaults):
                 self.actor_optimizer,
                 self.critic_optimizer,
                 self.running_objective,
+                self.scenario,
             ),
             pars=(
                 self.state_init,
                 self.action_init,
                 self.time_start,
                 self.time_final,
-                self.state_full_init,
+                self.state_init,
                 self.xMin,
                 self.xMax,
                 self.yMin,
                 self.yMax,
                 self.control_mode,
                 self.action_manual,
-                self.Fmin,
-                self.Mmin,
-                self.Fmax,
-                self.Mmax,
+                self.F_min,
+                self.M_min,
+                self.F_min,
+                self.M_max,
                 self.Nruns,
                 self.no_print,
                 self.is_log,
@@ -202,26 +201,6 @@ class Pipeline3WRobot(PipelineWithDefaults):
                 [],
             ),
         )
-
-        anm = animation.FuncAnimation(
-            animator.fig_sim,
-            animator.animate,
-            init_func=animator.init_anim,
-            blit=False,
-            interval=self.sampling_time / 1e6,
-            repeat=False,
-        )
-
-        animator.get_anm(anm)
-
-        cId = animator.fig_sim.canvas.mpl_connect(
-            "key_press_event", lambda event: on_key_press(event, anm)
-        )
-
-        anm.running = True
-        animator.fig_sim.tight_layout()
-
-        plt.show()
 
 
 def main():

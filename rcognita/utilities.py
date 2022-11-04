@@ -315,7 +315,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.min(array)
         elif rc_type == CASADI:
-            return casadi.fmin(*array)
+            return casadi.F_min(*array)
 
     def max(self, array, rc_type=NUMPY):
         if isinstance(array, (list, tuple)):

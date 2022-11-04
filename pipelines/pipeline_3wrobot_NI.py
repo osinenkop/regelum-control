@@ -5,6 +5,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
+from rcognita.visualization import animators
 import pathlib
 import warnings
 import matplotlib.animation as animation
@@ -34,7 +35,6 @@ print("INFO:", info)
 
 from rcognita import (
     controllers,
-    animators,
     simulator,
     systems,
     loggers,
@@ -53,7 +53,7 @@ from rcognita.actors import (
     ActorRQL,
     ActorSQL,
 )
-
+from rcognita.visualization.vis_3wrobot import Animator3WRobotNI
 from rcognita.critics import (
     CriticActionValue,
     CriticSTAG,
@@ -182,7 +182,7 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
 
     def initialize_visualizer(self):
 
-        self.animator = animators.Animator3WRobotNI(
+        self.animator = Animator3WRobotNI(
             objects=(
                 self.simulator,
                 self.system,

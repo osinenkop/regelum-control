@@ -247,25 +247,25 @@ class PipelineWithDefaults(AbstractPipeline):
         )
 
     def main_loop_visual(self):
+        self.animator.init_anim()
 
         anm = animation.FuncAnimation(
-            self.animator.fig_sim,
+            self.animator.main_figure,
             self.animator.animate,
-            init_func=self.animator.init_anim,
-            blit=False,
+            blit=True,
             interval=self.sampling_time / 1e6,
             repeat=False,
         )
 
         self.animator.get_anm(anm)
 
-        cId = self.animator.fig_sim.canvas.mpl_connect(
+        cId = self.animator.main_figure.canvas.mpl_connect(
             "key_press_event", lambda event: on_key_press(event, anm)
         )
 
         anm.running = True
 
-        self.animator.fig_sim.tight_layout()
+        self.animator.main_figure.tight_layout()
 
         plt.show()
 
