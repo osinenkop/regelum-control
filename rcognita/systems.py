@@ -317,7 +317,7 @@ class SysInvertedPendulum(System):
         #         if state[0] < -np.pi:
         #             state = [np.pi - delta, state[1]]
         # /DEBUG ===================================
-        delta_time = time - self.time_old
+        delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
         return rc.array([state[0], self.integral_alpha, state[1]])

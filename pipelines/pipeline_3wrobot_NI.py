@@ -5,7 +5,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
-from rcognita.visualization import animators
+from rcognita.visualization import animator
 import pathlib
 import warnings
 import matplotlib.animation as animation

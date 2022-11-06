@@ -1,5 +1,5 @@
 import numpy as np
-from .animators import (
+from .animator import (
     update_line,
     update_text,
     reset_line,

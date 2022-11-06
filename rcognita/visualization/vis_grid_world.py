@@ -1,5 +1,5 @@
 import numpy as np
-from .animators import update_line, Animator
+from .animator import update_line, Animator
 import matplotlib.patheffects as PathEffects
 from ..utilities import rc
 import matplotlib.pyplot as plt

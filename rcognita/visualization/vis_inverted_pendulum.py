@@ -1,5 +1,5 @@
 import numpy as np
-from .animators import update_line, update_text, init_data_cursor, Dashboard, Animator
+from .animator import update_line, update_text, init_data_cursor, Dashboard, Animator
 from ..utilities import rc
 import matplotlib.pyplot as plt
 
@@ -22,16 +22,10 @@ class InvPendulumTrackingDashboard(Dashboard):
         self.axes_rotating_pendulum.autoscale(False)
         self.axes_rotating_pendulum.set_xlim(x_from, x_to)
         self.axes_rotating_pendulum.set_ylim(y_from, y_to)
-        self.axes_rotating_pendulum.set_xlabel(x_from, x_to)
-        self.axes_rotating_pendulum.set_ylabel(y_from, y_to)
-
-        self.axes_rotating_pendulum.plot(
-            autoscale_on=False,
-            xlim=(x_from, x_to),
-            ylim=(y_from, y_to),
-            xlabel="x [m]",
-            ylabel="y [m]",
-            title="Pause - space, q - quit, click - data cursor",
+        self.axes_rotating_pendulum.set_xlabel("x [m]")
+        self.axes_rotating_pendulum.set_ylabel("y [m]")
+        self.axes_rotating_pendulum.set_title(
+            "Pause - space, q - quit, click - data cursor"
         )
         self.axes_rotating_pendulum.set_aspect("equal", adjustable="box")
         self.axes_rotating_pendulum.plot(
@@ -150,9 +144,10 @@ class EpisodicTrajectoryDashboard(Dashboard):
 
 
 class MeanEpisodicOutcomesDashboard(Dashboard):
-    def __init__(self, N_iterations, scenario):
+    def __init__(self, time_start, time_final, scenario):
         super().__init__()
-        self.N_iterations = N_iterations
+        self.time_start = time_start
+        self.time_final = time_final
         self.scenario = scenario
 
     def init_dashboard(self):
@@ -231,13 +226,13 @@ class AnimatorInvertedPendulum(Animator):
             self.scenario,
         ) = self.objects
 
-        (state_init, time_start, time_final, state_full_init, control_mode,) = self.pars
+        (state_init, time_start, time_final, control_mode) = self.pars
 
         # Store some parameters for later use
         self.time_old = 0
         self.outcome = 0
         self.time_start = time_start
-        self.state_full_init = state_full_init
+        self.state_init = state_init
         self.time_final = time_final
         self.control_mode = control_mode
         self.no_print = True
@@ -255,7 +250,7 @@ class AnimatorInvertedPendulum(Animator):
         )
         ########### SUBPLOT 3  --------- Episode mean ################
         mean_outcomes_dashboard = MeanEpisodicOutcomesDashboard(
-            self.scenario.N_iterations, self.scenario
+            self.time_start, self.time_final, self.scenario
         )
 
         ########### SUBPLOT 4  --------- POLICY PARAMETERS ################
@@ -282,7 +277,7 @@ class AnimatorInvertedPendulum(Animator):
         self.line_angle.set_ydata([])
         for handle in self.episodic_line_handles:
             handle.set_xdata([self.time_start])
-            handle.set_ydata([self.state_full_init[0]])
+            handle.set_ydata([self.state_init[0]])
 
         for i, handle in enumerate(self.policy_line_handles_pack):
             handle.set_xdata(self.iters[self.current_step])
@@ -399,7 +394,7 @@ class AnimatorInvertedPendulum(Animator):
     def update_iteration_playback(self):
         for handle in self.episodic_line_handles:
             handle.set_xdata([self.time_start])
-            handle.set_ydata([self.state_full_init[0]])
+            handle.set_ydata([self.state_init[0]])
 
         for i, handle in enumerate(self.policy_line_handles_pack):
             update_line(

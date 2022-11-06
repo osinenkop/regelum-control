@@ -1,6 +1,6 @@
 import os, sys
 
-from rcognita.visualization import animators
+from rcognita.visualization import animator
 
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
@@ -149,7 +149,7 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulum):
     def initialize_visualizer(self):
         state_full_init = self.simulator.state_full
         self.scenario.is_playback = False
-        self.animator = animators.AnimatorInvertedPendulum(
+        self.animator = animator.AnimatorInvertedPendulum(
             objects=(
                 self.simulator,
                 self.system,

@@ -21,7 +21,7 @@ from rcognita.models import (
     ModelWeightContainer,
 )
 
-from rcognita.scenarios import OnlineScenario
+from rcognita.scenarios import OnlineScenario, EpisodicScenarioBase
 import matplotlib.animation as animation
 from rcognita.utilities import on_key_press
 import matplotlib.pyplot as plt
@@ -232,7 +232,9 @@ class PipelineWithDefaults(AbstractPipeline):
         )
 
     def initialize_scenario(self):
-        self.scenario = OnlineScenario(
+        self.scenario = EpisodicScenarioBase(
+            1,
+            1,
             self.system,
             self.simulator,
             self.controller,
@@ -244,6 +246,10 @@ class PipelineWithDefaults(AbstractPipeline):
             self.running_objective,
             no_print=self.no_print,
             is_log=self.is_log,
+            is_playback=self.is_playback,
+            state_init=self.state_init,
+            action_init=self.action_init,
+            speedup=5,
         )
 
     def main_loop_visual(self):
@@ -289,3 +295,6 @@ class PipelineWithDefaults(AbstractPipeline):
             self.main_loop_visual()
         else:
             self.scenario.run()
+            if self.is_playback:
+                self.initialize_visualizer()
+                self.main_loop_visual()

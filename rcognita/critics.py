@@ -23,6 +23,7 @@ from functools import partial
 import torch
 from copy import deepcopy
 from multiprocessing import Pool
+from .models import ModelWeightContainer
 
 
 class Critic(ABC):
@@ -407,6 +408,8 @@ class CriticTrivial(Critic):
         self.running_objective = running_objective
         self.sampling_time = sampling_time
         self.outcome = 0
+        self.model = ModelWeightContainer()
+        self.model.weights = None
 
     def __call__(self):
         return self.outcome

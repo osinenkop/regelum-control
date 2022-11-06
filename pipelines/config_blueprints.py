@@ -36,6 +36,9 @@ class RcognitaArgParser(argparse.ArgumentParser):
             help="Flag to log data into a data file. Data are stored in simdata folder.",
         )
         self.add_argument(
+            "--is_playback", action="store_true", help="Flag to playback.",
+        )
+        self.add_argument(
             "--no_visual",
             action="store_true",
             help="Flag to produce graphical output.",
@@ -766,15 +769,9 @@ class ConfigInvertedPendulum(AbstractConfig):
         self.config_name = "inverted-pendulum"
 
     def argument_parser(self):
-        description = (
-            "Agent-environment pipeline: 3-wheel robot with dynamical actuators."
-        )
+        description = "Agent-environment pipeline: Mathematical rotating pendulum."
 
         parser = RcognitaArgParser(description=description)
-
-        parser.add_argument(
-            "--is_playback", action="store_true", help="Flag to playback.",
-        )
 
         parser.add_argument(
             "--state_init",

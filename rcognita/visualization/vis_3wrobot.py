@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.linalg as la
-from .animators import (
+from .animator import (
     update_line,
     update_text,
     reset_line,

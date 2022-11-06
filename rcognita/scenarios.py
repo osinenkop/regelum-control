@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 import os
 import matplotlib.pyplot as plt
 import sys
-from itertools import cycle, islice
+from itertools import islice
 
 
 class TabularScenarioBase:
@@ -96,43 +96,25 @@ class OnlineScenario:
         self.is_log = is_log
         self.is_playback = is_playback
         self.state_init = state_init
+        self.state_full = state_init
         self.action_init = action_init
+        self.action = self.action_init
+        self.observation = self.system.out(self.state_full)
+        self.running_objective_value = self.running_objective(
+            self.observation, self.action
+        )
 
         self.trajectory = []
         self.outcome = 0
+        self.time = 0
         self.time_old = 0
         self.delta_time = 0
-        if self.is_playback:
-            self.episodic_playback_table = []
-
-    def memorize(step_function):
-        cache = dict()
-
-        def memorized_step_function(self):
-            if self.time in cache.keys():
-                self.current_scenario_snapshot = cache(self.time)
-                self.time
-                return cache(self.time)
-            is_episode_ended = step_function()
-            self.current_scenario_snapshot = ()
-            cache[self.time] = ()
-            return is_episode_ended
-
-        return memorized_step_function
 
     def perform_post_step_operations(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
         self.update_outcome(self.observation, self.action, self.delta_time)
-
-        self.current_scenario_snapshot = (
-            self.state_full,
-            self.action,
-            self.observation,
-            self.running_objective_value,
-            self.outcome,
-        )
 
         if not self.no_print:
             self.logger.print_sim_step(
@@ -150,17 +132,6 @@ class OnlineScenario:
                 self.action,
                 self.running_objective_value,
                 self.outcome,
-            )
-
-        if self.is_playback:
-            self.episodic_playback_table.append(
-                [
-                    self.time,
-                    *self.state_full,
-                    *self.action,
-                    self.running_objective_value,
-                    self.outcome,
-                ]
             )
 
     def run(self):
@@ -214,7 +185,7 @@ class OnlineScenario:
 
 class EpisodicScenarioBase(OnlineScenario):
     def __init__(
-        self, N_episodes, N_iterations, *args, **kwargs,
+        self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
     ):
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -227,8 +198,8 @@ class EpisodicScenarioBase(OnlineScenario):
         self.sim_status = 1
         self.episode_counter = 0
         self.iteration_counter = 0
-        if self.is_playback:
-            self.episode_tables = []
+        self.current_scenario_status = "episode_continues"
+        self.speedup = speedup
 
     def reload_pipeline(self):
         self.sim_status = 1
@@ -245,7 +216,6 @@ class EpisodicScenarioBase(OnlineScenario):
         self.sim_status = 0
 
     def run(self):
-
         for _ in range(self.N_iterations):
             for _ in range(self.N_episodes):
                 while self.sim_status not in [
@@ -257,26 +227,9 @@ class EpisodicScenarioBase(OnlineScenario):
 
                 self.reload_pipeline()
 
-        if self.is_playback:
-            if len(self.episode_tables) > 1:
-                self.episode_tables = rc.vstack(self.episode_tables)
-            else:
-                self.episode_tables = rc.array(self.episode_tables[0])
-
-    def get_table_from_last_episode(self):
-        return rc.array(
-            [
-                rc.array(
-                    [
-                        self.iteration_counter,
-                        self.episode_counter,
-                        *x,
-                        *self.actor.model.weights,
-                    ]
-                )
-                for x in self.episodic_playback_table
-            ]
-        )
+        self.reset_episode()
+        self.reset_iteration()
+        self.reset_simulation()
 
     def reset_iteration(self):
         self.episode_counter = 0
@@ -285,23 +238,92 @@ class EpisodicScenarioBase(OnlineScenario):
         self.episode_REINFORCE_objective_gradients = []
 
     def reset_episode(self):
-        if self.is_playback:
-            new_table = self.get_table_from_last_episode()
-            self.episode_tables.append(new_table)
-            self.episodic_playback_table = []
-
         self.outcomes_of_episodes.append(self.critic.outcome)
         self.episode_counter += 1
+
+    def reset_simulation(self):
+        self.current_scenario_status = "episode_continues"
+        self.iteration_counter = 0
+        self.episode_counter = 0
 
     def iteration_update(self):
         self.outcome_episodic_means.append(rc.mean(self.outcomes_of_episodes))
 
+    def update_time_from_cache(self):
+        self.time, self.episode_counter, self.iteration_counter = next(
+            self.cached_timeline
+        )
+
+    def memorize(step_method):
+        """
+        This is a decorator for a simulator step method.
+        It containes a ``cache`` field that in turn comprises of ``keys`` and ``values``.
+        The ``cache`` dictionary method `keys` returns a triple: 
+
+        - ``time``: the current time in an episode
+        - ``episode_counter``: the current episode number
+        - ``iteration_counter``: the current agent learning epoch
+
+        If the scenario's triple ``(time, episode_counter, iteration_counter)`` is already contained in ``cache``, then the decorator returns a step method that simply reads from ``cache``.
+        Otherwise, the scenario's simulator is called to do a step.
+        """
+        cache = dict()
+
+        def step_with_memory(self):
+            triple = (
+                self.time,
+                self.episode_counter,
+                self.iteration_counter,
+            )
+
+            if triple in cache.keys():
+                (
+                    self.time,
+                    self.episode_counter,
+                    self.iteration_counter,
+                    self.state_full,
+                    self.action,
+                    self.observation,
+                    self.running_objective_value,
+                    self.outcome,
+                    self.actor.model.weights,
+                    self.critic.model.weights,
+                    self.current_scenario_status,
+                ) = cache[triple]
+                self.update_time_from_cache()
+            else:
+                if self.is_playback:
+                    self.current_scenario_snapshot = (
+                        self.time,
+                        self.episode_counter,
+                        self.iteration_counter,
+                        self.state_full,
+                        self.action,
+                        self.observation,
+                        self.running_objective_value,
+                        self.outcome,
+                        self.actor.model.weights,
+                        self.critic.model.weights,
+                        self.current_scenario_status,
+                    )
+                    cache[
+                        (self.time, self.episode_counter, self.iteration_counter)
+                    ] = self.current_scenario_snapshot
+
+                self.current_scenario_status = step_method(self)
+
+                if self.current_scenario_status == "simulation_ended":
+                    self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
+
+            return self.current_scenario_status
+
+        return step_with_memory
+
+    @memorize
     def step(self):
-        sim_status = super().step()
+        episode_not_ended = super().step()
 
-        is_episode_ended = sim_status == -1
-
-        if is_episode_ended:
+        if not episode_not_ended:
             self.reset_episode()
 
             is_iteration_ended = self.episode_counter >= self.N_episodes
@@ -313,11 +335,14 @@ class EpisodicScenarioBase(OnlineScenario):
                 is_simulation_ended = self.iteration_counter >= self.N_iterations
 
                 if is_simulation_ended:
+                    self.reset_simulation()
                     return "simulation_ended"
                 else:
                     return "iteration_ended"
             else:
                 return "episode_ended"
+        else:
+            return "episode_continues"
 
 
 class EpisodicScenarioREINFORCE(EpisodicScenarioBase):
@@ -418,91 +443,3 @@ class EpisodicScenarioAsyncAC(EpisodicScenarioREINFORCE):
     def reset_iteration(self):
         self.squared_TD_sums_of_episodes = []
         super().reset_iteration()
-
-
-class EpisodicScenarioCriticLearn(EpisodicScenarioREINFORCE):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        import numpy as np
-
-        angle_inits = np.random.uniform(-2.0 * np.pi, 2.0 * np.pi, self.N_iterations)
-        angular_velocity_inits = np.random.uniform(
-            -np.pi / 2.0, np.pi / 2.0, self.N_iterations
-        )
-
-        w1s = np.random.uniform(0, 15, self.N_iterations)
-        w2s = np.random.uniform(0, 15, self.N_iterations)
-        w3s = np.random.uniform(0, 15, self.N_iterations)
-
-        self.state_inits = np.vstack((angle_inits, angular_velocity_inits)).T
-        self.actor_model_weights = np.vstack((w1s, w2s, w3s)).T
-
-        self.action_inits = np.random.uniform(-25.0, 25.0, self.N_iterations)
-        self.critic_loss_values = []
-
-    def init_conditions_update(self):
-        self.simulator.state_full_init = self.state_init = self.state_inits[
-            self.iteration_counter, :
-        ]
-        self.action_init = self.action_inits[self.iteration_counter]
-        self.actor.model.weights = self.actor_model_weights[self.iteration_counter, :]
-
-    def reload_pipeline(self):
-        self.sim_status = 1
-        self.time = 0
-        self.time_old = 0
-        self.outcome = 0
-        self.init_conditions_update()
-        self.action = self.action_init
-        self.system.reset()
-        self.actor.reset()
-        self.critic.reset()
-        self.controller.reset(time_start=0)
-        self.simulator.reset()
-        self.observation = self.system.out(self.state_init, time=0)
-        self.sim_status = 0
-
-    def run(self):
-        self.step_counter = 0
-        self.one_episode_steps_numbers = [0]
-        skipped_steps = 43
-        for _ in range(self.N_iterations):
-            for _ in range(self.N_episodes):
-                while self.sim_status not in [
-                    "episode_ended",
-                    "simulation_ended",
-                    "iteration_ended",
-                ]:
-                    self.sim_status = self.step()
-                    self.step_counter += 1
-                    if self.step_counter > skipped_steps:
-                        self.critic_loss_values.append(self.critic.current_critic_loss)
-
-                self.one_episode_steps_numbers.append(
-                    self.one_episode_steps_numbers[-1]
-                    + self.step_counter
-                    - skipped_steps
-                )
-                self.step_counter = 0
-                if self.sim_status != "simulation_ended":
-                    self.reload_pipeline()
-        if self.is_playback:
-            if len(self.episode_tables) > 1:
-                self.episode_tables = rc.vstack(self.episode_tables)
-            else:
-                self.episode_tables = rc.array(self.episode_tables[0])
-
-        os.makedirs("critic", exist_ok=True)
-        self.plot_critic_learn_results()
-
-    def plot_critic_learn_results(self):
-        figure = plt.figure(figsize=(9, 9))
-        ax_critic = figure.add_subplot(111)
-        ax_critic.plot(self.critic_loss_values, label="TD")
-        [ax_critic.axvline(i, c="r") for i in self.one_episode_steps_numbers]
-        plt.legend()
-        plt.savefig(
-            f"./critic/{self.N_iterations}-iters_{self.time_final}-fintime_{self.critic.data_buffer_size}-dbsize",
-            format="png",
-        )
-        plt.show()

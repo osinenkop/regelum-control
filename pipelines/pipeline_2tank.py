@@ -1,6 +1,6 @@
 import os, sys
 
-from rcognita.visualization import animators
+from rcognita.visualization import animator
 
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
@@ -269,7 +269,7 @@ class Pipeline2Tank(AbstractPipeline):
     def main_loop_visual(self):
         self.state_full_init = self.simulator.state_full
 
-        animator = animators.Animator2Tank(
+        animator = animator.Animator2Tank(
             objects=(
                 self.simulator,
                 self.system,

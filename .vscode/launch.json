@@ -43,7 +43,7 @@
             "justMyCode": false
         },
         {
-            "name": "Python: Current File",
+            "name": "Python: Current File PG",
             "type": "python",
             "request": "launch",
             "program": "${file}",
@@ -51,7 +51,17 @@
             "justMyCode": false,
             "args": [
                 "--control_mode",
-                "PG"
+                "PG",
+                "--no_visual",
+                "--dt",
+                "0.1",
+                "--t1",
+                "1",
+                "--is_playback",
+                "--initial_weights",
+                "10.",
+                "0.",
+                "6."
             ]
         },
         {

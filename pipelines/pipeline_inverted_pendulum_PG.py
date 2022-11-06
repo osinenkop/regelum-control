@@ -159,11 +159,10 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
             state_init=self.state_init,
             action_init=self.action_init,
             learning_rate=self.learning_rate,
+            speedup=self.speedup,
         )
 
     def initialize_visualizer(self):
-        state_full_init = self.simulator.state_full
-        self.scenario.is_playback = False
         self.animator = AnimatorInvertedPendulum(
             objects=(
                 self.simulator,
@@ -177,45 +176,9 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
                 self.state_init,
                 self.time_start,
                 self.time_final,
-                state_full_init,
                 self.control_mode,
             ),
         )
-
-        if self.is_playback:
-            whole_playback_table = self.scenario.episode_tables
-            (iters, episodes, ts, angles, angle_dots, Ms, rs, outcomes) = np.hsplit(
-                whole_playback_table[:, : -len(self.actor.model.weights)], 8
-            )
-            thetas = whole_playback_table[:, len(self.actor.model.weights) :]
-            self.animator.set_sim_data(
-                iters, episodes, ts, angles, angle_dots, Ms, rs, outcomes, thetas,
-            )
-
-    def playback(self):
-
-        self.initialize_visualizer()
-        anm = animation.FuncAnimation(
-            self.animator.fig_sim,
-            self.animator.playback,
-            init_func=self.animator.init_anim,
-            blit=False,
-            interval=self.sampling_time / 1e6,
-            repeat=False,
-        )
-
-        self.animator.get_anm(anm)
-        self.animator.speedup = self.speedup
-
-        cId = self.animator.fig_sim.canvas.mpl_connect(
-            "key_press_event", lambda event: on_key_press(event, anm)
-        )
-
-        anm.running = True
-
-        self.animator.fig_sim.tight_layout()
-
-        plt.show()
 
     def execute_pipeline(self, **kwargs):
         self.load_config()
@@ -238,9 +201,10 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
         else:
             self.scenario.run()
             if self.is_playback:
-                self.playback()
+                self.initialize_visualizer()
+                self.main_loop_visual()
 
 
 if __name__ == "__main__":
 
-    PipelineInvertedPendulumPG().execute_pipeline()
+    PipelineInvertedPendulumPG().execute_pipeline(speedup=20)
