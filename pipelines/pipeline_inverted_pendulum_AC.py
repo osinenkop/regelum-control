@@ -171,9 +171,8 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulumPG):
 
     def initialize_simulator(self):
         self.simulator_actor = simulator.Simulator(
+            system=self.system,
             sys_type="diff_eqn",
-            compute_closed_loop_rhs=self.system.compute_closed_loop_rhs,
-            sys_out=self.system.out,
             state_init=self.state_init,
             disturb_init=[],
             action_init=self.action_init,

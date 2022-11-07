@@ -21,7 +21,9 @@ from numpy.random import rand
 from numpy.matlib import repmat
 import scipy.stats as st
 from scipy import signal
+import scipy as sp
 import matplotlib.pyplot as plt
+from abc import ABC, abstractmethod
 
 import inspect
 import warnings
@@ -125,7 +127,129 @@ def metaclassTypeInferenceDecorator(func):
     return wrapper
 
 
+class Solver(ABC):
+    @property
+    @abstractmethod
+    def y(self):
+        pass
+
+    @property
+    @abstractmethod
+    def t(self):
+        pass
+
+    @abstractmethod
+    def step(self):
+        pass
+
+
+class CasADiSolver(Solver):
+    def __init__(
+        self,
+        integrator,
+        time_start,
+        time_final,
+        step_size,
+        state_init,
+        action_init,
+        system,
+    ):
+
+        self.integrator = integrator
+        self.time_start = time_start
+        self.time_final = time_final
+        self.step_size = step_size
+        self.time = self.time_start
+        self.state_init = state_init
+        self.state = self.state_init
+        self.state_new = self.state
+        self.action_init = action_init
+        self.action = self.action_init
+        self.system = system
+
+    def step(self):
+        if self.time >= self.time_final:
+            raise RuntimeError()
+        self.state_new = np.squeeze(
+            self.integrator(x0=self.state, p=self.system.action)["xf"].full()
+        )
+        self.time += self.step_size
+        self.state = self.state_new
+
+    @property
+    def t(self):
+        return self.time
+
+    @property
+    def y(self):
+        return self.state
+
+
 class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
+
+    TORCH = RCType.TORCH
+    CASADI = RCType.CASADI
+    NUMPY = RCType.NUMPY
+
+    def CasADi_primitive(self, type="MX", rc_type=NUMPY):
+        if type == "MX":
+            return casadi.MX.sym("x", 1)
+        elif type == "SX":
+            return casadi.SX.sym("x", 1)
+        elif type == "DM":
+            return casadi.DM([0])
+
+    def ODE_solver(
+        self,
+        system,
+        compute_closed_loop_rhs,
+        state_full_init,
+        state_init,
+        action_init,
+        time_start=0,
+        time_final=10,
+        max_step=1e-3,
+        first_step=1e-6,
+        atol=1e-5,
+        rtol=1e-3,
+        ode_solver="NUMPY",
+        rc_type=NUMPY,
+    ):
+
+        if ode_solver == "NUMPY":
+
+            integrator = sp.integrate.RK45(
+                compute_closed_loop_rhs,
+                time_start,
+                state_full_init,
+                time_final,
+                max_step=max_step,
+                first_step=first_step,
+                atol=atol,
+                rtol=rtol,
+            )
+
+            return integrator
+
+        elif ode_solver == "CASADI":
+            state_symbolic = self.array_symb(self.shape(state_init), literal="x")
+            action_symbolic = self.array_symb(self.shape(action_init), literal="u")
+            time = self.array_symb((1, 1), literal="t")
+            ODE = system._compute_state_dynamics(time, state_symbolic, action_symbolic)
+            DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
+            options = {"tf": max_step}
+            integrator = casadi.integrator("intg", "rk", DAE, options)
+
+            return CasADiSolver(
+                integrator,
+                time_start,
+                time_final,
+                max_step,
+                state_init,
+                action_init,
+                system,
+            )
+
     def cos(self, x, rc_type=NUMPY):
         if rc_type == NUMPY:
             return np.cos(x)
@@ -337,7 +461,8 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.mean(array)
         elif rc_type == CASADI:
-            return casadi.mean(*safe_unpack(array))
+            length = self.max(self.shape(*safe_unpack(array)))
+            return casadi.sum1(*safe_unpack(array)) / length
 
     def to_col(self, argin, rc_type=NUMPY):
         arin_shape = self.shape(argin)

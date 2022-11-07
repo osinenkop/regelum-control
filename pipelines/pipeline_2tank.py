@@ -47,7 +47,7 @@ from rcognita import (
 from datetime import datetime
 from rcognita.utilities import on_key_press
 from rcognita.actors import (
-    ActorSTAG,
+    ActorCALF,
     ActorMPC,
     ActorRQL,
     ActorSQL,
@@ -55,7 +55,7 @@ from rcognita.actors import (
 
 from rcognita.critics import (
     CriticActionValue,
-    CriticSTAG,
+    CriticCALF,
 )
 
 
@@ -98,8 +98,7 @@ class Pipeline2Tank(AbstractPipeline):
             opt_method="SLSQP", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.SciPyOptimizer(
-            opt_method="SLSQP",
-            opt_options=opt_options,
+            opt_method="SLSQP", opt_options=opt_options,
         )
 
     def initialize_actor_critic(self):
@@ -110,9 +109,9 @@ class Pipeline2Tank(AbstractPipeline):
             sampling_time=self.sampling_time,
         )
 
-        if self.control_mode == "STAG":
-            Critic = CriticSTAG
-            Actor = ActorSTAG
+        if self.control_mode == "CALF":
+            Critic = CriticCALF
+            Actor = ActorCALF
 
         else:
             Critic = CriticActionValue
@@ -156,7 +155,7 @@ class Pipeline2Tank(AbstractPipeline):
             sys_out=self.system.out,
             prob_noise_pow=self.prob_noise_pow,
             is_est_model=self.is_est_model,
-            model_est_stage=self.model_est_stage,
+            model_est_CALFe=self.model_est_CALFe,
             model_est_period=self.model_est_period,
             data_buffer_size=self.data_buffer_size,
             model_order=self.model_order,
@@ -165,14 +164,13 @@ class Pipeline2Tank(AbstractPipeline):
             actor=self.actor,
             critic=self.critic,
             running_obj_pars=[self.R1],
-            observation_target=[],
+            observation_target=self.observation_target,
         )
 
     def initialize_simulator(self):
         self.simulator = simulator.Simulator(
+            system=self.system,
             sys_type="diff_eqn",
-            compute_closed_loop_rhs=self.system.compute_closed_loop_rhs,
-            sys_out=self.system.out,
             state_init=self.state_init,
             disturb_init=[],
             action_init=self.action_init,
@@ -226,7 +224,7 @@ class Pipeline2Tank(AbstractPipeline):
                     writer.writerow(["sampling_time", str(self.sampling_time)])
                     writer.writerow(["state_init", str(self.state_init)])
                     writer.writerow(["is_est_model", str(self.is_est_model)])
-                    writer.writerow(["model_est_stage", str(self.model_est_stage)])
+                    writer.writerow(["model_est_CALFe", str(self.model_est_CALFe)])
                     writer.writerow(
                         [
                             "model_est_period_multiplier",

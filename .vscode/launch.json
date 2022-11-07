@@ -11,7 +11,7 @@
             "module": "cProfile",
             "args": [
                 "-o",
-                "/tmp/tmp.prof",
+                "/tmp/tmp_np.prof",
                 "${file}",
                 "--no_visual",
                 "--t1",
@@ -20,17 +20,19 @@
             "justMyCode": true
         },
         {
-            "name": "Python: Current File with profiler",
+            "name": "Python: Current File with profiler casadi",
             "type": "python",
             "request": "launch",
             "module": "cProfile",
             "args": [
                 "-o",
-                "/tmp/tmp.prof",
+                "/tmp/tmp_csd.prof",
                 "${file}",
                 "--no_visual",
                 "--t1",
                 "1",
+                "--ode_solver",
+                "CASADI",
             ],
             "justMyCode": true
         },
@@ -40,7 +42,12 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "args": [
+                "--ode_solver",
+                "CASADI",
+                "--no_visual"
+            ]
         },
         {
             "name": "Python: Current File PG",
@@ -68,7 +75,7 @@
             "name": "basic debug",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -79,7 +86,7 @@
             "name": "basic debug with critic",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -92,7 +99,7 @@
             "name": "basic debug Q-learning",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -107,18 +114,29 @@
             "name": "casadi debug",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
                 "--no_visual",
+                "--is_playback",
+                "--control_mode",
+                "SQL",
+                "--speedup",
+                "15",
+                "--prediction_horizon",
+                "5",
+                "--data_buffer_size",
+                "20",
+                "--t1",
+                "3"
             ]
         },
         {
             "name": "casadi debug with critic",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -131,7 +149,7 @@
             "name": "casadi debug Q-learning",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -146,7 +164,7 @@
             "name": "torch debug",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI_torch.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_torch.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -159,7 +177,7 @@
             "name": "torch debug with critic",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI_torch.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_torch.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
@@ -174,7 +192,7 @@
             "name": "torch debug Q-learning",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/test/rcognita/pipelines/pipeline_3wrobot_NI_torch.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_torch.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [

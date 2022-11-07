@@ -19,16 +19,23 @@ class RcognitaArgParser(argparse.ArgumentParser):
             "--control_mode",
             metavar="control_mode",
             type=str,
-            choices=["manual", "nominal", "MPC", "RQL", "SQL", "STAG", "PG"],
+            choices=["manual", "nominal", "MPC", "RQL", "SQL", "CALF", "PG"],
             default="MPC",
             help="Control mode. Currently available: "
             + "----manual: manual constant control specified by action_manual; "
             + "----nominal: nominal controller, usually used to benchmark optimal controllers;"
             + "----MPC:model-predictive control; "
-            + "----RQL: Q-learning actor-critic with prediction_horizon-1 roll-outs of stage objective; "
+            + "----RQL: Q-learning actor-critic with prediction_horizon-1 roll-outs of CALFe objective; "
             + "----SQL: stacked Q-learning; "
-            + "----STAG: joint actor-critic (stabilizing), system-specific, needs proper setup."
+            + "----CALF: joint actor-critic (stabilizing), system-specific, needs proper setup."
             + "----PG: Standard Policy Gradient alorithm.",
+        )
+        self.add_argument(
+            "--ode_solver",
+            metavar="control_mode",
+            type=str,
+            choices=["NUMPY", "CASADI"],
+            default="NUMPY",
         )
         self.add_argument(
             "--is_log",
@@ -37,6 +44,12 @@ class RcognitaArgParser(argparse.ArgumentParser):
         )
         self.add_argument(
             "--is_playback", action="store_true", help="Flag to playback.",
+        )
+        self.add_argument(
+            "--speedup",
+            type=int,
+            default=5,
+            help="The speed-up of animation playback.",
         )
         self.add_argument(
             "--no_visual",
@@ -188,7 +201,7 @@ class Config3WRobot(AbstractConfig):
         )
 
         parser.add_argument(
-            "--model_est_stage",
+            "--model_est_CALFe",
             type=float,
             default=1.0,
             help="Seconds to learn model until benchmarking controller kicks in.",
@@ -241,23 +254,23 @@ class Config3WRobot(AbstractConfig):
             type=str,
             default="quadratic",
             choices=["quadratic", "biquadratic"],
-            help="Structure of stage objective function.",
+            help="Structure of CALFe objective function.",
         )
         parser.add_argument(
             "--R1_diag",
             type=float,
             nargs="+",
             default=[1, 10, 1, 0, 0, 0, 0],
-            help="Parameter of stage objective function. Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a quadratic stage objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
+            help="Parameter of CALFe objective function. Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a quadratic CALFe objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
             "--R2_diag",
             type=float,
             nargs="+",
             default=[1, 10, 1, 0, 0, 0, 0],
-            help="Parameter of stage objective function . Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a bi-quadratic stage objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
+            help="Parameter of CALFe objective function . Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a bi-quadratic CALFe objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
             + "where diag() is transformation of a vector to a diagonal matrix.",
         )
 
@@ -317,7 +330,7 @@ class Config3WRobot(AbstractConfig):
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.model_est_period = self.sampling_time * self.model_est_period_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
-        if self.control_mode == "STAG":
+        if self.control_mode == "CALF":
             self.prediction_horizon = 1
 
         self.R1 = np.diag(np.array(self.R1_diag))
@@ -383,7 +396,7 @@ class Config3WRobotNI(AbstractConfig):
             + "dimension is environment-specific!",
         )
         parser.add_argument(
-            "--model_est_stage",
+            "--model_est_CALFe",
             type=float,
             default=1.0,
             help="Seconds to learn model until benchmarking controller kicks in.",
@@ -436,23 +449,23 @@ class Config3WRobotNI(AbstractConfig):
             type=str,
             default="quadratic",
             choices=["quadratic", "biquadratic"],
-            help="Structure of stage objective function.",
+            help="Structure of CALFe objective function.",
         )
         parser.add_argument(
             "--R1_diag",
             type=float,
             nargs="+",
             default=[1, 10, 1, 0, 0],
-            help="Parameter of stage objective function. Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a quadratic stage objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
+            help="Parameter of CALFe objective function. Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a quadratic CALFe objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
             "--R2_diag",
             type=float,
             nargs="+",
             default=[1, 10, 1, 0, 0],
-            help="Parameter of stage objective function . Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a bi-quadratic stage objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
+            help="Parameter of CALFe objective function . Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a bi-quadratic CALFe objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
             + "where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
@@ -496,7 +509,7 @@ class Config3WRobotNI(AbstractConfig):
         self.dim_input = 2
         self.dim_output = self.dim_state
         self.dim_disturb = 2
-        if self.control_mode == "STAG":
+        if self.control_mode == "CALF":
             self.prediction_horizon = 1
 
         self.dim_R1 = self.dim_output + self.dim_input
@@ -597,7 +610,7 @@ class Config2Tank(AbstractConfig):
         )
 
         parser.add_argument(
-            "--model_est_stage",
+            "--model_est_CALFe",
             type=float,
             default=1.0,
             help="Seconds to learn model until benchmarking controller kicks in.",
@@ -650,23 +663,23 @@ class Config2Tank(AbstractConfig):
             type=str,
             default="quadratic",
             choices=["quadratic", "biquadratic"],
-            help="Structure of stage objective function.",
+            help="Structure of CALFe objective function.",
         )
         parser.add_argument(
             "--R1_diag",
             type=float,
             nargs="+",
             default=[10, 10, 1],
-            help="Parameter of stage objective function. Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a quadratic stage objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
+            help="Parameter of CALFe objective function. Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a quadratic CALFe objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
             "--R2_diag",
             type=float,
             nargs="+",
             default=[10, 10, 1],
-            help="Parameter of stage objective function . Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a bi-quadratic stage objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
+            help="Parameter of CALFe objective function . Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a bi-quadratic CALFe objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
             + "where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
@@ -837,9 +850,7 @@ class ConfigInvertedPendulum(AbstractConfig):
             default=0.001,
             help="Size of each prediction step in seconds is a pred_step_size_multiplier multiple of controller sampling time sampling_time.",
         )
-        parser.add_argument(
-            "--speedup", type=int, default=20, help="Animation speed up",
-        )
+
         parser.add_argument(
             "--data_buffer_size",
             type=int,
@@ -851,23 +862,23 @@ class ConfigInvertedPendulum(AbstractConfig):
             type=str,
             default="quadratic",
             choices=["quadratic", "biquadratic"],
-            help="Structure of stage objective function.",
+            help="Structure of CALFe objective function.",
         )
         parser.add_argument(
             "--R1_diag",
             type=float,
             nargs="+",
             default=[-10, 0, -3, -1],
-            help="Parameter of stage objective function. Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a quadratic stage objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
+            help="Parameter of CALFe objective function. Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a quadratic CALFe objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
             "--R2_diag",
             type=float,
             nargs="+",
             default=[-10, 0, -3, 0],
-            help="Parameter of stage objective function . Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a bi-quadratic stage objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
+            help="Parameter of CALFe objective function . Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a bi-quadratic CALFe objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
             + "where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
@@ -930,7 +941,7 @@ class ConfigInvertedPendulum(AbstractConfig):
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
 
-        if self.control_mode == "STAG":
+        if self.control_mode == "CALF":
             self.prediction_horizon = 1
         elif self.control_mode == "PG":
             self.prediction_horizon = 0
@@ -1076,23 +1087,23 @@ class ConfigInvertedPendulumAC(AbstractConfig):
             type=str,
             default="quadratic",
             choices=["quadratic", "biquadratic"],
-            help="Structure of stage objective function.",
+            help="Structure of CALFe objective function.",
         )
         parser.add_argument(
             "--R1_diag",
             type=float,
             nargs="+",
             default=[-10, 0, -3, -1],
-            help="Parameter of stage objective function. Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a quadratic stage objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
+            help="Parameter of CALFe objective function. Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a quadratic CALFe objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
             "--R2_diag",
             type=float,
             nargs="+",
             default=[-10, 0, -3, 0],
-            help="Parameter of stage objective function . Must have proper dimension. "
-            + "Say, if chi = [observation, action], then a bi-quadratic stage objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
+            help="Parameter of CALFe objective function . Must have proper dimension. "
+            + "Say, if chi = [observation, action], then a bi-quadratic CALFe objective reads chi**2.T diag(R2) chi**2 + chi.T diag(R1) chi, "
             + "where diag() is transformation of a vector to a diagonal matrix.",
         )
         parser.add_argument(
@@ -1154,7 +1165,7 @@ class ConfigInvertedPendulumAC(AbstractConfig):
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
-        if self.control_mode == "STAG":
+        if self.control_mode == "CALF":
             self.prediction_horizon = 1
 
         self.R1 = np.diag(np.array(self.R1_diag))

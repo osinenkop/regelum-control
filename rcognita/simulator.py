@@ -19,7 +19,8 @@ Remarks:
 import numpy as np
 import scipy as sp
 
-from .utilities import rej_sampling_rvs
+from .utilities import rej_sampling_rvs, rc
+from abc import ABC, abstractmethod
 
 
 class Simulator:
@@ -71,9 +72,8 @@ class Simulator:
 
     def __init__(
         self,
+        system,
         sys_type,
-        compute_closed_loop_rhs,
-        sys_out,
         state_init,
         disturb_init=[],
         action_init=[],
@@ -86,6 +86,7 @@ class Simulator:
         rtol=1e-3,
         is_disturb=0,
         is_dynamic_controller=0,
+        ode_solver="SciPy",
     ):
 
         """
@@ -125,10 +126,10 @@ class Simulator:
         max_step, first_step, atol, rtol : : numbers
             Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
         """
-
+        self.system = system
         self.sys_type = sys_type
-        self.compute_closed_loop_rhs = compute_closed_loop_rhs
-        self.sys_out = sys_out
+        self.compute_closed_loop_rhs = system.compute_closed_loop_rhs
+        self.sys_out = system.out
         self.sampling_time = sampling_time
 
         # Build full state of the closed-loop
@@ -149,6 +150,8 @@ class Simulator:
         self.state_full_init = state_full_init
         self.time_start = time_start
         self.time = time_start
+        self.state_init = state_init
+        self.action_init = action_init
         self.state = state_init
         self.dim_state = state_init.shape[0]
         self.observation = self.sys_out(state_init, time=self.time)
@@ -157,22 +160,30 @@ class Simulator:
         self.rtol = rtol
         self.time_final = time_final
         self.first_step = first_step
+        self.ode_solver = ode_solver
 
         if sys_type == "diff_eqn":
-            self.ODE_solver = sp.integrate.RK45(
-                self.compute_closed_loop_rhs,
-                self.time_start,
-                self.state_full_init,
-                self.time_final,
-                max_step=self.max_step,
-                first_step=first_step,
-                atol=self.atol,
-                rtol=self.rtol,
-            )
+            self.initialize_ODE_solver()
 
         # Store these for reset purposes
         self.state_full_init = state_full_init
         self.time_start = time_start
+
+    def initialize_ODE_solver(self):
+        self.ODE_solver = rc.ODE_solver(
+            self.system,
+            self.compute_closed_loop_rhs,
+            self.state_full_init,
+            self.state_init,
+            self.action_init,
+            self.time_start,
+            self.time_final,
+            max_step=self.max_step,
+            first_step=self.first_step,
+            atol=self.atol,
+            rtol=self.rtol,
+            ode_solver=self.ode_solver,
+        )
 
     def do_sim_step(self):
         """
@@ -229,20 +240,10 @@ class Simulator:
 
     def reset(self):
         if self.sys_type == "diff_eqn":
-            self.ODE_solver = sp.integrate.RK45(
-                self.compute_closed_loop_rhs,
-                self.time_start,
-                self.state_full_init,
-                self.time_final,
-                max_step=self.max_step,
-                first_step=self.first_step,
-                atol=self.atol,
-                rtol=self.rtol,
-            )
+            self.initialize_ODE_solver()
             self.time = self.time_start
             self.state = self.state_full_init
             self.observation = self.sys_out(self.state_full_init, time=self.time)
         else:  #### to extend further functionality
             self.time = self.time_start
             self.observation = self.state_full_init
-

@@ -196,7 +196,7 @@ class Critic(ABC):
         )
 
         self.model.update_and_cache_weights(optimized_weights)
-        self.current_critic_loss = cost_function(data_buffer)
+        # self.current_critic_loss = cost_function(data_buffer)
 
     def _Torch_update(self):
 
@@ -295,7 +295,7 @@ class CriticActionValue(Critic):
         return critic_objective
 
 
-class CriticSTAG(CriticValue):
+class CriticCALF(CriticValue):
     """
     Critic of a stabilizing agent.
     contains special stabilizability constraints.

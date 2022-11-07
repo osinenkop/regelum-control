@@ -48,7 +48,7 @@ from rcognita.loggers import logger3WRobotNI
 from datetime import datetime
 from rcognita.utilities import on_key_press
 from rcognita.actors import (
-    ActorSTAG,
+    ActorCALF,
     ActorMPC,
     ActorRQL,
     ActorSQL,
@@ -56,7 +56,7 @@ from rcognita.actors import (
 from rcognita.visualization.vis_3wrobot import Animator3WRobotNI
 from rcognita.critics import (
     CriticActionValue,
-    CriticSTAG,
+    CriticCALF,
 )
 
 from rcognita.utilities import rc
@@ -131,7 +131,7 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
                     writer.writerow(["sampling_time", str(self.sampling_time)])
                     writer.writerow(["state_init", str(self.state_init)])
                     writer.writerow(["is_est_model", str(self.is_est_model)])
-                    writer.writerow(["model_est_stage", str(self.model_est_stage)])
+                    writer.writerow(["model_est_CALFe", str(self.model_est_CALFe)])
                     writer.writerow(
                         [
                             "model_est_period_multiplier",

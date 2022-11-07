@@ -111,7 +111,6 @@ class RLController(OptimalController):
         # Critic
 
         # Update data buffers
-        self.critic.update_buffers(observation, self.actor.action_old)
 
         if is_critic_update:
             # Update critic's internal clock
@@ -120,6 +119,8 @@ class RLController(OptimalController):
 
         self.actor.update(observation)
         action = self.actor.action
+
+        self.critic.update_buffers(observation, action)
 
         return action
 

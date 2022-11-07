@@ -407,6 +407,7 @@ class ModelQuadNoMixTorch(ModelNN):
 
         self.double()
         self.cache_weights()
+        self.weights = self.parameters()
 
     def forward(self, input_tensor, weights=None):
         if weights is not None:

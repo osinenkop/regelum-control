@@ -119,7 +119,7 @@ class Animator2Tank(Animator):
             xlabel="Time [s]",
         )
 
-        text_outcome = r"$\int \mathrm{{Stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
+        text_outcome = r"$\int \mathrm{{CALFe\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
             outcome=0
         )
         self.text_outcome_handle = self.fig_sim.text(
@@ -137,7 +137,7 @@ class Animator2Tank(Animator):
             0,
             "g-",
             lw=0.5,
-            label=r"$\int \mathrm{Stage\,obj.} \,\mathrm{d}t$",
+            label=r"$\int \mathrm{CALFe\,obj.} \,\mathrm{d}t$",
         )
         self.axs_cost.legend(fancybox=True, loc="upper right")
 
@@ -244,7 +244,7 @@ class Animator2Tank(Animator):
         # Cost
         update_line(self.line_running_obj, time, running_objective)
         update_line(self.line_outcome, time, outcome)
-        text_outcome = r"$\int \mathrm{{Stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
+        text_outcome = r"$\int \mathrm{{CALFe\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
             outcome=np.squeeze(np.array(outcome))
         )
         update_text(self.text_outcome_handle, text_outcome)

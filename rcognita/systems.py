@@ -226,7 +226,7 @@ class System:
             Current closed-loop system state
 
         """
-        rhs_full_state = rc.zeros(self._dim_full_state)
+        rhs_full_state = rc.zeros(self._dim_full_state, prototype=state_full)
 
         state = state_full[0 : self.dim_state]
 
@@ -296,7 +296,7 @@ class SysInvertedPendulum(System):
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
-        Dstate = rc.zeros(self.dim_state, prototype=action)
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)))
         Dstate[0] = state[1]
         Dstate[1] = g / l * rc.sin(state[0]) + action[0] / (m * l ** 2)
 
@@ -394,7 +394,7 @@ class Sys3WRobot(System):
 
         m, I = self.pars[0], self.pars[1]
 
-        Dstate = rc.zeros(self.dim_state, prototype=action)
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)))
         Dstate[0] = state[3] * rc.cos(state[2])
         Dstate[1] = state[3] * rc.sin(state[2])
         Dstate[2] = state[4]
@@ -460,7 +460,7 @@ class Sys3WRobotNI(System):
 
     def _compute_state_dynamics(self, time, state, action, disturb=[]):
 
-        Dstate = rc.zeros(self.dim_state, prototype=action)
+        Dstate = rc.zeros(self.dim_state, rc.concatenate((state, action)))
 
         if self.is_disturb and (disturb != []):
             Dstate[0] = action[0] * rc.cos(state[2]) + disturb[0]
@@ -505,7 +505,7 @@ class Sys2Tank(System):
 
         tau1, tau2, K1, K2, K3 = self.pars
 
-        Dstate = rc.zeros(self.dim_state, prototype=action)
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)))
         Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action)
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 

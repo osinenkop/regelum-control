@@ -207,4 +207,4 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
 
 if __name__ == "__main__":
 
-    PipelineInvertedPendulumPG().execute_pipeline(speedup=20)
+    PipelineInvertedPendulumPG().execute_pipeline()

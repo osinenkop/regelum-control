@@ -3,13 +3,13 @@ from rcognita import controllers, simulator, predictors, optimizers, objectives
 
 from rcognita.utilities import rc
 from rcognita.actors import (
-    ActorSTAG,
+    ActorCALF,
     ActorMPC,
     ActorRQL,
     ActorSQL,
 )
 
-from rcognita.critics import CriticActionValue, CriticSTAG, CriticTrivial
+from rcognita.critics import CriticActionValue, CriticCALF, CriticTrivial
 
 from rcognita.models import (
     ModelQuadLin,
@@ -19,6 +19,7 @@ from rcognita.models import (
     ModelQuadForm,
     ModelSS,
     ModelWeightContainer,
+    ModelQuadNoMixTorch,
 )
 
 from rcognita.scenarios import OnlineScenario, EpisodicScenarioBase
@@ -88,13 +89,15 @@ class PipelineWithDefaults(AbstractPipeline):
         )
 
     def initialize_models(self):
-        if self.control_mode == "STAG":
+        if self.control_mode == "CALF":
             self.dim_critic_model_input = self.dim_output
         else:
             self.dim_critic_model_input = self.dim_input + self.dim_output
 
         if self.critic_struct == "NN":
-            self.critic_model = ModelNN(self.dim_output, self.dim_input, dim_hidden=3)
+            self.critic_model = ModelQuadNoMixTorch(
+                self.dim_output, self.dim_input, dim_hidden=3
+            )
         else:
             if self.critic_struct == "quad-lin":
                 self.critic_model = ModelQuadLin(self.dim_critic_model_input)
@@ -104,7 +107,7 @@ class PipelineWithDefaults(AbstractPipeline):
                 self.critic_model = ModelQuadratic(self.dim_critic_model_input)
 
         if self.actor_struct == "NN":
-            self.critic_model = ModelNN(self.dim_output, dim_hidden=3)
+            self.critic_model = ModelQuadNoMixTorch(self.dim_output, dim_hidden=3)
         else:
             if self.actor_struct == "quad-lin":
                 self.actor_model = ModelQuadLin(self.dim_output)
@@ -154,8 +157,8 @@ class PipelineWithDefaults(AbstractPipeline):
 
     def initialize_actor_critic(self):
 
-        if self.control_mode == "STAG":
-            self.critic = CriticSTAG(
+        if self.control_mode == "CALF":
+            self.critic = CriticCALF(
                 dim_input=self.dim_input,
                 dim_output=self.dim_output,
                 data_buffer_size=self.data_buffer_size,
@@ -166,7 +169,7 @@ class PipelineWithDefaults(AbstractPipeline):
                 safe_controller=self.nominal_controller,
                 predictor=self.predictor,
             )
-            Actor = ActorSTAG
+            Actor = ActorCALF
 
         else:
             if self.control_mode == "MPC":
@@ -214,21 +217,21 @@ class PipelineWithDefaults(AbstractPipeline):
 
     def initialize_simulator(self):
         self.simulator = simulator.Simulator(
+            system=self.system,
             sys_type="diff_eqn",
-            compute_closed_loop_rhs=self.system.compute_closed_loop_rhs,
-            sys_out=self.system.out,
             state_init=self.state_init,
             disturb_init=[],
             action_init=self.action_init,
             time_start=self.time_start,
             time_final=self.time_final,
             sampling_time=self.sampling_time,
-            max_step=self.sampling_time / 10,
+            max_step=self.sampling_time / 100.0,
             first_step=1e-6,
             atol=self.atol,
             rtol=self.rtol,
             is_disturb=self.is_disturb,
             is_dynamic_controller=self.is_dynamic_controller,
+            ode_solver=self.ode_solver,
         )
 
     def initialize_scenario(self):
@@ -249,7 +252,7 @@ class PipelineWithDefaults(AbstractPipeline):
             is_playback=self.is_playback,
             state_init=self.state_init,
             action_init=self.action_init,
-            speedup=5,
+            speedup=self.speedup,
         )
 
     def main_loop_visual(self):

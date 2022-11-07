@@ -52,7 +52,7 @@ def main():
     pipeline = Pipeline3WRobotCasadi()
     pipeline.execute_pipeline()
     # DEBUG ===================================================================
-    # if pipeline.control_mode == "STAG":
+    # if pipeline.control_mode == "CALF":
     #     plt.figure(figsize=(10, 10))
     #     plt.subplot(2, 2, 1)
     #     plt.plot(

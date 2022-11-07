@@ -29,7 +29,7 @@ from itertools import product
 def update_line(matplotlib_handle, newX, newY):
     old_xdata = matplotlib_handle.get_xdata()
     old_ydata = matplotlib_handle.get_ydata()
-    if all(isinstance(coord, numbers.Number) for coord in [newX, newY]):
+    if any(isinstance(coord, numbers.Number) for coord in [newX, newY]):
         new_xdata = rc.append(old_xdata, newX)
         new_ydata = rc.append(old_ydata, newY)
     else:

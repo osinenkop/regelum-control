@@ -10,3 +10,6 @@ from .visualization import animator
 from . import utilities
 from . import models
 from . import predictors
+import colored_traceback
+
+colored_traceback.add_hook()

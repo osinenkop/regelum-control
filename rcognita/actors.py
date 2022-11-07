@@ -67,7 +67,7 @@ class Actor:
             )
         elif self.control_mode == "MPC" and self.running_objective == []:
             raise ValueError(
-                f"Stage objective should be passed to actor in {self.control_mode} mode"
+                f"CALFe objective should be passed to actor in {self.control_mode} mode"
             )
 
         if isinstance(self.action_bounds, (list, np.ndarray)):
@@ -368,7 +368,7 @@ class ActorRQL(Actor):
         actor_objective = 0
 
         for k in range(self.prediction_horizon):
-            actor_objective -= self.discount_factor ** k * self.running_objective(
+            actor_objective += self.discount_factor ** k * self.running_objective(
                 observation_sequence[k, :], action_sequence_reshaped[k, :]
             )
 
@@ -427,9 +427,9 @@ class ActorV(Actor):
         return actor_objective
 
 
-class ActorSTAG(ActorV):
+class ActorCALF(ActorV):
     """
-    Stabilizing agent (STAG) actor.
+    Actor of a stabilizing agent called CALF (Critic As Lyapunov Function).
     It finds actions subject to specially designed stabilizing constraints, which involve a backup stabilizing policy.
     """
 

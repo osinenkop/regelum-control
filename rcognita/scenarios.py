@@ -174,7 +174,7 @@ class OnlineScenario:
     def update_outcome(self, observation, action, delta):
 
         """
-        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+        Sample-to-sample accumulated (summed up or integrated) CALFe objective. This can be handy to evaluate the performance of the agent.
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
 
