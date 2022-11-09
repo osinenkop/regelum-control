@@ -133,7 +133,7 @@ class EstimatorSS:
         x0est, _, _, _ = np.linalg.lstsq(self.model.C, observation)
         self.model.updateIC(x0est)
 
-        if t >= self.model_est_CALFe:
+        if t >= self.model_est_stage:
             # Drop probing noise
             self.is_prob_noise = 0
 

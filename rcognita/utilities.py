@@ -496,6 +496,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.sqrt(x)
 
+
     def shape(self, array, rc_type=NUMPY):
 
         if rc_type == CASADI:

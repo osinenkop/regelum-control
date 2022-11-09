@@ -108,14 +108,9 @@ class RLController(OptimalController):
     def compute_action(
         self, time, observation, is_critic_update=False,
     ):
-        # Critic
-
-        # Update data buffers
 
         if is_critic_update:
-            # Update critic's internal clock
-            self.critic_clock = time
-            self.critic.update(time=time)
+            self.critic.update(observation=observation, time=time)
 
         self.actor.update(observation)
         action = self.actor.action

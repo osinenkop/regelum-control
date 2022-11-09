@@ -20,6 +20,7 @@ import numpy as np
 from utilities import rc, rej_sampling_rvs
 import scipy as sp
 from functools import partial
+from abc import ABC, abstractmethod
 
 
 class Actor:
@@ -67,7 +68,7 @@ class Actor:
             )
         elif self.control_mode == "MPC" and self.running_objective == []:
             raise ValueError(
-                f"CALFe objective should be passed to actor in {self.control_mode} mode"
+                f"stage objective should be passed to actor in {self.control_mode} mode"
             )
 
         if isinstance(self.action_bounds, (list, np.ndarray)):
@@ -155,7 +156,7 @@ class Actor:
 
         return resulting_constraints
 
-    def update(self, observation, constraint_functions=(), time=None):
+    def update(self, observation, constraint_functions=[], time=None):
         """
         Method to update the current action or weight tensor.
         The old (previous) action or weight tensor is stored.
@@ -225,8 +226,8 @@ class Actor:
                 constraints=constraints,
             )
 
-        self.model.update_and_cache_weights(action_sequence_optimized[: self.dim_input])
         self.action_old = self.model.cache.weights
+        self.model.update_and_cache_weights(action_sequence_optimized[: self.dim_input])
         self.action = self.model.weights
 
 
@@ -410,113 +411,38 @@ class ActorV(Actor):
         observation_sequence_predicted = self.predictor.predict_sequence(
             observation, action_sequence_reshaped
         )
-
+        observation_row_shaped = rc.reshape(observation, [1, self.dim_output])
         observation_sequence = rc.vstack(
-            (
-                rc.reshape(observation, [1, self.dim_output]),
-                observation_sequence_predicted,
-            )
+            (observation_row_shaped, observation_sequence_predicted)
         )
 
-        actor_objective = self.running_objective(
+        running_objective_value = self.running_objective(
             observation_sequence[0, :], action_sequence_reshaped
-        ) + self.gamma * self.critic(
+        )
+        v_critic_value = self.critic(
             observation_sequence[1, :], use_stored_weights=True
         )
+
+        actor_objective = running_objective_value + self.gamma * v_critic_value
 
         return actor_objective
 
 
 class ActorCALF(ActorV):
-    """
-    Actor of a stabilizing agent called CALF (Critic As Lyapunov Function).
-    It finds actions subject to specially designed stabilizing constraints, which involve a backup stabilizing policy.
-    """
-
-    def __init__(self, *args, eps=0.01, **kwargs):
+    def __init__(self, safe_controller, *args, actor_constraints_on=True, **kwargs):
         super().__init__(*args, **kwargs)
-        self.eps = eps
+        self.safe_controller = safe_controller
+        self.actor_constraints_on = actor_constraints_on
 
-    def get_optimized_action(self, observation, constraint_functions=(), time=None):
+    def update(self, observation, constraint_functions=[], **kwargs):
+        if self.critic.weights_acceptance_status == "accepted":
+            super().update(constraint_functions=constraint_functions, **kwargs)
+        else:
+            action = self.safe_controller.compute_action(observation)
 
-        action_sequence_old = rc.rep_mat(
-            self.action_old, 1, self.prediction_horizon + 1
-        )
-
-        action_sequence_init_reshaped = rc.reshape(
-            action_sequence_old, [(self.prediction_horizon + 1) * self.dim_input],
-        )
-
-        constraints = ()
-
-        def stailizing_constraint(action, observation):
-
-            observation_next = self.predictor.predict_state(observation, action)
-
-            critic_curr = self.critic(observation)
-            critic_next = self.critic(observation_next)
-
-            return (
-                critic_next
-                - critic_curr
-                + self.predictor.pred_step_size * self.critic.safe_decay_rate
-            )
-
-        if self.optimizer.engine == "CasADi":
-            actor_objective, action_sequence_symbolic = rc.func_to_lambda_with_params(
-                self.objective, observation, var_prototype=action_sequence_init_reshaped
-            )
-
-            if constraint_functions:
-                constraints = self.create_constraints(
-                    constraint_functions, action_sequence_symbolic, observation
-                )
-
-            lambda_constraint = (
-                lambda action: stailizing_constraint(action, observation) - self.eps
-            )
-
-            constraints += (
-                rc.lambda2symb(lambda_constraint, action_sequence_symbolic),
-            )
-
-            action_sequence_optimized = self.optimizer.optimize(
-                actor_objective,
-                action_sequence_init_reshaped,
-                self.action_bounds,
-                constraints=constraints,
-                decision_variable_symbolic=action_sequence_symbolic,
-            )
-
-        elif self.optimizer.engine == "SciPy":
-            actor_objective = rc.func_to_lambda_with_params(
-                self.objective, observation, var_prototype=action_sequence_init_reshaped
-            )
-
-            if constraint_functions:
-                constraints = sp.optimize.NonlinearConstraint(
-                    partial(
-                        self.create_scipy_constraints,
-                        constraint_functions=constraint_functions,
-                        observation=observation,
-                    ),
-                    -np.inf,
-                    0,
-                )
-            resulting_constraints = sp.optimize.NonlinearConstraint(
-                lambda action: stailizing_constraint(action, observation),
-                -np.inf,
-                self.eps,
-            )
-
-            action_sequence_optimized = self.optimizer.optimize(
-                actor_objective,
-                action_sequence_init_reshaped,
-                self.action_bounds,
-                constraints=resulting_constraints,
-            )
-
-        return action_sequence_optimized[: self.dim_input]
+            self.action_old = self.model.cache.weights
+            self.model.update_and_cache_weights(action)
+            self.action = self.model.weights
 
 
 class ActorTabular(ActorV):

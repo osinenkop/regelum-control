@@ -241,7 +241,7 @@
                     <em class="sig-param"><span class="n"><span class="pre">is_est_model</span></span><span
                         class="o"><span class="pre">=</span></span><span class="default_value"><span
                           class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">model_est_CALFe</span></span><span class="o"><span
+                          class="pre">model_est_stage</span></span><span class="o"><span
                           class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>,
                     <em class="sig-param"><span class="n"><span class="pre">model_est_period</span></span><span
                         class="o"><span class="pre">=</span></span><span class="default_value"><span
@@ -382,7 +382,7 @@
                               class="pre">is_est_model</span></span><span class="o"><span
                               class="pre">=</span></span><span class="default_value"><span
                               class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span
-                              class="pre">model_est_CALFe</span></span><span class="o"><span
+                              class="pre">model_est_stage</span></span><span class="o"><span
                               class="pre">=</span></span><span class="default_value"><span
                               class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span
                               class="pre">model_est_period</span></span><span class="o"><span
@@ -495,7 +495,7 @@
                                 </p>
                               </li>
                               <li>
-                                <p><strong>model_est_CALFe</strong> (<em>: number</em>) – Initial time segment to fill
+                                <p><strong>model_est_stage</strong> (<em>: number</em>) – Initial time segment to fill
                                   the estimator’s buffer before applying optimal control (in seconds).</p>
                               </li>
                               <li>
@@ -539,7 +539,7 @@
                               <li>
                                 <p><strong>gamma</strong> (<em>: number in</em><em> (</em><em>0</em><em>,
                                   </em><em>1</em><em>]</em>) – Discounting factor.
-                                  Characterizes fading of CALFe objectives along horizon.</p>
+                                  Characterizes fading of stage objectives along horizon.</p>
                               </li>
                               <li>
                                 <p><strong>Ncritic</strong> (<em>: natural number</em>) – Critic stack size <span
@@ -658,7 +658,7 @@
                               </li>
                               <li>
                                 <p><strong>running_obj_struct</strong> (<em>: string</em>) –
-                                <p>Choice of the CALFe objective structure.</p>
+                                <p>Choice of the stage objective structure.</p>
                                 <p>Currently available:</p>
                                 <table class="colwidths-given docutils align-default" id="id5">
                                   <caption><span class="caption-text">Running objective structures</span><a
@@ -774,7 +774,7 @@
                             </p>
                           </td>
                           <td>
-                            <p>CALFe (equivalently, instantaneous or running) objective.</p>
+                            <p>stage (equivalently, instantaneous or running) objective.</p>
                           </td>
                         </tr>
                         <tr class="row-even">
@@ -784,7 +784,7 @@
                             </p>
                           </td>
                           <td>
-                            <p>Sample-to-sample accumulated (summed up or integrated) CALFe objective.</p>
+                            <p>Sample-to-sample accumulated (summed up or integrated) stage objective.</p>
                           </td>
                         </tr>
                       </tbody>

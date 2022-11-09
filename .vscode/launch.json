@@ -44,9 +44,9 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
-                "--ode_solver",
-                "CASADI",
-                "--no_visual"
+                "--no_visual",
+                "--control_mode",
+                "CALF"
             ]
         },
         {
