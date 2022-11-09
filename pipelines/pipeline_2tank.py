@@ -155,7 +155,7 @@ class Pipeline2Tank(AbstractPipeline):
             sys_out=self.system.out,
             prob_noise_pow=self.prob_noise_pow,
             is_est_model=self.is_est_model,
-            model_est_CALFe=self.model_est_CALFe,
+            model_est_stage=self.model_est_stage,
             model_est_period=self.model_est_period,
             data_buffer_size=self.data_buffer_size,
             model_order=self.model_order,
@@ -224,7 +224,7 @@ class Pipeline2Tank(AbstractPipeline):
                     writer.writerow(["sampling_time", str(self.sampling_time)])
                     writer.writerow(["state_init", str(self.state_init)])
                     writer.writerow(["is_est_model", str(self.is_est_model)])
-                    writer.writerow(["model_est_CALFe", str(self.model_est_CALFe)])
+                    writer.writerow(["model_est_stage", str(self.model_est_stage)])
                     writer.writerow(
                         [
                             "model_est_period_multiplier",

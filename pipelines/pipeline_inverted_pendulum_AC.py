@@ -212,7 +212,7 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulumPG):
         self.__dict__.update(kwargs)
         self.initialize_system()
         self.initialize_predictor()
-        self.initialize_safe_controller()
+        self.initialize_nominal_controller()
         self.critic_struct = "NN"
         self.initialize_models()
         self.initialize_objectives()

@@ -93,7 +93,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
             self.prediction_horizon,
         )
 
-    def initialize_safe_controller(self):
+    def initialize_nominal_controller(self):
         self.safe_controller = controllers.NominalControllerInvertedPendulum(
             self.action_bounds, controller_gain=1
         )
@@ -186,7 +186,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
         self.__dict__.update(kwargs)
         self.initialize_system()
         self.initialize_predictor()
-        self.initialize_safe_controller()
+        self.initialize_nominal_controller()
         self.initialize_models()
         self.initialize_objectives()
         self.initialize_optimizers()

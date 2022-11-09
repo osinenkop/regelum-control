@@ -84,7 +84,7 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
             ),
         )
 
-    def initialize_safe_controller(self):
+    def initialize_nominal_controller(self):
         self.nominal_controller = controllers.NominalController3WRobotNI(
             controller_gain=0.5,
             action_bounds=self.action_bounds,
@@ -131,7 +131,7 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
                     writer.writerow(["sampling_time", str(self.sampling_time)])
                     writer.writerow(["state_init", str(self.state_init)])
                     writer.writerow(["is_est_model", str(self.is_est_model)])
-                    writer.writerow(["model_est_CALFe", str(self.model_est_CALFe)])
+                    writer.writerow(["model_est_stage", str(self.model_est_stage)])
                     writer.writerow(
                         [
                             "model_est_period_multiplier",

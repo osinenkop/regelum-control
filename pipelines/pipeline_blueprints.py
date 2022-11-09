@@ -168,6 +168,7 @@ class PipelineWithDefaults(AbstractPipeline):
                 model=self.critic_model,
                 safe_controller=self.nominal_controller,
                 predictor=self.predictor,
+                observation_init=self.state_init,
             )
             Actor = ActorCALF
 
@@ -190,6 +191,8 @@ class PipelineWithDefaults(AbstractPipeline):
                     Actor = ActorRQL
                 elif self.control_mode == "SQL":
                     Actor = ActorSQL
+                elif self.control_mode == "nominal":
+                    Actor = ActorMPC
 
         self.actor = Actor(
             self.prediction_horizon,
@@ -205,15 +208,25 @@ class PipelineWithDefaults(AbstractPipeline):
             model=self.actor_model,
         )
 
-    def initialize_controller(self):
-        self.controller = controllers.RLController(
-            time_start=self.time_start,
+    def initialize_nominal_controller(self):
+        self.nominal_controller = controllers.NominalController3WRobotNI(
+            controller_gain=0.5,
+            action_bounds=self.action_bounds,
             sampling_time=self.sampling_time,
-            critic_period=self.critic_period,
-            actor=self.actor,
-            critic=self.critic,
-            observation_target=[],
         )
+
+    def initialize_controller(self):
+        if self.control_mode == "nominal":
+            self.controller = self.nominal_controller
+        else:
+            self.controller = controllers.RLController(
+                time_start=self.time_start,
+                sampling_time=self.sampling_time,
+                critic_period=self.critic_period,
+                actor=self.actor,
+                critic=self.critic,
+                observation_target=[],
+            )
 
     def initialize_simulator(self):
         self.simulator = simulator.Simulator(
@@ -225,7 +238,7 @@ class PipelineWithDefaults(AbstractPipeline):
             time_start=self.time_start,
             time_final=self.time_final,
             sampling_time=self.sampling_time,
-            max_step=self.sampling_time / 100.0,
+            max_step=self.sampling_time / 10.0,
             first_step=1e-6,
             atol=self.atol,
             rtol=self.rtol,
@@ -284,7 +297,7 @@ class PipelineWithDefaults(AbstractPipeline):
         self.__dict__.update(kwargs)
         self.initialize_system()
         self.initialize_predictor()
-        self.initialize_safe_controller()
+        self.initialize_nominal_controller()
         self.initialize_models()
         self.initialize_objectives()
         self.initialize_optimizers()
