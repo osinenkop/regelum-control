@@ -52,13 +52,21 @@ class ModelAbstract(ABC):
     def forward(self):
         pass
 
-    def update_and_cache_weights(self, weights):
+    def update_weights(self, weights):
+        self.weights = weights
+
+    def cache_weights(self, weights=None):
         if "cache" not in self.__dict__.keys():
             self.cache = deepcopy(self)
 
-        self.weights = weights
+        if weights is None:
+            self.cache.weights = self.weights
+        else:
+            self.cache.weights = weights
 
-        self.cache.weights = weights
+    def update_and_cache_weights(self, weights):
+        self.cache_weights(weights)
+        self.update_weights(weights)
 
 
 class ModelSS:
@@ -161,11 +169,11 @@ class ModelQuadNoMix(ModelAbstract):
 
     model_name = "quad-nomix"
 
-    def __init__(self, input_dim, single_weight_min=1e-3, single_weight_max=1e3):
+    def __init__(self, input_dim, single_weight_min=1e-4, single_weight_max=1e3):
         self.dim_weights = input_dim
         self.weight_min = single_weight_min * np.ones(self.dim_weights)
         self.weight_max = single_weight_max * np.ones(self.dim_weights)
-        self.weights = self.weight_min
+        self.weights = (self.weight_min + self.weight_max) / 2.0
         self.update_and_cache_weights(self.weights)
 
     def forward(self, *argin, weights=None):
@@ -173,6 +181,9 @@ class ModelQuadNoMix(ModelAbstract):
             vec = rc.concatenate(tuple(argin))
         else:
             vec = argin[0]
+
+        if isinstance(vec, tuple):
+            vec = vec[0]
 
         polynom = vec * vec
         result = rc.dot(weights, polynom)

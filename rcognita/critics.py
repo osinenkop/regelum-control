@@ -16,7 +16,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 import numpy as np
-from .utilities import rc, NUMPY, CASADI, TORCH
+from .utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC, abstractmethod
 import scipy as sp
 from functools import partial
@@ -69,6 +69,7 @@ class Critic(ABC):
         self.current_critic_loss = 0
         self.outcome = 0
         self.sampling_time = sampling_time
+        self.clock = Clock(sampling_time)
 
     def __call__(self, *args, use_stored_weights=False):
         if len(args) == 2:
@@ -76,6 +77,18 @@ class Critic(ABC):
         else:
             chi = args
         return self.model(chi, use_stored_weights=use_stored_weights)
+
+    def update_weights(self, weights=None):
+        if weights is None:
+            self.model.update_weights(self.optimized_weights)
+        else:
+            self.model.update_weights(weights)
+
+    def cache_weights(self, weights=None):
+        if weights is not None:
+            self.model.cache_weights(weights)
+        else:
+            self.model.cache_weights(self.optimized_weights)
 
     def accept_or_reject_weights(
         self,
@@ -88,22 +101,16 @@ class Critic(ABC):
         if constraint_functions is None:
             constraints_not_violated = True
         else:
-            constraints_not_violated = all(
-                [cond(weights) for cond in constraint_functions]
-            )
+            not_violated = [cond(weights) <= 0.0 for cond in constraint_functions]
+            constraints_not_violated = all(not_violated)
+            print(not_violated)
 
         if constraints_not_violated:
-            if optimizer_engine in ["SciPy", "CasADi"]:
-                self.model.update_and_cache_weights(weights)
-            elif optimizer_engine == "Torch":
-                self.model.update_and_cache_weights()
             return "accepted"
         else:
-            if optimizer_engine == "Torch":
-                self.model.restore_weights()
             return "rejected"
 
-    def update(
+    def launch_optimization_procedure(
         self, constraint_functions=[], observation=None, time=None,
     ):
 
@@ -112,26 +119,28 @@ class Critic(ABC):
 
         """
         if self.optimizer.engine == "CasADi":
-            optimized_weights = self._CasADi_update(constraint_functions)
+            self.optimized_weights = self._CasADi_update(constraint_functions)
 
         elif self.optimizer.engine == "SciPy":
-            optimized_weights = self._SciPy_update(constraint_functions)
+            self.optimized_weights = self._SciPy_update(constraint_functions)
 
         elif self.optimizer.engine == "Torch":
             self._Torch_update()
-            optimized_weights = self.model.weights
+            self.optimized_weights = self.model.weights
 
         if constraint_functions:
-            weights_acceptance_status = self.accept_or_reject_weights(
-                optimized_weights,
+            print("with constraint functions")
+            self.weights_acceptance_status = self.accept_or_reject_weights(
+                self.optimized_weights,
                 observation=observation,
                 constraint_functions=constraint_functions,
                 optimizer_engine=self.optimizer.engine,
             )
         else:
-            weights_acceptance_status = True
+            print("without constraint functions")
+            self.weights_acceptance_status = "accepted"
 
-        return weights_acceptance_status
+        return self.weights_acceptance_status
 
     def update_buffers(self, observation, action):
         self.action_buffer = rc.push_vec(
@@ -181,7 +190,7 @@ class Critic(ABC):
 
     def _SciPy_update(self, constraint_functions=[]):
 
-        weights_init = self.model.weight_min
+        weights_init = self.model.cache.weights
 
         constraints = ()
         weight_bounds = [self.model.weight_min, self.model.weight_max]
@@ -193,10 +202,12 @@ class Critic(ABC):
         cost_function = lambda weights: self.objective(data_buffer, weights=weights)
 
         if constraint_functions:
-            constraints = [
-                sp.optimize.NonlinearConstraint(constraint, -np.inf, 0,)
-                for constraint in constraint_functions
-            ]
+            constraints = tuple(
+                [
+                    sp.optimize.NonlinearConstraint(constraint, -np.inf, 0.0)
+                    for constraint in constraint_functions
+                ]
+            )
 
         optimized_weights = self.optimizer.optimize(
             cost_function, weights_init, weight_bounds, constraints=constraints,
@@ -330,15 +341,28 @@ class CriticActionValue(Critic):
 
 class CriticCALF(CriticValue):
     def __init__(
-        self, *args, safe_decay_rate=1e-4, predictor=[], observation_init=[], **kwargs
+        self,
+        *args,
+        safe_decay_rate=1e-3,
+        predictor=[],
+        observation_init=[],
+        safe_controller=[],
+        displacement_penalty=0,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.safe_decay_rate = safe_decay_rate
+        self.safe_controller = safe_controller
         self.predictor = predictor
         self.observation_last_good = observation_init
         self.lb_constraint_violations = []
         self.ub_constraint_violations = []
         self.stabilizing_constraint_violations = []
+        self.values = []
+        self.times = []
+        self.Ls = []
+        self.CALFs = []
+        self.displacement_penalty = displacement_penalty
 
     def CALF_decay_constraint(self, weights, observation=None):
         critic_prev = self.model(self.observation_last_good, use_stored_weights=True)
@@ -348,21 +372,21 @@ class CriticCALF(CriticValue):
             - critic_prev
             + self.predictor.pred_step_size * self.safe_decay_rate
         )
-        return self.stabilizing_constraint_violation
+        return -1  # self.stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(self, weights, observation=None):
-        self.lb_constraint_violation = 1e-3 * rc.norm_2(observation) - self.model(
+        self.lb_constraint_violation = 1e-2 * rc.norm_2(observation) - self.model(
             observation, weights=weights
         )
-        return self.lb_constraint_violation
+        return -1  # self.lb_constraint_violation
 
     def CALF_critic_upper_bound_constraint(self, weights, observation=None):
         self.ub_constraint_violation = self.model(
             observation, weights=weights
         ) - 1e3 * rc.norm_2(observation)
-        return self.ub_constraint_violation
+        return -1  # self.ub_constraint_violation
 
-    def update(
+    def launch_optimization_procedure(
         self, *args, constraint_functions=[], observation=None, action=None, **kwargs
     ):
         stabilizing_constraints = [
@@ -371,7 +395,7 @@ class CriticCALF(CriticValue):
             partial(self.CALF_critic_upper_bound_constraint, observation=observation),
         ]
 
-        self.weights_acceptance_status = super().update(
+        self.weights_acceptance_status = super().launch_optimization_procedure(
             constraint_functions=stabilizing_constraints,
             observation=observation,
             **kwargs
@@ -383,11 +407,55 @@ class CriticCALF(CriticValue):
         self.lb_constraint_violations.append(self.lb_constraint_violation)
         self.ub_constraint_violations.append(self.ub_constraint_violation)
 
-        if self.weights_acceptance_status == "accepted":
-            self.observation_last_good = observation
-            return True
+        self.values.append(self.model(observation))
+        self.CALFs.append(
+            self.model(self.observation_last_good, use_stored_weights=True)
+        )
+        self.Ls.append(self.safe_controller.compute_LF(observation))
+        self.times.append(kwargs.get("time"))
+
+        return self.weights_acceptance_status
+
+    def objective(self, data_buffer=None, weights=None):
+        """
+        Objective of the critic, say, a squared temporal difference.
+
+        """
+        if data_buffer is None:
+            observation_buffer = self.observation_buffer
+            action_buffer = self.action_buffer
         else:
-            return False
+            observation_buffer = data_buffer["observation_buffer"]
+            action_buffer = data_buffer["action_buffer"]
+
+        Jc = 0
+
+        for k in range(self.data_buffer_size - 1, -1, -1):
+            observation_old = observation_buffer[k - 1, :]
+            observation_next = observation_buffer[k, :]
+            action_old = action_buffer[k - 1, :]
+
+            # Temporal difference
+
+            critic_old = self.model(self.observation_last_good, weights=weights)
+            critic_next = self.model(observation_next, use_stored_weights=True)
+
+            weights_current = rc.array(weights)
+            weights_last_good = rc.array(self.model.cache.weights)
+            reg_term = (
+                rc.norm_2(weights_current - weights_last_good)
+                * self.displacement_penalty
+            )
+
+            temporal_difference = (
+                critic_old
+                - self.discount_factor * critic_next
+                - self.running_objective(observation_old, action_old)
+            )
+
+            Jc += 1 / 2 * temporal_difference ** 2 + reg_term
+
+        return Jc
 
 
 class CriticTrivial(Critic):
@@ -396,12 +464,19 @@ class CriticTrivial(Critic):
 
     """
 
-    def __init__(self, running_objective, sampling_time=0.01):
+    def __init__(self, running_objective, *args, sampling_time=0.01, **kwargs):
         self.running_objective = running_objective
         self.sampling_time = sampling_time
         self.outcome = 0
         self.model = ModelWeightContainer()
         self.model.weights = None
+        self.clock = Clock(sampling_time)
+
+        class optimizer:
+            def __init__(self):
+                self.engine = None
+
+        self.optimizer = optimizer()
 
     def __call__(self):
         return self.outcome
@@ -415,7 +490,7 @@ class CriticTrivial(Critic):
     def update_buffers(self, observation, action):
         self.update_outcome(observation, action)
 
-    def update(self, constraint_functions=[], time=None):
+    def update(self, constraint_functions=[], observation=None, time=None):
         pass
 
     def update_outcome(self, observation, action):

@@ -175,7 +175,7 @@ class CostDashboard(Dashboard):
         self.axes_cost.set_xlabel("Time [s]")
         self.axes_cost.autoscale(False)
 
-        text_outcome = r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
+        text_outcome = r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
             outcome=0
         )
         self.text_outcome_handle = self.axes_cost.text(
@@ -193,7 +193,7 @@ class CostDashboard(Dashboard):
             0,
             "g-",
             lw=0.5,
-            label=r"$\int \mathrm{stage\,obj.} \,\mathrm{d}t$",
+            label=r"$\int \mathrm{running\,obj.} \,\mathrm{d}t$",
         )
         self.artists.append(self.line_running_obj)
         self.artists.append(self.line_outcome)
@@ -206,7 +206,7 @@ class CostDashboard(Dashboard):
 
         update_line(self.line_running_obj, time, running_objective_value)
         update_line(self.line_outcome, time, outcome)
-        text_outcome = r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
+        text_outcome = r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
             outcome=np.squeeze(np.array(outcome))
         )
         update_text(self.text_outcome_handle, text_outcome)

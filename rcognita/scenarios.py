@@ -314,6 +314,118 @@ class EpisodicScenarioBase(OnlineScenario):
 
                 if self.current_scenario_status == "simulation_ended":
                     self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
+                    ## DEBUG ==============================
+                    import multiprocessing
+
+                    def debug_visual(self):
+                        from copy import deepcopy
+
+                        eps = 0.0
+                        figure = plt.figure(figsize=(10, 10))
+                        axes_array = figure.subplots(2, 4)
+                        times = deepcopy(self.critic.times)
+                        axes_array[0, 0].plot(
+                            times,
+                            (
+                                rc.array(self.critic.stabilizing_constraint_violations)
+                                > eps
+                            ).astype(int),
+                            label="stabilizing_constraint_violations",
+                            c="r",
+                            lw="1.2",
+                        )
+                        # [
+                        #     axes_array[0, 0].axvline(times[i], c="r", lw=0.4)
+                        #     for i, v in enumerate(pipeline.critic.stabilizing_constraint_violations)
+                        #     if v > eps
+                        # ]
+                        axes_array[0, 0].grid()
+                        axes_array[0, 0].legend()
+                        axes_array[0, 1].plot(
+                            times,
+                            (
+                                rc.array(self.critic.ub_constraint_violations) > eps
+                            ).astype(int),
+                            label="ub_constraint_violations",
+                            c="r",
+                            lw="1.2",
+                        )
+                        # [
+                        #     axes_array[0, 1].axvline(times[i], c="r", lw=0.4)
+                        #     for i, v in enumerate(pipeline.critic.ub_constraint_violations)
+                        #     if v > eps
+                        # ]
+                        axes_array[0, 1].grid()
+                        axes_array[0, 1].legend()
+                        axes_array[0, 2].plot(
+                            times,
+                            (
+                                rc.array(self.critic.lb_constraint_violations) > eps
+                            ).astype(int),
+                            label="lb_constraint_violations",
+                            c="r",
+                            lw="1.2",
+                        )
+                        # [
+                        #     axes_array[0, 2].axvline(times[i], c="r", lw=0.4)
+                        #     for i, v in enumerate(pipeline.critic.lb_constraint_violations)
+                        #     if v > eps
+                        # ]
+                        axes_array[0, 2].grid()
+                        axes_array[0, 2].legend()
+
+                        axes_array[0, 3].plot(
+                            times, self.critic.values, label="critic values"
+                        )
+                        axes_array[0, 3].legend()
+                        axes_array[0, 3].set_yscale("symlog")
+
+                        axes_array[1, 0].plot(
+                            times, self.critic.Ls, label="L under CALF"
+                        )
+                        axes_array[1, 0].legend()
+
+                        axes_array[1, 1].plot(
+                            times,
+                            self.critic.CALFs,
+                            label="Critic as lyapunov function",
+                        )
+                        axes_array[1, 1].legend()
+                        axes_array[1, 2].plot(
+                            times,
+                            (
+                                (rc.array(self.critic.ub_constraint_violations) > eps)
+                                | (rc.array(self.critic.lb_constraint_violations) > eps)
+                                | (
+                                    rc.array(
+                                        self.critic.stabilizing_constraint_violations
+                                    )
+                                    > eps
+                                )
+                            ).astype(int),
+                            label="nominal contoller is on",
+                            c="r",
+                            lw="1.2",
+                        )
+                        # [
+                        #     axes_array[0, 1].axvline(times[i], c="r", lw=0.4)
+                        #     for i, v in enumerate(pipeline.critic.ub_constraint_violations)
+                        #     if v > eps
+                        # ]
+                        axes_array[1, 2].grid()
+                        axes_array[1, 2].legend()
+                        axes_array[1, 3].plot(
+                            self.controller.weights_difference_norms,
+                            label="w_differences",
+                        )
+                        axes_array[1, 3].legend()
+
+                        plt.show()
+
+                    process = multiprocessing.Process(None, debug_visual, args=(self,))
+                    process.start()
+
+                    ## /DEBUG =============================
 
             return self.current_scenario_status
 

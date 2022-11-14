@@ -141,7 +141,7 @@ class PipelineWithDefaults(AbstractPipeline):
 
     def initialize_optimizers(self):
         opt_options = {
-            "maxiter": 120,
+            "maxiter": 320,
             "maxfev": 5000,
             "disp": False,
             "adaptive": True,

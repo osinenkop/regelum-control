@@ -144,6 +144,7 @@ class Animator:
         if SIMULATION_ENDED:
             print("Simulation ended")
             self.anm.event_source.stop()
+
         elif EPISODE_ENDED:
             self.update_dashboards("episode")
         elif ITERATION_ENDED:

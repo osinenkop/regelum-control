@@ -127,6 +127,24 @@ def metaclassTypeInferenceDecorator(func):
     return wrapper
 
 
+class Clock:
+    def __init__(self, period, time_start=0, eps=1e-7):
+        self.period = period
+        self.eps = eps
+        self.time_start = time_start
+        self.time = time_start
+
+    def check_time(self, time):
+        if time > self.time + self.period - self.eps:
+            self.time = time
+            return True
+        else:
+            return False
+
+    def reset(self):
+        self.time = self.time_start
+
+
 class Solver(ABC):
     @property
     @abstractmethod
@@ -169,7 +187,7 @@ class CasADiSolver(Solver):
 
     def step(self):
         if self.time >= self.time_final:
-            raise RuntimeError()
+            raise RuntimeError("An attempt to step with a finished solver")
         self.state_new = np.squeeze(
             self.integrator(x0=self.state, p=self.system.action)["xf"].full()
         )

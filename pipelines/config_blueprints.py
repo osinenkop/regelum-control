@@ -297,12 +297,13 @@ class Config3WRobot(AbstractConfig):
         parser.add_argument(
             "--actor_struct",
             type=str,
-            default="quad-nomix",
-            choices=["quad-lin", "quadratic", "quad-nomix"],
+            default="container",
+            choices=["quad-lin", "quadratic", "quad-nomix", "container"],
             help="Feature structure (actor). Currently available: "
             + "----quad-lin: quadratic-linear; "
             + "----quadratic: quadratic; "
-            + "----quad-nomix: quadratic, no mixed terms.",
+            + "----quad-nomix: quadratic, no mixed terms."
+            + "----container: weight container; ",
         )
 
         args = parser.parse_args()
@@ -492,12 +493,13 @@ class Config3WRobotNI(AbstractConfig):
         parser.add_argument(
             "--actor_struct",
             type=str,
-            default="quad-nomix",
-            choices=["quad-lin", "quadratic", "quad-nomix"],
+            default="container",
+            choices=["quad-lin", "quadratic", "quad-nomix", "container"],
             help="Feature structure (actor). Currently available: "
             + "----quad-lin: quadratic-linear; "
             + "----quadratic: quadratic; "
-            + "----quad-nomix: quadratic, no mixed terms.",
+            + "----quad-nomix: quadratic, no mixed terms."
+            + "----container: weight container; ",
         )
 
         args = parser.parse_args()

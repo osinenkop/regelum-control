@@ -61,8 +61,8 @@ from rcognita.utilities import rc
 from copy import deepcopy
 
 
-class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
-    config = Config3WRobotNI
+class Pipeline3WRobotCALF(Pipeline3WRobot):
+    config = Config3WRobot
 
     def initialize_actor_critic(self):
         self.critic = CriticCALF(
@@ -76,7 +76,7 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
             predictor=self.predictor,
             observation_init=self.state_init,
             safe_controller=self.nominal_controller,
-            displacement_penalty=1000,
+            displacement_penalty=0,
             sampling_time=self.sampling_time,
         )
         # self.critic = CriticValue(
@@ -102,12 +102,12 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
             critic=self.critic,
             running_objective=self.running_objective,
             model=self.actor_model,
-            destabilization_penalty=1000000,
+            destabilization_penalty=0,
         )
 
     def initialize_optimizers(self):
         opt_options = {
-            "maxiter": 300,
+            "maxiter": 50,
             "maxfev": 5000,
             "disp": False,
             "adaptive": True,
@@ -137,6 +137,5 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
 
 
 if __name__ == "__main__":
-    pipeline = Pipeline3WRobotNICALF()
+    pipeline = Pipeline3WRobotCALF()
     pipeline.execute_pipeline()
-

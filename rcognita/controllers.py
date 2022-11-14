@@ -9,7 +9,7 @@ Remarks:
 
 """
 
-from .utilities import rc
+from .utilities import rc, Clock
 import numpy as np
 
 import scipy as sp
@@ -36,7 +36,7 @@ class OptimalController(ABC):
 
         self.observation_target = observation_target
         self.is_fixed_critic_weights = is_fixed_critic_weights
-        self.new_cycle_eps_tollerance = 1e-6
+        self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def estimate_model(self, observation, time):
         if self.is_est_model or self.mode in ["RQL", "SQL"]:
@@ -44,20 +44,15 @@ class OptimalController(ABC):
 
     def compute_action_sampled(self, time, observation, constraints=()):
 
-        time_in_sample = time - self.controller_clock
-        timeInCriticPeriod = time - self.critic_clock
+        is_time_for_new_sample = self.clock.check_time(time)
+        is_time_for_critic_update = self.critic.clock.check_time(time)
+
         is_critic_update = (
-            timeInCriticPeriod >= self.critic_period - self.new_cycle_eps_tollerance
-        ) and not self.is_fixed_critic_weights
+            is_time_for_critic_update and not self.is_fixed_critic_weights
+        )
 
-        if is_critic_update:
-            self.critic_clock = time
-
-        if (
-            time_in_sample >= self.sampling_time - self.new_cycle_eps_tollerance
-        ):  # New sample
+        if is_time_for_new_sample:  # New sample
             # Update controller's internal clock
-            self.controller_clock = time
 
             action = self.compute_action(
                 time, observation, is_critic_update=is_critic_update
@@ -93,6 +88,7 @@ class RLController(OptimalController):
 
         self.critic_clock = time_start
         self.critic_period = critic_period
+        self.weights_difference_norms = []
 
     def reset(self, time_start):
         """
@@ -108,14 +104,56 @@ class RLController(OptimalController):
     def compute_action(
         self, time, observation, is_critic_update=False,
     ):
+        # Critic
+
+        # Update data buffers
+        self.critic.update_buffers(observation, self.actor.action_old)
 
         if is_critic_update:
-            self.critic.update(observation=observation, time=time)
+            # Update critic's internal clock
+            self.critic.launch_optimization_procedure(
+                time=time, observation=observation
+            )
+            self.critic.update_weights()
 
         self.actor.update(observation)
         action = self.actor.action
 
-        self.critic.update_buffers(observation, action)
+        return action
+
+
+class CALFController(RLController):
+    def compute_action(
+        self, time, observation, is_critic_update=False,
+    ):
+        # Critic
+
+        # Update data buffers
+        self.critic.update_buffers(observation, self.actor.action_old)
+
+        weights_accepted = (
+            self.critic.launch_optimization_procedure(
+                time=time, observation=observation
+            )
+            == "accepted"
+        )
+
+        if weights_accepted:
+            self.weights_difference_norm = rc.norm_2(
+                self.critic.model.cache.weights - self.critic.optimized_weights
+            )
+            self.weights_difference_norms.append(self.weights_difference_norm)
+            self.critic.update_weights(self.critic.optimized_weights)
+            self.actor.update(observation)
+            action = self.actor.action
+
+            self.critic.observation_last_good = observation
+            self.critic.cache_weights()
+        else:
+            self.actor.action_old = self.actor.model.cache.weights
+            action = self.actor.safe_controller.compute_action(observation)
+            self.actor.model.update_and_cache_weights(action)
+            self.actor.action = self.actor.model.weights
 
         return action
 
@@ -421,7 +459,8 @@ class NominalController3WRobotNI:
         self.action_bounds = action_bounds
         self.controller_clock = time_start
         self.sampling_time = sampling_time
-
+        self.Ls = []
+        self.times = []
         self.action_old = rc.zeros(2)
 
     def reset(self, time_start):
@@ -584,6 +623,7 @@ class NominalController3WRobotNI:
             self.controller_clock = time
 
             action = self.compute_action(observation)
+            self.times.append(time)
 
             if self.action_bounds.any():
                 for k in range(2):
@@ -621,6 +661,7 @@ class NominalController3WRobotNI:
         action = self._NH2ctrl_Cart(xNI, uNI)
 
         self.action_old = action
+        self.compute_LF(observation)
 
         return action
 
@@ -629,8 +670,11 @@ class NominalController3WRobotNI:
         xNI = self._Cart2NH(observation)
 
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
+        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma ** 2
 
-        return xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma ** 2
+        self.Ls.append(LF_value)
+
+        return LF_value
 
 
 class NominalControllerInvertedPendulum:
@@ -645,25 +689,3 @@ class NominalControllerInvertedPendulum:
     def compute_action(self, observation):
         self.observation = observation
         return np.array([-((observation[0]) + (observation[1])) * self.controller_gain])
-        # return np.array(
-        #     [
-        #         np.clip(
-        #             -((observation[0]) + (observation[1])) * self.controller_gain,
-        #             self.action_bounds[0][0],
-        #             self.action_bounds[0][1],
-        #         )
-        #     ]
-        # )
-        # return np.array(
-        #     [
-        #         np.clip(
-        #             -np.sign(observation[0])
-        #             * np.exp(
-        #                 observation[0] + observation[1] * np.sign(observation[1]) ** 2
-        #             )
-        #             * self.controller_gain,
-        #             self.action_bounds[0][0],
-        #             self.action_bounds[0][1],
-        #         )
-        #     ]
-        # )

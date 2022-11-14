@@ -40,13 +40,24 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_CALF_3wrobot.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
                 "--no_visual",
+                "--no_print",
                 "--control_mode",
-                "CALF"
+                "CALF",
+                "--t1",
+                "4",
+                "--state_init",
+                "-5",
+                "-5",
+                "3*pi/4",
+                "--data_buffer_size",
+                "1",
+                "--prediction_horizon",
+                "1"
             ]
         },
         {
