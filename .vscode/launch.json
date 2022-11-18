@@ -63,6 +63,18 @@
             ]
         },
         {
+            "name": "CALF",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_CALF_3wrobot.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--config",
+                "/home/gvidon/JoraProgramming/rcognita/pipelines/argv_configs/CALF_3wrobot.txt"
+            ]
+        },
+        {
             "name": "Nominal 3Wrobot",
             "type": "python",
             "request": "launch",

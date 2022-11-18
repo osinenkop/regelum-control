@@ -221,7 +221,10 @@ class Critic(ABC):
         cost_function = rc.lambda2symb(cost_function, symbolic_var)
 
         if intrinsic_constraints:
-            constraints = self.create_constraints(intrinsic_constraints, symbolic_var)
+            constraints = [
+                rc.lambda2symb(constraint, symbolic_var)
+                for constraint in intrinsic_constraints
+            ]
 
         optimized_weights = self.optimizer.optimize(
             cost_function,

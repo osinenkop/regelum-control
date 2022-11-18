@@ -198,7 +198,8 @@ class ModelQuadNoMix(ModelAbstract):
             vec = vec[0]
 
         polynom = vec * vec
-        result = rc.dot(weights, polynom)
+
+        result = rc.dot(weights, rc.to_col(polynom))
 
         return result
 

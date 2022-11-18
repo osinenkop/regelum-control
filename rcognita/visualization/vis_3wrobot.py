@@ -155,7 +155,7 @@ class SolutionDashboard(Dashboard):
         angle = state[2]
         # # Solution
         update_line(self.line_norm, time, la.norm([xCoord, yCoord]))
-        update_line(self.line_angle, time, angle)
+        update_line(self.line_angle, time, np.squeeze(angle))
 
 
 class CostDashboard(Dashboard):
@@ -201,7 +201,7 @@ class CostDashboard(Dashboard):
 
     def perform_step_update(self):
         time = self.scenario.time
-        running_objective_value = self.scenario.running_objective_value
+        running_objective_value = np.squeeze(self.scenario.running_objective_value)
         outcome = self.scenario.outcome
 
         update_line(self.line_running_obj, time, running_objective_value)
@@ -251,10 +251,10 @@ class ControlDashboard(Dashboard):
 
     def perform_step_update(self):
         # Control
-        action = self.scenario.action
+        action = np.squeeze(self.scenario.action)
         time = self.scenario.time
 
-        for (line, action_single) in zip(self.lines_action, np.array(action)):
+        for (line, action_single) in zip(self.lines_action, action):
             update_line(line, time, action_single)
 
 

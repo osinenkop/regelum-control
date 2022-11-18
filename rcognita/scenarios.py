@@ -368,10 +368,10 @@ class EpisodicScenarioBase(OnlineScenario):
                         axes_array[0, 3].legend()
                         axes_array[0, 3].set_yscale("symlog")
 
-                        axes_array[1, 0].plot(
-                            times, self.critic.Ls, label="L under CALF"
-                        )
-                        axes_array[1, 0].legend()
+                        # axes_array[1, 0].plot(
+                        #     times, self.critic.Ls, label="L under CALF"
+                        # )
+                        # axes_array[1, 0].legend()
 
                         axes_array[1, 1].plot(
                             times,

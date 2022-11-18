@@ -143,7 +143,7 @@ class CALFController(RLController):
         self.critic.update_buffers(
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
-        self.critic.safe_decay_rate = 1e-3 * rc.norm_2(observation)
+        # self.critic.safe_decay_rate = 1e1 * rc.norm_2(observation)
         self.actor.receive_observation(
             observation
         )  ### store current observation in actor
@@ -185,7 +185,7 @@ class CALFController(RLController):
 
     def collect_critic_stats(self, time):
         self.critic.stabilizing_constraint_violations.append(
-            self.critic.stabilizing_constraint_violation
+            np.squeeze(self.critic.stabilizing_constraint_violation)
         )
         self.critic.lb_constraint_violations.append(
             0
@@ -194,13 +194,17 @@ class CALFController(RLController):
             0
         )  # (self.critic.ub_constraint_violation)
         self.critic.Ls.append(
-            self.critic.safe_controller.compute_LF(self.critic.current_observation)
+            np.squeeze(
+                self.critic.safe_controller.compute_LF(self.critic.current_observation)
+            )
         )
         self.critic.times.append(time)
         current_CALF = self.critic.model(
             self.critic.observation_last_good, use_stored_weights=True
         )
-        self.critic.values.append(self.critic.model(self.critic.current_observation))
+        self.critic.values.append(
+            np.squeeze(self.critic.model(self.critic.current_observation))
+        )
         if self.critic.CALFs != []:
             CALF_increased = current_CALF > self.critic.CALFs[-1]
             if CALF_increased:
@@ -208,7 +212,7 @@ class CALFController(RLController):
 
         print(self.critic.model.weights, time)
 
-        self.critic.CALFs.append(current_CALF)
+        self.critic.CALFs.append(np.squeeze(current_CALF))
 
 
 class NominalController3WRobot:
@@ -690,7 +694,7 @@ class Controller3WRobotPID:
         self.PID_angle_origin = ControllerPID(
             -30, 0.0, -10, SP=0.0, initial_point=self.state_init[2]
         )
-        self.stabilization_tollerance = 1e-2
+        self.stabilization_tollerance = 1e-3
         self.current_F = 0
         self.current_M = 0
 

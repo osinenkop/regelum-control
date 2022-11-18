@@ -113,7 +113,7 @@ class CasADiOptimizer(BaseOptimizer):
             "g": vertcat(*constraints),
         }
 
-        if isinstance(constraints, tuple):
+        if isinstance(constraints, (tuple, list)):
             upper_bound_constraint = [0 for _ in constraints]
         elif isinstance(constraints, (SX, DM, int, float)):
             upper_bound_constraint = [0]

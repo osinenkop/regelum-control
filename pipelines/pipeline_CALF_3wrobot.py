@@ -105,20 +105,38 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             penalty_param=0,
         )
 
+    # def initialize_optimizers(self):
+    #     opt_options = {
+    #         "maxiter": 50,
+    #         "maxfev": 5000,
+    #         "disp": False,
+    #         "adaptive": True,
+    #         "xatol": 1e-7,
+    #         "fatol": 1e-7,
+    #     }
+    #     self.actor_optimizer = optimizers.SciPyOptimizer(
+    #         opt_method="SLSQP", opt_options=opt_options
+    #     )
+    #     self.critic_optimizer = optimizers.SciPyOptimizer(
+    #         opt_method="SLSQP", opt_options=opt_options,
+    #     )
+
     def initialize_optimizers(self):
+
         opt_options = {
-            "maxiter": 50,
-            "maxfev": 5000,
-            "disp": False,
-            "adaptive": True,
-            "xatol": 1e-7,
-            "fatol": 1e-7,
+            "print_time": 0,
+            "ipopt.max_iter": 200,
+            "ipopt.print_level": 0,
+            "ipopt.acceptable_tol": 1e-7,
+            "ipopt.acceptable_obj_change_tol": 1e-2,
         }
-        self.actor_optimizer = optimizers.SciPyOptimizer(
-            opt_method="SLSQP", opt_options=opt_options
+
+        self.actor_optimizer = optimizers.CasADiOptimizer(
+            opt_method="ipopt", opt_options=opt_options
         )
-        self.critic_optimizer = optimizers.SciPyOptimizer(
-            opt_method="SLSQP", opt_options=opt_options,
+        self.critic_optimizer = optimizers.CasADiOptimizer(
+            opt_method="ipopt",
+            opt_options=opt_options,
         )
 
     def initialize_controller(self):

@@ -232,17 +232,23 @@ class Actor:
             )
 
             actor_objective = rc.lambda2symb(actor_objective, symbolic_var)
-
+            constraint_functions = []
             if constraint_functions:
                 constraints = self.create_constraints(
                     constraint_functions, symbolic_var, self.observation
                 )
 
+            if self.intrinsic_constraints:
+                intrisic_constraints = [
+                    rc.lambda2symb(constraint, symbolic_var)
+                    for constraint in self.intrinsic_constraints
+                ]
+
             self.optimized_weights = self.optimizer.optimize(
                 actor_objective,
                 action_sequence_init_reshaped,
                 self.action_bounds,
-                constraints=constraints,
+                constraints=intrisic_constraints + constraint_functions,
                 decision_variable_symbolic=symbolic_var,
             )
 
