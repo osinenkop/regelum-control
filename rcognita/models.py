@@ -68,6 +68,15 @@ class ModelAbstract(ABC):
         self.cache_weights(weights)
         self.update_weights(weights)
 
+    def restore_weights(self):
+        """
+        Assign the weights of the cached model to the active model.
+        This may be needed when pytorch optimizer resulted in unsatisfactory weights, for instance.
+
+        """
+
+        self.update_and_cache_weights(self.cache.weights)
+
 
 class ModelSS:
     model_name = "state-space"
@@ -118,11 +127,12 @@ class ModelQuadLin(ModelAbstract):
         self.dim_weights = int((input_dim + 1) * input_dim / 2 + input_dim)
         self.weight_min = weight_min * np.ones(self.dim_weights)
         self.weight_max = weight_max * np.ones(self.dim_weights)
-        self.weights = self.weight_min
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
 
-    def forward(self, *argin, weights):
-        if len(vec) > 1:
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
         else:
             vec = argin[0]
@@ -146,11 +156,12 @@ class ModelQuadratic(ModelAbstract):
         self.dim_weights = int((input_dim + 1) * input_dim / 2)
         self.weight_min = single_weight_min * np.ones(self.dim_weights)
         self.weight_max = single_weight_max * np.ones(self.dim_weights)
-        self.weights = self.weight_min
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
 
-    def forward(self, *argin, weights):
-        if len(vec) > 1:
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
         else:
             vec = argin[0]
@@ -169,11 +180,12 @@ class ModelQuadNoMix(ModelAbstract):
 
     model_name = "quad-nomix"
 
-    def __init__(self, input_dim, single_weight_min=1e-4, single_weight_max=1e3):
+    def __init__(self, input_dim, single_weight_min=1e-6, single_weight_max=1e2):
         self.dim_weights = input_dim
         self.weight_min = single_weight_min * np.ones(self.dim_weights)
         self.weight_max = single_weight_max * np.ones(self.dim_weights)
-        self.weights = (self.weight_min + self.weight_max) / 2.0
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
 
     def forward(self, *argin, weights=None):
@@ -204,8 +216,8 @@ class ModelWeightContainer(ModelAbstract):
         self.weights_init = weights_init
         self.update_and_cache_weights(self.weights)
 
-    def forward(self, *argin):
-        return self.weights
+    def forward(self, *argin, weights=None):
+        return weights
 
 
 # class ModelQuadMix(ModelBase):
@@ -240,7 +252,7 @@ class ModelQuadForm(ModelAbstract):
     def __init__(self, weights=None):
         self.weights = weights
 
-    def forward(self, *argin, weights):
+    def forward(self, *argin, weights=None):
 
         if len(argin) != 2:
             raise ValueError("ModelQuadForm assumes two vector arguments!")
@@ -265,7 +277,7 @@ class ModelBiquadForm(ModelAbstract):
     def __init__(self, weights):
         self.weights = weights
 
-    def forward(self, *argin, weights):
+    def forward(self, *argin, weights=None):
         if len(argin) != 2:
             raise ValueError("ModelBiquadForm assumes two vector arguments!")
         result = (
@@ -451,7 +463,7 @@ class LookupTable(ModelAbstract):
             result = self.cache.forward(*argin)
         return result
 
-    def forward(self, *argin):
+    def forward(self, *argin, weights=None):
         indices = tuple(
             np.squeeze(
                 np.concatenate(tuple([np.atleast_1d(np.array(ind)) for ind in argin]))
@@ -470,12 +482,15 @@ class ModelGaussianConditional(ModelAbstract):
     model_name = "model-gaussian"
 
     def __init__(
-        self, expectation_function=None, arg_condition=[], weights=None, jitter=1e-6,
+        self, expectation_function=None, arg_condition=None, weights=None, jitter=1e-6,
     ):
 
         self.weights = np.array(weights)
         self.weights_init = self.weights
         self.expectation_function = expectation_function
+        if arg_condition is None:
+            arg_condition = []
+
         self.arg_condition = arg_condition
         self.arg_condition_init = arg_condition
         self.jitter = jitter
@@ -508,5 +523,5 @@ class ModelGaussianConditional(ModelAbstract):
 
         return np.array([np.random.normal(self.expectation, self.covariance)])
 
-    def forward(self,):
+    def forward(self, weights=None):
         pass

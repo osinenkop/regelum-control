@@ -54,7 +54,7 @@ from rcognita.actors import (
 )
 
 from rcognita.critics import (
-    CriticActionValue,
+    CriticOfActionObservation,
     CriticCALF,
 )
 
@@ -102,7 +102,7 @@ class Pipeline2Tank(AbstractPipeline):
         )
 
     def initialize_actor_critic(self):
-        self.nominal_controller = controllers.NominalController3WRobotNI(
+        self.nominal_controller = controllers.Controller3WRobotNIDisassembledCLF(
             controller_gain=0.5,
             action_bounds=self.action_bounds,
             time_start=self.time_start,
@@ -114,7 +114,7 @@ class Pipeline2Tank(AbstractPipeline):
             Actor = ActorCALF
 
         else:
-            Critic = CriticActionValue
+            Critic = CriticOfActionObservation
             if self.control_mode == "MPC":
                 Actor = ActorMPC
             elif self.control_mode == "RQL":
@@ -172,7 +172,7 @@ class Pipeline2Tank(AbstractPipeline):
             system=self.system,
             sys_type="diff_eqn",
             state_init=self.state_init,
-            disturb_init=[],
+            disturb_init=None,
             action_init=self.action_init,
             time_start=self.time_start,
             time_final=self.time_final,

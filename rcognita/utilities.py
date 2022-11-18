@@ -24,6 +24,7 @@ from scipy import signal
 import scipy as sp
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
+from typing import Union
 
 import inspect
 import warnings
@@ -61,6 +62,13 @@ except ModuleNotFoundError:
 
 
 class RCType(IntEnum):
+    """
+    Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
+    That is, if, for instance, a function of two arguments gets an argument of a `NumPy` type and an argument of a `CasAdi` type,
+    then the function's output type is inferred as a `CasADi` type.
+    Mixture of CasADi types will raise a `TypeError` exception.  
+    """
+
     TORCH = 3
     CASADI = 2
     NUMPY = 1
@@ -114,15 +122,15 @@ def decorateAll(decorator):
 
 
 @decorateAll
-def metaclassTypeInferenceDecorator(func):
+def metaclassTypeInferenceDecorator(function):
     def wrapper(*args, **kwargs):
         rc_type = kwargs.get("rc_type")
         if rc_type is not None:
             del kwargs["rc_type"]
-            return func(rc_type=rc_type, *args, **kwargs)
+            return function(rc_type=rc_type, *args, **kwargs)
         else:
 
-            return func(rc_type=type_inference(*args, **kwargs), *args, **kwargs)
+            return function(rc_type=type_inference(*args, **kwargs), *args, **kwargs)
 
     return wrapper
 
@@ -304,6 +312,17 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.vertcat(*tup)
 
+    def exp(self, x, rc_type=NUMPY):
+        if rc_type == NUMPY:
+            return np.exp(x)
+        elif rc_type == TORCH:
+            return torch.exp(x)
+        elif rc_type == CASADI:
+            return casadi.exp(x)
+
+    def penalty_function(self, x, penalty_param=1, rc_type=NUMPY):
+        return self.exp(x * penalty_param) - 1
+
     def push_vec(self, matrix, vec, rc_type=NUMPY):
         return self.vstack([matrix[1:, :], vec.T], rc_type=rc_type)
 
@@ -316,7 +335,11 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
         return result
 
-    def reshape(self, array, dim_params, rc_type=NUMPY):
+    def reshape_to_column(self, array, length, rc_type=NUMPY):
+        result_array = rc.reshape(array, [length, 1])
+        return result_array
+
+    def reshape(self, array, dim_params: Union[list, tuple, int], rc_type=NUMPY):
 
         if rc_type == CASADI:
             if isinstance(dim_params, (list, tuple)):
@@ -514,7 +537,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.sqrt(x)
 
-
     def shape(self, array, rc_type=NUMPY):
 
         if rc_type == CASADI:
@@ -524,15 +546,15 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return array.size()
 
-    def func_to_lambda_with_params(
-        self, func, *params, var_prototype=None, rc_type=NUMPY
+    def function_to_lambda_with_params(
+        self, function, *params, var_prototype=None, rc_type=NUMPY
     ):
 
         if rc_type == NUMPY or rc_type == TORCH:
             if params:
-                return lambda x: func(x, *params)
+                return lambda x: function(x, *params)
             else:
-                return lambda x: func(x)
+                return lambda x: function(x)
         else:
             try:
                 x_symb = casadi.MX.sym("x", self.shape(var_prototype))
@@ -540,12 +562,12 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
                 x_symb = casadi.MX.sym("x", *safe_unpack(self.shape(var_prototype)), 1)
 
             if params:
-                return func(x_symb, *safe_unpack(params)), x_symb
+                return function(x_symb, *safe_unpack(params)), x_symb
             else:
-                return func(x_symb), x_symb
+                return function(x_symb), x_symb
 
-    def lambda2symb(self, lambda_func, x_symb, rc_type=NUMPY):
-        return lambda_func(x_symb)
+    def lambda2symb(self, lambda_function, x_symb, rc_type=NUMPY):
+        return lambda_function(x_symb)
 
     def if_else(self, c, x, y, rc_type=NUMPY):
 
@@ -655,8 +677,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return casadi.SX(mat)
 
     @staticmethod
-    def autograd(func, x, *args):
-        return casadi.Function("f", [x, *args], [casadi.gradient(func(x, *args), x)])
+    def autograd(function, x, *args):
+        return casadi.Function(
+            "f", [x, *args], [casadi.gradient(function(x, *args), x)]
+        )
 
 
 rc = RCTypeHandler()

@@ -55,7 +55,7 @@ from rcognita.actors import (
 )
 from rcognita.visualization.vis_3wrobot import Animator3WRobotNI
 from rcognita.critics import (
-    CriticActionValue,
+    CriticOfActionObservation,
     CriticCALF,
 )
 
@@ -72,7 +72,7 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
             dim_input=self.dim_input,
             dim_output=self.dim_output,
             dim_disturb=self.dim_disturb,
-            pars=[],
+            pars=None,
             is_dynamic_controller=self.is_dynamic_controller,
             is_disturb=self.is_disturb,
             pars_disturb=rc.array(
@@ -85,7 +85,7 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
         )
 
     def initialize_nominal_controller(self):
-        self.nominal_controller = controllers.NominalController3WRobotNI(
+        self.nominal_controller = controllers.Controller3WRobotNIDisassembledCLF(
             controller_gain=0.5,
             action_bounds=self.action_bounds,
             time_start=self.time_start,

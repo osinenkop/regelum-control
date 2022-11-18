@@ -47,18 +47,6 @@ class TabularScenarioVI(TabularScenarioBase):
         self.critic.update()
 
 
-class TabularScenarioPI(TabularScenarioBase):
-    """
-    Tabular scenario for the use with tabular agents.
-    Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
-    Implements a scenario for policy iteration (PI) update.
-    """
-
-    def iterate(self):
-        self.critic.update()
-        self.actor.update()
-
-
 class OnlineScenario:
     """
     Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.

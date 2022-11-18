@@ -80,7 +80,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
             pars=[self.m, self.g, self.l],
             is_dynamic_controller=self.is_dynamic_controller,
             is_disturb=self.is_disturb,
-            pars_disturb=[],
+            pars_disturb=None,
         )
         self.observation_init = self.system.out(self.state_init, time=0)
 

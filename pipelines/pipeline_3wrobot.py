@@ -60,7 +60,7 @@ class Pipeline3WRobot(PipelineWithDefaults):
             pars=[self.m, self.I],
             is_dynamic_controller=self.is_dynamic_controller,
             is_disturb=self.is_disturb,
-            pars_disturb=[],
+            pars_disturb=None,
         )
 
     def initialize_nominal_controller(self):
@@ -192,7 +192,7 @@ class Pipeline3WRobot(PipelineWithDefaults):
                 self.action_manual,
                 self.F_min,
                 self.M_min,
-                self.F_min,
+                self.F_max,
                 self.M_max,
                 self.Nruns,
                 self.no_print,

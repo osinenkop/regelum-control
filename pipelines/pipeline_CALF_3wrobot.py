@@ -55,7 +55,7 @@ from rcognita.actors import (
     ActorSQL,
 )
 from rcognita.visualization.vis_3wrobot import Animator3WRobotNI
-from rcognita.critics import CriticActionValue, CriticCALF, CriticValue
+from rcognita.critics import CriticOfActionObservation, CriticCALF, CriticOfObservation
 
 from rcognita.utilities import rc
 from copy import deepcopy
@@ -76,10 +76,10 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             predictor=self.predictor,
             observation_init=self.state_init,
             safe_controller=self.nominal_controller,
-            displacement_penalty=0,
+            penalty_param=self.penalty_param,
             sampling_time=self.sampling_time,
         )
-        # self.critic = CriticValue(
+        # self.critic = CriticOfObservation(
         #     dim_input=self.dim_input,
         #     dim_output=self.dim_output,
         #     data_buffer_size=self.data_buffer_size,
@@ -102,7 +102,7 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             critic=self.critic,
             running_objective=self.running_objective,
             model=self.actor_model,
-            destabilization_penalty=0,
+            penalty_param=0,
         )
 
     def initialize_optimizers(self):
@@ -132,8 +132,13 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
                 critic_period=self.critic_period,
                 actor=self.actor,
                 critic=self.critic,
-                observation_target=[],
+                observation_target=None,
             )
+
+    def initialize_nominal_controller(self):
+        self.nominal_controller = controllers.Controller3WRobotPID(
+            state_init=self.state_init
+        )
 
 
 if __name__ == "__main__":

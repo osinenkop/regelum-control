@@ -27,12 +27,14 @@ class OptimalController(ABC):
         self,
         time_start=0,
         sampling_time=0.1,
-        observation_target=[],
+        observation_target=None,
         is_fixed_critic_weights=False,
     ):
 
         self.controller_clock = time_start
         self.sampling_time = sampling_time
+        if observation_target is None:
+            observation_target = []
 
         self.observation_target = observation_target
         self.is_fixed_critic_weights = is_fixed_critic_weights
@@ -54,14 +56,9 @@ class OptimalController(ABC):
         if is_time_for_new_sample:  # New sample
             # Update controller's internal clock
 
-            action = self.compute_action(
-                time, observation, is_critic_update=is_critic_update
-            )
+            self.compute_action(time, observation, is_critic_update=is_critic_update)
 
-            return action
-
-        else:
-            return self.actor.action_old
+        return self.actor.action
 
     @abstractmethod
     def compute_action(self):
@@ -77,7 +74,7 @@ class RLController(OptimalController):
     """
 
     def __init__(
-        self, *args, critic_period=0.1, actor=[], critic=[], time_start=0, **kwargs
+        self, *args, critic_period=0.1, actor=None, critic=None, time_start=0, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.actor = actor
@@ -104,58 +101,114 @@ class RLController(OptimalController):
     def compute_action(
         self, time, observation, is_critic_update=False,
     ):
-        # Critic
-
-        # Update data buffers
-        self.critic.update_buffers(observation, self.actor.action_old)
+        self.prepare_critic_and_actor(observation)
 
         if is_critic_update:
             # Update critic's internal clock
-            self.critic.launch_optimization_procedure(
-                time=time, observation=observation
-            )
-            self.critic.update_weights()
+            self.critic.optimize_weights(
+                time=time
+            )  ### optimize critic's model weights based on current observation
+            self.critic.update_and_cache_weights()  ### store weights in the critic's model
 
-        self.actor.update(observation)
-        action = self.actor.action
+        self.actor.optimize_weights()  ### optimize actor's model weights based on current observation
+        self.actor.update_and_cache_weights()  ### store weights in the actor's model
+        self.actor.update_action(observation)
 
-        return action
+        return self.actor.action
 
 
 class CALFController(RLController):
+    def compute_weights_displacement(self, agent):
+        self.weights_difference_norm = rc.norm_2(
+            self.critic.model.cache.weights - self.critic.optimized_weights
+        )
+        self.weights_difference_norms.append(self.weights_difference_norm)
+
+    def invoke_safe_action(self, observation):
+        self.actor.restore_to_previous_state()
+        self.critic.restore_to_previous_state()
+        action = self.actor.safe_controller.compute_action(observation)
+        self.actor.set_action(
+            np.clip(
+                action,
+                self.actor.action_bounds[0][: self.actor.dim_input],
+                self.actor.action_bounds[1][: self.actor.dim_input],
+            )
+        )
+
     def compute_action(
         self, time, observation, is_critic_update=False,
     ):
-        # Critic
-
         # Update data buffers
-        self.critic.update_buffers(observation, self.actor.action_old)
+        self.critic.update_buffers(
+            observation, self.actor.action
+        )  ### store current action and observation in critic's data buffer
+        self.critic.safe_decay_rate = 1e-3 * rc.norm_2(observation)
+        self.actor.receive_observation(
+            observation
+        )  ### store current observation in actor
 
-        weights_accepted = (
-            self.critic.launch_optimization_procedure(
-                time=time, observation=observation
-            )
-            == "accepted"
-        )
+        self.critic.optimize_weights(time=time)
 
-        if weights_accepted:
-            self.weights_difference_norm = rc.norm_2(
-                self.critic.model.cache.weights - self.critic.optimized_weights
-            )
-            self.weights_difference_norms.append(self.weights_difference_norm)
-            self.critic.update_weights(self.critic.optimized_weights)
-            self.actor.update(observation)
-            action = self.actor.action
+        critic_weights_accepted = self.critic.weights_acceptance_status == "accepted"
 
-            self.critic.observation_last_good = observation
-            self.critic.cache_weights()
+        if critic_weights_accepted:
+            self.critic.update_weights()
+
+            self.actor.optimize_weights(time=time)
+            actor_weights_accepted = self.actor.weights_acceptance_status == "accepted"
+
+            if actor_weights_accepted:
+                self.actor.update_and_cache_weights()
+                self.actor.update_action()
+
+                self.critic.observation_last_good = observation
+                self.critic.cache_weights()
+            else:
+                self.invoke_safe_action(observation)
         else:
-            self.actor.action_old = self.actor.model.cache.weights
-            action = self.actor.safe_controller.compute_action(observation)
-            self.actor.model.update_and_cache_weights(action)
-            self.actor.action = self.actor.model.weights
+            self.invoke_safe_action(observation)
 
-        return action
+        self.collect_critic_stats(time)
+
+        # self.critic.update_weights()
+
+        # self.actor.optimize_weights(time=time)
+
+        # self.actor.update_and_cache_weights()
+        # self.actor.update_action()
+
+        # self.critic.observation_last_good = observation
+        # self.critic.cache_weights()
+
+        return self.actor.action
+
+    def collect_critic_stats(self, time):
+        self.critic.stabilizing_constraint_violations.append(
+            self.critic.stabilizing_constraint_violation
+        )
+        self.critic.lb_constraint_violations.append(
+            0
+        )  # (self.critic.lb_constraint_violation)
+        self.critic.ub_constraint_violations.append(
+            0
+        )  # (self.critic.ub_constraint_violation)
+        self.critic.Ls.append(
+            self.critic.safe_controller.compute_LF(self.critic.current_observation)
+        )
+        self.critic.times.append(time)
+        current_CALF = self.critic.model(
+            self.critic.observation_last_good, use_stored_weights=True
+        )
+        self.critic.values.append(self.critic.model(self.critic.current_observation))
+        if self.critic.CALFs != []:
+            CALF_increased = current_CALF > self.critic.CALFs[-1]
+            if CALF_increased:
+                print("CALF increased!!")
+
+        print(self.critic.model.weights, time)
+
+        self.critic.CALFs.append(current_CALF)
 
 
 class NominalController3WRobot:
@@ -195,7 +248,7 @@ class NominalController3WRobot:
         m,
         I,
         controller_gain=10,
-        action_bounds=[],
+        action_bounds=None,
         time_start=0,
         sampling_time=0.1,
     ):
@@ -445,14 +498,415 @@ class NominalController3WRobot:
         return self._Fc(xNI, eta, theta_star)
 
 
-class NominalController3WRobotNI:
+class Controller3WRobotNIMotionPrimitive:
+    def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
+        if action_bounds is None:
+            action_bounds = []
+
+        self.action_bounds = action_bounds
+        self.K = K
+        self.controller_clock = time_start
+        self.sampling_time = sampling_time
+        self.Ls = []
+        self.times = []
+        self.action_old = rc.zeros(2)
+
+    def compute_action(self, observation):
+        x = observation[0]
+        y = observation[1]
+        angle = observation[2]
+
+        angle_cond = np.arctan2(y, x)
+
+        if not np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
+            angle, angle_cond, atol=1e-03
+        ):
+            omega = (
+                -self.K
+                * np.sign(angle - angle_cond)
+                * rc.sqrt(rc.abs(angle - angle_cond))
+            )
+            v = 0
+        elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
+            angle, angle_cond, atol=1e-03
+        ):
+            print("cond 2")
+            omega = 0
+            v = -self.K * rc.sqrt(rc.norm_2(rc.array([x, y])))
+        elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
+            angle, 0, atol=1e-03
+        ):
+            print("cond 3")
+            omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
+            v = 0
+        else:
+            omega = 0
+            v = 0
+
+        return rc.array([np.clip(v, -25.0, 25.0), np.clip(omega, -5.0, 5.0)])
+
+    def compute_action_sampled(self, time, observation):
+        """
+        Compute sampled action.
+
+        """
+
+        time_in_sample = time - self.controller_clock
+
+        if time_in_sample >= self.sampling_time:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+            self.times.append(time)
+
+            if self.action_bounds != []:
+                for k in range(2):
+                    action[k] = np.clip(
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+                    )
+
+            self.action_old = action
+
+            # DEBUG ===================================================================
+            # ================================LF debugger
+            # R  = '\033[31m'
+            # Bl  = '\033[30m'
+            # headerRow = ['L']
+            # dataRow = [self.compute_LF(observation)]
+            # rowFormat = ('8.5f', '8.5f', '8.5f', '8.5f')
+            # table = tabulate([headerRow, dataRow], floatfmt=rowFormat, headers='firstrow', tablefmt='grid')
+            # print(R+table+Bl)
+            # /DEBUG ===================================================================
+            print(action)
+            return action
+
+        else:
+            return self.action_old
+
+    def reset(self, time_start=0):
+        self.controller_clock = time_start
+
+    def compute_LF(self, observation):
+        pass
+
+
+class ControllerPID:
+    def __init__(self, P, I, D, SP=None, sampling_time=0.01, initial_point=(-5, -5)):
+        self.P = P
+        self.I = I
+        self.D = D
+
+        self.SP = SP
+        self.integral = 0.0
+        self.error_old = 0.0
+        self.sampling_time = sampling_time
+        self.initial_point = initial_point
+        if isinstance(initial_point, (float, int)):
+            state_size = 1
+        else:
+            state_size = len(initial_point)
+        self.observation_buffer = rc.ones((20, state_size)) * 1e3
+
+    def compute_error(self, PV):
+        if isinstance(PV, (float, int)):
+            error = PV - self.SP
+        else:
+            if len(PV) == 1:
+                error = PV - self.SP
+            else:
+                norm = rc.norm_2(self.SP - PV)
+                error = norm * rc.sign(rc.dot(self.initial_point, PV))
+        return error
+
+    def compute_integral(self, error):
+        self.integral += error * self.sampling_time
+        return self.integral
+
+    def compute_error_derivative(self, error):
+        error_derivative = (error - self.error_old) / self.sampling_time / 10.0
+        self.error_old = error
+        return error_derivative
+
+    def compute_action(self, PV, error_derivative=None):
+
+        error = self.compute_error(PV)
+        integral = self.compute_integral(error)
+
+        if error_derivative is None:
+            error_derivative = self.compute_error_derivative(error)
+
+        PID_signal = self.P * error + self.I * integral + self.D * error_derivative
+
+        ### DEBUG ==============================
+        # print(error, integral, error_derivative)
+        ### /DEBUG =============================
+
+        return PID_signal
+
+    def set_SP(self, SP):
+        self.SP = SP
+
+    def update_observation_buffer(self, observation):
+        self.observation_buffer = rc.push_vec(self.observation_buffer, observation)
+
+    def set_initial_point(self, point):
+        self.initial_point = point
+
+    def reset(self):
+        self.integral = 0.0
+        self.error_old = 0.0
+
+    def is_stabilized(self, stabilization_tollerance=1e-3):
+        is_stabilized = np.allclose(
+            self.observation_buffer,
+            rc.rep_mat(self.SP, 20, 1),
+            atol=stabilization_tollerance,
+        )
+        return is_stabilized
+
+
+class Controller3WRobotPID:
+    def __init__(
+        self, time_start=0, sampling_time=0.01, action_bounds=None, state_init=None
+    ):
+        if action_bounds is None:
+            action_bounds = []
+
+        self.action_bounds = action_bounds
+        self.state_init = state_init
+
+        self.controller_clock = time_start
+        self.sampling_time = sampling_time
+        self.Ls = []
+        self.times = []
+        self.action_old = rc.zeros(2)
+        self.PID_angle_arctan = ControllerPID(
+            -35, 0.0, -10, initial_point=self.state_init[2]
+        )
+        self.PID_x_y_origin = ControllerPID(
+            -35, 0.0, -30, SP=rc.array([0.0, 0.0]), initial_point=self.state_init[:2],
+        )
+        self.PID_angle_origin = ControllerPID(
+            -30, 0.0, -10, SP=0.0, initial_point=self.state_init[2]
+        )
+        self.stabilization_tollerance = 1e-2
+        self.current_F = 0
+        self.current_M = 0
+
+    def get_SP_for_PID_angle_arctan(self, x, y):
+        return np.arctan2(y, x)
+
+    def compute_square_of_norm(self, x, y):
+        return rc.sqrt(rc.norm_2(rc.array([x, y])))
+
+    def compute_action(self, observation):
+        x = observation[0]
+        y = observation[1]
+        angle = rc.array([observation[2]])
+        v = rc.array([observation[3]])
+        omega = rc.array([observation[4]])
+
+        angle_SP = rc.array([self.get_SP_for_PID_angle_arctan(y, x)])
+
+        if self.PID_angle_arctan.SP is None:
+            self.PID_angle_arctan.set_SP(angle_SP)
+
+        ANGLE_STABILIZED_TO_ARCTAN = self.PID_angle_arctan.is_stabilized()
+        XY_STABILIZED_TO_ORIGIN = self.PID_x_y_origin.is_stabilized(
+            stabilization_tollerance=self.stabilization_tollerance
+        )
+        ROBOT_STABILIZED_TO_ORIGIN = self.PID_angle_origin.is_stabilized()
+
+        if not ANGLE_STABILIZED_TO_ARCTAN:
+
+            self.PID_angle_arctan.update_observation_buffer(angle)
+            self.PID_angle_origin.reset()
+            self.PID_x_y_origin.reset()
+
+            # print(f"Stabilize to arctan(x/y), angle={angle}, arctan = {angle_SP}")
+
+            error_derivative = omega
+
+            F = 0
+            M = self.PID_angle_arctan.compute_action(
+                angle, error_derivative=error_derivative
+            )
+
+        elif ANGLE_STABILIZED_TO_ARCTAN and not XY_STABILIZED_TO_ORIGIN:
+
+            self.PID_x_y_origin.update_observation_buffer(rc.array([x, y]))
+            self.PID_angle_arctan.reset()
+            self.PID_angle_origin.reset()
+
+            # print(f"Stabilize (x, y) to (0, 0), (x, y) = {(x, y)}")
+
+            error_derivative = (
+                v * (x * rc.cos(angle) + y * rc.sin(angle)) / rc.sqrt(x ** 2 + y ** 2)
+            ) * rc.sign(rc.dot(self.PID_x_y_origin.initial_point, [x, y]))
+
+            F = self.PID_x_y_origin.compute_action(
+                [x, y], error_derivative=error_derivative
+            )
+            M = 0
+
+        elif XY_STABILIZED_TO_ORIGIN and not ROBOT_STABILIZED_TO_ORIGIN:
+
+            # print("Stabilize angle to 0")
+
+            self.PID_angle_origin.update_observation_buffer(angle)
+            self.PID_angle_arctan.reset()
+            self.PID_x_y_origin.reset()
+
+            error_derivative = omega
+
+            F = 0
+            M = self.PID_angle_origin.compute_action(
+                angle, error_derivative=error_derivative
+            )
+
+        else:
+            self.PID_angle_origin.reset()
+            self.PID_angle_arctan.reset()
+            self.PID_x_y_origin.reset()
+
+            M = 0
+            F = 0
+
+        clipped_F = np.clip(F, -300.0, 300.0)
+        clipped_M = np.clip(M, -100.0, 100.0)
+
+        self.current_F = clipped_F
+        self.current_M = clipped_M
+
+        return rc.array([clipped_F, clipped_M])
+
+    def compute_action_sampled(self, time, observation):
+        """
+        Compute sampled action.
+
+        """
+
+        time_in_sample = time - self.controller_clock
+
+        if time_in_sample >= self.sampling_time:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+            self.times.append(time)
+
+            if self.action_bounds != []:
+                for k in range(2):
+                    action[k] = np.clip(
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+                    )
+
+            self.action_old = action
+
+            print(action)
+            return action
+
+        else:
+            return self.action_old
+
+    def reset(self, time_start=0):
+        self.controller_clock = time_start
+
+    def compute_LF(self, observation):
+        pass
+
+
+class Controller3WRobotNIMotionPrimitive:
+    def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
+        if action_bounds is None:
+            action_bounds = []
+
+        self.action_bounds = action_bounds
+        self.K = K
+        self.controller_clock = time_start
+        self.sampling_time = sampling_time
+        self.Ls = []
+        self.times = []
+        self.action_old = rc.zeros(2)
+
+    def compute_action(self, observation):
+        x = observation[0]
+        y = observation[1]
+        angle = observation[2]
+
+        angle_cond = np.arctan2(y, x)
+
+        if not np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
+            angle, angle_cond, atol=1e-03
+        ):
+            omega = (
+                -self.K
+                * np.sign(angle - angle_cond)
+                * rc.sqrt(rc.abs(angle - angle_cond))
+            )
+            v = 0
+        elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
+            angle, angle_cond, atol=1e-03
+        ):
+            print("cond 2")
+            omega = 0
+            v = -self.K * rc.sqrt(rc.norm_2(rc.array([x, y])))
+        elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
+            angle, 0, atol=1e-03
+        ):
+            print("cond 3")
+            omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
+            v = 0
+        else:
+            omega = 0
+            v = 0
+
+        return rc.array([np.clip(v, -25.0, 25.0), np.clip(omega, -5.0, 5.0)])
+
+    def compute_action_sampled(self, time, observation):
+        """
+        Compute sampled action.
+
+        """
+
+        time_in_sample = time - self.controller_clock
+
+        if time_in_sample >= self.sampling_time:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+            self.times.append(time)
+
+            if self.action_bounds != []:
+                for k in range(2):
+                    action[k] = np.clip(
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+                    )
+
+            self.action_old = action
+            print(action)
+            return action
+
+        else:
+            return self.action_old
+
+    def reset(self, time_start=0):
+        self.controller_clock = time_start
+
+    def compute_LF(self, observation):
+        pass
+
+
+class Controller3WRobotNIDisassembledCLF:
     """
     Nominal parking controller for NI using disassembled supper_bound_constraintradients.
 
     """
 
     def __init__(
-        self, controller_gain=10, action_bounds=[], time_start=0, sampling_time=0.1
+        self, controller_gain=10, action_bounds=None, time_start=0, sampling_time=0.1
     ):
 
         self.controller_gain = controller_gain
@@ -651,7 +1105,7 @@ class NominalController3WRobotNI:
 
     def compute_action(self, observation):
         """
-        Same as :func:`~NominalController3WRobotNI.compute_action`, but without invoking the internal clock.
+        Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
 
         """
 

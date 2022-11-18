@@ -228,9 +228,9 @@ class BruteForceOptimizer(BaseOptimizer):
         self.possible_variants = possible_variants
 
     def element_wise_maximization(self, x):
-        reward_func = lambda variant: self.objective(variant, x)
-        reward_func = np.vectorize(reward_func)
-        values = reward_func(self.possible_variants)
+        reward_function = lambda variant: self.objective(variant, x)
+        reward_function = np.vectorize(reward_function)
+        values = reward_function(self.possible_variants)
         return self.possible_variants[np.argmax(values)]
 
     def optimize(self, objective, weights):

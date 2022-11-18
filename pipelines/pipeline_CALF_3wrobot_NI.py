@@ -55,7 +55,7 @@ from rcognita.actors import (
     ActorSQL,
 )
 from rcognita.visualization.vis_3wrobot import Animator3WRobotNI
-from rcognita.critics import CriticActionValue, CriticCALF, CriticValue
+from rcognita.critics import CriticOfActionObservation, CriticCALF, CriticOfObservation
 
 from rcognita.utilities import rc
 from copy import deepcopy
@@ -63,6 +63,9 @@ from copy import deepcopy
 
 class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
     config = Config3WRobotNI
+
+    def initialize_nominal_controller(self):
+        self.nominal_controller = controllers.Controller3WRobotNIMotionPrimitive(K=3)
 
     def initialize_actor_critic(self):
         self.critic = CriticCALF(
@@ -76,19 +79,10 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
             predictor=self.predictor,
             observation_init=self.state_init,
             safe_controller=self.nominal_controller,
-            displacement_penalty=1000,
+            penalty_param=self.penalty_param,
             sampling_time=self.sampling_time,
+            critic_regularization_param=self.critic_regularization_param,
         )
-        # self.critic = CriticValue(
-        #     dim_input=self.dim_input,
-        #     dim_output=self.dim_output,
-        #     data_buffer_size=self.data_buffer_size,
-        #     running_objective=self.running_objective,
-        #     discount_factor=self.discount_factor,
-        #     optimizer=self.critic_optimizer,
-        #     model=self.critic_model,
-        #     sampling_time=self.sampling_time,
-        # )
         self.actor = ActorCALF(
             self.nominal_controller,
             self.prediction_horizon,
@@ -102,12 +96,13 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
             critic=self.critic,
             running_objective=self.running_objective,
             model=self.actor_model,
-            destabilization_penalty=1000000,
+            penalty_param=self.penalty_param,
+            actor_regularization_param=self.actor_regularization_param,
         )
 
     def initialize_optimizers(self):
         opt_options = {
-            "maxiter": 300,
+            "maxiter": 150,
             "maxfev": 5000,
             "disp": False,
             "adaptive": True,
@@ -132,7 +127,7 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
                 critic_period=self.critic_period,
                 actor=self.actor,
                 critic=self.critic,
-                observation_target=[],
+                observation_target=None,
             )
 
 

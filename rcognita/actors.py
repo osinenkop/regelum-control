@@ -17,7 +17,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 import numpy as np
-from utilities import rc, rej_sampling_rvs
+from utilities import rc
 import scipy as sp
 from functools import partial
 from abc import ABC, abstractmethod
@@ -30,6 +30,9 @@ class Actor:
     An `objective` (a loss) as well as an `optimizer` are passed to an `actor` externally.
     """
 
+    def __call__(self, observation):
+        return self.action
+
     def reset(self):
         self.action_old = self.action_init
         self.action = self.action_init
@@ -40,12 +43,12 @@ class Actor:
         dim_input,
         dim_output,
         control_mode,
-        action_bounds=[],
-        action_init=[],
-        predictor=[],
+        action_bounds=None,
+        action_init=None,
+        predictor=None,
         optimizer=None,
-        critic=[],
-        running_objective=[],
+        critic=None,
+        running_objective=None,
         model=None,
         discount_factor=1,
     ):
@@ -60,16 +63,6 @@ class Actor:
         self.model = model
         self.predictor = predictor
         self.discount_factor = discount_factor
-        self.g_actor_values = []
-
-        if self.control_mode != "MPC" and self.critic == []:
-            raise ValueError(
-                f"Critic should be passed to actor in {self.control_mode} mode"
-            )
-        elif self.control_mode == "MPC" and self.running_objective == []:
-            raise ValueError(
-                f"stage objective should be passed to actor in {self.control_mode} mode"
-            )
 
         if isinstance(self.action_bounds, (list, np.ndarray)):
             if len(self.action_bounds) > 0:
@@ -100,6 +93,7 @@ class Actor:
         )
         self.action_bounds = [self.action_sequence_min, self.action_sequence_max]
         self.action = self.action_old
+        self.intrinsic_constraints = []
 
     def create_observation_constraints(
         self, constraint_functions, action_sequence_reshaped, observation
@@ -156,24 +150,73 @@ class Actor:
 
         return resulting_constraints
 
-    def update(self, observation, constraint_functions=[], time=None):
+    def receive_observation(self, observation):
+        self.observation = observation
+
+    def set_action(self, action):
+        self.action_old = self.action
+        self.action = action
+
+    def update_action(self, observation=None):
+        self.action_old = self.action
+
+        if observation is None:
+            observation = self.observation
+
+        self.action = self.model(observation)
+
+    def update_weights(self, weights=None):
+        if weights is None:
+            self.model.update_weights(self.optimized_weights)
+        else:
+            self.model.update_weights(weights)
+
+    def cache_weights(self, weights=None):
+        if weights is not None:
+            self.model.cache_weights(weights)
+        else:
+            self.model.cache_weights(self.optimized_weights)
+
+    def update_and_cache_weights(self, weights=None):
+        self.update_weights(weights)
+        self.cache_weights(weights)
+
+    def restore_to_previous_state(self):
+        self.model.restore_weights()
+        self.set_action(self.action_old)
+
+    def accept_or_reject_weights(
+        self, weights, constraint_functions=None, optimizer_engine="SciPy",
+    ):
+
+        if constraint_functions is None:
+            constraints_not_violated = True
+        else:
+            not_violated = [cond(weights) <= 0.0 for cond in constraint_functions]
+            constraints_not_violated = all(not_violated)
+            print(not_violated)
+
+        if constraints_not_violated:
+            return "accepted"
+        else:
+            return "rejected"
+
+    def optimize_weights(self, constraint_functions=None, time=None):
         """
-        Method to update the current action or weight tensor.
-        The old (previous) action or weight tensor is stored.
+        Method to optimize the current actor weights.
+        The old (previous) weights are stored.
         The `time` argument is used for debugging purposes.
+        If weights satisfying constraints are found, the method returns the status `accepted`.
+        Otherwise, it returns the status `rejected`.
         """
-
-        # IF NO MODEL IS PASSED, DO ACTION UPDATE. OTHERWISE, WEIGHT UPDATE
-
-        action_sequence_old = rc.rep_mat(
-            self.action_old, 1, self.prediction_horizon + 1
-        )
+        final_count_of_actions = self.prediction_horizon + 1
+        action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
         action_sequence_init_reshaped = rc.reshape(
-            action_sequence_old, [(self.prediction_horizon + 1) * self.dim_input,],
+            action_sequence, [final_count_of_actions * self.dim_input,],
         )
 
-        constraints = ()
+        constraints = []
 
         if self.optimizer.engine == "CasADi":
             action_sequence_init_reshaped = rc.DM(action_sequence_init_reshaped)
@@ -185,17 +228,17 @@ class Actor:
             )
 
             actor_objective = lambda action_sequence: self.objective(
-                action_sequence, observation
+                action_sequence, self.observation
             )
 
             actor_objective = rc.lambda2symb(actor_objective, symbolic_var)
 
             if constraint_functions:
                 constraints = self.create_constraints(
-                    constraint_functions, symbolic_var, observation
+                    constraint_functions, symbolic_var, self.observation
                 )
 
-            action_sequence_optimized = self.optimizer.optimize(
+            self.optimized_weights = self.optimizer.optimize(
                 actor_objective,
                 action_sequence_init_reshaped,
                 self.action_bounds,
@@ -204,31 +247,53 @@ class Actor:
             )
 
         elif self.optimizer.engine == "SciPy":
-            actor_objective = rc.func_to_lambda_with_params(
-                self.objective, observation, var_prototype=action_sequence_init_reshaped
+            actor_objective = rc.function_to_lambda_with_params(
+                self.objective,
+                self.observation,
+                var_prototype=action_sequence_init_reshaped,
             )
 
-            if constraint_functions:
+            if constraint_functions is not None:
                 constraints = sp.optimize.NonlinearConstraint(
                     partial(
                         self.create_constraints,
                         constraint_functions=constraint_functions,
-                        observation=observation,
+                        observation=self.observation,
                     ),
                     -np.inf,
                     0,
                 )
+            if self.intrinsic_constraints:
+                intrinsic_constraints = [
+                    sp.optimize.NonlinearConstraint(constraint_function, -np.inf, 0,)
+                    for constraint_function in self.intrinsic_constraints
+                ]
 
-            action_sequence_optimized = self.optimizer.optimize(
+            self.optimized_weights = self.optimizer.optimize(
                 actor_objective,
                 action_sequence_init_reshaped,
                 self.action_bounds,
-                constraints=constraints,
+                constraints=constraints + intrinsic_constraints,
             )
 
-        self.action_old = self.model.cache.weights
-        self.model.update_and_cache_weights(action_sequence_optimized[: self.dim_input])
-        self.action = self.model.weights
+        self.optimized_weights = self.optimized_weights[: self.dim_input]
+
+        if self.intrinsic_constraints:
+            # DEBUG ==============================
+            print("with constraint functions")
+            # /DEBUG =============================
+            self.weights_acceptance_status = self.accept_or_reject_weights(
+                self.optimized_weights,
+                constraint_functions=self.intrinsic_constraints,
+                optimizer_engine=self.optimizer.engine,
+            )
+        else:
+            # DEBUG ==============================
+            print("without constraint functions")
+            # /DEBUG =============================
+            self.weights_acceptance_status = "accepted"
+
+        return self.weights_acceptance_status
 
 
 class ActorMPC(Actor):
@@ -384,11 +449,12 @@ class ActorRQL(Actor):
         return actor_objective
 
 
-class ActorV(Actor):
+class ActorRPO(Actor):
     def objective(
         self, action, observation,
     ):
         """
+        "Running (objective) Plus Optimal (objective) actor.
         Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
         May be suitable for value iteration and policy iteration agents.
         Specifically, it optimizes the following actor objective:
@@ -428,125 +494,150 @@ class ActorV(Actor):
         return actor_objective
 
 
-class ActorCALF(ActorV):
+class ActorCALF(ActorRPO):
     def __init__(
         self,
         safe_controller,
         *args,
         actor_constraints_on=True,
-        destabilization_penalty=0,
+        penalty_param=0,
+        actor_regularization_param=0,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.safe_controller = safe_controller
         self.actor_constraints_on = actor_constraints_on
-        self.destabilization_penalty = destabilization_penalty
-        self.action_bounds[0] = rc.concatenate(
-            (self.action_bounds[0], self.critic.model.weight_min)
-        )
-        self.action_bounds[1] = rc.concatenate(
-            (self.action_bounds[1], self.critic.model.weight_max)
-        )
-
-    def update(self, observation, *args, constraint_functions=[], **kwargs):
-        if self.critic.weights_acceptance_status == "accepted":
-            super().update(
-                observation, *args, constraint_functions=constraint_functions, **kwargs
-            )
-        else:
-            action = self.safe_controller.compute_action(observation)
-
-            self.action_old = self.model.cache.weights
-            self.model.update_and_cache_weights(action)
-            self.action = self.model.weights
-
-    def objective(self, action_critic_weights, observation):
-
-        action = action_critic_weights[: (self.prediction_horizon + 1) * self.dim_input]
-        critic_weights = action_critic_weights[
-            (self.prediction_horizon + 1) * self.dim_input :
+        self.penalty_param = penalty_param
+        self.actor_regularization_param = actor_regularization_param
+        self.predictive_constraint_violations = []
+        self.intrinsic_constraints = [
+            self.CALF_decay_constraint_for_actor,
+            # self.CALF_decay_constraint_for_actor_same_critic
         ]
 
-        actor_objective = super().objective(action, observation)
-        predicted_observation = self.predictor.predict(
-            observation, action[: self.dim_input]
+    def CALF_decay_constraint_for_actor(self, weights):
+        action = self.model(self.observation, weights=weights)
+
+        predicted_observation = self.predictor.predict(self.observation, action)
+        observation_last_good = self.critic.observation_last_good
+
+        critic_next = self.critic(predicted_observation)
+        critic_current = self.critic(observation_last_good, use_stored_weights=True)
+
+        self.predictive_constraint_violation = (
+            critic_next
+            - critic_current
+            + self.critic.sampling_time * self.critic.safe_decay_rate
         )
+        return self.predictive_constraint_violation
 
-        critic_objective_current = self.critic.model(
-            observation, use_stored_weights=True,
+    def CALF_decay_constraint_for_actor_same_critic(self, weights):
+        action = self.model(self.observation, weights=weights)
+
+        predicted_observation = self.predictor.predict(self.observation, action)
+        observation_last_good = self.critic.observation_last_good
+
+        self.predictive_constraint_violation = (
+            self.critic(predicted_observation)
+            - self.critic(observation_last_good)
+            + self.critic.sampling_time * self.critic.safe_decay_rate
         )
-        critic_objective_predicted = self.critic.model(
-            predicted_observation, weights=critic_weights
-        )
+        return self.predictive_constraint_violation
 
-        def ReLU(x):
-            return x * (x > 0)
+    # def objective(self, action_critic_weights, observation):
 
-        regularization_term = (
-            self.destabilization_penalty
-            * (
-                ReLU(
-                    critic_objective_predicted
-                    - critic_objective_current
-                    + self.critic.sampling_time * self.critic.safe_decay_rate
-                )
-            )
-            ** 2
-        )
+    #     action = action_critic_weights[: (self.prediction_horizon + 1) * self.dim_input]
+    #     critic_weights = action_critic_weights[
+    #         (self.prediction_horizon + 1) * self.dim_input :
+    #     ]
 
-        return actor_objective + regularization_term
+    #     actor_objective = super().objective(action, observation)
+    #     predicted_observation = self.predictor.predict(
+    #         observation, action[: self.dim_input]
+    #     )
 
-    def update(self, observation, constraint_functions=[], time=None):
-        """
-        Method to update the current action or weight tensor.
-        The old (previous) action or weight tensor is stored.
-        The `time` argument is used for debugging purposes.
-        """
+    #     critic_objective_current = self.critic.model(
+    #         observation, use_stored_weights=True,
+    #     )
+    #     critic_objective_predicted = self.critic.model(
+    #         predicted_observation, weights=critic_weights
+    #     )
 
-        # IF NO MODEL IS PASSED, DO ACTION UPDATE. OTHERWISE, WEIGHT UPDATE
+    #     if self.penalty_param > 0.0:
 
-        action_sequence_old = rc.rep_mat(
-            self.action_old, 1, self.prediction_horizon + 1
-        )
+    #         def ReLU(x):
+    #             return x * (x > 0)
 
-        action_sequence_init_reshaped = rc.reshape(
-            action_sequence_old, [(self.prediction_horizon + 1) * self.dim_input,],
-        )
+    #         regularization_term = (
+    #             self.penalty_param
+    #             * (
+    #                 ReLU(
+    #                     critic_objective_predicted
+    #                     - critic_objective_current
+    #                     + self.critic.sampling_time * self.critic.safe_decay_rate
+    #                 )
+    #             )
+    #             ** 2
+    #         )
+    #     else:
+    #         regularization_term = 0
 
-        constraints = ()
+    #     return actor_objective + regularization_term
 
-        action_sequence_init_reshaped = rc.concatenate(
-            (action_sequence_init_reshaped, self.critic.model.weights)
-        )
+    # def update(self, observation, constraint_functions=[], time=None):
+    #     """
+    #     Method to update the current action or weight tensor.
+    #     The old (previous) action or weight tensor is stored.
+    #     The `time` argument is used for debugging purposes.
+    #     """
 
-        actor_objective = rc.func_to_lambda_with_params(
-            self.objective, observation, var_prototype=action_sequence_init_reshaped
-        )
+    #     # IF NO MODEL IS PASSED, DO ACTION UPDATE. OTHERWISE, WEIGHT UPDATE
 
-        if constraint_functions:
-            constraints = sp.optimize.NonlinearConstraint(
-                partial(
-                    self.create_constraints,
-                    constraint_functions=constraint_functions,
-                    observation=observation,
-                ),
-                -np.inf,
-                0,
-            )
+    #     action_sequence = rc.rep_mat(
+    #         self.action_old, 1, self.prediction_horizon + 1
+    #     )
 
-        action_sequence_optimized = self.optimizer.optimize(
-            actor_objective,
-            action_sequence_init_reshaped,
-            self.action_bounds,
-            constraints=constraints,
-        )[: self.dim_input]
+    #     action_sequence_init_reshaped = rc.reshape(
+    #         action_sequence, [(self.prediction_horizon + 1) * self.dim_input,],
+    #     )
 
-        self.action_old = self.model.cache.weights
-        self.model.update_and_cache_weights(action_sequence_optimized)
-        self.action = self.model.weights
+    #     constraints = ()
+
+    #     action_sequence_init_reshaped = rc.concatenate(
+    #         (action_sequence_init_reshaped, self.critic.model.weights)
+    #     )
+
+    #     actor_objective = rc.function_to_lambda_with_params(
+    #         self.objective, observation, var_prototype=action_sequence_init_reshaped
+    #     )
+
+    #     if constraint_functions:
+    #         constraints = sp.optimize.NonlinearConstraint(
+    #             partial(
+    #                 self.create_constraints,
+    #                 constraint_functions=[
+    #                     self.CALF_predictive_constraint,
+    #                     # self.CALF_predictive_constraint_with_current_critic,
+    #                 ],
+    #                 observation=observation,
+    #             ),
+    #             -np.inf,
+    #             0,
+    #         )
+
+    #     action_sequence_optimized = self.optimizer.optimize(
+    #         actor_objective,
+    #         action_sequence_init_reshaped,
+    #         self.action_bounds,
+    #         constraints=constraints,
+    #     )[: self.dim_input]
+
+    #     self.action_old = self.model.cache.weights
+    #     self.model.update_and_cache_weights(action_sequence_optimized)
+    #     self.action = self.model.weights
 
 
-class ActorTabular(ActorV):
+class ActorTabular(ActorRPO):
     """
     Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.

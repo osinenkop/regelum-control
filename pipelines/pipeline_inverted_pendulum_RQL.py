@@ -1,6 +1,6 @@
 from pipeline_inverted_pendulum_PG import PipelineInvertedPendulumPG
 from rcognita.actors import ActorRQL
-from rcognita.critics import CriticActionValue
+from rcognita.critics import CriticOfActionObservation
 from rcognita.systems import SysInvertedPendulumPD
 from rcognita.models import (
     ModelQuadNoMixTorch,
@@ -74,7 +74,7 @@ class PipelineInvertedPendulumRQL(PipelineInvertedPendulumPG):
             pars=[self.m, self.g, self.l],
             is_dynamic_controller=self.is_dynamic_controller,
             is_disturb=self.is_disturb,
-            pars_disturb=[],
+            pars_disturb=None,
         )
         self.observation_init = self.system.out(self.state_init)
 
@@ -101,7 +101,7 @@ class PipelineInvertedPendulumRQL(PipelineInvertedPendulumPG):
         self.critic_optimizer = TorchOptimizer(opt_options_torch)
 
     def initialize_actor_critic(self):
-        self.critic = CriticActionValue(
+        self.critic = CriticOfActionObservation(
             dim_input=self.dim_input,
             dim_output=self.dim_output,
             data_buffer_size=self.data_buffer_size,

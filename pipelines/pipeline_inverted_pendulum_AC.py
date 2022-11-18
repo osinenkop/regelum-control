@@ -35,7 +35,7 @@ else:
 print("INFO:", info)
 
 
-from rcognita.critics import CriticActionValue
+from rcognita.critics import CriticOfActionObservation
 from rcognita.actors import ActorProbabilisticEpisodic
 
 from rcognita.utilities import rc
@@ -85,7 +85,7 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulumPG):
 
     def initialize_actor_critic(self):
 
-        self.critic = CriticActionValue(
+        self.critic = CriticOfActionObservation(
             dim_input=self.dim_input,
             dim_output=self.dim_output,
             data_buffer_size=self.data_buffer_size,
@@ -174,7 +174,7 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulumPG):
             system=self.system,
             sys_type="diff_eqn",
             state_init=self.state_init,
-            disturb_init=[],
+            disturb_init=None,
             action_init=self.action_init,
             time_start=self.time_start,
             time_final=self.time_final,
@@ -192,7 +192,7 @@ class PipelineInvertedPendulumAC(PipelineInvertedPendulumPG):
             compute_closed_loop_rhs=self.system.compute_closed_loop_rhs,
             sys_out=self.system.out,
             state_init=self.state_init,
-            disturb_init=[],
+            disturb_init=None,
             action_init=self.action_init,
             time_start=self.time_start,
             time_final=self.time_final_critic,

@@ -102,6 +102,26 @@ class RcognitaArgParser(argparse.ArgumentParser):
             action="store_true",
             help="Flag to save animation after the visualization is over.",
         )
+        self.add_argument(
+            "--penalty_param",
+            type=float,
+            default=0,
+            help="Size of penalty coefficient",
+        )
+        self.add_argument(
+            "--areg_param",
+            dest="actor_regularization_param",
+            type=float,
+            default=0,
+            help="Size of actor regularization coefficient",
+        )
+        self.add_argument(
+            "--creg_param",
+            dest="critic_regularization_param",
+            type=float,
+            default=0,
+            help="Size of critic regularization coefficient",
+        )
 
 
 class MetaConf(type):

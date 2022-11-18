@@ -20,7 +20,7 @@ class Animator2Tank(Animator):
 
     """
 
-    def __init__(self, objects=[], pars=[]):
+    def __init__(self, objects=None, pars=None):
         self.objects = objects
         self.pars = pars
 

@@ -9,7 +9,7 @@ from rcognita.actors import (
     ActorSQL,
 )
 
-from rcognita.critics import CriticActionValue, CriticCALF, CriticTrivial
+from rcognita.critics import CriticOfActionObservation, CriticCALF, CriticTrivial
 
 from rcognita.models import (
     ModelQuadLin,
@@ -177,7 +177,7 @@ class PipelineWithDefaults(AbstractPipeline):
                 Actor = ActorMPC
                 self.critic = CriticTrivial(self.running_objective, self.sampling_time)
             else:
-                self.critic = CriticActionValue(
+                self.critic = CriticOfActionObservation(
                     dim_input=self.dim_input,
                     dim_output=self.dim_output,
                     data_buffer_size=self.data_buffer_size,
@@ -208,13 +208,6 @@ class PipelineWithDefaults(AbstractPipeline):
             model=self.actor_model,
         )
 
-    def initialize_nominal_controller(self):
-        self.nominal_controller = controllers.NominalController3WRobotNI(
-            controller_gain=0.5,
-            action_bounds=self.action_bounds,
-            sampling_time=self.sampling_time,
-        )
-
     def initialize_controller(self):
         if self.control_mode == "nominal":
             self.controller = self.nominal_controller
@@ -225,7 +218,7 @@ class PipelineWithDefaults(AbstractPipeline):
                 critic_period=self.critic_period,
                 actor=self.actor,
                 critic=self.critic,
-                observation_target=[],
+                observation_target=None,
             )
 
     def initialize_simulator(self):
@@ -233,7 +226,7 @@ class PipelineWithDefaults(AbstractPipeline):
             system=self.system,
             sys_type="diff_eqn",
             state_init=self.state_init,
-            disturb_init=[],
+            disturb_init=None,
             action_init=self.action_init,
             time_start=self.time_start,
             time_final=self.time_final,

@@ -75,8 +75,8 @@ class Simulator:
         system,
         sys_type,
         state_init,
-        disturb_init=[],
-        action_init=[],
+        disturb_init=None,
+        action_init=None,
         time_start=0,
         time_final=1,
         sampling_time=1e-2,
@@ -131,6 +131,8 @@ class Simulator:
         self.compute_closed_loop_rhs = system.compute_closed_loop_rhs
         self.sys_out = system.out
         self.sampling_time = sampling_time
+        if disturb_init is None:
+            disturb_init = []
 
         # Build full state of the closed-loop
         if is_dynamic_controller:

@@ -313,7 +313,9 @@ class Animator3WRobot(Animator):
 
     """
 
-    def __init__(self, objects=[], pars=[], subplot_grid_size=[2, 2]):
+    def __init__(self, objects=None, pars=None, subplot_grid_size=None):
+        if subplot_grid_size is None:
+            subplot_grid_size = [2, 2]
         super().__init__(subplot_grid_size=subplot_grid_size)
         self.objects = objects
         self.pars = pars
@@ -431,7 +433,7 @@ class Animator3WRobotNI(Animator):
 
     """
 
-    def __init__(self, objects=[], pars=[], subplot_grid_size=[2, 2]):
+    def __init__(self, objects=None, pars=None, subplot_grid_size=[2, 2]):
         super().__init__(subplot_grid_size=subplot_grid_size)
         self.objects = objects
         self.pars = pars

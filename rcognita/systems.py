@@ -75,10 +75,10 @@ class System:
         dim_input,
         dim_output,
         dim_disturb,
-        pars=[],
+        pars=None,
         is_dynamic_controller=0,
         is_disturb=0,
-        pars_disturb=[],
+        pars_disturb=None,
     ):
 
         """
@@ -292,7 +292,7 @@ class SysInvertedPendulum(System):
         # self.is_angle_overflow = is_angle_overflow
         # /DEBUG ===================================
 
-    def _compute_state_dynamics(self, time, state, action, disturb=[]):
+    def _compute_state_dynamics(self, time, state, action, disturb=None):
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
@@ -390,7 +390,7 @@ class Sys3WRobot(System):
             self.mu_disturb = self.pars_disturb[1]
             self.tau_disturb = self.pars_disturb[2]
 
-    def _compute_state_dynamics(self, time, state, action, disturb=[]):
+    def _compute_state_dynamics(self, time, state, action, disturb=None):
 
         m, I = self.pars[0], self.pars[1]
 
@@ -458,7 +458,7 @@ class Sys3WRobotNI(System):
             self.mu_disturb = self.pars_disturb[1]
             self.tau_disturb = self.pars_disturb[2]
 
-    def _compute_state_dynamics(self, time, state, action, disturb=[]):
+    def _compute_state_dynamics(self, time, state, action, disturb=None):
 
         Dstate = rc.zeros(self.dim_state, rc.concatenate((state, action)))
 
@@ -501,7 +501,7 @@ class Sys2Tank(System):
 
         self.name = "2tank"
 
-    def _compute_state_dynamics(self, time, state, action, disturb=[]):
+    def _compute_state_dynamics(self, time, state, action, disturb=None):
 
         tau1, tau2, K1, K2, K3 = self.pars
 
@@ -517,7 +517,7 @@ class Sys2Tank(System):
 
         return Ddisturb
 
-    def out(self, state, time=None, action=[]):
+    def out(self, state, time=None, action=None):
 
         return state
 
