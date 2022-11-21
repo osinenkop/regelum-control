@@ -135,8 +135,7 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             opt_method="ipopt", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.CasADiOptimizer(
-            opt_method="ipopt",
-            opt_options=opt_options,
+            opt_method="ipopt", opt_options=opt_options,
         )
 
     def initialize_controller(self):
@@ -155,7 +154,7 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
 
     def initialize_nominal_controller(self):
         self.nominal_controller = controllers.Controller3WRobotPID(
-            state_init=self.state_init
+            params=[self.m, self.I], state_init=self.state_init
         )
 
 

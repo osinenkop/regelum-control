@@ -672,8 +672,17 @@ class ControllerPID:
 
 class Controller3WRobotPID:
     def __init__(
-        self, time_start=0, sampling_time=0.01, action_bounds=None, state_init=None
+        self,
+        params=None,
+        time_start=0,
+        sampling_time=0.01,
+        action_bounds=None,
+        state_init=None,
     ):
+        if params is None:
+            params = [10, 1]
+
+        self.m, self.I = params
         if action_bounds is None:
             action_bounds = []
 
@@ -716,11 +725,15 @@ class Controller3WRobotPID:
         if self.PID_angle_arctan.SP is None:
             self.PID_angle_arctan.set_SP(angle_SP)
 
-        ANGLE_STABILIZED_TO_ARCTAN = self.PID_angle_arctan.is_stabilized()
+        ANGLE_STABILIZED_TO_ARCTAN = self.PID_angle_arctan.is_stabilized(
+            stabilization_tollerance=self.stabilization_tollerance / 10.0
+        )
         XY_STABILIZED_TO_ORIGIN = self.PID_x_y_origin.is_stabilized(
+            stabilization_tollerance=self.stabilization_tollerance * 10
+        )
+        ROBOT_STABILIZED_TO_ORIGIN = self.PID_angle_origin.is_stabilized(
             stabilization_tollerance=self.stabilization_tollerance
         )
-        ROBOT_STABILIZED_TO_ORIGIN = self.PID_angle_origin.is_stabilized()
 
         if not ANGLE_STABILIZED_TO_ARCTAN:
 
