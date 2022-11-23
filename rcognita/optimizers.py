@@ -10,7 +10,7 @@ import numpy as np
 import warnings
 
 try:
-    from casadi import vertcat, nlpsol, DM, SX, Function
+    from casadi import vertcat, nlpsol, DM, MX, Function
 
 except ModuleNotFoundError:
     warnings.warn_explicit(
@@ -115,7 +115,7 @@ class CasADiOptimizer(BaseOptimizer):
 
         if isinstance(constraints, (tuple, list)):
             upper_bound_constraint = [0 for _ in constraints]
-        elif isinstance(constraints, (SX, DM, int, float)):
+        elif isinstance(constraints, (MX, DM, int, float)):
             upper_bound_constraint = [0]
 
         try:

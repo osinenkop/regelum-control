@@ -1,11 +1,10 @@
 --no_visual 
---control_mode nominal 
---t1 15
---state_init -5 -5 3*pi/4 0 0 
---data_buffer_size 8
---prediction_horizon 1 
---speedup 35 
---dt 0.005 
---creg_param 1e1 
+--control_mode CALF 
+--t1 5
+--state_init 5 5 3*pi/4 0 0 
+--data_buffer_size 30
+--speedup 55 
+--dt 0.01 
+--creg_param 3e2
 --penalty_param 0
 --ode_solver CASADI

@@ -19,7 +19,7 @@ class RcognitaArgParser(argparse.ArgumentParser):
             "--control_mode",
             metavar="control_mode",
             type=str,
-            choices=["manual", "nominal", "MPC", "RQL", "SQL", "CALF", "PG"],
+            choices=["manual", "nominal", "MPC", "RQL", "SQL", "CALF", "PG", "AC"],
             default="MPC",
             help="Control mode. Currently available: "
             + "----manual: manual constant control specified by action_manual; "
@@ -28,7 +28,8 @@ class RcognitaArgParser(argparse.ArgumentParser):
             + "----RQL: Q-learning actor-critic with prediction_horizon-1 roll-outs of stage objective; "
             + "----SQL: stacked Q-learning; "
             + "----CALF: joint actor-critic (stabilizing), system-specific, needs proper setup."
-            + "----PG: Standard Policy Gradient alorithm.",
+            + "----PG: Standard Policy Gradient alorithm."
+            + "----AC: Plain Actor Critic",
         )
         self.add_argument(
             "--ode_solver",
@@ -352,7 +353,7 @@ class Config3WRobot(AbstractConfig):
         self.model_est_period = self.sampling_time * self.model_est_period_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
         if self.control_mode == "CALF":
-            self.prediction_horizon = 1
+            self.prediction_horizon = 0
 
         self.R1 = np.diag(np.array(self.R1_diag))
         self.R2 = np.diag(np.array(self.R2_diag))

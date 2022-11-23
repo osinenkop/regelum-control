@@ -64,13 +64,14 @@ class Pipeline3WRobot(PipelineWithDefaults):
         )
 
     def initialize_nominal_controller(self):
-        self.nominal_controller = controllers.NominalController3WRobot(
+        self.nominal_controller = controllers.Controller3WRobotDisassembledCLF(
             self.m,
             self.I,
             controller_gain=0.5,
             action_bounds=self.action_bounds,
             time_start=self.time_start,
             sampling_time=self.sampling_time,
+            max_iters=100,
         )
 
     def initialize_logger(self):

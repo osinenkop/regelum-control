@@ -73,6 +73,7 @@ class Critic(ABC):
         self.sampling_time = sampling_time
         self.clock = Clock(sampling_time)
         self.intrinsic_constraints = []
+        self.penalty_param = 0
 
     def __call__(self, *args, use_stored_weights=False):
         if len(args) == 2:
@@ -354,7 +355,7 @@ class CriticCALF(CriticOfObservation):
     def __init__(
         self,
         *args,
-        safe_decay_rate=1.5e3,
+        safe_decay_rate=3e3,
         predictor=None,
         observation_init=None,
         safe_controller=None,
@@ -377,6 +378,8 @@ class CriticCALF(CriticOfObservation):
         self.penalty_param = penalty_param
         self.critic_regularization_param = critic_regularization_param
         self.expected_CALFs = []
+        self.stabilizing_constraint_violation = 0
+        self.CALF = 0
 
         self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
         # self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
@@ -429,7 +432,7 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_decay_constraint_predicted_on_policy(self, weights):
-        action = self.action_buffer[-1]
+        action = self.action_buffer[-1, :]
         predicted_observation = self.predictor.predict(self.current_observation, action)
         self.stabilizing_constraint_violation = (
             self.model(predicted_observation, weights=weights)
@@ -465,6 +468,8 @@ class CriticTrivial(Critic):
                 self.engine = None
 
         self.optimizer = optimizer()
+        self.intrinsic_constraints = []
+        self.optimized_weights = []
 
     def __call__(self):
         return self.outcome

@@ -243,6 +243,8 @@ class Actor:
                     rc.lambda2symb(constraint, symbolic_var)
                     for constraint in self.intrinsic_constraints
                 ]
+            else:
+                intrisic_constraints = []
 
             self.optimized_weights = self.optimizer.optimize(
                 actor_objective,
@@ -274,6 +276,8 @@ class Actor:
                     sp.optimize.NonlinearConstraint(constraint_function, -np.inf, 0,)
                     for constraint_function in self.intrinsic_constraints
                 ]
+            else:
+                intrinsic_constraints = []
 
             self.optimized_weights = self.optimizer.optimize(
                 actor_objective,
@@ -482,12 +486,12 @@ class ActorRPO(Actor):
 
         observation_sequence = [observation]
 
-        observation_sequence_predicted = self.predictor.predict_sequence(
+        observation_predicted = self.predictor.predict(
             observation, action_sequence_reshaped
         )
         observation_row_shaped = rc.reshape(observation, [1, self.dim_output])
         observation_sequence = rc.vstack(
-            (observation_row_shaped, observation_sequence_predicted)
+            (observation_row_shaped, observation_predicted)
         )
 
         running_objective_value = self.running_objective(

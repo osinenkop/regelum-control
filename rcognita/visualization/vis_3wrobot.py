@@ -239,7 +239,7 @@ class ControlDashboard(Dashboard):
             [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
         )  # Help line
         self.lines_action = self.axis_action.plot(
-            self.time_start, rc.to_col(self.scenario.actor.action_init).T, lw=0.5
+            self.time_start, rc.force_column(self.scenario.actor.action_init).T, lw=0.5
         )
         self.axis_action.legend(
             iter(self.lines_action),
@@ -288,7 +288,7 @@ class ControlDashboardNI(Dashboard):
             [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
         )  # Help line
         self.lines_action = self.axis_action.plot(
-            self.time_start, rc.to_col(self.scenario.actor.action_init).T, lw=0.5
+            self.time_start, rc.force_column(self.scenario.actor.action_init).T, lw=0.5
         )
         self.axis_action.legend(
             iter(self.lines_action),

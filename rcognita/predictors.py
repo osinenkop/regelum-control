@@ -51,7 +51,7 @@ class EulerPredictor(BasePredictor):
             + self.pred_step_size
             * self.compute_state_dynamics([], current_state_or_observation, action)
         )
-        return next_state_or_observation
+        return rc.force_row(next_state_or_observation)
 
     def predict_sequence(self, observation, action_sequence):
 
@@ -90,6 +90,22 @@ class EulerPredictorPendulum(EulerPredictor):
             observation_sequence[k, :] = self.sys_out(next_observation)
             current_observation = next_observation
         return observation_sequence
+
+
+class RKPredictor(EulerPredictor):
+    def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.integrator = rc.create_CasADi_integrator(
+            self.compute_state_dynamics,
+            state_or_observation_init,
+            action_init,
+            self.pred_step_size,
+        )
+
+    def predict(self, current_state_or_observation, action):
+        state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
+        return rc.force_row(state_new)
 
 
 class TrivialPredictor(BasePredictor):

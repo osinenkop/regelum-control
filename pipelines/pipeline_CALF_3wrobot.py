@@ -62,7 +62,16 @@ from copy import deepcopy
 
 
 class Pipeline3WRobotCALF(Pipeline3WRobot):
-    config = Config3WRobot
+    def initialize_predictor(self):
+        self.predictor = predictors.RKPredictor(
+            self.state_init,
+            self.action_init,
+            self.pred_step_size,
+            self.system._compute_state_dynamics,
+            self.system.out,
+            self.dim_output,
+            self.prediction_horizon,
+        )
 
     def initialize_actor_critic(self):
         self.critic = CriticCALF(
@@ -152,10 +161,10 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
                 observation_target=None,
             )
 
-    def initialize_nominal_controller(self):
-        self.nominal_controller = controllers.Controller3WRobotPID(
-            params=[self.m, self.I], state_init=self.state_init
-        )
+    # def initialize_nominal_controller(self):
+    #     self.nominal_controller = controllers.Controller3WRobotPID(
+    #         params=[self.m, self.I], state_init=self.state_init
+    #     )
 
 
 if __name__ == "__main__":

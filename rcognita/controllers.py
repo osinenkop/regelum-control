@@ -9,13 +9,14 @@ Remarks:
 
 """
 
-from .utilities import rc, Clock
+from .utilities import rc, Clock, CASADI_compliance
 import numpy as np
 
 import scipy as sp
 from numpy.random import rand
 from scipy.optimize import minimize
 from abc import ABC, abstractmethod
+from .optimizers import CasADiOptimizer, SciPyOptimizer
 
 
 class OptimalController(ABC):
@@ -101,7 +102,14 @@ class RLController(OptimalController):
     def compute_action(
         self, time, observation, is_critic_update=False,
     ):
-        self.prepare_critic_and_actor(observation)
+        # Update data buffers
+        self.critic.update_buffers(
+            observation, self.actor.action
+        )  ### store current action and observation in critic's data buffer
+        # self.critic.safe_decay_rate = 1e1 * rc.norm_2(observation)
+        self.actor.receive_observation(
+            observation
+        )  ### store current observation in actor
 
         if is_critic_update:
             # Update critic's internal clock
@@ -143,6 +151,7 @@ class CALFController(RLController):
         self.critic.update_buffers(
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
+
         # self.critic.safe_decay_rate = 1e1 * rc.norm_2(observation)
         self.actor.receive_observation(
             observation
@@ -215,7 +224,7 @@ class CALFController(RLController):
         self.critic.CALFs.append(np.squeeze(current_CALF))
 
 
-class NominalController3WRobot:
+class Controller3WRobotDisassembledCLF:
     """
     This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
 
@@ -254,7 +263,8 @@ class NominalController3WRobot:
         controller_gain=10,
         action_bounds=None,
         time_start=0,
-        sampling_time=0.1,
+        sampling_time=0.01,
+        max_iters=200,
     ):
 
         self.m = m
@@ -265,6 +275,29 @@ class NominalController3WRobot:
         self.sampling_time = sampling_time
 
         self.action_old = rc.zeros(2)
+
+        casadi_opt_options = {
+            "print_time": 0,
+            "ipopt.max_iter": max_iters,
+            "ipopt.print_level": 0,
+            "ipopt.acceptable_tol": 1e-7,
+            "ipopt.acceptable_obj_change_tol": 1e-2,
+        }
+        self.casadi_optimizer = CasADiOptimizer(
+            opt_method="ipopt", opt_options=casadi_opt_options
+        )
+        scipy_opt_options = {
+            "maxiter": 50,
+            "maxfev": 5000,
+            "disp": False,
+            "adaptive": True,
+            "xatol": 1e-7,
+            "fatol": 1e-7,
+        }
+        self.scipy_optimizer = SciPyOptimizer(
+            opt_method="SLSQP", opt_options=scipy_opt_options
+        )
+        self.optimizer_engine = "CasADi"  # CasADi
 
     def reset(self, time_start):
 
@@ -286,7 +319,7 @@ class NominalController3WRobot:
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
 
-        nablaF = rc.zeros(3)
+        nablaF = rc.zeros(3, prototype=theta)
 
         nablaF[0] = (
             4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde ** 3
@@ -315,20 +348,23 @@ class NominalController3WRobot:
         Stabilizing controller for NI-part.
 
         """
-        kappa_val = rc.zeros(2)
 
         G = rc.zeros([3, 2])
         G[:, 0] = [1, 0, xNI[1]]
         G[:, 1] = [0, 1, -xNI[0]]
 
-        zeta_val = self._zeta(xNI, theta)
+        with CASADI_compliance(locals()):
 
-        kappa_val[0] = -rc.abs(rc.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 0])
-        )
-        kappa_val[1] = -rc.abs(rc.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 1])
-        )
+            kappa_val = rc.zeros(2, prototype=theta)
+
+            zeta_val = self._zeta(xNI, theta)
+
+            kappa_val[0] = -rc.abs(rc.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
+                rc.dot(zeta_val, G[:, 0])
+            )
+            kappa_val[1] = -rc.abs(rc.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
+                rc.dot(zeta_val, G[:, 1])
+            )
 
         return kappa_val
 
@@ -352,18 +388,29 @@ class NominalController3WRobot:
     def _minimizer_theta(self, xNI, eta):
         thetaInit = 0
 
-        bnds = sp.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
+        objective_lambda = lambda theta: self._Fc(xNI, eta, theta)
+        if self.optimizer_engine == "SciPy":
+            bnds = sp.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
+            options = {"maxiter": 50, "disp": False}
+            theta_val = minimize(
+                objective_lambda,
+                thetaInit,
+                method="trust-constr",
+                tol=1e-4,
+                bounds=bnds,
+                options=options,
+            ).x
 
-        options = {"maxiter": 50, "disp": False}
+        elif self.optimizer_engine == "CasADi":
+            symbolic_var = rc.array_symb((1, 1), literal="x")
+            objective_symbolic = rc.lambda2symb(objective_lambda, symbolic_var)
 
-        theta_val = minimize(
-            lambda theta: self._Fc(xNI, eta, theta),
-            thetaInit,
-            method="trust-constr",
-            tol=1e-6,
-            bounds=bnds,
-            options=options,
-        ).x
+            theta_val = self.casadi_optimizer.optimize(
+                objective=objective_symbolic,
+                initial_guess=rc.array([thetaInit], rc_type=rc.CASADI),
+                bounds=[-np.pi, np.pi],
+                decision_variable_symbolic=symbolic_var,
+            )
 
         return theta_val
 
@@ -479,7 +526,7 @@ class NominalController3WRobot:
 
     def compute_action(self, observation):
         """
-        Same as :func:`~NominalController3WRobot.compute_action`, but without invoking the internal clock.
+        Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
 
         """
 
@@ -596,7 +643,16 @@ class Controller3WRobotNIMotionPrimitive:
 
 
 class ControllerPID:
-    def __init__(self, P, I, D, SP=None, sampling_time=0.01, initial_point=(-5, -5)):
+    def __init__(
+        self,
+        P,
+        I,
+        D,
+        SP=None,
+        sampling_time=0.01,
+        initial_point=(-5, -5),
+        buffer_length=30,
+    ):
         self.P = P
         self.I = I
         self.D = D
@@ -607,10 +663,12 @@ class ControllerPID:
         self.sampling_time = sampling_time
         self.initial_point = initial_point
         if isinstance(initial_point, (float, int)):
-            state_size = 1
+            self.state_size = 1
         else:
-            state_size = len(initial_point)
-        self.observation_buffer = rc.ones((20, state_size)) * 1e3
+            self.state_size = len(initial_point)
+
+        self.buffer_length = buffer_length
+        self.observation_buffer = rc.ones((buffer_length, self.state_size)) * 1e3
 
     def compute_error(self, PV):
         if isinstance(PV, (float, int)):
@@ -661,10 +719,13 @@ class ControllerPID:
         self.integral = 0.0
         self.error_old = 0.0
 
+    def reset_buffer(self):
+        self.observation_buffer = rc.ones((self.buffer_length, self.state_size)) * 1e3
+
     def is_stabilized(self, stabilization_tollerance=1e-3):
         is_stabilized = np.allclose(
             self.observation_buffer,
-            rc.rep_mat(self.SP, 20, 1),
+            rc.rep_mat(self.SP, self.buffer_length, 1),
             atol=stabilization_tollerance,
         )
         return is_stabilized
@@ -698,7 +759,12 @@ class Controller3WRobotPID:
             -35, 0.0, -10, initial_point=self.state_init[2]
         )
         self.PID_x_y_origin = ControllerPID(
-            -35, 0.0, -30, SP=rc.array([0.0, 0.0]), initial_point=self.state_init[:2],
+            -35,
+            0.0,
+            -35,
+            SP=rc.array([0.0, 0.0]),
+            initial_point=self.state_init[:2],
+            buffer_length=100,
         )
         self.PID_angle_origin = ControllerPID(
             -30, 0.0, -10, SP=0.0, initial_point=self.state_init[2]
@@ -726,7 +792,7 @@ class Controller3WRobotPID:
             self.PID_angle_arctan.set_SP(angle_SP)
 
         ANGLE_STABILIZED_TO_ARCTAN = self.PID_angle_arctan.is_stabilized(
-            stabilization_tollerance=self.stabilization_tollerance / 10.0
+            stabilization_tollerance=self.stabilization_tollerance
         )
         XY_STABILIZED_TO_ORIGIN = self.PID_x_y_origin.is_stabilized(
             stabilization_tollerance=self.stabilization_tollerance * 10
@@ -735,8 +801,9 @@ class Controller3WRobotPID:
             stabilization_tollerance=self.stabilization_tollerance
         )
 
-        if not ANGLE_STABILIZED_TO_ARCTAN:
-
+        if not ANGLE_STABILIZED_TO_ARCTAN and not np.allclose(
+            [x, y], [0, 0], atol=1e-02
+        ):
             self.PID_angle_arctan.update_observation_buffer(angle)
             self.PID_angle_origin.reset()
             self.PID_x_y_origin.reset()
@@ -827,7 +894,16 @@ class Controller3WRobotPID:
         else:
             return self.action_old
 
+    def reset_all_PID_controllers(self):
+        self.PID_x_y_origin.reset()
+        self.PID_x_y_origin.reset_buffer()
+        self.PID_angle_arctan.reset()
+        self.PID_angle_arctan.reset_buffer()
+        self.PID_angle_origin.reset()
+        self.PID_angle_origin.reset_buffer()
+
     def reset(self, time_start=0):
+
         self.controller_clock = time_start
 
     def compute_LF(self, observation):
@@ -1044,7 +1120,7 @@ class Controller3WRobotNIDisassembledCLF:
 
         z = eta - self._kappa(xNI, theta)
 
-        return F + 1 / 2 * np.dot(z, z)
+        return F + 1 / 2 * rc.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
 

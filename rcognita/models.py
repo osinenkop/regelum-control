@@ -125,8 +125,8 @@ class ModelQuadLin(ModelAbstract):
 
     def __init__(self, input_dim, weight_min=1.0, weight_max=1e3):
         self.dim_weights = int((input_dim + 1) * input_dim / 2 + input_dim)
-        self.weight_min = weight_min * np.ones(self.dim_weights)
-        self.weight_max = weight_max * np.ones(self.dim_weights)
+        self.weight_min = weight_min * rc.ones(self.dim_weights)
+        self.weight_max = weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
@@ -138,7 +138,7 @@ class ModelQuadLin(ModelAbstract):
             vec = argin[0]
 
         polynom = rc.uptria2vec(rc.outer(vec, vec))
-        polynom = rc.concatenate([polynom, vec]) ** 2
+        polynom = rc.concatenate([polynom, vec])
         result = rc.dot(weights, polynom)
 
         return result
@@ -154,8 +154,8 @@ class ModelQuadratic(ModelAbstract):
 
     def __init__(self, input_dim, single_weight_min=1.0, single_weight_max=1e3):
         self.dim_weights = int((input_dim + 1) * input_dim / 2)
-        self.weight_min = single_weight_min * np.ones(self.dim_weights)
-        self.weight_max = single_weight_max * np.ones(self.dim_weights)
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
@@ -166,7 +166,7 @@ class ModelQuadratic(ModelAbstract):
         else:
             vec = argin[0]
 
-        polynom = rc.to_col(rc.uptria2vec(rc.outer(vec, vec))) ** 2
+        polynom = rc.force_column(rc.uptria2vec(rc.outer(vec, vec)))
         result = rc.dot(weights, polynom)
 
         return result
@@ -182,8 +182,8 @@ class ModelQuadNoMix(ModelAbstract):
 
     def __init__(self, input_dim, single_weight_min=1e-6, single_weight_max=1e2):
         self.dim_weights = input_dim
-        self.weight_min = single_weight_min * np.ones(self.dim_weights)
-        self.weight_max = single_weight_max * np.ones(self.dim_weights)
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
@@ -199,7 +199,7 @@ class ModelQuadNoMix(ModelAbstract):
 
         polynom = vec * vec
 
-        result = rc.dot(weights, rc.to_col(polynom))
+        result = rc.dot(weights, rc.force_column(polynom))
 
         return result
 
@@ -233,8 +233,8 @@ class ModelWeightContainer(ModelAbstract):
 
 #     def _forward(self, vec, weights):
 
-#         v1 = rc.to_col(v1)
-#         v2 = rc.to_col(v2)
+#         v1 = rc.force_column(v1)
+#         v2 = rc.force_column(v2)
 
 #         polynom = rc.concatenate([v1 ** 2, rc.kron(v1, v2), v2 ** 2])
 #         result = rc.dot(weights, polynom)
@@ -293,8 +293,9 @@ class ModelBiquadForm(ModelAbstract):
 
 class ModelNN(nn.Module):
     """
-    pytorch neural network of three layers: fully connected, ReLU, fully connected.
-
+    Class of pytorch neural network models. This class is not to be used barebones.
+    Instead, you should inherit from it and specify your concrete architecture.
+    
     """
 
     model_name = "NN"
@@ -421,6 +422,11 @@ class ModelNN(nn.Module):
 
 
 class ModelQuadNoMixTorch(ModelNN):
+    """
+    pytorch neural network of one layer: fully connected.
+
+    """
+
     def __init__(self, dim_observation, dim_action, dim_hidden=20, weights=None):
         super().__init__()
 
@@ -451,7 +457,7 @@ class LookupTable(ModelAbstract):
 
     def __init__(self, *dims):
         dims = tuple(
-            np.concatenate(tuple([np.atleast_1d(dim) for dim in dims])).astype(int)
+            rc.concatenate(tuple([rc.atleast_1d(dim) for dim in dims])).astype(int)
         )
         self.weights = rc.zeros(dims)
         self.update_and_cache_weights(self.weights)
@@ -466,8 +472,8 @@ class LookupTable(ModelAbstract):
 
     def forward(self, *argin, weights=None):
         indices = tuple(
-            np.squeeze(
-                np.concatenate(tuple([np.atleast_1d(np.array(ind)) for ind in argin]))
+            rc.squeeze(
+                rc.concatenate(tuple([rc.atleast_1d(rc.array(ind)) for ind in argin]))
             ).astype(int)
         )
         return self.weights[indices]
@@ -486,7 +492,7 @@ class ModelGaussianConditional(ModelAbstract):
         self, expectation_function=None, arg_condition=None, weights=None, jitter=1e-6,
     ):
 
-        self.weights = np.array(weights)
+        self.weights = rc.array(weights)
         self.weights_init = self.weights
         self.expectation_function = expectation_function
         if arg_condition is None:
@@ -514,6 +520,9 @@ class ModelGaussianConditional(ModelAbstract):
         return grad
 
     def update(self, new_weights):
+        # We clip the weights here to discard the too large ones.
+        # It is somewhat artificial, but convenient in practice, especially for plotting weights.
+        # For clipping, we use numpy explicitly without resorting to rc
         self.weights = np.clip(new_weights, 0, 100)
         self.update_expectation(self.arg_condition_init)
         self.update_covariance()
@@ -522,7 +531,8 @@ class ModelGaussianConditional(ModelAbstract):
         self.update_expectation(argin)
         self.update_covariance()
 
-        return np.array([np.random.normal(self.expectation, self.covariance)])
+        # As rc does not have random sampling, we use numpy here.
+        return rc.array([np.random.normal(self.expectation, self.covariance)])
 
     def forward(self, weights=None):
         pass
