@@ -209,12 +209,12 @@ class Estimator_RNN:
         for i in range(self.buffer_size - 1):
             # y_pred = self.model.model_out(np.concatenate((self.observation_buffer[i, :], self.action_buffer[i, :])))
             y_pred = self.model.model_out(
-                self.observation_buffer[i, :], self.action_buffer[i, :]
+                self.observation_buffer[:, i], self.action_buffer[:, i]
             )
 
             # loss += np.linalg.norm((y_pred.detach().numpy() - self.observation_buffer[i + 1, :]))
             self.loss += self.criterion(
-                y_pred, torch.tensor(self.observation_buffer[i + 1, :])
+                y_pred, torch.tensor(self.observation_buffer[:, i + 1])
             )
 
         return self.loss.detach().numpy()

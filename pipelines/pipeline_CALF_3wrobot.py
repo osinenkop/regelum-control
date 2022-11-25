@@ -62,72 +62,15 @@ from copy import deepcopy
 
 
 class Pipeline3WRobotCALF(Pipeline3WRobot):
-    def initialize_predictor(self):
-        self.predictor = predictors.RKPredictor(
-            self.state_init,
-            self.action_init,
-            self.pred_step_size,
-            self.system._compute_state_dynamics,
-            self.system.out,
-            self.dim_output,
-            self.prediction_horizon,
-        )
-
-    def initialize_actor_critic(self):
-        self.critic = CriticCALF(
-            dim_input=self.dim_input,
-            dim_output=self.dim_output,
-            data_buffer_size=self.data_buffer_size,
-            running_objective=self.running_objective,
-            discount_factor=self.discount_factor,
-            optimizer=self.critic_optimizer,
-            model=self.critic_model,
-            predictor=self.predictor,
-            observation_init=self.state_init,
-            safe_controller=self.nominal_controller,
-            penalty_param=self.penalty_param,
-            sampling_time=self.sampling_time,
-        )
-        # self.critic = CriticOfObservation(
-        #     dim_input=self.dim_input,
-        #     dim_output=self.dim_output,
-        #     data_buffer_size=self.data_buffer_size,
-        #     running_objective=self.running_objective,
-        #     discount_factor=self.discount_factor,
-        #     optimizer=self.critic_optimizer,
-        #     model=self.critic_model,
-        #     sampling_time=self.sampling_time,
-        # )
-        self.actor = ActorCALF(
-            self.nominal_controller,
-            self.prediction_horizon,
-            self.dim_input,
-            self.dim_output,
-            self.control_mode,
-            action_bounds=self.action_bounds,
-            action_init=self.action_init,
-            predictor=self.predictor,
-            optimizer=self.actor_optimizer,
-            critic=self.critic,
-            running_objective=self.running_objective,
-            model=self.actor_model,
-            penalty_param=0,
-        )
-
-    # def initialize_optimizers(self):
-    #     opt_options = {
-    #         "maxiter": 50,
-    #         "maxfev": 5000,
-    #         "disp": False,
-    #         "adaptive": True,
-    #         "xatol": 1e-7,
-    #         "fatol": 1e-7,
-    #     }
-    #     self.actor_optimizer = optimizers.SciPyOptimizer(
-    #         opt_method="SLSQP", opt_options=opt_options
-    #     )
-    #     self.critic_optimizer = optimizers.SciPyOptimizer(
-    #         opt_method="SLSQP", opt_options=opt_options,
+    # def initialize_predictor(self):
+    #     self.predictor = predictors.RKPredictor(
+    #         self.state_init,
+    #         self.action_init,
+    #         self.pred_step_size,
+    #         self.system._compute_state_dynamics,
+    #         self.system.out,
+    #         self.dim_output,
+    #         self.prediction_horizon,
     #     )
 
     def initialize_optimizers(self):
@@ -160,11 +103,6 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
                 critic=self.critic,
                 observation_target=None,
             )
-
-    # def initialize_nominal_controller(self):
-    #     self.nominal_controller = controllers.Controller3WRobotPID(
-    #         params=[self.m, self.I], state_init=self.state_init
-    #     )
 
 
 if __name__ == "__main__":

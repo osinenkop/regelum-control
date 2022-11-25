@@ -120,7 +120,7 @@ class Actor:
         max_constraint_violation = -1
         action_sequence = rc.reshape(
             action_sequence_reshaped, [self.prediction_horizon, self.dim_input]
-        )
+        ).T
 
         # Initialize for caclulation of the predicted observation sequence
         predicted_observation = current_observation
@@ -213,7 +213,7 @@ class Actor:
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
         action_sequence_init_reshaped = rc.reshape(
-            action_sequence, [final_count_of_actions * self.dim_input,],
+            action_sequence, [final_count_of_actions * self.dim_input],
         )
 
         constraints = []
@@ -256,9 +256,7 @@ class Actor:
 
         elif self.optimizer.engine == "SciPy":
             actor_objective = rc.function_to_lambda_with_params(
-                self.objective,
-                self.observation,
-                var_prototype=action_sequence_init_reshaped,
+                self.objective, self.observation,
             )
 
             if constraint_functions is not None:
@@ -285,8 +283,6 @@ class Actor:
                 self.action_bounds,
                 constraints=constraints + intrinsic_constraints,
             )
-
-        self.optimized_weights = self.optimized_weights[: self.dim_input]
 
         if self.intrinsic_constraints:
             # DEBUG ==============================
@@ -328,7 +324,7 @@ class ActorMPC(Actor):
         """
         action_sequence_reshaped = rc.reshape(
             action_sequence, [self.prediction_horizon + 1, self.dim_input]
-        )
+        ).T
 
         observation_sequence = [observation]
 
@@ -336,16 +332,14 @@ class ActorMPC(Actor):
             observation, action_sequence_reshaped
         )
 
-        observation_cur = rc.reshape(observation, [1, self.dim_output])
-
-        observation_sequence = rc.vstack(
-            (observation_cur, observation_sequence_predicted)
+        observation_sequence = rc.column_stack(
+            (observation, observation_sequence_predicted)
         )
 
         actor_objective = 0
         for k in range(self.prediction_horizon):
             actor_objective += self.discount_factor ** k * self.running_objective(
-                observation_sequence[k, :].T, action_sequence_reshaped[k, :].T
+                observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
         return actor_objective
 
@@ -374,7 +368,7 @@ class ActorSQL(Actor):
 
         action_sequence_reshaped = rc.reshape(
             action_sequence, [self.prediction_horizon + 1, self.dim_input]
-        )
+        ).T
 
         observation_sequence = [observation]
 
@@ -382,19 +376,16 @@ class ActorSQL(Actor):
             observation, action_sequence_reshaped
         )
 
-        observation_sequence = rc.vstack(
-            (
-                rc.reshape(observation, [1, self.dim_output]),
-                observation_sequence_predicted,
-            )
+        observation_sequence = rc.column_stack(
+            (observation, observation_sequence_predicted,)
         )
 
         actor_objective = 0
 
         for k in range(self.prediction_horizon + 1):
             action_objective = self.critic(
-                observation_sequence[k, :],
-                action_sequence_reshaped[k, :],
+                observation_sequence[:, k],
+                action_sequence_reshaped[:, k],
                 use_stored_weights=True,
             )
 
@@ -426,7 +417,7 @@ class ActorRQL(Actor):
 
         action_sequence_reshaped = rc.reshape(
             action_sequence, [self.prediction_horizon + 1, self.dim_input]
-        )
+        ).T
 
         observation_sequence = [observation]
 
@@ -434,28 +425,16 @@ class ActorRQL(Actor):
             observation, action_sequence_reshaped
         )
 
-        observation_sequence = rc.vstack(
-            (
-                rc.reshape(observation, [1, self.dim_output]),
-                observation_sequence_predicted,
-            )
+        observation_sequence = rc.column_stack(
+            (observation, observation_sequence_predicted,)
         )
 
         actor_objective = 0
 
         for k in range(self.prediction_horizon):
             actor_objective += self.discount_factor ** k * self.running_objective(
-                observation_sequence[k, :], action_sequence_reshaped[k, :]
+                observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
-
-        # actor_objective += (
-        #     self.discount_factor ** self.prediction_horizon
-        #     * self.critic(
-        #         observation_sequence[-1, :],
-        #         action_sequence_reshaped[-1, :],
-        #         use_stored_weights=True,
-        #     )
-        # )
         return actor_objective
 
 
@@ -480,26 +459,13 @@ class ActorRPO(Actor):
         * :math:`J^*`: optimal objective function (or its estimate)
         """
 
-        action_sequence_reshaped = rc.reshape(
-            action, [self.prediction_horizon + 1, self.dim_input]
-        )
+        observation_predicted = self.predictor.predict(observation, action)
 
-        observation_sequence = [observation]
+        running_objective_value = self.running_objective(observation, action)
 
-        observation_predicted = self.predictor.predict(
-            observation, action_sequence_reshaped
-        )
-        observation_row_shaped = rc.reshape(observation, [1, self.dim_output])
-        observation_sequence = rc.vstack(
-            (observation_row_shaped, observation_predicted)
-        )
+        critic_of_observation = self.critic(observation_predicted)
 
-        running_objective_value = self.running_objective(
-            observation_sequence[0, :], action_sequence_reshaped[0, :]
-        )
-        v_critic_value = self.critic(observation_sequence[1, :])
-
-        actor_objective = running_objective_value + v_critic_value
+        actor_objective = running_objective_value + critic_of_observation
 
         return actor_objective
 

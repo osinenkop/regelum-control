@@ -79,7 +79,9 @@ class PipelineInvertedPendulumRQL(PipelineInvertedPendulumPG):
         self.observation_init = self.system.out(self.state_init)
 
     def initialize_models(self):
-        self.actor_model = ModelWeightContainer(weights_init=self.action_init)
+        self.actor_model = ModelWeightContainer(
+            dim_output=self.dim_input, weights_init=self.action_init
+        )
         self.critic_model = ModelTorch(self.dim_output, self.dim_input)
         self.running_objective_model = ModelQuadForm(weights=self.R1)
 

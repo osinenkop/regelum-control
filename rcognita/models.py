@@ -166,7 +166,7 @@ class ModelQuadratic(ModelAbstract):
         else:
             vec = argin[0]
 
-        polynom = rc.force_column(rc.uptria2vec(rc.outer(vec, vec)))
+        polynom = rc.uptria2vec(rc.outer(vec, vec))
         result = rc.dot(weights, polynom)
 
         return result
@@ -199,7 +199,7 @@ class ModelQuadNoMix(ModelAbstract):
 
         polynom = vec * vec
 
-        result = rc.dot(weights, rc.force_column(polynom))
+        result = rc.dot(weights, polynom)
 
         return result
 
@@ -212,13 +212,14 @@ class ModelWeightContainer(ModelAbstract):
 
     model_name = "action-sequence"
 
-    def __init__(self, weights_init=None):
+    def __init__(self, dim_output, weights_init=None):
+        self.dim_output = dim_output
         self.weights = weights_init
         self.weights_init = weights_init
         self.update_and_cache_weights(self.weights)
 
     def forward(self, *argin, weights=None):
-        return weights
+        return weights[: self.dim_output]
 
 
 # class ModelQuadMix(ModelBase):

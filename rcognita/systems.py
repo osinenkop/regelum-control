@@ -12,10 +12,11 @@ Remarks:
 from calendar import c
 import numpy as np
 from numpy.random import randn
-from .utilities import rc, CASADI_compliance
+from .utilities import rc
+from abc import ABC, abstractmethod
 
 
-class System:
+class System(ABC):
     """
      Interface class of dynamical systems a.k.a. environments.
      Concrete systems should be built upon this class.
@@ -148,6 +149,7 @@ class System:
             else:
                 self._dim_full_state = self.dim_state
 
+    @abstractmethod
     def _compute_state_dynamics(self, time, state, action, disturb):
         """
         Description of the system internal dynamics.
@@ -227,41 +229,36 @@ class System:
 
         """
 
-        with CASADI_compliance(locals()):
+        rhs_full_state = rc.zeros(
+            self._dim_full_state, prototype=rc.concatenate((state_full, self.action))
+        )
 
-            rhs_full_state = rc.zeros(self._dim_full_state, prototype=state_full)
+        state = state_full[0 : self.dim_state]
 
-            state = state_full[0 : self.dim_state]
+        if self.is_disturb:
+            disturb = state_full[self.dim_state :]
+        else:
+            disturb = []
 
-            if self.is_disturb:
-                disturb = state_full[self.dim_state :]
-            else:
-                disturb = []
+        if self.is_dynamic_controller:
+            action = state_full[-self.dim_input :]
+            observation = self.out(state)
+            rhs_full_state[-self.dim_input :] = self._ctrlDyn(time, action, observation)
+        else:
+            # Fetch the control action stored in the system
+            action = self.action
 
-            if self.is_dynamic_controller:
-                action = state_full[-self.dim_input :]
-                observation = self.out(state)
-                rhs_full_state[-self.dim_input :] = rc.array(
-                    self._ctrlDyn(time, action, observation)
-                )
-            else:
-                # Fetch the control action stored in the system
-                action = self.action
+        rhs_full_state[0 : self.dim_state] = self._compute_state_dynamics(
+            time, state, action, disturb
+        )
 
-            rhs_full_state[0 : self.dim_state] = rc.squeeze(
-                rc.array(
-                    self._compute_state_dynamics(time, state, action, disturb),
-                    prototype=rhs_full_state,
-                )
+        if self.is_disturb:
+            rhs_full_state[self.dim_state :] = self._compute_disturbance_dynamics(
+                time, disturb
             )
 
-            if self.is_disturb:
-                rhs_full_state[self.dim_state :] = self._compute_disturbance_dynamics(
-                    time, disturb
-                )
-
-            # Track system's state
-            self._state = state
+        # Track system's state
+        self._state = state
 
         return rhs_full_state
 
@@ -297,14 +294,12 @@ class SysInvertedPendulum(System):
 
     def _compute_state_dynamics(self, time, state, action, disturb=None):
 
-        with CASADI_compliance(locals()):
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
 
-            Dstate = self.init_Dstate(state, action)
+        m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
-            m, g, l = self.pars[0], self.pars[1], self.pars[2]
-
-            Dstate[0] = state[1]
-            Dstate[1] = g / l * rc.sin(state[0]) + action[0] / (m * l ** 2)
+        Dstate[0] = state[1]
+        Dstate[1] = g / l * rc.sin(state[0]) + action[0] / (m * l ** 2)
 
         return Dstate
 
@@ -398,22 +393,20 @@ class Sys3WRobot(System):
 
     def _compute_state_dynamics(self, time, state, action, disturb=None):
 
-        with CASADI_compliance(locals()):
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
 
-            Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)))
+        m, I = self.pars[0], self.pars[1]
 
-            m, I = self.pars[0], self.pars[1]
+        Dstate[0] = state[3] * rc.cos(state[2])
+        Dstate[1] = state[3] * rc.sin(state[2])
+        Dstate[2] = state[4]
 
-            Dstate[0] = state[3] * rc.cos(state[2])
-            Dstate[1] = state[3] * rc.sin(state[2])
-            Dstate[2] = state[4]
-
-            if self.is_disturb and (disturb != []):
-                Dstate[3] = 1 / m * (action[0] + disturb[0])
-                Dstate[4] = 1 / I * (action[1] + disturb[1])
-            else:
-                Dstate[3] = 1 / m * action[0]
-                Dstate[4] = 1 / I * action[1]
+        if self.is_disturb and (disturb != []):
+            Dstate[3] = 1 / m * (action[0] + disturb[0])
+            Dstate[4] = 1 / I * (action[1] + disturb[1])
+        else:
+            Dstate[3] = 1 / m * action[0]
+            Dstate[4] = 1 / I * action[1]
 
         return Dstate
 
@@ -433,14 +426,13 @@ class Sys3WRobot(System):
         ``pars_disturb = [sigma_disturb, mu_disturb, tau_disturb]``, with each being an array of shape ``[dim_disturb, ]``
 
         """
-        with CASADI_compliance(locals()):
 
-            Ddisturb = rc.zeros(self.dim_disturb, prototype=disturb)
+        Ddisturb = rc.zeros(self.dim_disturb, prototype=disturb)
 
-            for k in range(0, self.dim_disturb):
-                Ddisturb[k] = -self.tau_disturb[k] * (
-                    disturb[k] + self.sigma_disturb[k] * (randn() + self.mu_disturb[k])
-                )
+        for k in range(0, self.dim_disturb):
+            Ddisturb[k] = -self.tau_disturb[k] * (
+                disturb[k] + self.sigma_disturb[k] * (randn() + self.mu_disturb[k])
+            )
 
         return Ddisturb
 
@@ -471,7 +463,7 @@ class Sys3WRobotNI(System):
 
     def _compute_state_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = self.init_Dstate(state, action)
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)))
 
         if self.is_disturb and (disturb != []):
             Dstate[0] = action[0] * rc.cos(state[2]) + disturb[0]
@@ -487,7 +479,7 @@ class Sys3WRobotNI(System):
     def _compute_disturbance_dynamics(self, time, disturb):
 
         """ """
-        Ddisturb = self.init_Ddisturb(self.dim_disturb)
+        Ddisturb = rc.zeros(self.dim_disturb)
 
         for k in range(0, self.dim_disturb):
             Ddisturb[k] = -self.tau_disturb[k] * (
@@ -516,7 +508,7 @@ class Sys2Tank(System):
 
         tau1, tau2, K1, K2, K3 = self.pars
 
-        Dstate = self.init_Dstate(state, action)
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
         Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action)
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 
@@ -524,9 +516,9 @@ class Sys2Tank(System):
 
     def _compute_disturbance_dynamics(self, time, disturb):
 
-        Ddisturb = self.init_Ddisturb(self.dim_disturb)
+        Ddisturb = rc.zeros(self.dim_disturb)
 
-        return Ddisturb
+        return rc.array(Ddisturb)
 
     def out(self, state, time=None, action=None):
 

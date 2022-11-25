@@ -9,7 +9,7 @@ Remarks:
 
 """
 
-from .utilities import rc, Clock, CASADI_compliance
+from .utilities import rc, Clock
 import numpy as np
 
 import scipy as sp
@@ -106,7 +106,7 @@ class RLController(OptimalController):
         self.critic.update_buffers(
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
-        # self.critic.safe_decay_rate = 1e1 * rc.norm_2(observation)
+        # self.critic.safe_decay_rate = 1e-1 * rc.norm_2(observation)
         self.actor.receive_observation(
             observation
         )  ### store current observation in actor
@@ -353,18 +353,16 @@ class Controller3WRobotDisassembledCLF:
         G[:, 0] = [1, 0, xNI[1]]
         G[:, 1] = [0, 1, -xNI[0]]
 
-        with CASADI_compliance(locals()):
+        kappa_val = rc.zeros(2, prototype=theta)
 
-            kappa_val = rc.zeros(2, prototype=theta)
+        zeta_val = self._zeta(xNI, theta)
 
-            zeta_val = self._zeta(xNI, theta)
-
-            kappa_val[0] = -rc.abs(rc.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
-                rc.dot(zeta_val, G[:, 0])
-            )
-            kappa_val[1] = -rc.abs(rc.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
-                rc.dot(zeta_val, G[:, 1])
-            )
+        kappa_val[0] = -rc.abs(rc.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
+            rc.dot(zeta_val, G[:, 0])
+        )
+        kappa_val[1] = -rc.abs(rc.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
+            rc.dot(zeta_val, G[:, 1])
+        )
 
         return kappa_val
 

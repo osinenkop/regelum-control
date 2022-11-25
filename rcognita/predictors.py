@@ -51,19 +51,19 @@ class EulerPredictor(BasePredictor):
             + self.pred_step_size
             * self.compute_state_dynamics([], current_state_or_observation, action)
         )
-        return rc.force_row(next_state_or_observation)
+        return next_state_or_observation
 
     def predict_sequence(self, observation, action_sequence):
 
         observation_sequence = rc.zeros(
-            [self.prediction_horizon, self.dim_output], prototype=action_sequence
+            [self.dim_output, self.prediction_horizon], prototype=action_sequence
         )
         current_observation = observation
 
         for k in range(self.prediction_horizon):
-            current_action = action_sequence[k, :]
+            current_action = action_sequence[:, k]
             next_observation = self.predict(current_observation, current_action)
-            observation_sequence[k, :] = self.sys_out(next_observation)
+            observation_sequence[:, k] = self.sys_out(next_observation)
             current_observation = next_observation
         return observation_sequence
 

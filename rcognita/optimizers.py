@@ -23,10 +23,19 @@ except ModuleNotFoundError:
 
 from abc import ABC, abstractmethod
 import time
-import torch.optim as optim
-import torch
-from multiprocessing import Pool
-import matplotlib.pyplot as plt
+
+try:
+    import torch.optim as optim
+    import torch
+
+except ModuleNotFoundError:
+    warnings.warn_explicit(
+        "\nImporting Torch failed. You may still use rcognita, but"
+        + " without PyTorch. ",
+        UserWarning,
+        __file__,
+        42,
+    )
 
 
 class BaseOptimizer(ABC):
@@ -142,7 +151,7 @@ class CasADiOptimizer(BaseOptimizer):
         # print(g1(result["x"]))
         ##### DEBUG
 
-        return result["x"]
+        return rc.to_np_1D(result["x"])
 
 
 class GradientOptimizer(CasADiOptimizer):
@@ -190,9 +199,9 @@ class GradientOptimizer(CasADiOptimizer):
 class TorchOptimizer(BaseOptimizer):
     engine = "Torch"
 
-    def __init__(
-        self, opt_options, iterations=1, opt_method=torch.optim.Adam, verbose=False
-    ):
+    def __init__(self, opt_options, iterations=1, opt_method=None, verbose=False):
+        if opt_method is None:
+            opt_method = torch.optim.Adam
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.iterations = iterations

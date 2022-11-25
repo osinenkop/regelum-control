@@ -42,6 +42,7 @@ class Critic(ABC):
         discount_factor=1,
         observation_target=None,
         sampling_time=None,
+        critic_regularization_param=0,
     ):
 
         self.data_buffer_size = data_buffer_size
@@ -74,6 +75,13 @@ class Critic(ABC):
         self.clock = Clock(sampling_time)
         self.intrinsic_constraints = []
         self.penalty_param = 0
+        self.critic_regularization_param = critic_regularization_param
+        # self.stabilizing_constraint_violations = []
+        # self.ub_constraint_violations = []
+        # self.lb_constraint_violations = []
+        # self.stabilizing_constraint_violation = 0
+        # self.ub_constraint_violation = 0
+        # self.lb_constraint_violation = 0
 
     def __call__(self, *args, use_stored_weights=False):
         if len(args) == 2:
@@ -156,17 +164,18 @@ class Critic(ABC):
             rc.array(observation, prototype=self.observation_buffer),
         )
         self.update_outcome(observation, action)
+
         self.current_observation = observation
         self.current_action = action
 
     def initialize_buffers(self):
 
         self.action_buffer = rc.zeros(
-            (int(self.data_buffer_size), int(self.dim_input)),
+            (int(self.dim_input), int(self.data_buffer_size)),
             rc_type=self.optimizer_engine,
         )
         self.observation_buffer = rc.zeros(
-            (int(self.data_buffer_size), int(self.dim_output)),
+            (int(self.dim_output), int(self.data_buffer_size)),
             rc_type=self.optimizer_engine,
         )
 
@@ -278,9 +287,9 @@ class CriticOfObservation(Critic):
         critic_objective = 0
 
         for k in range(self.data_buffer_size - 1, 0, -1):
-            observation_old = observation_buffer[k - 1, :]
-            observation_next = observation_buffer[k, :]
-            action_old = action_buffer[k - 1, :]
+            observation_old = observation_buffer[:, k - 1]
+            observation_next = observation_buffer[:, k]
+            action_old = action_buffer[:, k - 1]
 
             # Temporal difference
 
@@ -291,7 +300,7 @@ class CriticOfObservation(Critic):
             weights_last_good = self.model.cache.weights
             if self.critic_regularization_param > 0:
                 regularization_term = (
-                    rc.norm_2(weights_current - weights_last_good)
+                    rc.sum_2(weights_current - weights_last_good)
                     * self.critic_regularization_param
                 )
             else:
@@ -328,10 +337,10 @@ class CriticOfActionObservation(Critic):
         critic_objective = 0
 
         for k in range(self.data_buffer_size - 1, 0, -1):
-            observation_old = observation_buffer[k - 1, :]
-            observation_next = observation_buffer[k, :]
-            action_old = action_buffer[k - 1, :]
-            action_next = action_buffer[k, :]
+            observation_old = observation_buffer[:, k - 1]
+            observation_next = observation_buffer[:, k]
+            action_old = action_buffer[:, k - 1]
+            action_next = action_buffer[:, k]
 
             # Temporal difference
 
@@ -355,7 +364,7 @@ class CriticCALF(CriticOfObservation):
     def __init__(
         self,
         *args,
-        safe_decay_rate=3e3,
+        safe_decay_rate=2e2,
         predictor=None,
         observation_init=None,
         safe_controller=None,
@@ -392,8 +401,10 @@ class CriticCALF(CriticOfObservation):
         ]
 
     def CALF_decay_constraint_no_prediction(self, weights):
-        critic_prev = self.model(self.observation_last_good, use_stored_weights=True)
+
         critic_curr = self.model(self.current_observation, weights=weights)
+        critic_prev = self.model(self.observation_last_good, use_stored_weights=True)
+
         self.stabilizing_constraint_violation = (
             critic_curr
             - critic_prev
@@ -422,7 +433,7 @@ class CriticCALF(CriticOfObservation):
         observation_last_good = self.observation_last_good
 
         critic_next = self.model(predicted_observation, weights=weights)
-        critic_current = self.model(self.current_observation)
+        critic_current = self.model(observation_last_good, use_stored_weights=True)
 
         self.stabilizing_constraint_violation = (
             critic_next
@@ -432,7 +443,7 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_decay_constraint_predicted_on_policy(self, weights):
-        action = self.action_buffer[-1, :]
+        action = self.action_buffer[:, -1]
         predicted_observation = self.predictor.predict(self.current_observation, action)
         self.stabilizing_constraint_violation = (
             self.model(predicted_observation, weights=weights)
@@ -440,13 +451,6 @@ class CriticCALF(CriticOfObservation):
             + self.predictor.pred_step_size * self.safe_decay_rate
         )
         return self.stabilizing_constraint_violation
-
-    # def objective(self, data_buffer=None, weights=None):
-    #     critic_objective = super().objective(data_buffer=data_buffer, weights=weights)
-    #     penalty = rc.penalty_function(
-    #         self.CALF_decay_constraint(weights), self.penalty_param
-    #     )
-    #     return critic_objective + penalty
 
 
 class CriticTrivial(Critic):
@@ -459,7 +463,7 @@ class CriticTrivial(Critic):
         self.running_objective = running_objective
         self.sampling_time = sampling_time
         self.outcome = 0
-        self.model = ModelWeightContainer()
+        self.model = ModelWeightContainer(1)
         self.model.weights = None
         self.clock = Clock(sampling_time)
 

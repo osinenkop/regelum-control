@@ -2,14 +2,14 @@ from abc import ABCMeta, abstractmethod
 from rcognita import controllers, simulator, predictors, optimizers, objectives
 
 from rcognita.utilities import rc
-from rcognita.actors import (
-    ActorCALF,
-    ActorMPC,
-    ActorRQL,
-    ActorSQL,
-)
+from rcognita.actors import ActorCALF, ActorMPC, ActorRQL, ActorSQL, ActorRPO
 
-from rcognita.critics import CriticOfActionObservation, CriticCALF, CriticTrivial
+from rcognita.critics import (
+    CriticOfActionObservation,
+    CriticCALF,
+    CriticTrivial,
+    CriticOfObservation,
+)
 
 from rcognita.models import (
     ModelQuadLin,
@@ -88,8 +88,19 @@ class PipelineWithDefaults(AbstractPipeline):
             self.prediction_horizon,
         )
 
+    # def initialize_predictor(self):
+    #     self.predictor = predictors.RKPredictor(
+    #         self.state_init,
+    #         self.action_init,
+    #         self.pred_step_size,
+    #         self.system._compute_state_dynamics,
+    #         self.system.out,
+    #         self.dim_output,
+    #         self.prediction_horizon,
+    #     )
+
     def initialize_models(self):
-        if self.control_mode == "CALF":
+        if self.control_mode in ("CALF", "AC"):
             self.dim_critic_model_input = self.dim_output
         else:
             self.dim_critic_model_input = self.dim_input + self.dim_output
@@ -116,7 +127,9 @@ class PipelineWithDefaults(AbstractPipeline):
             elif self.actor_struct == "quadratic":
                 self.actor_model = ModelQuadratic(self.dim_output)
             else:
-                self.actor_model = ModelWeightContainer(weights_init=self.action_init)
+                self.actor_model = ModelWeightContainer(
+                    dim_output=self.dim_input, weights_init=self.action_init
+                )
 
         self.model_running_objective = ModelQuadForm(weights=self.R1)
 
@@ -166,16 +179,47 @@ class PipelineWithDefaults(AbstractPipeline):
                 discount_factor=self.discount_factor,
                 optimizer=self.critic_optimizer,
                 model=self.critic_model,
-                safe_controller=self.nominal_controller,
                 predictor=self.predictor,
                 observation_init=self.state_init,
+                safe_controller=self.nominal_controller,
+                penalty_param=self.penalty_param,
+                sampling_time=self.sampling_time,
+                critic_regularization_param=self.critic_regularization_param,
             )
-            Actor = ActorCALF
+            self.actor = ActorCALF(
+                self.nominal_controller,
+                self.prediction_horizon,
+                self.dim_input,
+                self.dim_output,
+                self.control_mode,
+                action_bounds=self.action_bounds,
+                action_init=self.action_init,
+                predictor=self.predictor,
+                optimizer=self.actor_optimizer,
+                critic=self.critic,
+                running_objective=self.running_objective,
+                model=self.actor_model,
+                penalty_param=self.penalty_param,
+                actor_regularization_param=self.actor_regularization_param,
+            )
 
         else:
             if self.control_mode == "MPC":
                 Actor = ActorMPC
                 self.critic = CriticTrivial(self.running_objective, self.sampling_time)
+            elif self.control_mode == "AC":
+                self.critic = CriticOfObservation(
+                    dim_input=self.dim_input,
+                    dim_output=self.dim_output,
+                    data_buffer_size=self.data_buffer_size,
+                    running_objective=self.running_objective,
+                    discount_factor=self.discount_factor,
+                    optimizer=self.critic_optimizer,
+                    model=self.critic_model,
+                    sampling_time=self.sampling_time,
+                )
+                Actor = ActorRPO
+
             else:
                 self.critic = CriticOfActionObservation(
                     dim_input=self.dim_input,
@@ -194,23 +238,32 @@ class PipelineWithDefaults(AbstractPipeline):
                 elif self.control_mode == "nominal":
                     Actor = ActorMPC
 
-        self.actor = Actor(
-            self.prediction_horizon,
-            self.dim_input,
-            self.dim_output,
-            self.control_mode,
-            self.action_bounds,
-            action_init=self.action_init,
-            predictor=self.predictor,
-            optimizer=self.actor_optimizer,
-            critic=self.critic,
-            running_objective=self.running_objective,
-            model=self.actor_model,
-        )
+            self.actor = Actor(
+                self.prediction_horizon,
+                self.dim_input,
+                self.dim_output,
+                self.control_mode,
+                self.action_bounds,
+                action_init=self.action_init,
+                predictor=self.predictor,
+                optimizer=self.actor_optimizer,
+                critic=self.critic,
+                running_objective=self.running_objective,
+                model=self.actor_model,
+            )
 
     def initialize_controller(self):
         if self.control_mode == "nominal":
             self.controller = self.nominal_controller
+        elif self.control_mode == "CALF":
+            self.controller = controllers.CALFController(
+                time_start=self.time_start,
+                sampling_time=self.sampling_time,
+                critic_period=self.critic_period,
+                actor=self.actor,
+                critic=self.critic,
+                observation_target=None,
+            )
         else:
             self.controller = controllers.RLController(
                 time_start=self.time_start,

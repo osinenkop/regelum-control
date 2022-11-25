@@ -37,6 +37,18 @@
             "justMyCode": true
         },
         {
+            "name": "Python: simplest",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_3wrobot_NI.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--no_visual",
+                "--is_playback"
+            ]
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
@@ -72,6 +84,18 @@
             "args": [
                 "--config",
                 "/home/gvidon/JoraProgramming/rcognita/pipelines/argv_configs/CALF_3wrobot.txt"
+            ]
+        },
+        {
+            "name": "CALF NI",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_CALF_3wrobot_NI.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--config",
+                "/home/gvidon/JoraProgramming/rcognita/pipelines/argv_configs/best_CALF_try.txt"
             ]
         },
         {
@@ -166,22 +190,12 @@
             "name": "casadi debug",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_3wrobot_NI_casadi.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [
                 "--no_visual",
                 "--is_playback",
-                "--control_mode",
-                "SQL",
-                "--speedup",
-                "15",
-                "--prediction_horizon",
-                "5",
-                "--data_buffer_size",
-                "20",
-                "--t1",
-                "3"
             ]
         },
         {

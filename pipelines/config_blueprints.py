@@ -352,7 +352,7 @@ class Config3WRobot(AbstractConfig):
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.model_est_period = self.sampling_time * self.model_est_period_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
-        if self.control_mode == "CALF":
+        if self.control_mode in ("CALF", "AC"):
             self.prediction_horizon = 0
 
         self.R1 = np.diag(np.array(self.R1_diag))
@@ -532,8 +532,8 @@ class Config3WRobotNI(AbstractConfig):
         self.dim_input = 2
         self.dim_output = self.dim_state
         self.dim_disturb = 2
-        if self.control_mode == "CALF":
-            self.prediction_horizon = 1
+        if self.control_mode in ("CALF", "AC"):
+            self.prediction_horizon = 0
 
         self.dim_R1 = self.dim_output + self.dim_input
         self.dim_R2 = self.dim_R1

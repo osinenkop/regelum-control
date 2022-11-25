@@ -7,6 +7,17 @@ Remarks:
 - All buffers are treated as of type [L, n] where each row is a vector
 - Buffers are updated from bottom to top
 
+np convention
+
+casadi convetion
+
+rc convention:
+
+
+
+therefore, we do so or so
+
+tag `compliant` will mean that the operation be compliant with the rc vwector dimensionality convention
 """
 
 import numpy as np
@@ -127,9 +138,9 @@ def metaclassTypeInferenceDecorator(function):
         rc_type = kwargs.get("rc_type")
         if rc_type is not None:
             del kwargs["rc_type"]
-            return function(rc_type=rc_type, *args, **kwargs)
+            return function(*args, **kwargs, rc_type=rc_type)
         else:
-            return function(rc_type=type_inference(*args, **kwargs), *args, **kwargs)
+            return function(*args, **kwargs, rc_type=type_inference(*args, **kwargs))
 
     return wrapper
 
@@ -285,12 +296,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         integrator = casadi.integrator("intg", "rk", DAE, options)
         return integrator
 
-    def force_CASADI_vector_compliance(self, vector, prototype=None, rc_type=NUMPY):
-        if rc_type == CASADI:
-            return self.force_column(vector)
-        else:
-            return vector
-
     def cos(self, x, rc_type=NUMPY):
         if rc_type == NUMPY:
             return np.cos(x)
@@ -306,6 +311,16 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.sin(x)
         elif rc_type == CASADI:
             return casadi.sin(x)
+
+    def column_stack(self, tup, rc_type=NUMPY):
+        rc_type = type_inference(*tup)
+
+        if rc_type == NUMPY:
+            return np.column_stack(tup)
+        elif rc_type == TORCH:
+            return torch.column_stack(tup)
+        elif rc_type == CASADI:
+            return casadi.horzcat(*tup)
 
     def hstack(self, tup, rc_type=NUMPY):
         rc_type = type_inference(*tup)
@@ -339,7 +354,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self.exp(x * penalty_param) - 1
 
     def push_vec(self, matrix, vec, rc_type=NUMPY):
-        return self.vstack([matrix[1:, :], vec], rc_type=rc_type)
+        return self.column_stack([matrix[:, 1:], vec], rc_type=rc_type)
 
     def reshape_CasADi_as_np(self, array, dim_params, rc_type=NUMPY):
         result = casadi.MX(*dim_params)
@@ -376,7 +391,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.reshape(array, dim_params)
 
-    def array(self, array, prototype=None, rc_type=NUMPY):
+    def array(
+        self, array, prototype=None, rc_type=NUMPY,
+    ):
+
         if rc_type == NUMPY:
             self._array = np.array(array)
         elif rc_type == TORCH:
@@ -385,43 +403,40 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             casadi_constructor = type(prototype) if prototype is not None else casadi.DM
 
-            self._array = (
-                self.force_row(casadi_constructor(array))
-                if self.is_force_row
-                else casadi_constructor(array)
-            )
+            self._array = casadi_constructor(array)
 
         return self._array
 
-    def ones(self, argin, prototype=None, rc_type=NUMPY):
+    def ones(
+        self, argin, prototype=None, rc_type=NUMPY,
+    ):
+
         if rc_type == NUMPY:
             self._array = np.ones(argin)
         elif rc_type == TORCH:
             self._array = torch.ones(argin)
         elif rc_type == CASADI:
+
             casadi_constructor = type(prototype) if prototype is not None else casadi.DM
 
-            self._array = (
-                self.force_row(casadi_constructor.ones(*safe_unpack(argin)))
-                if self.is_force_row
-                else casadi_constructor.ones(*safe_unpack(argin))
-            )
+            self._array = casadi_constructor.ones(*safe_unpack(argin))
 
         return self._array
 
-    def zeros(self, argin, prototype=None, rc_type=NUMPY):
+    def zeros(
+        self, argin, prototype=None, rc_type=NUMPY,
+    ):
 
         if rc_type == NUMPY:
             return np.zeros(argin)
         elif rc_type == TORCH:
             return torch.zeros(argin)
         elif rc_type == CASADI:
+
             casadi_constructor = type(prototype) if prototype is not None else casadi.DM
-            self._array = (
-                self.force_row(casadi_constructor.zeros(*safe_unpack(argin)))
-                if self.is_force_row
-                else casadi_constructor.zeros(*safe_unpack(argin))
-            )
+
+            self._array = casadi_constructor.zeros(*safe_unpack(argin))
+
             return self._array
 
     def concatenate(self, argin, rc_type=NUMPY, **kwargs):
@@ -521,6 +536,17 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.max(*safe_unpack(array))
 
+    def sum_2(self, array, rc_type=NUMPY):
+        if isinstance(array, (list, tuple)):
+            rc_type = type_inference(*array)
+
+        if rc_type == NUMPY:
+            return np.sum(array ** 2)
+        elif rc_type == TORCH:
+            return torch.sum(array ** 2)
+        elif rc_type == CASADI:
+            return casadi.sum1(array ** 2)
+
     def mean(self, array, rc_type=NUMPY):
         if isinstance(array, (list, tuple)):
             rc_type = type_inference(*array)
@@ -550,19 +576,21 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def force_row(self, argin, rc_type=NUMPY):
         argin_shape = self.shape(argin)
 
-        if len(argin_shape) > 1:
-            if (
-                self.shape(argin)[0] > self.shape(argin)[1]
-                and self.shape(argin)[1] == 1
-            ):
-                return argin.T
-            else:
-                return argin
+        if rc_type == CASADI:
+            if len(argin_shape) > 1:
+                if (
+                    self.shape(argin)[0] > self.shape(argin)[1]
+                    and self.shape(argin)[1] == 1
+                ):
+                    return argin.T
+                else:
+                    return argin
         else:
-            if rc_type == NUMPY:
-                return np.reshape(argin, (1, argin.size))
-            elif rc_type == TORCH:
-                return torch.reshape(argin, (1, argin.size()[0]))
+            return argin
+            # if rc_type == NUMPY:
+            #     return np.reshape(argin, (1, argin.size))
+            # elif rc_type == TORCH:
+            #     return torch.reshape(argin, (1, argin.size()[0]))
 
     def dot(self, A, B, rc_type=NUMPY):
 
@@ -592,24 +620,24 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return array.size()
 
     def function_to_lambda_with_params(
-        self, function, *params, var_prototype=None, rc_type=NUMPY
+        self, function_to_lambda, *params, var_prototype=None, rc_type=NUMPY
     ):
 
-        if rc_type == NUMPY or rc_type == TORCH:
+        if rc_type in (NUMPY, TORCH):
             if params:
-                return lambda x: function(x, *params)
+                return lambda x: function_to_lambda(x, *params)
             else:
-                return lambda x: function(x)
+                return lambda x: function_to_lambda(x)
         else:
             try:
-                x_symb = casadi.MX.sym("x", self.shape(var_prototype))
+                x_symb = self.array_symb(self.shape(var_prototype))
             except NotImplementedError:
-                x_symb = casadi.MX.sym("x", *safe_unpack(self.shape(var_prototype)), 1)
+                x_symb = self.array_symb((*safe_unpack(self.shape(var_prototype)), 1))
 
             if params:
-                return function(x_symb, *safe_unpack(params)), x_symb
+                return function_to_lambda(x_symb, *safe_unpack(params)), x_symb
             else:
-                return function(x_symb), x_symb
+                return function_to_lambda(x_symb), x_symb
 
     def lambda2symb(self, lambda_function, x_symb, rc_type=NUMPY):
         return lambda_function(x_symb)
@@ -680,6 +708,12 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.logic_and(a, b)
 
+    def to_np_1D(self, v, rc_type=NUMPY):
+        if rc_type == CASADI:
+            return v.T.full().flatten()
+        else:
+            return v
+
     def squeeze(self, v, rc_type=NUMPY):
 
         if rc_type == NUMPY:
@@ -735,43 +769,48 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 rc = RCTypeHandler()
 
 
-class CASADI_compliance:
-    """
-    A context manager for automatic transpose of vectors.
-    Basic usage is:
+# class CASADI_vector_convention:
+#     """
+#     A context manager for automatic transpose of vectors for vector_convention with the CASADI default vector dimension convention.
+#     rcognita treats vectors, just like numpy, as rows.
+#     CASADI, on contrary, treats them as columns.
+#     We want to flatten everything to the desfault assumed standard which is row.
+#     But in order to process some code blocks so that they comply with CASADI, we use this context manager.
 
-    ..  code-block:: python
+#     Basic usage goes like:
 
-        with CASADI_compliance(locals()):
-            Dstate = rc.zeros(dim_state, rc_type=rc.CASADI)
-            ...
+#     ..  code-block:: python
 
-    It will automatically sets Dstate to the row format 
-    after the body of the context is finished.
-    """
+#         with CASADI_vector_convention(locals()):
+#             Dstate = rc.zeros(dim_state, rc_type=rc.CASADI)
+#             ...
 
-    def __init__(self, local_dict):
-        self.local_dict = local_dict
-        RCTypeHandler.is_force_row = False
+#     This code will automatically set `Dstate` to the column format, whenever the backround engine is CASADI.
+#     After the body of the context is executed, `Dstate` will be converted to the default (row) format.
+#     """
 
-    def __enter__(self):
-        self.local_dict["rc"] = rc
+#     def __init__(self, local_dict):
+#         self.local_dict = local_dict
+#         RCTypeHandler.is_force_row = False
 
-    def __exit__(self, *args):
+#     def __enter__(self):
+#         self.local_dict["rc"] = rc
 
-        for var in self.local_dict:
-            if is_CasADi_typecheck(self.local_dict[var]):
-                try:
-                    shape = rc.shape(self.local_dict[var])
-                    if shape[1] == 1:
-                        self.local_dict[var] = rc.force_row(self.local_dict[var])
-                        break
-                except:
-                    pass
-            else:
-                pass
+#     def __exit__(self, *args):
+#         print(self.local_dict)
+#         for var in self.local_dict:
+#             if is_CasADi_typecheck(self.local_dict[var]):
+#                 try:
+#                     shape = rc.shape(self.local_dict[var])
+#                     if shape[1] == 1:
+#                         self.local_dict[var] = rc.force_row(self.local_dict[var])
+#                         break
+#                 except:
+#                     pass
+#             else:
+#                 pass
 
-        RCTypeHandler.is_force_row = True
+#         RCTypeHandler.is_force_row = True
 
 
 def rej_sampling_rvs(dim, pdf, M):
