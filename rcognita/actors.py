@@ -181,7 +181,7 @@ class Actor:
         self.update_weights(weights)
         self.cache_weights(weights)
 
-    def restore_to_previous_state(self):
+    def restore_weights(self):
         self.model.restore_weights()
         self.set_action(self.action_old)
 
@@ -490,6 +490,7 @@ class ActorCALF(ActorRPO):
             self.CALF_decay_constraint_for_actor,
             # self.CALF_decay_constraint_for_actor_same_critic
         ]
+        self.weights_acceptance_status = False
 
     def CALF_decay_constraint_for_actor(self, weights):
         action = self.model(self.observation, weights=weights)

@@ -124,6 +124,20 @@ class RcognitaArgParser(argparse.ArgumentParser):
             help="Size of critic regularization coefficient",
         )
 
+        self.add_argument(
+            "--safe_decay_rate",
+            dest="safe_decay_rate",
+            type=float,
+            default=1e-3,
+            help="Size of critic regularization coefficient",
+        )
+        self.add_argument(
+            "--dynamic_decay_rate",
+            action="store_true",
+            dest="is_dynamic_decay_rate",
+            help="Flag to produce graphical output.",
+        )
+
 
 class MetaConf(type):
     def __init__(cls, name, bases, clsdict):
@@ -281,7 +295,7 @@ class Config3WRobot(AbstractConfig):
             "--R1_diag",
             type=float,
             nargs="+",
-            default=[1, 10, 1, 0, 0, 0, 0],
+            default=[10, 10, 1, 0, 0, 0, 0],
             help="Parameter of stage objective function. Must have proper dimension. "
             + "Say, if chi = [observation, action], then a quadratic stage objective reads chi.T diag(R1) chi, where diag() is transformation of a vector to a diagonal matrix.",
         )

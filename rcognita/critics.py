@@ -102,7 +102,7 @@ class Critic(ABC):
         else:
             self.model.cache_weights(self.optimized_weights)
 
-    def restore_to_previous_state(self):
+    def restore_weights(self):
         self.model.restore_weights()
 
     def update_and_cache_weights(self, weights=None):
@@ -230,10 +230,12 @@ class Critic(ABC):
 
         cost_function = rc.lambda2symb(cost_function, symbolic_var)
 
+        is_penalty = int(self.penalty_param > 0)
+
         if intrinsic_constraints:
             constraints = [
                 rc.lambda2symb(constraint, symbolic_var)
-                for constraint in intrinsic_constraints
+                for constraint in intrinsic_constraints[is_penalty:]
             ]
 
         optimized_weights = self.optimizer.optimize(
@@ -364,7 +366,8 @@ class CriticCALF(CriticOfObservation):
     def __init__(
         self,
         *args,
-        safe_decay_rate=2e2,
+        safe_decay_rate=1e-3,
+        is_dynamic_decay_rate=True,
         predictor=None,
         observation_init=None,
         safe_controller=None,
@@ -374,6 +377,7 @@ class CriticCALF(CriticOfObservation):
     ):
         super().__init__(*args, **kwargs)
         self.safe_decay_rate = safe_decay_rate
+        self.is_dynamic_decay_rate = is_dynamic_decay_rate
         self.safe_controller = safe_controller
         self.predictor = predictor
         self.observation_last_good = observation_init
@@ -389,9 +393,10 @@ class CriticCALF(CriticOfObservation):
         self.expected_CALFs = []
         self.stabilizing_constraint_violation = 0
         self.CALF = 0
+        self.weights_acceptance_status = False
 
-        self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
-        # self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
+        # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
+        self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
         # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
 
         self.intrinsic_constraints = [
@@ -399,6 +404,23 @@ class CriticCALF(CriticOfObservation):
             # self.CALF_critic_lower_bound_constraint,
             # self.CALF_critic_upper_bound_constraint,
         ]
+
+    def update_buffers(self, observation, action):
+        self.action_buffer = rc.push_vec(
+            self.action_buffer, rc.array(action, prototype=self.action_buffer)
+        )
+        self.observation_buffer = rc.push_vec(
+            self.observation_buffer,
+            rc.array(observation, prototype=self.observation_buffer),
+        )
+        self.update_outcome(observation, action)
+
+        self.current_observation = observation
+        self.current_action = action
+
+        if self.is_dynamic_decay_rate:
+            print(self.safe_decay_rate)
+            self.safe_decay_rate = 1e2 * rc.norm_2(observation)
 
     def CALF_decay_constraint_no_prediction(self, weights):
 
@@ -427,10 +449,10 @@ class CriticCALF(CriticOfObservation):
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights):
-        action = self.safe_controller.compute_action(self.current_observation)
-
-        predicted_observation = self.predictor.predict(self.current_observation, action)
         observation_last_good = self.observation_last_good
+
+        action = self.safe_controller.compute_action(self.current_observation)
+        predicted_observation = self.predictor.predict(self.current_observation, action)
 
         critic_next = self.model(predicted_observation, weights=weights)
         critic_current = self.model(observation_last_good, use_stored_weights=True)
@@ -451,6 +473,17 @@ class CriticCALF(CriticOfObservation):
             + self.predictor.pred_step_size * self.safe_decay_rate
         )
         return self.stabilizing_constraint_violation
+
+    def objective(self, *args, **kwargs):
+        objective = super().objective(*args, **kwargs)
+
+        weights = kwargs.get("weights")
+        if self.penalty_param != 0:
+            objective += rc.penalty_function(
+                self.CALF_decay_constraint(weights), self.penalty_param
+            )
+
+        return objective
 
 
 class CriticTrivial(Critic):

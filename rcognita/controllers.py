@@ -125,7 +125,7 @@ class RLController(OptimalController):
         return self.actor.action
 
 
-class CALFController(RLController):
+class CALFControllerExPost(RLController):
     def compute_weights_displacement(self, agent):
         self.weights_difference_norm = rc.norm_2(
             self.critic.model.cache.weights - self.critic.optimized_weights
@@ -133,8 +133,8 @@ class CALFController(RLController):
         self.weights_difference_norms.append(self.weights_difference_norm)
 
     def invoke_safe_action(self, observation):
-        self.actor.restore_to_previous_state()
-        self.critic.restore_to_previous_state()
+        # self.actor.restore_weights()
+        # self.critic.restore_weights()
         action = self.actor.safe_controller.compute_action(observation)
         self.actor.set_action(
             np.clip(
@@ -152,7 +152,7 @@ class CALFController(RLController):
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
 
-        # self.critic.safe_decay_rate = 1e1 * rc.norm_2(observation)
+        self.critic.safe_decay_rate = 1e-1 * rc.norm_2(observation)
         self.actor.receive_observation(
             observation
         )  ### store current observation in actor
@@ -180,16 +180,6 @@ class CALFController(RLController):
 
         self.collect_critic_stats(time)
 
-        # self.critic.update_weights()
-
-        # self.actor.optimize_weights(time=time)
-
-        # self.actor.update_and_cache_weights()
-        # self.actor.update_action()
-
-        # self.critic.observation_last_good = observation
-        # self.critic.cache_weights()
-
         return self.actor.action
 
     def collect_critic_stats(self, time):
@@ -208,7 +198,7 @@ class CALFController(RLController):
             )
         )
         self.critic.times.append(time)
-        current_CALF = self.critic.model(
+        current_CALF = self.critic(
             self.critic.observation_last_good, use_stored_weights=True
         )
         self.critic.values.append(
@@ -221,7 +211,49 @@ class CALFController(RLController):
 
         print(self.critic.model.weights, time)
 
-        self.critic.CALFs.append(np.squeeze(current_CALF))
+        self.critic.CALFs.append(current_CALF)
+
+
+class CALFControllerPredictive(CALFControllerExPost):
+    def compute_action(
+        self, time, observation, is_critic_update=False,
+    ):
+
+        # Update data buffers
+        self.critic.update_buffers(
+            observation, self.actor.action
+        )  ### store current action and observation in critic's data buffer
+        # if on prev step weifhtts were acccepted, then upd last good
+        if self.actor.weights_acceptance_status == "accepted":
+            self.critic.observation_last_good = observation
+            self.critic.weights_acceptance_status = False
+            self.actor.weights_acceptance_status = False
+            if self.critic.CALFs != []:
+                self.critic.CALFs[-1] = self.critic(
+                    self.critic.observation_last_good, use_stored_weights=True
+                )
+
+        # Store current observation in actor
+        self.actor.receive_observation(observation)
+
+        self.critic.optimize_weights(time=time)
+
+        if self.critic.weights_acceptance_status == "accepted":
+            self.critic.update_and_cache_weights()
+
+            self.actor.optimize_weights(time=time)
+
+            if self.actor.weights_acceptance_status == "accepted":
+                self.actor.update_and_cache_weights()
+                self.actor.update_action()
+            else:
+                self.invoke_safe_action(observation)
+        else:
+            self.invoke_safe_action(observation)
+
+        self.collect_critic_stats(time)
+
+        return self.actor.action
 
 
 class Controller3WRobotDisassembledCLF:

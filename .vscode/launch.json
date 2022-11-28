@@ -78,7 +78,7 @@
             "name": "CALF",
             "type": "python",
             "request": "launch",
-            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_CALF_3wrobot.py",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_CALF_3wrobot_predictive.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [

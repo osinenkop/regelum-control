@@ -152,7 +152,7 @@ class ModelQuadratic(ModelAbstract):
 
     model_name = "quadratic"
 
-    def __init__(self, input_dim, single_weight_min=1.0, single_weight_max=1e3):
+    def __init__(self, input_dim, single_weight_min=1e-6, single_weight_max=1e2):
         self.dim_weights = int((input_dim + 1) * input_dim / 2)
         self.weight_min = single_weight_min * rc.ones(self.dim_weights)
         self.weight_max = single_weight_max * rc.ones(self.dim_weights)
@@ -166,8 +166,27 @@ class ModelQuadratic(ModelAbstract):
         else:
             vec = argin[0]
 
+        if isinstance(vec, tuple):
+            vec = vec[0]
+
         polynom = rc.uptria2vec(rc.outer(vec, vec))
         result = rc.dot(weights, polynom)
+
+        return result
+
+
+class ModelQuadraticSquared(ModelQuadratic):
+    """
+    Quadratic model. May contain mixed terms.
+
+    """
+
+    model_name = "quadratic-squared"
+
+    def forward(self, *argin, weights=None):
+        result = super().forward(*argin, weights=weights)
+
+        result = result ** 2 / 1e5
 
         return result
 
@@ -282,10 +301,10 @@ class ModelBiquadForm(ModelAbstract):
     def forward(self, *argin, weights=None):
         if len(argin) != 2:
             raise ValueError("ModelBiquadForm assumes two vector arguments!")
-        result = (
-            argin[0].T ** 2,
-            weights[0] @ argin[1] ** 2 + argin[0].T @ weights[1] @ argin[1],
-        )
+
+        vec = rc.concatenate(tuple(argin))
+
+        result = vec.T ** 2 @ weights[0] @ vec ** 2 + vec.T @ weights[1] @ vec
 
         result = rc.squeeze(result)
 

@@ -172,6 +172,8 @@ class PipelineWithDefaults(AbstractPipeline):
 
         if self.control_mode == "CALF":
             self.critic = CriticCALF(
+                safe_decay_rate=self.safe_decay_rate,
+                is_dynamic_decay_rate=self.is_dynamic_decay_rate,
                 dim_input=self.dim_input,
                 dim_output=self.dim_output,
                 data_buffer_size=self.data_buffer_size,
@@ -256,7 +258,7 @@ class PipelineWithDefaults(AbstractPipeline):
         if self.control_mode == "nominal":
             self.controller = self.nominal_controller
         elif self.control_mode == "CALF":
-            self.controller = controllers.CALFController(
+            self.controller = controllers.CALFControllerExPost(
                 time_start=self.time_start,
                 sampling_time=self.sampling_time,
                 critic_period=self.critic_period,

@@ -98,6 +98,19 @@ class Pipeline3WRobotNICALF(Pipeline3WRobotNI):
             opt_method="ipopt", opt_options=opt_options,
         )
 
+    def initialize_controller(self):
+        if self.control_mode == "nominal":
+            self.controller = self.nominal_controller
+        else:
+            self.controller = controllers.CALFControllerPredictive(
+                time_start=self.time_start,
+                sampling_time=self.sampling_time,
+                critic_period=self.critic_period,
+                actor=self.actor,
+                critic=self.critic,
+                observation_target=None,
+            )
+
 
 if __name__ == "__main__":
     pipeline = Pipeline3WRobotNICALF()

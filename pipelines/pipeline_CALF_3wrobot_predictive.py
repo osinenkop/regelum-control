@@ -73,6 +73,15 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
     #         self.prediction_horizon,
     #     )
 
+    # def initialize_models(self):
+    #     self.dim_critic_model_input = self.dim_output
+    #     self.critic_model = models.ModelQuadraticSquared(self.dim_critic_model_input)
+    #     self.actor_model = models.ModelWeightContainer(
+    #         dim_output=self.dim_input, weights_init=self.action_init
+    #     )
+
+    #     self.model_running_objective = models.ModelQuadForm(weights=self.R1)
+
     def initialize_optimizers(self):
 
         opt_options = {
@@ -95,7 +104,15 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             self.controller = self.nominal_controller
         else:
 
-            self.controller = controllers.CALFController(
+            # self.controller = controllers.CALFControllerExPost(
+            #     time_start=self.time_start,
+            #     sampling_time=self.sampling_time,
+            #     critic_period=self.critic_period,
+            #     actor=self.actor,
+            #     critic=self.critic,
+            #     observation_target=None,
+            # )
+            self.controller = controllers.CALFControllerPredictive(
                 time_start=self.time_start,
                 sampling_time=self.sampling_time,
                 critic_period=self.critic_period,
