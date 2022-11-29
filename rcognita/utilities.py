@@ -642,6 +642,15 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def lambda2symb(self, lambda_function, *x_symb, rc_type=NUMPY):
         return lambda_function(*x_symb)
 
+    def tanh(self, x, rc_type=NUMPY):
+        if rc_type == CASADI:
+            res = casadi.tanh(x)
+        elif rc_type == NUMPY:
+            res = np.tanh(x)
+        elif rc_type == TORCH:
+            res = torch.tanh(x)
+        return res
+
     def if_else(self, c, x, y, rc_type=NUMPY):
 
         if rc_type == CASADI:
@@ -759,11 +768,16 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def MX(mat):
         return casadi.MX(mat)
 
-    @staticmethod
-    def autograd(function, x, *args):
+    def autograd(self, function, x, *args, rc_type=NUMPY):
         return casadi.Function(
             "f", [x, *args], [casadi.gradient(function(x, *args), x)]
         )
+
+    def to_casadi_function(self, symbolic_expression, symbolic_var, rc_type=NUMPY):
+        return casadi.Function("f", [symbolic_var], [symbolic_expression])
+
+    def soft_abs(self, x, a=20, rc_type=NUMPY):
+        return a * rc.abs(x) ** 3 / (1 + a * x ** 2)
 
 
 rc = RCTypeHandler()

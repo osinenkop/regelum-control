@@ -24,6 +24,16 @@ from copy import deepcopy
 from collections import OrderedDict
 
 
+def force_positive_def(func):
+    def positive_def_wrapper(self, *args, **kwargs):
+        if self.force_positive_def:
+            return rc.soft_abs(func(self, *args, **kwargs))
+        else:
+            return func(self, *args, **kwargs)
+
+    return positive_def_wrapper
+
+
 class ModelAbstract(ABC):
     """
     Blueprint of a model.
@@ -123,18 +133,23 @@ class ModelQuadLin(ModelAbstract):
 
     model_name = "quad-lin"
 
-    def __init__(self, input_dim, weight_min=1.0, weight_max=1e3):
+    def __init__(
+        self, input_dim, weight_min=1.0, weight_max=1e3, force_positive_def=True
+    ):
         self.dim_weights = int((input_dim + 1) * input_dim / 2 + input_dim)
         self.weight_min = weight_min * rc.ones(self.dim_weights)
         self.weight_max = weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
+        self.force_positive_def = force_positive_def
 
+    @force_positive_def
     def forward(self, *argin, weights=None):
         if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
         else:
+            print(argin)
             vec = argin[0]
 
         polynom = rc.uptria2vec(rc.outer(vec, vec))
@@ -152,14 +167,22 @@ class ModelQuadratic(ModelAbstract):
 
     model_name = "quadratic"
 
-    def __init__(self, input_dim, single_weight_min=1e-6, single_weight_max=1e2):
+    def __init__(
+        self,
+        input_dim,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
+        force_positive_def=True,
+    ):
         self.dim_weights = int((input_dim + 1) * input_dim / 2)
         self.weight_min = single_weight_min * rc.ones(self.dim_weights)
         self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
+        self.force_positive_def = force_positive_def
 
+    @force_positive_def
     def forward(self, *argin, weights=None):
         if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
@@ -199,13 +222,16 @@ class ModelQuadNoMix(ModelAbstract):
 
     model_name = "quad-nomix"
 
-    def __init__(self, input_dim, single_weight_min=1e-6, single_weight_max=1e2):
+    def __init__(
+        self, input_dim, single_weight_min=1e-6, single_weight_max=1e2,
+    ):
         self.dim_weights = input_dim
         self.weight_min = single_weight_min * rc.ones(self.dim_weights)
         self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
         self.update_and_cache_weights(self.weights)
+        self.force_positive_def = force_positive_def
 
     def forward(self, *argin, weights=None):
         if len(argin) > 1:
@@ -447,7 +473,14 @@ class ModelQuadNoMixTorch(ModelNN):
 
     """
 
-    def __init__(self, dim_observation, dim_action, dim_hidden=20, weights=None):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden=20,
+        weights=None,
+        force_positive_def=False,
+    ):
         super().__init__()
 
         self.fc1 = nn.Linear(dim_observation + dim_action, 1, bias=False)
@@ -458,7 +491,9 @@ class ModelQuadNoMixTorch(ModelNN):
         self.double()
         self.cache_weights()
         self.weights = self.parameters()
+        self.force_positive_def = force_positive_def
 
+    @force_positive_def
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
