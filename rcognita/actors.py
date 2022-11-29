@@ -256,7 +256,7 @@ class Actor:
 
         elif self.optimizer.engine == "SciPy":
             actor_objective = rc.function_to_lambda_with_params(
-                self.running_objective, self.observation,
+                self.objective, self.observation,
             )
 
             if constraint_functions is not None:

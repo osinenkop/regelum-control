@@ -98,10 +98,10 @@
             ]
         },
         {
-            "name": "3wrobot AC",
+            "name": "3wrobot LF",
             "type": "python",
             "request": "launch",
-            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_3wrobot_casadi.py",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_3wrobot.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [

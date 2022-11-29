@@ -87,7 +87,7 @@ class Critic(ABC):
         if len(args) == 2:
             chi = rc.concatenate(tuple(args))
         else:
-            chi = args
+            chi = args[0]
         return self.model(chi, use_stored_weights=use_stored_weights)
 
     def update_weights(self, weights=None):

@@ -134,22 +134,21 @@ class ModelQuadLin(ModelAbstract):
     model_name = "quad-lin"
 
     def __init__(
-        self, input_dim, weight_min=1.0, weight_max=1e3, force_positive_def=True
+        self, input_dim, weight_min=1e-6, weight_max=1e2, force_positive_def=True
     ):
         self.dim_weights = int((input_dim + 1) * input_dim / 2 + input_dim)
         self.weight_min = weight_min * rc.ones(self.dim_weights)
         self.weight_max = weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
-        self.update_and_cache_weights(self.weights)
         self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
 
     @force_positive_def
     def forward(self, *argin, weights=None):
         if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
         else:
-            print(argin)
             vec = argin[0]
 
         polynom = rc.uptria2vec(rc.outer(vec, vec))
@@ -179,8 +178,8 @@ class ModelQuadratic(ModelAbstract):
         self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
-        self.update_and_cache_weights(self.weights)
         self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
 
     @force_positive_def
     def forward(self, *argin, weights=None):
@@ -230,8 +229,8 @@ class ModelQuadNoMix(ModelAbstract):
         self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 2.0
         self.weights = self.weights_init
-        self.update_and_cache_weights(self.weights)
         self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
 
     def forward(self, *argin, weights=None):
         if len(argin) > 1:
