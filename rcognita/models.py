@@ -554,5 +554,5 @@ class ModelGaussianConditional(ModelAbstract):
         # As rc does not have random sampling, we use numpy here.
         return rc.array([np.random.normal(self.expectation, self.covariance)])
 
-    def forward(self, weights=None):
-        pass
+    def forward(self, *args, weights=None):
+        return weights

@@ -87,7 +87,7 @@ class AnimatorGridWorld(Animator):
             for j in range(width):
                 val = table[i, j]
                 action = self.actor.model.weights[i, j]
-                table_range = np.ptp(np.F_max(table, 70))
+                table_range = np.ptp(np.fmax(table, 70))
                 color = self.colormap((val - np.max([np.min(table), 70])) / table_range)
                 rectangle = self.rect_patch_pack[i * width + j]
                 arr_x, arr_y = self.map_action2arrow(action, rectangle)

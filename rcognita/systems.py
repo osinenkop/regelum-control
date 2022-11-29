@@ -21,7 +21,7 @@ class System(ABC):
      Interface class of dynamical systems a.k.a. environments.
      Concrete systems should be built upon this class.
      To design a concrete system: inherit this class, override:
-         | :func:`~systems.system._compute_state_dynamics` :
+         | :func:`~systems.system._compute_dynamics` :
          | right-hand side of system description (required)
          | :func:`~systems.system._compute_disturbance_dynamics` :
          | right-hand side of disturbance model (if necessary)
@@ -150,11 +150,11 @@ class System(ABC):
                 self._dim_full_state = self.dim_state
 
     @abstractmethod
-    def _compute_state_dynamics(self, time, state, action, disturb):
+    def _compute_dynamics(self, time, state, action, disturb):
         """
         Description of the system internal dynamics.
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
-        As a probability disitribution, ``_compute_state_dynamics`` should return a number in :math:`[0,1]`
+        As a probability disitribution, ``_compute_dynamics`` should return a number in :math:`[0,1]`
 
         """
         pass
@@ -197,7 +197,7 @@ class System(ABC):
 
         See also
         --------
-        :func:`~systems.system._compute_state_dynamics`
+        :func:`~systems.system._compute_dynamics`
 
         """
         # Trivial case: output identical to state
@@ -248,7 +248,7 @@ class System(ABC):
             # Fetch the control action stored in the system
             action = self.action
 
-        rhs_full_state[0 : self.dim_state] = self._compute_state_dynamics(
+        rhs_full_state[0 : self.dim_state] = self._compute_dynamics(
             time, state, action, disturb
         )
 
@@ -292,7 +292,7 @@ class SysInvertedPendulum(System):
         # self.is_angle_overflow = is_angle_overflow
         # /DEBUG ===================================
 
-    def _compute_state_dynamics(self, time, state, action, disturb=None):
+    def _compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
 
@@ -391,7 +391,7 @@ class Sys3WRobot(System):
             self.mu_disturb = self.pars_disturb[1]
             self.tau_disturb = self.pars_disturb[2]
 
-    def _compute_state_dynamics(self, time, state, action, disturb=None):
+    def _compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
 
@@ -461,7 +461,7 @@ class Sys3WRobotNI(System):
             self.mu_disturb = self.pars_disturb[1]
             self.tau_disturb = self.pars_disturb[2]
 
-    def _compute_state_dynamics(self, time, state, action, disturb=None):
+    def _compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)))
 
@@ -504,7 +504,7 @@ class Sys2Tank(System):
 
         self.name = "2tank"
 
-    def _compute_state_dynamics(self, time, state, action, disturb=None):
+    def _compute_dynamics(self, time, state, action, disturb=None):
 
         tau1, tau2, K1, K2, K3 = self.pars
 

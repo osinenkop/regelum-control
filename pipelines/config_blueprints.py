@@ -19,7 +19,17 @@ class RcognitaArgParser(argparse.ArgumentParser):
             "--control_mode",
             metavar="control_mode",
             type=str,
-            choices=["manual", "nominal", "MPC", "RQL", "SQL", "CALF", "PG", "AC"],
+            choices=[
+                "manual",
+                "nominal",
+                "MPC",
+                "RQL",
+                "SQL",
+                "CALF",
+                "PG",
+                "AC",
+                "LF",
+            ],
             default="MPC",
             help="Control mode. Currently available: "
             + "----manual: manual constant control specified by action_manual; "
@@ -29,7 +39,8 @@ class RcognitaArgParser(argparse.ArgumentParser):
             + "----SQL: stacked Q-learning; "
             + "----CALF: joint actor-critic (stabilizing), system-specific, needs proper setup."
             + "----PG: Standard Policy Gradient alorithm."
-            + "----AC: Plain Actor Critic",
+            + "----AC: Plain Actor Critic"
+            + "----LF: LF optimization-based feedback (only available for systems with implemented Lyapunov Function)",
         )
         self.add_argument(
             "--ode_solver",

@@ -67,7 +67,7 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
     #         self.state_init,
     #         self.action_init,
     #         self.pred_step_size,
-    #         self.system._compute_state_dynamics,
+    #         self.system._compute_dynamics,
     #         self.system.out,
     #         self.dim_output,
     #         self.prediction_horizon,

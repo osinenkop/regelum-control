@@ -58,7 +58,7 @@ class PipelineInvertedPendulumRQL(PipelineInvertedPendulumPG):
     def initialize_predictor(self):
         self.predictor = EulerPredictorPendulum(
             self.pred_step_size,
-            self.system._compute_state_dynamics,
+            self.system._compute_dynamics,
             self.system.out,
             self.dim_output,
             self.prediction_horizon,

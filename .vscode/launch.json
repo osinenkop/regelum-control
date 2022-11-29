@@ -37,6 +37,17 @@
             "justMyCode": true
         },
         {
+            "name": "Python: PG",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_inverted_pendulum_PG.py",
+            "args": [
+                "--config",
+                "/home/gvidon/JoraProgramming/rcognita/pipelines/argv_configs/successful_pg.txt"
+            ],
+            "justMyCode": true
+        },
+        {
             "name": "Python: simplest",
             "type": "python",
             "request": "launch",
@@ -79,6 +90,18 @@
             "type": "python",
             "request": "launch",
             "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_CALF_3wrobot_predictive.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--config",
+                "/home/gvidon/JoraProgramming/rcognita/pipelines/argv_configs/CALF_3wrobot.txt"
+            ]
+        },
+        {
+            "name": "3wrobot AC",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_3wrobot_casadi.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [

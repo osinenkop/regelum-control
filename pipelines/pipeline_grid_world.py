@@ -1,11 +1,11 @@
 import os, sys
 
-from rcognita.visualization import animator
-
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
+
+from rcognita.visualization.vis_grid_world import AnimatorGridWorld
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
@@ -169,7 +169,7 @@ class PipelineTabular(PipelineWithDefaults):
         self.scenario = TabularScenarioVI(self.actor, self.critic, 400)
 
     def initialize_visualizer(self):
-        self.visualizer = animator.AnimatorGridWorld(
+        self.visualizer = AnimatorGridWorld(
             self.actor,
             self.critic,
             self.reward_cell,

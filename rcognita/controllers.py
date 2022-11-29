@@ -119,6 +119,7 @@ class RLController(OptimalController):
             self.critic.update_and_cache_weights()  ### store weights in the critic's model
 
         self.actor.optimize_weights()  ### optimize actor's model weights based on current observation
+
         self.actor.update_and_cache_weights()  ### store weights in the actor's model
         self.actor.update_action(observation)
 

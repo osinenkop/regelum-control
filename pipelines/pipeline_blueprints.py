@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from rcognita import controllers, simulator, predictors, optimizers, objectives
 
 from rcognita.utilities import rc
-from rcognita.actors import ActorCALF, ActorMPC, ActorRQL, ActorSQL, ActorRPO
+from rcognita.actors import ActorCALF, ActorMPC, ActorRQL, ActorSQL, ActorRPO, ActorLF
 
 from rcognita.critics import (
     CriticOfActionObservation,
@@ -82,7 +82,7 @@ class PipelineWithDefaults(AbstractPipeline):
     def initialize_predictor(self):
         self.predictor = predictors.EulerPredictor(
             self.pred_step_size,
-            self.system._compute_state_dynamics,
+            self.system._compute_dynamics,
             self.system.out,
             self.dim_output,
             self.prediction_horizon,
@@ -93,7 +93,7 @@ class PipelineWithDefaults(AbstractPipeline):
     #         self.state_init,
     #         self.action_init,
     #         self.pred_step_size,
-    #         self.system._compute_state_dynamics,
+    #         self.system._compute_dynamics,
     #         self.system.out,
     #         self.dim_output,
     #         self.prediction_horizon,
@@ -154,7 +154,7 @@ class PipelineWithDefaults(AbstractPipeline):
 
     def initialize_optimizers(self):
         opt_options = {
-            "maxiter": 320,
+            "maxiter": 100,
             "maxfev": 5000,
             "disp": False,
             "adaptive": True,
@@ -169,8 +169,25 @@ class PipelineWithDefaults(AbstractPipeline):
         )
 
     def initialize_actor_critic(self):
+        if self.control_mode == "LF":
+            self.critic = CriticTrivial(self.running_objective, self.sampling_time)
 
-        if self.control_mode == "CALF":
+            self.actor = ActorLF(
+                self.nominal_controller,
+                self.prediction_horizon,
+                self.dim_input,
+                self.dim_output,
+                self.control_mode,
+                action_bounds=self.action_bounds,
+                action_init=self.action_init,
+                predictor=self.predictor,
+                optimizer=self.actor_optimizer,
+                critic=self.critic,
+                running_objective=self.running_objective,
+                model=self.actor_model,
+            )
+
+        elif self.control_mode == "CALF":
             self.critic = CriticCALF(
                 safe_decay_rate=self.safe_decay_rate,
                 is_dynamic_decay_rate=self.is_dynamic_decay_rate,

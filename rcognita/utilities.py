@@ -270,7 +270,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif ode_solver == "CASADI":
 
             integrator = self.create_CasADi_integrator(
-                system._compute_state_dynamics, state_init, action_init, max_step
+                system._compute_dynamics, state_init, action_init, max_step
             )
 
             solver = CasADiSolver(
@@ -639,8 +639,8 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             else:
                 return function_to_lambda(x_symb), x_symb
 
-    def lambda2symb(self, lambda_function, x_symb, rc_type=NUMPY):
-        return lambda_function(x_symb)
+    def lambda2symb(self, lambda_function, *x_symb, rc_type=NUMPY):
+        return lambda_function(*x_symb)
 
     def if_else(self, c, x, y, rc_type=NUMPY):
 
@@ -668,7 +668,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         if isinstance(shape, tuple):
             if len(tup) > 2:
                 raise ValueError(
-                    f"Not implemented for number of dimensions grreater than 2. Passed: {len(tup)}"
+                    f"Not implemented for number of dimensions greater than 2. Passed: {len(tup)}"
                 )
             else:
                 return casadi.MX.sym(literal, *tup)

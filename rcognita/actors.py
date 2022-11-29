@@ -256,7 +256,7 @@ class Actor:
 
         elif self.optimizer.engine == "SciPy":
             actor_objective = rc.function_to_lambda_with_params(
-                self.objective, self.observation,
+                self.running_objective, self.observation,
             )
 
             if constraint_functions is not None:
@@ -612,6 +612,24 @@ class ActorCALF(ActorRPO):
     #     self.action_old = self.model.cache.weights
     #     self.model.update_and_cache_weights(action_sequence_optimized)
     #     self.action = self.model.weights
+
+
+class ActorLF(ActorCALF):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.intrinsic_constraints = []
+
+    def objective(
+        self, action, observation,
+    ):
+
+        observation_predicted = self.predictor.predict(observation, action)
+
+        actor_objective = 0
+
+        actor_objective += self.safe_controller.compute_LF(observation_predicted)
+
+        return actor_objective
 
 
 class ActorTabular(ActorRPO):

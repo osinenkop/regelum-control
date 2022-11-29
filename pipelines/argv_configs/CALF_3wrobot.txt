@@ -1,7 +1,8 @@
 --no_visual 
---no_print 
---control_mode CALF
---t1 25  
+
+--control_mode LF
+--prediction_horizon 1
+--t1 5 
 --state_init -5 5 3*pi/4 0 0
 --data_buffer_size 8
 --is_playback 
