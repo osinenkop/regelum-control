@@ -15,7 +15,7 @@ import csv
 import rcognita
 
 from config_blueprints import Config2Tank
-from pipeline_blueprints import AbstractPipeline
+from pipeline_blueprints import Pipeline
 
 if os.path.abspath(rcognita.__file__ + "/../..") == PARENT_DIR:
     info = (
@@ -59,7 +59,7 @@ from rcognita.critics import (
 )
 
 
-class Pipeline2Tank(AbstractPipeline):
+class Pipeline2Tank(Pipeline):
     def initialize_system(self):
         self.system = systems.Sys2Tank(
             sys_type="diff_eqn",

@@ -34,7 +34,7 @@ def force_positive_def(func):
     return positive_def_wrapper
 
 
-class ModelAbstract(ABC):
+class Model(ABC):
     """
     Blueprint of a model.
     """
@@ -47,7 +47,7 @@ class ModelAbstract(ABC):
             else:
                 return self.forward(*args, weights=self.weights)
         else:
-            return self.cache.forward(*args, weights=self.weights)
+            return self.cache.forward(*args, weights=self.cache.weights)
 
     @property
     @abstractmethod
@@ -125,7 +125,7 @@ class ModelSS:
         self.initial_guessset = initial_guesssetNew
 
 
-class ModelQuadLin(ModelAbstract):
+class ModelQuadLin(Model):
     """
     Quadratic-linear model.
 
@@ -139,7 +139,7 @@ class ModelQuadLin(ModelAbstract):
         self.dim_weights = int((input_dim + 1) * input_dim / 2 + input_dim)
         self.weight_min = weight_min * rc.ones(self.dim_weights)
         self.weight_max = weight_max * rc.ones(self.dim_weights)
-        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights_init = (self.weight_min + self.weight_max) / 20.0
         self.weights = self.weights_init
         self.force_positive_def = force_positive_def
         self.update_and_cache_weights(self.weights)
@@ -158,7 +158,7 @@ class ModelQuadLin(ModelAbstract):
         return result
 
 
-class ModelQuadratic(ModelAbstract):
+class ModelQuadratic(Model):
     """
     Quadratic model. May contain mixed terms.
 
@@ -213,7 +213,7 @@ class ModelQuadraticSquared(ModelQuadratic):
         return result
 
 
-class ModelQuadNoMix(ModelAbstract):
+class ModelQuadNoMix(Model):
     """
     Quadratic model (no mixed terms).
 
@@ -248,9 +248,44 @@ class ModelQuadNoMix(ModelAbstract):
         return result
 
 
-class ModelWeightContainer(ModelAbstract):
+class ModelQuadNoMix2D(Model):
     """
     Quadratic model (no mixed terms).
+
+    """
+
+    model_name = "quad-nomix"
+
+    def __init__(
+        self, input_dim, single_weight_min=1e-6, single_weight_max=1e2,
+    ):
+        self.dim_weights = input_dim
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)[:2]
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)[:2]
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
+
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
+            vec = rc.concatenate(tuple(argin))
+        else:
+            vec = argin[0]
+
+        if isinstance(vec, tuple):
+            vec = vec[0]
+
+        polynom = vec[:2] * vec[:2]
+
+        result = rc.dot(weights, polynom)
+
+        return result
+
+
+class ModelWeightContainer(Model):
+    """
+    Trivial model, which is typically used in actor in which actions are being optimized directly.
 
     """
 
@@ -287,7 +322,7 @@ class ModelWeightContainer(ModelAbstract):
 #         return result
 
 
-class ModelQuadForm(ModelAbstract):
+class ModelQuadForm(Model):
     """
     Quadratic form.
 
@@ -312,7 +347,7 @@ class ModelQuadForm(ModelAbstract):
         return result
 
 
-class ModelBiquadForm(ModelAbstract):
+class ModelBiquadForm(Model):
     """
     Bi-quadratic form.
 
@@ -506,7 +541,7 @@ class ModelQuadNoMixTorch(ModelNN):
         return x
 
 
-class LookupTable(ModelAbstract):
+class LookupTable(Model):
     model_name = "lookup-table"
 
     def __init__(self, *dims):
@@ -533,7 +568,7 @@ class LookupTable(ModelAbstract):
         return self.weights[indices]
 
 
-class ModelGaussianConditional(ModelAbstract):
+class ModelGaussianConditional(Model):
     """
     Gaussian probability distribution model with `weights[0]` being an expectation vector
     and `weights[1]` being a covariance matrix.

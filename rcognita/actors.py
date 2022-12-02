@@ -186,13 +186,13 @@ class Actor:
         self.set_action(self.action_old)
 
     def accept_or_reject_weights(
-        self, weights, constraint_functions=None, optimizer_engine="SciPy",
+        self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
 
         if constraint_functions is None:
             constraints_not_violated = True
         else:
-            not_violated = [cond(weights) <= 0.0 for cond in constraint_functions]
+            not_violated = [cond(weights) <= atol for cond in constraint_functions]
             constraints_not_violated = all(not_violated)
             print(not_violated)
 
@@ -298,6 +298,11 @@ class Actor:
             print("without constraint functions")
             # /DEBUG =============================
             self.weights_acceptance_status = "accepted"
+
+        self.cost_function = actor_objective
+        self.constraint = intrisic_constraints[0]
+        self.weights_init = action_sequence_init_reshaped
+        self.symbolic_var = symbolic_var
 
         return self.weights_acceptance_status
 
@@ -491,6 +496,11 @@ class ActorCALF(ActorRPO):
             # self.CALF_decay_constraint_for_actor_same_critic
         ]
         self.weights_acceptance_status = False
+        safe_action = self.safe_controller.compute_action(
+            self.critic.observation_last_good
+        )
+        self.action = safe_action
+        self.model.update_and_cache_weights(safe_action)
 
     def CALF_decay_constraint_for_actor(self, weights):
         action = self.model(self.observation, weights=weights)

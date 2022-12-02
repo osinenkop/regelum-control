@@ -171,7 +171,7 @@ class OnlineScenario:
         self.outcome += self.running_objective(observation, action) * delta
 
 
-class EpisodicScenarioBase(OnlineScenario):
+class EpisodicScenario(OnlineScenario):
     def __init__(
         self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
     ):
@@ -308,7 +308,7 @@ class EpisodicScenarioBase(OnlineScenario):
                     def debug_visual(self):
                         from copy import deepcopy
 
-                        eps = 0.0
+                        eps = 1e-9
                         figure = plt.figure(figsize=(10, 10))
                         axes_array = figure.subplots(2, 4)
                         times = deepcopy(self.critic.times)
@@ -445,7 +445,7 @@ class EpisodicScenarioBase(OnlineScenario):
             return "episode_continues"
 
 
-class EpisodicScenarioREINFORCE(EpisodicScenarioBase):
+class EpisodicScenarioREINFORCE(EpisodicScenario):
     def __init__(
         self,
         *args,

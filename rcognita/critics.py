@@ -76,12 +76,6 @@ class Critic(ABC):
         self.intrinsic_constraints = []
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
-        # self.stabilizing_constraint_violations = []
-        # self.ub_constraint_violations = []
-        # self.lb_constraint_violations = []
-        # self.stabilizing_constraint_violation = 0
-        # self.ub_constraint_violation = 0
-        # self.lb_constraint_violation = 0
 
     def __call__(self, *args, use_stored_weights=False):
         if len(args) == 2:
@@ -110,12 +104,12 @@ class Critic(ABC):
         self.cache_weights(weights)
 
     def accept_or_reject_weights(
-        self, weights, constraint_functions=None, optimizer_engine="SciPy",
+        self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
         if constraint_functions is None:
             constraints_not_violated = True
         else:
-            not_violated = [cond(weights) <= 0.0 for cond in constraint_functions]
+            not_violated = [cond(weights) <= atol for cond in constraint_functions]
             constraints_not_violated = all(not_violated)
             print(not_violated)
 
@@ -245,6 +239,11 @@ class Critic(ABC):
             constraints=constraints,
             decision_variable_symbolic=symbolic_var,
         )
+
+        self.cost_function = cost_function
+        self.constraint = constraints[0]
+        self.weights_init = weights_init
+        self.symbolic_var = symbolic_var
 
         return optimized_weights
 

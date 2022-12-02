@@ -62,16 +62,16 @@ from copy import deepcopy
 
 
 class Pipeline3WRobotCALF(Pipeline3WRobot):
-    # def initialize_predictor(self):
-    #     self.predictor = predictors.RKPredictor(
-    #         self.state_init,
-    #         self.action_init,
-    #         self.pred_step_size,
-    #         self.system._compute_dynamics,
-    #         self.system.out,
-    #         self.dim_output,
-    #         self.prediction_horizon,
-    #     )
+    def initialize_predictor(self):
+        self.predictor = predictors.RKPredictor(
+            self.state_init,
+            self.action_init,
+            self.pred_step_size,
+            self.system._compute_dynamics,
+            self.system.out,
+            self.dim_output,
+            self.prediction_horizon,
+        )
 
     # def initialize_models(self):
     #     self.dim_critic_model_input = self.dim_output
@@ -86,17 +86,17 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
 
         opt_options = {
             "print_time": 0,
-            "ipopt.max_iter": 200,
-            "ipopt.print_level": 0,
-            "ipopt.acceptable_tol": 1e-7,
-            "ipopt.acceptable_obj_change_tol": 1e-2,
+            # "ipopt.max_iter": 200,
+            # "ipopt.print_level": 0,
+            # "ipopt.acceptable_tol": 1e-7,
+            # "ipopt.acceptable_obj_change_tol": 1e-2,
         }
 
         self.actor_optimizer = optimizers.CasADiOptimizer(
-            opt_method="ipopt", opt_options=opt_options
+            opt_method="bonmin", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.CasADiOptimizer(
-            opt_method="ipopt", opt_options=opt_options,
+            opt_method="bonmin", opt_options=opt_options,
         )
 
     def initialize_controller(self):

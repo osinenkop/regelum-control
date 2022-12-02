@@ -7,7 +7,7 @@
 --is_playback 
 --speedup 25 
 --dt 0.01 
---creg_param 7000 
+--creg_param 0
 --ode_solver CASADI
 --safe_decay_rate 1e-3
 --dynamic_decay_rate

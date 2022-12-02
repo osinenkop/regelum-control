@@ -8,7 +8,7 @@ from rcognita.models import (
     ModelWeightContainer,
     ModelQuadForm,
 )
-from rcognita.scenarios import EpisodicScenarioBase
+from rcognita.scenarios import EpisodicScenario
 from rcognita.utilities import rc
 from rcognita.optimizers import SciPyOptimizer, TorchOptimizer
 import numpy as np
@@ -128,7 +128,7 @@ class PipelineInvertedPendulumRQL(PipelineInvertedPendulumPG):
         )
 
     def initialize_scenario(self):
-        self.scenario = EpisodicScenarioBase(
+        self.scenario = EpisodicScenario(
             system=self.system,
             simulator=self.simulator,
             controller=self.controller,

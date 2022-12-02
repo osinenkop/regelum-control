@@ -161,7 +161,7 @@ class MetaConf(type):
             setattr(cls, "argument_parser", new_argument_parser)
 
 
-class AbstractConfig(object, metaclass=MetaConf):
+class Config(object, metaclass=MetaConf):
     @abstractmethod
     def __init__(self):
         self.config_name = None
@@ -186,7 +186,7 @@ class AbstractConfig(object, metaclass=MetaConf):
             pickle.dump(self.__dict__, env_description_out)
 
 
-class ConfigGridWorld(AbstractConfig):
+class ConfigGridWorld(Config):
     def __init__(self):
         self.config_name = "grid_world"
 
@@ -219,7 +219,7 @@ class ConfigGridWorld(AbstractConfig):
         return args
 
 
-class Config3WRobot(AbstractConfig):
+class Config3WRobot(Config):
     def __init__(self):
         self.config_name = "3wrobot"
 
@@ -333,12 +333,19 @@ class Config3WRobot(AbstractConfig):
             "--critic_struct",
             type=str,
             default="quad-nomix",
-            choices=["quad-lin", "quadratic", "quad-nomix", "quad-mix"],
+            choices=[
+                "quad-lin",
+                "quadratic",
+                "quad-nomix",
+                "quad-mix",
+                "quad-nomix-2d",
+            ],
             help="Feature structure (critic). Currently available: "
             + "----quad-lin: quadratic-linear; "
             + "----quadratic: quadratic; "
             + "----quad-nomix: quadratic, no mixed terms; "
-            + "----quad-mix: quadratic, mixed observation-action terms (for, say, action_objective or advantage function approximations).",
+            + "----quad-mix: quadratic, mixed observation-action terms (for, say, action_objective or advantage function approximations)."
+            + "----quad-nomix-2d: quadratic, no mixed terms with fixed all weights except the first two",
         )
         parser.add_argument(
             "--actor_struct",
@@ -418,7 +425,7 @@ class Config3WRobot(AbstractConfig):
         self.observation_target = []
 
 
-class Config3WRobotNI(AbstractConfig):
+class Config3WRobotNI(Config):
     def __init__(self):
         self.config_name = "3wrobot_NI"
 
@@ -632,7 +639,7 @@ class ConfigROS3WRobotNI(Config3WRobotNI):
         return self.__dict__
 
 
-class Config2Tank(AbstractConfig):
+class Config2Tank(Config):
     def __init__(self):
         self.config_name = "2tank"
 
@@ -825,7 +832,7 @@ class Config2Tank(AbstractConfig):
         self.observation_target = np.array([0.5, 0.5])
 
 
-class ConfigInvertedPendulum(AbstractConfig):
+class ConfigInvertedPendulum(Config):
     def __init__(self):
         self.config_name = "inverted-pendulum"
 
@@ -1020,7 +1027,7 @@ class ConfigInvertedPendulum(AbstractConfig):
         self.observation_target = []
 
 
-class ConfigInvertedPendulumAC(AbstractConfig):
+class ConfigInvertedPendulumAC(Config):
     def __init__(self):
         self.config_name = "inverted-pendulum-AC"
 

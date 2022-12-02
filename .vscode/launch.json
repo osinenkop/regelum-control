@@ -98,6 +98,18 @@
             ]
         },
         {
+            "name": "CALF 2d",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_CALF_3wrobot_predictive.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--config",
+                "/home/gvidon/JoraProgramming/rcognita/pipelines/argv_configs/CALF_3wrobot_2D.txt"
+            ]
+        },
+        {
             "name": "3wrobot LF",
             "type": "python",
             "request": "launch",

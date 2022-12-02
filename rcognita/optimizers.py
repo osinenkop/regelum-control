@@ -38,7 +38,7 @@ except ModuleNotFoundError:
     )
 
 
-class BaseOptimizer(ABC):
+class Optimizer(ABC):
     """
     Optimizer blueprint.
 
@@ -70,7 +70,7 @@ class BaseOptimizer(ABC):
         return wrapper
 
 
-class SciPyOptimizer(BaseOptimizer):
+class SciPyOptimizer(Optimizer):
     engine = "SciPy"
 
     def __init__(self, opt_method, opt_options, verbose=False):
@@ -78,7 +78,7 @@ class SciPyOptimizer(BaseOptimizer):
         self.opt_options = opt_options
         self.verbose = verbose
 
-    @BaseOptimizer.verbose
+    @Optimizer.verbose
     def optimize(self, objective, initial_guess, bounds, constraints=(), verbose=False):
 
         weight_bounds = sp.optimize.Bounds(bounds[0], bounds[1], keep_feasible=True)
@@ -99,7 +99,7 @@ class SciPyOptimizer(BaseOptimizer):
         return opt_result.x
 
 
-class CasADiOptimizer(BaseOptimizer):
+class CasADiOptimizer(Optimizer):
     engine = "CasADi"
 
     def __init__(self, opt_method, opt_options, verbose=False):
@@ -107,7 +107,7 @@ class CasADiOptimizer(BaseOptimizer):
         self.opt_options = opt_options
         self.verbose = verbose
 
-    @BaseOptimizer.verbose
+    @Optimizer.verbose
     def optimize(
         self,
         objective,
@@ -122,10 +122,11 @@ class CasADiOptimizer(BaseOptimizer):
             "g": vertcat(*constraints),
         }
 
+        atol = 1e-10
         if isinstance(constraints, (tuple, list)):
-            upper_bound_constraint = [0 for _ in constraints]
+            upper_bound_constraint = [atol for _ in constraints]
         elif isinstance(constraints, (MX, DM, int, float)):
-            upper_bound_constraint = [0]
+            upper_bound_constraint = [atol]
 
         try:
             solver = nlpsol(
@@ -188,7 +189,7 @@ class GradientOptimizer(CasADiOptimizer):
         initial_guess_res = initial_guess - self.learning_rate * grad_eval
         return initial_guess_res
 
-    @BaseOptimizer.verbose
+    @Optimizer.verbose
     def optimize(self, initial_guess, *args):
         for _ in range(self.N_steps):
             initial_guess = self.grad_step(initial_guess, *args)
@@ -196,7 +197,7 @@ class GradientOptimizer(CasADiOptimizer):
         return initial_guess
 
 
-class TorchOptimizer(BaseOptimizer):
+class TorchOptimizer(Optimizer):
     engine = "Torch"
 
     def __init__(self, opt_options, iterations=1, opt_method=None, verbose=False):
@@ -208,7 +209,7 @@ class TorchOptimizer(BaseOptimizer):
         self.verbose = verbose
         self.loss_history = []
 
-    @BaseOptimizer.verbose
+    @Optimizer.verbose
     def optimize(self, objective, model, model_input):
         optimizer = self.opt_method(
             model.parameters(), **self.opt_options, weight_decay=0
@@ -229,7 +230,7 @@ class TorchOptimizer(BaseOptimizer):
         self.loss_history.append([loss_before, loss_after])
 
 
-class BruteForceOptimizer(BaseOptimizer):
+class BruteForceOptimizer(Optimizer):
     engine = "Parallel"
 
     def __init__(self, N_parallel_processes, possible_variants):

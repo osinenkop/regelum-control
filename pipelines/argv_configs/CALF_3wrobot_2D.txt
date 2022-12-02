@@ -1,15 +1,16 @@
 --no_print
 --no_visual
 --control_mode CALF
---critic_struct quad-nomix
+--critic_struct quad-nomix-2d
 --prediction_horizon 1
---t1 20
+--t1 2
 --state_init -5 -5 3*pi/4 0 0
---data_buffer_size 4
+--data_buffer_size 8
 --is_playback 
 --speedup 75 
 --dt 0.01 
 --creg_param 0
 --penalty_param 0
 --ode_solver CASADI
---safe_decay_rate 1e-2
+--safe_decay_rate 1e+2
+--R1_diag 1 1 0 0 0 0 0

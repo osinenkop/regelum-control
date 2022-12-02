@@ -17,6 +17,7 @@ from numpy.random import rand
 from scipy.optimize import minimize
 from abc import ABC, abstractmethod
 from .optimizers import CasADiOptimizer, SciPyOptimizer
+from w_plotting import plot_optimization_results
 
 
 class OptimalController(ABC):
@@ -137,13 +138,13 @@ class CALFControllerExPost(RLController):
         # self.actor.restore_weights()
         # self.critic.restore_weights()
         action = self.actor.safe_controller.compute_action(observation)
-        self.actor.set_action(
-            np.clip(
-                action,
-                self.actor.action_bounds[0][: self.actor.dim_input],
-                self.actor.action_bounds[1][: self.actor.dim_input],
-            )
+        action = np.clip(
+            action,
+            self.actor.action_bounds[0][: self.actor.dim_input],
+            self.actor.action_bounds[1][: self.actor.dim_input],
         )
+        self.actor.set_action(action)
+        self.actor.model.update_and_cache_weights(action)
 
     def compute_action(
         self, time, observation, is_critic_update=False,
@@ -164,6 +165,8 @@ class CALFControllerExPost(RLController):
 
         if critic_weights_accepted:
             self.critic.update_weights()
+
+            self.invoke_safe_action(observation)
 
             self.actor.optimize_weights(time=time)
             actor_weights_accepted = self.actor.weights_acceptance_status == "accepted"
@@ -227,8 +230,8 @@ class CALFControllerPredictive(CALFControllerExPost):
         # if on prev step weifhtts were acccepted, then upd last good
         if self.actor.weights_acceptance_status == "accepted":
             self.critic.observation_last_good = observation
-            self.critic.weights_acceptance_status = False
-            self.actor.weights_acceptance_status = False
+            self.critic.weights_acceptance_status = "rejected"
+            self.actor.weights_acceptance_status = "rejected"
             if self.critic.CALFs != []:
                 self.critic.CALFs[-1] = self.critic(
                     self.critic.observation_last_good, use_stored_weights=True
@@ -240,19 +243,36 @@ class CALFControllerPredictive(CALFControllerExPost):
         self.critic.optimize_weights(time=time)
 
         if self.critic.weights_acceptance_status == "accepted":
-            self.critic.update_and_cache_weights()
+            self.critic.update_weights()
+
+            self.invoke_safe_action(observation)
 
             self.actor.optimize_weights(time=time)
 
             if self.actor.weights_acceptance_status == "accepted":
                 self.actor.update_and_cache_weights()
                 self.actor.update_action()
+
+                self.critic.cache_weights()
             else:
                 self.invoke_safe_action(observation)
         else:
             self.invoke_safe_action(observation)
 
         self.collect_critic_stats(time)
+
+        # plot_optimization_results(
+        #     self.critic.cost_function,
+        #     self.critic.constraint,
+        #     self.actor.cost_function,
+        #     self.actor.constraint,
+        #     self.critic.symbolic_var,
+        #     self.actor.symbolic_var,
+        #     self.critic.weights_init,
+        #     self.critic.optimized_weights,
+        #     self.actor.weights_init,
+        #     self.actor.optimized_weights,
+        # )
 
         return self.actor.action
 

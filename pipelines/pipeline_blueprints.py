@@ -15,6 +15,7 @@ from rcognita.models import (
     ModelQuadLin,
     ModelQuadratic,
     ModelQuadNoMix,
+    ModelQuadNoMix2D,
     ModelNN,
     ModelQuadForm,
     ModelSS,
@@ -22,7 +23,7 @@ from rcognita.models import (
     ModelQuadNoMixTorch,
 )
 
-from rcognita.scenarios import OnlineScenario, EpisodicScenarioBase
+from rcognita.scenarios import OnlineScenario, EpisodicScenario
 import matplotlib.animation as animation
 from rcognita.utilities import on_key_press
 import matplotlib.pyplot as plt
@@ -30,7 +31,7 @@ import matplotlib.pyplot as plt
 # from rcognita.estimators import Estimator
 
 
-class AbstractPipeline(metaclass=ABCMeta):
+class Pipeline(metaclass=ABCMeta):
     @property
     @abstractmethod
     def config(self):
@@ -78,7 +79,7 @@ class AbstractPipeline(metaclass=ABCMeta):
         pass
 
 
-class PipelineWithDefaults(AbstractPipeline):
+class PipelineWithDefaults(Pipeline):
     def initialize_predictor(self):
         self.predictor = predictors.EulerPredictor(
             self.pred_step_size,
@@ -114,6 +115,8 @@ class PipelineWithDefaults(AbstractPipeline):
                 self.critic_model = ModelQuadLin(self.dim_critic_model_input)
             elif self.critic_struct == "quad-nomix":
                 self.critic_model = ModelQuadNoMix(self.dim_critic_model_input)
+            elif self.critic_struct == "quad-nomix-2d":
+                self.critic_model = ModelQuadNoMix2D(self.dim_critic_model_input)
             elif self.critic_struct == "quadratic":
                 self.critic_model = ModelQuadratic(self.dim_critic_model_input)
 
@@ -313,7 +316,7 @@ class PipelineWithDefaults(AbstractPipeline):
         )
 
     def initialize_scenario(self):
-        self.scenario = EpisodicScenarioBase(
+        self.scenario = EpisodicScenario(
             1,
             1,
             self.system,

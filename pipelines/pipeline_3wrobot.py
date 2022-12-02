@@ -71,7 +71,7 @@ class Pipeline3WRobot(PipelineWithDefaults):
             action_bounds=self.action_bounds,
             time_start=self.time_start,
             sampling_time=self.sampling_time,
-            max_iters=25,
+            max_iters=100,
         )
 
     def initialize_logger(self):
