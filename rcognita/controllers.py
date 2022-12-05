@@ -138,11 +138,7 @@ class CALFControllerExPost(RLController):
         # self.actor.restore_weights()
         # self.critic.restore_weights()
         action = self.actor.safe_controller.compute_action(observation)
-        action = np.clip(
-            action,
-            self.actor.action_bounds[0][: self.actor.dim_input],
-            self.actor.action_bounds[1][: self.actor.dim_input],
-        )
+
         self.actor.set_action(action)
         self.actor.model.update_and_cache_weights(action)
 
@@ -154,7 +150,7 @@ class CALFControllerExPost(RLController):
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
 
-        self.critic.safe_decay_rate = 1e-1 * rc.norm_2(observation)
+        # self.critic.safe_decay_rate = 1e-1 * rc.norm_2(observation)
         self.actor.receive_observation(
             observation
         )  ### store current observation in actor
@@ -551,12 +547,6 @@ class Controller3WRobotDisassembledCLF:
             # This controller needs full-state measurement
             action = self.compute_action(observation)
 
-            if self.action_bounds.any():
-                for k in range(2):
-                    action[k] = np.clip(
-                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
-                    )
-
             self.action_old = action
 
             # DEBUG ===================================================================
@@ -569,6 +559,11 @@ class Controller3WRobotDisassembledCLF:
             # table = tabulate([headerRow, dataRow], floatfmt=rowFormat, headers='firstrow', tablefmt='grid')
             # print(R+table+Bl)
             # /DEBUG ===================================================================
+            # if self.action_bounds.any():
+            #     for k in range(2):
+            #         action[k] = np.clip(
+            #             action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+            #         )
 
             return action
 
@@ -587,6 +582,12 @@ class Controller3WRobotDisassembledCLF:
         z = eta - kappa_val
         uNI = -self.controller_gain * z
         action = self._NH2ctrl_Cart(xNI, eta, uNI)
+
+        # if self.action_bounds.any():
+        #     for k in range(2):
+        #         action[k] = np.clip(
+        #             action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+        #         )
 
         self.action_old = action
 
@@ -719,7 +720,7 @@ class ControllerPID:
             self.state_size = len(initial_point)
 
         self.buffer_length = buffer_length
-        self.observation_buffer = rc.ones((buffer_length, self.state_size)) * 1e3
+        self.observation_buffer = rc.ones((self.state_size, buffer_length)) * 1e3
 
     def compute_error(self, PV):
         if isinstance(PV, (float, int)):
@@ -771,12 +772,12 @@ class ControllerPID:
         self.error_old = 0.0
 
     def reset_buffer(self):
-        self.observation_buffer = rc.ones((self.buffer_length, self.state_size)) * 1e3
+        self.observation_buffer = rc.ones((self.state_size, self.buffer_length)) * 1e3
 
     def is_stabilized(self, stabilization_tollerance=1e-3):
         is_stabilized = np.allclose(
             self.observation_buffer,
-            rc.rep_mat(self.SP, self.buffer_length, 1),
+            rc.rep_mat(rc.reshape(self.SP, (-1, 1)), 1, self.buffer_length),
             atol=stabilization_tollerance,
         )
         return is_stabilized
@@ -785,11 +786,11 @@ class ControllerPID:
 class Controller3WRobotPID:
     def __init__(
         self,
+        state_init,
         params=None,
         time_start=0,
         sampling_time=0.01,
         action_bounds=None,
-        state_init=None,
     ):
         if params is None:
             params = [10, 1]
@@ -809,13 +810,16 @@ class Controller3WRobotPID:
         self.PID_angle_arctan = ControllerPID(
             -35, 0.0, -10, initial_point=self.state_init[2]
         )
+        self.PID_v_zero = ControllerPID(
+            -35, 0.0, 1.2, initial_point=self.state_init[3], SP=0.0
+        )
         self.PID_x_y_origin = ControllerPID(
             -35,
             0.0,
             -35,
             SP=rc.array([0.0, 0.0]),
             initial_point=self.state_init[:2],
-            buffer_length=100,
+            # buffer_length=100,
         )
         self.PID_angle_origin = ControllerPID(
             -30, 0.0, -10, SP=0.0, initial_point=self.state_init[2]
@@ -837,7 +841,7 @@ class Controller3WRobotPID:
         v = rc.array([observation[3]])
         omega = rc.array([observation[4]])
 
-        angle_SP = rc.array([self.get_SP_for_PID_angle_arctan(y, x)])
+        angle_SP = rc.array([self.get_SP_for_PID_angle_arctan(x, y)])
 
         if self.PID_angle_arctan.SP is None:
             self.PID_angle_arctan.set_SP(angle_SP)
@@ -855,22 +859,30 @@ class Controller3WRobotPID:
         if not ANGLE_STABILIZED_TO_ARCTAN and not np.allclose(
             [x, y], [0, 0], atol=1e-02
         ):
+
             self.PID_angle_arctan.update_observation_buffer(angle)
             self.PID_angle_origin.reset()
             self.PID_x_y_origin.reset()
 
-            # print(f"Stabilize to arctan(x/y), angle={angle}, arctan = {angle_SP}")
+            if abs(v) > 1e-2:
+                error_derivative = self.current_F / self.m
 
-            error_derivative = omega
+                F = self.PID_v_zero.compute_action(v, error_derivative=error_derivative)
+                M = 0
 
-            F = 0
-            M = self.PID_angle_arctan.compute_action(
-                angle, error_derivative=error_derivative
-            )
+            else:
+                error_derivative = omega
+
+                F = 0
+                M = self.PID_angle_arctan.compute_action(
+                    angle, error_derivative=error_derivative
+                )
 
         elif ANGLE_STABILIZED_TO_ARCTAN and not XY_STABILIZED_TO_ORIGIN:
 
             self.PID_x_y_origin.update_observation_buffer(rc.array([x, y]))
+            self.PID_angle_arctan.update_observation_buffer(angle)
+
             self.PID_angle_arctan.reset()
             self.PID_angle_origin.reset()
 
@@ -883,7 +895,8 @@ class Controller3WRobotPID:
             F = self.PID_x_y_origin.compute_action(
                 [x, y], error_derivative=error_derivative
             )
-            M = 0
+            self.PID_angle_arctan.set_SP(angle_SP)
+            M = self.PID_angle_arctan.compute_action(angle, error_derivative=omega)[0]
 
         elif XY_STABILIZED_TO_ORIGIN and not ROBOT_STABILIZED_TO_ORIGIN:
 
@@ -905,8 +918,14 @@ class Controller3WRobotPID:
             self.PID_angle_arctan.reset()
             self.PID_x_y_origin.reset()
 
-            M = 0
-            F = 0
+            if abs(v) > 1e-3:
+                error_derivative = self.current_F / self.m
+
+                F = self.PID_v_zero.compute_action(v, error_derivative=error_derivative)
+                M = 0
+            else:
+                M = 0
+                F = 0
 
         clipped_F = np.clip(F, -300.0, 300.0)
         clipped_M = np.clip(M, -100.0, 100.0)

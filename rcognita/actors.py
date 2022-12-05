@@ -505,15 +505,19 @@ class ActorCALF(ActorRPO):
     def CALF_decay_constraint_for_actor(self, weights):
         action = self.model(self.observation, weights=weights)
 
-        predicted_observation = self.predictor.predict(self.observation, action)
+        self.predicted_observation = predicted_observation = self.predictor.predict(
+            self.observation, action
+        )
         observation_last_good = self.critic.observation_last_good
 
-        critic_next = self.critic(predicted_observation)
-        critic_current = self.critic(observation_last_good, use_stored_weights=True)
+        self.critic_next = self.critic(predicted_observation)
+        self.critic_current = self.critic(
+            observation_last_good, use_stored_weights=True
+        )
 
         self.predictive_constraint_violation = (
-            critic_next
-            - critic_current
+            self.critic_next
+            - self.critic_current
             + self.critic.sampling_time * self.critic.safe_decay_rate
         )
         return self.predictive_constraint_violation

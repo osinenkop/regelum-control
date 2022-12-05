@@ -303,6 +303,14 @@ class Config3WRobot(Config):
             help="Structure of stage objective function.",
         )
         parser.add_argument(
+            "--nominal_controller_type",
+            type=str,
+            default="PID",
+            choices=["CLF", "PID"],
+            help="Type of the nominal controller: stabilizing PID-controller or a based on Control Lyapunov Function one. \
+            See more in the description of controllers",
+        )
+        parser.add_argument(
             "--R1_diag",
             type=float,
             nargs="+",

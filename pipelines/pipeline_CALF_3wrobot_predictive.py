@@ -73,45 +73,27 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             self.prediction_horizon,
         )
 
-    # def initialize_models(self):
-    #     self.dim_critic_model_input = self.dim_output
-    #     self.critic_model = models.ModelQuadraticSquared(self.dim_critic_model_input)
-    #     self.actor_model = models.ModelWeightContainer(
-    #         dim_output=self.dim_input, weights_init=self.action_init
-    #     )
-
-    #     self.model_running_objective = models.ModelQuadForm(weights=self.R1)
-
     def initialize_optimizers(self):
 
         opt_options = {
             "print_time": 0,
-            # "ipopt.max_iter": 200,
-            # "ipopt.print_level": 0,
-            # "ipopt.acceptable_tol": 1e-7,
-            # "ipopt.acceptable_obj_change_tol": 1e-2,
+            "ipopt.max_iter": 200,
+            "ipopt.print_level": 0,
+            "ipopt.acceptable_tol": 1e-7,
+            "ipopt.acceptable_obj_change_tol": 1e-2,
         }
 
         self.actor_optimizer = optimizers.CasADiOptimizer(
-            opt_method="bonmin", opt_options=opt_options
+            opt_method="ipopt", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.CasADiOptimizer(
-            opt_method="bonmin", opt_options=opt_options,
+            opt_method="ipopt", opt_options=opt_options,
         )
 
     def initialize_controller(self):
         if self.control_mode == "nominal":
             self.controller = self.nominal_controller
         else:
-
-            # self.controller = controllers.CALFControllerExPost(
-            #     time_start=self.time_start,
-            #     sampling_time=self.sampling_time,
-            #     critic_period=self.critic_period,
-            #     actor=self.actor,
-            #     critic=self.critic,
-            #     observation_target=None,
-            # )
             self.controller = controllers.CALFControllerPredictive(
                 time_start=self.time_start,
                 sampling_time=self.sampling_time,

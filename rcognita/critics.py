@@ -394,8 +394,8 @@ class CriticCALF(CriticOfObservation):
         self.CALF = 0
         self.weights_acceptance_status = False
 
-        # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
-        self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
+        self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
+        # self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
         # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
 
         self.intrinsic_constraints = [
@@ -450,15 +450,19 @@ class CriticCALF(CriticOfObservation):
     def CALF_decay_constraint_predicted_safe_policy(self, weights):
         observation_last_good = self.observation_last_good
 
-        action = self.safe_controller.compute_action(self.current_observation)
-        predicted_observation = self.predictor.predict(self.current_observation, action)
+        self.safe_action = action = self.safe_controller.compute_action(
+            self.current_observation
+        )
+        self.predicted_observation = predicted_observation = self.predictor.predict(
+            self.current_observation, action
+        )
 
-        critic_next = self.model(predicted_observation, weights=weights)
-        critic_current = self.model(observation_last_good, use_stored_weights=True)
+        self.critic_next = self.model(predicted_observation, weights=weights)
+        self.critic_current = self.model(observation_last_good, use_stored_weights=True)
 
         self.stabilizing_constraint_violation = (
-            critic_next
-            - critic_current
+            self.critic_next
+            - self.critic_current
             + self.predictor.pred_step_size * self.safe_decay_rate
         )
         return self.stabilizing_constraint_violation
