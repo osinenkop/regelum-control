@@ -29,8 +29,6 @@ from pipeline_3wrobot_NI import Pipeline3WRobotNI
 
 class Pipeline3WRobotNITorch(Pipeline3WRobotNI):
     def initialize_optimizers(self):
-
-        opt_options_torch = {"lr": 0.000001}
         opt_options_scipy = {
             "maxiter": 1250,
             "maxfev": 5000,
@@ -42,6 +40,8 @@ class Pipeline3WRobotNITorch(Pipeline3WRobotNI):
         self.actor_optimizer = optimizers.SciPyOptimizer(
             opt_method="SLSQP", opt_options=opt_options_scipy
         )
+
+        opt_options_torch = {"lr": 0.000001}
 
         self.critic_optimizer = optimizers.TorchOptimizer(opt_options_torch)
 

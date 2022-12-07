@@ -301,25 +301,26 @@ class ModelWeightContainer(Model):
         return weights[: self.dim_output]
 
 
-# class ModelQuadMix(ModelBase):
-#     model_name = "quad-mix"
+class ModelQuadMix(Model):
+    model_name = "quad-mix"
 
-#     def __init__(self, input_dim, weight_min=1.0, weight_max=1e3):
-#         self.dim_weights = int(
-#             self.dim_output + self.dim_output * self.dim_input + self.dim_input
-#         )
-#         self.weight_min = weight_min * np.ones(self.dim_weights)
-#         self.weight_max = weight_max * np.ones(self.dim_weights)
+    def __init__(self, input_dim, weight_min=1.0, weight_max=1e3):
 
-#     def _forward(self, vec, weights):
+        self.dim_weights = int(
+            self.dim_output + self.dim_output * self.dim_input + self.dim_input
+        )
+        self.weight_min = weight_min * np.ones(self.dim_weights)
+        self.weight_max = weight_max * np.ones(self.dim_weights)
 
-#         v1 = rc.force_column(v1)
-#         v2 = rc.force_column(v2)
+    def _forward(self, vec, weights):
 
-#         polynom = rc.concatenate([v1 ** 2, rc.kron(v1, v2), v2 ** 2])
-#         result = rc.dot(weights, polynom)
+        v1 = rc.force_column(v1)
+        v2 = rc.force_column(v2)
 
-#         return result
+        polynom = rc.concatenate([v1 ** 2, rc.kron(v1, v2), v2 ** 2])
+        result = rc.dot(weights, polynom)
+
+        return result
 
 
 class ModelQuadForm(Model):

@@ -301,6 +301,34 @@ class EpisodicScenario(OnlineScenario):
                 self.current_scenario_status = step_method(self)
 
                 if self.current_scenario_status == "simulation_ended":
+                    import codecs, json
+
+                    # print(cache[(0, 0, 0)])
+
+                    def all_to_list(l):
+                        _l = []
+                        for x in l:
+                            if not isinstance(x, (float, int, bool, str, list)):
+                                _l.append(x.tolist())
+                            else:
+                                _l.append(x)
+                        print(_l)
+                        return _l
+
+                    def transform_cache(mapping):
+                        cache_transformed = [
+                            {"time_id": k, "data_snapshot": all_to_list(v)}
+                            for k, v in mapping.items()
+                        ]
+                        return cache_transformed
+
+                    json.dump(
+                        transform_cache(cache),
+                        codecs.open("cached.json", "w", encoding="utf-8"),
+                        separators=(",", ":"),
+                        sort_keys=True,
+                    )
+
                     self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
                     ## DEBUG ==============================
                     import multiprocessing

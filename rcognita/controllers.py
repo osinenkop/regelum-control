@@ -322,6 +322,7 @@ class Controller3WRobotDisassembledCLF:
         self.action_bounds = action_bounds
         self.controller_clock = time_start
         self.sampling_time = sampling_time
+        self.clock = Clock(period=sampling_time, time_start=time_start)
 
         self.action_old = rc.zeros(2)
 
@@ -537,12 +538,9 @@ class Controller3WRobotDisassembledCLF:
         .. [2] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational aspects." arXiv preprint arXiv:2006.14013 (2020)
 
         """
+        is_time_for_new_sample = self.clock.check_time(time)
 
-        time_in_sample = time - self.controller_clock
-
-        if time_in_sample >= self.sampling_time:  # New sample
-            # Update internal clock
-            self.controller_clock = time
+        if is_time_for_new_sample:  # New sample
 
             # This controller needs full-state measurement
             action = self.compute_action(observation)
@@ -613,6 +611,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
+        self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def compute_action(self, observation):
         x = observation[0]
@@ -654,11 +653,9 @@ class Controller3WRobotNIMotionPrimitive:
 
         """
 
-        time_in_sample = time - self.controller_clock
+        is_time_for_new_sample = self.clock.check_time(time)
 
-        if time_in_sample >= self.sampling_time:  # New sample
-            # Update internal clock
-            self.controller_clock = time
+        if is_time_for_new_sample:  # New sample
 
             action = self.compute_action(observation)
             self.times.append(time)
@@ -713,6 +710,7 @@ class ControllerPID:
         self.integral = 0.0
         self.error_old = 0.0
         self.sampling_time = sampling_time
+        self.clock = Clock(period=sampling_time, time_start=0)
         self.initial_point = initial_point
         if isinstance(initial_point, (float, int)):
             self.state_size = 1
@@ -804,6 +802,8 @@ class Controller3WRobotPID:
 
         self.controller_clock = time_start
         self.sampling_time = sampling_time
+
+        self.clock = Clock(period=sampling_time, time_start=time_start)
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
@@ -933,7 +933,7 @@ class Controller3WRobotPID:
         self.current_F = clipped_F
         self.current_M = clipped_M
 
-        return rc.array([clipped_F, clipped_M])
+        return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)])
 
     def compute_action_sampled(self, time, observation):
         """
@@ -941,9 +941,9 @@ class Controller3WRobotPID:
 
         """
 
-        time_in_sample = time - self.controller_clock
+        is_time_for_new_sample = self.clock.check_time(time)
 
-        if time_in_sample >= self.sampling_time:  # New sample
+        if is_time_for_new_sample:  # New sample
             # Update internal clock
             self.controller_clock = time
 
@@ -992,6 +992,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
+        self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def compute_action(self, observation):
         x = observation[0]
@@ -1033,9 +1034,9 @@ class Controller3WRobotNIMotionPrimitive:
 
         """
 
-        time_in_sample = time - self.controller_clock
+        is_time_for_new_sample = self.clock.check_time(time)
 
-        if time_in_sample >= self.sampling_time:  # New sample
+        if is_time_for_new_sample:  # New sample
             # Update internal clock
             self.controller_clock = time
 
@@ -1079,6 +1080,7 @@ class Controller3WRobotNIDisassembledCLF:
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
+        self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def reset(self, time_start):
 
@@ -1233,11 +1235,9 @@ class Controller3WRobotNIDisassembledCLF:
 
         """
 
-        time_in_sample = time - self.controller_clock
+        is_time_for_new_sample = self.clock.check_time(time)
 
-        if time_in_sample >= self.sampling_time:  # New sample
-            # Update internal clock
-            self.controller_clock = time
+        if is_time_for_new_sample:  # New sample
 
             action = self.compute_action(observation)
             self.times.append(time)
