@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from rcognita import controllers, simulator, predictors, optimizers, objectives
 
 from rcognita.utilities import rc
@@ -16,22 +16,19 @@ from rcognita.models import (
     ModelQuadratic,
     ModelQuadNoMix,
     ModelQuadNoMix2D,
-    ModelNN,
     ModelQuadForm,
     ModelSS,
     ModelWeightContainer,
     ModelQuadNoMixTorch,
 )
 
-from rcognita.scenarios import OnlineScenario, EpisodicScenario
+from rcognita.scenarios import EpisodicScenario
 import matplotlib.animation as animation
 from rcognita.utilities import on_key_press
 import matplotlib.pyplot as plt
 
-# from rcognita.estimators import Estimator
 
-
-class Pipeline(metaclass=ABCMeta):
+class Pipeline(ABC):
     @property
     @abstractmethod
     def config(self):
@@ -83,7 +80,7 @@ class PipelineWithDefaults(Pipeline):
     def initialize_predictor(self):
         self.predictor = predictors.EulerPredictor(
             self.pred_step_size,
-            self.system._compute_dynamics,
+            self.system.compute_dynamics,
             self.system.out,
             self.dim_output,
             self.prediction_horizon,
@@ -94,7 +91,7 @@ class PipelineWithDefaults(Pipeline):
     #         self.state_init,
     #         self.action_init,
     #         self.pred_step_size,
-    #         self.system._compute_dynamics,
+    #         self.system.compute_dynamics,
     #         self.system.out,
     #         self.dim_output,
     #         self.prediction_horizon,
@@ -168,7 +165,8 @@ class PipelineWithDefaults(Pipeline):
             opt_method="SLSQP", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.SciPyOptimizer(
-            opt_method="SLSQP", opt_options=opt_options,
+            opt_method="SLSQP",
+            opt_options=opt_options,
         )
 
     def initialize_actor_critic(self):

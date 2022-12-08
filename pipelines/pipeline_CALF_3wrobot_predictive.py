@@ -67,7 +67,7 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             self.state_init,
             self.action_init,
             self.pred_step_size,
-            self.system._compute_dynamics,
+            self.system.compute_dynamics,
             self.system.out,
             self.dim_output,
             self.prediction_horizon,
@@ -87,7 +87,8 @@ class Pipeline3WRobotCALF(Pipeline3WRobot):
             opt_method="ipopt", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.CasADiOptimizer(
-            opt_method="ipopt", opt_options=opt_options,
+            opt_method="ipopt",
+            opt_options=opt_options,
         )
 
     def initialize_controller(self):

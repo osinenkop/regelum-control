@@ -49,7 +49,7 @@ class ModelTorch(ModelNN):
         x = self.fc3(x)
         x = self.r3(x)
         x = self.fc4(x)
-        x = torch.sum(x ** 2)
+        x = torch.sum(x**2)
 
         return x
 
@@ -58,7 +58,7 @@ class PipelineInvertedPendulumRQL(PipelineInvertedPendulumPG):
     def initialize_predictor(self):
         self.predictor = EulerPredictorPendulum(
             self.pred_step_size,
-            self.system._compute_dynamics,
+            self.system.compute_dynamics,
             self.system.out,
             self.dim_output,
             self.prediction_horizon,

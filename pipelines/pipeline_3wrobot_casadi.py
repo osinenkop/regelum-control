@@ -30,16 +30,16 @@ import matplotlib.pyplot as plt
 
 
 class Pipeline3WRobotCasadi(Pipeline3WRobot):
-    def initialize_predictor(self):
-        self.predictor = predictors.RKPredictor(
-            self.state_init,
-            self.action_init,
-            self.pred_step_size,
-            self.system._compute_dynamics,
-            self.system.out,
-            self.dim_output,
-            self.prediction_horizon,
-        )
+    # def initialize_predictor(self):
+    #     self.predictor = predictors.RKPredictor(
+    #         self.state_init,
+    #         self.action_init,
+    #         self.pred_step_size,
+    #         self.system.compute_dynamics,
+    #         self.system.out,
+    #         self.dim_output,
+    #         self.prediction_horizon,
+    #     )
 
     def initialize_optimizers(self):
 
@@ -55,7 +55,8 @@ class Pipeline3WRobotCasadi(Pipeline3WRobot):
             opt_method="ipopt", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.CasADiOptimizer(
-            opt_method="ipopt", opt_options=opt_options,
+            opt_method="ipopt",
+            opt_options=opt_options,
         )
 
 
