@@ -130,7 +130,10 @@ class CasADiOptimizer(Optimizer):
 
         try:
             solver = nlpsol(
-                "solver", self.opt_method, optimization_problem, self.opt_options,
+                "solver",
+                self.opt_method,
+                optimization_problem,
+                self.opt_options,
             )
         except Exception as e:
             print(e)

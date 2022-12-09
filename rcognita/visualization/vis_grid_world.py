@@ -233,5 +233,5 @@ class AnimatorGridWorld(Animator):
         return arr_x, arr_y
 
     def animate(self, k):
-        self.scenario.iterate()
+        self.scenario.step()
         self.update_grid(k)

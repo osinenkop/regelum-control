@@ -10,17 +10,18 @@ Remarks:
 
 """
 
-import os, sys
 
-PARENT_DIR = os.path.abspath(__file__ + "/../../")
-sys.path.insert(0, PARENT_DIR)
-CUR_DIR = os.path.abspath(__file__ + "/..")
-sys.path.insert(0, CUR_DIR)
 import numpy as np
-from utilities import rc
 import scipy as sp
 from functools import partial
 from abc import ABC, abstractmethod
+from typing import Union
+
+from .utilities import rc
+from .predictors import Predictor
+from .optimizers import Optimizer
+from .critics import Critic
+from .models import Model
 
 
 class Actor:
@@ -39,17 +40,17 @@ class Actor:
 
     def __init__(
         self,
-        prediction_horizon,
-        dim_input,
-        dim_output,
-        control_mode,
-        action_bounds=None,
-        action_init=None,
-        predictor=None,
-        optimizer=None,
-        critic=None,
+        prediction_horizon: int,
+        dim_input: int,
+        dim_output: int,
+        control_mode: str,
+        action_bounds: Union[list, np.ndarray] = None,
+        action_init: list = None,
+        predictor: Predictor = None,
+        optimizer: Optimizer = None,
+        critic: Critic = None,
         running_objective=None,
-        model=None,
+        model: Model = None,
         discount_factor=1,
     ):
         self.prediction_horizon = prediction_horizon
@@ -213,7 +214,8 @@ class Actor:
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
         action_sequence_init_reshaped = rc.reshape(
-            action_sequence, [final_count_of_actions * self.dim_input],
+            action_sequence,
+            [final_count_of_actions * self.dim_input],
         )
 
         constraints = []
@@ -253,10 +255,15 @@ class Actor:
                 constraints=intrisic_constraints + constraint_functions,
                 decision_variable_symbolic=symbolic_var,
             )
+            # self.cost_function = actor_objective
+            # self.constraint = intrisic_constraints[0]
+            # self.weights_init = action_sequence_init_reshaped
+            # self.symbolic_var = symbolic_var
 
         elif self.optimizer.engine == "SciPy":
             actor_objective = rc.function_to_lambda_with_params(
-                self.objective, self.observation,
+                self.objective,
+                self.observation,
             )
 
             if constraint_functions is not None:
@@ -271,7 +278,11 @@ class Actor:
                 )
             if self.intrinsic_constraints:
                 intrinsic_constraints = [
-                    sp.optimize.NonlinearConstraint(constraint_function, -np.inf, 0,)
+                    sp.optimize.NonlinearConstraint(
+                        constraint_function,
+                        -np.inf,
+                        0,
+                    )
                     for constraint_function in self.intrinsic_constraints
                 ]
             else:
@@ -286,7 +297,7 @@ class Actor:
 
         if self.intrinsic_constraints:
             # DEBUG ==============================
-            print("with constraint functions")
+            # print("with constraint functions")
             # /DEBUG =============================
             self.weights_acceptance_status = self.accept_or_reject_weights(
                 self.optimized_weights,
@@ -295,21 +306,18 @@ class Actor:
             )
         else:
             # DEBUG ==============================
-            print("without constraint functions")
+            # print("without constraint functions")
             # /DEBUG =============================
             self.weights_acceptance_status = "accepted"
-
-        self.cost_function = actor_objective
-        self.constraint = intrisic_constraints[0]
-        self.weights_init = action_sequence_init_reshaped
-        self.symbolic_var = symbolic_var
 
         return self.weights_acceptance_status
 
 
 class ActorMPC(Actor):
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Model-predictive control (MPC) actor.
@@ -343,7 +351,7 @@ class ActorMPC(Actor):
 
         actor_objective = 0
         for k in range(self.prediction_horizon):
-            actor_objective += self.discount_factor ** k * self.running_objective(
+            actor_objective += self.discount_factor**k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
         return actor_objective
@@ -351,7 +359,9 @@ class ActorMPC(Actor):
 
 class ActorSQL(Actor):
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Staked Q-learning (SQL) actor.
@@ -382,7 +392,10 @@ class ActorSQL(Actor):
         )
 
         observation_sequence = rc.column_stack(
-            (observation, observation_sequence_predicted,)
+            (
+                observation,
+                observation_sequence_predicted,
+            )
         )
 
         actor_objective = 0
@@ -400,7 +413,9 @@ class ActorSQL(Actor):
 
 class ActorRQL(Actor):
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Rollout Q-learning (RQL) actor.
@@ -431,13 +446,16 @@ class ActorRQL(Actor):
         )
 
         observation_sequence = rc.column_stack(
-            (observation, observation_sequence_predicted,)
+            (
+                observation,
+                observation_sequence_predicted,
+            )
         )
 
         actor_objective = 0
 
         for k in range(self.prediction_horizon):
-            actor_objective += self.discount_factor ** k * self.running_objective(
+            actor_objective += self.discount_factor**k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
         return actor_objective
@@ -445,7 +463,9 @@ class ActorRQL(Actor):
 
 class ActorRPO(Actor):
     def objective(
-        self, action, observation,
+        self,
+        action,
+        observation,
     ):
         """
         "Running (objective) Plus Optimal (objective) actor.
@@ -634,7 +654,9 @@ class ActorLF(ActorCALF):
         self.intrinsic_constraints = []
 
     def objective(
-        self, action, observation,
+        self,
+        action,
+        observation,
     ):
 
         observation_predicted = self.predictor.predict(observation, action)
@@ -695,7 +717,9 @@ class ActorTabular(ActorRPO):
         self.model.update_and_cache_weights(new_action_table)
 
     def objective(
-        self, action, observation,
+        self,
+        action,
+        observation,
     ):
         if tuple(observation) == tuple(self.terminal_state):
             return 0

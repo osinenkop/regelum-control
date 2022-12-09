@@ -24,6 +24,8 @@ import torch
 from copy import deepcopy
 from multiprocessing import Pool
 from .models import ModelWeightContainer
+from .optimizers import Optimizer
+from .models import Model
 
 
 class Critic(ABC):
@@ -33,16 +35,16 @@ class Critic(ABC):
 
     def __init__(
         self,
-        dim_input,
-        dim_output,
-        data_buffer_size,
-        optimizer=None,
-        model=None,
+        dim_input: int,
+        dim_output: int,
+        data_buffer_size: int,
+        optimizer: Optimizer = None,
+        model: Model = None,
         running_objective=None,
-        discount_factor=1,
-        observation_target=None,
-        sampling_time=None,
-        critic_regularization_param=0,
+        discount_factor: float = 1.0,
+        observation_target: np.ndarray = None,
+        sampling_time: float = None,
+        critic_regularization_param: float = 0.0,
     ):
 
         self.data_buffer_size = data_buffer_size
@@ -119,7 +121,8 @@ class Critic(ABC):
             return "rejected"
 
     def optimize_weights(
-        self, time=None,
+        self,
+        time=None,
     ):
         """
         Compute optimized critic weights, possibly subject to constraints.
@@ -137,14 +140,14 @@ class Critic(ABC):
             self.optimized_weights = self.model.weights
 
         if self.intrinsic_constraints:
-            print("with constraint functions")
+            # print("with constraint functions")
             self.weights_acceptance_status = self.accept_or_reject_weights(
                 self.optimized_weights,
                 optimizer_engine=self.optimizer.engine,
                 constraint_functions=self.intrinsic_constraints,
             )
         else:
-            print("without constraint functions")
+            # print("without constraint functions")
             self.weights_acceptance_status = "accepted"
 
         return self.weights_acceptance_status
@@ -204,7 +207,10 @@ class Critic(ABC):
             )
 
         optimized_weights = self.optimizer.optimize(
-            cost_function, weights_init, weight_bounds, constraints=constraints,
+            cost_function,
+            weights_init,
+            weight_bounds,
+            constraints=constraints,
         )
         return optimized_weights
 
@@ -255,7 +261,9 @@ class Critic(ABC):
         }
 
         self.optimizer.optimize(
-            objective=self.objective, model=self.model, model_input=data_buffer,
+            objective=self.objective,
+            model=self.model,
+            model_input=data_buffer,
         )
 
         self.current_critic_loss = self.objective(data_buffer).detach().numpy()
@@ -313,7 +321,7 @@ class CriticOfObservation(Critic):
                 - self.running_objective(observation_old, action_old)
             )
 
-            critic_objective += 1 / 2 * temporal_difference ** 2 + regularization_term
+            critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
 
         return critic_objective
 
@@ -356,7 +364,7 @@ class CriticOfActionObservation(Critic):
                 - self.running_objective(observation_old, action_old)
             )
 
-            critic_objective += 1 / 2 * temporal_difference ** 2
+            critic_objective += 1 / 2 * temporal_difference**2
 
         return critic_objective
 
@@ -434,7 +442,8 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(
-        self, weights,
+        self,
+        weights,
     ):
         self.lb_constraint_violation = 1e-4 * rc.norm_2(
             self.current_observation

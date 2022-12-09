@@ -9,15 +9,16 @@ Remarks:
 
 """
 
-from .utilities import rc, Clock
-import numpy as np
+from abc import ABC, abstractmethod
 
+import numpy as np
 import scipy as sp
 from numpy.random import rand
 from scipy.optimize import minimize
-from abc import ABC, abstractmethod
+
+from .utilities import rc, Clock
 from .optimizers import CasADiOptimizer, SciPyOptimizer
-from w_plotting import plot_optimization_results
+from .w_plotting import plot_optimization_results
 
 
 class OptimalController(ABC):
@@ -27,10 +28,10 @@ class OptimalController(ABC):
 
     def __init__(
         self,
-        time_start=0,
-        sampling_time=0.1,
-        observation_target=None,
-        is_fixed_critic_weights=False,
+        time_start: float = 0,
+        sampling_time: float = 0.1,
+        observation_target: list = None,
+        is_fixed_critic_weights: bool = False,
     ):
 
         self.controller_clock = time_start
@@ -101,7 +102,10 @@ class RLController(OptimalController):
         self.actor.action_old = self.actor.action_init
 
     def compute_action(
-        self, time, observation, is_critic_update=False,
+        self,
+        time,
+        observation,
+        is_critic_update=False,
     ):
         # Update data buffers
         self.critic.update_buffers(
@@ -143,7 +147,10 @@ class CALFControllerExPost(RLController):
         self.actor.model.update_and_cache_weights(action)
 
     def compute_action(
-        self, time, observation, is_critic_update=False,
+        self,
+        time,
+        observation,
+        is_critic_update=False,
     ):
         # Update data buffers
         self.critic.update_buffers(
@@ -216,7 +223,10 @@ class CALFControllerExPost(RLController):
 
 class CALFControllerPredictive(CALFControllerExPost):
     def compute_action(
-        self, time, observation, is_critic_update=False,
+        self,
+        time,
+        observation,
+        is_critic_update=False,
     ):
 
         # Update data buffers
@@ -372,11 +382,11 @@ class Controller3WRobotDisassembledCLF:
         nablaF = rc.zeros(3, prototype=theta)
 
         nablaF[0] = (
-            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde ** 3
+            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde**3
         )
 
         nablaF[1] = (
-            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde ** 3
+            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde**3
         )
 
         nablaF[2] = (
@@ -387,7 +397,7 @@ class Controller3WRobotDisassembledCLF:
             )
             * xNI[2] ** 2
             * rc.sign(xNI[2])
-            / sigma_tilde ** 3
+            / sigma_tilde**3
         )
 
         return nablaF
@@ -427,7 +437,7 @@ class Controller3WRobotDisassembledCLF:
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + rc.sqrt(rc.abs(xNI[2]))
         )
 
-        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde ** 2
+        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde**2
 
         z = eta - self._kappa(xNI, theta)
 
@@ -889,7 +899,7 @@ class Controller3WRobotPID:
             # print(f"Stabilize (x, y) to (0, 0), (x, y) = {(x, y)}")
 
             error_derivative = (
-                v * (x * rc.cos(angle) + y * rc.sin(angle)) / rc.sqrt(x ** 2 + y ** 2)
+                v * (x * rc.cos(angle) + y * rc.sin(angle)) / rc.sqrt(x**2 + y**2)
             ) * rc.sign(rc.dot(self.PID_x_y_origin.initial_point, [x, y]))
 
             F = self.PID_x_y_origin.compute_action(
@@ -1105,7 +1115,7 @@ class Controller3WRobotNIDisassembledCLF:
         nablaL[0] = (
             4 * xNI[0] ** 3
             + rc.abs(xNI[2]) ** 3
-            / sigma ** 3
+            / sigma**3
             * 1
             / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
             * 2
@@ -1114,7 +1124,7 @@ class Controller3WRobotNIDisassembledCLF:
         nablaL[1] = (
             4 * xNI[1] ** 3
             + rc.abs(xNI[2]) ** 3
-            / sigma ** 3
+            / sigma**3
             * 1
             / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
             * 2
@@ -1122,7 +1132,7 @@ class Controller3WRobotNIDisassembledCLF:
         )
         nablaL[2] = 3 * rc.abs(xNI[2]) ** 2 * rc.sign(xNI[2]) + rc.abs(
             xNI[2]
-        ) ** 3 / sigma ** 3 * 1 / np.sqrt(rc.abs(xNI[2])) * rc.sign(xNI[2])
+        ) ** 3 / sigma**3 * 1 / np.sqrt(rc.abs(xNI[2])) * rc.sign(xNI[2])
 
         theta = 0
 
@@ -1133,10 +1143,10 @@ class Controller3WRobotNIDisassembledCLF:
         nablaF = rc.zeros(3)
 
         nablaF[0] = (
-            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde ** 3
+            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde**3
         )
         nablaF[1] = (
-            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde ** 3
+            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde**3
         )
         nablaF[2] = (
             (
@@ -1146,7 +1156,7 @@ class Controller3WRobotNIDisassembledCLF:
             )
             * xNI[2] ** 2
             * rc.sign(xNI[2])
-            / sigma_tilde ** 3
+            / sigma_tilde**3
         )
 
         if xNI[0] == 0 and xNI[1] == 0:
@@ -1188,7 +1198,7 @@ class Controller3WRobotNIDisassembledCLF:
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
 
-        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde ** 2
+        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde**2
 
         z = eta - self._kappa(xNI, theta)
 
@@ -1287,7 +1297,7 @@ class Controller3WRobotNIDisassembledCLF:
         xNI = self._Cart2NH(observation)
 
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
-        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma ** 2
+        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma**2
 
         self.Ls.append(LF_value)
 

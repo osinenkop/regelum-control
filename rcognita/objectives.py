@@ -4,10 +4,7 @@ For instance, a running objective can be used commonly by a generic optimal cont
 
 """
 
-from .utilities import rc
 from abc import ABC, abstractmethod
-from torch.nn import Module
-import actors
 
 
 class Objective(ABC):

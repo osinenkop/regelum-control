@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pylab import cm
 import matplotlib
-from utilities import rc
+from pylab import cm
+
+from .utilities import rc
 
 
 def plot_optimization_results(
@@ -223,4 +224,3 @@ def plot_optimization_results(
     ax_critic_constr.set_aspect("equal", adjustable="box")
     ax_actor_obj.set_aspect(1.0 / ax_actor_obj.get_data_ratio(), adjustable="box")
     ax_actor_constr.set_aspect(1.0 / ax_actor_constr.get_data_ratio(), adjustable="box")
-

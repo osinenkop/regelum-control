@@ -5,7 +5,6 @@ from . import systems
 from . import simulator
 from . import systems
 from . import loggers
-import visualization
 from .visualization import animator
 from . import utilities
 from . import models

@@ -4,37 +4,36 @@ For instance, an online scenario is when the controller and system interact with
 
 """
 
-from re import S
-from rcognita.utilities import rc
-from rcognita.optimizers import TorchOptimizer
+
 from abc import ABC, abstractmethod
-import os
 import matplotlib.pyplot as plt
-import sys
 from itertools import islice
+import numpy as np
+
+from .utilities import rc
+from .optimizers import TorchOptimizer
+from .actors import Actor
+from .critics import Critic
+from .systems import System
+from .simulator import Simulator
+from .loggers import Logger
+from .controllers import OptimalController
 
 
-class TabularScenarioBase:
-    """
-    A tabular scenario blueprint.
-
-    """
-
-    def __init__(self, actor, critic, N_iterations):
-        self.actor = actor
-        self.critic = critic
-        self.N_iterations = N_iterations
-
-    def run(self):
-        for i in range(self.N_iterations):
-            self.iterate()
+class Scenario(ABC):
+    def __init__(self):
+        pass
 
     @abstractmethod
-    def iterate(self):
+    def run(self):
+        pass
+
+    @abstractmethod
+    def step(self):
         pass
 
 
-class TabularScenarioVI(TabularScenarioBase):
+class TabularScenarioVI(Scenario):
     """
     Tabular scenario for the use with tabular agents.
     Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
@@ -42,12 +41,21 @@ class TabularScenarioVI(TabularScenarioBase):
 
     """
 
-    def iterate(self):
+    def __init__(self, actor: Actor, critic: Critic, N_iterations: int):
+        self.actor = actor
+        self.critic = critic
+        self.N_iterations = N_iterations
+
+    def run(self):
+        for i in range(self.N_iterations):
+            self.step()
+
+    def step(self):
         self.actor.update()
         self.critic.update()
 
 
-class OnlineScenario:
+class OnlineScenario(Scenario):
     """
     Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
 
@@ -55,19 +63,19 @@ class OnlineScenario:
 
     def __init__(
         self,
-        system,
-        simulator,
-        controller,
-        actor,
-        critic,
-        logger,
+        system: System,
+        simulator: Simulator,
+        controller: OptimalController,
+        actor: Actor,
+        critic: Critic,
+        logger: Logger,
         datafiles,
-        time_final,
+        time_final: float,
         running_objective,
-        no_print=False,
-        is_log=False,
-        is_playback=False,
-        state_init=None,
+        no_print: bool = False,
+        is_log: bool = False,
+        is_playback: bool = False,
+        state_init: np.ndarray = None,
         action_init=None,
     ):
         self.system = system
@@ -173,7 +181,12 @@ class OnlineScenario:
 
 class EpisodicScenario(OnlineScenario):
     def __init__(
-        self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
+        self,
+        N_episodes,
+        N_iterations,
+        *args,
+        speedup=1,
+        **kwargs,
     ):
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -246,7 +259,7 @@ class EpisodicScenario(OnlineScenario):
         """
         This is a decorator for a simulator step method.
         It containes a ``cache`` field that in turn comprises of ``keys`` and ``values``.
-        The ``cache`` dictionary method `keys` returns a triple: 
+        The ``cache`` dictionary method `keys` returns a triple:
 
         - ``time``: the current time in an episode
         - ``episode_counter``: the current episode number
@@ -331,115 +344,6 @@ class EpisodicScenario(OnlineScenario):
 
                     self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
                     ## DEBUG ==============================
-                    import multiprocessing
-
-                    def debug_visual(self):
-                        from copy import deepcopy
-
-                        eps = 1e-9
-                        figure = plt.figure(figsize=(10, 10))
-                        axes_array = figure.subplots(2, 4)
-                        times = deepcopy(self.critic.times)
-                        axes_array[0, 0].plot(
-                            times,
-                            (
-                                rc.array(self.critic.stabilizing_constraint_violations)
-                                > eps
-                            ).astype(int),
-                            label="stabilizing_constraint_violations",
-                            c="r",
-                            lw="1.2",
-                        )
-                        # [
-                        #     axes_array[0, 0].axvline(times[i], c="r", lw=0.4)
-                        #     for i, v in enumerate(pipeline.critic.stabilizing_constraint_violations)
-                        #     if v > eps
-                        # ]
-                        axes_array[0, 0].grid()
-                        axes_array[0, 0].legend()
-                        axes_array[0, 1].plot(
-                            times,
-                            (
-                                rc.array(self.critic.ub_constraint_violations) > eps
-                            ).astype(int),
-                            label="ub_constraint_violations",
-                            c="r",
-                            lw="1.2",
-                        )
-                        # [
-                        #     axes_array[0, 1].axvline(times[i], c="r", lw=0.4)
-                        #     for i, v in enumerate(pipeline.critic.ub_constraint_violations)
-                        #     if v > eps
-                        # ]
-                        axes_array[0, 1].grid()
-                        axes_array[0, 1].legend()
-                        axes_array[0, 2].plot(
-                            times,
-                            (
-                                rc.array(self.critic.lb_constraint_violations) > eps
-                            ).astype(int),
-                            label="lb_constraint_violations",
-                            c="r",
-                            lw="1.2",
-                        )
-                        # [
-                        #     axes_array[0, 2].axvline(times[i], c="r", lw=0.4)
-                        #     for i, v in enumerate(pipeline.critic.lb_constraint_violations)
-                        #     if v > eps
-                        # ]
-                        axes_array[0, 2].grid()
-                        axes_array[0, 2].legend()
-
-                        axes_array[0, 3].plot(
-                            times, self.critic.values, label="critic values"
-                        )
-                        axes_array[0, 3].legend()
-                        axes_array[0, 3].set_yscale("symlog")
-
-                        # axes_array[1, 0].plot(
-                        #     times, self.critic.Ls, label="L under CALF"
-                        # )
-                        # axes_array[1, 0].legend()
-
-                        axes_array[1, 1].plot(
-                            times,
-                            self.critic.CALFs,
-                            label="Critic as lyapunov function",
-                        )
-                        axes_array[1, 1].legend()
-                        axes_array[1, 2].plot(
-                            times,
-                            (
-                                (rc.array(self.critic.ub_constraint_violations) > eps)
-                                | (rc.array(self.critic.lb_constraint_violations) > eps)
-                                | (
-                                    rc.array(
-                                        self.critic.stabilizing_constraint_violations
-                                    )
-                                    > eps
-                                )
-                            ).astype(int),
-                            label="nominal contoller is on",
-                            c="r",
-                            lw="1.2",
-                        )
-                        # [
-                        #     axes_array[0, 1].axvline(times[i], c="r", lw=0.4)
-                        #     for i, v in enumerate(pipeline.critic.ub_constraint_violations)
-                        #     if v > eps
-                        # ]
-                        axes_array[1, 2].grid()
-                        axes_array[1, 2].legend()
-                        axes_array[1, 3].plot(
-                            self.controller.weights_difference_norms,
-                            label="w_differences",
-                        )
-                        axes_array[1, 3].legend()
-
-                        plt.show()
-
-                    process = multiprocessing.Process(None, debug_visual, args=(self,))
-                    process.start()
 
                     ## /DEBUG =============================
 
