@@ -5,14 +5,12 @@ try:
     import casadi
 except ModuleNotFoundError:
     warnings.warn_explicit(
-        "\n CasADiSolver is not available",
-        UserWarning,
-        __file__,
-        42,
+        "\n CasADiSolver is not available", UserWarning, __file__, 42,
     )
 
 import numpy as np
 from .systems import System
+from .utilities import rc
 
 
 class Solver(ABC):
@@ -74,7 +72,6 @@ class CasADiSolver(Solver):
 
 
 def create_ODE_solver(
-    self,
     system,
     state_full_init,
     state_init,
@@ -120,10 +117,10 @@ def create_ODE_solver(
     return solver
 
 
-def create_CasADi_integrator(self, system, state_init, action_init, max_step):
-    state_symbolic = self.array_symb(self.shape(state_init), literal="x")
-    action_symbolic = self.array_symb(self.shape(action_init), literal="u")
-    time = self.array_symb((1, 1), literal="t")
+def create_CasADi_integrator(system, state_init, action_init, max_step):
+    state_symbolic = rc.array_symb(rc.shape(state_init), literal="x")
+    action_symbolic = rc.array_symb(rc.shape(action_init), literal="u")
+    time = rc.array_symb((1, 1), literal="t")
 
     ODE = system.compute_dynamics(time, state_symbolic, action_symbolic)
     DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}

@@ -267,10 +267,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.reshape(array, dim_params)
 
     def array(
-        self,
-        array,
-        prototype=None,
-        rc_type=NUMPY,
+        self, array, prototype=None, rc_type=NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -286,10 +283,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self._array
 
     def ones(
-        self,
-        argin,
-        prototype=None,
-        rc_type=NUMPY,
+        self, argin, prototype=None, rc_type=NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -305,10 +299,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self._array
 
     def zeros(
-        self,
-        argin,
-        prototype=None,
-        rc_type=NUMPY,
+        self, argin, prototype=None, rc_type=NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -425,11 +416,11 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             rc_type = type_inference(*array)
 
         if rc_type == NUMPY:
-            return np.sum(array**2)
+            return np.sum(array ** 2)
         elif rc_type == TORCH:
-            return torch.sum(array**2)
+            return torch.sum(array ** 2)
         elif rc_type == CASADI:
-            return casadi.sum1(array**2)
+            return casadi.sum1(array ** 2)
 
     def mean(self, array, rc_type=NUMPY):
         if isinstance(array, (list, tuple)):
@@ -661,10 +652,42 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return casadi.Function("f", [symbolic_var], [symbolic_expression])
 
     def soft_abs(self, x, a=20, rc_type=NUMPY):
-        return a * rc.abs(x) ** 3 / (1 + a * x**2)
+        return a * rc.abs(x) ** 3 / (1 + a * x ** 2)
 
 
 rc = RCTypeHandler()
+
+
+def simulation_progress(bar_length=10, print_level=100):
+    counter = 0
+
+    def simulation_progress_inner(step_function):
+        def wrapper(self, *args, **kwargs):
+            nonlocal counter
+
+            result = step_function(self, *args, **kwargs)
+
+            current_time = self.time
+            if counter % print_level == 0:
+                bar = ["." for _ in range(bar_length)]
+                final_time = self.time_final
+                part_done = int(current_time / final_time * bar_length)
+                bar = ["#" for i in range(part_done)] + bar[part_done:]
+                print(
+                    "".join(bar),
+                    f"Episode is {int(current_time / final_time*100)}% done.\nSimulation time {current_time:.2f}",
+                )
+
+            counter += 1
+
+            if result == -1:
+                counter = 0
+                print("End of episode")
+            return result
+
+        return wrapper
+
+    return simulation_progress_inner
 
 
 # class CASADI_vector_convention:

@@ -214,8 +214,7 @@ class Actor:
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
         action_sequence_init_reshaped = rc.reshape(
-            action_sequence,
-            [final_count_of_actions * self.dim_input],
+            action_sequence, [final_count_of_actions * self.dim_input],
         )
 
         constraints = []
@@ -262,8 +261,7 @@ class Actor:
 
         elif self.optimizer.engine == "SciPy":
             actor_objective = rc.function_to_lambda_with_params(
-                self.objective,
-                self.observation,
+                self.objective, self.observation,
             )
 
             if constraint_functions is not None:
@@ -278,11 +276,7 @@ class Actor:
                 )
             if self.intrinsic_constraints:
                 intrinsic_constraints = [
-                    sp.optimize.NonlinearConstraint(
-                        constraint_function,
-                        -np.inf,
-                        0,
-                    )
+                    sp.optimize.NonlinearConstraint(constraint_function, -np.inf, 0,)
                     for constraint_function in self.intrinsic_constraints
                 ]
             else:
@@ -315,9 +309,7 @@ class Actor:
 
 class ActorMPC(Actor):
     def objective(
-        self,
-        action_sequence,
-        observation,
+        self, action_sequence, observation,
     ):
         """
         Model-predictive control (MPC) actor.
@@ -351,7 +343,7 @@ class ActorMPC(Actor):
 
         actor_objective = 0
         for k in range(self.prediction_horizon):
-            actor_objective += self.discount_factor**k * self.running_objective(
+            actor_objective += self.discount_factor ** k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
         return actor_objective
@@ -359,9 +351,7 @@ class ActorMPC(Actor):
 
 class ActorSQL(Actor):
     def objective(
-        self,
-        action_sequence,
-        observation,
+        self, action_sequence, observation,
     ):
         """
         Staked Q-learning (SQL) actor.
@@ -392,10 +382,7 @@ class ActorSQL(Actor):
         )
 
         observation_sequence = rc.column_stack(
-            (
-                observation,
-                observation_sequence_predicted,
-            )
+            (observation, observation_sequence_predicted,)
         )
 
         actor_objective = 0
@@ -413,9 +400,7 @@ class ActorSQL(Actor):
 
 class ActorRQL(Actor):
     def objective(
-        self,
-        action_sequence,
-        observation,
+        self, action_sequence, observation,
     ):
         """
         Rollout Q-learning (RQL) actor.
@@ -446,16 +431,13 @@ class ActorRQL(Actor):
         )
 
         observation_sequence = rc.column_stack(
-            (
-                observation,
-                observation_sequence_predicted,
-            )
+            (observation, observation_sequence_predicted,)
         )
 
         actor_objective = 0
 
         for k in range(self.prediction_horizon):
-            actor_objective += self.discount_factor**k * self.running_objective(
+            actor_objective += self.discount_factor ** k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
         return actor_objective
@@ -463,9 +445,7 @@ class ActorRQL(Actor):
 
 class ActorRPO(Actor):
     def objective(
-        self,
-        action,
-        observation,
+        self, action, observation,
     ):
         """
         "Running (objective) Plus Optimal (objective) actor.
@@ -654,9 +634,7 @@ class ActorLF(ActorCALF):
         self.intrinsic_constraints = []
 
     def objective(
-        self,
-        action,
-        observation,
+        self, action, observation,
     ):
 
         observation_predicted = self.predictor.predict(observation, action)
@@ -717,9 +695,7 @@ class ActorTabular(ActorRPO):
         self.model.update_and_cache_weights(new_action_table)
 
     def objective(
-        self,
-        action,
-        observation,
+        self, action, observation,
     ):
         if tuple(observation) == tuple(self.terminal_state):
             return 0
@@ -764,6 +740,9 @@ class ActorProbabilisticEpisodic(Actor):
 
     def get_action(self):
         return self.action
+
+    def optimize_weights(self):
+        pass
 
 
 class ActorProbabilisticEpisodicAC(ActorProbabilisticEpisodic):

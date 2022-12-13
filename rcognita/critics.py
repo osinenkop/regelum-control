@@ -121,8 +121,7 @@ class Critic(ABC):
             return "rejected"
 
     def optimize_weights(
-        self,
-        time=None,
+        self, time=None,
     ):
         """
         Compute optimized critic weights, possibly subject to constraints.
@@ -207,10 +206,7 @@ class Critic(ABC):
             )
 
         optimized_weights = self.optimizer.optimize(
-            cost_function,
-            weights_init,
-            weight_bounds,
-            constraints=constraints,
+            cost_function, weights_init, weight_bounds, constraints=constraints,
         )
         return optimized_weights
 
@@ -261,9 +257,7 @@ class Critic(ABC):
         }
 
         self.optimizer.optimize(
-            objective=self.objective,
-            model=self.model,
-            model_input=data_buffer,
+            objective=self.objective, model=self.model, model_input=data_buffer,
         )
 
         self.current_critic_loss = self.objective(data_buffer).detach().numpy()
@@ -321,7 +315,7 @@ class CriticOfObservation(Critic):
                 - self.running_objective(observation_old, action_old)
             )
 
-            critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
+            critic_objective += 1 / 2 * temporal_difference ** 2 + regularization_term
 
         return critic_objective
 
@@ -364,7 +358,7 @@ class CriticOfActionObservation(Critic):
                 - self.running_objective(observation_old, action_old)
             )
 
-            critic_objective += 1 / 2 * temporal_difference**2
+            critic_objective += 1 / 2 * temporal_difference ** 2
 
         return critic_objective
 
@@ -380,6 +374,7 @@ class CriticCALF(CriticOfObservation):
         safe_controller=None,
         penalty_param=0,
         critic_regularization_param=0,
+        is_predictive=True,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -402,14 +397,16 @@ class CriticCALF(CriticOfObservation):
         self.CALF = 0
         self.weights_acceptance_status = False
 
-        self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
-        # self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
-        # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
+        if is_predictive:
+            self.CALF_decay_constraint = (
+                self.CALF_decay_constraint_predicted_safe_policy
+            )
+            # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
+        else:
+            self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
 
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
-            # self.CALF_critic_lower_bound_constraint,
-            # self.CALF_critic_upper_bound_constraint,
         ]
 
     def update_buffers(self, observation, action):
@@ -442,8 +439,7 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(
-        self,
-        weights,
+        self, weights,
     ):
         self.lb_constraint_violation = 1e-4 * rc.norm_2(
             self.current_observation

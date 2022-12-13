@@ -17,7 +17,7 @@ from .critics import Critic
 from .systems import System
 from .simulator import Simulator
 from .loggers import Logger
-from .controllers import OptimalController
+from .controllers import Controller
 
 
 class Scenario(ABC):
@@ -65,7 +65,7 @@ class OnlineScenario(Scenario):
         self,
         system: System,
         simulator: Simulator,
-        controller: OptimalController,
+        controller: Controller,
         actor: Actor,
         critic: Critic,
         logger: Logger,
@@ -181,12 +181,7 @@ class OnlineScenario(Scenario):
 
 class EpisodicScenario(OnlineScenario):
     def __init__(
-        self,
-        N_episodes,
-        N_iterations,
-        *args,
-        speedup=1,
-        **kwargs,
+        self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
     ):
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -314,33 +309,6 @@ class EpisodicScenario(OnlineScenario):
                 self.current_scenario_status = step_method(self)
 
                 if self.current_scenario_status == "simulation_ended":
-                    import codecs, json
-
-                    # print(cache[(0, 0, 0)])
-
-                    def all_to_list(l):
-                        _l = []
-                        for x in l:
-                            if not isinstance(x, (float, int, bool, str, list)):
-                                _l.append(x.tolist())
-                            else:
-                                _l.append(x)
-                        print(_l)
-                        return _l
-
-                    def transform_cache(mapping):
-                        cache_transformed = [
-                            {"time_id": k, "data_snapshot": all_to_list(v)}
-                            for k, v in mapping.items()
-                        ]
-                        return cache_transformed
-
-                    json.dump(
-                        transform_cache(cache),
-                        codecs.open("cached.json", "w", encoding="utf-8"),
-                        separators=(",", ":"),
-                        sort_keys=True,
-                    )
 
                     self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
                     ## DEBUG ==============================

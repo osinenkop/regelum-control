@@ -48,10 +48,22 @@
             "justMyCode": true
         },
         {
-            "name": "Python: simplest",
+            "name": "Python: simplest Gvidon",
             "type": "python",
             "request": "launch",
             "program": "/home/gvidon/JoraProgramming/rcognita/pipelines/pipeline_3wrobot_NI.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--no_visual",
+                "--is_playback"
+            ]
+        },
+        {
+            "name": "Python: simplest SK",
+            "type": "python",
+            "request": "launch",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/pipeline_3wrobot_NI.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [

@@ -40,7 +40,7 @@ from rcognita.actors import ActorProbabilisticEpisodic
 
 from rcognita.utilities import rc
 
-from rcognita.scenarios import EpisodicScenarioCriticLearn, EpisodicScenarioREINFORCE
+from rcognita.scenarios import EpisodicScenarioREINFORCE
 from rcognita import models, optimizers, loggers, simulator
 from copy import deepcopy
 
