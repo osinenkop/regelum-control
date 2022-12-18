@@ -1,0 +1,12 @@
+# @package _global_
+
+pi: "${get_cls: numpy.pi}"
+
+e:
+  _target_: numpy.e
+
+euler_gamma:
+  _target_: numpy.euler_gamma
+
+inf:
+  _target_: numpy.inf

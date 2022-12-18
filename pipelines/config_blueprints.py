@@ -56,9 +56,7 @@ class RcognitaArgParser(argparse.ArgumentParser):
             help="Flag to log data into a data file. Data are stored in simdata folder.",
         )
         self.add_argument(
-            "--is_playback",
-            action="store_true",
-            help="Flag to playback.",
+            "--is_playback", action="store_true", help="Flag to playback.",
         )
         self.add_argument(
             "--speedup",
@@ -104,10 +102,7 @@ class RcognitaArgParser(argparse.ArgumentParser):
         )
         self.add_argument("--config", type=open, action=LoadFromFile)
         self.add_argument(
-            "strings",
-            metavar="STRING",
-            nargs="*",
-            help="String for searching",
+            "strings", metavar="STRING", nargs="*", help="String for searching",
         )
 
         self.add_argument(
@@ -251,19 +246,6 @@ class Config3WRobot(Config):
             help="Initial state (as sequence of numbers); "
             + "dimension is environment-specific!",
         )
-
-        parser.add_argument(
-            "--model_est_stage",
-            type=float,
-            default=1.0,
-            help="Seconds to learn model until benchmarking controller kicks in.",
-        )
-        parser.add_argument(
-            "--model_est_period_multiplier",
-            type=float,
-            default=1,
-            help="Model is updated every model_est_period_multiplier times sampling_time seconds.",
-        )
         parser.add_argument(
             "--model_order",
             type=int,
@@ -277,23 +259,10 @@ class Config3WRobot(Config):
             help="Power of probing (exploration) noise.",
         )
         parser.add_argument(
-            "--action_manual",
-            type=float,
-            default=[-5, -3],
-            nargs="+",
-            help="Manual control action to be fed constant, system-specific!",
-        )
-        parser.add_argument(
             "--prediction_horizon",
             type=int,
             default=5,
             help="Horizon length (in steps) for predictive controllers.",
-        )
-        parser.add_argument(
-            "--pred_step_size_multiplier",
-            type=float,
-            default=2.0,
-            help="Size of each prediction step in seconds is a pred_step_size_multiplier multiple of controller sampling time sampling_time.",
         )
         parser.add_argument(
             "--data_buffer_size",
@@ -1053,9 +1022,7 @@ class ConfigInvertedPendulumAC(Config):
         parser = RcognitaArgParser(description=description)
 
         parser.add_argument(
-            "--is_playback",
-            action="store_true",
-            help="Flag to playback.",
+            "--is_playback", action="store_true", help="Flag to playback.",
         )
 
         parser.add_argument(
@@ -1145,10 +1112,7 @@ class ConfigInvertedPendulumAC(Config):
             help="Size of gradient critic update.",
         )
         parser.add_argument(
-            "--speedup",
-            type=int,
-            default=20,
-            help="Animation speed up",
+            "--speedup", type=int, default=20, help="Animation speed up",
         )
         parser.add_argument(
             "--data_buffer_size",

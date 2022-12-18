@@ -30,16 +30,13 @@ class Controller(ABC):
         self,
         time_start: float = 0,
         sampling_time: float = 0.1,
-        observation_target: list = None,
         is_fixed_critic_weights: bool = False,
     ):
 
         self.controller_clock = time_start
         self.sampling_time = sampling_time
-        if observation_target is None:
-            observation_target = []
 
-        self.observation_target = observation_target
+        self.observation_target = []
         self.is_fixed_critic_weights = is_fixed_critic_weights
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
@@ -68,6 +65,20 @@ class Controller(ABC):
         pass
 
 
+class ControllerStabilizing(ABC):
+    """
+    A blueprint of optimal controllers.
+    """
+
+    def __init__(self, *args, observation_target: list = None, **kwargs):
+
+        super().__init__(*args, **kwargs)
+        if observation_target is None:
+            observation_target = []
+
+        self.observation_target = observation_target
+
+
 class RLController(Controller):
     """
     Reinforcement learning controller class.
@@ -83,8 +94,8 @@ class RLController(Controller):
         self.actor = actor
         self.critic = critic
 
-        self.dim_input = self.actor.dim_input
-        self.dim_output = self.actor.dim_output
+        # self.dim_input = self.actor.dim_input
+        # self.dim_output = self.actor.dim_output
 
         self.critic_clock = time_start
         self.critic_period = critic_period
@@ -596,98 +607,6 @@ class Controller3WRobotDisassembledCLF:
         theta_star = self._minimizer_theta(xNI, eta)
 
         return self._Fc(xNI, eta, theta_star)
-
-
-class Controller3WRobotNIMotionPrimitive:
-    def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
-        if action_bounds is None:
-            action_bounds = []
-
-        self.action_bounds = action_bounds
-        self.K = K
-        self.controller_clock = time_start
-        self.sampling_time = sampling_time
-        self.Ls = []
-        self.times = []
-        self.action_old = rc.zeros(2)
-        self.clock = Clock(period=sampling_time, time_start=time_start)
-
-    def compute_action(self, observation):
-        x = observation[0]
-        y = observation[1]
-        angle = observation[2]
-
-        angle_cond = np.arctan2(y, x)
-
-        if not np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
-            angle, angle_cond, atol=1e-03
-        ):
-            omega = (
-                -self.K
-                * np.sign(angle - angle_cond)
-                * rc.sqrt(rc.abs(angle - angle_cond))
-            )
-            v = 0
-        elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
-            angle, angle_cond, atol=1e-03
-        ):
-            print("cond 2")
-            omega = 0
-            v = -self.K * rc.sqrt(rc.norm_2(rc.array([x, y])))
-        elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
-            angle, 0, atol=1e-03
-        ):
-            print("cond 3")
-            omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
-            v = 0
-        else:
-            omega = 0
-            v = 0
-
-        return rc.array([np.clip(v, -25.0, 25.0), np.clip(omega, -5.0, 5.0)])
-
-    def compute_action_sampled(self, time, observation):
-        """
-        Compute sampled action.
-
-        """
-
-        is_time_for_new_sample = self.clock.check_time(time)
-
-        if is_time_for_new_sample:  # New sample
-
-            action = self.compute_action(observation)
-            self.times.append(time)
-
-            if self.action_bounds != []:
-                for k in range(2):
-                    action[k] = np.clip(
-                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
-                    )
-
-            self.action_old = action
-
-            # DEBUG ===================================================================
-            # ================================LF debugger
-            # R  = '\033[31m'
-            # Bl  = '\033[30m'
-            # headerRow = ['L']
-            # dataRow = [self.compute_LF(observation)]
-            # rowFormat = ('8.5f', '8.5f', '8.5f', '8.5f')
-            # table = tabulate([headerRow, dataRow], floatfmt=rowFormat, headers='firstrow', tablefmt='grid')
-            # print(R+table+Bl)
-            # /DEBUG ===================================================================
-            print(action)
-            return action
-
-        else:
-            return self.action_old
-
-    def reset(self, time_start=0):
-        self.controller_clock = time_start
-
-    def compute_LF(self, observation):
-        pass
 
 
 class ControllerPID:

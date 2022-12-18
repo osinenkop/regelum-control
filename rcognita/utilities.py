@@ -82,15 +82,15 @@ CASADI = RCType.CASADI
 NUMPY = RCType.NUMPY
 
 
-def is_CasADi_typecheck(*args):
+def is_CasADi_typecheck(*args) -> Union[RCType, bool]:
     return CASADI if any([isinstance(arg, CASADI_TYPES) for arg in args]) else False
 
 
-def is_Torch_typecheck(*args):
+def is_Torch_typecheck(*args) -> Union[RCType, bool]:
     return TORCH if any([isinstance(arg, TORCH_TYPES) for arg in args]) else False
 
 
-def type_inference(*args, **kwargs):
+def type_inference(*args, **kwargs) -> Union[RCType, bool]:
     is_CasADi = is_CasADi_typecheck(*args, *kwargs.values())
     is_Torch = is_Torch_typecheck(*args, *kwargs.values())
     if is_CasADi + is_Torch > 4:
@@ -111,7 +111,7 @@ def safe_unpack(argin):
 
 def decorateAll(decorator):
     class MetaClassDecorator(type):
-        def __new__(meta, classname, supers, classdict):
+        def __new__(cls, classname, supers, classdict):
             for name, elem in classdict.items():
                 if (
                     type(elem) is types.FunctionType
@@ -119,7 +119,7 @@ def decorateAll(decorator):
                     and not isinstance(elem, staticmethod)
                 ):
                     classdict[name] = decorator(classdict[name])
-            return type.__new__(meta, classname, supers, classdict)
+            return type.__new__(cls, classname, supers, classdict)
 
     return MetaClassDecorator
 
@@ -138,13 +138,13 @@ def metaclassTypeInferenceDecorator(function):
 
 
 class Clock:
-    def __init__(self, period, time_start=0, eps=1e-7):
+    def __init__(self, period: float, time_start: float = 0.0, eps=1e-7):
         self.period = period
         self.eps = eps
         self.time_start = time_start
         self.time = time_start
 
-    def check_time(self, time):
+    def check_time(self, time: float):
         if time > self.time + self.period - self.eps:
             self.time = time
             return True
@@ -163,7 +163,9 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     is_force_row = True
 
-    def CasADi_primitive(self, type="MX", rc_type=NUMPY):
+    def CasADi_primitive(
+        self, type: str = "MX", rc_type: RCType = NUMPY
+    ) -> Union[casadi.DM, casadi.MX, casadi.SX]:
         if type == "MX":
             return casadi.MX.sym("x", 1)
         elif type == "SX":
@@ -171,7 +173,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif type == "DM":
             return casadi.DM([0])
 
-    def cos(self, x, rc_type=NUMPY):
+    def cos(self, x, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.cos(x)
         elif rc_type == TORCH:
@@ -179,7 +181,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.cos(x)
 
-    def sin(self, x, rc_type=NUMPY):
+    def sin(self, x, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.sin(x)
         elif rc_type == TORCH:
@@ -187,7 +189,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.sin(x)
 
-    def column_stack(self, tup, rc_type=NUMPY):
+    def column_stack(self, tup, rc_type: RCType = NUMPY):
         rc_type = type_inference(*tup)
 
         if rc_type == NUMPY:
@@ -197,7 +199,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.horzcat(*tup)
 
-    def hstack(self, tup, rc_type=NUMPY):
+    def hstack(self, tup, rc_type: RCType = NUMPY):
         rc_type = type_inference(*tup)
 
         if rc_type == NUMPY:
@@ -207,7 +209,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.horzcat(*tup)
 
-    def vstack(self, tup, rc_type=NUMPY):
+    def vstack(self, tup, rc_type: RCType = NUMPY):
         rc_type = type_inference(*tup)
 
         if rc_type == NUMPY:
@@ -217,7 +219,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.vertcat(*tup)
 
-    def exp(self, x, rc_type=NUMPY):
+    def exp(self, x, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.exp(x)
         elif rc_type == TORCH:
@@ -225,13 +227,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.exp(x)
 
-    def penalty_function(self, x, penalty_param=1, rc_type=NUMPY):
+    def penalty_function(self, x, penalty_param=1, rc_type: RCType = NUMPY):
         return self.exp(x * penalty_param) - 1
 
-    def push_vec(self, matrix, vec, rc_type=NUMPY):
+    def push_vec(self, matrix, vec, rc_type: RCType = NUMPY):
         return self.column_stack([matrix[:, 1:], vec], rc_type=rc_type)
 
-    def reshape_CasADi_as_np(self, array, dim_params, rc_type=NUMPY):
+    def reshape_CasADi_as_np(self, array, dim_params, rc_type: RCType = NUMPY):
         result = casadi.MX(*dim_params)
         n_rows = dim_params[0]
         n_cols = dim_params[1]
@@ -240,11 +242,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
         return result
 
-    def reshape_to_column(self, array, length, rc_type=NUMPY):
+    def reshape_to_column(self, array, length, rc_type: RCType = NUMPY):
         result_array = rc.reshape(array, [length, 1])
         return result_array
 
-    def reshape(self, array, dim_params: Union[list, tuple, int], rc_type=NUMPY):
+    def reshape(
+        self, array, dim_params: Union[list, tuple, int], rc_type: RCType = NUMPY
+    ):
 
         if rc_type == CASADI:
             if isinstance(dim_params, (list, tuple)):
@@ -267,7 +271,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.reshape(array, dim_params)
 
     def array(
-        self, array, prototype=None, rc_type=NUMPY,
+        self, array, prototype=None, rc_type: RCType = NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -283,7 +287,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self._array
 
     def ones(
-        self, argin, prototype=None, rc_type=NUMPY,
+        self, argin, prototype=None, rc_type: RCType = NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -299,7 +303,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self._array
 
     def zeros(
-        self, argin, prototype=None, rc_type=NUMPY,
+        self, argin, prototype=None, rc_type: RCType = NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -314,7 +318,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             return self._array
 
-    def concatenate(self, argin, rc_type=NUMPY, **kwargs):
+    def concatenate(self, argin, rc_type: RCType = NUMPY, **kwargs):
         rc_type = type_inference(*safe_unpack(argin))
 
         if rc_type == NUMPY:
@@ -332,10 +336,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
                         + "Possible types are: list, tuple"
                     )
 
-    def atleast_1d(self, dim, rc_type=NUMPY):
+    def atleast_1d(self, dim, rc_type: RCType = NUMPY):
         return np.atleast_1d(dim)
 
-    def rep_mat(self, array, n, m, rc_type=NUMPY):
+    def rep_mat(self, array, n, m, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.squeeze(np.tile(array, (n, m)))
@@ -344,7 +348,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.repmat(array, n, m)
 
-    def matmul(self, A, B, rc_type=NUMPY):
+    def matmul(self, A, B, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.matmul(A, B)
@@ -355,14 +359,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.mtimes(A, B)
 
-    def casadi_outer(self, v1, v2, rc_type=NUMPY):
+    def casadi_outer(self, v1, v2, rc_type: RCType = NUMPY):
 
         if not is_CasADi_typecheck(v1):
             v1 = self.array_symb(v1)
 
         return casadi.horzcat(*[v1 * v2_i for v2_i in v2.nz])
 
-    def outer(self, v1, v2, rc_type=NUMPY):
+    def outer(self, v1, v2, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.outer(v1, v2)
@@ -371,7 +375,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return self.casadi_outer(v1, v2)
 
-    def sign(self, x, rc_type=NUMPY):
+    def sign(self, x, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.sign(x)
@@ -380,7 +384,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.sign(x)
 
-    def abs(self, x, rc_type=NUMPY):
+    def abs(self, x, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.abs(x)
@@ -389,7 +393,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.fabs(x)
 
-    def min(self, array, rc_type=NUMPY):
+    def min(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
             rc_type = type_inference(array)
 
@@ -400,7 +404,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.min(*safe_unpack(array))
 
-    def max(self, array, rc_type=NUMPY):
+    def max(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
             rc_type = type_inference(array)
 
@@ -411,7 +415,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.max(*safe_unpack(array))
 
-    def sum_2(self, array, rc_type=NUMPY):
+    def sum_2(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
             rc_type = type_inference(*array)
 
@@ -422,7 +426,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.sum1(array ** 2)
 
-    def mean(self, array, rc_type=NUMPY):
+    def mean(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
             rc_type = type_inference(*array)
 
@@ -434,7 +438,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             length = self.max(self.shape(*safe_unpack(array)))
             return casadi.sum1(*safe_unpack(array)) / length
 
-    def force_column(self, argin, rc_type=NUMPY):
+    def force_column(self, argin, rc_type: RCType = NUMPY):
         argin_shape = self.shape(argin)
 
         if len(argin_shape) > 1:
@@ -448,7 +452,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             elif rc_type == TORCH:
                 return torch.reshape(argin, (argin.size()[0], 1))
 
-    def force_row(self, argin, rc_type=NUMPY):
+    def force_row(self, argin, rc_type: RCType = NUMPY):
         argin_shape = self.shape(argin)
 
         if rc_type == CASADI:
@@ -467,7 +471,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             # elif rc_type == TORCH:
             #     return torch.reshape(argin, (1, argin.size()[0]))
 
-    def dot(self, A, B, rc_type=NUMPY):
+    def dot(self, A, B, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.dot(A, B)
@@ -476,7 +480,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.dot(A, B)
 
-    def sqrt(self, x, rc_type=NUMPY):
+    def sqrt(self, x, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.sqrt(x)
@@ -485,7 +489,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.sqrt(x)
 
-    def shape(self, array, rc_type=NUMPY):
+    def shape(self, array, rc_type: RCType = NUMPY):
 
         if rc_type == CASADI:
             return array.size()
@@ -495,7 +499,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return array.size()
 
     def function_to_lambda_with_params(
-        self, function_to_lambda, *params, var_prototype=None, rc_type=NUMPY
+        self, function_to_lambda, *params, var_prototype=None, rc_type: RCType = NUMPY
     ):
 
         if rc_type in (NUMPY, TORCH):
@@ -514,10 +518,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             else:
                 return function_to_lambda(x_symb), x_symb
 
-    def lambda2symb(self, lambda_function, *x_symb, rc_type=NUMPY):
+    def lambda2symb(self, lambda_function, *x_symb, rc_type: RCType = NUMPY):
         return lambda_function(*x_symb)
 
-    def tanh(self, x, rc_type=NUMPY):
+    def tanh(self, x, rc_type: RCType = NUMPY):
         if rc_type == CASADI:
             res = casadi.tanh(x)
         elif rc_type == NUMPY:
@@ -526,7 +530,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             res = torch.tanh(x)
         return res
 
-    def if_else(self, c, x, y, rc_type=NUMPY):
+    def if_else(self, c, x, y, rc_type: RCType = NUMPY):
 
         if rc_type == CASADI:
             res = casadi.if_else(c, x, y)
@@ -534,7 +538,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH or rc_type == NUMPY:
             return x if c else y
 
-    def kron(self, A, B, rc_type=NUMPY):
+    def kron(self, A, B, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.kron(A, B)
@@ -543,7 +547,9 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.kron(A, B)
 
-    def array_symb(self, tup=None, literal="x", rc_type=NUMPY, prototype=None):
+    def array_symb(
+        self, tup=None, literal="x", rc_type: RCType = NUMPY, prototype=None
+    ):
         if prototype is not None:
             shape = self.shape(prototype)
         else:
@@ -565,7 +571,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
                 f"Passed an invalide argument of type {type(tup)}. Takes either int or tuple data types"
             )
 
-    def norm_1(self, v, rc_type=NUMPY):
+    def norm_1(self, v, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.linalg.norm(v, 1)
@@ -574,7 +580,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.norm_1(v)
 
-    def norm_2(self, v, rc_type=NUMPY):
+    def norm_2(self, v, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.linalg.norm(v, 2)
@@ -583,7 +589,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.norm_2(v)
 
-    def logic_and(self, a, b, rc_type=NUMPY):
+    def logic_and(self, a, b, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.logical_and(a, b)
@@ -592,13 +598,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.logic_and(a, b)
 
-    def to_np_1D(self, v, rc_type=NUMPY):
+    def to_np_1D(self, v, rc_type: RCType = NUMPY):
         if rc_type == CASADI:
             return v.T.full().flatten()
         else:
             return v
 
-    def squeeze(self, v, rc_type=NUMPY):
+    def squeeze(self, v, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
             return np.squeeze(v)
@@ -607,7 +613,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return v
 
-    def uptria2vec(self, mat, rc_type=NUMPY):
+    def uptria2vec(self, mat, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             result = mat[np.triu_indices(self.shape(mat)[0])]
             return result
@@ -627,7 +633,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             return vec
 
-    def append(self, array, to_append, rc_type=NUMPY):
+    def append(self, array, to_append, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.append(array, to_append)
 
@@ -643,15 +649,17 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def MX(mat):
         return casadi.MX(mat)
 
-    def autograd(self, function, x, *args, rc_type=NUMPY):
+    def autograd(self, function, x, *args, rc_type: RCType = NUMPY):
         return casadi.Function(
             "f", [x, *args], [casadi.gradient(function(x, *args), x)]
         )
 
-    def to_casadi_function(self, symbolic_expression, symbolic_var, rc_type=NUMPY):
+    def to_casadi_function(
+        self, symbolic_expression, symbolic_var, rc_type: RCType = NUMPY
+    ):
         return casadi.Function("f", [symbolic_var], [symbolic_expression])
 
-    def soft_abs(self, x, a=20, rc_type=NUMPY):
+    def soft_abs(self, x, a=20, rc_type: RCType = NUMPY):
         return a * rc.abs(x) ** 3 / (1 + a * x ** 2)
 
 
@@ -703,7 +711,7 @@ def simulation_progress(bar_length=10, print_level=100):
 #     ..  code-block:: python
 
 #         with CASADI_vector_convention(locals()):
-#             Dstate = rc.zeros(dim_state, rc_type=rc.CASADI)
+#             Dstate = rc.zeros(dim_state, rc_type: RCType = rc.CASADI)
 #             ...
 
 #     This code will automatically set `Dstate` to the column format, whenever the backround engine is CASADI.

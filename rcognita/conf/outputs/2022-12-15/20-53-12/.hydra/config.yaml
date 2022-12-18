@@ -1,0 +1,20 @@
+turtlebot:
+  state_init:
+  - -5.0
+  - -5.0
+  - '${get_cls: numpy}.pi'
+  - 0.0
+  - 0.0
+  F_min: -300
+  F_max: 300
+  M_min: -100
+  M_max: 100
+  nominal:
+    CLF:
+    - controller_gain: 10
+    PID:
+    - params:
+      - 10
+      - 1
+    - time_start: general.simulation.time_final
+    - sampling_time: general.simulation.sampling_time

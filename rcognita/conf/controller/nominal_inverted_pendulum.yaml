@@ -1,0 +1,3 @@
+_target_: ${rcognita:controllers.NominalControllerInvertedPendulum}
+controller_gain: 10
+action_bounds: ${controller.action_bounds}

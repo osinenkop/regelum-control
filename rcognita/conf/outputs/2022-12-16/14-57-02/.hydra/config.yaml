@@ -1,0 +1,14 @@
+general:
+  ode_solver: numpy
+  is_playback: true
+  no_visual: false
+  speedup: 5
+  no_print: false
+  sampling_time: 0.01
+  time_final: 10.0
+  save_animation: true
+  penalty_param: 0.0
+controller:
+  F_min: ${get:numpy.pi}
+speedup: ${general.speedup}
+F_min: ${controller.F_min}

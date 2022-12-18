@@ -14,7 +14,7 @@ setup(
     version=__version__,
     author="AIDynamicAction",
     description="rcognita is a framework for hybrid agent-environment loop simulation, with a library of predictive and stabilizing reinforcement learning setups",
-    url="https://github.com/AIDynamicAction/rcognita",
+    url="https://gitflic.ru/project/aidynamicaction/rcognita",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

@@ -43,7 +43,6 @@ class Actor:
         prediction_horizon: int,
         dim_input: int,
         dim_output: int,
-        control_mode: str,
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
         predictor: Predictor = None,
@@ -56,7 +55,6 @@ class Actor:
         self.prediction_horizon = prediction_horizon
         self.dim_input = dim_input
         self.dim_output = dim_output
-        self.control_mode = control_mode
         self.action_bounds = action_bounds
         self.optimizer = optimizer
         self.critic = critic

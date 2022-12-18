@@ -1,0 +1,31 @@
+general:
+  ode_solver: numpy
+  is_playback: true
+  no_visual: false
+  speedup: 5
+  no_print: false
+  sampling_time: 0.01
+  time_final: 10.0
+  save_animation: true
+  penalty_param: 0.0
+_group_:
+  state_init:
+  - -5.0
+  - -5.0
+  - 0.0
+  - 0.0
+  F_min: -300
+  F_max: 300
+  M_min: -100
+  M_max: 100
+  nominal:
+    CLF:
+    - controller_gain: 10
+    PID:
+    - params:
+      - 10
+      - 1
+    - time_start: general.simulation.time_final
+    - sampling_time: general.simulation.sampling_time
+speedup: ${general.speedup}
+F_min: ${controller}

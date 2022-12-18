@@ -1,0 +1,5 @@
+_target_: ${rcognita:controllers.Controller3WRobotNIMotionPrimitive}
+K: 10
+action_bounds: ${controller.action_bounds}
+sampling_time: ${sampling_time}
+time_start: ${time_start}

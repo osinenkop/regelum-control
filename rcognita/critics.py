@@ -26,6 +26,8 @@ from multiprocessing import Pool
 from .models import ModelWeightContainer
 from .optimizers import Optimizer
 from .models import Model
+from .objectives import Objective
+from typing import Optional, Union
 
 
 class Critic(ABC):
@@ -38,12 +40,12 @@ class Critic(ABC):
         dim_input: int,
         dim_output: int,
         data_buffer_size: int,
-        optimizer: Optimizer = None,
-        model: Model = None,
-        running_objective=None,
+        optimizer: Optional[Optimizer] = None,
+        model: Optional[Model] = None,
+        running_objective: Optional[Objective] = None,
         discount_factor: float = 1.0,
-        observation_target: np.ndarray = None,
-        sampling_time: float = None,
+        observation_target: Optional[np.ndarray] = None,
+        sampling_time: float = 0.01,
         critic_regularization_param: float = 0.0,
     ):
 
@@ -51,26 +53,26 @@ class Critic(ABC):
         self.dim_input = dim_input
         self.dim_output = dim_output
 
-        self.optimizer = optimizer
-        if self.optimizer.engine == "Torch":
-            self.optimizer_engine = TORCH
-        elif self.optimizer.engine == "CasADi":
-            self.optimizer_engine = CASADI
+        if optimizer is not None:
+            self.optimizer = optimizer
         else:
-            self.optimizer_engine = NUMPY
+            raise ValueError("No optimizer defined")
+
+        if model:
+            self.model = model
+        else:
+            raise ValueError("No model defined")
+
         self.initialize_buffers()
+
         if observation_target is None:
-            observation_target = []
+            observation_target = np.array([])
+
         self.observation_target = observation_target
 
         self.discount_factor = discount_factor
         self.running_objective = running_objective
 
-        # DEBUG-----------------------------------------------------------
-        # self.g_critic_values = []
-        # /DEBUG----------------------------------------------------------
-
-        self.model = model
         self.current_critic_loss = 0
         self.outcome = 0
         self.sampling_time = sampling_time
@@ -78,6 +80,15 @@ class Critic(ABC):
         self.intrinsic_constraints = []
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
+
+    @property
+    def optimizer_engine(self):
+        if self.optimizer.engine == "Torch":
+            return TORCH
+        elif self.optimizer.engine == "CasADi":
+            return CASADI
+        else:
+            return NUMPY
 
     def __call__(self, *args, use_stored_weights=False):
         if len(args) == 2:
