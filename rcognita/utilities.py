@@ -20,25 +20,17 @@ therefore, we do so or so
 tag `compliant` will mean that the operation be compliant with the rc vwector dimensionality convention
 """
 
-import numpy as np
-import os, sys
-from enum import IntEnum
-
-PARENT_DIR = os.path.abspath(__file__ + "/../../")
-sys.path.insert(0, PARENT_DIR)
-CUR_DIR = os.path.abspath(__file__ + "/..")
-sys.path.insert(0, CUR_DIR)
-from numpy.random import rand
-from numpy.matlib import repmat
-import scipy.stats as st
-from scipy import signal
-import scipy as sp
-import matplotlib.pyplot as plt
-from abc import ABC, abstractmethod
-from typing import Union
-
 import inspect
 import warnings
+import numpy as np
+import scipy.stats as st
+import scipy as sp
+import matplotlib.pyplot as plt
+
+from enum import IntEnum
+from numpy.random import rand
+from scipy import signal
+from typing import Union
 
 try:
     import casadi
@@ -77,7 +69,7 @@ class RCType(IntEnum):
     Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
     That is, if, for instance, a function of two arguments gets an argument of a `NumPy` type and an argument of a `CasAdi` type,
     then the function's output type is inferred as a `CasADi` type.
-    Mixture of CasADi types will raise a `TypeError` exception.  
+    Mixture of CasADi types will raise a `TypeError` exception.
     """
 
     TORCH = 3
@@ -163,64 +155,6 @@ class Clock:
         self.time = self.time_start
 
 
-class Solver(ABC):
-    @property
-    @abstractmethod
-    def y(self):
-        pass
-
-    @property
-    @abstractmethod
-    def t(self):
-        pass
-
-    @abstractmethod
-    def step(self):
-        pass
-
-
-class CasADiSolver(Solver):
-    def __init__(
-        self,
-        integrator,
-        time_start,
-        time_final,
-        step_size,
-        state_init,
-        action_init,
-        system,
-    ):
-
-        self.integrator = integrator
-        self.time_start = time_start
-        self.time_final = time_final
-        self.step_size = step_size
-        self.time = self.time_start
-        self.state_init = state_init
-        self.state = self.state_init
-        self.state_new = self.state
-        self.action_init = action_init
-        self.action = self.action_init
-        self.system = system
-
-    def step(self):
-        if self.time >= self.time_final:
-            raise RuntimeError("An attempt to step with a finished solver")
-        self.state_new = np.squeeze(
-            self.integrator(x0=self.state, p=self.system.action)["xf"].full()
-        )
-        self.time += self.step_size
-        self.state = self.state_new
-
-    @property
-    def t(self):
-        return self.time
-
-    @property
-    def y(self):
-        return self.state
-
-
 class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     TORCH = RCType.TORCH
@@ -236,65 +170,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.SX.sym("x", 1)
         elif type == "DM":
             return casadi.DM([0])
-
-    def ODE_solver(
-        self,
-        system,
-        compute_closed_loop_rhs,
-        state_full_init,
-        state_init,
-        action_init,
-        time_start=0,
-        time_final=10,
-        max_step=1e-3,
-        first_step=1e-6,
-        atol=1e-5,
-        rtol=1e-3,
-        ode_solver="NUMPY",
-        rc_type=NUMPY,
-    ):
-
-        if ode_solver == "NUMPY":
-
-            solver = sp.integrate.RK45(
-                compute_closed_loop_rhs,
-                time_start,
-                state_full_init,
-                time_final,
-                max_step=max_step,
-                first_step=first_step,
-                atol=atol,
-                rtol=rtol,
-            )
-
-        elif ode_solver == "CASADI":
-
-            integrator = self.create_CasADi_integrator(
-                system._compute_dynamics, state_init, action_init, max_step
-            )
-
-            solver = CasADiSolver(
-                integrator,
-                time_start,
-                time_final,
-                max_step,
-                state_init,
-                action_init,
-                system,
-            )
-        return solver
-
-    def create_CasADi_integrator(
-        self, compute_state_dynamics, state_init, action_init, max_step, rc_type=NUMPY
-    ):
-        state_symbolic = self.array_symb(self.shape(state_init), literal="x")
-        action_symbolic = self.array_symb(self.shape(action_init), literal="u")
-        time = self.array_symb((1, 1), literal="t")
-        ODE = compute_state_dynamics(time, state_symbolic, action_symbolic)
-        DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
-        options = {"tf": max_step}
-        integrator = casadi.integrator("intg", "rk", DAE, options)
-        return integrator
 
     def cos(self, x, rc_type=NUMPY):
         if rc_type == NUMPY:
@@ -781,6 +656,38 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
 
 rc = RCTypeHandler()
+
+
+def simulation_progress(bar_length=10, print_level=100):
+    counter = 0
+
+    def simulation_progress_inner(step_function):
+        def wrapper(self, *args, **kwargs):
+            nonlocal counter
+
+            result = step_function(self, *args, **kwargs)
+
+            current_time = self.time
+            if counter % print_level == 0:
+                bar = ["." for _ in range(bar_length)]
+                final_time = self.time_final
+                part_done = int(current_time / final_time * bar_length)
+                bar = ["#" for i in range(part_done)] + bar[part_done:]
+                print(
+                    "".join(bar),
+                    f"Episode is {int(current_time / final_time*100)}% done.\nSimulation time {current_time:.2f}",
+                )
+
+            counter += 1
+
+            if result == -1:
+                counter = 0
+                print("End of episode")
+            return result
+
+        return wrapper
+
+    return simulation_progress_inner
 
 
 # class CASADI_vector_convention:

@@ -9,28 +9,29 @@ Remarks:
 
 """
 
-from .utilities import rc, Clock
-import numpy as np
+from abc import ABC, abstractmethod
 
+import numpy as np
 import scipy as sp
 from numpy.random import rand
 from scipy.optimize import minimize
-from abc import ABC, abstractmethod
+
+from .utilities import rc, Clock
 from .optimizers import CasADiOptimizer, SciPyOptimizer
-from w_plotting import plot_optimization_results
+from .w_plotting import plot_optimization_results
 
 
-class OptimalController(ABC):
+class Controller(ABC):
     """
     A blueprint of optimal controllers.
     """
 
     def __init__(
         self,
-        time_start=0,
-        sampling_time=0.1,
-        observation_target=None,
-        is_fixed_critic_weights=False,
+        time_start: float = 0,
+        sampling_time: float = 0.1,
+        observation_target: list = None,
+        is_fixed_critic_weights: bool = False,
     ):
 
         self.controller_clock = time_start
@@ -67,7 +68,7 @@ class OptimalController(ABC):
         pass
 
 
-class RLController(OptimalController):
+class RLController(Controller):
     """
     Reinforcement learning controller class.
     Takes instances of `actor` and `critic` to operate.
@@ -101,27 +102,25 @@ class RLController(OptimalController):
         self.actor.action_old = self.actor.action_init
 
     def compute_action(
-        self, time, observation, is_critic_update=False,
+        self, time, observation, is_critic_update=True,
     ):
-        # Update data buffers
-        self.critic.update_buffers(
-            observation, self.actor.action
-        )  ### store current action and observation in critic's data buffer
-        # self.critic.safe_decay_rate = 1e-1 * rc.norm_2(observation)
-        self.actor.receive_observation(
-            observation
-        )  ### store current observation in actor
+        ### store current action and observation in critic's data buffer
+        self.critic.update_buffers(observation, self.actor.action)
+
+        ### store current observation in actor
+        self.actor.receive_observation(observation)
 
         if is_critic_update:
-            # Update critic's internal clock
-            self.critic.optimize_weights(
-                time=time
-            )  ### optimize critic's model weights based on current observation
-            self.critic.update_and_cache_weights()  ### store weights in the critic's model
+            ### optimize critic's model weights
+            self.critic.optimize_weights(time=time)
+            ### substitute and cache critic's model optimized weights
+            self.critic.update_and_cache_weights()
 
-        self.actor.optimize_weights()  ### optimize actor's model weights based on current observation
+        ### optimize actor's model weights based on current observation
+        self.actor.optimize_weights()
 
-        self.actor.update_and_cache_weights()  ### store weights in the actor's model
+        ### substitute and cache weights in the actor's model
+        self.actor.update_and_cache_weights()
         self.actor.update_action(observation)
 
         return self.actor.action

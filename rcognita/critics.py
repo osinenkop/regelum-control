@@ -24,6 +24,8 @@ import torch
 from copy import deepcopy
 from multiprocessing import Pool
 from .models import ModelWeightContainer
+from .optimizers import Optimizer
+from .models import Model
 
 
 class Critic(ABC):
@@ -33,16 +35,16 @@ class Critic(ABC):
 
     def __init__(
         self,
-        dim_input,
-        dim_output,
-        data_buffer_size,
-        optimizer=None,
-        model=None,
+        dim_input: int,
+        dim_output: int,
+        data_buffer_size: int,
+        optimizer: Optimizer = None,
+        model: Model = None,
         running_objective=None,
-        discount_factor=1,
-        observation_target=None,
-        sampling_time=None,
-        critic_regularization_param=0,
+        discount_factor: float = 1.0,
+        observation_target: np.ndarray = None,
+        sampling_time: float = None,
+        critic_regularization_param: float = 0.0,
     ):
 
         self.data_buffer_size = data_buffer_size
@@ -137,14 +139,14 @@ class Critic(ABC):
             self.optimized_weights = self.model.weights
 
         if self.intrinsic_constraints:
-            print("with constraint functions")
+            # print("with constraint functions")
             self.weights_acceptance_status = self.accept_or_reject_weights(
                 self.optimized_weights,
                 optimizer_engine=self.optimizer.engine,
                 constraint_functions=self.intrinsic_constraints,
             )
         else:
-            print("without constraint functions")
+            # print("without constraint functions")
             self.weights_acceptance_status = "accepted"
 
         return self.weights_acceptance_status
@@ -372,6 +374,7 @@ class CriticCALF(CriticOfObservation):
         safe_controller=None,
         penalty_param=0,
         critic_regularization_param=0,
+        is_predictive=True,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -394,14 +397,16 @@ class CriticCALF(CriticOfObservation):
         self.CALF = 0
         self.weights_acceptance_status = False
 
-        self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_safe_policy
-        # self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
-        # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
+        if is_predictive:
+            self.CALF_decay_constraint = (
+                self.CALF_decay_constraint_predicted_safe_policy
+            )
+            # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
+        else:
+            self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
 
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
-            # self.CALF_critic_lower_bound_constraint,
-            # self.CALF_critic_upper_bound_constraint,
         ]
 
     def update_buffers(self, observation, action):

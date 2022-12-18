@@ -95,7 +95,7 @@ class PipelineTabular(PipelineWithDefaults):
         self.system = systems.GridWorld(self.grid_size, self.reward_cell)
 
     def initialize_predictor(self):
-        self.predictor = predictors.TrivialPredictor(self.system._compute_dynamics)
+        self.predictor = predictors.TrivialPredictor(self.system.compute_dynamics)
 
     def initialize_optimizers(self):
         self.actor_optimizer = optimizers.BruteForceOptimizer(5, action_space)

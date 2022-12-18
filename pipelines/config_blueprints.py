@@ -2,6 +2,7 @@ import numpy as np
 import argparse
 from abc import abstractmethod
 import pickle5 as pickle
+from rcognita.utilities import rc
 
 
 class LoadFromFile(argparse.Action):
@@ -55,7 +56,9 @@ class RcognitaArgParser(argparse.ArgumentParser):
             help="Flag to log data into a data file. Data are stored in simdata folder.",
         )
         self.add_argument(
-            "--is_playback", action="store_true", help="Flag to playback.",
+            "--is_playback",
+            action="store_true",
+            help="Flag to playback.",
         )
         self.add_argument(
             "--speedup",
@@ -101,7 +104,10 @@ class RcognitaArgParser(argparse.ArgumentParser):
         )
         self.add_argument("--config", type=open, action=LoadFromFile)
         self.add_argument(
-            "strings", metavar="STRING", nargs="*", help="String for searching",
+            "strings",
+            metavar="STRING",
+            nargs="*",
+            help="String for searching",
         )
 
         self.add_argument(
@@ -385,9 +391,9 @@ class Config3WRobot(Config):
         for k in range(len(self.state_init)):
             self.state_init[k] = eval(self.state_init[k].replace("pi", str(np.pi)))
 
-        self.state_init = np.array(self.state_init)
+        self.state_init = rc.array(self.state_init)
 
-        self.action_manual = np.array(self.action_manual)
+        self.action_manual = rc.array(self.action_manual)
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.model_est_period = self.sampling_time * self.model_est_period_multiplier
@@ -395,8 +401,8 @@ class Config3WRobot(Config):
         if self.control_mode in ("CALF", "AC"):
             self.prediction_horizon = 0
 
-        self.R1 = np.diag(np.array(self.R1_diag))
-        self.R2 = np.diag(np.array(self.R2_diag))
+        self.R1 = np.diag(rc.array(self.R1_diag))
+        self.R2 = np.diag(rc.array(self.R2_diag))
         self.is_disturb = 0
 
         self.is_dynamic_controller = 0
@@ -423,7 +429,7 @@ class Config3WRobot(Config):
         self.F_max = 300
         self.M_min = -100
         self.M_max = 100
-        self.action_bounds = np.array(
+        self.action_bounds = rc.array(
             [[self.F_min, self.F_max], [self.M_min, self.M_max]]
         )
 
@@ -582,15 +588,15 @@ class Config3WRobotNI(Config):
         for k in range(len(self.state_init)):
             self.state_init[k] = eval(self.state_init[k].replace("pi", str(np.pi)))
 
-        self.state_init = np.array(self.state_init)
-        self.action_manual = np.array(self.action_manual)
+        self.state_init = rc.array(self.state_init)
+        self.action_manual = rc.array(self.action_manual)
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.model_est_period = self.sampling_time * self.model_est_period_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
 
-        self.R1 = np.diag(np.array(self.R1_diag))
-        self.R2 = np.diag(np.array(self.R2_diag))
+        self.R1 = np.diag(rc.array(self.R1_diag))
+        self.R2 = np.diag(rc.array(self.R2_diag))
 
         assert self.time_final > self.sampling_time > 0.0
         assert self.state_init.size == self.dim_state
@@ -621,7 +627,7 @@ class Config3WRobotNI(Config):
         self.v_max = 25
         self.omega_min = -5
         self.omega_max = 5
-        self.action_bounds = np.array(
+        self.action_bounds = rc.array(
             [[self.v_min, self.v_max], [self.omega_min, self.omega_max]]
         )
 
@@ -640,10 +646,10 @@ class ConfigROS3WRobotNI(Config3WRobotNI):
         self.v_max = 0.22
         self.omega_min = -2.84
         self.omega_max = 2.84
-        self.action_bounds = np.array(
+        self.action_bounds = rc.array(
             [[self.v_min, self.v_max], [self.omega_min, self.omega_max]]
         )
-        self.state_init = np.array([2, 2, 3.1415])
+        self.state_init = rc.array([2, 2, 3.1415])
         return self.__dict__
 
 
@@ -794,15 +800,15 @@ class Config2Tank(Config):
         for k in range(len(self.state_init)):
             self.state_init[k] = eval(self.state_init[k].replace("pi", str(np.pi)))
 
-        self.state_init = np.array(self.state_init)
-        self.action_manual = np.array(self.action_manual)
+        self.state_init = rc.array(self.state_init)
+        self.action_manual = rc.array(self.action_manual)
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.model_est_period = self.sampling_time * self.model_est_period_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
 
-        self.R1 = np.diag(np.array(self.R1_diag))
-        self.R2 = np.diag(np.array(self.R2_diag))
+        self.R1 = np.diag(rc.array(self.R1_diag))
+        self.R2 = np.diag(rc.array(self.R2_diag))
 
         assert self.time_final > self.sampling_time > 0.0
         assert self.state_init.size == self.dim_state
@@ -827,7 +833,7 @@ class Config2Tank(Config):
         # Control constraints
         self.action_min = 0
         self.action_max = 1
-        self.action_bounds = np.array([[self.action_min], [self.action_max]]).T
+        self.action_bounds = rc.array([[self.action_min], [self.action_max]]).T
 
         # System parameters
         self.tau1 = 18.4
@@ -837,7 +843,7 @@ class Config2Tank(Config):
         self.K3 = 0.2
 
         # Target filling of the tanks
-        self.observation_target = np.array([0.5, 0.5])
+        self.observation_target = rc.array([0.5, 0.5])
 
 
 class ConfigInvertedPendulum(Config):
@@ -948,7 +954,7 @@ class ConfigInvertedPendulum(Config):
             "--initial_weights",
             type=float,
             nargs="+",
-            default=np.array([0.0, 0.0, 0.0]),
+            default=rc.array([0.0, 0.0, 0.0]),
             help="Parameters of the gaussian model for prior mean computation",
         )
         parser.add_argument(
@@ -999,7 +1005,7 @@ class ConfigInvertedPendulum(Config):
 
         # self.state_init = [eval(self.state_init[k].replace("pi", str(np.pi)))]
 
-        self.state_init = np.array(self.state_init)
+        self.state_init = rc.array(self.state_init)
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
@@ -1009,8 +1015,8 @@ class ConfigInvertedPendulum(Config):
         elif self.control_mode == "PG":
             self.prediction_horizon = 0
 
-        self.R1 = np.diag(np.array(self.R1_diag))
-        self.R2 = np.diag(np.array(self.R2_diag))
+        self.R1 = np.diag(rc.array(self.R1_diag))
+        self.R2 = np.diag(rc.array(self.R2_diag))
         self.is_disturb = 0
 
         self.is_dynamic_controller = 0
@@ -1026,7 +1032,7 @@ class ConfigInvertedPendulum(Config):
         # Control constraints
         self.M_min = -30
         self.M_max = 30
-        self.action_bounds = np.array([[self.M_min, self.M_max]])
+        self.action_bounds = rc.array([[self.M_min, self.M_max]])
 
         # System parameters
         self.m = 1  # [kg]
@@ -1047,7 +1053,9 @@ class ConfigInvertedPendulumAC(Config):
         parser = RcognitaArgParser(description=description)
 
         parser.add_argument(
-            "--is_playback", action="store_true", help="Flag to playback.",
+            "--is_playback",
+            action="store_true",
+            help="Flag to playback.",
         )
 
         parser.add_argument(
@@ -1137,7 +1145,10 @@ class ConfigInvertedPendulumAC(Config):
             help="Size of gradient critic update.",
         )
         parser.add_argument(
-            "--speedup", type=int, default=20, help="Animation speed up",
+            "--speedup",
+            type=int,
+            default=20,
+            help="Animation speed up",
         )
         parser.add_argument(
             "--data_buffer_size",
@@ -1173,7 +1184,7 @@ class ConfigInvertedPendulumAC(Config):
             "--initial_weights",
             type=float,
             nargs="+",
-            default=np.array([30, 0.0, 9]),
+            default=rc.array([30, 0.0, 9]),
             help="Parameters of the gaussian model for prior mean computation",
         )
         parser.add_argument(
@@ -1224,15 +1235,15 @@ class ConfigInvertedPendulumAC(Config):
 
         # self.state_init = [eval(self.state_init[k].replace("pi", str(np.pi)))]
 
-        self.state_init = np.array(self.state_init)
+        self.state_init = rc.array(self.state_init)
 
         self.pred_step_size = self.sampling_time * self.pred_step_size_multiplier
         self.critic_period = self.sampling_time * self.critic_period_multiplier
         if self.control_mode == "CALF":
             self.prediction_horizon = 1
 
-        self.R1 = np.diag(np.array(self.R1_diag))
-        self.R2 = np.diag(np.array(self.R2_diag))
+        self.R1 = np.diag(rc.array(self.R1_diag))
+        self.R2 = np.diag(rc.array(self.R2_diag))
         self.is_disturb = 0
 
         self.is_dynamic_controller = 0
@@ -1248,7 +1259,7 @@ class ConfigInvertedPendulumAC(Config):
         # Control constraints
         self.M_min = -30
         self.M_max = 30
-        self.action_bounds = np.array([[self.M_min, self.M_max]])
+        self.action_bounds = rc.array([[self.M_min, self.M_max]])
         self.prediction_horizon = 0
 
         # System parameters

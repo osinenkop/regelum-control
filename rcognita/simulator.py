@@ -19,7 +19,8 @@ Remarks:
 import numpy as np
 import scipy as sp
 
-from .utilities import rej_sampling_rvs, rc
+from .utilities import rej_sampling_rvs, rc, simulation_progress
+from .solvers import create_ODE_solver
 from abc import ABC, abstractmethod
 
 
@@ -172,9 +173,8 @@ class Simulator:
         self.time_start = time_start
 
     def initialize_ODE_solver(self):
-        self.ODE_solver = rc.ODE_solver(
+        self.ODE_solver = create_ODE_solver(
             self.system,
-            self.compute_closed_loop_rhs,
             self.state_full_init,
             self.state_init,
             self.action_init,
@@ -187,6 +187,7 @@ class Simulator:
             ode_solver=self.ode_solver,
         )
 
+    @simulation_progress(bar_length=40)
     def do_sim_step(self):
         """
         Do one simulation step and update current simulation data (time, system state and output).
@@ -196,7 +197,6 @@ class Simulator:
             try:
                 self.ODE_solver.step()
             except RuntimeError:
-                print("End of simulation episode")
                 self.reset()
                 return -1
 

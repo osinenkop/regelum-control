@@ -4,12 +4,12 @@ Module that contains state or observation (depending on the context) predictors.
 """
 
 import numpy as np
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 from .utilities import rc
 
 
-class BasePredictor(metaclass=ABCMeta):
+class Predictor(ABC):
     """
     Blueprint of a predictor.
 
@@ -24,7 +24,7 @@ class BasePredictor(metaclass=ABCMeta):
         pass
 
 
-class EulerPredictor(BasePredictor):
+class EulerPredictor(Predictor):
     """
     Euler predictor uses a simple Euler discretization scheme.
     It does predictions by increments scaled by a sampling time times the velocity evaluated at each successive node.
@@ -33,11 +33,11 @@ class EulerPredictor(BasePredictor):
 
     def __init__(
         self,
-        pred_step_size,
+        pred_step_size: float,
         compute_state_dynamics,
         sys_out,
-        dim_output,
-        prediction_horizon,
+        dim_output: int,
+        prediction_horizon: int,
     ):
         self.pred_step_size = pred_step_size
         self.compute_state_dynamics = compute_state_dynamics
@@ -108,7 +108,7 @@ class RKPredictor(EulerPredictor):
         return state_new
 
 
-class TrivialPredictor(BasePredictor):
+class TrivialPredictor(Predictor):
     """
     This predictor propagates the observation or state directly through the system dynamics law.
 

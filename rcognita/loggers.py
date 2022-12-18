@@ -44,6 +44,9 @@ class Logger:
         self.is_next_episode = False
         self.time_old = 0
 
+        is_many_episodes = int(self.N_episodes == 1)
+        is_many_iterations = int(self.N_iterations == 1)
+
         self.row_header = [
             "iterations_passed",
             "episodes_passed",
@@ -52,7 +55,7 @@ class Logger:
             *self.action_components_strings,
             "running_objective",
             "outcome",
-        ]
+        ][is_many_episodes + is_many_iterations :]
         if row_format_list is None:
             self.row_format = tuple(["8.3f" for _ in self.row_header])
         else:
@@ -69,6 +72,9 @@ class Logger:
 
         self.time_old = time
 
+        is_many_episodes = int(self.N_episodes == 1)
+        is_many_iterations = int(self.N_iterations == 1)
+
         row_data = [
             self.iterations_passed,
             self.episodes_passed,
@@ -77,7 +83,7 @@ class Logger:
             *np.array(action),
             running_objective,
             outcome,
-        ]
+        ][is_many_episodes + is_many_iterations :]
 
         table = tabulate(
             [self.row_header, row_data],

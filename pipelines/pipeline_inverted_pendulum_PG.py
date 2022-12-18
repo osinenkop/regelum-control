@@ -87,7 +87,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
     def initialize_predictor(self):
         self.predictor = predictors.EulerPredictor(
             self.pred_step_size,
-            self.system._compute_dynamics,
+            self.system.compute_dynamics,
             self.system.out,
             self.dim_output,
             self.prediction_horizon,
