@@ -1,0 +1,15 @@
+--no_print
+--no_visual
+--control_mode nominal
+--critic_struct quad-nomix
+--prediction_horizon 1
+--t1 10
+--state_init 5 -5 3*pi/4 10 3 
+--data_buffer_size 20
+--is_playback 
+--speedup 75 
+--dt 0.01 
+--creg_param 1
+--penalty_param 0
+--ode_solver CASADI
+--safe_decay_rate 50000
