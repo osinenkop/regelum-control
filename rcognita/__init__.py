@@ -75,10 +75,10 @@ def sub_map(pattern, f, s):
 
 
 def obtain(obj_repr):
-    pattern = re.compile(r'(\A|\s|\(|\[)[a-zA-Z]+')
+    pattern = re.compile(r'(\A|[^a-zA-Z\._])[a-zA-Z_]+')
     resolved = []
     def resolve(s):
-        if s[0].isalnum():
+        if s[0].isalnum() or s[0] == '_':
             prefix = ""
         else:
             prefix = s[0]
