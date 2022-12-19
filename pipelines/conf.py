@@ -13,16 +13,17 @@ import hydra
 from hydra.utils import instantiate
 
 
-@r.main(version_base=None, config_path="../rcognita/conf/", config_name="config")
+@r.main(
+    version_base=None,
+    config_path="../rcognita/conf/testing_configs",
+    config_name="test",
+)
 def my_app(cfg: DictConfig):
-    print(cfg.sampling_time)
-    r.config = cfg
-    controller = instantiate(cfg.controller)
-
-    print(controller.actor is controller.critic)
-    print(cfg.simulator.state_init)
-    # simulator = instantiate(cfg.simulator)
-    print(controller.actor)
+    # B = ~cfg
+    # print(B.b)
+    c = ~cfg.bc
+    print(c.a)
+    print(~cfg.de)
 
 
 if __name__ == "__main__":

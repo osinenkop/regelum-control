@@ -1,0 +1,4 @@
+bc:
+  a: ${conf.alt_c.a}
+  b: false
+  _target_: rcognita.t.C

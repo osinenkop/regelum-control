@@ -1,0 +1,4 @@
+import:
+- bc/b.yaml
+- _self_
+a: 1
