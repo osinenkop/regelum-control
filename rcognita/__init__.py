@@ -1,5 +1,6 @@
 __version__ = "v0.1.2"
 
+import sys
 
 import omegaconf
 
@@ -26,7 +27,6 @@ monkey_patch(__fakeantlr4, antlr4)
 
 from hydra.utils import instantiate
 
-
 from . import controllers
 from . import systems
 from . import simulator
@@ -38,7 +38,6 @@ from . import models
 from . import predictors
 from . import actors
 import colored_traceback
-import numpy
 
 from unittest.mock import Mock
 from hydra._internal.utils import _locate
@@ -76,11 +75,20 @@ def sub_map(pattern, f, s):
 
 
 def obtain(obj_repr):
-    pattern = re.compile(r'^\\.[a-zA-Z]+')
+    pattern = re.compile(r'(\A|\s|\(|\[)[a-zA-Z]+')
     resolved = []
     def resolve(s):
-        resolved.append(_locate(s))
-        return f"resolved[{len(resolved) -  1}]"
+        if s[0].isalnum():
+            prefix = ""
+        else:
+            prefix = s[0]
+            s = s[1:]
+        try:
+            entity = _locate(s)
+        except:
+            entity = eval(s)
+        resolved.append(entity)
+        return f"{prefix}resolved[{len(resolved) -  1}]"
     obj_repr_resolved_modules = sub_map(pattern, resolve, obj_repr)
     return eval(obj_repr_resolved_modules)
 
