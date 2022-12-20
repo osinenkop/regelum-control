@@ -1,0 +1,4 @@
+BC:
+  BC_sub:
+    _target_: rcognita.t.B
+a: 1

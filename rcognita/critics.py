@@ -384,7 +384,6 @@ class CriticCALF(CriticOfObservation):
         observation_init=None,
         safe_controller=None,
         penalty_param=0,
-        critic_regularization_param=0,
         is_predictive=True,
         **kwargs
     ):
@@ -402,7 +401,6 @@ class CriticCALF(CriticOfObservation):
         self.Ls = []
         self.CALFs = []
         self.penalty_param = penalty_param
-        self.critic_regularization_param = critic_regularization_param
         self.expected_CALFs = []
         self.stabilizing_constraint_violation = 0
         self.CALF = 0

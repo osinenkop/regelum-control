@@ -1,4 +1,0 @@
-_target_: rcognita.simulator.Simulator
-system: ${mock:}
-sys_type: ${mock:}
-state_init: ${get:numpy.zeros\(5\)}
