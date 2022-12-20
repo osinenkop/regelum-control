@@ -21,7 +21,7 @@ time_final: 10.
 penalty_param: 0.
 is_fixed_critic_weights: true
 critic_period_multiplier: 1.
-critic_period: ${get:${critic_period_multiplier} * ${sampling_time}}
+critic_period: = ${critic_period_multiplier} * ${sampling_time}
 data_buffer_size: 10
 discount_factor: 1.
 
