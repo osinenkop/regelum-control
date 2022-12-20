@@ -107,26 +107,29 @@ from hydra import main as hydramain
 
 class ComplementedConfigWrapper:
     def __init__(self, cfg):
-        self.cfg = cfg
+        self.__cfg = cfg
 
     def __getattr__(self, item):
-        cfg = object.__getattribute__(self, "cfg")
-        return ComplementedConfigWrapper(cfg.__getattr__(item))
+        cfg = object.__getattribute__(self, "__cfg")
+        attr = cfg.__getattr__(item)
+        if isinstance(attr, DictConfig):
+            attr = ComplementedConfigWrapper(attr)
+        return attr
 
     def __str__(self):
-        return str(self.cfg)
+        return str(self.__cfg)
 
     def __repr__(self):
-        return self.__class__.__name__ + ": " + repr(self.cfg)
+        return self.__class__.__name__ + ": " + repr(self.__cfg)
 
     def __setattr__(self, key, value):
         if hasattr(self, "cfg"):
-            self.cfg.__setattr__(self, key, value)
+            self.__cfg.__setattr__(self, key, value)
         else:
             object.__setattr__(self, key, value)
 
     def __invert__(self):
-        return instantiate(self.cfg)
+        return instantiate(self.__cfg)
 
 
 
