@@ -31,6 +31,20 @@ def wrap_tilde_expression(content):
 def tilde_sugar_for_references(content):
     return sub_map(r"(:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
 
+def wrap_tilde_expression_specific(content):
+    i = content.index('~')
+    try:
+        j = content.index('-')
+        if j > i:
+            raise ValueError()
+    except ValueError:
+        j = content.index(':')
+    name = content[j + 1:i].strip()
+    return content[:i] + f"${{same:{content[i + 1:].lstrip()};{name}}"
+
+def tilde_sugar_for_specific_references(content):
+    return sub_map(r"(:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content)
+
 def wrap_dollar_expression(content):
     i = content.index('$')
     if content[i + 1] == "{":
@@ -72,6 +86,7 @@ def pre_parse(content):
     content = dolar_sugar_for_references(content)
     content = equals_sugar_for_inlines(content)
     content = tilde_sugar_for_references(content)
+    content = tilde_sugar_for_specific_references(content)
     content = numerize_strings_inside_braces(content)
     content = fix_characters(content)
 
