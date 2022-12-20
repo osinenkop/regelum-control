@@ -40,7 +40,7 @@ def wrap_tilde_expression_specific(content):
     except ValueError:
         j = content.index(':')
     name = content[j + 1:i].strip()
-    return content[:i] + f"${{same:{content[i + 1:].lstrip()};{name}}"
+    return content[:i] + f"${{same:{content[i + 1:].lstrip()};{name}}}"
 
 def tilde_sugar_for_specific_references(content):
     return sub_map(r"(:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content)
