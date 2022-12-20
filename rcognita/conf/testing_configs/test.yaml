@@ -6,3 +6,5 @@ a_container:
   a_1: 1000
   a_2: 100
   a_3: ${get:${a_container.a_1} * ${a_container.a_2}}
+
+a: 50

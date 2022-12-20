@@ -1,32 +1,31 @@
 defaults:
-    - controller:
-          - rl_controller
-    - critic:
-          - trivial
-    - actor:
-          - mpc
-    - simulator:
-          - default_simulator
+    - controller: ~ rl_controller
+    - critic: ~ trivial
+    - actor: ~ mpc
+    - simulator: ~ simulator
+    - objective: ~ running_objective
 
 ode_solver: numpy
 is_playback: true
-no_visual: false
-speedup: 5
 no_print: false
+no_visual: false
+save_animation: true
+speedup: 5
+
 sampling_time: 1.0E-2
 time_start: 0.
 time_final: 10.
-save_animation: true
+
+### Actor and Critic
+
 penalty_param: 0.
 is_fixed_critic_weights: true
 critic_period_multiplier: 1.
 critic_period: ${get:${critic_period_multiplier} * ${sampling_time}}
+data_buffer_size: 10
+discount_factor: 1.
 
-### constants:
+### Controller
 
-pi: "${get: numpy.pi}"
-e: "${get: numpy.e}"
-euler_gamma: "${get: numpy.euler_gamma}"
-inf: "${get: numpy.inf}"
-### 3wrobot_NI default constants
-
+prediction_horizon: 3
+pred_step_size_multiplier: 1.
