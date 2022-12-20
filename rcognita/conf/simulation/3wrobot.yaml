@@ -1,7 +1,7 @@
 state_init:
   - 5.
   - 5.
-  - = -3 * numpy.pi / 4
+  - ${field}
   - 0
   - 0
 
@@ -21,8 +21,8 @@ critic_period_multiplier: 1.
 trajectory: []
 dim_state: 5
 dim_input: 2
-dim_output: $ dim_state
+dim_output: $ field
 dim_disturb: 0
 
-dim_R1: = ${dim_output} + ${dim_input}
+dim_R1: = ${simulation.dim_output} + ${simulation.dim_input}
 dim_R2: $ dim_R1

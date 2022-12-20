@@ -23,6 +23,7 @@ from recursive_monkey_patch import monkey_patch
 import hydra.core.plugins
 from . import _Plugins__fake_file_config_source
 from . import __fake_plugins
+
 monkey_patch(__fake_plugins, hydra.core.plugins)
 
 from hydra.utils import instantiate
@@ -41,11 +42,6 @@ import colored_traceback
 
 from unittest.mock import Mock
 from hydra._internal.utils import _locate
-
-
-
-
-
 
 
 mock = Mock()
@@ -71,14 +67,16 @@ def memorize_instance(resolver):
 def sub_map(pattern, f, s):
     def map_match(match):
         return f(match.group())
+
     return re.sub(pattern, map_match, s)
 
 
 def obtain(obj_repr):
-    pattern = re.compile(r'(\A|[^a-zA-Z\._])[a-zA-Z_]+')
+    pattern = re.compile(r"(\A|[^a-zA-Z\._])[a-zA-Z_]+")
     resolved = []
+
     def resolve(s):
-        if s[0].isalnum() or s[0] == '_':
+        if s[0].isalnum() or s[0] == "_":
             prefix = ""
         else:
             prefix = s[0]
@@ -89,10 +87,9 @@ def obtain(obj_repr):
             entity = eval(s)
         resolved.append(entity)
         return f"{prefix}resolved[{len(resolved) -  1}]"
+
     obj_repr_resolved_modules = sub_map(pattern, resolve, obj_repr)
     return eval(obj_repr_resolved_modules)
-
-
 
 
 OmegaConf.register_new_resolver("same", memorize_instance(oc.select))
@@ -107,30 +104,29 @@ from hydra import main as hydramain
 
 class ComplementedConfigWrapper:
     def __init__(self, cfg):
-        self.__cfg = cfg
+        self.cfg = cfg
 
     def __getattr__(self, item):
-        cfg = object.__getattribute__(self, "__cfg")
+        cfg = object.__getattribute__(self, "cfg")
         attr = cfg.__getattr__(item)
         if isinstance(attr, DictConfig):
             attr = ComplementedConfigWrapper(attr)
         return attr
 
     def __str__(self):
-        return str(self.__cfg)
+        return str(self.cfg)
 
     def __repr__(self):
-        return self.__class__.__name__ + ": " + repr(self.__cfg)
+        return self.__class__.__name__ + ": " + repr(self.cfg)
 
     def __setattr__(self, key, value):
-        if hasattr(self, "__cfg"):
-            self.__cfg.__setattr__(self, key, value)
+        if hasattr(self, "cfg"):
+            self.cfg.__setattr__(self, key, value)
         else:
             object.__setattr__(self, key, value)
 
     def __invert__(self):
-        return instantiate(self.__cfg)
-
+        return instantiate(self.cfg)
 
 
 class main:

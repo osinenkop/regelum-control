@@ -1,9 +1,4 @@
-state_init:
-  - 5.
-  - 5.
-  - ${get:-3 * numpy.pi / 4}
-  - 0
-  - 0
+state_init: [${get:-3 * numpy.pi / 4}]
 
 action_manual:
   - -5.
@@ -24,5 +19,5 @@ dim_input: 2
 dim_output: $ dim_state
 dim_disturb: 0
 
-dim_R1: = ${dim_output} + ${dim_input}
+dim_R1: = ${simulation.dim_output} + ${simulation.dim_input}
 dim_R2: $ dim_R1

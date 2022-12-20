@@ -1,2 +1,4 @@
 defaults:
     - simulation: 3wrobot
+
+field: 1
