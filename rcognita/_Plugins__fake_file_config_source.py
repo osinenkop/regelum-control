@@ -10,56 +10,74 @@ from io import StringIO
 import re
 
 
-
-
 def sub_map(pattern, f, s):
     def map_match(match):
         return f(match.group())
+
     return re.sub(pattern, map_match, s)
 
+
 def wrap_equals_expression(content):
-    i = content.index('=')
+    i = content.index("=")
     return content[:i] + f"${{get:{content[i + 1:].lstrip()}}}"
+
 
 def equals_sugar_for_inlines(content):
     return sub_map(r"(:|-)\s*\=.*\S+.*", wrap_equals_expression, content)
 
+
 def wrap_tilde_expression(content):
-    i = content.index('~')
+    i = content.index("~")
     return content[:i] + f"${{same:{content[i + 1:].lstrip()}}}"
+
 
 def tilde_sugar_for_references(content):
     return sub_map(r"(:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
 
+
 def wrap_tilde_expression_specific(content):
-    i = content.index('~')
+    i = content.index("~")
     try:
-        j = content.index('-')
+        j = content.index("-")
         if j > i:
             raise ValueError()
     except ValueError:
-        j = content.index(':')
-    name = content[j + 1:i].strip()
-    return content[:i] + f"${{same:{content[i + 1:].lstrip()};{name}}}"
+        j = content.index(":")
+    name = content[j + 1 : i].strip()
+    return content[: j + 1] + " " + f"${{same:{content[i + 1:].lstrip()};{name}}}"
+
 
 def tilde_sugar_for_specific_references(content):
-    return sub_map(r"(:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content)
+    return sub_map(
+        r"(:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content
+    )
+
 
 def wrap_dollar_expression(content):
-    i = content.index('$')
+    i = content.index("$")
     if content[i + 1] == "{":
         return content
     return content[:i] + f"${{{content[i + 1:].lstrip()}}}"
 
+
 def dolar_sugar_for_references(content):
     return sub_map(r"(:|-)\s*\$.*\S+.*", wrap_dollar_expression, content)
 
+
 def fix_characters(content):
-    return content.replace('(', '\\(').replace(')', '\\)').replace('[', '\\[').replace(']', '\\]').replace(',', '\\,').replace(';', ',')
+    return (
+        content.replace("(", "\\(")
+        .replace(")", "\\)")
+        .replace("[", "\\[")
+        .replace("]", "\\]")
+        .replace(",", "\\,")
+        .replace(";", ",")
+    )
+
 
 def numerize_string(s):
     new_s = ""
-    string_kind=""
+    string_kind = ""
     chr_terms = []
     for char in s:
         if string_kind:
@@ -69,7 +87,7 @@ def numerize_string(s):
                 chr_terms = []
             else:
                 code = ord(char)
-                chr_terms.append(f'chr({code})')
+                chr_terms.append(f"chr({code})")
         else:
             if char == '"' or char == "'":
                 string_kind = char
@@ -82,6 +100,7 @@ def numerize_string(s):
 def numerize_strings_inside_braces(content):
     return sub_map(r"\{.+\}", numerize_string, content)
 
+
 def pre_parse(content):
     content = dolar_sugar_for_references(content)
     content = equals_sugar_for_inlines(content)
@@ -91,6 +110,7 @@ def pre_parse(content):
     content = fix_characters(content)
 
     return content
+
 
 class FileConfigSource(ConfigSource):
     def __init__(self, provider: str, path: str) -> None:

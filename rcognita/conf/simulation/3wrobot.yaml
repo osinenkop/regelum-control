@@ -1,7 +1,7 @@
 state_init:
   - 5.
   - 5.
-  - ${field}
+  - $ simulation.dim_output
   - 0
   - 0
 
@@ -18,10 +18,10 @@ R2_diag: = numpy.array([1, 10, 1, 0, 0, 0])
 discount_factor: 1.
 critic_period_multiplier: 1.
 
-trajectory: []
+trajectory: = []
 dim_state: 5
 dim_input: 2
-dim_output: $ field
+dim_output: 5
 dim_disturb: 0
 
 dim_R1: = ${simulation.dim_output} + ${simulation.dim_input}

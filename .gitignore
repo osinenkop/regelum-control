@@ -157,3 +157,5 @@ dmypy.json
 cython_debug/
 
 diff.txt
+
+outputs

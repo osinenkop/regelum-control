@@ -14,10 +14,14 @@ from hydra.utils import instantiate
 
 
 @r.main(
-    version_base=None, config_path="../rcognita/conf", config_name="config_test",
+    version_base=None,
+    config_path="../rcognita/conf/testing_configs",
+    config_name="test",
 )
 def my_app(cfg: DictConfig):
-    print(type(cfg.simulation.state_init))
+    print(cfg.c1 is cfg.c2)
+    print(cfg.c2 is cfg.c3)
+    print(cfg.c1, cfg.c2, cfg.c3)
 
 
 if __name__ == "__main__":
