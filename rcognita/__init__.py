@@ -4,7 +4,7 @@ import sys
 
 import omegaconf
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, OmegaConf, ListConfig
 from omegaconf.resolvers import oc
 import re
 
@@ -109,12 +109,23 @@ class ComplementedConfigWrapper:
     def __getattr__(self, item):
         cfg = object.__getattribute__(self, "cfg")
         attr = cfg.__getattr__(item)
-        if isinstance(attr, DictConfig):
+        if isinstance(attr, DictConfig) or isinstance(attr, ListConfig):
             attr = ComplementedConfigWrapper(attr)
         return attr
 
     def __str__(self):
         return str(self.cfg)
+
+    def __getitem__(self, key):
+        cfg = object.__getattribute__(self, "cfg")
+        item = cfg[key]
+        if isinstance(item, DictConfig) or isinstance(item, ListConfig):
+            attr = ComplementedConfigWrapper(item)
+        return item
+
+    def __setitem__(self, key, value):
+        self.cfg[key] = value
+
 
     def __repr__(self):
         return self.__class__.__name__ + ": " + repr(self.cfg)
