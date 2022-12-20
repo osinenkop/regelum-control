@@ -15,15 +15,15 @@ from omegaconf._utils import _DEFAULT_MARKER_, _get_value
 from omegaconf.basecontainer import BaseContainer
 from omegaconf.errors import ConfigKeyError
 from omegaconf.grammar_parser import *
-from omegaconf.grammar_parser import _grammar_cache
-from omegaconf.resolvers.oc import dict
 
-import antlr4
-from . import __fakeantlr4
+
 from recursive_monkey_patch import monkey_patch
 
-monkey_patch(__fakeantlr4, antlr4)
 
+import hydra.core.plugins
+from . import _Plugins__fake_file_config_source
+from . import __fake_plugins
+monkey_patch(__fake_plugins, hydra.core.plugins)
 
 from hydra.utils import instantiate
 
@@ -141,6 +141,5 @@ class main:
                 return old_app(ComplementedConfigWrapper(cfg))
 
         app.__module__ = old_app.__module__
-
         return hydramain(*self.args, **self.kwargs)(app)
 
