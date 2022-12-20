@@ -123,7 +123,7 @@ class ComplementedConfigWrapper:
         return self.__class__.__name__ + ": " + repr(self.__cfg)
 
     def __setattr__(self, key, value):
-        if hasattr(self, "cfg"):
+        if hasattr(self, "__cfg"):
             self.__cfg.__setattr__(self, key, value)
         else:
             object.__setattr__(self, key, value)
