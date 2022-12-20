@@ -1,0 +1,46 @@
+testing_configs:
+  state_init: \[${get:-3 * numpy.pi / 4}\]
+  action_manual:
+  - -5.0
+  - -3.0
+  prob_noise_pow: false
+  prediction_horizon: 3
+  pred_step_size_multiplier: 1.0
+  data_buffer_size: 10
+  R1_diag: ${get:numpy.array\(\[1\, 10\, 1\, 0\, 0\, 0\]\)}
+  R2_diag: ${get:numpy.array\(\[1\, 10\, 1\, 0\, 0\, 0\]\)}
+  discount_factor: 1.0
+  critic_period_multiplier: 1.0
+  trajectory: \[\]
+  dim_state: 5
+  dim_input: 2
+  dim_output: ${dim_state}
+  dim_disturb: 0
+  dim_R1: ${get:${dim_output} + ${dim_input}}
+  dim_R2: ${dim_R1}
+simulation:
+  state_init:
+  - 5.0
+  - 5.0
+  - ${dim_state}
+  - 0
+  - 0
+  action_manual:
+  - -5.0
+  - -3.0
+  prob_noise_pow: false
+  prediction_horizon: 3
+  pred_step_size_multiplier: 1.0
+  data_buffer_size: 10
+  R1_diag: ${get:numpy.array\(\[1\, 10\, 1\, 0\, 0\, 0\]\)}
+  R2_diag: ${get:numpy.array\(\[1\, 10\, 1\, 0\, 0\, 0\]\)}
+  discount_factor: 1.0
+  critic_period_multiplier: 1.0
+  trajectory: \[\]
+  dim_state: 5
+  dim_input: 2
+  dim_output: ${dim_state}
+  dim_disturb: 0
+  dim_R1: ${dim_output} + ${dim_input}
+  dim_R2: ${dim_R1}
+field: 3wrobot

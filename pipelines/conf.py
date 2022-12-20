@@ -17,7 +17,7 @@ from hydra.utils import instantiate
     version_base=None, config_path="../rcognita/conf", config_name="config_test",
 )
 def my_app(cfg: DictConfig):
-    print(type(cfg.cfg))
+    print(type(cfg.simulation.state_init))
 
 
 if __name__ == "__main__":
