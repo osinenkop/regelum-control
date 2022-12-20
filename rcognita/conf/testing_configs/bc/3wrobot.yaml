@@ -1,7 +1,7 @@
 state_init:
   - 5.
   - 5.
-  - = -3 * numpy.pi / 4
+  - ${get:-3 * numpy.pi / 4}
   - 0
   - 0
 
