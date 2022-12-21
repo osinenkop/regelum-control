@@ -71,7 +71,7 @@ def sub_map(pattern, f, s):
 def obtain(obj_repr):
     obj_repr = obj_repr.replace('__QUOTATION__', '"').replace("__APOSTROPHE__", "'")
     obj_repr = _Plugins__fake_file_config_source.numerize_string(obj_repr)
-    pattern = re.compile(r"(\A|[^a-zA-Z\._])[a-zA-Z_]+")
+    pattern = re.compile(r"(\A|[^a-zA-Z\._])[a-zA-Z_][a-zA-Z0-9_]*")
     resolved = []
 
     def resolve(s):
