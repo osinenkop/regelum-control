@@ -140,9 +140,9 @@ class ComplementedConfigWrapper:
     def __setattr__(self, key, value):
         if hasattr(self, "cfg"):
             if key + "__IGNORE__" in self.cfg:
-                self.cfg.__setattr__(self, key + "__IGNORE__", value)
+                self.cfg.__setattr__(key + "__IGNORE__", value)
             else:
-                self.cfg.__setattr__(self, key, value)
+                self.cfg.__setattr__(key, value)
         else:
             object.__setattr__(self, key, value)
 
