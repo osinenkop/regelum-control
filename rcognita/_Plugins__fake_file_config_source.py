@@ -124,7 +124,7 @@ def pre_parse(content):
     content = equals_sugar_for_inlines(content)
     content = tilde_sugar_for_references(content)
     content = tilde_sugar_for_specific_references(content)
-    content = numerize_strings_inside_braces(content)
+    content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
     content = fix_characters(content)
 
     return content
