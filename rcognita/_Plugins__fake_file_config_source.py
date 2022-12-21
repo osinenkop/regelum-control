@@ -23,7 +23,7 @@ def wrap_equals_expression(content):
 
 
 def equals_sugar_for_inlines(content):
-    return sub_map(r"(:|-)\s*\=.*\S+.*", wrap_equals_expression, content)
+    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\=.*\S+.*", wrap_equals_expression, content)
 
 
 def wrap_tilde_expression(content):
@@ -32,7 +32,7 @@ def wrap_tilde_expression(content):
 
 
 def tilde_sugar_for_references(content):
-    return sub_map(r"(\A|\n)[-: ]*([A-Za-z0-9_%]+:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
+    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
 
 
 def wrap_tilde_expression_specific(content):
@@ -49,7 +49,7 @@ def wrap_tilde_expression_specific(content):
 
 def tilde_sugar_for_specific_references(content):
     return sub_map(
-        r"(:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content
+        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content
     )
 
 
@@ -61,11 +61,11 @@ def wrap_dollar_expression(content):
 
 
 def dolar_sugar_for_references(content):
-    return sub_map(r"(:|-)\s*\$.*\S+.*", wrap_dollar_expression, content)
+    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\$.*\S+.*", wrap_dollar_expression, content)
 
 def wrap_multidollar_expression(match):
     content = match.group(0)
-    num_dollars = len(match.group(2))
+    num_dollars = len(match.group(4))
     i = content.index("$")
     j = i + num_dollars
     if content[j + 1] == "{":
@@ -73,7 +73,7 @@ def wrap_multidollar_expression(match):
     return content[:i] + f"${{{'.' * num_dollars + content[j + 1:].lstrip()}}}"
 
 def multidollar_sugar_for_relative_references(content):
-    return re.sub(r"(:|-)\s*(\$+)\$.*\S+.*", wrap_multidollar_expression, content)
+    return re.sub(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*(\$+)\$.*\S+.*", wrap_multidollar_expression, content)
 
 
 def double_percent_sugar_for_ignored_fields(content):
