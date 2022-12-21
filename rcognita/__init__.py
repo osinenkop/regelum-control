@@ -26,7 +26,7 @@ from . import __fake_plugins
 
 monkey_patch(__fake_plugins, hydra.core.plugins)
 
-from hydra.utils import instantiate
+
 
 from . import controllers
 from . import systems
@@ -43,6 +43,7 @@ import colored_traceback
 from unittest.mock import Mock
 from hydra._internal.utils import _locate
 
+from . import __instantiate as inst
 
 mock = Mock()
 
@@ -53,7 +54,7 @@ def memorize_instance(resolver):
     def inner(
         key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
     ) -> Any:
-        obj = instantiate(resolver(key, default=default, _parent_=_parent_))
+        obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
         key = obj.__class__.__name__ + str(default)
         if key in objects_created:
             return objects_created[key]
@@ -137,7 +138,7 @@ class ComplementedConfigWrapper:
             object.__setattr__(self, key, value)
 
     def __invert__(self):
-        return instantiate(self.cfg)
+        return inst.instantiate(self.cfg)
 
 
 class main:

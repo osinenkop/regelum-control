@@ -63,6 +63,21 @@ def wrap_dollar_expression(content):
 def dolar_sugar_for_references(content):
     return sub_map(r"(:|-)\s*\$.*\S+.*", wrap_dollar_expression, content)
 
+def wrap_multidollar_expression(match):
+    content = match.group(0)
+    num_dollars = len(match.group(2))
+    i = content.index("$")
+    j = i + num_dollars
+    if content[j + 1] == "{":
+        return content
+    return content[:i] + f"${{{'.' * num_dollars + content[j + 1:].lstrip()}}}"
+
+def multidollar_sugar_for_relative_references(content):
+    return re.sub(r"(:|-)\s*(\$+)\$.*\S+.*", wrap_multidollar_expression, content)
+
+
+def double_percent_sugar_for_ignored_fields(content):
+    return content.replace("%%", "__IGNORE__")
 
 def fix_characters(content):
     return (
@@ -101,7 +116,10 @@ def numerize_strings_inside_braces(content):
     return sub_map(r"\{.+\}", numerize_string, content)
 
 
+
 def pre_parse(content):
+    content = double_percent_sugar_for_ignored_fields(content)
+    content = multidollar_sugar_for_relative_references(content)
     content = dolar_sugar_for_references(content)
     content = equals_sugar_for_inlines(content)
     content = tilde_sugar_for_references(content)
@@ -127,7 +145,7 @@ class FileConfigSource(ConfigSource):
         full_path = os.path.realpath(os.path.join(self.path, normalized_config_path))
         if not os.path.exists(full_path):
             raise ConfigLoadError(f"Config not found : {full_path}")
-        with open(full_path, encoding="utf-8") as f:
+        with open(full_path, encoding="utf-8") as f: ## RCOGNITA CODE HERE
             content = pre_parse(f.read())
         with StringIO(content) as f:
             header_text = f.read(512)

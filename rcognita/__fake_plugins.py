@@ -188,7 +188,7 @@ class Plugins(metaclass=Singleton):
                         if sys.version_info < (3, 10):
                             m = importer.find_module(modname)  # type: ignore
                             assert m is not None
-                            if modname == 'hydra._internal.core_plugins.file_config_source':
+                            if modname == 'hydra._internal.core_plugins.file_config_source': ## RCOGNITA CODE HERE
                                 loaded_mod = m.load_module(modname)
                                 loaded_mod.FileConfigSource = rcognita.__fake_file_config_source.FileConfigSource
                             else:
