@@ -116,6 +116,9 @@ def numerize_strings_inside_braces(content):
     return sub_map(r"\{.+\}", numerize_string, content)
 
 
+def replace_string_characters(content):
+    return sub_map(r"\{.+\}", lambda s: s.replace("'", "__APOSTROPHE__").replace('"', "__QUOTATION__"), content)
+
 
 def pre_parse(content):
     content = double_percent_sugar_for_ignored_fields(content)
@@ -124,7 +127,8 @@ def pre_parse(content):
     content = equals_sugar_for_inlines(content)
     content = tilde_sugar_for_references(content)
     content = tilde_sugar_for_specific_references(content)
-    content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
+    #content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
+    content = replace_string_characters(content)
     content = fix_characters(content)
 
     return content

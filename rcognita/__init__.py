@@ -69,6 +69,7 @@ def sub_map(pattern, f, s):
 
 
 def obtain(obj_repr):
+    obj_repr = obj_repr.replace('__QUOTATION__', '"').replace("__APOSTROPHE__", "'")
     pattern = re.compile(r"(\A|[^a-zA-Z\._])[a-zA-Z_]+")
     resolved = []
 
