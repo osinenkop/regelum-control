@@ -1,6 +1,7 @@
 __version__ = "v0.1.2"
 
 import sys
+import warnings
 
 import omegaconf
 
@@ -104,10 +105,10 @@ from hydra import main as hydramain
 
 class ComplementedConfigWrapper:
     def __init__(self, cfg):
-        self.cfg = cfg
+        self.__hydra_config = cfg
 
     def __getattr__(self, item):
-        cfg = object.__getattribute__(self, "cfg")
+        cfg = object.__getattribute__(self, "_ComplementedConfigWrapper__hydra_config")
         try:
             attr = cfg.__getattr__(item)
         except (IndexError, KeyError, AttributeError) as e:
@@ -117,10 +118,10 @@ class ComplementedConfigWrapper:
         return attr
 
     def __str__(self):
-        return str(self.cfg)
+        return str(self.__hydra_config)
 
     def __getitem__(self, key):
-        cfg = object.__getattribute__(self, "cfg")
+        cfg = object.__getattribute__(self, "_ComplementedConfigWrapper__hydra_config")
         try:
             item = cfg[key]
         except (IndexError, KeyError, AttributeError) as e:
@@ -133,31 +134,31 @@ class ComplementedConfigWrapper:
         return item
 
     def __setitem__(self, key, value):
-        if key + "__IGNORE__" in self.cfg:
-            self.cfg[key + "__IGNORE__"] = value
+        if key + "__IGNORE__" in self.__hydra_config:
+            self.__hydra_config[key + "__IGNORE__"] = value
         else:
-            self.cfg[key] = value
+            self.__hydra_config[key] = value
 
     def __repr__(self):
-        return self.__class__.__name__ + ": " + repr(self.cfg)
+        return self.__class__.__name__ + ": " + repr(self.__hydra_config)
 
     def __setattr__(self, key, value):
-        if hasattr(self, "cfg"):
-            if key + "__IGNORE__" in self.cfg:
-                self.cfg.__setattr__(key + "__IGNORE__", value)
+        if hasattr(self, "_ComplementedConfigWrapper__hydra_config"):
+            if key + "__IGNORE__" in self.__hydra_config:
+                self.__hydra_config.__setattr__(key + "__IGNORE__", value)
             else:
-                self.cfg.__setattr__(key, value)
+                self.__hydra_config.__setattr__(key, value)
         else:
             object.__setattr__(self, key, value)
 
     def copy(self):
-        return ComplementedConfigWrapper(self.cfg.copy())
+        return ComplementedConfigWrapper(self.__hydra_config.copy())
 
     def has_key(self, key):
-        return key in self.cfg or key + "__IGNORE__" in self.cfg
+        return key in self.__hydra_config or key + "__IGNORE__" in self.__hydra_config
 
     def clear(self):
-        self.cfg.clear()
+        self.__hydra_config.clear()
 
     def update(self, *args, **kwargs):
         for subdict in args:
@@ -167,22 +168,22 @@ class ComplementedConfigWrapper:
             self[key] = value
 
     def keys(self):
-        return [key.replace("__IGNORE__", "") for key in self.cfg.keys()]
+        return [key.replace("__IGNORE__", "") for key in self.__hydra_config.keys()]
 
     def values(self):
         return [(key.replace("__IGNORE__", ""),
                  value if not isinstance(value, DictConfig) and not isinstance(value, ListConfig)
                  else ComplementedConfigWrapper(value))
-                for key, value in self.cfg.values()]
+                for key, value in self.__hydra_config.values()]
 
     def __delitem__(self, key):
-        if key + '__IGNORE__' in self.cfg:
-            del self.cfg[key + '__IGNORE__']
+        if key + '__IGNORE__' in self.__hydra_config:
+            del self.__hydra_config[key + '__IGNORE__']
         else:
-            del self.cfg[key]
+            del self.__hydra_config[key]
 
     def __invert__(self):
-        return inst.instantiate(self.cfg)
+        return inst.instantiate(self.__hydra_config)
 
 
 class main:
@@ -197,3 +198,5 @@ class main:
 
         app.__module__ = old_app.__module__
         return hydramain(*self.args, **self.kwargs)(app)
+
+warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)
