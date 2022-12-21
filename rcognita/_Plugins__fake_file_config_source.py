@@ -32,7 +32,7 @@ def wrap_tilde_expression(content):
 
 
 def tilde_sugar_for_references(content):
-    return sub_map(r"(:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
+    return sub_map(r"(\A|\n)[-: ]*([A-Za-z0-9_%]+:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
 
 
 def wrap_tilde_expression_specific(content):
@@ -116,8 +116,10 @@ def numerize_strings_inside_braces(content):
     return sub_map(r"\{.+\}", numerize_string, content)
 
 
-def replace_string_characters(content):
-    return sub_map(r"\{.+\}", lambda s: s.replace("'", "__APOSTROPHE__").replace('"', "__QUOTATION__"), content)
+def replace_forbidden_characters_in_braces(content):
+    return sub_map(r"\{.+\}",
+                   lambda s: s.replace("'", "__APOSTROPHE__").replace('"', "__QUOTATION__").replace('~', "__TILDE__"),
+                   content)
 
 
 def pre_parse(content):
@@ -128,7 +130,7 @@ def pre_parse(content):
     content = tilde_sugar_for_references(content)
     content = tilde_sugar_for_specific_references(content)
     #content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
-    content = replace_string_characters(content) # format strings still remain off limits
+    content = replace_forbidden_characters_in_braces(content) # format strings still remain off limits
     content = fix_characters(content)
 
     return content
