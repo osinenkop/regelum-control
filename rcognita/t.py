@@ -10,8 +10,9 @@ class B(A):
 
 
 class C(A):
-    def __init__(self, b=False, **kwargs):
+    def __init__(self, b=False, foo=None, **kwargs):
         super().__init__(**kwargs)
+        self.foo = foo
         self.b = b
 
 
@@ -19,3 +20,8 @@ class D(A):
     def __init__(self, d="kek", **kwargs):
         super().__init__(**kwargs)
         self.d = d
+
+
+class Foo:
+    def __init__(self, var=0):
+        self.var = var

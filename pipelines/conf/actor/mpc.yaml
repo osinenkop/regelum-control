@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+_target_: rcognita.actors.ActorMPC
+
+running_objective: $ objective

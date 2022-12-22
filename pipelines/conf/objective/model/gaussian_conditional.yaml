@@ -1,0 +1,4 @@
+_target_: rcognita.models.ModelGaussianConditional
+expectation_function: = None
+arg_condition: = None
+weights: = None

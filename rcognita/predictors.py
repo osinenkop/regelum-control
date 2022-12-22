@@ -7,6 +7,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 from .utilities import rc
+from .systems import System
 
 
 class Predictor(ABC):
@@ -34,14 +35,13 @@ class EulerPredictor(Predictor):
     def __init__(
         self,
         pred_step_size: float,
-        compute_state_dynamics,
-        sys_out,
+        system: System,
         dim_output: int,
         prediction_horizon: int,
     ):
         self.pred_step_size = pred_step_size
-        self.compute_state_dynamics = compute_state_dynamics
-        self.sys_out = sys_out
+        self.compute_state_dynamics = system.compute_dynamics
+        self.sys_out = system.out
         self.dim_output = dim_output
         self.prediction_horizon = prediction_horizon
 

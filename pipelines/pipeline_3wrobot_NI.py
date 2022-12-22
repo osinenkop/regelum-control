@@ -92,94 +92,6 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
             sampling_time=self.sampling_time,
         )
 
-    def initialize_logger(self):
-        if (
-            os.path.basename(os.path.normpath(os.path.abspath(os.getcwd())))
-            == "presets"
-        ):
-            self.data_folder = "../simdata"
-        else:
-            self.data_folder = "simdata"
-
-        pathlib.Path(self.data_folder).mkdir(parents=True, exist_ok=True)
-
-        date = datetime.now().strftime("%Y-%m-%d")
-        time = datetime.now().strftime("%Hh%Mm%Ss")
-        self.datafiles = [None] * self.Nruns
-
-        for k in range(0, self.Nruns):
-            self.datafiles[k] = (
-                self.data_folder
-                + "/"
-                + self.system.name
-                + "__"
-                + self.control_mode
-                + "__"
-                + date
-                + "__"
-                + time
-                + "__run{run:02d}.csv".format(run=k + 1)
-            )
-
-            if self.is_log:
-                print("Logging data to:    " + self.datafiles[k])
-
-                with open(self.datafiles[k], "w", newline="") as outfile:
-                    writer = csv.writer(outfile)
-                    writer.writerow(["System", self.system.name])
-                    writer.writerow(["Controller", self.control_mode])
-                    writer.writerow(["sampling_time", str(self.sampling_time)])
-                    writer.writerow(["state_init", str(self.state_init)])
-                    writer.writerow(["is_est_model", str(self.is_est_model)])
-                    writer.writerow(["model_est_stage", str(self.model_est_stage)])
-                    writer.writerow(
-                        [
-                            "model_est_period_multiplier",
-                            str(self.model_est_period_multiplier),
-                        ]
-                    )
-                    writer.writerow(["model_order", str(self.model_order)])
-                    writer.writerow(["prob_noise_pow", str(self.prob_noise_pow)])
-                    writer.writerow(
-                        ["prediction_horizon", str(self.prediction_horizon)]
-                    )
-                    writer.writerow(
-                        [
-                            "pred_step_size_multiplier",
-                            str(self.pred_step_size_multiplier),
-                        ]
-                    )
-                    writer.writerow(["data_buffer_size", str(self.data_buffer_size)])
-                    writer.writerow(
-                        ["running_obj_struct", str(self.running_obj_struct)]
-                    )
-                    writer.writerow(["R1_diag", str(self.R1_diag)])
-                    writer.writerow(["R2_diag", str(self.R2_diag)])
-                    writer.writerow(["discount_factor", str(self.discount_factor)])
-                    writer.writerow(
-                        ["critic_period_multiplier", str(self.critic_period_multiplier)]
-                    )
-                    writer.writerow(["critic_struct", str(self.critic_struct)])
-                    writer.writerow(["actor_struct", str(self.actor_struct)])
-                    writer.writerow(
-                        [
-                            "t [s]",
-                            "x [m]",
-                            "y [m]",
-                            "angle [rad]",
-                            "running_objective",
-                            "outcome",
-                            "v [m/s]",
-                            "omega [rad/s]",
-                        ]
-                    )
-
-        # Do not display annoying warnings when print is on
-        if not self.no_print:
-            warnings.filterwarnings("ignore")
-
-        self.logger = logger3WRobotNI
-
     def initialize_visualizer(self):
 
         self.animator = Animator3WRobotNI(
@@ -211,7 +123,6 @@ class Pipeline3WRobotNI(PipelineWithDefaults):
                 self.omega_min,
                 self.v_max,
                 self.omega_max,
-                self.Nruns,
                 self.no_print,
                 self.is_log,
                 0,

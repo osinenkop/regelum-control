@@ -293,15 +293,12 @@ class SysInvertedPendulum(System):
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = rc.zeros(
-            self.dim_state,
-            prototype=rc.concatenate((state, action)),
-        )
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
         Dstate[0] = state[1]
-        Dstate[1] = g / l * rc.sin(state[0]) + action[0] / (m * l**2)
+        Dstate[1] = g / l * rc.sin(state[0]) + action[0] / (m * l ** 2)
 
         return Dstate
 
@@ -395,10 +392,7 @@ class Sys3WRobot(System):
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = rc.zeros(
-            self.dim_state,
-            prototype=rc.concatenate((state, action)),
-        )
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
 
         m, I = self.pars[0], self.pars[1]
 
@@ -498,7 +492,7 @@ class Sys3WRobotNI(System):
         return state
 
 
-class Sys2Tank(System):
+class System2Tank(System):
     """
     Two-tank system with nonlinearity.
 
@@ -513,10 +507,7 @@ class Sys2Tank(System):
 
         tau1, tau2, K1, K2, K3 = self.pars
 
-        Dstate = rc.zeros(
-            self.dim_state,
-            prototype=rc.concatenate((state, action)),
-        )
+        Dstate = rc.zeros(self.dim_state, prototype=rc.concatenate((state, action)),)
         Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action)
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 

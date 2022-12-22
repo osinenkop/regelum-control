@@ -1,4 +1,0 @@
-_target_: rcognita.controllers.RLController
-critic_period: ${critic_period}
-actor: ${simulator}
-critic: ${simulator}

@@ -61,7 +61,7 @@ def memorize_instance(resolver):
 
 
     def inner(
-            key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
+        key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
     ) -> Any:
         obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
         if default == _DEFAULT_MARKER_:
@@ -86,7 +86,11 @@ def sub_map(pattern, f, s):
 def obtain(obj_repr):
     if not isinstance(obj_repr, str):
         obj_repr = str(obj_repr)
-    obj_repr = obj_repr.replace('__QUOTATION__', '"').replace("__APOSTROPHE__", "'").replace("__TILDE__", '~')
+    obj_repr = (
+        obj_repr.replace("__QUOTATION__", '"')
+        .replace("__APOSTROPHE__", "'")
+        .replace("__TILDE__", "~")
+    )
     obj_repr = _Plugins__fake_file_config_source.numerize_string(obj_repr)
     pattern = re.compile(r"(\A|[^a-zA-Z\._])[a-zA-Z_][a-zA-Z0-9_]*")
     resolved = []
@@ -215,8 +219,8 @@ class ComplementedConfig:
                 for key, value in self.__hydra_config.values()]
 
     def __delitem__(self, key):
-        if key + '__IGNORE__' in self.__hydra_config:
-            del self.__hydra_config[key + '__IGNORE__']
+        if key + "__IGNORE__" in self.__hydra_config:
+            del self.__hydra_config[key + "__IGNORE__"]
         else:
             del self.__hydra_config[key]
 
@@ -247,5 +251,6 @@ class main:
 
         app.__module__ = old_app.__module__
         return hydramain(*self.args, **self.kwargs)(app)
+
 
 warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)

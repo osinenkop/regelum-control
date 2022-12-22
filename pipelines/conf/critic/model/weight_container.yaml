@@ -1,0 +1,4 @@
+_target_: rcognita.models.ModelWeightContainer
+input_dim: 3
+single_weight_min: 1.0E-6
+single_weight_max: 1.0E+2

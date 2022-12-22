@@ -1,0 +1,4 @@
+defaults:
+  - model: quad_form
+
+_target_: rcognita.objectives.RunningObjective

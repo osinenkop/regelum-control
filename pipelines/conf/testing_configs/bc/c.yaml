@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+_target_: rcognita.t.C
+foo: ~ de
+a: 100

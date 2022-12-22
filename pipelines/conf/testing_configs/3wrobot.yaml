@@ -1,0 +1,22 @@
+state_init: [${get:-3 * numpy.pi / 4}]
+
+action_manual:
+  - -5.
+  - -3.
+
+prediction_horizon: 3
+pred_step_size_multiplier: 1.0
+data_buffer_size: 10
+R1_diag: = numpy.array([1, 10, 1, 0, 0, 0])
+R2_diag: = numpy.array([1, 10, 1, 0, 0, 0])
+discount_factor: 1.
+critic_period_multiplier: 1.
+
+trajectory: []
+dim_state: 5
+dim_input: 2
+dim_output: $ dim_state
+dim_disturb: 0
+
+dim_R1: = ${simulation.dim_output} + ${simulation.dim_input}
+dim_R2: $ dim_R1

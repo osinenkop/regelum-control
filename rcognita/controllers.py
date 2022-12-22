@@ -40,10 +40,6 @@ class Controller(ABC):
         self.is_fixed_critic_weights = is_fixed_critic_weights
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
-    def estimate_model(self, observation, time):
-        if self.is_est_model or self.mode in ["RQL", "SQL"]:
-            self.estimator.estimate_model(observation, time)
-
     def compute_action_sampled(self, time, observation, constraints=()):
 
         is_time_for_new_sample = self.clock.check_time(time)
