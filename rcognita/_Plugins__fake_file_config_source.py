@@ -83,6 +83,50 @@ def multidollar_sugar_for_relative_references(content):
     return re.sub(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*(\$+)\$.*\S+.*", wrap_multidollar_expression, content)
 
 
+
+
+def at_dictionarize(content):
+    rerouts = {}
+    for match in re.finditer(r"(\A|\n)( )*@([A-Za-z0-9_]+)([A-Za-z0-9_\.]*)( )*:( )*(.*)", content):
+        if match.group(3) not in rerouts:
+            rerouts[match.group(3)] = ""
+        if match.group(4):
+            rerouts[match.group(3)] += "@" + match.group(4)[1:] + ":" + match.group(7) + "\n"
+        else:
+            rerouts[match.group(3)] = (match.group(7),)
+    if rerouts:
+        return {key: at_dictionarize(value) if type(value) is not tuple else value for key, value in rerouts.items()}
+    else:
+        return rerouts
+
+
+def write_rerouts_references(rerouts):
+    references = ""
+    fields = ""
+    for key in rerouts:
+        if type(rerouts[key]) is tuple:
+            references += f"{key}: $ {key}%%\n"
+            fields += f"{key}%%: {rerouts[key][0]}\n"
+        else:
+            subreferences, new_fields = write_rerouts_references(rerouts[key])
+            fields += new_fields
+            references += f"{key}:\n"
+            for line in subreferences.split('\n'):
+                references += "  " + line + "\n"
+    return references, fields
+
+
+
+def at_sugar_for_rerouting(content):
+    rerouts = at_dictionarize(content)
+    added_references, added_fields = write_rerouts_references(rerouts)
+
+    content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_]+)([A-Za-z0-9_\.]*)( )*:( )*(.*)", "", content)
+    return added_fields + added_references + content
+
+
+
+
 def double_percent_sugar_for_ignored_fields(content):
     return content.replace("%%", "__IGNORE__")
 
@@ -130,6 +174,7 @@ def replace_forbidden_characters_in_braces(content):
 
 
 def pre_parse(content):
+    content = at_sugar_for_rerouting(content)
     content = double_percent_sugar_for_ignored_fields(content)
     content = multidollar_sugar_for_relative_references(content)
     content = dolar_sugar_for_references(content)
