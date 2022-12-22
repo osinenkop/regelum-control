@@ -1,0 +1,11 @@
+_target_: rcognita.systems.System3WRobotNI
+
+dim_input: 2
+dim_output: 3
+sys_type: diff_eqn
+dim_state: 3
+dim_disturb: 3
+pars: = [${.m%%}, ${.I%%}]
+
+m%%: 10
+I%%: 1

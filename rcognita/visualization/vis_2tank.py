@@ -44,7 +44,6 @@ class Animator2Tank(Animator):
             action_manual,
             action_min,
             action_max,
-            Nruns,
             no_print,
             is_log,
             is_playback,
@@ -58,7 +57,6 @@ class Animator2Tank(Animator):
         self.time_final = time_final
         self.control_mode = control_mode
         self.action_manual = action_manual
-        self.Nruns = Nruns
         self.no_print = no_print
         self.is_log = is_log
         self.is_playback = is_playback
@@ -263,10 +261,6 @@ class Animator2Tank(Animator):
 
             self.run_curr += 1
 
-            if self.run_curr > self.Nruns:
-                print("Animation done...")
-                self.stop_anm()
-                return
 
             if self.is_log:
                 self.datafile_curr = self.datafiles[self.run_curr - 1]

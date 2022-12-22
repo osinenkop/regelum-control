@@ -1,0 +1,8 @@
+defaults:
+  - default
+
+_target_: rcognita.controllers.Controller3WRobotNIDisassembledCLF
+controller_gain: 10
+action_bounds: $ controller.action_bounds
+time_start: $ time_start
+sampling_time: $ sampling_time

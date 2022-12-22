@@ -1,8 +1,0 @@
-_target_: rcognita.controllers.Controller3WRobotDisassembledCLF
-m: ${system.m}
-I: ${system.I}
-controller_gain: 10
-action_bounds: ${controller.action_bounds}
-time_start: ${time_start}
-sampling_time: ${sampling_time}
-max_iters: 200

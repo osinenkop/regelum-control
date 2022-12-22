@@ -1,9 +1,9 @@
-rcognita.systems.Sys2Tank
+rcognita.systems.System2Tank
 =========================
 
 .. currentmodule:: rcognita.systems
 
-.. autoclass:: Sys2Tank
+.. autoclass:: System2Tank
 
    
    .. automethod:: __init__
@@ -13,10 +13,10 @@ rcognita.systems.Sys2Tank
 
    .. autosummary::
    
-      ~Sys2Tank.__init__
-      ~Sys2Tank.closed_loop_rhs
-      ~Sys2Tank.out
-      ~Sys2Tank.receive_action
+      ~System2Tank.__init__
+      ~System2Tank.closed_loop_rhs
+      ~System2Tank.out
+      ~System2Tank.receive_action
    
    
 
@@ -26,6 +26,6 @@ rcognita.systems.Sys2Tank
 
    .. autosummary::
    
-      ~Sys2Tank.name
+      ~System2Tank.name
    
    

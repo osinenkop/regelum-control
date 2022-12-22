@@ -1,0 +1,6 @@
+_target_: rcognita.critics.CriticOfActionObservation
+
+dim_input: $ actor.dim_input
+dim_output: $ system.dim_output
+data_buffer_size: $ data_buffer_size
+optimizer: $ casadi

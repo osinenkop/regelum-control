@@ -1,6 +1,0 @@
-_target_: rcognita.controllers.Controller3WRobotPID
-state_init: ${state_init}
-action_bounds: ${controller.action_bounds}
-sampling_time: ${sampling_time}
-time_start: ${time_start}
-params: -${system.m} -${system.I}

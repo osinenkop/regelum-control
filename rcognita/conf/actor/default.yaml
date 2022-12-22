@@ -1,9 +1,0 @@
-prediction_horizon: 4
-dim_input: ${system.dim_input}
-dim_output: ${system.dim_output}
-control_mode: ${control_mode}
-action_bounds: ${controller.action_bounds}
-action_init: ${action_init}
-predictor: ${predictor}
-optimizer: ${optimizer}
-critic: ${critic}

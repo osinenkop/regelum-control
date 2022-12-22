@@ -1,0 +1,6 @@
+_target_: rcognita.models.ModelQuadNoMixTorch
+
+dim_observation: 3
+dim_action: 2
+dim_hidden: 20
+force_positive_def: false

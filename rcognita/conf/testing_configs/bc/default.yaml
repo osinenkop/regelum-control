@@ -1,3 +1,0 @@
-b: ${de.d}
-a: 20
-#${get:${de.a} + numpy.pi}}

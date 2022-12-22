@@ -1,0 +1,5 @@
+defaults:
+  - default
+  - model: ~ weight_container
+
+_target_: rcognita.actors.ActorCALF

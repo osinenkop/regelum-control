@@ -133,19 +133,6 @@ class PipelineWithDefaults(Pipeline):
 
         self.model_running_objective = ModelQuadForm(weights=self.R1)
 
-        A = rc.zeros([self.model_order, self.model_order])
-        B = rc.zeros([self.model_order, self.dim_input])
-        C = rc.zeros([self.dim_output, self.model_order])
-        D = rc.zeros([self.dim_output, self.dim_input])
-        initial_guessest = rc.zeros(self.model_order)
-
-        self.model_SS = ModelSS(A, B, C, D, initial_guessest)
-
-    # def estimator_initialization(self):
-    #     self.estimator = Estimator(
-    #         model_est_checks=self.model_est_checks, model=self.model_SS
-    #     )
-
     def initialize_objectives(self):
 
         self.running_objective = objectives.RunningObjective(
@@ -165,8 +152,7 @@ class PipelineWithDefaults(Pipeline):
             opt_method="SLSQP", opt_options=opt_options
         )
         self.critic_optimizer = optimizers.SciPyOptimizer(
-            opt_method="SLSQP",
-            opt_options=opt_options,
+            opt_method="SLSQP", opt_options=opt_options,
         )
 
     def initialize_actor_critic(self):

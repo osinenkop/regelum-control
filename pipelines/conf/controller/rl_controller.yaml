@@ -1,0 +1,7 @@
+defaults:
+  - default
+
+_target_: rcognita.controllers.RLController
+critic_period: $ critic.critic_period
+actor: $ actor
+critic: $ critic

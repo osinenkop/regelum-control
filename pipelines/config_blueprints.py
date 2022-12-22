@@ -75,11 +75,6 @@ class RcognitaArgParser(argparse.ArgumentParser):
             help="Flag to print simulation data into terminal.",
         )
         self.add_argument(
-            "--is_est_model",
-            action="store_true",
-            help="Flag to estimate environment model.",
-        )
-        self.add_argument(
             "--save_trajectory",
             action="store_true",
             help="Flag to store trajectory inside the pipeline during execution.",
@@ -232,12 +227,6 @@ class Config3WRobot(Config):
         parser = RcognitaArgParser(description=description)
 
         parser.add_argument(
-            "--Nruns",
-            type=int,
-            default=1,
-            help="Number of episodes. Learned parameters are not reset after an episode.",
-        )
-        parser.add_argument(
             "--state_init",
             type=str,
             nargs="+",
@@ -245,18 +234,6 @@ class Config3WRobot(Config):
             default=["5", "5", "-3*pi/4", "0", "0"],
             help="Initial state (as sequence of numbers); "
             + "dimension is environment-specific!",
-        )
-        parser.add_argument(
-            "--model_order",
-            type=int,
-            default=5,
-            help="Order of state-space estimation model.",
-        )
-        parser.add_argument(
-            "--prob_noise_pow",
-            type=float,
-            default=False,
-            help="Power of probing (exploration) noise.",
         )
         parser.add_argument(
             "--prediction_horizon",
@@ -418,12 +395,6 @@ class Config3WRobotNI(Config):
         parser = RcognitaArgParser(description=description)
 
         parser.add_argument(
-            "--Nruns",
-            type=int,
-            default=1,
-            help="Number of episodes. Learned parameters are not reset after an episode.",
-        )
-        parser.add_argument(
             "--state_init",
             type=str,
             nargs="+",
@@ -443,18 +414,6 @@ class Config3WRobotNI(Config):
             type=float,
             default=1,
             help="Model is updated every model_est_period_multiplier times sampling_time seconds.",
-        )
-        parser.add_argument(
-            "--model_order",
-            type=int,
-            default=5,
-            help="Order of state-space estimation model.",
-        )
-        parser.add_argument(
-            "--prob_noise_pow",
-            type=float,
-            default=False,
-            help="Power of probing (exploration) noise.",
         )
         parser.add_argument(
             "--action_manual",
@@ -632,12 +591,6 @@ class Config2Tank(Config):
         parser = RcognitaArgParser(description=description)
 
         parser.add_argument(
-            "--Nruns",
-            type=int,
-            default=1,
-            help="Number of episodes. Learned parameters are not reset after an episode.",
-        )
-        parser.add_argument(
             "--state_init",
             type=str,
             nargs="+",
@@ -658,18 +611,6 @@ class Config2Tank(Config):
             type=float,
             default=1,
             help="Model is updated every model_est_period_multiplier times sampling_time seconds.",
-        )
-        parser.add_argument(
-            "--model_order",
-            type=int,
-            default=5,
-            help="Order of state-space estimation model.",
-        )
-        parser.add_argument(
-            "--prob_noise_pow",
-            type=float,
-            default=False,
-            help="Power of probing (exploration) noise.",
         )
         parser.add_argument(
             "--action_manual",
@@ -832,19 +773,6 @@ class ConfigInvertedPendulum(Config):
             default=[np.pi, 0.0],
             help="Initial state (as sequence of numbers); "
             + "dimension is environment-specific!",
-        )
-
-        parser.add_argument(
-            "--model_order",
-            type=int,
-            default=5,
-            help="Order of state-space estimation model.",
-        )
-        parser.add_argument(
-            "--prob_noise_pow",
-            type=float,
-            default=False,
-            help="Power of probing (exploration) noise.",
         )
         parser.add_argument(
             "--sigma",
@@ -1042,19 +970,6 @@ class ConfigInvertedPendulumAC(Config):
             default=[np.pi, 0.0],
             help="Initial state (as sequence of numbers); "
             + "dimension is environment-specific!",
-        )
-
-        parser.add_argument(
-            "--model_order",
-            type=int,
-            default=5,
-            help="Order of state-space estimation model.",
-        )
-        parser.add_argument(
-            "--prob_noise_pow",
-            type=float,
-            default=False,
-            help="Power of probing (exploration) noise.",
         )
         parser.add_argument(
             "--sigma",

@@ -61,7 +61,7 @@ from rcognita.critics import (
 
 class Pipeline2Tank(Pipeline):
     def initialize_system(self):
-        self.system = systems.Sys2Tank(
+        self.system = systems.System2Tank(
             sys_type="diff_eqn",
             dim_state=self.dim_state,
             dim_input=self.dim_input,
@@ -153,12 +153,9 @@ class Pipeline2Tank(Pipeline):
             pred_step_size=self.pred_step_size,
             compute_state_dynamics=self.system._state_dyn,
             sys_out=self.system.out,
-            prob_noise_pow=self.prob_noise_pow,
-            is_est_model=self.is_est_model,
             model_est_stage=self.model_est_stage,
             model_est_period=self.model_est_period,
             data_buffer_size=self.data_buffer_size,
-            model_order=self.model_order,
             model_est_checks=self.model_est_checks,
             critic_period=self.critic_period,
             actor=self.actor,
@@ -185,85 +182,6 @@ class Pipeline2Tank(Pipeline):
             is_dynamic_controller=self.is_dynamic_controller,
         )
 
-    def initialize_logger(self):
-        if (
-            os.path.basename(os.path.normpath(os.path.abspath(os.getcwd())))
-            == "presets"
-        ):
-            self.data_folder = "../simdata"
-        else:
-            self.data_folder = "simdata"
-
-        pathlib.Path(self.data_folder).mkdir(parents=True, exist_ok=True)
-
-        date = datetime.now().strftime("%Y-%m-%d")
-        time = datetime.now().strftime("%Hh%Mm%Ss")
-        self.datafiles = [None] * self.Nruns
-
-        for k in range(0, self.Nruns):
-            self.datafiles[k] = (
-                self.data_folder
-                + "/"
-                + self.system.name
-                + "__"
-                + self.control_mode
-                + "__"
-                + date
-                + "__"
-                + time
-                + "__run{run:02d}.csv".format(run=k + 1)
-            )
-
-            if self.is_log:
-                print("Logging data to:    " + self.datafiles[k])
-
-                with open(self.datafiles[k], "w", newline="") as outfile:
-                    writer = csv.writer(outfile)
-                    writer.writerow(["System", self.system.name])
-                    writer.writerow(["Controller", self.control_mode])
-                    writer.writerow(["sampling_time", str(self.sampling_time)])
-                    writer.writerow(["state_init", str(self.state_init)])
-                    writer.writerow(["is_est_model", str(self.is_est_model)])
-                    writer.writerow(["model_est_stage", str(self.model_est_stage)])
-                    writer.writerow(
-                        [
-                            "model_est_period_multiplier",
-                            str(self.model_est_period_multiplier),
-                        ]
-                    )
-                    writer.writerow(["model_order", str(self.model_order)])
-                    writer.writerow(["prob_noise_pow", str(self.prob_noise_pow)])
-                    writer.writerow(
-                        ["prediction_horizon", str(self.prediction_horizon)]
-                    )
-                    writer.writerow(
-                        [
-                            "pred_step_size_multiplier",
-                            str(self.pred_step_size_multiplier),
-                        ]
-                    )
-                    writer.writerow(["data_buffer_size", str(self.data_buffer_size)])
-                    writer.writerow(
-                        ["running_obj_struct", str(self.running_obj_struct)]
-                    )
-                    writer.writerow(["R1_diag", str(self.R1_diag)])
-                    writer.writerow(["R2_diag", str(self.R2_diag)])
-                    writer.writerow(["discount_factor", str(self.discount_factor)])
-                    writer.writerow(
-                        ["critic_period_multiplier", str(self.critic_period_multiplier)]
-                    )
-                    writer.writerow(["critic_struct", str(self.critic_struct)])
-                    writer.writerow(["actor_struct", str(self.actor_struct)])
-                    writer.writerow(
-                        ["t [s]", "h1", "h2", "p", "running_objective", "outcome"]
-                    )
-
-        # Do not display annoying warnings when print is on
-        if not self.no_print:
-            warnings.filterwarnings("ignore")
-
-        self.logger = loggers.Logger2Tank()
-
     def main_loop_visual(self):
         self.state_full_init = self.simulator.state_full
 
@@ -286,7 +204,6 @@ class Pipeline2Tank(Pipeline):
                 self.action_manual,
                 self.action_min,
                 self.action_max,
-                self.Nruns,
                 self.no_print,
                 self.is_log,
                 0,
@@ -315,66 +232,6 @@ class Pipeline2Tank(Pipeline):
         animator.fig_sim.tight_layout()
 
         plt.show()
-
-    def main_loop_raw(self):
-        run_curr = 1
-        datafile = self.datafiles[0]
-
-        while True:
-            self.simulator.do_sim_step()
-
-            time, state, observation, state_full = self.simulator.get_sim_step_data()
-
-            if self.save_trajectory:
-                self.trajectory.append(state_full)
-
-            action = self.controller.compute_action(time, observation)
-
-            self.system.receive_action(action)
-            self.controller.update_outcome(observation, action)
-
-            h1 = state_full[0]
-            h2 = state_full[1]
-            p = action
-
-            running_objective = self.controller.running_objective(observation, action)
-            outcome = self.controller.outcome_value
-
-            if not self.no_print:
-                self.logger.print_sim_step(time, h1, h2, p, running_objective, outcome)
-
-            if self.is_log:
-                self.logger.log_data_row(
-                    datafile, time, h1, h2, p, running_objective, outcome
-                )
-
-            if time >= self.time_final:
-                if not self.no_print:
-                    print(
-                        ".....................................Run {run:2d} done.....................................".format(
-                            run=run_curr
-                        )
-                    )
-
-                run_curr += 1
-
-                if run_curr > self.Nruns:
-                    break
-
-                if self.is_log:
-                    datafile = self.datafiles[run_curr - 1]
-
-                # Reset simulator
-                self.simulator.status = "running"
-                self.simulator.time = self.time_start
-                self.simulator.observation = self.state_full_init
-
-                if self.control_mode != "nominal":
-                    self.controller.reset(self.time_start)
-                else:
-                    self.nominal_controller.reset(self.time_start)
-
-                outcome = 0
 
     def execute_pipeline(self, **kwargs):
         self.load_config(Config2Tank)
