@@ -68,8 +68,6 @@ class OnlineScenario(Scenario):
         controller: Controller,
         actor: Actor,
         critic: Critic,
-        logger: Logger,
-        datafiles,
         time_final: float,
         running_objective,
         no_print: bool = False,
@@ -83,11 +81,9 @@ class OnlineScenario(Scenario):
         self.controller = controller
         self.actor = actor
         self.critic = critic
-        self.logger = logger
         self.running_objective = running_objective
 
         self.time_final = time_final
-        self.datafile = datafiles[0]
         self.no_print = no_print
         self.is_log = is_log
         self.is_playback = is_playback
@@ -114,15 +110,6 @@ class OnlineScenario(Scenario):
 
         if not self.no_print:
             self.logger.print_sim_step(
-                self.time,
-                self.state_full,
-                self.action,
-                self.running_objective_value,
-                self.outcome,
-            )
-        if self.is_log:
-            self.logger.log_data_row(
-                self.datafile,
                 self.time,
                 self.state_full,
                 self.action,

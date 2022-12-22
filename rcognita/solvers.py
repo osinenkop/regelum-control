@@ -82,10 +82,10 @@ def create_ODE_solver(
     first_step=1e-6,
     atol=1e-5,
     rtol=1e-3,
-    ode_solver="NUMPY",
+    ode_solver="SCIPY",
 ):
 
-    if ode_solver == "NUMPY":
+    if ode_solver == "SCIPY":
         import scipy as sp
 
         solver = sp.integrate.RK45(

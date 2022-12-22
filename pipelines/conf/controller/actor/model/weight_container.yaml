@@ -1,0 +1,3 @@
+_target_: rcognita.models.ModelWeightContainer
+dim_output: $ actor.dim_input
+weights_init: $ action_init

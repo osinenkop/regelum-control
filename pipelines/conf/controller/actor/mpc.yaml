@@ -3,4 +3,4 @@ defaults:
 
 _target_: rcognita.actors.ActorMPC
 
-running_objective: $ objective
+running_objective: $ running_objective

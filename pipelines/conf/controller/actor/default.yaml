@@ -1,0 +1,12 @@
+defaults:
+  - model: weight_container
+  - optimizer: scipy
+  - predictor: euler
+
+prediction_horizon: $ prediction_horizon%%
+dim_input: $ simulator.system.dim_input
+dim_output: $ simulator.system.dim_output
+discount_factor: $ discount_factor%%
+action_bounds: $ action_bounds%%
+action_init: $ action_init
+critic: $ controller.critic

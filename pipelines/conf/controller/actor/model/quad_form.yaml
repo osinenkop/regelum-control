@@ -1,0 +1,3 @@
+_target_: rcognita.models.ModelQuadForm
+
+weights: = numpy.diag(numpy.array(${R1_diag%%}))
