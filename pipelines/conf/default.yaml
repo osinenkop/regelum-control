@@ -1,0 +1,83 @@
+defaults:
+  - controller: rl_controller
+  - objective: running_objective
+  - simulator: scipy
+
+### A set of default parameters using to specify simulation
+
+controller:
+  sampling_time: $ sampling_time%%
+
+ode_solver: $ ode_solver%%
+
+no_visual: $ no_visual%%
+save_animation: $ save_animation%%
+save_trajectory: $ save_trajectory%%
+speedup: $ speedup%%
+
+sampling_time: $ sampling_time%%
+
+time_start: $ time_start%%
+
+action_bounds: = numpy.array([[${F_min%%}, ${F_max%%}], [${M_min%%}, ${M_max%%}]])
+
+ode_solver%%: casadi
+
+is_log%%: false
+is_playback%%: true
+no_print%%: false
+no_visual%%: false
+save_animation%%: true
+save_trajectory%%: false
+speedup%%: 5
+sampling_time%%: 1.0E-2
+
+time_start%%: 0.
+time_final%%: 10.
+
+F_min%%: -300.
+F_max%%: 300.
+M_min%%: -100.
+M_max%%: 100.
+
+state_init%%: = [5., 5., 3. * numpy.pi / 4.]
+
+action_init%%: = numpy.ones(5)
+
+prediction_horizon: 3
+pred_step_size_multiplier: 1.0
+data_buffer_size: 10
+R1_diag: = numpy.array([1, 10, 1, 0, 0, 0])
+R2_diag: = numpy.array([1, 10, 1, 0, 0, 0])
+
+dim_R1: = ${simulation.dim_output} + ${simulation.dim_input}
+dim_R2: $ dim_R1
+
+### Actor and Critic
+
+discount_factor: 1.
+critic_period_multiplier: 1.
+
+penalty_param: 0.
+areg_param: 0
+creg_param: 0
+safe_decay_rate: 1.0E-3
+
+learning_rate_actor: 0.01
+learning_rate_critic: 1.0E-7
+
+is_fixed_critic_weights: true
+critic_period: = ${.critic_period_multiplier} * ${.sampling_time}
+
+N_episodes_critic: 1
+N_iterations_critic: 1
+
+N_episodes_actor: 1
+N_iterations_actor: 1
+
+observation_target: = []
+
+### Solver
+
+atol: 1.0E-5
+rtol: 1.0E-3
