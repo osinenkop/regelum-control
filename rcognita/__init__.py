@@ -21,10 +21,13 @@ from omegaconf.grammar_parser import *
 from recursive_monkey_patch import monkey_patch
 
 import hydra.core.plugins
+import hydra._internal.config_loader_impl
 from . import _Plugins__fake_file_config_source
 from . import __fake_plugins
+from . import __fake_config_loader_impl
 
 monkey_patch(__fake_plugins, hydra.core.plugins)
+monkey_patch(__fake_config_loader_impl, hydra._internal.config_loader_impl)
 
 from . import controllers
 from . import systems
