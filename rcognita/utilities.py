@@ -32,6 +32,8 @@ from numpy.random import rand
 from scipy import signal
 from typing import Union
 
+import systems
+
 try:
     import casadi
 
@@ -904,3 +906,39 @@ def on_key_press(event, anm):
     elif event.key == "q":
         plt.close("all")
         raise Exception("exit")
+
+log = None
+
+def logging_callback(obj, method, output):
+    if not log:
+        return
+    if isinstance(obj, systems.System):
+        log.info(f"System's state{obj._state}")
+
+
+default_callbacks = [logging_callback]
+
+def apply_callbacks(method):
+    def new_method(self, *args, **kwargs):
+        res = method(self, *args, **kwargs)
+        for callback in self.callbacks:
+            callback(obj=self, method=method.__name__, output=res)
+
+    return new_method
+
+
+class introduce_callbacks:
+    def __init__(self, default_callbacks=default_callbacks):
+        self.default_callbacks = default_callbacks
+
+
+    def __call__(self, cls):
+        class whatever(cls):
+            def __init__(self, *args, callbacks=self.default_callbacks, **kwargs):
+                super().__init__(self, *args, **kwargs)
+                self.callbacks = callbacks
+
+        return whatever
+
+
+

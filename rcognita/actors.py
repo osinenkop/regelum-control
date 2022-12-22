@@ -11,6 +11,8 @@ Remarks:
 """
 
 
+
+
 import numpy as np
 import scipy as sp
 from functools import partial
@@ -18,12 +20,13 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from .utilities import rc
+from .callbacks import introduce_callbacks, apply_callbacks
 from .predictors import Predictor
 from .optimizers import Optimizer
 from .critics import Critic
 from .models import Model
 
-
+@introduce_callbacks()
 class Actor:
     """
     Class of actors.
@@ -306,6 +309,7 @@ class Actor:
 
 
 class ActorMPC(Actor):
+    @apply_callbacks
     def objective(
         self, action_sequence, observation,
     ):

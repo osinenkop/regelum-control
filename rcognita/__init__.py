@@ -1,6 +1,7 @@
 __version__ = "v0.1.2"
 
 import sys
+import logging
 import warnings
 
 import omegaconf
@@ -237,11 +238,21 @@ class ComplementedConfig:
                 return res
 
 
+from .callbacks import *
 
 class main:
-    def __init__(self, *args, **kwargs):
+    callbacks = None
+    logger = None
+    def __init__(self, *args,
+                 logger=logging.getLogger("rcognita"),
+                 callbacks=[StateCallback,
+                            ObjectiveCallback],
+                 **kwargs):
         self.args = args
         self.kwargs = kwargs
+        self.kwargs["version_base"] = None if "version_base" not in kwargs else kwargs["version_base"]
+        self.__class__.callbacks = [callback(logger) for callback in callbacks]
+        self.__class__.logger = logger
 
     def __call__(self, old_app):
         def app(cfg):
