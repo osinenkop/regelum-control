@@ -44,19 +44,33 @@ from . import __instantiate as inst
 
 mock = Mock()
 
+reset_instances = None
+objects_created = None
 
 def memorize_instance(resolver):
+    global objects_created
     objects_created = {}
+    global reset_instances
+    def reset_instances():
+        if objects_created:
+            warnings.warn("Object instantiations within your config have been reset. "
+                          "The objects that you instantiated from your config no "
+                          "longer refer to those that you are about to instantiate"
+                          "from respective config paths.")
+        objects_created.clear()
+
 
     def inner(
         key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
     ) -> Any:
         obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
-        key = obj.__class__.__name__ + str(default)
-        if key in objects_created:
-            return objects_created[key]
+        if default == _DEFAULT_MARKER_:
+            default = key.strip()
+        instance_name = str(default)
+        if instance_name in objects_created:
+            return objects_created[instance_name]
         else:
-            objects_created[key] = obj
+            objects_created[instance_name] = obj
             return obj
 
     return inner
@@ -107,34 +121,54 @@ colored_traceback.add_hook()
 from hydra import main as hydramain
 
 
-class ComplementedConfigWrapper:
-    def __init__(self, cfg):
+class ComplementedConfig:
+    def __init__(self, cfg, config_path=""):
         self.__hydra_config = cfg
+        self.config_path = config_path
+
+    def refresh(self):
+        reset_instances()
 
     def __getattr__(self, item):
-        cfg = object.__getattribute__(self, "_ComplementedConfigWrapper__hydra_config")
+        cfg = object.__getattribute__(self, "_ComplementedConfig__hydra_config")
         try:
-            attr = cfg.__getattr__(item)
+            name = item
+            attr = cfg.__getattr__(name)
         except (IndexError, KeyError, AttributeError) as e:
-            attr = cfg.__getattr__(item + "__IGNORE__")
+            name = item + "__IGNORE__"
+            attr = cfg.__getattr__(name)
         if isinstance(attr, DictConfig) or isinstance(attr, ListConfig):
-            attr = ComplementedConfigWrapper(attr)
+            if self.config_path:
+                child_config_path = self.config_path + "." + name
+            else:
+                child_config_path = name
+            attr = ComplementedConfig(attr, config_path=child_config_path)
         return attr
 
     def __str__(self):
-        return str(self.__hydra_config)
+        return str(self.__hydra_config)\
+            .replace("DictConfig", "ComplementedConfig")\
+            .replace("ListConfig", "ComplementedConfig")\
+            .replace("${get:", "={")\
+            .replace("${same:", "~{}")
 
     def __getitem__(self, key):
-        cfg = object.__getattribute__(self, "_ComplementedConfigWrapper__hydra_config")
+        cfg = object.__getattribute__(self, "_ComplementedConfig__hydra_config")
         try:
-            item = cfg[key]
+            name = key
+            item = cfg[name]
         except (IndexError, KeyError, AttributeError) as e:
             if isinstance(key, str):
-                item = cfg[key + "__IGNORE__"]
+                name = key + "__IGNORE__"
+                item = cfg[name]
             else:
                 raise e
         if isinstance(item, DictConfig) or isinstance(item, ListConfig):
-            attr = ComplementedConfigWrapper(item)
+            if self.config_path:
+                child_config_path = self.config_path + "." + name
+            else:
+                child_config_path = name
+            item = ComplementedConfig(item, config_path=child_config_path)
         return item
 
     def __setitem__(self, key, value):
@@ -144,10 +178,13 @@ class ComplementedConfigWrapper:
             self.__hydra_config[key] = value
 
     def __repr__(self):
-        return self.__class__.__name__ + ": " + repr(self.__hydra_config)
+        return self.__class__.__name__ + "( " + repr(self.__hydra_config) + ")"
 
     def __setattr__(self, key, value):
-        if hasattr(self, "_ComplementedConfigWrapper__hydra_config"):
+        if key == "config_path":
+            object.__setattr__(self, key, value)
+            return
+        if hasattr(self, "_ComplementedConfig__hydra_config"):
             if key + "__IGNORE__" in self.__hydra_config:
                 self.__hydra_config.__setattr__(key + "__IGNORE__", value)
             else:
@@ -156,7 +193,7 @@ class ComplementedConfigWrapper:
             object.__setattr__(self, key, value)
 
     def copy(self):
-        return ComplementedConfigWrapper(self.__hydra_config.copy())
+        return ComplementedConfig(self.__hydra_config.copy(), config_path=self.config_path)
 
     def has_key(self, key):
         return key in self.__hydra_config or key + "__IGNORE__" in self.__hydra_config
@@ -175,16 +212,11 @@ class ComplementedConfigWrapper:
         return [key.replace("__IGNORE__", "") for key in self.__hydra_config.keys()]
 
     def values(self):
-        return [
-            (
-                key.replace("__IGNORE__", ""),
-                value
-                if not isinstance(value, DictConfig)
-                and not isinstance(value, ListConfig)
-                else ComplementedConfigWrapper(value),
-            )
-            for key, value in self.__hydra_config.values()
-        ]
+        return [(key.replace("__IGNORE__", ""),
+                 value if not isinstance(value, DictConfig) and not isinstance(value, ListConfig)
+                 else ComplementedConfig(value,
+                                         config_path=key if not self.config_path else f"{self.config_path}.{key}"))
+                for key, value in self.__hydra_config.values()]
 
     def __delitem__(self, key):
         if key + "__IGNORE__" in self.__hydra_config:
@@ -193,7 +225,17 @@ class ComplementedConfigWrapper:
             del self.__hydra_config[key]
 
     def __invert__(self):
-        return inst.instantiate(self.__hydra_config)
+        if not self.config_path:
+            return inst.instantiate(self.__hydra_config)
+        else:
+            instance_name = self.config_path.strip()
+            if instance_name in objects_created:
+                return objects_created[instance_name]
+            else:
+                res = inst.instantiate(self.__hydra_config)
+                objects_created[instance_name] = res
+                return res
+
 
 
 class main:
@@ -204,7 +246,7 @@ class main:
     def __call__(self, old_app):
         def app(cfg):
             with omegaconf.flag_override(cfg, "allow_objects", True):
-                return old_app(ComplementedConfigWrapper(cfg))
+                return old_app(ComplementedConfig(cfg))
 
         app.__module__ = old_app.__module__
         return hydramain(*self.args, **self.kwargs)(app)
