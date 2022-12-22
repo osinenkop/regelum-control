@@ -8,9 +8,9 @@ defaults:
 system: ~ ${simulator.system}
 actor: ~ ${controller.actor}
 critic: ~ ${controller.critic}
-time_final: $ time_final%%
-no_print: $ no_print%%
-is_log: $ is_log%%
-is_playback: $ is_playback%%
-state_init: $ state_init%%
-action_init: $ action_init%%
+time_final: 10.
+no_print: true
+is_log: false
+is_playback: true
+state_init: = [5., 5., 3. * numpy.pi / 4.]
+action_init: = numpy.ones(5)
