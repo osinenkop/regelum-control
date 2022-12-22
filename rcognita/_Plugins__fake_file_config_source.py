@@ -8,6 +8,7 @@ from hydra.core.object_type import ObjectType
 from hydra.plugins.config_source import ConfigLoadError, ConfigResult, ConfigSource
 from io import StringIO
 import re
+from functools import partial
 
 
 def sub_map(pattern, f, s):
@@ -32,7 +33,9 @@ def wrap_tilde_expression(content):
 
 
 def tilde_sugar_for_references(content):
-    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\~.*\S+.*", wrap_tilde_expression, content)
+    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\~.*\S+.*",
+                   wrap_tilde_expression,
+                   content)
 
 
 def wrap_tilde_expression_specific(content):
@@ -62,6 +65,10 @@ def wrap_dollar_expression(content):
 
 def dolar_sugar_for_references(content):
     return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\$.*\S+.*", wrap_dollar_expression, content)
+
+def additional_sugars(content):
+    return content.replace("={", "${get:").replace("$${", "${.").replace("~{", "${same:") ## needs to be extended
+
 
 def wrap_multidollar_expression(match):
     content = match.group(0)
@@ -129,6 +136,7 @@ def pre_parse(content):
     content = equals_sugar_for_inlines(content)
     content = tilde_sugar_for_references(content)
     content = tilde_sugar_for_specific_references(content)
+    content = additional_sugars(content)
     #content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
     content = replace_forbidden_characters_in_braces(content) # format strings still remain off limits
     content = fix_characters(content)
