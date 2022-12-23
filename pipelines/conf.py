@@ -9,14 +9,22 @@ sys.path.insert(0, CUR_DIR)
 import rcognita as r
 
 
+# @r.main(
+#     version_base=None,
+#     config_path="../pipelines/conf/",
+#     config_name="episodic_scenario",
+# )
+# def launch(scenario):
+#     scenario = ~scenario
+#     scenario.run()
+
 @r.main(
     version_base=None,
-    config_path="../pipelines/conf/",
-    config_name="episodic_scenario",
+    config_path="../pipelines/conf/testing_configs",
+    config_name="test",
 )
-def launch(scenario):
-    scenario = ~scenario
-    scenario.run()
+def launch(cfg):
+    print(cfg.de.var)
 
 
 if __name__ == "__main__":

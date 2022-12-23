@@ -7,11 +7,11 @@ sys_type: $ simulator.system.sys_type
 state_init: $ state_init
 action_init: $ action_init
 disturb_init: = None
-time_start: $ time_start%%
-time_final: $ time_final%%
-sampling_time: $ sampling_time%%
-max_step: $ max_step%%
+time_start: 0
+time_final: 10
+sampling_time: $ controller.sampling_time
+max_step: = ${controller.sampling_time} / 10.
 first_step: 1.0E-6
-atol: $ atol%%
-rtol: $ rtol%%
-ode_solver: $ ode_solver%%
+atol: 1.0E-5
+rtol: 1.0E-3
+ode_solver: $ SCIPY

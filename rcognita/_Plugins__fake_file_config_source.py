@@ -87,7 +87,7 @@ def multidollar_sugar_for_relative_references(content):
 
 def at_dictionarize(content):
     rerouts = {}
-    for match in re.finditer(r"(\A|\n)( )*@([A-Za-z0-9_]+)([A-Za-z0-9_\.]*)( )*:( )*(.*)", content):
+    for match in re.finditer(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", content):
         if match.group(3) not in rerouts:
             rerouts[match.group(3)] = ""
         if match.group(4):
@@ -121,8 +121,8 @@ def at_sugar_for_rerouting(content):
     rerouts = at_dictionarize(content)
     added_references, added_fields = write_rerouts_references(rerouts)
 
-    content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_]+)([A-Za-z0-9_\.]*)( )*:( )*(.*)", "", content)
-    return added_fields + added_references + content
+    content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", "", content)
+    return added_fields.replace("%%%%", "%%") + added_references.replace("%%%%", "%%") + content
 
 
 
