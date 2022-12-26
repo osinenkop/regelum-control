@@ -20,9 +20,6 @@
       :toctree: sub
    
       Logger
-      Logger2Tank
-      Logger3WRobot
-      Logger3WRobotNI
    
    
 

@@ -36,4 +36,4 @@ In Linux-based OS, to build these wiki docs, run inside cloned repo folder:
     cd docsrc
     make
 
-Commit changes.
+Before running make, you need to make sure that all dependencies are installed and sphinx your sphinx is fresh (i.e somewhere around 5.3.0). On the website (of sphinx) it tells you to use `apt install python3-sphinx`, but THIS IS A TRAP. If you do this you'll just install an outdated version of sphinx. You probably want to `pip install -U sphinx` instead. Also be sure to also install the theme via  `pip install sphinx_rtd_theme`.

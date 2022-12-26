@@ -14,9 +14,10 @@ rcognita.simulator.Simulator
    .. autosummary::
    
       ~Simulator.__init__
+      ~Simulator.do_sim_step
       ~Simulator.get_sim_step_data
+      ~Simulator.initialize_ODE_solver
       ~Simulator.reset
-      ~Simulator.sim_step
    
    
 

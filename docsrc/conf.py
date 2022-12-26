@@ -15,10 +15,15 @@ import sys
 
 sys.path.insert(0, os.path.abspath(__file__ + "/../.."))
 sys.path.insert(0, os.path.abspath(__file__ + "/../../rcognita"))
+sys.path.insert(0, os.path.abspath(__file__ + "/../../rcognita"))
 
 # -- Project information -----------------------------------------------------
-
-from rcognita import __version__
+try:
+    from rcognita import __version__
+except ModuleNotFoundError as e:
+    print(f"This docs generating script is running from {sys.executable}. "
+          f"Make sure that the respective environment has rcognita's dependencies installed.")
+    raise e
 
 project = "rcognita"
 copyright = "2021, AIDA Lab"

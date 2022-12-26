@@ -14,9 +14,11 @@ rcognita.systems.System
    .. autosummary::
    
       ~System.__init__
-      ~System.closed_loop_rhs
+      ~System.compute_closed_loop_rhs
+      ~System.compute_dynamics
       ~System.out
       ~System.receive_action
+      ~System.reset
    
    
 
