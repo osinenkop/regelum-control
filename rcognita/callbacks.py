@@ -67,6 +67,7 @@ def method_callback(method_name, class_name=None, log_level="debug"):
         def perform(self, obj, method, output):
             if method==method_name and class_name in [None, obj.__class__.__name__]:
                 self.log(f"Method '{method}' of class '{obj.__class__.__name__}' returned {output}")
+    return MethodCallback
 
 
 class StateCallback(Callback):

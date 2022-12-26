@@ -11,7 +11,7 @@ Remarks:
 
 import numpy as np
 from numpy.random import randn
-from . import utilities
+from rcognita import utilities
 from abc import ABC, abstractmethod
 
 

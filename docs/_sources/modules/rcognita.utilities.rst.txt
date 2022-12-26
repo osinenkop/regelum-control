@@ -15,17 +15,23 @@
    .. autosummary::
       :toctree: sub
    
+      apply_callbacks
+      decorateAll
       dss_sim
+      is_CasADi_typecheck
+      is_Torch_typecheck
+      logging_callback
       on_key_press
       push_vec
       rej_sampling_rvs
-      rep_mat
       reset_line
-      to_col_vec
-      upd_line
-      upd_scatter
-      upd_text
-      uptria2vec
+      safe_unpack
+      simulation_progress
+      type_inference
+      update_line
+      update_patch
+      update_scatter
+      update_text
    
    
 
@@ -36,8 +42,13 @@
    .. autosummary::
       :toctree: sub
    
+      Clock
       DFilter
+      RCType
+      RCTypeHandler
       ZOH
+      introduce_callbacks
+      metaclassTypeInferenceDecorator
    
    
 

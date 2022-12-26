@@ -14,18 +14,14 @@ rcognita.systems.Sys3WRobotNI
    .. autosummary::
    
       ~Sys3WRobotNI.__init__
-      ~Sys3WRobotNI.closed_loop_rhs
+      ~Sys3WRobotNI.compute_closed_loop_rhs
+      ~Sys3WRobotNI.compute_dynamics
       ~Sys3WRobotNI.out
       ~Sys3WRobotNI.receive_action
+      ~Sys3WRobotNI.reset
    
    
 
    
-   
-   .. rubric:: Attributes
-
-   .. autosummary::
-   
-      ~Sys3WRobotNI.name
    
    

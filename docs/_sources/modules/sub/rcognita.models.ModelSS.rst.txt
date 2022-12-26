@@ -14,11 +14,17 @@ rcognita.models.ModelSS
    .. autosummary::
    
       ~ModelSS.__init__
-      ~ModelSS.upd_pars
       ~ModelSS.updateIC
+      ~ModelSS.update_pars
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelSS.model_name
    
    

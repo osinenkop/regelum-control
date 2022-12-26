@@ -10,13 +10,6 @@
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree: sub
-   
-      ctrl_selector
-   
    
 
    
@@ -26,10 +19,17 @@
    .. autosummary::
       :toctree: sub
    
-      CtrlNominal3WRobot
-      CtrlNominal3WRobotNI
+      CALFControllerExPost
+      CALFControllerPredictive
+      Controller
+      Controller3WRobotDisassembledCLF
+      Controller3WRobotNIDisassembledCLF
+      Controller3WRobotNIMotionPrimitive
+      Controller3WRobotPID
+      ControllerPID
+      ControllerStabilizing
+      NominalControllerInvertedPendulum
       RLController
-      CtrlRLStab
    
    
 
