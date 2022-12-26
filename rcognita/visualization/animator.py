@@ -186,6 +186,28 @@ class Animator:
     def get_index(self, r, c):
         return r * self.subplot_grid_size[1] + c
 
+    def playback(self):
+        from matplotlib import animation
+        from rcognita.utilities import on_key_press
+
+        self.init_anim()
+
+        anm = animation.FuncAnimation(
+            self.main_figure,
+            self.animate,
+            blit=True,
+            interval=self.sampling_time / 1e6,
+            repeat=False,
+        )
+
+        self.get_anm(anm)
+
+        cId = self.main_figure.canvas.mpl_connect(
+            "key_press_event", lambda event: on_key_press(event, anm)
+        )
+
+        anm.running = True
+
 
 class RobotMarker:
     """

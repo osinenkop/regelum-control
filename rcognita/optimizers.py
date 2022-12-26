@@ -130,10 +130,7 @@ class CasADiOptimizer(Optimizer):
 
         try:
             solver = nlpsol(
-                "solver",
-                self.opt_method,
-                optimization_problem,
-                self.opt_options,
+                "solver", self.opt_method, optimization_problem, self.opt_options,
             )
         except Exception as e:
             print(e)
@@ -236,7 +233,7 @@ class TorchOptimizer(Optimizer):
 class BruteForceOptimizer(Optimizer):
     engine = "Parallel"
 
-    def __init__(self, N_parallel_processes, possible_variants):
+    def __init__(self, possible_variants, N_parallel_processes=0):
         self.N_parallel_processes = N_parallel_processes
         self.possible_variants = possible_variants
 

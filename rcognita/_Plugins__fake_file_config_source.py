@@ -25,7 +25,11 @@ def wrap_equals_expression(content):
 
 
 def equals_sugar_for_inlines(content):
-    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\=.*\S+.*", wrap_equals_expression, content)
+    return sub_map(
+        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\=.*\S+.*",
+        wrap_equals_expression,
+        content,
+    )
 
 
 def wrap_tilde_expression(content):
@@ -34,9 +38,11 @@ def wrap_tilde_expression(content):
 
 
 def tilde_sugar_for_references(content):
-    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\~.*\S+.*",
-                   wrap_tilde_expression,
-                   content)
+    return sub_map(
+        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\~.*\S+.*",
+        wrap_tilde_expression,
+        content,
+    )
 
 
 def wrap_tilde_expression_specific(content):
@@ -53,7 +59,9 @@ def wrap_tilde_expression_specific(content):
 
 def tilde_sugar_for_specific_references(content):
     return sub_map(
-        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*", wrap_tilde_expression_specific, content
+        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*[A-Za-z0-9_]+\s*\~.*\S+.*",
+        wrap_tilde_expression_specific,
+        content,
     )
 
 
@@ -65,10 +73,17 @@ def wrap_dollar_expression(content):
 
 
 def dolar_sugar_for_references(content):
-    return sub_map(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\$.*\S+.*", wrap_dollar_expression, content)
+    return sub_map(
+        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*\$.*\S+.*",
+        wrap_dollar_expression,
+        content,
+    )
+
 
 def additional_sugars(content):
-    return content.replace("={", "${get:").replace("$${", "${.").replace("~{", "${same:") ## needs to be extended
+    return (
+        content.replace("={", "${get:").replace("$${", "${.").replace("~{", "${same:")
+    )  ## needs to be extended
 
 
 def wrap_multidollar_expression(match):
@@ -80,23 +95,33 @@ def wrap_multidollar_expression(match):
         return content
     return content[:i] + f"${{{'.' * num_dollars + content[j + 1:].lstrip()}}}"
 
+
 def multidollar_sugar_for_relative_references(content):
-    return re.sub(r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*(\$+)\$.*\S+.*", wrap_multidollar_expression, content)
-
-
+    return re.sub(
+        r"(\A|\n)[- ]*([A-Za-z0-9_%]+( )*:|-)\s*(\$+)\$.*\S+.*",
+        wrap_multidollar_expression,
+        content,
+    )
 
 
 def at_dictionarize(content):
     rerouts = {}
-    for match in re.finditer(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", content):
+    for match in re.finditer(
+        r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", content
+    ):
         if match.group(3) not in rerouts:
             rerouts[match.group(3)] = ""
         if match.group(4):
-            rerouts[match.group(3)] += "@" + match.group(4)[1:] + ":" + match.group(7) + "\n"
+            rerouts[match.group(3)] += (
+                "@" + match.group(4)[1:] + ":" + match.group(7) + "\n"
+            )
         else:
             rerouts[match.group(3)] = (match.group(7),)
     if rerouts:
-        return {key: at_dictionarize(value) if type(value) is not tuple else value for key, value in rerouts.items()}
+        return {
+            key: at_dictionarize(value) if type(value) is not tuple else value
+            for key, value in rerouts.items()
+        }
     else:
         return rerouts
 
@@ -112,33 +137,48 @@ def write_rerouts_references(rerouts):
             subreferences, new_fields = write_rerouts_references(rerouts[key])
             fields += new_fields
             references += f"{key}:\n"
-            for line in subreferences.split('\n'):
+            for line in subreferences.split("\n"):
                 references += "  " + line + "\n"
     return references, fields
 
 
 def at_no_colon_on_match(match):
-    forwarded_path = match.group(3) + match.group(4)
-    top_level_var = forwarded_path.split('.')[-1]
-    rcognita.main.post_assignment(top_level_var,
-                                  eval(f"lambda cfg: cfg.{forwarded_path}"), weak=True)
-    rcognita.main.post_assignment(forwarded_path,
-                                  f"${{{top_level_var}__IGNORE__}}")
-    return f"{top_level_var}__IGNORE__: __REPLACE__"
+    forwarded_path = (match.group(3) + match.group(4)).replace("%%", "__IGNORE__")
+    top_level_var = forwarded_path.split(".")[-1]
+    rcognita.main.post_assignment(
+        top_level_var, eval(f"lambda cfg: cfg.{forwarded_path}"), weak=True
+    )
+    rcognita.main.post_assignment(
+        forwarded_path,
+        f"${{{top_level_var}__IGNORE__}}".replace("__IGNORE__" * 2, "__IGNORE__"),
+    )
+    return f"{top_level_var}__IGNORE__: __REPLACE__".replace(
+        "__IGNORE__" * 2, "__IGNORE__"
+    )
+
 
 def at_sugar_for_rerouting(content):
     rerouts = at_dictionarize(content)
     added_references, added_fields = write_rerouts_references(rerouts)
 
-    content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", "", content)
-    content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*", at_no_colon_on_match, content)
-    return added_fields.replace("%%%%", "%%") + added_references.replace("%%%%", "%%") + content
-
-
+    content = re.sub(
+        r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", "", content
+    )
+    content = re.sub(
+        r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*",
+        at_no_colon_on_match,
+        content,
+    )
+    return (
+        added_fields.replace("%%%%", "%%")
+        + added_references.replace("%%%%", "%%")
+        + content
+    )
 
 
 def double_percent_sugar_for_ignored_fields(content):
     return content.replace("%%", "__IGNORE__")
+
 
 def fix_characters(content):
     return (
@@ -178,9 +218,13 @@ def numerize_strings_inside_braces(content):
 
 
 def replace_forbidden_characters_in_braces(content):
-    return sub_map(r"\{.+\}",
-                   lambda s: s.replace("'", "__APOSTROPHE__").replace('"', "__QUOTATION__").replace('~', "__TILDE__"),
-                   content)
+    return sub_map(
+        r"\{.+\}",
+        lambda s: s.replace("'", "__APOSTROPHE__")
+        .replace('"', "__QUOTATION__")
+        .replace("~", "__TILDE__"),
+        content,
+    )
 
 
 def pre_parse(content):
@@ -192,8 +236,10 @@ def pre_parse(content):
     content = tilde_sugar_for_references(content)
     content = tilde_sugar_for_specific_references(content)
     content = additional_sugars(content)
-    #content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
-    content = replace_forbidden_characters_in_braces(content) # format strings still remain off limits
+    # content = numerize_strings_inside_braces(content) ## This will destroy references inside of strings
+    content = replace_forbidden_characters_in_braces(
+        content
+    )  # format strings still remain off limits
     content = fix_characters(content)
 
     return content
@@ -214,7 +260,7 @@ class FileConfigSource(ConfigSource):
         full_path = os.path.realpath(os.path.join(self.path, normalized_config_path))
         if not os.path.exists(full_path):
             raise ConfigLoadError(f"Config not found : {full_path}")
-        with open(full_path, encoding="utf-8") as f: ## RCOGNITA CODE HERE
+        with open(full_path, encoding="utf-8") as f:  ## RCOGNITA CODE HERE
             content = pre_parse(f.read())
         with StringIO(content) as f:
             header_text = f.read(512)

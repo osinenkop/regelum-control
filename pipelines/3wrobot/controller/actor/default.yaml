@@ -1,8 +1,3 @@
-defaults:
-  - model: weight_container
-  - optimizer: scipy
-  - predictor: euler
-
 prediction_horizon: $ controller.actor.predictor.prediction_horizon
 dim_output: $ simulator.system.dim_input
 dim_input: $ simulator.system.dim_output
