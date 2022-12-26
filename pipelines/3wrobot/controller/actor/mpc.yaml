@@ -1,5 +1,8 @@
 defaults:
   - default
+  - model: weight_container
+  - optimizer: scipy
+  - predictor: euler
 
 _target_: rcognita.actors.ActorMPC
 

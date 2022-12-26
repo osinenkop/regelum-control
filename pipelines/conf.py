@@ -10,6 +10,8 @@ import numpy as np
 import rcognita as r
 import omegaconf
 from omegaconf import DictConfig, OmegaConf, flag_override
+from rcognita.visualization.vis_3wrobot import Animator3WRobot
+import matplotlib.pyplot as plt
 
 
 @r.main(
@@ -18,8 +20,12 @@ from omegaconf import DictConfig, OmegaConf, flag_override
     config_name="episodic_scenario",
 )
 def launch(scenario):
-    scenario = ~scenario
-    scenario.run()
+    scenario_instance = ~scenario
+    scenario_instance.run()
+    if scenario_instance.is_playback:
+        animator = Animator3WRobot(scenario_instance)
+        anm = animator.playback()
+        plt.show()
 
 
 if __name__ == "__main__":

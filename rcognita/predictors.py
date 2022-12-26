@@ -114,8 +114,8 @@ class TrivialPredictor(Predictor):
 
     """
 
-    def __init__(self, compute_dynamics):
-        self.compute_dynamics = compute_dynamics
+    def __init__(self, system):
+        self.compute_dynamics = system.compute_dynamics
 
     def predict(self, current_state_or_observation, action):
         return self.compute_dynamics(current_state_or_observation, action)

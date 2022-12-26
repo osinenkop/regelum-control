@@ -75,6 +75,7 @@ class OnlineScenario(Scenario):
         is_playback: bool = False,
         state_init: np.ndarray = None,
         action_init=None,
+        time_start: float = 0.0,
     ):
         self.system = system
         self.simulator = simulator
@@ -83,6 +84,7 @@ class OnlineScenario(Scenario):
         self.critic = critic
         self.running_objective = running_objective
 
+        self.time_start = time_start
         self.time_final = time_final
         self.no_print = no_print
         self.is_log = is_log
