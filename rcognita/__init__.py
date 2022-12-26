@@ -265,13 +265,13 @@ class main:
         for key, value in cls.weak_assignments:
             if callable(value):
                 value = value(cfg)
-            current = eval(f"cfg.{key}")
-            if current.strp() == "__REPLACE__":
-                exec(f"cfg.{key} = value")
+            current = eval(f"cfg.{key.replace('%%', '')}")
+            if current == "__REPLACE__":
+                exec(f"cfg.{key.replace('%%', '')} = value")
         for key, value in cls.assignments:
             if callable(value):
                 value = value(cfg)
-            exec(f"cfg.{key} = value")
+            exec(f"cfg.{key.replace('%%', '')} = value")
 
     def __init__(self, *args,
                  logger=logging.getLogger("rcognita"),

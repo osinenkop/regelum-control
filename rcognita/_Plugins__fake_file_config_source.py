@@ -119,12 +119,12 @@ def write_rerouts_references(rerouts):
 
 def at_no_colon_on_match(match):
     forwarded_path = match.group(3) + match.group(4)
-    top_level_var = forwarded_path.split('.')[-1] + "%%"
+    top_level_var = forwarded_path.split('.')[-1]
     rcognita.main.post_assignment(top_level_var,
-                                  eval(f"lambda cfg: cfg.{forwarded_path}"))
+                                  eval(f"lambda cfg: cfg.{forwarded_path}"), weak=True)
     rcognita.main.post_assignment(forwarded_path,
-                                  f"${{{top_level_var}}}", weak=True)
-    return f"{top_level_var}: __REPLACE__"
+                                  f"${{{top_level_var}__IGNORE__}}")
+    return f"{top_level_var}__IGNORE__: __REPLACE__"
 
 def at_sugar_for_rerouting(content):
     rerouts = at_dictionarize(content)
