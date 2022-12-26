@@ -246,6 +246,33 @@ from .callbacks import *
 class main:
     callbacks = None
     logger = None
+    assignments=[]
+    weak_assignments=[]
+
+    @classmethod
+    def post_weak_assignment(cls, key, value):
+        cls.weak_assignments.append((key, value))
+
+    @classmethod
+    def post_assignment(cls, key, value, weak=False):
+        if weak:
+            cls.post_weak_assignment(key, value)
+        else:
+            cls.assignments.append((key, value))
+
+    @classmethod
+    def apply_assignments(cls, cfg):
+        for key, value in cls.weak_assignments:
+            if callable(value):
+                value = value(cfg)
+            current = eval(f"cfg.{key}")
+            if current.strp() == "__REPLACE__":
+                exec(f"cfg.{key} = value")
+        for key, value in cls.assignments:
+            if callable(value):
+                value = value(cfg)
+            exec(f"cfg.{key} = value")
+
     def __init__(self, *args,
                  logger=logging.getLogger("rcognita"),
                  callbacks=[StateCallback,
@@ -260,7 +287,9 @@ class main:
     def __call__(self, old_app):
         def app(cfg):
             with omegaconf.flag_override(cfg, "allow_objects", True):
-                return old_app(ComplementedConfig(cfg))
+                ccfg = ComplementedConfig(cfg)
+                self.apply_assignments(ccfg)
+                return old_app(ccfg)
 
         app.__module__ = old_app.__module__
         return hydramain(*self.args, **self.kwargs)(app)

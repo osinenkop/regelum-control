@@ -8,6 +8,7 @@ from hydra.core.object_type import ObjectType
 from hydra.plugins.config_source import ConfigLoadError, ConfigResult, ConfigSource
 from io import StringIO
 import re
+import rcognita
 from functools import partial
 
 
@@ -116,12 +117,21 @@ def write_rerouts_references(rerouts):
     return references, fields
 
 
+def at_no_colon_on_match(match):
+    forwarded_path = match.group(3) + match.group(4)
+    top_level_var = forwarded_path.split('.')[-1] + "%%"
+    rcognita.main.post_assignment(top_level_var,
+                                  eval(f"lambda cfg: cfg.{forwarded_path}"))
+    rcognita.main.post_assignment(forwarded_path,
+                                  f"${{{top_level_var}}}", weak=True)
+    return f"{top_level_var}: __REPLACE__"
 
 def at_sugar_for_rerouting(content):
     rerouts = at_dictionarize(content)
     added_references, added_fields = write_rerouts_references(rerouts)
 
     content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*:( )*(.*)", "", content)
+    content = re.sub(r"(\A|\n)( )*@([A-Za-z0-9_%]+)([A-Za-z0-9_%\.]*)( )*", at_no_colon_on_match, content)
     return added_fields.replace("%%%%", "%%") + added_references.replace("%%%%", "%%") + content
 
 
