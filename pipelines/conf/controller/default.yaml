@@ -1,3 +1,8 @@
-time_start: $ time_start%%
-sampling_time: $ sampling_time%%
-is_fixed_critic_weights: $ is_fixed_critic_weights%%
+time_start: 0
+sampling_time: 1.0E-2
+is_fixed_critic_weights: false
+
+F_min%%: -300.
+F_max%%: 300.
+M_min%%: -100.
+M_max%%: 100.

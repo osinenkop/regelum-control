@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - default
+  - forward/3wrobot
   - controller: rl_controller
   - simulator: default
   - running_objective: running_objective

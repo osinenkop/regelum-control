@@ -1,0 +1,46 @@
+### A set of default parameters using
+### to specify simulation
+
+@no_visual: $ no_visual%%
+@save_animation%%: true
+@save_trajectory%%: false
+@speedup%%: 5
+
+@controller.action_bounds: = numpy.array([[${F_min}, ${F_max}], [${M_min}, ${M_max}]])
+@simulator.ode_solver: SCIPY
+@controller.sampling_time: 1.0E-2
+
+@simulator.time_start: 0.
+@simulator.time_final: 10.
+
+@controller.is_fixed_critic_weights: true
+
+@controller.F_min: -300.
+@controller.F_max: 300.
+@controller.M_min: -100.
+@controller.M_max: 100.
+
+@actor.predictor.prediction_horizon: 3
+@critic.predictor.prediction_horizon: 3
+@actor.predictor.pred_step_size_multiplier: 1.0
+@critic.predictor.pred_step_size_multiplier: 1.0
+@critic.data_buffer_size: 10
+@running_objective.model.R1_diag%%: = [1, 10, 1, 0, 0, 0, 0]
+@running_objective.model.R2_diag%%: = [1, 10, 1, 0, 0, 0, 0]
+@running_objective.model.dim_R1: = len(${running_objective.model.R1_diag%%})
+@running_objective.model.dim_R2: = len(${running_objective.model.R2_diag%%})
+
+### Actor and Critic
+
+@actor.discount_factor: 1.
+@critic.discount_factor: 1.
+@critic.critic_period_multiplier: 1.
+
+observation_target: = []
+
+### Solver
+
+atol: 1.0E-5
+rtol: 1.0E-3
+
+max_step: = ${.sampling_time} / 10.
