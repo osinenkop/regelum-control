@@ -1,9 +1,9 @@
 defaults:
   - _self_
-  - forward
   - controller: rl_controller
   - simulator: default
   - running_objective: running_objective
+  - forward
 
 _target_: rcognita.scenarios.EpisodicScenario
 
@@ -12,7 +12,6 @@ _target_: rcognita.scenarios.EpisodicScenario
 system: ~ simulator.system
 actor: ~ controller.actor
 critic: ~ controller.critic
-time_final: 10.
 no_print: true
 is_log: false
 is_playback: true

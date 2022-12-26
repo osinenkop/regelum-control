@@ -68,7 +68,6 @@ class OnlineScenario(Scenario):
         controller: Controller,
         actor: Actor,
         critic: Critic,
-        time_final: float,
         running_objective,
         no_print: bool = False,
         is_log: bool = False,
@@ -85,7 +84,7 @@ class OnlineScenario(Scenario):
         self.running_objective = running_objective
 
         self.time_start = time_start
-        self.time_final = time_final
+        self.time_final = self.simulator.time_final
         self.no_print = no_print
         self.is_log = is_log
         self.is_playback = is_playback

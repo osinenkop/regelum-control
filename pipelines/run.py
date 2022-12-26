@@ -24,7 +24,7 @@ def launch(scenario):
     scenario_instance.run()
     if scenario_instance.is_playback:
         animator = Animator3WRobot(scenario_instance)
-        anm = animator.playback()
+        animator.playback()
         plt.show()
 
 
