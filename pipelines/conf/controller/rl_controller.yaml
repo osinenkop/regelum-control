@@ -1,9 +1,0 @@
-defaults:
-  - default
-  - actor: mpc
-  - critic: trivial
-
-_target_: rcognita.controllers.RLController
-critic_period: = ${.critic_period_multiplier%%} * ${sampling_time}
-
-critic_period_multiplier%%: 1.

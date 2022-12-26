@@ -36,13 +36,13 @@ class EulerPredictor(Predictor):
         self,
         pred_step_size: float,
         system: System,
-        dim_output: int,
+        dim_input: int,
         prediction_horizon: int,
     ):
         self.pred_step_size = pred_step_size
         self.compute_state_dynamics = system.compute_dynamics
         self.sys_out = system.out
-        self.dim_output = dim_output
+        self.dim_input = dim_input
         self.prediction_horizon = prediction_horizon
 
     def predict(self, current_state_or_observation, action):
@@ -56,7 +56,7 @@ class EulerPredictor(Predictor):
     def predict_sequence(self, observation, action_sequence):
 
         observation_sequence = rc.zeros(
-            [self.dim_output, self.prediction_horizon], prototype=action_sequence
+            [self.dim_input, self.prediction_horizon], prototype=action_sequence
         )
         current_observation = observation
 

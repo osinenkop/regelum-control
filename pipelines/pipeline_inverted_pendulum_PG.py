@@ -104,7 +104,7 @@ class PipelineInvertedPendulumPG(PipelineWithDefaults):
             arg_condition=self.observation_init,
             weights=self.initial_weights,
         )
-        self.critic_model = models.ModelQuadNoMix(input_dim=self.dim_input)
+        self.critic_model = models.ModelQuadNoMix(dim_input=self.dim_input)
         self.running_objective_model = models.ModelQuadForm(weights=self.R1)
 
     def initialize_objectives(self):

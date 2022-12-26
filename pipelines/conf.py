@@ -20,11 +20,12 @@ import rcognita as r
 
 @r.main(
     version_base=None,
-    config_path="../pipelines/conf/testing_configs",
-    config_name="test",
+    config_path="../pipelines/3wrobot",
+    config_name="episodic_scenario",
 )
-def launch(cfg):
-    print(cfg.de.var)
+def launch(scenario):
+    scenario = ~scenario
+    scenario.run()
 
 
 if __name__ == "__main__":

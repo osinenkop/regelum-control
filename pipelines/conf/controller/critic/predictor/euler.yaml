@@ -1,6 +1,0 @@
-_target_: rcognita.predictors.EulerPredictor
-
-pred_step_size: $ controller.sampling_time
-system: $ simulator.system
-dim_output: $ controller.actor.dim_output
-prediction_horizon: $ critic.predictior.prediction_horizon

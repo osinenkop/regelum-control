@@ -1,4 +1,0 @@
-defaults:
-    - system: two_tanks
-
-instantiated_system: ~ system

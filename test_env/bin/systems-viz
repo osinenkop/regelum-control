@@ -1,4 +1,0 @@
-#!/home/odinmaniac/Downloads/Repos/rcognita/test_env/bin/python3
-
-import systems.viz
-systems.viz.main()

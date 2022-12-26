@@ -43,8 +43,8 @@ class Actor:
     def __init__(
         self,
         prediction_horizon: int,
-        dim_input: int,
         dim_output: int,
+        dim_input: int,
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
         predictor: Predictor = None,
@@ -55,8 +55,8 @@ class Actor:
         discount_factor=1,
     ):
         self.prediction_horizon = prediction_horizon
-        self.dim_input = dim_input
         self.dim_output = dim_output
+        self.dim_input = dim_input
         self.action_bounds = action_bounds
         self.optimizer = optimizer
         self.critic = critic
@@ -70,8 +70,8 @@ class Actor:
                 self.action_min = np.array(self.action_bounds)[:, 0]
                 self.action_max = np.array(self.action_bounds)[:, 1]
         else:
-            self.action_min = np.array(self.action_bounds.lb[: self.dim_input])
-            self.action_max = np.array(self.action_bounds.ub[: self.dim_input])
+            self.action_min = np.array(self.action_bounds.lb[: self.dim_output])
+            self.action_max = np.array(self.action_bounds.ub[: self.dim_output])
 
         if len(action_init) == 0:
             self.action_old = (self.action_min + self.action_max) / 2
@@ -214,7 +214,7 @@ class Actor:
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
         action_sequence_init_reshaped = rc.reshape(
-            action_sequence, [final_count_of_actions * self.dim_input],
+            action_sequence, [final_count_of_actions * self.dim_output],
         )
 
         constraints = []
@@ -328,7 +328,7 @@ class ActorMPC(Actor):
         * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
         """
         action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_input]
+            action_sequence, [self.prediction_horizon + 1, self.dim_output]
         ).T
 
         observation_sequence = [observation]
