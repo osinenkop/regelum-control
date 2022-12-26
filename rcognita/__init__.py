@@ -230,13 +230,13 @@ class ComplementedConfig:
 
     def __invert__(self):
         if not self.config_path:
-            return inst.instantiate(self.__hydra_config)
+            return inst.instantiate(self.__hydra_config, path=self.config_path)
         else:
             instance_name = self.config_path.strip()
             if instance_name in objects_created:
                 return objects_created[instance_name]
             else:
-                res = inst.instantiate(self.__hydra_config)
+                res = inst.instantiate(self.__hydra_config, path=self.config_path)
                 objects_created[instance_name] = res
                 return res
 
