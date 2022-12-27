@@ -40,13 +40,13 @@ except ModuleNotFoundError:
 
 class Optimizer(ABC):
     """
-    Optimizer blueprint.
-
+    Abstract base class for optimizers.
     """
 
     @property
     @abstractmethod
     def engine(self):
+        """Name of the optimization engine being used"""
         return "engine_name"
 
     @abstractmethod
@@ -57,7 +57,21 @@ class Optimizer(ABC):
     def optimize(self):
         pass
 
+    @staticmethod
     def verbose(opt_func):
+        """
+        A static method decorator that makes the decorated function verbose.
+
+        This method will print the optimization time of the decorated function
+        if the `verbose` attribute of the instance is set to True.
+
+        Parameters:
+        opt_func (function): The function to be decorated.
+
+        Returns:
+        function: The decorated function.
+        """
+
         def wrapper(self, *args, **kwargs):
             tic = time.time()
             result = opt_func(self, *args, **kwargs)
@@ -71,15 +85,42 @@ class Optimizer(ABC):
 
 
 class SciPyOptimizer(Optimizer):
+    """
+    Optimizer class using the SciPy optimization library.
+
+    Attributes:
+        engine (str): Name of the optimization engine.
+        opt_method (str): Optimization method to use.
+        opt_options (dict): Options for the optimization method.
+        verbose (bool): Whether to print optimization progress and timing.
+    """
+
     engine = "SciPy"
 
     def __init__(self, opt_method, opt_options, verbose=False):
+        """
+        Initialize a SciPyOptimizer instance.
+
+        :param opt_method: str, the name of the optimization method to use.
+        :param opt_options: dict, options for the optimization method.
+        :param verbose: bool, whether to print the optimization time and the objective function value before and after optimization.
+        """
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.verbose = verbose
 
     @Optimizer.verbose
     def optimize(self, objective, initial_guess, bounds, constraints=(), verbose=False):
+        """
+        Optimize the objective function using the specified method and options.
+
+        :param objective: function, the objective function to optimize.
+        :param initial_guess: array-like, the initial guess for the optimization.
+        :param bounds: tuple, the lower and upper bounds for the optimization.
+        :param constraints: tuple, the equality and inequality constraints for the optimization.
+        :param verbose: bool, whether to print the objective function value before and after optimization.
+        :return: array-like, the optimal solution.
+        """
 
         weight_bounds = sp.optimize.Bounds(bounds[0], bounds[1], keep_feasible=True)
 
@@ -106,6 +147,16 @@ class CasADiOptimizer(Optimizer):
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.verbose = verbose
+        """
+        Initialize the CasADiOptimizer object.
+        
+        :param opt_method: The optimization method to use (string).
+        :type opt_method: str
+        :param opt_options: A dictionary of options for the optimization method.
+        :type opt_options: dict
+        :param verbose: Whether or not to print messages during optimization (default: False).
+        :type verbose: bool, optional
+        """
 
     @Optimizer.verbose
     def optimize(
@@ -116,6 +167,22 @@ class CasADiOptimizer(Optimizer):
         constraints=(),
         decision_variable_symbolic=None,
     ):
+        """
+        Optimize the given objective function using the CasADi optimization engine.
+        
+        :param objective: The objective function to optimize.
+        :type objective: function
+        :param initial_guess: The initial guess for the optimization variables.
+        :type initial_guess: numpy array
+        :param bounds: A tuple of lower and upper bounds for the optimization variables.
+        :type bounds: tuple
+        :param constraints: Any constraints to enforce during optimization (default: no constraints).
+        :type constraints: tuple, optional
+        :param decision_variable_symbolic: A list of symbolic variables representing the optimization variables.
+        :type decision_variable_symbolic: list
+        :return: The optimized decision variables.
+        :rtype: numpy array
+        """
         optimization_problem = {
             "f": objective,
             "x": vertcat(decision_variable_symbolic),
@@ -130,10 +197,7 @@ class CasADiOptimizer(Optimizer):
 
         try:
             solver = nlpsol(
-                "solver",
-                self.opt_method,
-                optimization_problem,
-                self.opt_options,
+                "solver", self.opt_method, optimization_problem, self.opt_options,
             )
         except Exception as e:
             print(e)
@@ -194,6 +258,22 @@ class GradientOptimizer(CasADiOptimizer):
 
     @Optimizer.verbose
     def optimize(self, initial_guess, *args):
+        """
+        Optimize the given objective function using the CasADi optimization engine.
+        
+        :param objective: The objective function to optimize.
+        :type objective: function
+        :param initial_guess: The initial guess for the optimization variables.
+        :type initial_guess: numpy array
+        :param bounds: A tuple of lower and upper bounds for the optimization variables.
+        :type bounds: tuple
+        :param constraints: Any constraints to enforce during optimization (default: no constraints).
+        :type constraints: tuple, optional
+        :param decision_variable_symbolic: A list of symbolic variables representing the optimization variables.
+        :type decision_variable_symbolic: list
+        :return: The optimized decision variables.
+        :rtype: numpy array
+        """
         for _ in range(self.N_steps):
             initial_guess = self.grad_step(initial_guess, *args)
 
@@ -201,9 +281,25 @@ class GradientOptimizer(CasADiOptimizer):
 
 
 class TorchOptimizer(Optimizer):
+    """
+    Optimizer class that uses PyTorch as its optimization engine.
+    """
+
     engine = "Torch"
 
     def __init__(self, opt_options, iterations=1, opt_method=None, verbose=False):
+        """
+        Initialize an instance of TorchOptimizer.
+        
+        :param opt_options: Options for the PyTorch optimizer.
+        :type opt_options: dict
+        :param iterations: Number of iterations to optimize the model.
+        :type iterations: int
+        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
+        :type opt_method: torch.optim.Optimizer
+        :param verbose: Whether to print optimization progress.
+        :type verbose: bool
+        """
         if opt_method is None:
             opt_method = torch.optim.Adam
         self.opt_method = opt_method
@@ -214,6 +310,16 @@ class TorchOptimizer(Optimizer):
 
     @Optimizer.verbose
     def optimize(self, objective, model, model_input):
+        """
+        Optimize the model with the given objective.
+        
+        :param objective: Objective function to optimize.
+        :type objective: callable
+        :param model: Model to optimize.
+        :type model: torch.nn.Module
+        :param model_input: Inputs to the model.
+        :type model_input: torch.Tensor
+        """
         optimizer = self.opt_method(
             model.parameters(), **self.opt_options, weight_decay=0
         )
@@ -234,19 +340,48 @@ class TorchOptimizer(Optimizer):
 
 
 class BruteForceOptimizer(Optimizer):
+    """
+    Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."
     engine = "Parallel"
+    """
 
     def __init__(self, N_parallel_processes, possible_variants):
+        """
+        Initialize an instance of BruteForceOptimizer.
+
+        :param N_parallel_processes: number of processes to use in parallel
+        :type N_parallel_processes: int
+        :param possible_variants: list of possible variants to evaluate
+        :type possible_variants: list
+        """
         self.N_parallel_processes = N_parallel_processes
         self.possible_variants = possible_variants
 
     def element_wise_maximization(self, x):
+        """
+        Find the variant that maximizes the reward for a given element.
+        
+        :param x: element to optimize
+        :type x: tuple
+        :return: variant that maximizes the reward
+        :rtype: int
+        """
         reward_function = lambda variant: self.objective(variant, x)
         reward_function = np.vectorize(reward_function)
         values = reward_function(self.possible_variants)
         return self.possible_variants[np.argmax(values)]
 
     def optimize(self, objective, weights):
+        """
+        Maximize the objective function over the possible variants.
+        
+        :param objective: The objective function to maximize.
+        :type objective: Callable
+        :param weights: The weights to optimize.
+        :type weights: np.ndarray
+        :return: The optimized weights.
+        :rtype: np.ndarray
+        """
         self.weights = weights
         self.objective = objective
         indices = tuple(

@@ -1,5 +1,5 @@
 """
-Module containing critics, which are integrated in controllers (agents).
+This module containing critics, which are integrated in controllers (agents).
 
 Remarks: 
 
@@ -32,7 +32,11 @@ from typing import Optional, Union
 
 class Critic(ABC):
     """
-    Blueprint of a critic.
+    Critic base class.
+
+    A critic is an object that estimates or provides the value of a given action or state in a reinforcement learning problem.
+
+    The critic estimates the value of an action by learning from past experience, typically through the optimization of a loss function.
     """
 
     def __init__(
@@ -48,7 +52,29 @@ class Critic(ABC):
         sampling_time: float = 0.01,
         critic_regularization_param: float = 0.0,
     ):
-
+        """
+        Initialize a critic object.
+        :param dim_input: Dimension of the input data
+        :type dim_input: int
+        :param dim_output: Dimension of the output data
+        :type dim_output: int
+        :param data_buffer_size: Maximum size of the data buffer
+        :type data_buffer_size: int
+        :param optimizer: Optimizer to use for training the critic
+        :type optimizer: Optional[Optimizer]
+        :param model: Model to use for the critic
+        :type model: Optional[Model]
+        :param running_objective: Objective function to use for the critic
+        :type running_objective: Optional[Objective]
+        :param discount_factor: Discount factor to use in the value calculation
+        :type discount_factor: float
+        :param observation_target: Target observation for the critic
+        :type observation_target: Optional[np.ndarray]
+        :param sampling_time: Sampling time for the critic
+        :type sampling_time: float
+        :param critic_regularization_param: Regularization parameter for the critic
+        :type critic_regularization_param: float
+        """
         self.data_buffer_size = data_buffer_size
         self.dim_input = dim_input
         self.dim_output = dim_output
@@ -83,6 +109,11 @@ class Critic(ABC):
 
     @property
     def optimizer_engine(self):
+        """Returns the engine used by the optimizer.
+        
+        :return: A string representing the engine used by the optimizer.
+            Can be one of 'Torch', 'CasADi', or 'Numpy'.
+        """
         if self.optimizer.engine == "Torch":
             return TORCH
         elif self.optimizer.engine == "CasADi":
@@ -91,6 +122,16 @@ class Critic(ABC):
             return NUMPY
 
     def __call__(self, *args, use_stored_weights=False):
+        """
+        Compute the value of the critic function for a given observation and/or action.
+        
+        :param args: tuple of the form (observation, action) or (observation,)
+        :type args: tuple
+        :param use_stored_weights: flag indicating whether to use the stored weights of the critic model or the current weights
+        :type use_stored_weights: bool
+        :return: value of the critic function
+        :rtype: float
+        """
         if len(args) == 2:
             chi = rc.concatenate(tuple(args))
         else:
@@ -98,27 +139,61 @@ class Critic(ABC):
         return self.model(chi, use_stored_weights=use_stored_weights)
 
     def update_weights(self, weights=None):
+        """
+        Update the weights of the critic model.
+        
+        :param weights: new weights to be used for the critic model, if not provided the optimized weights will be used
+        :type weights: numpy array
+        """
         if weights is None:
             self.model.update_weights(self.optimized_weights)
         else:
             self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
+        """
+        Stores a copy of the current model weights.
+        
+        :param weights: An optional ndarray of weights to store. If not provided, the current
+            model weights are stored. Default is None.
+        """
         if weights is not None:
             self.model.cache_weights(weights)
         else:
             self.model.cache_weights(self.optimized_weights)
 
     def restore_weights(self):
+        """
+        Restores the model weights to the cached weights.
+        """
         self.model.restore_weights()
 
     def update_and_cache_weights(self, weights=None):
+        """
+        Update the model's weights and cache the new values.
+
+        :param weights: new weights for the model (optional)
+        """
         self.update_weights(weights)
         self.cache_weights(weights)
 
     def accept_or_reject_weights(
         self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
+        """
+        Determine whether to accept or reject the given weights based on whether they violate the given constraints.
+
+        :param weights: weights to evaluate
+        :type weights: numpy array
+        :param constraint_functions: functions that return the constraint violations for the given weights
+        :type constraint_functions: list of functions
+        :param optimizer_engine: optimizer engine used
+        :type optimizer_engine: str
+        :param atol: absolute tolerance for the constraints (default is 1e-10)
+        :type atol: float
+        :return: string indicating whether the weights were accepted or rejected
+        :rtype: str
+        """
         if constraint_functions is None:
             constraints_not_violated = True
         else:
@@ -138,6 +213,11 @@ class Critic(ABC):
         Compute optimized critic weights, possibly subject to constraints.
         If weights satisfying constraints are found, the method returns the status `accepted`.
         Otherwise, it returns the status `rejected`.
+
+        :param time: optional time parameter for use in CasADi and SciPy optimization.
+        :type time: float, optional
+        :return: acceptance status of the optimized weights, either `accepted` or `rejected`.
+        :rtype: str
         """
         if self.optimizer.engine == "CasADi":
             self.optimized_weights = self._CasADi_update(self.intrinsic_constraints)
@@ -163,6 +243,14 @@ class Critic(ABC):
         return self.weights_acceptance_status
 
     def update_buffers(self, observation, action):
+        """
+        Updates the buffers of the critic with the given observation and action.
+
+        :param observation: the current observation of the system.
+        :type observation: np.ndarray
+        :param action: the current action taken by the actor.
+        :type action: np.ndarray
+        """
         self.action_buffer = rc.push_vec(
             self.action_buffer, rc.array(action, prototype=self.action_buffer)
         )
@@ -176,7 +264,9 @@ class Critic(ABC):
         self.current_action = action
 
     def initialize_buffers(self):
-
+        """
+        Initialize the action and observation buffers with zeros.
+        """
         self.action_buffer = rc.zeros(
             (int(self.dim_input), int(self.data_buffer_size)),
             rc_type=self.optimizer_engine,
@@ -187,10 +277,20 @@ class Critic(ABC):
         )
 
     def update_outcome(self, observation, action):
+        """
+        Update the outcome variable based on the running objective and the current observation and action.
+        :param observation: current observation
+        :type observation: np.ndarray
+        :param action: current action
+        :type action: np.ndarray
+        """
 
         self.outcome += self.running_objective(observation, action) * self.sampling_time
 
     def reset(self):
+        """
+        Reset the outcome and current critic loss variables, and re-initialize the buffers.
+        """
         self.outcome = 0
         self.current_critic_loss = 0
         self.initialize_buffers()
@@ -338,8 +438,14 @@ class CriticOfActionObservation(Critic):
 
     def objective(self, data_buffer=None, weights=None):
         """
-        Objective of the critic, say, a squared temporal difference.
+        Compute the objective function of the critic, which is typically a squared temporal difference.
 
+        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
+        :type data_buffer: dict, optional
+        :param weights: the weights of the critic model, if different from the stored weights.
+        :type weights: numpy.ndarray, optional
+        :return: the value of the objective function
+        :rtype: float
         """
         if data_buffer is None:
             observation_buffer = self.observation_buffer
@@ -387,6 +493,19 @@ class CriticCALF(CriticOfObservation):
         is_predictive=True,
         **kwargs
     ):
+        """
+        Initialize a CriticCALF object.
+
+        :param args: Arguments to be passed to the base class `CriticOfObservation`.
+        :param safe_decay_rate: Rate at which the safe set shrinks over time.
+        :param is_dynamic_decay_rate: Whether the decay rate should be dynamic or not.
+        :param predictor: A predictor object to be used to predict future observations.
+        :param observation_init: Initial observation to be used to initialize the safe set.
+        :param safe_controller: Safe controller object to be used to compute stabilizing actions.
+        :param penalty_param: Penalty parameter to be used in the CALF objective.
+        :param is_predictive: Whether the safe constraints should be computed based on predictions or not.
+        :param kwargs: Keyword arguments to be passed to the base class `CriticOfObservation`.
+        """
         super().__init__(*args, **kwargs)
         self.safe_decay_rate = safe_decay_rate
         self.is_dynamic_decay_rate = is_dynamic_decay_rate
@@ -419,6 +538,19 @@ class CriticCALF(CriticOfObservation):
         ]
 
     def update_buffers(self, observation, action):
+        """
+        Update data buffers and dynamic safe decay rate.
+
+        Updates the observation and action data buffers with the given observation and action.
+        Updates the outcome using the given observation and action.
+        Updates the current observation and action with the given observation and action.
+        If the flag is_dynamic_decay_rate is set to True, also updates the safe decay rate with the L2 norm of the given observation.
+
+        :param observation: The new observation to be added to the observation buffer.
+        :type observation: numpy.ndarray
+        :param action: The new action to be added to the action buffer.
+        :type action: numpy.ndarray
+        """
         self.action_buffer = rc.push_vec(
             self.action_buffer, rc.array(action, prototype=self.action_buffer)
         )
@@ -436,6 +568,15 @@ class CriticCALF(CriticOfObservation):
             self.safe_decay_rate = 1e2 * rc.norm_2(observation)
 
     def CALF_decay_constraint_no_prediction(self, weights):
+        """
+        Constraint that ensures that the CALF value is decreasing by a certain rate. The rate is determined by the
+        `safe_decay_rate` parameter. This constraint is used when there is no prediction of the next state.
+
+        :param weights: critic weights to be evaluated
+        :type weights: ndarray
+        :return: constraint violation
+        :rtype: float
+        """
 
         critic_curr = self.model(self.current_observation, weights=weights)
         critic_prev = self.model(self.observation_last_good, use_stored_weights=True)
@@ -450,18 +591,43 @@ class CriticCALF(CriticOfObservation):
     def CALF_critic_lower_bound_constraint(
         self, weights,
     ):
+        """
+        Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
+        the `current_observation` and a certain constant.
+
+        :param weights: critic weights to be evaluated
+        :type weights: ndarray
+        :return: constraint violation
+        :rtype: float
+        """
         self.lb_constraint_violation = 1e-4 * rc.norm_2(
             self.current_observation
         ) - self.model(self.current_observation, weights=weights)
         return self.lb_constraint_violation
 
     def CALF_critic_upper_bound_constraint(self, weights):
+        """
+        Calculate the constraint violation for the CALF decay constraint when no prediction is made.
+
+        :param weights: critic weights
+        :type weights: ndarray
+        :return: constraint violation
+        :rtype: float
+        """
         self.ub_constraint_violation = self.model(
             self.current_observation, weights=weights
         ) - 1e3 * rc.norm_2(self.current_observation)
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights):
+        """
+        Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.
+
+        :param weights: critic weights
+        :type weights: ndarray
+        :return: constraint violation
+        :rtype: float
+        """
         observation_last_good = self.observation_last_good
 
         self.safe_action = action = self.safe_controller.compute_action(
@@ -482,6 +648,15 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_decay_constraint_predicted_on_policy(self, weights):
+        """
+        Constraint for ensuring that the CALF function decreases at each iteration.
+        This constraint is used when prediction is done using the last action taken.
+
+        :param weights: Current weights of the critic network.
+        :type weights: ndarray
+        :return: Violation of the constraint. A positive value indicates violation.
+        :rtype: float
+        """
         action = self.action_buffer[:, -1]
         predicted_observation = self.predictor.predict(self.current_observation, action)
         self.stabilizing_constraint_violation = (
@@ -492,6 +667,15 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def objective(self, *args, **kwargs):
+        """
+        Objective of the critic, which is the sum of the squared temporal difference and the penalty
+        for violating the CALF decay constraint, if the penalty parameter is non-zero.
+
+        :param args: Positional arguments to be passed to the parent class's `objective` method.
+        :param kwargs: Keyword arguments to be passed to the parent class's `objective` method.
+        :return: Value of the objective.
+        :rtype: float
+        """
         objective = super().objective(*args, **kwargs)
 
         weights = kwargs.get("weights")
@@ -510,6 +694,16 @@ class CriticTrivial(Critic):
     """
 
     def __init__(self, running_objective, *args, sampling_time=0.01, **kwargs):
+        """
+        Initialize a trivial critic.
+
+        :param running_objective: Function object representing the running objective.
+        :type running_objective: function
+        :param sampling_time: Sampling time.
+        :type sampling_time: float
+        :param args: Additional arguments.
+        :param kwargs: Additional keyword arguments.
+        """
         self.running_objective = running_objective
         self.sampling_time = sampling_time
         self.outcome = 0
@@ -526,25 +720,77 @@ class CriticTrivial(Critic):
         self.optimized_weights = []
 
     def __call__(self):
+        """
+        Returns the current outcome.
+
+        :return: Current outcome.
+        :rtype: float
+        """
         return self.outcome
 
     def objective(self, weights):
+        """
+        Dummy method for the objective function.
+
+        :param weights: Weights.
+        :type weights: ndarray or list
+        """
         pass
 
     def get_optimized_weights(self, intrinsic_constraints=None, time=None):
+        """
+        Dummy method to return optimized weights.
+
+        :param intrinsic_constraints: Constraints to be applied during optimization.
+        :type intrinsic_constraints: list of functions
+        :param time: Time.
+        :type time: float
+        :return: Optimized weights.
+        :rtype: ndarray or list
+        """
         pass
 
     def update_buffers(self, observation, action):
+        """
+        Updates the outcome.
+
+        :param observation: Current observation.
+        :type observation: ndarray or list
+        :param action: Current action.
+        :type action: ndarray or list
+        """
         self.update_outcome(observation, action)
 
     def update(self, intrinsic_constraints=None, observation=None, time=None):
+        """
+        Dummy method for updating the critic.
+
+        :param intrinsic_constraints: Constraints to be applied during optimization.
+        :type intrinsic_constraints: list of functions
+        :param observation: Current observation.
+        :type observation: ndarray or list
+        :param time: Time.
+        :type time: float
+        """
         pass
 
     def update_outcome(self, observation, action):
+        """
+        Update the value of the outcome variable by adding the value of the running_objective function
+        evaluated at the current observation and action, multiplied by the sampling time.
+
+        :param observation: The current observation.
+        :type observation: Any
+        :param action: The current action.
+        :type action: Any
+        """
 
         self.outcome += self.running_objective(observation, action) * self.sampling_time
 
     def reset(self):
+        """
+        Reset the outcome variable to zero.
+        """
         self.outcome = 0
 
 
@@ -565,6 +811,27 @@ class CriticTabularVI(Critic):
         N_parallel_processes=5,
         terminal_state=None,
     ):
+        """
+        Initialize a CriticTabularVI object.
+
+        :param dim_state_space: The dimensions of the state space.
+        :type dim_state_space: tuple of int
+        :param running_objective: The running objective function.
+        :type running_objective: callable
+        :param predictor: The predictor object.
+        :type predictor: any
+        :param model: The model object.
+        :type model: Model
+        :param actor_model: The actor model object.
+        :type actor_model: any
+        :param discount_factor: The discount factor for the temporal difference.
+        :type discount_factor: float, optional
+        :param N_parallel_processes: The number of parallel processes to use.
+        :type N_parallel_processes: int, optional
+        :param terminal_state: The terminal state, if applicable.
+        :type terminal_state: optional, int or tuple of int
+        :return: None
+        """
 
         self.objective_table = rc.zeros(dim_state_space)
         self.action_table = rc.zeros(dim_state_space)
@@ -577,6 +844,14 @@ class CriticTabularVI(Critic):
         self.terminal_state = terminal_state
 
     def update_single_cell(self, observation):
+        """
+        Update the value function for a single state.
+
+        :param observation: current state
+        :type observation: tuple of int
+        :return: value of the state
+        :rtype: float
+        """
         action = self.actor_model.weights[observation]
         if tuple(self.terminal_state) == observation:
             return self.running_objective(observation, action)
@@ -584,6 +859,9 @@ class CriticTabularVI(Critic):
         return self.objective(observation, action)
 
     def update(self):
+        """
+        Update the value function for all states.
+        """
         observation_table_indices = tuple(
             [
                 (i, j)
@@ -597,6 +875,16 @@ class CriticTabularVI(Critic):
         self.model.weights = new_table
 
     def objective(self, observation, action):
+        """
+        Calculate the value of a state given the action taken and the observation of the current state.
+
+        :param observation: current state
+        :type observation: tuple of int
+        :param action: action taken from the current state
+        :type action: int
+        :return: value of the state
+        :rtype: float
+        """
         return (
             self.running_objective(observation, action)
             + self.discount_factor
@@ -606,11 +894,26 @@ class CriticTabularVI(Critic):
 
 class CriticTabularPI(CriticTabularVI):
     def __init__(self, *args, tolerance=1e-3, N_update_iters_max=50, **kwargs):
+        """
+        Initialize a new instance of the `CriticTabularPI` class.
+
+        :param args: Positional arguments to pass to the superclass's `__init__` method.
+        :type args: tuple
+        :param tolerance: The tolerance value for the update loop.
+        :type tolerance: float
+        :param N_update_iters_max: The maximum number of iterations for the update loop.
+        :type N_update_iters_max: int
+        :param kwargs: Keyword arguments to pass to the superclass's `__init__` method.
+        :type kwargs: dict
+        """
         super().__init__(*args, **kwargs)
         self.tolerance = tolerance
         self.N_update_iters_max = N_update_iters_max
 
     def update(self):
+        """
+        Update the value table.
+        """
         observation_table_indices = tuple(
             [
                 (i, j)

@@ -23,9 +23,25 @@ class RunningObjective(Objective):
     """
 
     def __init__(self, model):
+        """
+        Initialize a RunningObjective instance.
+
+        :param model: function that calculates the running objective for a given observation and action.
+        :type model: function
+        """
         self.model = model
 
     def __call__(self, observation, action):
+        """
+        Calculate the running objective for a given observation and action.
+
+        :param observation: current observation.
+        :type observation: numpy array
+        :param action: current action.
+        :type action: numpy array
+        :return: running objective value.
+        :rtype: float
+        """
 
         running_objective = self.model(observation, action)
 

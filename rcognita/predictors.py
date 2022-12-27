@@ -93,6 +93,10 @@ class EulerPredictorPendulum(EulerPredictor):
 
 
 class RKPredictor(EulerPredictor):
+    """
+    Predictor that makes use o Runge-Kutta finite difference methods.
+    """
+
     def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

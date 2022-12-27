@@ -14,6 +14,17 @@ from .utilities import rc
 
 
 class Solver(ABC):
+    """
+    Solver is an abstract class representing a solver for optimization problems.
+
+    Attributes:
+    y: A property representing the output of the solver.
+    t: A property representing the current time of the solver.
+
+    Methods:
+    step: An abstract method representing a single step of the solver.
+    """
+
     @property
     @abstractmethod
     def y(self):
@@ -26,10 +37,17 @@ class Solver(ABC):
 
     @abstractmethod
     def step(self):
+        """
+        Advance the solver by one step.
+        """
         pass
 
 
 class CasADiSolver(Solver):
+    """
+    The CasADiSolver class is a subclass of the abstract Solver class that allows for the integration of a system of differential equations using the CasADi library. It can be used to solve a system of equations with a given initial state and action, and a given step size and final time. The CasADiSolver class has several properties, including the integrator object, the starting and ending times for the integration, the step size for the integration, the initial and current states of the system, and the initial and current actions applied to the system. It also has a step() method which advances the integration by one time step and updates the current state of the system.
+    """
+
     def __init__(
         self,
         integrator: casadi.integrator,
@@ -40,7 +58,24 @@ class CasADiSolver(Solver):
         action_init: np.array,
         system: System,
     ):
+        """
+        Initialize a CasADiSolver object.
 
+        :param integrator: A CasADi integrator object.
+        :type integrator: casadi.integrator
+        :param time_start: The starting time for the solver.
+        :type time_start: float
+        :param time_final: The final time for the solver.
+        :type time_final: float
+        :param step_size: The step size for the solver.
+        :type step_size: float
+        :param state_init: The initial state for the solver.
+        :type state_init: np.array
+        :param action_init: The initial action for the solver.
+        :type action_init: np.array
+        :param system: The system object for the solver.
+        :type system: System
+        """
         self.integrator = integrator
         self.time_start = time_start
         self.time_final = time_final
@@ -54,6 +89,9 @@ class CasADiSolver(Solver):
         self.system = system
 
     def step(self):
+        """
+        Advance the solver by one step.
+        """
         if self.time >= self.time_final:
             raise RuntimeError("An attempt to step with a finished solver")
         self.state_new = np.squeeze(
@@ -84,7 +122,34 @@ def create_ODE_solver(
     rtol=1e-3,
     ode_solver="SCIPY",
 ):
+    """
+    Create an ODE solver for the given system with the given initial conditions and integration parameters.
 
+    :param system: a system object to be integrated
+    :type system: System
+    :param state_full_init: the initial state of the system
+    :type state_full_init: np.array
+    :param state_init: the initial value of the state variable
+    :type state_init: np.array
+    :param action_init: the initial value of the action variable
+    :type action_init: np.array
+    :param time_start: the start time of the integration
+    :type time_start: float
+    :param time_final: the final time of the integration
+    :type time_final: float
+    :param max_step: the maximum step size to be taken by the integrator
+    :type max_step: float
+    :param first_step: the step size to be taken by the integrator at the beginning of the integration
+    :type first_step: float
+    :param atol: the absolute tolerance for the integration
+    :type atol: float
+    :param rtol: the relative tolerance for the integration
+    :type rtol: float
+    :param ode_solver: the type of ODE solver to be used, either "SCIPY" or "CASADI"
+    :type ode_solver: str
+    :return: an ODE solver object
+    :rtype: Solver
+    """
     if ode_solver == "SCIPY":
         import scipy as sp
 
@@ -118,6 +183,20 @@ def create_ODE_solver(
 
 
 def create_CasADi_integrator(system, state_init, action_init, max_step):
+    """
+    Create a CasADi integrator for a given system.
+    :param system: The system for which to create the integrator.
+    :type system: System
+    :param state_init: Initial state of the system.
+    :type state_init: numpy.ndarray
+    :param action_init: Initial action of the system.
+    :type action_init: numpy.ndarray
+    :param max_step: Maximum step size for the integrator.
+    :type max_step: float
+    :return: CasADi integrator for the system.
+    :rtype: casadi.integrator
+    """
+
     state_symbolic = rc.array_symb(rc.shape(state_init), literal="x")
     action_symbolic = rc.array_symb(rc.shape(action_init), literal="u")
     time = rc.array_symb((1, 1), literal="t")
