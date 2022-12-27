@@ -1,8 +1,13 @@
+defaults:
+  - model: quad_no_mix
+  - optimizer: scipy
+
+defaults:
+  - default
+
 _target_: rcognita.critics.CriticOfActionObservation
 
 ###---Constructor arguments---###
 
-dim_input: $ actor.dim_input
-dim_output: $ system.dim_output
-data_buffer_size: $ data_buffer_size
-optimizer: $ casadi
+dim_critic_model_input%%: = ${.system_dim_input} + ${.system_dim_output}
+

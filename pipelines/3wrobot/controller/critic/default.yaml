@@ -2,11 +2,10 @@ defaults:
   - model: quad_no_mix
   - optimizer: scipy
 
-dim_input: $ system.dim_input
-dim_output: $ dim_output
-data_buffer_size: $ data_buffer_size
-optimizer: $ optimizer
+system_dim_input: $ system.dim_input
+system_dim_output: $ system.dim_output
+data_buffer_size: 5
 running_objective: $ running_objective
 discount_factor: $ actor.discount_factor
-sampling_time: $ sampling_time
-critic_regularization_param: $ critic_regularization_param
+sampling_time: $ controller.sampling_time
+critic_regularization_param: 0

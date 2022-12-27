@@ -41,8 +41,8 @@ class Critic(ABC):
 
     def __init__(
         self,
-        dim_input: int,
-        dim_output: int,
+        system_dim_input: int,
+        system_dim_output: int,
         data_buffer_size: int,
         optimizer: Optional[Optimizer] = None,
         model: Optional[Model] = None,
@@ -54,10 +54,10 @@ class Critic(ABC):
     ):
         """
         Initialize a critic object.
-        :param dim_input: Dimension of the input data
-        :type dim_input: int
-        :param dim_output: Dimension of the output data
-        :type dim_output: int
+        :param system_dim_input: Dimension of the input data
+        :type system_dim_input: int
+        :param system_dim_output: Dimension of the output data
+        :type system_dim_output: int
         :param data_buffer_size: Maximum size of the data buffer
         :type data_buffer_size: int
         :param optimizer: Optimizer to use for training the critic
@@ -76,8 +76,8 @@ class Critic(ABC):
         :type critic_regularization_param: float
         """
         self.data_buffer_size = data_buffer_size
-        self.dim_input = dim_input
-        self.dim_output = dim_output
+        self.system_dim_input = system_dim_input
+        self.system_dim_output = system_dim_output
 
         if optimizer is not None:
             self.optimizer = optimizer
@@ -268,11 +268,11 @@ class Critic(ABC):
         Initialize the action and observation buffers with zeros.
         """
         self.action_buffer = rc.zeros(
-            (int(self.dim_input), int(self.data_buffer_size)),
+            (int(self.system_dim_input), int(self.data_buffer_size)),
             rc_type=self.optimizer_engine,
         )
         self.observation_buffer = rc.zeros(
-            (int(self.dim_output), int(self.data_buffer_size)),
+            (int(self.system_dim_output), int(self.data_buffer_size)),
             rc_type=self.optimizer_engine,
         )
 

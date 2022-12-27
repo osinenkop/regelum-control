@@ -1,4 +1,9 @@
+defaults:
+  - default
+
 _target_: rcognita.critics.CriticOfObservation
 
 ###---Constructor arguments---###
 
+
+dim_critic_model_input%%: $ system_dim_output

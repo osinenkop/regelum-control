@@ -1,0 +1,12 @@
+defaults:
+  - default
+
+_target_: rcognita.controllers.Controller3WRobotPID
+
+###---Constructor arguments---###
+
+state_init: $ state_init
+action_bounds: $ controller.action_bounds
+sampling_time: $ sampling_time
+time_start: $ time_start
+params: = [${system.m},${system.I}]
