@@ -39,6 +39,7 @@ class EulerPredictor(Predictor):
         dim_input: int,
         prediction_horizon: int,
     ):
+        self.system = system
         self.pred_step_size = pred_step_size
         self.compute_state_dynamics = system.compute_dynamics
         self.sys_out = system.out

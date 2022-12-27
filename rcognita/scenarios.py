@@ -107,6 +107,7 @@ class OnlineScenario(Scenario):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
+        print(f"running objective: {self.running_objective_value}")
         self.update_outcome(self.observation, self.action, self.delta_time)
 
         if not self.no_print:
