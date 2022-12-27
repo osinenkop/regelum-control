@@ -1,0 +1,3 @@
+_target_: rcognita.optimizers.BruteForceOptimizer
+
+possible_variants: 5

@@ -25,7 +25,6 @@ from .critics import Critic
 from .models import Model
 
 
-@introduce_callbacks()
 class Actor:
     """
     Class of actors.
@@ -450,7 +449,7 @@ class ActorMPC(Actor):
         )
 
         actor_objective = 0
-        for k in range(self.prediction_horizon):
+        for k in range(self.prediction_horizon + 1):
             actor_objective += self.discount_factor ** k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )

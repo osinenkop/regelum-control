@@ -397,7 +397,7 @@ class ConfigLoaderImpl(ConfigLoader):
                         f"Error merging override {override.input_line}"
                     ).with_traceback(sys.exc_info()[2]) from ex
             except:
-                key = key + "__IGNORE__"
+                key = key + "__IGNORE__"  ## RCOGNITA CODE HERE
                 try:
                     if override.is_delete():
                         config_val = OmegaConf.select(cfg, key, throw_on_missing=False)

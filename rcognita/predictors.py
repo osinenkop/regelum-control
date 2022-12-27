@@ -39,6 +39,7 @@ class EulerPredictor(Predictor):
         dim_input: int,
         prediction_horizon: int,
     ):
+        self.system = system
         self.pred_step_size = pred_step_size
         self.compute_state_dynamics = system.compute_dynamics
         self.sys_out = system.out
@@ -118,8 +119,8 @@ class TrivialPredictor(Predictor):
 
     """
 
-    def __init__(self, compute_dynamics):
-        self.compute_dynamics = compute_dynamics
+    def __init__(self, system):
+        self.compute_dynamics = system.compute_dynamics
 
     def predict(self, current_state_or_observation, action):
         return self.compute_dynamics(current_state_or_observation, action)

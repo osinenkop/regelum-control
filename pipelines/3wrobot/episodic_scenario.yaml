@@ -1,22 +1,20 @@
 defaults:
-  - _self_
-  - forward
   - controller: rl_controller
   - simulator: default
   - running_objective: running_objective
+  - forward
 
 _target_: rcognita.scenarios.EpisodicScenario
 
 ###---Constructor arguments---###
 
-system: $ simulator.system
-actor: $ controller.actor
-critic: $ controller.critic
-time_final: 10.
+system: ~ simulator.system
+actor: ~ controller.actor
+critic: ~ controller.critic
 no_print: true
 is_log: false
 is_playback: true
-state_init: = numpy.array([5., 5., 3. * numpy.pi / 4., 0., 0.])
+state_init: = numpy.array([5., 5., -3. * numpy.pi / 4., 0., 0.])
 action_init: = numpy.ones(2)
 N_episodes: 1
 N_iterations: 1

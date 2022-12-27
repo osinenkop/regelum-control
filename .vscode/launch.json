@@ -23,8 +23,11 @@
             "name": "conf",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/conf.py",
-            "justMyCode": false
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/run.py",
+            "justMyCode": false,
+            "args": [
+                "prediction_horizon=1"
+            ],
         },
         {
             "name": "Python: Current File with profiler casadi",
