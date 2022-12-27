@@ -2,3 +2,5 @@ defaults:
   - default_critic
 
 _target_: rcognita.critics.CriticTabularVI
+
+###---Constructor arguments---###

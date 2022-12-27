@@ -2,6 +2,9 @@ defaults:
   - default
 
 _target_: rcognita.controllers.Controller3WRobotNIMotionPrimitive
+
+###---Constructor arguments---###
+
 K: 10
 action_bounds: $ controller.action_bounds
 sampling_time: $ sampling_time

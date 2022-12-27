@@ -1,7 +1,0 @@
-bc:
-  a: ${a_container.a_1}
-  b: false
-  _target_: rcognita.t.C
-a_container:
-  a_1: 1000
-  a_2: 1

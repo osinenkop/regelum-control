@@ -1,3 +1,8 @@
+_target_: rcognita.optimizers.CasADiOptimizer
+
+
+###---Constructor arguments---###
+
 opt_options:
   print_time: 0
   ipopt.max_iter: 200
@@ -6,5 +11,3 @@ opt_options:
   ipopt.acceptable_obj_change_tol: 1.0E-4
 
 opt_method: ipopt
-
-_target_: rcognita.optimizers.CasADiOptimizer

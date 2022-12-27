@@ -2,3 +2,5 @@ defaults:
   - default
 
 _target_: rcognita.actors.ActorProbabilisticEpisodic
+
+###---Constructor arguments---###

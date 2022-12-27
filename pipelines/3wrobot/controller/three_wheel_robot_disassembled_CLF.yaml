@@ -2,6 +2,9 @@ defaults:
   - default
 
 _target_: rcognita.controllers.Controller3WRobotDisassembledCLF
+
+###---Constructor arguments---###
+
 m: ${system.m}
 I: ${system.I}
 controller_gain: 10

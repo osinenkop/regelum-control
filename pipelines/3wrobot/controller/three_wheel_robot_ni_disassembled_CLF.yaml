@@ -2,6 +2,9 @@ defaults:
   - default
 
 _target_: rcognita.controllers.Controller3WRobotNIDisassembledCLF
+
+###---Constructor arguments---###
+
 controller_gain: 10
 action_bounds: $ controller.action_bounds
 time_start: $ time_start

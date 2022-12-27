@@ -4,6 +4,9 @@ defaults:
   - critic: trivial
 
 _target_: rcognita.controllers.RLController
+
+###---Constructor arguments---###
+
 critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 
 critic_period_multiplier%%: 1

@@ -3,6 +3,8 @@ defaults:
 
 _target_: rcognita.simulator.Simulator
 
+###---Constructor arguments---###
+
 sys_type: $ simulator.system.sys_type
 state_init: $ state_init
 action_init: $ action_init

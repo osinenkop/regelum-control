@@ -1,5 +1,9 @@
 _target_: rcognita.models.ModelQuadNoMixTorch
 
+###---Constructor arguments---###
+
+
+
 dim_observation: 3
 dim_action: 2
 dim_hidden: 20

@@ -346,6 +346,14 @@ class BruteForceOptimizer(Optimizer):
     """
 
     def __init__(self, possible_variants, N_parallel_processes=0):
+        """
+        Initialize an instance of BruteForceOptimizer.
+
+        :param N_parallel_processes: number of processes to use in parallel
+        :type N_parallel_processes: int
+        :param possible_variants: list of possible variants to evaluate
+        :type possible_variants: list
+        """
         self.N_parallel_processes = N_parallel_processes
         self.possible_variants = possible_variants
 

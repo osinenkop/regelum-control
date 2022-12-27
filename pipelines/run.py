@@ -15,9 +15,7 @@ import matplotlib.pyplot as plt
 
 
 @r.main(
-    version_base=None,
-    config_path="../pipelines/3wrobot",
-    config_name="episodic_scenario",
+    version_base=None, config_path="../pipelines/3wrobot", config_name="mpc",
 )
 def launch(scenario):
     scenario_instance = ~scenario

@@ -1,5 +1,7 @@
 _target_: rcognita.systems.System3WRobotNI
 
+###---Constructor arguments---###
+
 dim_input: 2
 dim_output: 3
 sys_type: diff_eqn

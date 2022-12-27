@@ -8,3 +8,5 @@ _target_: rcognita.actors.ActorMPC
 
 running_objective: $ running_objective
 
+###---Constructor arguments---###
+

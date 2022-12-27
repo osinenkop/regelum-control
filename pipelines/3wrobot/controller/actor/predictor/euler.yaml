@@ -1,5 +1,7 @@
 _target_: rcognita.predictors.EulerPredictor
 
+###---Constructor arguments---###
+
 pred_step_size: = ${controller.sampling_time} * ${.pred_step_size_multiplier%%}
 system: $ simulator.system
 dim_input: $ controller.actor.dim_input

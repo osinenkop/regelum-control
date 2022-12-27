@@ -5,3 +5,5 @@ defaults:
   - predictor: trivial
 
 _target_: rcognita.actors.ActorTabular
+
+###---Constructor arguments---###

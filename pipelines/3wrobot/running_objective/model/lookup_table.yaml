@@ -1,2 +1,5 @@
 _target_: rcognita.models.LookupTable
+
+###---Constructor arguments---###
+
 dims: = [10, 10]

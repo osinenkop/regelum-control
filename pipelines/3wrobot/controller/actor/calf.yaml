@@ -5,3 +5,5 @@ defaults:
   - predictor: euler
 
 _target_: rcognita.actors.ActorCALF
+
+###---Constructor arguments---###
