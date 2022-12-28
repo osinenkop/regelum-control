@@ -1,6 +1,3 @@
-defaults:
-  - cb: b
-
 _target_: rcognita.__t.B
 
 b: false

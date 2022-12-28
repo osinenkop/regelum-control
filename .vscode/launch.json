@@ -26,7 +26,8 @@
             "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/run.py",
             "justMyCode": false,
             "args": [
-                "controller=clf"
+                "ode_solver=CASADI",
+                "controller/actor/optimizer=casadi"
             ],
         },
         {

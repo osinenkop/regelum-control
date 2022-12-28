@@ -7,24 +7,18 @@ sys.path.insert(0, CUR_DIR)
 
 import logging
 import numpy as np
-import rcognita as r
+import hydra
 import omegaconf
 from omegaconf import DictConfig, OmegaConf, flag_override
 from rcognita.visualization.vis_3wrobot import Animator3WRobot
 import matplotlib.pyplot as plt
 
 
-@r.main(
-    version_base=None, config_path="../pipelines/3wrobot_ni", config_name="scenario",
+@hydra.main(
+    version_base=None, config_path="../pipelines/test_conf", config_name="test",
 )
-def launch(scenario):
-    scenario_instance = ~scenario
-    scenario_instance.run()
-
-    if scenario_instance.is_playback:
-        animator = Animator3WRobot(scenario_instance)
-        animator.playback()
-        plt.show()
+def launch(cfg):
+    print(cfg)
 
 
 if __name__ == "__main__":

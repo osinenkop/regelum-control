@@ -1,11 +1,10 @@
 defaults:
+  - default
   - model: weight_container
   - optimizer: scipy
   - predictor: euler
 
-_target_: rcognita.actors.ActorMPC
-
-running_objective: $ running_objective
+_target_: rcognita.actors.ActorRQL
 
 ###---Constructor arguments---###
 
@@ -15,4 +14,4 @@ dim_input: $ simulator.system.dim_output
 discount_factor: 1.
 action_bounds: $ controller.action_bounds%%
 action_init: $ action_init
-critic: ~ controller.critic
+critic: $ controller.critic

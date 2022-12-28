@@ -1,12 +1,10 @@
-_target_: rcognita.predictors.RKPredictor
+_target_: rcognita.predictors.EulerPredictor
 
 ###---Constructor arguments---###
 
 pred_step_size: = ${controller.sampling_time} * ${.pred_step_size_multiplier%%}
-system: $ system
+system: $ simulator.system
 dim_input: $ controller.actor.dim_input
 prediction_horizon: 5
-state_or_observation_init: $ state_init
-action_init: $ action_init
 
 pred_step_size_multiplier%%: 2

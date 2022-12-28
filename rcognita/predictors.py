@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 
 from .__utilities import rc
 from .systems import System
+from .solvers import create_CasADi_integrator
 
 
 class Predictor(ABC):
@@ -64,7 +65,7 @@ class EulerPredictor(Predictor):
         for k in range(self.prediction_horizon):
             current_action = action_sequence[:, k]
             next_observation = self.predict(current_observation, current_action)
-            observation_sequence[:, k] = self.sys_out(next_observation)
+            observation_sequence[:, k] = self.sys_out(next_observation).T
             current_observation = next_observation
         return observation_sequence
 
@@ -101,11 +102,8 @@ class RKPredictor(EulerPredictor):
     def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.integrator = rc.create_CasADi_integrator(
-            self.compute_state_dynamics,
-            state_or_observation_init,
-            action_init,
-            self.pred_step_size,
+        self.integrator = create_CasADi_integrator(
+            self.system, state_or_observation_init, action_init, self.pred_step_size,
         )
 
     def predict(self, current_state_or_observation, action):
