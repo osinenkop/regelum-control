@@ -13,7 +13,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
-from utilities import rc, rej_sampling_rvs
+from __utilities import rc, rej_sampling_rvs
 import numpy as np
 import torch
 from torch import nn

@@ -6,7 +6,7 @@ Module that contains state or observation (depending on the context) predictors.
 import numpy as np
 from abc import ABC, abstractmethod
 
-from .utilities import rc
+from .__utilities import rc
 from .systems import System
 
 

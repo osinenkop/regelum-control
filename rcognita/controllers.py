@@ -16,9 +16,9 @@ import scipy as sp
 from numpy.random import rand
 from scipy.optimize import minimize
 
-from .utilities import rc, Clock
+from .__utilities import rc, Clock
 from .optimizers import CasADiOptimizer, SciPyOptimizer
-from .w_plotting import plot_optimization_results
+from .__w_plotting import plot_optimization_results
 
 
 class Controller(ABC):

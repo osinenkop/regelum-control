@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 from pylab import cm
 
-from .utilities import rc
+from .__utilities import rc
 
 
 def plot_optimization_results(

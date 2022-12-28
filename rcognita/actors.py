@@ -17,7 +17,7 @@ from functools import partial
 from abc import ABC, abstractmethod
 from typing import Union
 
-from .utilities import rc
+from .__utilities import rc
 from .callbacks import introduce_callbacks, apply_callbacks
 from .predictors import Predictor
 from .optimizers import Optimizer
@@ -409,16 +409,17 @@ class ActorMPC(Actor):
     """
     Model-predictive control (MPC) actor.
     Optimizes the following actor objective:
-    :math:`J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a} \gamma^i r(y_{i|k}, u_{i|k})`
+    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
 
     Notation:
+
     * :math:`y`: observation
     * :math:`u`: action
     * :math:`N_a`: prediction horizon
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
-    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -460,8 +461,7 @@ class ActorSQL(Actor):
     """
     Staked Q-learning (SQL) actor.
     Optimizes the following actor objective:
-    .. math::
-        J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a} \gamma^i Q(y_{i|k}, u_{i|k})
+    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`
 
     Notation:
 
@@ -471,8 +471,8 @@ class ActorSQL(Actor):
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`Q`: action-objective function (or its estimate)
-    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -520,8 +520,8 @@ class ActorRQL(Actor):
     """
     Rollout Q-learning (RQL) actor.
     Optimizes the following actor objective:
-    .. math::
-        J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a-1} \gamma^i r(y_{i|k}, u_{i|k}) + \gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})
+
+    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
 
     Notation:
 
@@ -531,8 +531,8 @@ class ActorRQL(Actor):
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`Q`: action-objective function (or its estimate)
-    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -573,18 +573,18 @@ class ActorRQL(Actor):
 
 class ActorRPO(Actor):
     """
-    "Running (objective) Plus Optimal (objective) actor.
+    Running (objective) Plus Optimal (objective) actor.
     Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
-    .. math::
-        J^a \left( y_k| \{u\}_k \right) =  r(y_{k}, u_{k}) + \gamma J^*(y_{k})
+
+    :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
 
     Notation:
 
     * :math:`y`: observation
     * :math:`u`: action
-    * :math:`gamma`: discount factor
+    * :math:`\\gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`J^*`: optimal objective function (or its estimate)
     """
@@ -754,14 +754,14 @@ class ActorTabular(ActorRPO):
     Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
-    .. math::
-        J^a \left( y_k| \{u\}_k \right) =  r(y_{k}, u_{k}) + \gamma J^*(y_{k})
+
+    :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
 
     Notation:
 
     * :math:`y`: observation
     * :math:`u`: action
-    * :math:`gamma`: discount factor
+    * :math:`\\gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`J^*`: optimal objective function (or its estimate)
 

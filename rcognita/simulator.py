@@ -19,7 +19,7 @@ Remarks:
 import numpy as np
 import scipy as sp
 
-from .utilities import rej_sampling_rvs, rc, simulation_progress
+from .__utilities import rej_sampling_rvs, rc, simulation_progress
 from .solvers import create_ODE_solver
 from abc import ABC, abstractmethod
 

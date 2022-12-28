@@ -35,7 +35,7 @@ from . import simulator
 from . import systems
 from . import loggers
 from .visualization import animator
-from . import utilities
+from . import __utilities
 from . import models
 from . import predictors
 from . import actors
@@ -289,6 +289,11 @@ class main:
             with omegaconf.flag_override(cfg, "allow_objects", True):
                 ccfg = ComplementedConfig(cfg)
                 self.apply_assignments(ccfg)
+                if "callbacks" in cfg:
+                    for callback in cfg.callbacks:
+                        callback = obtain(callback) if isinstance(callback, str) else callback
+                        self.__class__.callbacks.append(callback(self.__class__.logger))
+                    delattr(cfg, "callbacks")
                 return old_app(ccfg)
 
         app.__module__ = old_app.__module__
@@ -296,3 +301,6 @@ class main:
 
 
 warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)
+
+
+array = __utilities.rc.array

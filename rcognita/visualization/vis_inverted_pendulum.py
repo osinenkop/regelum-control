@@ -1,6 +1,6 @@
 import numpy as np
 from .animator import update_line, update_text, init_data_cursor, Dashboard, Animator
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 
