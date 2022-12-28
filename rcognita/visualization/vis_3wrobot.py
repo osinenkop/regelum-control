@@ -170,7 +170,7 @@ class CostDashboard(Dashboard):
         self.axes_cost = plt.gca()
 
         self.axes_cost.set_xlim(self.time_start, self.time_final)
-        self.axes_cost.set_ylim(0, 1e4 * self.running_objective_init)
+        self.axes_cost.set_ylim(0, 1e4)
         self.axes_cost.set_yscale("symlog")
         self.axes_cost.set_xlabel("Time [s]")
         self.axes_cost.autoscale(False)
@@ -243,7 +243,7 @@ class ControlDashboard(Dashboard):
             [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
         )  # Help line
         self.lines_action = self.axis_action.plot(
-            self.time_start, rc.force_column(self.scenario.actor.action_init).T, lw=0.5
+            self.time_start, rc.force_column(self.scenario.action_init).T, lw=0.5
         )
         self.axis_action.legend(
             iter(self.lines_action),
@@ -292,7 +292,7 @@ class ControlDashboardNI(Dashboard):
             [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
         )  # Help line
         self.lines_action = self.axis_action.plot(
-            self.time_start, rc.force_column(self.scenario.actor.action_init).T, lw=0.5
+            self.time_start, rc.force_column(self.scenario.action_init).T, lw=0.5
         )
         self.axis_action.legend(
             iter(self.lines_action),
@@ -341,10 +341,10 @@ class Animator3WRobot(Animator):
             10,
             -10,
             10,
-            self.scenario.actor.action_bounds[0][0],
-            self.scenario.actor.action_bounds[0][1],
-            self.scenario.actor.action_bounds[1][0],
-            self.scenario.actor.action_bounds[1][1],
+            self.scenario.controller.action_bounds[0][0],
+            self.scenario.controller.action_bounds[0][1],
+            self.scenario.controller.action_bounds[1][0],
+            self.scenario.controller.action_bounds[1][1],
             0,
         )
         self.sampling_time = self.scenario.controller.sampling_time

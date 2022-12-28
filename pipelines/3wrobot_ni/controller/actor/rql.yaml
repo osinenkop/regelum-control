@@ -1,5 +1,4 @@
 defaults:
-  - default
   - model: weight_container
   - optimizer: scipy
   - predictor: euler
@@ -15,3 +14,4 @@ discount_factor: 1.
 action_bounds: $ controller.action_bounds%%
 action_init: $ action_init
 critic: $ controller.critic
+running_objective: $ running_objective

@@ -9,15 +9,17 @@ from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
 from itertools import islice
 import numpy as np
+from typing import Optional
+from unittest.mock import Mock, MagicMock
+
 
 from .__utilities import rc
 from .optimizers import TorchOptimizer
 from .actors import Actor
 from .critics import Critic
-from .systems import System
 from .simulator import Simulator
-from .loggers import Logger
 from .controllers import Controller
+from .objectives import RunningObjective
 
 
 class Scenario(ABC):
@@ -63,12 +65,9 @@ class OnlineScenario(Scenario):
 
     def __init__(
         self,
-        system: System,
         simulator: Simulator,
         controller: Controller,
-        actor: Actor,
-        critic: Critic,
-        running_objective,
+        running_objective: Optional[RunningObjective] = None,
         no_print: bool = False,
         is_log: bool = False,
         is_playback: bool = False,
@@ -76,12 +75,24 @@ class OnlineScenario(Scenario):
         action_init=None,
         time_start: float = 0.0,
     ):
-        self.system = system
+
         self.simulator = simulator
+
+        self.system = Mock() if not hasattr(simulator, "system") else simulator.system
+
         self.controller = controller
-        self.actor = actor
-        self.critic = critic
-        self.running_objective = running_objective
+        self.actor = (
+            MagicMock() if not hasattr(controller, "actor") else controller.actor
+        )
+        self.critic = (
+            MagicMock() if not hasattr(controller, "critic") else controller.critic
+        )
+
+        self.running_objective = (
+            (lambda observation, action: 0)
+            if running_objective is None
+            else running_objective
+        )
 
         self.time_start = time_start
         self.time_final = self.simulator.time_final
@@ -299,9 +310,6 @@ class EpisodicScenario(OnlineScenario):
                 if self.current_scenario_status == "simulation_ended":
 
                     self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
-                    ## DEBUG ==============================
-
-                    ## /DEBUG =============================
 
             return self.current_scenario_status
 

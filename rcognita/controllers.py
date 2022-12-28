@@ -84,14 +84,19 @@ class RLController(Controller):
     """
 
     def __init__(
-        self, *args, critic_period=0.1, actor=None, critic=None, time_start=0, **kwargs
+        self,
+        *args,
+        critic_period=0.1,
+        actor=None,
+        critic=None,
+        time_start=0,
+        action_bounds=None,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.actor = actor
         self.critic = critic
-
-        # self.dim_input = self.actor.dim_input
-        # self.dim_output = self.actor.dim_output
+        self.action_bounds = action_bounds
 
         self.critic_clock = time_start
         self.critic_period = critic_period
@@ -320,6 +325,7 @@ class Controller3WRobotDisassembledCLF:
         time_start=0,
         sampling_time=0.01,
         max_iters=200,
+        optimizer_engine="SciPy",
     ):
 
         self.m = m
@@ -332,28 +338,19 @@ class Controller3WRobotDisassembledCLF:
 
         self.action_old = rc.zeros(2)
 
-        casadi_opt_options = {
-            "print_time": 0,
-            "ipopt.max_iter": max_iters,
-            "ipopt.print_level": 0,
-            "ipopt.acceptable_tol": 1e-7,
-            "ipopt.acceptable_obj_change_tol": 1e-2,
-        }
-        self.casadi_optimizer = CasADiOptimizer(
-            opt_method="ipopt", opt_options=casadi_opt_options
-        )
-        scipy_opt_options = {
-            "maxiter": 50,
-            "maxfev": 5000,
-            "disp": False,
-            "adaptive": True,
-            "xatol": 1e-7,
-            "fatol": 1e-7,
-        }
-        self.scipy_optimizer = SciPyOptimizer(
-            opt_method="SLSQP", opt_options=scipy_opt_options
-        )
-        self.optimizer_engine = "CasADi"  # CasADi
+        self.optimizer_engine = optimizer_engine
+
+        if optimizer_engine == "CasADi":
+            casadi_opt_options = {
+                "print_time": 0,
+                "ipopt.max_iter": max_iters,
+                "ipopt.print_level": 0,
+                "ipopt.acceptable_tol": 1e-7,
+                "ipopt.acceptable_obj_change_tol": 1e-2,
+            }
+            self.casadi_optimizer = CasADiOptimizer(
+                opt_method="ipopt", opt_options=casadi_opt_options
+            )
 
     def reset(self, time_start):
 

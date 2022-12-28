@@ -568,6 +568,9 @@ class ActorRQL(Actor):
             actor_objective += self.discount_factor ** k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
+        
+        actor_objective += self.critic(action_sequence_reshaped[:, -1], observation_sequence[:, -1])
+
         return actor_objective
 
 

@@ -1,0 +1,12 @@
+_target_: rcognita.controllers.Controller3WRobotNIMotionPrimitive
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: 1.0E-2
+v_min%%: -25.
+v_max%%: 25.
+omega_min%%: -5.
+omega_max%%: 5.
+action_bounds: = numpy.array([[${.v_min%%}, ${.v_max%%}], [${.omega_min%%}, ${.omega_max%%}]])
+K: 3

@@ -27,7 +27,7 @@
             "justMyCode": false,
             "args": [
                 "ode_solver=CASADI",
-                "controller/actor/optimizer=casadi"
+                "controller=pid"
             ],
         },
         {

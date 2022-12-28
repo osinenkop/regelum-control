@@ -51,18 +51,21 @@ mock = Mock()
 reset_instances = None
 objects_created = None
 
+
 def memorize_instance(resolver):
     global objects_created
     objects_created = {}
     global reset_instances
+
     def reset_instances():
         if objects_created:
-            warnings.warn("Object instantiations within your config have been reset. "
-                          "The objects that you instantiated from your config no "
-                          "longer refer to those that you are about to instantiate"
-                          "from respective config paths.")
+            warnings.warn(
+                "Object instantiations within your config have been reset. "
+                "The objects that you instantiated from your config no "
+                "longer refer to those that you are about to instantiate"
+                "from respective config paths."
+            )
         objects_created.clear()
-
 
     def inner(
         key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
@@ -150,11 +153,13 @@ class ComplementedConfig:
         return attr
 
     def __str__(self):
-        return str(self.__hydra_config)\
-            .replace("DictConfig", "ComplementedConfig")\
-            .replace("ListConfig", "ComplementedConfig")\
-            .replace("${get:", "={")\
-            .replace("${same:", "~{}")
+        return (
+            str(self.__hydra_config)
+            .replace("DictConfig", "ComplementedConfig")
+            .replace("ListConfig", "ComplementedConfig")
+            .replace("${get:", "={")
+            .replace("${same:", "~{")
+        )
 
     def __getitem__(self, key):
         cfg = object.__getattribute__(self, "_ComplementedConfig__hydra_config")
@@ -197,7 +202,9 @@ class ComplementedConfig:
             object.__setattr__(self, key, value)
 
     def copy(self):
-        return ComplementedConfig(self.__hydra_config.copy(), config_path=self.config_path)
+        return ComplementedConfig(
+            self.__hydra_config.copy(), config_path=self.config_path
+        )
 
     def has_key(self, key):
         return key in self.__hydra_config or key + "__IGNORE__" in self.__hydra_config
@@ -216,11 +223,21 @@ class ComplementedConfig:
         return [key.replace("__IGNORE__", "") for key in self.__hydra_config.keys()]
 
     def values(self):
-        return [(key.replace("__IGNORE__", ""),
-                 value if not isinstance(value, DictConfig) and not isinstance(value, ListConfig)
-                 else ComplementedConfig(value,
-                                         config_path=key if not self.config_path else f"{self.config_path}.{key}"))
-                for key, value in self.__hydra_config.values()]
+        return [
+            (
+                key.replace("__IGNORE__", ""),
+                value
+                if not isinstance(value, DictConfig)
+                and not isinstance(value, ListConfig)
+                else ComplementedConfig(
+                    value,
+                    config_path=key
+                    if not self.config_path
+                    else f"{self.config_path}.{key}",
+                ),
+            )
+            for key, value in self.__hydra_config.values()
+        ]
 
     def __delitem__(self, key):
         if key + "__IGNORE__" in self.__hydra_config:
@@ -243,11 +260,12 @@ class ComplementedConfig:
 
 from .callbacks import *
 
+
 class main:
     callbacks = None
     logger = None
-    assignments=[]
-    weak_assignments=[]
+    assignments = []
+    weak_assignments = []
 
     @classmethod
     def post_weak_assignment(cls, key, value):
@@ -273,14 +291,18 @@ class main:
                 value = value(cfg)
             exec(f"cfg.{key.replace('%%', '')} = value")
 
-    def __init__(self, *args,
-                 logger=logging.getLogger("rcognita"),
-                 callbacks=[StateCallback,
-                            ObjectiveCallback],
-                 **kwargs):
+    def __init__(
+        self,
+        *args,
+        logger=logging.getLogger("rcognita"),
+        callbacks=[StateCallback, ObjectiveCallback],
+        **kwargs,
+    ):
         self.args = args
         self.kwargs = kwargs
-        self.kwargs["version_base"] = None if "version_base" not in kwargs else kwargs["version_base"]
+        self.kwargs["version_base"] = (
+            None if "version_base" not in kwargs else kwargs["version_base"]
+        )
         self.__class__.callbacks = [callback(logger) for callback in callbacks]
         self.__class__.logger = logger
 
@@ -291,7 +313,9 @@ class main:
                 self.apply_assignments(ccfg)
                 if "callbacks" in cfg:
                     for callback in cfg.callbacks:
-                        callback = obtain(callback) if isinstance(callback, str) else callback
+                        callback = (
+                            obtain(callback) if isinstance(callback, str) else callback
+                        )
                         self.__class__.callbacks.append(callback(self.__class__.logger))
                     delattr(cfg, "callbacks")
                 return old_app(ccfg)

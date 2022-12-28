@@ -1,9 +1,0 @@
-_target_: rcognita.controllers.Controller3WRobotPID
-
-###---Constructor arguments---###
-
-state_init: $ state_init
-params: $ simulator.system.pars
-time_start: $ simulator.time_start
-sampling_time: $ controller.sampling_time
-action_bounds: $ controller.action_bounds%%
