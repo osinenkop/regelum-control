@@ -1,9 +1,0 @@
-defaults:
-  - default
-  - model: lookup_table
-  - optimizer: bruteforce
-  - predictor: trivial
-
-_target_: rcognita.actors.ActorTabular
-
-###---Constructor arguments---###

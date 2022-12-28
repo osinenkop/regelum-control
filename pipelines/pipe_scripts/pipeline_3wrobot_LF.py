@@ -49,7 +49,7 @@ class Pipeline3WRobotCasadi(Pipeline3WRobot):
 
     def initialize_actor_critic(self):
         super().initialize_actor_critic()
-        self.actor = actors.ActorLF(
+        self.actor = actors.ActorCLF(
             self.nominal_controller,
             self.prediction_horizon,
             self.dim_input,

@@ -1,10 +1,14 @@
 defaults:
-  - predictor: euler
-  - safe_controller: 3wrobot_pid
+  - observation
+  - safe_controller: pid
+
+_target_: rcognita.critics.CriticCALF
 
 safe_decay_rate: 1.0E-3
-is_dynamic_decay_rate: false
+is_dynamic_decay_rate: true
 observation_init: $ state_init
 
 penalty_param: 0
 is_predictive: true
+
+predictor: ~ controller.actor.predictor
