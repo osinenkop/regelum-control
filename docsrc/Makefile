@@ -1,3 +1,9 @@
+##############
+# READ OR DIE# ============>     pip install sphinx==4.0 -U
+##############
+# if you install 3, it will not work. if you install 5 it will not work in the intended way.
+
+
 # Before running make, you need to make sure that all dependencies are installed and sphinx
 # your sphinx is fresh (i.e somewhere around 5.3.0). On the website (of sphinx) it tells you to
 # use `apt install python3-sphinx`, but THIS IS A TRAP. If you do this you'll just install an

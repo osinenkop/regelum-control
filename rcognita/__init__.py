@@ -289,6 +289,11 @@ class main:
             with omegaconf.flag_override(cfg, "allow_objects", True):
                 ccfg = ComplementedConfig(cfg)
                 self.apply_assignments(ccfg)
+                if "callbacks" in cfg:
+                    for callback in cfg.callbacks:
+                        callback = obtain(callback) if isinstance(callback, str) else callback
+                        self.__class__.callbacks.append(callback(self.__class__.logger))
+                    delattr(cfg, "callbacks")
                 return old_app(ccfg)
 
         app.__module__ = old_app.__module__

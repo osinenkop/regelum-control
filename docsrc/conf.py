@@ -1,3 +1,7 @@
+##############
+# READ OR DIE# ============>     pip install sphinx==4.0 -U
+##############
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -10,6 +14,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+
+
 import os
 import sys
 
@@ -45,6 +51,15 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.autosummary", "sphinx.ext.napole
 
 autosummary_generate = True
 
+"""
+autodoc_mock_imports = [
+    'rcognita.ROS_harnesses'
+    'rcognita.utilities',
+    'rcognita.t',
+    'rcognita.w_plotting',
+]
+"""
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -65,3 +80,5 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
