@@ -166,9 +166,7 @@ def create_ODE_solver(
 
     elif ode_solver == "CASADI":
 
-        integrator = create_CasADi_integrator(
-            system.compute_dynamics, state_init, action_init, max_step
-        )
+        integrator = create_CasADi_integrator(system, state_init, action_init, max_step)
 
         solver = CasADiSolver(
             integrator,
