@@ -1,11 +1,3 @@
 defaults:
-  - bc/c
+  - bc: b
   - de: foo
-
-########## PARAMS ##########
-var: 1000
-
-c: ~ bc
-a100: = ${bc.a} * 100
-
-@de.kek%%: 10

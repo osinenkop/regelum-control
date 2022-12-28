@@ -1,0 +1,5 @@
+_target_: rcognita.models.ModelBiquadForm
+
+###---Constructor arguments---###
+
+weights: [1, 2, 3]

@@ -1,4 +1,4 @@
 defaults:
   - default
 
-_target_: rcognita.t.D
+_target_: rcognita.__t.D

@@ -3,7 +3,7 @@ defaults:
   - optimizer: scipy
   - predictor: euler
 
-_target_: rcognita.actors.ActorMPC
+_target_: rcognita.actors.ActorRPO
 
 running_objective: $ running_objective
 
@@ -15,4 +15,4 @@ dim_input: $ simulator.system.dim_output
 discount_factor: 1.
 action_bounds: $ controller.action_bounds%%
 action_init: $ action_init
-critic: ~ controller.critic
+critic: $ controller.critic
