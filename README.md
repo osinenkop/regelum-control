@@ -4,7 +4,8 @@
 
 `rcognita` is a flexibly configurable framework for agent-enviroment
 simulation with a menu of predictive and safe reinforcement learning
-controllers.
+controllers. It is made for researchers and engineers in reinforcement
+learning and control theory.
 
 ## Example run with a mobile robot simulation
 
@@ -22,44 +23,49 @@ Alternatively, one can install the package direcly form the master
 branch. The following instruction is for Unix-based systems, assuming a
 terminal and Python3 interpreter.
 
-    git clone https://github.com/AIDynamicAction/rcognita
+    git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
     cd rcognita
     python3 setup.py install
 
 Notice that your Python 3 interpreter might be called something else,
-say, just `python`.
+for instance, just `python`.
 
-## With model estimation tools
+## With PyTorch for neural networks
 
-The package was tested with online model estimation using
-[SIPPY](https://github.com/CPCLAB-UNIPI/SIPPY). The respective
-functionality is implemented and enabled via `is_est_model`. Related
-parameters can be found in the documentation of the `RLController`
-class.
+It is common for deep reinforcement learning software to make use of
+advanced frameworks for building and training neural networks.
+`rcognita` supports integration with PyTorch, a powerful Python
+interface for deep learning.
 
-### Installing dependencies
+Here is how to install `rcognita` together with PyTorch.
 
-To install `SIPPY`, first take care of the dependencies:
+    pip3 install rcognita[TORCH]
 
-#### Ubuntu/Debian:
+or
 
-    sudo apt-get install -y build-essential gfortran cmake libopenblas-dev
+    git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
+    cd rcognita
+    python3 setup.py install .[TORCH]
 
-#### Arch
+## With CasADi for nonlinear optimization
 
-    pacman -Sy gcc gcc-fortran cmake base-devel openblas
+In model predictive control it is important that one can
+time-efficiently optimize over numerically integrated ODEs. `rcognita`
+interfaces with CasADi, a python package that offers an efficient and
+convenient toolset for optimization tasks of this kind.
 
-### Installing `scikit-build`
+Here is how to install `rcognita` together with CasADi.
 
-    pip install scikit-build
+    pip3 install rcognita[CASADI]
 
-or, using `Anaconda`,
+or
 
-    conda install scikit-build
+    git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
+    cd rcognita
+    python3 setup.py install .[CASADI]
 
-### Installing `rcognita` with `SIPPY`
-
-    pip3 install rcognita[SIPPY]
+**You can use both CasADi and PyTorch. They are not mutually
+exclusive.**
 
 # General description
 
@@ -67,10 +73,8 @@ or, using `Anaconda`,
 and environments (generally speaking, not necessarily reinforcement
 learning agents). Its main idea is to have an explicit implementation of
 sampled controls with user-defined sampling time specification. The
-package consists of several modules, namely, `controllers`, `loggers`,
-`models`, `simulator`, `systems`, `utilities`, `visuals` and a
-collection of main modules (presets) for each agent-environment
-configuration.
+package consists of several modules, namely, `controllers`, `models`,
+`simulator`, `systems`.
 
 [This flowchart](./flowcharts/rcognita-flowchart-RLController.pdf) shows
 interaction of the core `rcognita` classes contained in the said modules
@@ -192,7 +196,7 @@ Some key settings are described below (full description is available via
 | `actor_struct`   | string | Structure of actor features              |
 +------------------+--------+------------------------------------------+
 | `                | binary | Flag to store trajectory during the      |
-| save_trajectory` |        | execution of the pipeline                |
+| save_trajectory` |        | execution of the p                       |
 +------------------+--------+------------------------------------------+
 
 ## Advanced customization

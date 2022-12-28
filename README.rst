@@ -3,7 +3,8 @@
 About
 =====
 
-``rcognita`` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe reinforcement learning controllers.
+``rcognita`` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
+reinforcement learning controllers. It is made for researchers and engineers in reinforcement learning and control theory.
 A detailed documentation is available `here <https://aidynamicaction.github.io/rcognita/>`__.
 
 Example run with a mobile robot simulation
@@ -45,76 +46,66 @@ terminal and Python3 interpreter.
 
 ::
 
-    git clone https://github.com/AIDynamicAction/rcognita
+    git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
     cd rcognita
     python3 setup.py install
 
 Notice that your Python 3 interpreter might be called something else,
-say, just ``python``.
+for instance, just ``python``.
 
-With model estimation tools
----------------------------
+With PyTorch for neural networks
+--------------------------------
+It is common for deep reinforcement learning software to make use of
+advanced frameworks for building and training neural networks. ``rcognita``
+supports integration with PyTorch, a powerful Python interface for deep learning.
 
-`To table of content <#Table-of-content>`__
-
-The package was tested with online model estimation using
-`SIPPY <https://github.com/CPCLAB-UNIPI/SIPPY>`__. The respective
-functionality is implemented and enabled via ``is_est_model``. Related
-parameters can be found in the documentation of the ``RLController``
-class.
-
-Installing dependencies
-~~~~~~~~~~~~~~~~~~~~~~~
-
-To install ``SIPPY``, first take care of the dependencies:
-
-Ubuntu/Debian:
-^^^^^^^^^^^^^^
+Here is how to install ``rcognita`` together with PyTorch.
 
 ::
 
-    sudo apt-get install -y build-essential gfortran cmake libopenblas-dev
+    pip3 install rcognita[TORCH]
 
-Arch
-^^^^
-
-::
-
-    pacman -Sy gcc gcc-fortran cmake base-devel openblas
-
-Installing ``scikit-build``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+or
 
 ::
 
-    pip install scikit-build
+    git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
+    cd rcognita
+    python3 setup.py install .[TORCH]
 
-or, using ``Anaconda``,
+With CasADi for nonlinear optimization
+---------------------------------------
+In model predictive control it is important that one can time-efficiently optimize over numerically integrated
+ODEs. ``rcognita`` interfaces with CasADi, a python package that offers an efficient and convenient
+toolset for optimization tasks of this kind.
+
+Here is how to install ``rcognita`` together with CasADi.
 
 ::
 
-    conda install scikit-build
+    pip3 install rcognita[CASADI]
 
-Installing ``rcognita`` with ``SIPPY``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+or
 
 ::
 
-    pip3 install rcognita[SIPPY]
+    git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
+    cd rcognita
+    python3 setup.py install .[CASADI]
 
-General description
-===================
+**You can use both CasADi and PyTorch. They are not mutually exclusive.**
+
+
+
+What is ``rcognita``?
+=====================
 
 `To table of content <#Table-of-content>`__
 
 ``rcognita`` Python package is designed for hybrid simulation of agents
 and environments (generally speaking, not necessarily reinforcement
 learning agents). Its main idea is to have an explicit implementation of
-sampled controls with user-defined sampling time specification. The
-package consists of several modules, namely, ``controllers``,
-``loggers``, ``models``, ``simulator``, ``systems``, ``utilities``,
-``visuals`` and a collection of main modules (presets) for each
-agent-environment configuration.
+sampled controls with user-defined sampling time specification.
 
 `This flowchart <./flowcharts/rcognita-flowchart-RLController.pdf>`__
 shows interaction of the core ``rcognita`` classes contained in the said
@@ -211,7 +202,7 @@ Some key settings are described below (full description is available via
 +-------------------------+-----------+--------------------------------------------------------+
 | Parameter               | Type      | Description                                            |
 +=========================+===========+========================================================+
-| ``control_mode``           | string    | Controller mode                                        |
+| ``control_mode``           | string    | Controller mode                                     |
 +-------------------------+-----------+--------------------------------------------------------+
 | ``dt``                  | number    | Controller sampling time                               |
 +-------------------------+-----------+--------------------------------------------------------+
@@ -229,7 +220,7 @@ Some key settings are described below (full description is available via
 +-------------------------+-----------+--------------------------------------------------------+
 | ``Nactor``              | integer   | Horizon length (in steps) for predictive controllers   |
 +-------------------------+-----------+--------------------------------------------------------+
-| ``running_obj_struct``    | string    | Structure of running objective function                |
+| ``running_obj_struct``    | string    | Structure of running objective function              |
 +-------------------------+-----------+--------------------------------------------------------+
 | ``Ncritic``             | integer   | Critic stack size (number of TDs)                      |
 +-------------------------+-----------+--------------------------------------------------------+
@@ -239,7 +230,7 @@ Some key settings are described below (full description is available via
 +-------------------------+-----------+--------------------------------------------------------+
 | ``actor_struct``        | string    | Structure of actor features                            |
 +-------------------------+-----------+--------------------------------------------------------+
-| ``save_trajectory``     | binary    | Flag to store trajectory during the execution of the pipeline|
+| ``save_trajectory``     | binary    | Flag to store trajectory during the execution of the p |
 +-------------------------+-----------+--------------------------------------------------------+
 
 Advanced customization
@@ -259,18 +250,6 @@ Advanced customization
    state-space model structure. You may use any other one. In case of
    neural nets, use, e.g., `Torch <https://pytorch.org/>`__
 
-Experimental things
--------------------
-
-`To table of content <#Table-of-content>`__
-
-An interface for dynamical controllers, which can be considered as
-extensions of the system state vector, is provided in ``_ctrl_dyn`` of
-the ``systems`` module. RL is usually understood as a static controller,
-i.e., a one which assigns actions directly to outputs. A dynamical
-controller does this indirectly, via an internal state as intermediate
-link. ynamical controllers can overcome some limitations of static
-controllers.
 
 Related literature
 ==================
