@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rcognita: A framework for DP and RL algorithm development, testing, and simulation &mdash; rcognita v0.1.2 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,9 +13,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -49,7 +46,7 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#getting-started">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#for-developers">For developers</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
@@ -59,22 +56,18 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.obstacles_parser.html"><code class="docutils literal notranslate"><span class="pre">rcognita.obstacles_parser</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.t.html"><code class="docutils literal notranslate"><span class="pre">rcognita.t</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.utilities.html"><code class="docutils literal notranslate"><span class="pre">rcognita.utilities</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.w_plotting.html"><code class="docutils literal notranslate"><span class="pre">rcognita.w_plotting</span></code></a></li>
 </ul>
 
         </div>
@@ -100,8 +93,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="rcognita-a-framework-for-dp-and-rl-algorithm-development-testing-and-simulation">
-<h1>Rcognita: A framework for DP and RL algorithm development, testing, and simulation<a class="headerlink" href="#rcognita-a-framework-for-dp-and-rl-algorithm-development-testing-and-simulation" title="Permalink to this heading"></a></h1>
+  <div class="section" id="rcognita-a-framework-for-dp-and-rl-algorithm-development-testing-and-simulation">
+<h1>Rcognita: A framework for DP and RL algorithm development, testing, and simulation<a class="headerlink" href="#rcognita-a-framework-for-dp-and-rl-algorithm-development-testing-and-simulation" title="Permalink to this headline"></a></h1>
 <p>Welocme to <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s documentation!
 This wiki contains all the nescessary information to get started with usage
 or development. Follow the <a class="reference external" href="introduction.html#installation">installation instructions</a> to get rcognita or check
@@ -121,11 +114,11 @@ you’d like to browse releases or fork the repository.</p>
 </div>
 <div class="toctree-wrapper compound">
 </div>
-</section>
-<section id="module-rcognita">
-<span id="modules"></span><h1>Modules<a class="headerlink" href="#module-rcognita" title="Permalink to this heading"></a></h1>
+</div>
+<div class="section" id="module-rcognita">
+<span id="modules"></span><h1>Modules<a class="headerlink" href="#module-rcognita" title="Permalink to this headline"></a></h1>
 <p class="rubric">Functions</p>
-<table class="autosummary longtable docutils align-default">
+<table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -146,7 +139,7 @@ you’d like to browse releases or fork the repository.</p>
 </tbody>
 </table>
 <p class="rubric">Classes</p>
-<table class="autosummary longtable docutils align-default">
+<table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -160,7 +153,7 @@ you’d like to browse releases or fork the repository.</p>
 </tr>
 </tbody>
 </table>
-<table class="autosummary longtable docutils align-default">
+<table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -190,42 +183,30 @@ you’d like to browse releases or fork the repository.</p>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.observers</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.obstacles_parser</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></p></td>
 <td><p>This module contains optimization routines to be used in optimal controllers, actors, critics etc.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></p></td>
 <td><p>Module that contains state or observation (depending on the context) predictors.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></p></td>
 <td><p>This module contains various simulation scenarios.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></p></td>
 <td><p>This module contains one single class that simulates controller-system (agent-environment) loops.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.systems</span></code></p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.systems</span></code></p></td>
 <td><p>This module contains a generic interface for systems (environments) as well as concrete systems as realizations of the former</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.t</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.utilities</span></code></p></td>
-<td><p>This module contains auxiliary tools.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.w_plotting</span></code></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
 </table>
-</section>
+</div>
 
 
            </div>

@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>rcognita.systems.Sys3WRobot &mdash; rcognita v0.1.2 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,9 +13,7 @@
         <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
-        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script src="../../_static/sphinx_highlight.js"></script>
         <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -51,7 +48,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#getting-started">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#for-developers">For developers</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
@@ -61,7 +58,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.obstacles_parser.html"><code class="docutils literal notranslate"><span class="pre">rcognita.obstacles_parser</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
@@ -69,13 +65,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.GridWorld.html">rcognita.systems.GridWorld</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.systems.Sys3WRobot</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#rcognita.systems.Sys3WRobot"><code class="docutils literal notranslate"><span class="pre">Sys3WRobot</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#rcognita.systems.Sys3WRobot.__init__"><code class="docutils literal notranslate"><span class="pre">Sys3WRobot.__init__()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.systems.Sys3WRobot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.Sys3WRobotNI.html">rcognita.systems.Sys3WRobotNI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysInvertedPendulum.html">rcognita.systems.SysInvertedPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysInvertedPendulumPD.html">rcognita.systems.SysInvertedPendulumPD</a></li>
@@ -83,15 +73,12 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.System2Tank.html">rcognita.systems.System2Tank</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.t.html"><code class="docutils literal notranslate"><span class="pre">rcognita.t</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.utilities.html"><code class="docutils literal notranslate"><span class="pre">rcognita.utilities</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.w_plotting.html"><code class="docutils literal notranslate"><span class="pre">rcognita.w_plotting</span></code></a></li>
 </ul>
 
         </div>
@@ -118,14 +105,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="rcognita-systems-sys3wrobot">
-<h1>rcognita.systems.Sys3WRobot<a class="headerlink" href="#rcognita-systems-sys3wrobot" title="Permalink to this heading"></a></h1>
+  <div class="section" id="rcognita-systems-sys3wrobot">
+<h1>rcognita.systems.Sys3WRobot<a class="headerlink" href="#rcognita-systems-sys3wrobot" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.systems.Sys3WRobot">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rcognita.systems.</span></span><span class="sig-name descname"><span class="pre">Sys3WRobot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.systems.Sys3WRobot" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.systems.</span></span><span class="sig-name descname"><span class="pre">Sys3WRobot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.systems.Sys3WRobot" title="Permalink to this definition"></a></dt>
 <dd><p>System class: 3-wheel robot with dynamical actuators.</p>
-<section id="description">
-<h2>Description<a class="headerlink" href="#description" title="Permalink to this heading"></a></h2>
 <p>Three-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended non-holonomic double integrator) [<a class="footnote-reference brackets" href="#id2" id="id1">1</a>]</p>
 <div class="math notranslate nohighlight">
 \[\begin{array}{ll}
@@ -177,13 +162,13 @@ nonholonomic double integrator”. In: Kybernetika 53.4 (2017), pp. 578–594</p
 <div class="line"><span class="math notranslate nohighlight">\(disturb\)</span> : disturbance</div>
 </div>
 </p></li>
-<li><p><strong>solvers</strong> (<em>The time variable time is commonly used by ODE</em>) – </p></li>
-<li><p><strong>definition</strong> (<em>and you shouldn't have it explicitly referenced in the</em>) – </p></li>
-<li><p><strong>non-autonomous.</strong> (<em>unless your system is</em>) – </p></li>
-<li><p><strong>case</strong> (<em>For the latter</em>) – </p></li>
+<li><p><strong>time variable time is commonly used by ODE solvers</strong> (<em>The</em>) – </p></li>
+<li><p><strong>you shouldn't have it explicitly referenced in the definition</strong> (<em>and</em>) – </p></li>
+<li><p><strong>your system is non-autonomous.</strong> (<em>unless</em>) – </p></li>
+<li><p><strong>the latter case</strong> (<em>For</em>) – </p></li>
 <li><p><strong>however</strong> – </p></li>
-<li><p><strong>disposal.</strong> (<em>you already have the input and disturbance at your</em>) – </p></li>
-<li><p><strong>attribute.</strong> (<em>Parameters</em><em> of </em><em>the system are contained in pars</em>) – </p></li>
+<li><p><strong>already have the input and disturbance at your disposal.</strong> (<em>you</em>) – </p></li>
+<li><p><strong>of the system are contained in pars attribute.</strong> (<em>Parameters</em>) – </p></li>
 <li><p><strong>dim_state</strong> (<em>: integer</em>) – System dimensions</p></li>
 <li><p><strong>dim_input</strong> (<em>: integer</em>) – System dimensions</p></li>
 <li><p><strong>dim_output</strong> (<em>: integer</em>) – System dimensions</p></li>
@@ -201,7 +186,7 @@ If empty, control is unconstrained (default)</p></li>
 </dd></dl>
 
 <p class="rubric">Methods</p>
-<table class="autosummary longtable docutils align-default">
+<table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
@@ -232,10 +217,9 @@ If empty, control is unconstrained (default)</p></li>
 </tr>
 </tbody>
 </table>
-</section>
 </dd></dl>
 
-</section>
+</div>
 
 
            </div>

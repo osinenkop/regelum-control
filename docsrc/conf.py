@@ -1,6 +1,7 @@
 ##############
 # READ OR DIE# ============>     pip install sphinx==4.0 -U
-##############
+############## ============>     conda install pandoc # or you might instead just use `apt install pandoc`, depending on your environment
+# if you install sphinx==3, it will not work. if you install sphinx==5 it will not work in the intended way.
 
 # Configuration file for the Sphinx documentation builder.
 #

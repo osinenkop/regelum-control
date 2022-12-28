@@ -1,7 +1,7 @@
 ##############
 # READ OR DIE# ============>     pip install sphinx==4.0 -U
-##############
-# if you install 3, it will not work. if you install 5 it will not work in the intended way.
+############## ============>     conda install pandoc # or you might instead just use `apt install pandoc`, depending on your environment
+# if you install sphinx==3, it will not work. if you install sphinx==5 it will not work in the intended way.
 
 
 # Before running make, you need to make sure that all dependencies are installed and sphinx
@@ -36,6 +36,8 @@ github:
 	@rm -rf ../docs/*
 	@cp -a build/html/. ../docs
 	@rm -f ./README.rst
+	@rm -f ../README.md
+	@mv ./README.md ../README.md
 
 
 help:
