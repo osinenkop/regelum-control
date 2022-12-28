@@ -1,2 +1,0 @@
-_target_: rcognita.models.LookupTable
-dims: = [10, 10]

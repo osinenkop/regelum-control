@@ -1,5 +1,4 @@
 defaults:
-  - controller: rl_controller
   - simulator: default
   - running_objective: running_objective
 
@@ -47,7 +46,7 @@ speedup: 25
 
 
 @controller.critic.data_buffer_size: 10
-@controller.critic.critic_period_multiplier: 1.
+@controller.critic_period_multiplier%%: 1.
 
 
 

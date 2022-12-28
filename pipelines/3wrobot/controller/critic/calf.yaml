@@ -1,7 +1,14 @@
-safe_decay_rate: 1E-3
+defaults:
+  - observation
+  - safe_controller: pid
+
+_target_: rcognita.critics.CriticCALF
+
+safe_decay_rate: 1.0E-3
 is_dynamic_decay_rate: true
-predictor: ${predictor}
-observation_init: ${observation_init}
-safe_controller: ${safe_controller}
-penalty_param: ${penalty_param}
-is_predictive: calf_type
+observation_init: $ state_init
+
+penalty_param: 0
+is_predictive: true
+
+predictor: ~ controller.actor.predictor

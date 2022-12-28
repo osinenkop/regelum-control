@@ -1,3 +1,0 @@
-_target_: rcognita.models.ModelWeightContainer
-dim_output: $ controller.actor.dim_output
-weights_init: $ action_init

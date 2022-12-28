@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from rcognita import controllers, simulator, predictors, optimizers, objectives
 
 from rcognita.utilities import rc
-from rcognita.actors import ActorCALF, ActorMPC, ActorRQL, ActorSQL, ActorRPO, ActorLF
+from rcognita.actors import ActorCALF, ActorMPC, ActorRQL, ActorSQL, ActorRPO, ActorCLF
 
 from rcognita.critics import (
     CriticOfActionObservation,
@@ -159,7 +159,7 @@ class PipelineWithDefaults(Pipeline):
         if self.control_mode == "LF":
             self.critic = CriticTrivial(self.running_objective, self.sampling_time)
 
-            self.actor = ActorLF(
+            self.actor = ActorCLF(
                 self.nominal_controller,
                 self.prediction_horizon,
                 self.dim_input,

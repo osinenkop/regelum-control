@@ -481,16 +481,16 @@ class ActorSQL(Actor):
         """
         Calculates the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
         
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
+        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_input,) representing the current observation
+        :param observation: numpy array of shape (dim_output,) representing the current observation
         :type observation: numpy.ndarray
         :return: actor objective for the given action sequence and observation
         :rtype: float
         """
 
         action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_input]
+            action_sequence, [self.prediction_horizon + 1, self.dim_output]
         ).T
 
         observation_sequence = [observation]
@@ -541,15 +541,15 @@ class ActorRQL(Actor):
         """
         Calculates the actor objective for the given action sequence and observation using Rollout Q-learning (RQL).
         
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
+        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_input,) representing the current observation
+        :param observation: numpy array of shape (dim_output,) representing the current observation
         :type observation: numpy.ndarray
         :return: actor objective for the given action sequence and observation
         :rtype: float
         """
         action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_input]
+            action_sequence, [self.prediction_horizon + 1, self.dim_output]
         ).T
 
         observation_sequence = [observation]
@@ -590,7 +590,7 @@ class ActorRPO(Actor):
     """
 
     def objective(
-        self, action, observation,
+        self, action_sequence, observation,
     ):
         """
         Calculates the actor objective for the given action sequence and observation using Running Plus Optimal (RPO).
@@ -602,9 +602,11 @@ class ActorRPO(Actor):
         :return: actor objective for the given action sequence and observation
         :rtype: float
         """
-        observation_predicted = self.predictor.predict(observation, action)
+        current_action = action_sequence[: self.dim_output]
 
-        running_objective_value = self.running_objective(observation, action)
+        observation_predicted = self.predictor.predict(observation, current_action)
+
+        running_objective_value = self.running_objective(observation, current_action)
 
         critic_of_observation = self.critic(observation_predicted)
 
@@ -639,14 +641,17 @@ class ActorCALF(ActorRPO):
         """
         super().__init__(*args, **kwargs)
         self.safe_controller = safe_controller
-        self.actor_constraints_on = actor_constraints_on
         self.penalty_param = penalty_param
         self.actor_regularization_param = actor_regularization_param
         self.predictive_constraint_violations = []
-        self.intrinsic_constraints = [
-            self.CALF_decay_constraint_for_actor,
-            # self.CALF_decay_constraint_for_actor_same_critic
-        ]
+        self.intrinsic_constraints = (
+            [
+                self.CALF_decay_constraint_for_actor,
+                # self.CALF_decay_constraint_for_actor_same_critic
+            ]
+            if actor_constraints_on
+            else []
+        )
         self.weights_acceptance_status = False
         safe_action = self.safe_controller.compute_action(
             self.critic.observation_last_good
@@ -704,104 +709,13 @@ class ActorCALF(ActorRPO):
             - self.critic(observation_last_good)
             + self.critic.sampling_time * self.critic.safe_decay_rate
         )
+
         return self.predictive_constraint_violation
 
-    # def objective(self, action_critic_weights, observation):
 
-    #     action = action_critic_weights[: (self.prediction_horizon + 1) * self.dim_input]
-    #     critic_weights = action_critic_weights[
-    #         (self.prediction_horizon + 1) * self.dim_input :
-    #     ]
-
-    #     actor_objective = super().objective(action, observation)
-    #     predicted_observation = self.predictor.predict(
-    #         observation, action[: self.dim_input]
-    #     )
-
-    #     critic_objective_current = self.critic.model(
-    #         observation, use_stored_weights=True,
-    #     )
-    #     critic_objective_predicted = self.critic.model(
-    #         predicted_observation, weights=critic_weights
-    #     )
-
-    #     if self.penalty_param > 0.0:
-
-    #         def ReLU(x):
-    #             return x * (x > 0)
-
-    #         regularization_term = (
-    #             self.penalty_param
-    #             * (
-    #                 ReLU(
-    #                     critic_objective_predicted
-    #                     - critic_objective_current
-    #                     + self.critic.sampling_time * self.critic.safe_decay_rate
-    #                 )
-    #             )
-    #             ** 2
-    #         )
-    #     else:
-    #         regularization_term = 0
-
-    #     return actor_objective + regularization_term
-
-    # def update(self, observation, constraint_functions=[], time=None):
-    #     """
-    #     Method to update the current action or weight tensor.
-    #     The old (previous) action or weight tensor is stored.
-    #     The `time` argument is used for debugging purposes.
-    #     """
-
-    #     # IF NO MODEL IS PASSED, DO ACTION UPDATE. OTHERWISE, WEIGHT UPDATE
-
-    #     action_sequence = rc.rep_mat(
-    #         self.action_old, 1, self.prediction_horizon + 1
-    #     )
-
-    #     action_sequence_init_reshaped = rc.reshape(
-    #         action_sequence, [(self.prediction_horizon + 1) * self.dim_input,],
-    #     )
-
-    #     constraints = ()
-
-    #     action_sequence_init_reshaped = rc.concatenate(
-    #         (action_sequence_init_reshaped, self.critic.model.weights)
-    #     )
-
-    #     actor_objective = rc.function_to_lambda_with_params(
-    #         self.objective, observation, var_prototype=action_sequence_init_reshaped
-    #     )
-
-    #     if constraint_functions:
-    #         constraints = sp.optimize.NonlinearConstraint(
-    #             partial(
-    #                 self.create_constraints,
-    #                 constraint_functions=[
-    #                     self.CALF_predictive_constraint,
-    #                     # self.CALF_predictive_constraint_with_current_critic,
-    #                 ],
-    #                 observation=observation,
-    #             ),
-    #             -np.inf,
-    #             0,
-    #         )
-
-    #     action_sequence_optimized = self.optimizer.optimize(
-    #         actor_objective,
-    #         action_sequence_init_reshaped,
-    #         self.action_bounds,
-    #         constraints=constraints,
-    #     )[: self.dim_input]
-
-    #     self.action_old = self.model.cache.weights
-    #     self.model.update_and_cache_weights(action_sequence_optimized)
-    #     self.action = self.model.weights
-
-
-class ActorLF(ActorCALF):
+class ActorCLF(ActorCALF):
     """
-    ActorLF is an actor class that aims to optimize the decay of a Control-Lyapunov function (CLF).
+    ActorCLF is an actor class that aims to optimize the decay of a Control-Lyapunov function (CLF).
     """
 
     def __init__(self, *args, **kwargs):

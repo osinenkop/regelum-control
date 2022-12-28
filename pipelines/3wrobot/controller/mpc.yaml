@@ -1,17 +1,14 @@
 defaults:
-  - actor: calf
-  - critic: calf
+  - actor: mpc
+  - critic: trivial
 
-_target_: rcognita.controllers.CALFControllerPredictive
+_target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###
 
 time_start: $ simulator.time_start
 sampling_time: 1.0E-2
 is_fixed_critic_weights: false
-
-critic:
-  is_predictive: true
 
 F_min%%: -300.
 F_max%%: 300.
