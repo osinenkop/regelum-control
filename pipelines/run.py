@@ -15,11 +15,12 @@ import matplotlib.pyplot as plt
 
 
 @r.main(
-    version_base=None, config_path="../pipelines/3wrobot", config_name="mpc",
+    version_base=None, config_path="../pipelines/3wrobot", config_name="scenario",
 )
 def launch(scenario):
     scenario_instance = ~scenario
     scenario_instance.run()
+
     if scenario_instance.is_playback:
         animator = Animator3WRobot(scenario_instance)
         animator.playback()

@@ -1,9 +1,0 @@
-defaults:
-  - tabular_type: tabular_type
-
-actor_model: ${actor_model}
-predictor: ${predictor}
-model: ${critic_model}
-running_objective: ${running_objective}
-dim_state_space: ${dim_state_space}
-terminal_state: ${terminal_state}

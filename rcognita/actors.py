@@ -481,16 +481,16 @@ class ActorSQL(Actor):
         """
         Calculates the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
         
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
+        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_input,) representing the current observation
+        :param observation: numpy array of shape (dim_output,) representing the current observation
         :type observation: numpy.ndarray
         :return: actor objective for the given action sequence and observation
         :rtype: float
         """
 
         action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_input]
+            action_sequence, [self.prediction_horizon + 1, self.dim_output]
         ).T
 
         observation_sequence = [observation]
@@ -541,15 +541,15 @@ class ActorRQL(Actor):
         """
         Calculates the actor objective for the given action sequence and observation using Rollout Q-learning (RQL).
         
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
+        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_input,) representing the current observation
+        :param observation: numpy array of shape (dim_output,) representing the current observation
         :type observation: numpy.ndarray
         :return: actor objective for the given action sequence and observation
         :rtype: float
         """
         action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_input]
+            action_sequence, [self.prediction_horizon + 1, self.dim_output]
         ).T
 
         observation_sequence = [observation]

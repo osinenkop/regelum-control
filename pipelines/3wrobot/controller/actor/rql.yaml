@@ -7,3 +7,5 @@ defaults:
 _target_: rcognita.actors.ActorRQL
 
 ###---Constructor arguments---###
+
+running_objective: $ running_objective

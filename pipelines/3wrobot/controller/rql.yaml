@@ -1,0 +1,7 @@
+defaults:
+  - default
+  - actor: rql
+  - critic: action_observation
+
+_target_: rcognita.controllers.RLController
+

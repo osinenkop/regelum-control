@@ -26,7 +26,7 @@
             "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/run.py",
             "justMyCode": false,
             "args": [
-                "prediction_horizon=1"
+                "controller=rql"
             ],
         },
         {

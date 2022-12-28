@@ -23,6 +23,7 @@ def apply_callbacks(method):
             self.callbacks = rcognita.main.callbacks
         for callback in self.callbacks:
             callback(obj=self, method=method.__name__, output=res)
+        return res
 
     return new_method
 

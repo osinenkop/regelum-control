@@ -1,9 +1,6 @@
 defaults:
-  - controller: rl_controller
   - simulator: default
   - running_objective: running_objective
-  - override controller/actor: rql
-  - override controller/critic: action_observation
 
 _target_: rcognita.scenarios.EpisodicScenario
 
@@ -20,6 +17,7 @@ action_init: = numpy.ones(2)
 N_episodes: 1
 N_iterations: 1
 speedup: 25
+
 
 ### A set of parameters forwarded into a global scope
 
@@ -48,7 +46,7 @@ speedup: 25
 
 
 @controller.critic.data_buffer_size: 10
-@controller.critic.critic_period_multiplier: 1.
+@controller.critic_period_multiplier%%: 1.
 
 
 
