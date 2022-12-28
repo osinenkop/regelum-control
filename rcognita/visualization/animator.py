@@ -11,7 +11,7 @@ Remarks:
 
 """
 
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage
@@ -188,7 +188,7 @@ class Animator:
 
     def playback(self):
         from matplotlib import animation
-        from rcognita.utilities import on_key_press
+        from rcognita.__utilities import on_key_press
 
         self.init_anim()
 

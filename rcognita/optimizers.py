@@ -3,7 +3,7 @@ This module contains optimization routines to be used in optimal controllers, ac
 
 """
 
-from rcognita.utilities import rc
+from rcognita.__utilities import rc
 import scipy as sp
 from scipy.optimize import minimize
 import numpy as np

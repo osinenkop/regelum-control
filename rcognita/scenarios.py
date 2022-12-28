@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from itertools import islice
 import numpy as np
 
-from .utilities import rc
+from .__utilities import rc
 from .optimizers import TorchOptimizer
 from .actors import Actor
 from .critics import Critic

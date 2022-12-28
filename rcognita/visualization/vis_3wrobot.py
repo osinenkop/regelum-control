@@ -11,7 +11,7 @@ from .animator import (
 )
 from mpldatacursor import datacursor
 from collections import namedtuple
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 

@@ -16,7 +16,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 import numpy as np
-from .utilities import rc, NUMPY, CASADI, TORCH, Clock
+from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC, abstractmethod
 import scipy as sp
 from functools import partial
@@ -54,6 +54,7 @@ class Critic(ABC):
     ):
         """
         Initialize a critic object.
+
         :param dim_input: Dimension of the input data
         :type dim_input: int
         :param dim_output: Dimension of the output data

@@ -35,7 +35,7 @@ from . import simulator
 from . import systems
 from . import loggers
 from .visualization import animator
-from . import utilities
+from . import __utilities
 from . import models
 from . import predictors
 from . import actors
@@ -296,3 +296,6 @@ class main:
 
 
 warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)
+
+
+array = __utilities.rc.array

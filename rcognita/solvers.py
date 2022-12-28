@@ -10,7 +10,7 @@ except ModuleNotFoundError:
 
 import numpy as np
 from .systems import System
-from .utilities import rc
+from .__utilities import rc
 
 
 class Solver(ABC):
@@ -185,6 +185,7 @@ def create_ODE_solver(
 def create_CasADi_integrator(system, state_init, action_init, max_step):
     """
     Create a CasADi integrator for a given system.
+
     :param system: The system for which to create the integrator.
     :type system: System
     :param state_init: Initial state of the system.

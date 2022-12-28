@@ -10,7 +10,7 @@ from .animator import (
 from mpldatacursor import datacursor
 from collections import namedtuple
 import matplotlib.patheffects as PathEffects
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 
