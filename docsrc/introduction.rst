@@ -11,13 +11,7 @@ Here's a short guide on how to build the docs on Ubuntu/Debian.
 Before building docs, make sure you have adequate dependencies installed:
 ::
 
-    apt install pandoc
-    pip3 install sphinx==4.0 -U
-
-Though in a ``conda`` environment one should instead run:
-::
-    conda install pandoc
-    pip3 install sphix==4.0 -U
+    pip3 install rst-to-myst==0.3.3 sphinx==4.0 -U
 
 It is also necessary for ``rcognita``'s dependencies to be installed,
 which can be accomplished by running the following inside ``rcognita``'s repository folder:
