@@ -366,8 +366,6 @@ or even
 python3 main.py simulator._target_=MyOwnBetterSimulator
 ```
 
-For more examples see the page dedicated to `rcognita`'s config pipeline.
-
 # Presets
 
 To get started with using `rcognita` the reader is advised to examine some concrete usecases.
@@ -417,7 +415,7 @@ Parameters marked with a "*" are not present in `presets/grid_world`.
 It must be noted that one could in theory override any of the parameters
 defined in the preset's config (i.e. `presets/*/scenario.yaml`), because
 that's just how the config pipeline works.
-For instance, if you wanted to speedup you simulation you could try messing
+For instance, if you wanted to speed up you simulation you could try messing
 with the ODE solver's tolerances:
 
 ```

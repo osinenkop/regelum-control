@@ -433,7 +433,6 @@ conveniently override any input parameters, when running the script like so</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">_target_</span><span class="o">=</span><span class="n">MyOwnBetterSimulator</span>
 </pre></div>
 </div>
-<p>For more examples see the page dedicated to <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline.</p>
 </div>
 </div>
 <div class="section" id="presets">
@@ -517,7 +516,7 @@ the presets:</p>
 <p>It must be noted that one could in theory override any of the parameters
 defined in the preset’s config (i.e. <code class="docutils literal notranslate"><span class="pre">presets/*/scenario.yaml</span></code>), because
 that’s just how the config pipeline works.
-For instance, if you wanted to speedup you simulation you could try messing
+For instance, if you wanted to speed up you simulation you could try messing
 with the ODE solver’s tolerances:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">atol</span><span class="o">=</span><span class="mf">0.1</span> <span class="n">simulator</span><span class="o">.</span><span class="n">rtol</span><span class="o">=</span><span class="mf">0.1</span>
 </pre></div>
