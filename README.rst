@@ -293,7 +293,7 @@ both the classes and their args in ``my_config.yaml``.
 
 Note, that the operator ``~`` is necessary to let rcognita know that
 the corresponding node within the config describes an instance of a class
-an we would like to instantiate it
+and we would like to instantiate it
 (as opposed to accessing it as a config-dictionary).
 
 In other words ``~config.robot`` evaluates to

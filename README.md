@@ -251,7 +251,7 @@ MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in `my_config.yaml`.
 
 Note, that the operator `~` is necessary to let rcognita know that the
-corresponding node within the config describes an instance of a class an
+corresponding node within the config describes an instance of a class and
 we would like to instantiate it (as opposed to accessing it as a
 config-dictionary).
 
