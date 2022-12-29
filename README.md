@@ -148,14 +148,14 @@ This applies to just about any entity in `rcognita`. Want a more
 advanced training pipeline? All it takes is too derive your own
 `Scenario`. Want to push the boundaries of what an RL agent looks like?
 Say no more: just derive a child from `RLController` and modify it to
-your heart\'s content.
+your heart's content.
 
 Be sure to hit the API docs (or the source code) if you want figure out
-the best way of deriving something yourself. In most cases you\'ll find
+the best way of deriving something yourself. In most cases you'll find
 that only a few methods need to be overriden to produce the desired
 result. In fact, in a great number of cases no deriving is necessary.
 
-# `rcognita`\'s config pipeline
+# `rcognita`'s config pipeline
 
 RL and control theory are infamous for having overwhelmingly many
 entities to keep track of: agents, environments, models, training
@@ -172,10 +172,10 @@ since `rcognita` includes all of the original features and syntaxes of
 `hydra`. However `rcognita` additionally provides convenient syntactic
 sugars that `hydra` does not posses.
 
-Keep in mind that **using rcognita\'s config pipeline IS NOT mandatory**
+Keep in mind that **using rcognita's config pipeline IS NOT mandatory**
 and the examples mentioned in the previous section are totally valid.
 However, in a more realistic usecase one will often find that the
-utility of `rcognita`\'s configs is **IMMEASURABLE**. The reader is thus
+utility of `rcognita`'s configs is **IMMEASURABLE**. The reader is thus
 encouraged to familiarize themselves with `hydra`.
 
 ## Example 1
@@ -246,7 +246,7 @@ Consider the following files in your hypothetical project.
         my_app()
 
 The above example project is the equivalent to the first example in
-section \"What is `rcognita`?\". Here instead of providing args for
+section "What is `rcognita`?". Here instead of providing args for
 MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in `my_config.yaml`.
 
@@ -266,7 +266,7 @@ In other words `~config.robot` evaluates to ::
 
 Note, that when using this config paradigm nothing impedes us from
 instantiating **literally everything** directly inside the config,
-leaving the python script almost empty. Here\'s an example of how this
+leaving the python script almost empty. Here's an example of how this
 can be done:
 
 `my_utilities.py`: :
@@ -335,13 +335,13 @@ or even
 
     python3 main.py simulator._target_=MyOwnBetterSimulator
 
-For more examples see the page dedicated to `rcognita`\'s config
+For more examples see the page dedicated to `rcognita`'s config
 pipeline.
 
 # Presets
 
 To get started with using `rcognita` the reader is advised to examine
-some concrete usecases. `rcognita`\'s
+some concrete usecases. `rcognita`'s
 [repository](https://gitflic.ru/project/aidynamicaction/rcognita)
 contains an assortment of presets, which can be both studied and
 conveniently repurposed.
@@ -378,16 +378,16 @@ for the presets:
   | `prediction_horizon` * | `int`     | Horizon length (in steps) for predictive controllers        |
   | `data_buffer_size`     | `int`     | Critic stack size (number of TDs)                           |
   | `discount_factor`      | `float`   | Discount factor                                             |
-  | `ode_backend` *        | `str`     | ODE solving backend for simulation. \"SCIPY\" or \"CASADI\" |
+  | `ode_backend` *        | `str`     | ODE solving backend for simulation. "SCIPY" or "CASADI" |
   |`animation_speedup`     | `str`     | Makes the animation `animation_speedup` times faster.       |
 
-Parameters marked with a "\*" are not present in `presets/grid_world`.
+Parameters marked with a "*" are not present in `presets/grid_world`.
 
 It must be noted that one could in theory override any of the parameters
 defined in the preset's config (i.e. `presets/*/scenario.yaml`),
 because that's just how the config pipeline works. For instance, if you
 wanted to speedup you simulation you could try messing with the ODE
-solver\'s tolerances: :
+solver's tolerances: :
 
     python3 main.py simulator.atol=0.1 simulator.rtol=0.1
 
@@ -399,7 +399,7 @@ You could, of course, instead just edit the config.
     model estimation](https://arxiv.org/abs/2007.03999)
 -   [More on fusion of model-predictive control and reinforcement
     learing](https://arxiv.org/abs/1906.02580)
--   [More on \"RLSTAB\", joint actor-critic
+-   [More on "RLSTAB", joint actor-critic
     (stabilizing)](https://arxiv.org/abs/2006.14034)
 -   [Some comparison of model-predictive control vs. stacked
     Q-learning](https://arxiv.org/abs/2108.04802)
@@ -407,7 +407,7 @@ You could, of course, instead just edit the config.
 # Closing remarks
 
 Please contact [me](mailto:p.osinenko@gmail.com) for any inquiries and
-don\'t forget to give me credit for usage of this code. If you are
+don't forget to give me credit for usage of this code. If you are
 interested in stacked Q-learning, kindly read the
 [paper](https://arxiv.org/abs/2007.03999).
 
