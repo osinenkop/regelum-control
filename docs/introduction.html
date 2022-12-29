@@ -48,20 +48,24 @@
 <li class="toctree-l2"><a class="reference internal" href="#with-casadi-for-nonlinear-optimization">With CasADi for nonlinear optimization</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#general-description">General description</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#usage">Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#settings">Settings</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#advanced-customization">Advanced customization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#experimental-things">Experimental things</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#what-is-rcognita">What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#rcognita-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1">Example 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2">Example 2</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="#presets">Presets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#related-literature">Related literature</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#closing-remarks">Closing remarks</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#bibtex-reference">Bibtex reference</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#getting-started">Getting started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#for-developers">For developers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#for-developers">For developers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#building-docs">Building docs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#forking">Forking</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul>
@@ -172,88 +176,297 @@ toolset for optimization tasks of this kind.</p>
 <p><strong>You can use both CasADi and PyTorch. They are not mutually exclusive.</strong></p>
 </div>
 </div>
-<div class="section" id="general-description">
-<h1>General description<a class="headerlink" href="#general-description" title="Permalink to this headline"></a></h1>
+<div class="section" id="what-is-rcognita">
+<h1>What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?<a class="headerlink" href="#what-is-rcognita" title="Permalink to this headline"></a></h1>
+<img alt="https://gitflic.ru/project/aidynamicaction/rcognita/blob/raw?file=gfx%2Fflowchart.png&amp;commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d" src="https://gitflic.ru/project/aidynamicaction/rcognita/blob/raw?file=gfx%2Fflowchart.png&amp;commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d" />
 <p><code class="docutils literal notranslate"><span class="pre">rcognita</span></code> Python package is designed for hybrid simulation of agents
-and environments (generally speaking, not necessarily reinforcement
-learning agents). Its main idea is to have an explicit implementation of
-sampled controls with user-defined sampling time specification. The
-package consists of several modules, namely, <code class="docutils literal notranslate"><span class="pre">controllers</span></code>, <code class="docutils literal notranslate"><span class="pre">models</span></code>, <code class="docutils literal notranslate"><span class="pre">simulator</span></code>, <code class="docutils literal notranslate"><span class="pre">systems</span></code>.</p>
-<p><a class="reference external" href="./flowcharts/rcognita-flowchart-RLController.pdf">This flowchart</a>
-shows interaction of the core <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> classes contained in the said
-modules (the latter are not shown on the diagram).</p>
-<p>The main module is a preset, on the flowchart a 3-wheel robot. It
-initializes the system (the environment), the controllers (the agents,
-e. g., a safe agent, a benchmarking agent, a reinforcement learning
-agent etc.), the visualization engine called animator, the logger and
-the simulator. The latter is a multi-purpose device for simulating
-agent-environment loops of different types (specified by <code class="docutils literal notranslate"><span class="pre">sys_type</span></code>).</p>
-<p>Depending on <code class="docutils literal notranslate"><span class="pre">sys_type</span></code>, the environment can either be described by a
-differential equation (including stochastic ones), a difference equation
-(for discrete-time systems), or by a probability distribution (for,
-e.g., Markov decision processes).</p>
-<p>The parameter <code class="docutils literal notranslate"><span class="pre">dt</span></code> determines the maximal step size for the numerical
-solver in case of differential equations. The main method of this class
-is <code class="docutils literal notranslate"><span class="pre">sim_step</span></code> which performs one solver step, whereas reset
-re-initializes the simulator after an episode.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">Logger</span></code> class is an interface defining stubs of a
-print-to-console method print sim step, and print-to-file method log
-data row, respectively. Concrete loggers realize these methods.</p>
-<p>A similar class inheritance scheme is used in <code class="docutils literal notranslate"><span class="pre">Animator</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">System</span></code>. The core data of <code class="docutils literal notranslate"><span class="pre">Animator</span></code>’s subclasses are
-<code class="docutils literal notranslate"><span class="pre">objects</span></code>, which include entities to be updated on the screen, and
-their parameters stored in <code class="docutils literal notranslate"><span class="pre">pars</span></code>.</p>
-<p>A concrete realization of a system interface must realize <code class="docutils literal notranslate"><span class="pre">sys_dyn</span></code>,
-which is the “right-handside” of the environment description, optionally
-disturbance dynamics via <code class="docutils literal notranslate"><span class="pre">disturb_dyn</span></code>, optionally controller dynamics
-(if the latter is, e.g., time-varying), and the output function <code class="docutils literal notranslate"><span class="pre">out</span></code>.
-The method <code class="docutils literal notranslate"><span class="pre">receive_action</span></code> gets a control action and stores it.
-Everything is packed together in the <code class="docutils literal notranslate"><span class="pre">closed_loop_rhs</span></code> for the use in
-<code class="docutils literal notranslate"><span class="pre">Simulator</span></code>.</p>
-<p>Finally, the <code class="docutils literal notranslate"><span class="pre">controllers</span></code> module contains various agent types. One of
-them is <code class="docutils literal notranslate"><span class="pre">RLController</span></code> – the class of predictive objective-optimizing
-agents (model-predictive control and predictive reinforcement learning)
-as shown in <a class="reference external" href="./flowcharts/rcognita-flowchart-RLController.pdf">this
-flowchart</a>. Notice
-it contains an explicit specification of the sampling time <code class="docutils literal notranslate"><span class="pre">dt</span></code>.</p>
-<p>The method <code class="docutils literal notranslate"><span class="pre">critic</span></code> computes a model of something related to the
-value, e.g., value function, Q-function or advantage. In turn,
-<code class="docutils literal notranslate"><span class="pre">cost</span></code> defines a cost (loss) function to fit the critic
-(commonly based on temporal errors). The method <code class="docutils literal notranslate"><span class="pre">get_optimized_weights</span></code>
-actually optimizes the critic cost. The principle is analogous with the
-actor, except that it optimizes an objective along a prediction horizon.
-The details can be found in the code documentation. The method
-<code class="docutils literal notranslate"><span class="pre">compute_action</span></code> essentially watches the internal clock and performs
-an action updates when a time sample has elapsed.</p>
-<p>Auxiliary modules of the package are <code class="docutils literal notranslate"><span class="pre">models</span></code> and <code class="docutils literal notranslate"><span class="pre">utilities</span></code> which
-provide auxiliary functions and data structures, such as neural
-networks.</p>
-</div>
-<div class="section" id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h1>
-<p>After the package is installed, you may just <code class="docutils literal notranslate"><span class="pre">python</span></code> run one of the
-presets found <a class="reference external" href="./presets">here</a>, say,</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main_3wrobot_NI</span><span class="o">.</span><span class="n">py</span>
+and environments (i.e. controllers and control-systems). <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> allows one to
+simulate either discrete-time systems (environments) or continuous-time systems (environments)
+with sampled feedback (agents that react to their observations at a finite frequency).</p>
+<p>For instance, if you have a model of a robot and an agent of some kind, <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> would allow
+you to see how the robot would behave if this agent controlled the robot by
+issuing its actions at a given rate.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="o">...</span>  <span class="c1">## Define the robot</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="o">...</span>  <span class="c1">## Define what your agent does</span>
+
+<span class="n">rate</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1">## The agent performs actions once every 100ms</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c1">## In which state the robot will start</span>
+
+<span class="n">robot</span> <span class="o">=</span> <span class="n">MyRobotSystem</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">controller</span> <span class="o">=</span> <span class="n">MyAgent</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">sampling_time</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
+<span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+<span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>This will call the preset with default settings, description of which
-can be found in the preset accordingly.</p>
-<p>The naming convention is <code class="docutils literal notranslate"><span class="pre">main_ACRONYM</span></code>, where <code class="docutils literal notranslate"><span class="pre">ACRONYM</span></code> is actually
-related to the system (environment). You may create your own by analogy.</p>
-<p>For configuration of hyper-parameters, just call help on the required
-preset, say,</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main_3wrobot_NI</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">h</span>
+<p>Not only can you use <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> to simulate things, but you can also
+use it to run your training and tuning. <code class="docutils literal notranslate"><span class="pre">Scenario</span></code> objects are also meant to
+manage your training pipeline for RL (if needed):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">RLController</span>
+<span class="kn">from</span> <span class="nn">rcognita.actors</span> <span class="kn">import</span> <span class="n">Actor</span>
+<span class="kn">from</span> <span class="nn">rcognita.critics</span> <span class="kn">import</span> <span class="n">Critic</span>
+<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="o">...</span>  <span class="c1">## Define the robot</span>
+
+<span class="k">class</span> <span class="nc">MyActor</span><span class="p">(</span><span class="n">Actor</span><span class="p">):</span>
+    <span class="o">...</span>  <span class="c1">## Your custom actor</span>
+
+<span class="k">class</span> <span class="nc">MyCritic</span><span class="p">(</span><span class="n">Critic</span><span class="p">):</span>
+    <span class="o">...</span>  <span class="c1">## Your custom critic</span>
+
+<span class="k">def</span> <span class="nf">my_reward</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+    <span class="k">return</span> <span class="o">...</span> <span class="c1">## How the agent is rewarded</span>
+
+<span class="n">rate</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1">## The agent performs actions once every 100ms</span>
+<span class="n">initial_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="c1">## In which state the robot will start</span>
+
+<span class="n">robot</span> <span class="o">=</span> <span class="n">MyRobotSystem</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">actor</span> <span class="o">=</span> <span class="n">MyActor</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">critic</span> <span class="o">=</span> <span class="n">MyCritic</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">controller</span> <span class="o">=</span> <span class="n">RLController</span><span class="p">(</span><span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span> <span class="n">critic</span><span class="o">=</span><span class="n">critic</span><span class="p">)</span>
+<span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">sampling_time</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
+<span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">my_reward</span><span class="p">)</span>
+<span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="section" id="settings">
-<h2>Settings<a class="headerlink" href="#settings" title="Permalink to this headline"></a></h2>
-<p>Some key settings are described below (full description is available via
-<code class="docutils literal notranslate"><span class="pre">-h</span></code> option).</p>
+<p>The main intended advantages of <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> are customizability and modularity.
+For instance if you wanted to try out your own numerical methods for integrating
+ODEs and whatnot, you could simply:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MySimulator</span><span class="p">(</span><span class="n">Simulator</span><span class="p">):</span>
+    <span class="o">...</span> <span class="c1">## Your methods</span>
+</pre></div>
+</div>
+<p>This applies to just about any entity in <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>. Want a more advanced
+training pipeline? All it takes is too derive your own <code class="docutils literal notranslate"><span class="pre">Scenario</span></code>.
+Want to push the boundaries of what an RL agent looks like? Say no more:
+just derive a child from <code class="docutils literal notranslate"><span class="pre">RLController</span></code> and modify it to your heart’s content.</p>
+<p>Be sure to hit the API docs (or the source code) if you want figure out the
+best way of deriving something yourself. In most cases you’ll find that
+only a few methods need to be overriden to produce the desired result. In fact,
+in a great number of cases no deriving is necessary.</p>
+</div>
+<div class="section" id="rcognita-s-config-pipeline">
+<h1><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline<a class="headerlink" href="#rcognita-s-config-pipeline" title="Permalink to this headline"></a></h1>
+<p>RL and control theory are infamous for having overwhelmingly many
+entities to keep track of: agents, environments, models, training routines,
+integrators, predictors, observers, optimizers… Each of the above in turn
+has a number of parameters of its own, and to make things worse,
+your setup will most likely be highly sensitive to all of these. Therefore
+tweaking and tuning your setup may and will get tedeous unless you figure
+out a way to do it conveniently and systematically.</p>
+<p>Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+built on top of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>. It must be noted that a regular <code class="docutils literal notranslate"><span class="pre">hydra</span></code>
+config will run on <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> just fine (but not vice versa), since
+<code class="docutils literal notranslate"><span class="pre">rcognita</span></code> includes all of the original features and syntaxes of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.
+However <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> additionally provides convenient syntactic sugars that
+<code class="docutils literal notranslate"><span class="pre">hydra</span></code> does not posses.</p>
+<p>Keep in mind that <strong>using rcognita’s config pipeline IS NOT mandatory</strong> and
+the examples mentioned in the previous section are totally valid. However, in
+a more realistic usecase one will often find that the utility of
+<code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s configs is <strong>IMMEASURABLE</strong>.
+The reader is thus encouraged to familiarize themselves
+with <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.</p>
+<div class="section" id="example-1">
+<h2>Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline"></a></h2>
+<p>Consider the following files in your hypothetical project.</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rate</span><span class="p">:</span> <span class="mf">0.1</span>
+
+<span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="c1"># The &#39;=&#39; lets us evaluate this</span>
+                                <span class="c1"># python code &#39;numpy.zeros(5)&#39;</span>
+
+<span class="n">robot</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span> <span class="c1"># &#39;_target_&#39; is a special field</span>
+    <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>                                 <span class="c1"># that should point to a class</span>
+    <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
+    <span class="n">z</span><span class="p">:</span> <span class="mi">3</span>
+
+<span class="n">agent</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
+    <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">b</span><span class="p">:</span> <span class="mi">4</span>
+    <span class="n">c</span><span class="p">:</span> <span class="mi">5</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">rcognita.scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+<span class="kn">import</span> <span class="nn">my_utilities</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+<span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="n">robot</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">robot</span>      <span class="c1"># &#39;~&#39; instantiates the object</span>
+    <span class="n">controller</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">agent</span> <span class="c1"># described in the corresponding</span>
+                               <span class="c1"># field. It makes use of &#39;_target_&#39;.</span>
+    <span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span>
+                          <span class="n">config</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span>
+                          <span class="n">sampling_time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
+    <span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+    <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The above example project is the equivalent to the first example in section
+“What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?”. Here instead of providing args for
+MyRobotSystem and MyAgent inside the python script, we instead specify
+both the classes and their args in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.</p>
+<p>Note, that the operator <code class="docutils literal notranslate"><span class="pre">~</span></code> is necessary to let rcognita know that
+the corresponding node within the config describes an instance of a class
+an we would like to instantiate it
+(as opposed to accessing it as a config-dictionary).</p>
+<p>In other words <code class="docutils literal notranslate"><span class="pre">~config.robot</span></code> evaluates to</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe53aa39220</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>, while <code class="docutils literal notranslate"><span class="pre">config.robot</span></code> evaluates to</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;_target_&#39;</span><span class="p">:</span><span class="s1">&#39;my_utilities.MyRobotSystem&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2">
+<h2>Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline"></a></h2>
+<p>Note, that when using this config paradigm nothing impedes us from instantiating
+<strong>literally everything</strong> directly inside the config, leaving the python script
+almost empty. Here’s an example of how this can be done:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+
+<span class="n">simulator</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">robot</span><span class="p">:</span>
+        <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
+        <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
+        <span class="n">z</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
+
+<span class="n">controller</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
+    <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">b</span><span class="p">:</span> <span class="mi">4</span>
+    <span class="n">c</span><span class="p">:</span> <span class="mi">5</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">import</span> <span class="nn">my_utilities</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+ <span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+     <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+     <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+ <span class="p">)</span>
+ <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+     <span class="n">scenario</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span>
+     <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+ <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+     <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This way of doing it has numerous advantages. Notably, you can now
+conveniently override any input parameters, when running the script like so</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">.</span><span class="n">a</span><span class="o">=</span><span class="mi">10</span>
+</pre></div>
+</div>
+<p>or even</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">_target_</span><span class="o">=</span><span class="n">MyOwnBetterSimulator</span>
+</pre></div>
+</div>
+<p>For more examples see the page dedicated to <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline.</p>
+</div>
+</div>
+<div class="section" id="presets">
+<h1>Presets<a class="headerlink" href="#presets" title="Permalink to this headline"></a></h1>
+<p>To get started with using <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> the reader is advised to examine some concrete usecases.
+<code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s <a class="reference external" href="https://gitflic.ru/project/aidynamicaction/rcognita">repository</a> contains an
+assortment of presets, which can be both studied and conveniently repurposed.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">presets</span></code> directory contains several working  <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> projects:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">presets/3wrobot</span></code>: Parking a three wheeled robot.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">presets/3wrobot_ni</span></code>: Parking a massless three wheeled robot.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">presets/grid_world</span></code>: Path-finding in a gridworld.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">presets/inverted_pendululm</span></code>: Balancing and inverted pendulum.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">presets/2tank</span></code>: Equalizing water levels in a two-tank system.</p></li>
+</ul>
+<p>For instance, if one wanted to run the three wheeled robot parking project,
+all it would take is to execute the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">presets</span><span class="o">/</span><span class="mi">3</span><span class="n">wrobot</span>
+<span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>One could also override some of the global parameters when running the script.
+For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">sampling_time</span><span class="o">=</span><span class="mf">0.2</span> <span class="n">time_final</span><span class="o">=</span><span class="mi">20</span>
+</pre></div>
+</div>
+<p>Below is a table detailing some of the available overridable parameters for
+the presets:</p>
 <table class="docutils align-default">
 <colgroup>
 <col style="width: 27%" />
-<col style="width: 12%" />
-<col style="width: 61%" />
+<col style="width: 14%" />
+<col style="width: 60%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Parameter</p></th>
@@ -262,91 +475,54 @@ preset, say,</p>
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td colspan="3"><p><code class="docutils literal notranslate"><span class="pre">control_mode</span></code>           | string    | Controller mode</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">dt</span></code></p></td>
-<td><p>number</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sampling_time</span></code> *</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
 <td><p>Controller sampling time</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">t1</span></code></p></td>
-<td><p>number</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">time_final</span></code> *</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
 <td><p>Final time</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">state_init</span></code></p></td>
-<td><p>list</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">state_init</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ndarray</span></code></p></td>
 <td><p>Initial state</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">is_log</span></code></p></td>
-<td><p>binary</p></td>
-<td><p>Flag to log data</p></td>
-</tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">no_visual</span></code></p></td>
-<td><p>binary</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bool</span></code></p></td>
 <td><p>Flag to supress graphical output</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">no_print</span></code></p></td>
-<td><p>binary</p></td>
-<td><p>Flag to supress printing of simulation step data</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">is_est_model</span></code></p></td>
-<td><p>binary</p></td>
-<td><p>If a model of the system is to be estimated online</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Nactor</span></code></p></td>
-<td><p>integer</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">prediction_horizon</span></code> *</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code></p></td>
 <td><p>Horizon length (in steps) for predictive controllers</p></td>
 </tr>
-<tr class="row-odd"><td colspan="3"><p><code class="docutils literal notranslate"><span class="pre">running_obj_struct</span></code>    | string    | Structure of running objective function</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Ncritic</span></code></p></td>
-<td><p>integer</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">data_buffer_size</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">int</span></code></p></td>
 <td><p>Critic stack size (number of TDs)</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code></p></td>
-<td><p>number</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">discount_factor</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">float</span></code></p></td>
 <td><p>Discount factor</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">critic_struct</span></code></p></td>
-<td><p>string</p></td>
-<td><p>Structure of critic features</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ode_backend</span></code> *</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p>ODE solving backend for simulation. “SCIPY” or “CASADI”</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">actor_struct</span></code></p></td>
-<td><p>string</p></td>
-<td><p>Structure of actor features</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">save_trajectory</span></code></p></td>
-<td><p>binary</p></td>
-<td><p>Flag to store trajectory during the execution of the p</p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">animation_speedup</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p>Makes the animation <code class="docutils literal notranslate"><span class="pre">animation_speedup</span></code> times faster.</p></td>
 </tr>
 </tbody>
 </table>
+<p>Parameters marked with a “*” are not present in <code class="docutils literal notranslate"><span class="pre">presets/grid_world</span></code>.</p>
+<p>It must be noted that one could in theory override any of the parameters
+defined in the preset’s config (i.e. <code class="docutils literal notranslate"><span class="pre">presets/*/scenario.yaml</span></code>), because
+that’s just how the config pipeline works.
+For instance, if you wanted to speedup you simulation you could try messing
+with the ODE solver’s tolerances:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">atol</span><span class="o">=</span><span class="mf">0.1</span> <span class="n">simulator</span><span class="o">.</span><span class="n">rtol</span><span class="o">=</span><span class="mf">0.1</span>
+</pre></div>
 </div>
-<div class="section" id="advanced-customization">
-<h2>Advanced customization<a class="headerlink" href="#advanced-customization" title="Permalink to this headline"></a></h2>
-<ul class="simple">
-<li><p><strong>Custom environments</strong>: realize <code class="docutils literal notranslate"><span class="pre">system</span></code> interface in the
-<code class="docutils literal notranslate"><span class="pre">systems</span></code> module. You might need nominal controllers for that, as
-well as an animator, a logger etc.</p></li>
-<li><p><strong>Custom running cost</strong>: adjust <code class="docutils literal notranslate"><span class="pre">rcost</span></code> in controllers</p></li>
-<li><p><strong>Custom AC method</strong>: simplest way – by adding a new mode and
-updating <code class="docutils literal notranslate"><span class="pre">cost</span></code>, <code class="docutils literal notranslate"><span class="pre">cost</span></code> and, possibly, <code class="docutils literal notranslate"><span class="pre">_actor</span></code>,
-<code class="docutils literal notranslate"><span class="pre">critic</span></code>. For deep net AC structures, use, say,
-<a class="reference external" href="https://pytorch.org/">Torch</a></p></li>
-<li><p><strong>Custom model estimator</strong>: so far, the framework offers a
-state-space model structure. You may use any other one. In case of
-neural nets, use, e.g., <a class="reference external" href="https://pytorch.org/">Torch</a></p></li>
-</ul>
-</div>
-<div class="section" id="experimental-things">
-<h2>Experimental things<a class="headerlink" href="#experimental-things" title="Permalink to this headline"></a></h2>
-<p>An interface for dynamical controllers, which can be considered as
-extensions of the system state vector, is provided in <code class="docutils literal notranslate"><span class="pre">_ctrl_dyn</span></code> of
-the <code class="docutils literal notranslate"><span class="pre">systems</span></code> module. RL is usually understood as a static controller,
-i.e., a one which assigns actions directly to outputs. A dynamical
-controller does this indirectly, via an internal state as intermediate
-link. ynamical controllers can overcome some limitations of static
-controllers.</p>
-</div>
+<p>You could, of course, instead just edit the config.</p>
 </div>
 <div class="section" id="related-literature">
 <h1>Related literature<a class="headerlink" href="#related-literature" title="Permalink to this headline"></a></h1>
@@ -380,31 +556,46 @@ interested in stacked Q-learning, kindly read the
 </div>
 </div>
 </div>
-<div class="section" id="getting-started">
-<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline"></a></h1>
-<p>The package is organized in modules.</p>
-<p>These are:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">controllers</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">loggers</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">models</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">simulator</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">systems</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">utilities</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">visuals</span></code></p></li>
-</ul>
-<p>There is a collection of main modules (presets) for each agent-environment configuration.</p>
-<p>To work with <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>, use one of the presets by <code class="docutils literal notranslate"><span class="pre">python</span></code> running it and specifying parameters.
-If you want to create your own environment, fork the repo and implement one in <code class="docutils literal notranslate"><span class="pre">systems</span></code> via inheriting the <code class="docutils literal notranslate"><span class="pre">System</span></code> superclass.</p>
-</div>
 <div class="section" id="for-developers">
 <h1>For developers<a class="headerlink" href="#for-developers" title="Permalink to this headline"></a></h1>
-<p>In Linux-based OS, to build these wiki docs, run inside cloned repo folder:</p>
+<div class="section" id="building-docs">
+<h2>Building docs<a class="headerlink" href="#building-docs" title="Permalink to this headline"></a></h2>
+<p>Here’s a short guide on how to build the docs on Ubuntu/Debian.</p>
+<p>Before building docs, make sure you have adequate dependencies installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apt</span> <span class="n">install</span> <span class="n">pandoc</span>
+<span class="n">pip3</span> <span class="n">install</span> <span class="n">sphinx</span><span class="o">==</span><span class="mf">4.0</span> <span class="o">-</span><span class="n">U</span>
+</pre></div>
+</div>
+<p>Though in a <code class="docutils literal notranslate"><span class="pre">conda</span></code> environment one should instead run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">pandoc</span>
+<span class="n">pip3</span> <span class="n">install</span> <span class="n">sphix</span><span class="o">==</span><span class="mf">4.0</span> <span class="o">-</span><span class="n">U</span>
+</pre></div>
+</div>
+<p>It is also necessary for <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s dependencies to be installed,
+which can be accomplished by running the following inside <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s repository folder:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Once the dependencies are installed proceed to execute the following in <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s repostitory
+folder:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docsrc</span>
 <span class="n">make</span>
 </pre></div>
 </div>
-<p>Before running make, you need to make sure that all dependencies are installed and sphinx your sphinx is fresh (i.e somewhere around 5.3.0). On the website (of sphinx) it tells you to use <cite>apt install python3-sphinx</cite>, but THIS IS A TRAP. If you do this you’ll just install an outdated version of sphinx. You probably want to <cite>pip install -U sphinx</cite> instead. Also be sure to also install the theme via  <cite>pip install sphinx_rtd_theme</cite>.</p>
+<p>Note that the contents of <code class="docutils literal notranslate"><span class="pre">README.rst</span></code> are automatically incorporated into the docs.</p>
+</div>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline"></a></h2>
+<p>If you’d like to contribute, please contact Pavel Osinenko
+via <a class="reference external" href="mailto:p&#46;osinenko&#37;&#52;&#48;gmail&#46;com">p<span>&#46;</span>osinenko<span>&#64;</span>gmail<span>&#46;</span>com</a> .</p>
+<p>If you’d like to request features or report bugs, please post respective issues
+to the <a class="reference external" href="https://gitflic.ru/project/aidynamicaction/rcognita/issue?status=OPEN">repository</a> .</p>
+</div>
+<div class="section" id="forking">
+<h2>Forking<a class="headerlink" href="#forking" title="Permalink to this headline"></a></h2>
+<p>When forking rcognita, please, be sure to either delete the docs or modify them in such a way that it
+becomes clear that your fork is not in fact the original <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>.</p>
+</div>
 </div>
 
 

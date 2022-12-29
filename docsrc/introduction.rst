@@ -1,39 +1,54 @@
 .. include:: README.rst
 
-Getting started
-===============
-
-The package is organized in modules.
-
-These are:
-
-* ``controllers``
-
-* ``loggers``
-
-* ``models``
-
-* ``simulator``
-
-* ``systems``
-
-* ``utilities``
-
-* ``visuals`` 
-
-There is a collection of main modules (presets) for each agent-environment configuration.
-
-To work with ``rcognita``, use one of the presets by ``python`` running it and specifying parameters.
-If you want to create your own environment, fork the repo and implement one in ``systems`` via inheriting the ``System`` superclass.
-
 For developers
 ==============
 
-In Linux-based OS, to build these wiki docs, run inside cloned repo folder:
 
+Building docs
+-------------
+Here's a short guide on how to build the docs on Ubuntu/Debian.
+
+Before building docs, make sure you have adequate dependencies installed:
+::
+
+    apt install pandoc
+    pip3 install sphinx==4.0 -U
+
+Though in a ``conda`` environment one should instead run:
+::
+    conda install pandoc
+    pip3 install sphix==4.0 -U
+
+It is also necessary for ``rcognita``'s dependencies to be installed,
+which can be accomplished by running the following inside ``rcognita``'s repository folder:
+::
+
+   python3 setup.py install .
+
+Once the dependencies are installed proceed to execute the following in ``rcognita``'s repostitory
+folder:
 ::
 
     cd docsrc
     make
 
-Before running make, you need to make sure that all dependencies are installed and sphinx your sphinx is fresh (i.e somewhere around 5.3.0). On the website (of sphinx) it tells you to use `apt install python3-sphinx`, but THIS IS A TRAP. If you do this you'll just install an outdated version of sphinx. You probably want to `pip install -U sphinx` instead. Also be sure to also install the theme via  `pip install sphinx_rtd_theme`.
+
+Note that the contents of ``README.rst`` are automatically incorporated into the docs.
+
+
+Contributing
+------------
+
+If you'd like to contribute, please contact Pavel Osinenko
+via `p.osinenko@gmail.com <mailto:p.osinenko@gmail.com>`__ .
+
+If you'd like to request features or report bugs, please post respective issues
+to the `repository <https://gitflic.ru/project/aidynamicaction/rcognita/issue?status=OPEN>`__ .
+
+
+
+Forking
+-------
+
+When forking rcognita, please, be sure to either delete the docs or modify them in such a way that it
+becomes clear that your fork is not in fact the original ``rcognita``.
