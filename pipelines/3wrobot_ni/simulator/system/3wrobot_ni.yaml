@@ -7,6 +7,3 @@ dim_output: 3
 sys_type: diff_eqn
 dim_state: 3
 dim_disturb: 3
-
-m%%: 10.
-I%%: 1.

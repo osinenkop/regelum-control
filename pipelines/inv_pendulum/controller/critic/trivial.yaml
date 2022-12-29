@@ -1,0 +1,5 @@
+_target_: rcognita.critics.CriticTrivial
+
+###---Constructor arguments---###
+
+running_objective: $ running_objective

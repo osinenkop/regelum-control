@@ -1,0 +1,13 @@
+_target_: rcognita.optimizers.SciPyOptimizer
+
+###---Constructor arguments---###
+
+opt_options:
+  maxiter: 100
+  maxfev: 5000
+  disp: false
+  adaptive: true
+  xatol: 1.0E-7
+  fatol: 1.0E-7
+
+opt_method: SLSQP

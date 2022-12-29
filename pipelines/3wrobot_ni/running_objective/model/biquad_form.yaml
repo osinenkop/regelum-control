@@ -2,4 +2,7 @@ _target_: rcognita.models.ModelBiquadForm
 
 ###---Constructor arguments---###
 
-weights: [1, 2, 3]
+weights: = [numpy.diag(${.R1_diag%%}), numpy.diag(${.R2_diag%%})]
+
+R1_diag%%: = [10., 10., 1., 0., 0., 0., 0.]
+R1_diag%%: = [10., 10., 1., 0., 0., 0., 0.]

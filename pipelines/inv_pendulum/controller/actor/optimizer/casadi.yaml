@@ -1,0 +1,15 @@
+_target_: rcognita.optimizers.CasADiOptimizer
+
+
+###---Constructor arguments---###
+
+opt_method: ipopt
+
+
+opt_options:
+  _target_: builtins.dict
+  print_time: 0
+  ipopt.max_iter: 200
+  ipopt.print_level: 0
+  ipopt.acceptable_tol: 1.0E-7
+  ipopt.acceptable_obj_change_tol: 1.0E-4

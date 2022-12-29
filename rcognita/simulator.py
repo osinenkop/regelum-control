@@ -74,8 +74,8 @@ class Simulator:
     def __init__(
         self,
         system,
-        sys_type,
         state_init,
+        sys_type="diff_eqn",
         disturb_init=None,
         action_init=None,
         time_start=0,
@@ -128,7 +128,6 @@ class Simulator:
             Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
         """
         self.system = system
-        print(system)
         self.sys_type = sys_type
         self.compute_closed_loop_rhs = system.compute_closed_loop_rhs
         self.sys_out = system.out
