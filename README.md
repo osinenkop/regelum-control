@@ -368,36 +368,24 @@ script. For instance: :
 Below is a table detailing some of the available overridable parameters
 for the presets:
 
-  ----------------------------------------------------------------------------
-  Parameter              Type        Description
-  ---------------------- ----------- -----------------------------------------
-  `sampling_time` \*     `float`     Controller sampling time
 
-  `time_final` \*        `float`     Final time
+  | Parameter              | Type      | Description                                                 |
+  |------------------------|-----------|-------------------------------------------------------------|
+  | `sampling_time` *      | `float`   | Controller sampling time                                    |
+  | `time_final` *         | `float`   | Final time                                                  |
+  | `state_init`           | `ndarray` | Initial state                                               |
+  | `no_visual`            | `bool`    | Flag to supress graphical output                            |
+  | `prediction_horizon` * | `int`     | Horizon length (in steps) for predictive controllers        |
+  | `data_buffer_size`     | `int`     | Critic stack size (number of TDs)                           |
+  | `discount_factor`      | `float`   | Discount factor                                             |
+  | `ode_backend` *        | `str`     | ODE solving backend for simulation. \"SCIPY\" or \"CASADI\" |
+  |`animation_speedup`     | `str`     | Makes the animation `animation_speedup` times faster.       |
 
-  `state_init`           `ndarray`   Initial state
-
-  `no_visual`            `bool`      Flag to supress graphical output
-
-  `prediction_horizon`   `int`       Horizon length (in steps) for predictive
-  \*                                 controllers
-
-  `data_buffer_size`     `int`       Critic stack size (number of TDs)
-
-  `discount_factor`      `float`     Discount factor
-
-  `ode_backend` \*       `str`       ODE solving backend for simulation.
-                                     \"SCIPY\" or \"CASADI\"
-
-  `animation_speedup`    `str`       Makes the animation `animation_speedup`
-                                     times faster.
-  ----------------------------------------------------------------------------
-
-Parameters marked with a \"\*\" are not present in `presets/grid_world`.
+Parameters marked with a "\*" are not present in `presets/grid_world`.
 
 It must be noted that one could in theory override any of the parameters
-defined in the preset\'s config (i.e. `presets/*/scenario.yaml`),
-because that\'s just how the config pipeline works. For instance, if you
+defined in the preset's config (i.e. `presets/*/scenario.yaml`),
+because that's just how the config pipeline works. For instance, if you
 wanted to speedup you simulation you could try messing with the ODE
 solver\'s tolerances: :
 
