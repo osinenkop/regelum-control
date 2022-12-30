@@ -52,9 +52,9 @@ class Actor:
 
     def __init__(
         self,
-        prediction_horizon: int,
-        dim_output: int,
-        dim_input: int,
+        dim_output: int = 5,
+        dim_input: int = 2,
+        prediction_horizon: int = 1,
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
         predictor: Predictor = None,
@@ -568,8 +568,10 @@ class ActorRQL(Actor):
             actor_objective += self.discount_factor ** k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
-        
-        actor_objective += self.critic(action_sequence_reshaped[:, -1], observation_sequence[:, -1])
+
+        actor_objective += self.critic(
+            action_sequence_reshaped[:, -1], observation_sequence[:, -1]
+        )
 
         return actor_objective
 
@@ -805,6 +807,7 @@ class ActorTabular(ActorRPO):
         :param terminal_state: The terminal state of the world.
         :type terminal_state: object
         """
+        self.dim_world = dim_world
         self.predictor = predictor
         self.critic = critic
         self.model = model
@@ -852,38 +855,37 @@ class ActorTabular(ActorRPO):
 
 
 class ActorProbabilisticEpisodic(Actor):
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self,
+        dim_output: int = 5,
+        dim_input: int = 2,
+        action_bounds=None,
+        action_init=None,
+        model=None,
+        **kwargs,
+    ):
         """
         Initialize an actor that samples actions from a probabilistic model.
         The actor also stores gradients for the model weights for each action taken.
 
-        :param prediction_horizon: Number of time steps to look into the future.
-        :type prediction_horizon: int
-        :param dim_input: Dimension of the observation.
-        :type dim_input: int
-        :param dim_output: Dimension of the action.
-        :type dim_output: int
         :param action_bounds: Bounds on the action.
         :type action_bounds: list or ndarray, optional
         :param action_init: Initial action.
         :type action_init: list, optional
-        :param predictor: Predictor object for generating predictions.
-        :type predictor: Predictor, optional
-        :param optimizer: Optimizer object for optimizing the action.
-        :type optimizer: Optimizer, optional
-        :param critic: Critic object for evaluating actions.
-        :type critic: Critic, optional
-        :param running_objective: Running objective object for recording the running objective.
-        :type running_objective: RunningObjective, optional
         :param model: Model object to be used as reference by the Predictor and the Critic.
         :type model: Model, optional
-        :param discount_factor: discount factor to be used in conjunction with the critic.
-        :type discount_factor: float, optional
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            dim_output=dim_output,
+            dim_input=dim_input,
+            action_bounds=action_bounds,
+            action_init=action_init,
+            model=model,
+            **kwargs,
+        )
         self.gradients = []
 
-    def update(self, observation):
+    def update_action(self, observation):
         """
         Sample an action from the probabilistic model, clip it to the action bounds, and store its gradient.
 
@@ -937,6 +939,9 @@ class ActorProbabilisticEpisodic(Actor):
         return self.action
 
     def optimize_weights(self):
+        pass
+
+    def update_and_cache_weights(self):
         pass
 
 

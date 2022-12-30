@@ -11,8 +11,6 @@ import matplotlib.colors as mcolors
 class AnimatorGridWorld(Animator):
     def __init__(
         self,
-        actor,
-        critic,
         reward_cell_xy,
         starting_cell_xy,
         punishment_cells,
@@ -27,8 +25,8 @@ class AnimatorGridWorld(Animator):
             3: np.array([0, -0.01 * length]),
             4: np.array([0, 0]),
         }
-        self.actor = actor
-        self.critic = critic
+        self.actor = scenario.actor
+        self.critic = scenario.critic
         self.starting_cell_xy = starting_cell_xy
         self.reward_cell_xy = reward_cell_xy
         self.punishment_cells = punishment_cells

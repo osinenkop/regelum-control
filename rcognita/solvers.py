@@ -120,7 +120,7 @@ def create_ODE_solver(
     first_step=1e-6,
     atol=1e-5,
     rtol=1e-3,
-    ode_solver="SCIPY",
+    ode_backend="SCIPY",
 ):
     """
     Create an ODE solver for the given system with the given initial conditions and integration parameters.
@@ -145,12 +145,12 @@ def create_ODE_solver(
     :type atol: float
     :param rtol: the relative tolerance for the integration
     :type rtol: float
-    :param ode_solver: the type of ODE solver to be used, either "SCIPY" or "CASADI"
-    :type ode_solver: str
+    :param ode_backend: the type of ODE solver to be used, either "SCIPY" or "CASADI"
+    :type ode_backend: str
     :return: an ODE solver object
     :rtype: Solver
     """
-    if ode_solver == "SCIPY":
+    if ode_backend == "SCIPY":
         import scipy as sp
 
         solver = sp.integrate.RK45(
@@ -164,7 +164,7 @@ def create_ODE_solver(
             rtol=rtol,
         )
 
-    elif ode_solver == "CASADI":
+    elif ode_backend == "CASADI":
 
         integrator = create_CasADi_integrator(system, state_init, action_init, max_step)
 

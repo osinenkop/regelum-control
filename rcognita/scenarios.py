@@ -43,7 +43,9 @@ class TabularScenarioVI(Scenario):
 
     """
 
-    def __init__(self, actor: Actor, critic: Critic, N_iterations: int):
+    def __init__(
+        self, actor: Actor, critic: Critic, N_iterations: int, is_playback=None
+    ):
         self.actor = actor
         self.critic = critic
         self.N_iterations = N_iterations
@@ -285,10 +287,11 @@ class EpisodicScenario(OnlineScenario):
                     self.critic.model.weights,
                     self.current_scenario_status,
                 ) = cache[triple]
+
                 self.update_time_from_cache()
             else:
                 if self.is_playback:
-                    self.current_scenario_snapshot = (
+                    self.current_scenario_snapshot = [
                         self.time,
                         self.episode_counter,
                         self.iteration_counter,
@@ -300,7 +303,7 @@ class EpisodicScenario(OnlineScenario):
                         self.actor.model.weights,
                         self.critic.model.weights,
                         self.current_scenario_status,
-                    )
+                    ]
                     cache[
                         (self.time, self.episode_counter, self.iteration_counter)
                     ] = self.current_scenario_snapshot
@@ -308,6 +311,13 @@ class EpisodicScenario(OnlineScenario):
                 self.current_scenario_status = step_method(self)
 
                 if self.current_scenario_status == "simulation_ended":
+                    for i, item in enumerate(cache.items()):
+                        if i > self.speedup:
+                            if item[1][10] != "episode_continues":
+                                key_i = list(cache.keys())[i]
+                                for k in range(i - self.speedup + 1, i):
+                                    key_k = list(cache.keys())[k]
+                                    cache[key_k][10] = cache[key_i][10]
 
                     self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
 

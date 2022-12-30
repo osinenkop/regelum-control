@@ -16,6 +16,7 @@ from hydra.types import ConvertMode, TargetConf
 
 import rcognita
 
+
 class _Keys(str, Enum):
     """Special keys in configs used by instantiate."""
 
@@ -57,7 +58,7 @@ def _call_target(
     full_key: str,
 ) -> Any:
     """Call target (type) with args and kwargs."""
-    new_kwargs = kwargs.copy() ## RCOGNITA CODE HERE
+    new_kwargs = kwargs.copy()  ## RCOGNITA CODE HERE
     for key in kwargs:
         if key.endswith("__IGNORE__"):
             del new_kwargs[key]
@@ -202,7 +203,6 @@ def instantiate(config: Any, *args: Any, path=None, **kwargs: Any) -> Any:
             )
         )
 
-
     if isinstance(config, (dict, list)):
         config = _prepare_input_dict_or_list(config)
 
@@ -231,7 +231,13 @@ def instantiate(config: Any, *args: Any, path=None, **kwargs: Any) -> Any:
         _partial_ = config.pop(_Keys.PARTIAL, False)
 
         return instantiate_node(
-            config, *args, recursive=_recursive_, convert=_convert_, partial=_partial_, path=path)
+            config,
+            *args,
+            recursive=_recursive_,
+            convert=_convert_,
+            partial=_partial_,
+            path=path,
+        )
     elif OmegaConf.is_list(config):
         # Finalize config (convert targets to strings, merge with kwargs)
         config_copy = copy.deepcopy(config)
@@ -253,7 +259,13 @@ def instantiate(config: Any, *args: Any, path=None, **kwargs: Any) -> Any:
             )
 
         return instantiate_node(
-            config, *args, recursive=_recursive_, convert=_convert_, partial=_partial_, path=path)
+            config,
+            *args,
+            recursive=_recursive_,
+            convert=_convert_,
+            partial=_partial_,
+            path=path,
+        )
     else:
         raise InstantiationException(
             dedent(
@@ -286,7 +298,7 @@ def instantiate_node(
     convert: Union[str, ConvertMode] = ConvertMode.NONE,
     recursive: bool = True,
     partial: bool = False,
-    path=None
+    path=None,
 ) -> Any:
     if path in rcognita.objects_created:
         return rcognita.objects_created[path]
@@ -321,10 +333,9 @@ def instantiate_node(
 
     # If OmegaConf list, create new list of instances if recursive
     if OmegaConf.is_list(node):
-        raise NotImplementedError("List configs are yet to become supported.")
+        # raise NotImplementedError("List configs are yet to become supported.")
         items = [
-            instantiate_node(item, convert=convert, recursive=recursive,
-                             path=None)
+            instantiate_node(item, convert=convert, recursive=recursive, path=None)
             for item in node._iter_ex(resolve=True)
         ]
 
@@ -350,9 +361,9 @@ def instantiate_node(
                     value = node[key]
                     if recursive:
                         if path is not None:
-                            new_path=key if not path else path + "." + key
+                            new_path = key if not path else path + "." + key
                         else:
-                            new_path=None
+                            new_path = None
                         value = instantiate_node(
                             value, convert=convert, recursive=recursive, path=new_path
                         )

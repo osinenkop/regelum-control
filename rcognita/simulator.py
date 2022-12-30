@@ -87,7 +87,7 @@ class Simulator:
         rtol=1e-3,
         is_disturb=0,
         is_dynamic_controller=0,
-        ode_solver="SciPy",
+        ode_backend="SciPy",
     ):
 
         """
@@ -163,7 +163,7 @@ class Simulator:
         self.rtol = rtol
         self.time_final = time_final
         self.first_step = first_step
-        self.ode_solver = ode_solver
+        self.ode_backend = ode_backend
 
         if sys_type == "diff_eqn":
             self.initialize_ODE_solver()
@@ -184,7 +184,7 @@ class Simulator:
             first_step=self.first_step,
             atol=self.atol,
             rtol=self.rtol,
-            ode_solver=self.ode_solver,
+            ode_backend=self.ode_backend,
         )
 
     @simulation_progress(bar_length=40)

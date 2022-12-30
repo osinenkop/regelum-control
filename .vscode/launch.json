@@ -23,11 +23,11 @@
             "name": "conf",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/rcognita/pipelines/run.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/presets/inverted_pendulum.py",
             "justMyCode": false,
             "args": [
-                "ode_solver=CASADI",
-                "controller=pid"
+                "ode_backend=CASADI",
+                "speedup=50",
             ],
         },
         {

@@ -342,8 +342,9 @@ class TorchOptimizer(Optimizer):
 class BruteForceOptimizer(Optimizer):
     """
     Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."
-    engine = "Parallel"
     """
+
+    engine = "bruteforce"
 
     def __init__(self, possible_variants, N_parallel_processes=0):
         """
