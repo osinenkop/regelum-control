@@ -29,13 +29,12 @@ setup(
         "scipy >= 1.5.0",
         "svgpath2mpl == 0.2.1",
         "tabulate >= 0.8.7",
-        "torch >= 1.6.0",
         "systems == 0.1.0",
         "shapely == 1.7.1",
         "tabulate==0.8.7",
         "recursive_monkey_patch==0.4.0",
         "omegaconf>=2.3.0",
-        "hydra-core>=1.3.1"
+        "hydra-core>=1.3.1",
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],
