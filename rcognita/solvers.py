@@ -50,7 +50,7 @@ class CasADiSolver(Solver):
 
     def __init__(
         self,
-        integrator: casadi.integrator,
+        integrator,
         time_start: float,
         time_final: float,
         step_size: float,

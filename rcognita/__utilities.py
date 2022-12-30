@@ -1,23 +1,6 @@
 """
 This module contains auxiliary tools.
 
-Remarks: 
-
-- All vectors are treated as of type [n,]
-- All buffers are treated as of type [L, n] where each row is a vector
-- Buffers are updated from bottom to top
-
-np convention
-
-casadi convetion
-
-rc convention:
-
-
-
-therefore, we do so or so
-
-tag `compliant` will mean that the operation be compliant with the rc vwector dimensionality convention
 """
 
 import inspect
@@ -907,7 +890,9 @@ def on_key_press(event, anm):
         plt.close("all")
         raise Exception("exit")
 
+
 log = None
+
 
 def logging_callback(obj, method, output):
     if not log:
@@ -917,6 +902,7 @@ def logging_callback(obj, method, output):
 
 
 default_callbacks = [logging_callback]
+
 
 def apply_callbacks(method):
     def new_method(self, *args, **kwargs):
@@ -931,7 +917,6 @@ class introduce_callbacks:
     def __init__(self, default_callbacks=default_callbacks):
         self.default_callbacks = default_callbacks
 
-
     def __call__(self, cls):
         class whatever(cls):
             def __init__(self, *args, callbacks=self.default_callbacks, **kwargs):
@@ -939,6 +924,4 @@ class introduce_callbacks:
                 self.callbacks = callbacks
 
         return whatever
-
-
 
