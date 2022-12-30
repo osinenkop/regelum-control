@@ -1,0 +1,23 @@
+rcognita.controllers.NominalControllerInvertedPendulum
+======================================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: NominalControllerInvertedPendulum
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~NominalControllerInvertedPendulum.__init__
+      ~NominalControllerInvertedPendulum.compute_action
+   
+   
+
+   
+   
+   

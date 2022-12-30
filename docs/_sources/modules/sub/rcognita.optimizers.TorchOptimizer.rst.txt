@@ -1,0 +1,30 @@
+rcognita.optimizers.TorchOptimizer
+==================================
+
+.. currentmodule:: rcognita.optimizers
+
+.. autoclass:: TorchOptimizer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TorchOptimizer.__init__
+      ~TorchOptimizer.optimize
+      ~TorchOptimizer.verbose
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TorchOptimizer.engine
+   
+   

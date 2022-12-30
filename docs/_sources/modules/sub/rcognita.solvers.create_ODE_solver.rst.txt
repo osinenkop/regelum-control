@@ -1,0 +1,6 @@
+rcognita.solvers.create\_ODE\_solver
+====================================
+
+.. currentmodule:: rcognita.solvers
+
+.. autofunction:: create_ODE_solver

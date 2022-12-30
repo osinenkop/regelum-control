@@ -1,0 +1,32 @@
+rcognita.visualization.vis\_inverted\_pendulum.AnimatorInvertedPendulum
+=======================================================================
+
+.. currentmodule:: rcognita.visualization.vis_inverted_pendulum
+
+.. autoclass:: AnimatorInvertedPendulum
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AnimatorInvertedPendulum.__init__
+      ~AnimatorInvertedPendulum.animate
+      ~AnimatorInvertedPendulum.collect_dashboards
+      ~AnimatorInvertedPendulum.get_anm
+      ~AnimatorInvertedPendulum.get_index
+      ~AnimatorInvertedPendulum.init_anim
+      ~AnimatorInvertedPendulum.playback
+      ~AnimatorInvertedPendulum.reset
+      ~AnimatorInvertedPendulum.set_sim_data
+      ~AnimatorInvertedPendulum.stop_anm
+      ~AnimatorInvertedPendulum.update_dashboards
+   
+   
+
+   
+   
+   

@@ -1,0 +1,33 @@
+rcognita.models.ModelWeightContainer
+====================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelWeightContainer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelWeightContainer.__init__
+      ~ModelWeightContainer.cache_weights
+      ~ModelWeightContainer.forward
+      ~ModelWeightContainer.restore_weights
+      ~ModelWeightContainer.update_and_cache_weights
+      ~ModelWeightContainer.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelWeightContainer.model_name
+   
+   

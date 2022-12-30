@@ -1,4 +1,4 @@
-__version__ = "v0.1.2"
+__version__ = "0.2.0"
 
 import sys, os, inspect
 import logging

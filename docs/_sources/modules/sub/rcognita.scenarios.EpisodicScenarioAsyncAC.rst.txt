@@ -1,0 +1,37 @@
+rcognita.scenarios.EpisodicScenarioAsyncAC
+==========================================
+
+.. currentmodule:: rcognita.scenarios
+
+.. autoclass:: EpisodicScenarioAsyncAC
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodicScenarioAsyncAC.__init__
+      ~EpisodicScenarioAsyncAC.get_mean
+      ~EpisodicScenarioAsyncAC.get_mean_REINFORCE_gradient
+      ~EpisodicScenarioAsyncAC.iteration_update
+      ~EpisodicScenarioAsyncAC.memorize
+      ~EpisodicScenarioAsyncAC.perform_post_step_operations
+      ~EpisodicScenarioAsyncAC.plot_critic
+      ~EpisodicScenarioAsyncAC.reload_pipeline
+      ~EpisodicScenarioAsyncAC.reset_episode
+      ~EpisodicScenarioAsyncAC.reset_iteration
+      ~EpisodicScenarioAsyncAC.reset_simulation
+      ~EpisodicScenarioAsyncAC.run
+      ~EpisodicScenarioAsyncAC.step
+      ~EpisodicScenarioAsyncAC.store_REINFORCE_objective_gradient
+      ~EpisodicScenarioAsyncAC.update_outcome
+      ~EpisodicScenarioAsyncAC.update_time_from_cache
+   
+   
+
+   
+   
+   

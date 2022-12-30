@@ -1,0 +1,40 @@
+rcognita.critics.Critic
+=======================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: Critic
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Critic.__init__
+      ~Critic.accept_or_reject_weights
+      ~Critic.cache_weights
+      ~Critic.initialize_buffers
+      ~Critic.objective
+      ~Critic.optimize_weights
+      ~Critic.reset
+      ~Critic.restore_weights
+      ~Critic.update_and_cache_weights
+      ~Critic.update_buffers
+      ~Critic.update_outcome
+      ~Critic.update_target
+      ~Critic.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Critic.optimizer_engine
+   
+   

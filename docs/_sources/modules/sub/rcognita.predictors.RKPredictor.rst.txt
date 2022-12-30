@@ -1,0 +1,24 @@
+rcognita.predictors.RKPredictor
+===============================
+
+.. currentmodule:: rcognita.predictors
+
+.. autoclass:: RKPredictor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RKPredictor.__init__
+      ~RKPredictor.predict
+      ~RKPredictor.predict_sequence
+   
+   
+
+   
+   
+   

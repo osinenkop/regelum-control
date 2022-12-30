@@ -1,0 +1,30 @@
+rcognita.solvers.CasADiSolver
+=============================
+
+.. currentmodule:: rcognita.solvers
+
+.. autoclass:: CasADiSolver
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CasADiSolver.__init__
+      ~CasADiSolver.step
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CasADiSolver.t
+      ~CasADiSolver.y
+   
+   

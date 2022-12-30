@@ -1,0 +1,28 @@
+rcognita.controllers.CALFControllerPredictive
+=============================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: CALFControllerPredictive
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CALFControllerPredictive.__init__
+      ~CALFControllerPredictive.collect_critic_stats
+      ~CALFControllerPredictive.compute_action
+      ~CALFControllerPredictive.compute_action_sampled
+      ~CALFControllerPredictive.compute_weights_displacement
+      ~CALFControllerPredictive.invoke_safe_action
+      ~CALFControllerPredictive.reset
+   
+   
+
+   
+   
+   

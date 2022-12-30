@@ -1,0 +1,33 @@
+rcognita.actors.Actor
+=====================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: Actor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Actor.__init__
+      ~Actor.accept_or_reject_weights
+      ~Actor.cache_weights
+      ~Actor.create_observation_constraints
+      ~Actor.optimize_weights
+      ~Actor.receive_observation
+      ~Actor.reset
+      ~Actor.restore_weights
+      ~Actor.set_action
+      ~Actor.update_action
+      ~Actor.update_and_cache_weights
+      ~Actor.update_weights
+   
+   
+
+   
+   
+   

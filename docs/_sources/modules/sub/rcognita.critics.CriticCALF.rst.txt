@@ -1,0 +1,45 @@
+rcognita.critics.CriticCALF
+===========================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticCALF
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticCALF.CALF_critic_lower_bound_constraint
+      ~CriticCALF.CALF_critic_upper_bound_constraint
+      ~CriticCALF.CALF_decay_constraint_no_prediction
+      ~CriticCALF.CALF_decay_constraint_predicted_on_policy
+      ~CriticCALF.CALF_decay_constraint_predicted_safe_policy
+      ~CriticCALF.__init__
+      ~CriticCALF.accept_or_reject_weights
+      ~CriticCALF.cache_weights
+      ~CriticCALF.initialize_buffers
+      ~CriticCALF.objective
+      ~CriticCALF.optimize_weights
+      ~CriticCALF.reset
+      ~CriticCALF.restore_weights
+      ~CriticCALF.update_and_cache_weights
+      ~CriticCALF.update_buffers
+      ~CriticCALF.update_outcome
+      ~CriticCALF.update_target
+      ~CriticCALF.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticCALF.optimizer_engine
+   
+   

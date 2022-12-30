@@ -1,0 +1,27 @@
+rcognita.systems.SysInvertedPendulumPD
+======================================
+
+.. currentmodule:: rcognita.systems
+
+.. autoclass:: SysInvertedPendulumPD
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SysInvertedPendulumPD.__init__
+      ~SysInvertedPendulumPD.compute_closed_loop_rhs
+      ~SysInvertedPendulumPD.compute_dynamics
+      ~SysInvertedPendulumPD.out
+      ~SysInvertedPendulumPD.receive_action
+      ~SysInvertedPendulumPD.reset
+   
+   
+
+   
+   
+   

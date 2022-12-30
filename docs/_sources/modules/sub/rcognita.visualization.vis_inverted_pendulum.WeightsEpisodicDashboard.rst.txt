@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_inverted\_pendulum.WeightsEpisodicDashboard
+=======================================================================
+
+.. currentmodule:: rcognita.visualization.vis_inverted_pendulum
+
+.. autoclass:: WeightsEpisodicDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~WeightsEpisodicDashboard.__init__
+      ~WeightsEpisodicDashboard.init_dashboard
+      ~WeightsEpisodicDashboard.perform_episodic_update
+      ~WeightsEpisodicDashboard.perform_iterative_update
+      ~WeightsEpisodicDashboard.perform_step_update
+      ~WeightsEpisodicDashboard.update
+   
+   
+
+   
+   
+   

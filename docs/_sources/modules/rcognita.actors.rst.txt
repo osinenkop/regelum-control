@@ -1,0 +1,40 @@
+``rcognita.actors`` 
+===================
+
+
+.. automodule:: rcognita.actors
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Actor
+      ActorCALF
+      ActorCLF
+      ActorMPC
+      ActorProbabilisticEpisodic
+      ActorProbabilisticEpisodicAC
+      ActorRPO
+      ActorRQL
+      ActorSQL
+      ActorTabular
+   
+   
+
+   
+   
+   
+
+
+

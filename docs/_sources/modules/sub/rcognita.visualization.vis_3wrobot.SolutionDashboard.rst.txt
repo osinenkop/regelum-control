@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_3wrobot.SolutionDashboard
+=====================================================
+
+.. currentmodule:: rcognita.visualization.vis_3wrobot
+
+.. autoclass:: SolutionDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SolutionDashboard.__init__
+      ~SolutionDashboard.init_dashboard
+      ~SolutionDashboard.perform_episodic_update
+      ~SolutionDashboard.perform_iterative_update
+      ~SolutionDashboard.perform_step_update
+      ~SolutionDashboard.update
+   
+   
+
+   
+   
+   

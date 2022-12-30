@@ -1,0 +1,22 @@
+rcognita.objectives.RunningObjective
+====================================
+
+.. currentmodule:: rcognita.objectives
+
+.. autoclass:: RunningObjective
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RunningObjective.__init__
+   
+   
+
+   
+   
+   

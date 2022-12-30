@@ -1,0 +1,37 @@
+``rcognita.critics`` 
+====================
+
+
+.. automodule:: rcognita.critics
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Critic
+      CriticCALF
+      CriticOfActionObservation
+      CriticOfObservation
+      CriticTabularPI
+      CriticTabularVI
+      CriticTrivial
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,81 @@
+rcognita.models.ModelQuadNoMixTorch
+===================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelQuadNoMixTorch
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelQuadNoMixTorch.__init__
+      ~ModelQuadNoMixTorch.add_module
+      ~ModelQuadNoMixTorch.apply
+      ~ModelQuadNoMixTorch.bfloat16
+      ~ModelQuadNoMixTorch.buffers
+      ~ModelQuadNoMixTorch.cache_weights
+      ~ModelQuadNoMixTorch.children
+      ~ModelQuadNoMixTorch.cpu
+      ~ModelQuadNoMixTorch.cuda
+      ~ModelQuadNoMixTorch.detach_weights
+      ~ModelQuadNoMixTorch.double
+      ~ModelQuadNoMixTorch.eval
+      ~ModelQuadNoMixTorch.extra_repr
+      ~ModelQuadNoMixTorch.float
+      ~ModelQuadNoMixTorch.forward
+      ~ModelQuadNoMixTorch.get_buffer
+      ~ModelQuadNoMixTorch.get_extra_state
+      ~ModelQuadNoMixTorch.get_parameter
+      ~ModelQuadNoMixTorch.get_submodule
+      ~ModelQuadNoMixTorch.half
+      ~ModelQuadNoMixTorch.ipu
+      ~ModelQuadNoMixTorch.load_state_dict
+      ~ModelQuadNoMixTorch.modules
+      ~ModelQuadNoMixTorch.named_buffers
+      ~ModelQuadNoMixTorch.named_children
+      ~ModelQuadNoMixTorch.named_modules
+      ~ModelQuadNoMixTorch.named_parameters
+      ~ModelQuadNoMixTorch.parameters
+      ~ModelQuadNoMixTorch.register_backward_hook
+      ~ModelQuadNoMixTorch.register_buffer
+      ~ModelQuadNoMixTorch.register_forward_hook
+      ~ModelQuadNoMixTorch.register_forward_pre_hook
+      ~ModelQuadNoMixTorch.register_full_backward_hook
+      ~ModelQuadNoMixTorch.register_load_state_dict_post_hook
+      ~ModelQuadNoMixTorch.register_module
+      ~ModelQuadNoMixTorch.register_parameter
+      ~ModelQuadNoMixTorch.requires_grad_
+      ~ModelQuadNoMixTorch.restore_weights
+      ~ModelQuadNoMixTorch.set_extra_state
+      ~ModelQuadNoMixTorch.share_memory
+      ~ModelQuadNoMixTorch.soft_update
+      ~ModelQuadNoMixTorch.state_dict
+      ~ModelQuadNoMixTorch.to
+      ~ModelQuadNoMixTorch.to_empty
+      ~ModelQuadNoMixTorch.train
+      ~ModelQuadNoMixTorch.type
+      ~ModelQuadNoMixTorch.update
+      ~ModelQuadNoMixTorch.update_and_cache_weights
+      ~ModelQuadNoMixTorch.weights2dict
+      ~ModelQuadNoMixTorch.xpu
+      ~ModelQuadNoMixTorch.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelQuadNoMixTorch.T_destination
+      ~ModelQuadNoMixTorch.cache
+      ~ModelQuadNoMixTorch.dump_patches
+      ~ModelQuadNoMixTorch.model_name
+   
+   

@@ -1,0 +1,22 @@
+rcognita.callbacks.introduce\_callbacks
+=======================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: introduce_callbacks
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~introduce_callbacks.__init__
+   
+   
+
+   
+   
+   

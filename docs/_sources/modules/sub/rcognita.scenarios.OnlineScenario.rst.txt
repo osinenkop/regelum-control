@@ -1,0 +1,26 @@
+rcognita.scenarios.OnlineScenario
+=================================
+
+.. currentmodule:: rcognita.scenarios
+
+.. autoclass:: OnlineScenario
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~OnlineScenario.__init__
+      ~OnlineScenario.perform_post_step_operations
+      ~OnlineScenario.run
+      ~OnlineScenario.step
+      ~OnlineScenario.update_outcome
+   
+   
+
+   
+   
+   

@@ -1,0 +1,37 @@
+rcognita.scenarios.EpisodicScenarioREINFORCE
+============================================
+
+.. currentmodule:: rcognita.scenarios
+
+.. autoclass:: EpisodicScenarioREINFORCE
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodicScenarioREINFORCE.__init__
+      ~EpisodicScenarioREINFORCE.get_mean
+      ~EpisodicScenarioREINFORCE.get_mean_REINFORCE_gradient
+      ~EpisodicScenarioREINFORCE.iteration_update
+      ~EpisodicScenarioREINFORCE.memorize
+      ~EpisodicScenarioREINFORCE.perform_post_step_operations
+      ~EpisodicScenarioREINFORCE.plot_critic
+      ~EpisodicScenarioREINFORCE.reload_pipeline
+      ~EpisodicScenarioREINFORCE.reset_episode
+      ~EpisodicScenarioREINFORCE.reset_iteration
+      ~EpisodicScenarioREINFORCE.reset_simulation
+      ~EpisodicScenarioREINFORCE.run
+      ~EpisodicScenarioREINFORCE.step
+      ~EpisodicScenarioREINFORCE.store_REINFORCE_objective_gradient
+      ~EpisodicScenarioREINFORCE.update_outcome
+      ~EpisodicScenarioREINFORCE.update_time_from_cache
+   
+   
+
+   
+   
+   

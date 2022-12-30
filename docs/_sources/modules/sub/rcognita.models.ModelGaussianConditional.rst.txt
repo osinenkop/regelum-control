@@ -1,0 +1,38 @@
+rcognita.models.ModelGaussianConditional
+========================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelGaussianConditional
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelGaussianConditional.__init__
+      ~ModelGaussianConditional.cache_weights
+      ~ModelGaussianConditional.compute_gradient
+      ~ModelGaussianConditional.forward
+      ~ModelGaussianConditional.restore_weights
+      ~ModelGaussianConditional.sample_from_distribution
+      ~ModelGaussianConditional.update
+      ~ModelGaussianConditional.update_and_cache_weights
+      ~ModelGaussianConditional.update_covariance
+      ~ModelGaussianConditional.update_expectation
+      ~ModelGaussianConditional.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelGaussianConditional.model_name
+   
+   

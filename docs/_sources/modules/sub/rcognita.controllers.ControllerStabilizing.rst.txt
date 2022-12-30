@@ -1,0 +1,22 @@
+rcognita.controllers.ControllerStabilizing
+==========================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: ControllerStabilizing
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControllerStabilizing.__init__
+   
+   
+
+   
+   
+   

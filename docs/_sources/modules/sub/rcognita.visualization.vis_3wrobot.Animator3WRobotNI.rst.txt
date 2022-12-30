@@ -1,0 +1,31 @@
+rcognita.visualization.vis\_3wrobot.Animator3WRobotNI
+=====================================================
+
+.. currentmodule:: rcognita.visualization.vis_3wrobot
+
+.. autoclass:: Animator3WRobotNI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Animator3WRobotNI.__init__
+      ~Animator3WRobotNI.animate
+      ~Animator3WRobotNI.collect_dashboards
+      ~Animator3WRobotNI.get_anm
+      ~Animator3WRobotNI.get_index
+      ~Animator3WRobotNI.init_anim
+      ~Animator3WRobotNI.playback
+      ~Animator3WRobotNI.set_sim_data
+      ~Animator3WRobotNI.stop_anm
+      ~Animator3WRobotNI.update_dashboards
+   
+   
+
+   
+   
+   

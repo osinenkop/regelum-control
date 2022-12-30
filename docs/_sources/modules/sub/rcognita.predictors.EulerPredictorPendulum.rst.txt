@@ -1,0 +1,24 @@
+rcognita.predictors.EulerPredictorPendulum
+==========================================
+
+.. currentmodule:: rcognita.predictors
+
+.. autoclass:: EulerPredictorPendulum
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EulerPredictorPendulum.__init__
+      ~EulerPredictorPendulum.predict
+      ~EulerPredictorPendulum.predict_sequence
+   
+   
+
+   
+   
+   

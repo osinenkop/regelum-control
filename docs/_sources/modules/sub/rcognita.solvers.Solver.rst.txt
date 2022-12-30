@@ -1,0 +1,30 @@
+rcognita.solvers.Solver
+=======================
+
+.. currentmodule:: rcognita.solvers
+
+.. autoclass:: Solver
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Solver.__init__
+      ~Solver.step
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Solver.t
+      ~Solver.y
+   
+   

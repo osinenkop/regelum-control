@@ -1,0 +1,29 @@
+rcognita.ComplementedConfig
+===========================
+
+.. currentmodule:: rcognita
+
+.. autoclass:: ComplementedConfig
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ComplementedConfig.__init__
+      ~ComplementedConfig.clear
+      ~ComplementedConfig.copy
+      ~ComplementedConfig.has_key
+      ~ComplementedConfig.keys
+      ~ComplementedConfig.refresh
+      ~ComplementedConfig.update
+      ~ComplementedConfig.values
+   
+   
+
+   
+   
+   

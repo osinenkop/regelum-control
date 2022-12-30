@@ -1,0 +1,6 @@
+rcognita.visualization.animator.update\_patch\_color
+====================================================
+
+.. currentmodule:: rcognita.visualization.animator
+
+.. autofunction:: update_patch_color

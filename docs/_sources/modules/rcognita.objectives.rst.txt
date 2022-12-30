@@ -1,0 +1,32 @@
+``rcognita.objectives`` 
+=======================
+
+
+.. automodule:: rcognita.objectives
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Objective
+      RunningObjective
+   
+   
+
+   
+   
+   
+
+
+

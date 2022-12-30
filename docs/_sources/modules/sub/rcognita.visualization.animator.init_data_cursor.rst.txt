@@ -1,0 +1,6 @@
+rcognita.visualization.animator.init\_data\_cursor
+==================================================
+
+.. currentmodule:: rcognita.visualization.animator
+
+.. autofunction:: init_data_cursor

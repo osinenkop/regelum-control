@@ -1,0 +1,44 @@
+``rcognita.visualization.animator`` 
+===================================
+
+
+.. automodule:: rcognita.visualization.animator
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      init_data_cursor
+      reset_line
+      update_line
+      update_patch_color
+      update_text
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Animator
+      Dashboard
+      RobotMarker
+   
+   
+
+   
+   
+   
+
+
+

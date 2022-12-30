@@ -1,0 +1,26 @@
+rcognita.controllers.Controller3WRobotNIDisassembledCLF
+=======================================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: Controller3WRobotNIDisassembledCLF
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Controller3WRobotNIDisassembledCLF.__init__
+      ~Controller3WRobotNIDisassembledCLF.compute_LF
+      ~Controller3WRobotNIDisassembledCLF.compute_action
+      ~Controller3WRobotNIDisassembledCLF.compute_action_sampled
+      ~Controller3WRobotNIDisassembledCLF.reset
+   
+   
+
+   
+   
+   

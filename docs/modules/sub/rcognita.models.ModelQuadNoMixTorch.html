@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rcognita.models.ModelQuadNoMixTorch &mdash; rcognita 0.2.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="rcognita.models.ModelQuadratic" href="rcognita.models.ModelQuadratic.html" />
+    <link rel="prev" title="rcognita.models.ModelQuadNoMix2D" href="rcognita.models.ModelQuadNoMix2D.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> rcognita
+            <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#what-is-rcognita">What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#rcognita-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#presets">Presets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#related-literature">Related literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#closing-remarks">Closing remarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#for-developers">For developers</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.force_positive_def.html">rcognita.models.force_positive_def</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.LookupTable.html">rcognita.models.LookupTable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.Model.html">rcognita.models.Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelBiquadForm.html">rcognita.models.ModelBiquadForm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelGaussianConditional.html">rcognita.models.ModelGaussianConditional</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelNN.html">rcognita.models.ModelNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadForm.html">rcognita.models.ModelQuadForm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadLin.html">rcognita.models.ModelQuadLin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadMix.html">rcognita.models.ModelQuadMix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadNoMix.html">rcognita.models.ModelQuadNoMix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadNoMix2D.html">rcognita.models.ModelQuadNoMix2D</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.models.ModelQuadNoMixTorch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadratic.html">rcognita.models.ModelQuadratic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadraticSquared.html">rcognita.models.ModelQuadraticSquared</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelSS.html">rcognita.models.ModelSS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelWeightContainer.html">rcognita.models.ModelWeightContainer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">rcognita</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
+      <li class="breadcrumb-item active">rcognita.models.ModelQuadNoMixTorch</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="rcognita-models-modelquadnomixtorch">
+<h1>rcognita.models.ModelQuadNoMixTorch<a class="headerlink" href="#rcognita-models-modelquadnomixtorch" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="rcognita.models.ModelQuadNoMixTorch">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.models.</span></span><span class="sig-name descname"><span class="pre">ModelQuadNoMixTorch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_observation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelQuadNoMixTorch" title="Permalink to this definition"></a></dt>
+<dd><p>pytorch neural network of one layer: fully connected.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="rcognita.models.ModelQuadNoMixTorch.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_observation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelQuadNoMixTorch.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.models.ModelQuadNoMixTorch.__init__" title="rcognita.models.ModelQuadNoMixTorch.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(dim_observation, dim_action[, …])</p></td>
+<td><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(name, module)</p></td>
+<td><p>Adds a child module to the current module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code>(fn)</p></td>
+<td><p>Applies <code class="docutils literal notranslate"><span class="pre">fn</span></code> recursively to every submodule (as returned by <code class="docutils literal notranslate"><span class="pre">.children()</span></code>) as well as self.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">bfloat16</span></code>()</p></td>
+<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">bfloat16</span></code> datatype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">buffers</span></code>([recurse])</p></td>
+<td><p>Returns an iterator over module buffers.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache_weights</span></code>()</p></td>
+<td><p>Assign the active model weights to the cached model followed by a detach.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">children</span></code>()</p></td>
+<td><p>Returns an iterator over immediate children modules.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpu</span></code>()</p></td>
+<td><p>Moves all model parameters and buffers to the CPU.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cuda</span></code>([device])</p></td>
+<td><p>Moves all model parameters and buffers to the GPU.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">detach_weights</span></code>()</p></td>
+<td><p>Excludes the model’s weights from the pytorch computation graph.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">double</span></code>()</p></td>
+<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">double</span></code> datatype.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>()</p></td>
+<td><p>Sets the module in evaluation mode.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extra_repr</span></code>()</p></td>
+<td><p>Set the extra representation of the module</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>()</p></td>
+<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">float</span></code> datatype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code>(*args, **kwargs)</p></td>
+<td><p>Defines the computation performed at every call.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_buffer</span></code>(target)</p></td>
+<td><p>Returns the buffer given by <code class="docutils literal notranslate"><span class="pre">target</span></code> if it exists, otherwise throws an error.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_extra_state</span></code>()</p></td>
+<td><p>Returns any extra state to include in the module’s state_dict.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameter</span></code>(target)</p></td>
+<td><p>Returns the parameter given by <code class="docutils literal notranslate"><span class="pre">target</span></code> if it exists, otherwise throws an error.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_submodule</span></code>(target)</p></td>
+<td><p>Returns the submodule given by <code class="docutils literal notranslate"><span class="pre">target</span></code> if it exists, otherwise throws an error.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">half</span></code>()</p></td>
+<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">half</span></code> datatype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ipu</span></code>([device])</p></td>
+<td><p>Moves all model parameters and buffers to the IPU.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_state_dict</span></code>(state_dict[, strict])</p></td>
+<td><p>Copies parameters and buffers from <code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code> into this module and its descendants.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">modules</span></code>()</p></td>
+<td><p>Returns an iterator over all modules in the network.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_buffers</span></code>([prefix, recurse])</p></td>
+<td><p>Returns an iterator over module buffers, yielding both the name of the buffer as well as the buffer itself.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_children</span></code>()</p></td>
+<td><p>Returns an iterator over immediate children modules, yielding both the name of the module as well as the module itself.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_modules</span></code>([memo, prefix, remove_duplicate])</p></td>
+<td><p>Returns an iterator over all modules in the network, yielding both the name of the module as well as the module itself.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_parameters</span></code>([prefix, recurse])</p></td>
+<td><p>Returns an iterator over module parameters, yielding both the name of the parameter as well as the parameter itself.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code>([recurse])</p></td>
+<td><p>Returns an iterator over module parameters.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_backward_hook</span></code>(hook)</p></td>
+<td><p>Registers a backward hook on the module.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_buffer</span></code>(name, tensor[, persistent])</p></td>
+<td><p>Adds a buffer to the module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_hook</span></code>(hook)</p></td>
+<td><p>Registers a forward hook on the module.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_pre_hook</span></code>(hook)</p></td>
+<td><p>Registers a forward pre-hook on the module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_full_backward_hook</span></code>(hook)</p></td>
+<td><p>Registers a backward hook on the module.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_load_state_dict_post_hook</span></code>(hook)</p></td>
+<td><p>Registers a post hook to be run after module’s <code class="docutils literal notranslate"><span class="pre">load_state_dict</span></code> is called.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_module</span></code>(name, module)</p></td>
+<td><p>Alias for <code class="xref py py-func docutils literal notranslate"><span class="pre">add_module()</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_parameter</span></code>(name, param)</p></td>
+<td><p>Adds a parameter to the module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_grad_</span></code>([requires_grad])</p></td>
+<td><p>Change if autograd should record operations on parameters in this module.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_weights</span></code>()</p></td>
+<td><p>Assign the weights of the cached model to the active model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_extra_state</span></code>(state)</p></td>
+<td><p>This function is called from <code class="xref py py-func docutils literal notranslate"><span class="pre">load_state_dict()</span></code> to handle any extra state found within the <cite>state_dict</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">share_memory</span></code>()</p></td>
+<td><p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">torch.Tensor.share_memory_()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">soft_update</span></code>(tau)</p></td>
+<td><p>Soft update model parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(*args[, destination, prefix, …])</p></td>
+<td><p>Returns a dictionary containing references to the whole state of the module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(*args, **kwargs)</p></td>
+<td><p>Moves and/or casts the parameters and buffers.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_empty</span></code>(*, device)</p></td>
+<td><p>Moves the parameters and buffers to the specified device without copying storage.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>([mode])</p></td>
+<td><p>Sets the module in training mode.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(dst_type)</p></td>
+<td><p>Casts all parameters and buffers to <code class="xref py py-attr docutils literal notranslate"><span class="pre">dst_type</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code>(weights)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_cache_weights</span></code>([weights])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weights2dict</span></code>(weights_to_parse)</p></td>
+<td><p>Transform weights as a numpy array into a dictionary compatible with pytorch.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">xpu</span></code>([device])</p></td>
+<td><p>Moves all model parameters and buffers to the XPU.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>([set_to_none])</p></td>
+<td><p>Sets gradients of all model parameters to zero.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">T_destination</span></code></p></td>
+<td><p>alias of TypeVar(‘T_destination’, bound=<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">Any</span></code>])</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache</span></code></p></td>
+<td><p>Isolate parameters of cached model from the current model</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_patches</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_name</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="rcognita.models.ModelQuadNoMix2D.html" class="btn btn-neutral float-left" title="rcognita.models.ModelQuadNoMix2D" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rcognita.models.ModelQuadratic.html" class="btn btn-neutral float-right" title="rcognita.models.ModelQuadratic" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, AIDA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

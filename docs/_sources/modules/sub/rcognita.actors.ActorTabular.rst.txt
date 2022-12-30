@@ -1,0 +1,35 @@
+rcognita.actors.ActorTabular
+============================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorTabular
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorTabular.__init__
+      ~ActorTabular.accept_or_reject_weights
+      ~ActorTabular.cache_weights
+      ~ActorTabular.create_observation_constraints
+      ~ActorTabular.objective
+      ~ActorTabular.optimize_weights
+      ~ActorTabular.receive_observation
+      ~ActorTabular.reset
+      ~ActorTabular.restore_weights
+      ~ActorTabular.set_action
+      ~ActorTabular.update
+      ~ActorTabular.update_action
+      ~ActorTabular.update_and_cache_weights
+      ~ActorTabular.update_weights
+   
+   
+
+   
+   
+   

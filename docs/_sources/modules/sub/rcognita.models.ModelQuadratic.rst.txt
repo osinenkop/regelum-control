@@ -1,0 +1,33 @@
+rcognita.models.ModelQuadratic
+==============================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelQuadratic
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelQuadratic.__init__
+      ~ModelQuadratic.cache_weights
+      ~ModelQuadratic.forward
+      ~ModelQuadratic.restore_weights
+      ~ModelQuadratic.update_and_cache_weights
+      ~ModelQuadratic.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelQuadratic.model_name
+   
+   

@@ -1,0 +1,33 @@
+rcognita.scenarios.EpisodicScenario
+===================================
+
+.. currentmodule:: rcognita.scenarios
+
+.. autoclass:: EpisodicScenario
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodicScenario.__init__
+      ~EpisodicScenario.iteration_update
+      ~EpisodicScenario.memorize
+      ~EpisodicScenario.perform_post_step_operations
+      ~EpisodicScenario.reload_pipeline
+      ~EpisodicScenario.reset_episode
+      ~EpisodicScenario.reset_iteration
+      ~EpisodicScenario.reset_simulation
+      ~EpisodicScenario.run
+      ~EpisodicScenario.step
+      ~EpisodicScenario.update_outcome
+      ~EpisodicScenario.update_time_from_cache
+   
+   
+
+   
+   
+   

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rcognita.critics.CriticTabularPI &mdash; rcognita 0.2.0 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="rcognita.critics.CriticTabularVI" href="rcognita.critics.CriticTabularVI.html" />
+    <link rel="prev" title="rcognita.critics.CriticOfObservation" href="rcognita.critics.CriticOfObservation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> rcognita
+            <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#what-is-rcognita">What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#rcognita-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#presets">Presets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#related-literature">Related literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#closing-remarks">Closing remarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#for-developers">For developers</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.Critic.html">rcognita.critics.Critic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticCALF.html">rcognita.critics.CriticCALF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfActionObservation.html">rcognita.critics.CriticOfActionObservation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfObservation.html">rcognita.critics.CriticOfObservation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.critics.CriticTabularPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticTabularVI.html">rcognita.critics.CriticTabularVI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticTrivial.html">rcognita.critics.CriticTrivial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">rcognita</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+      <li class="breadcrumb-item active">rcognita.critics.CriticTabularPI</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="rcognita-critics-critictabularpi">
+<h1>rcognita.critics.CriticTabularPI<a class="headerlink" href="#rcognita-critics-critictabularpi" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="rcognita.critics.CriticTabularPI">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticTabularPI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_update_iters_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTabularPI" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="rcognita.critics.CriticTabularPI.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_update_iters_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTabularPI.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize a new instance of the <cite>CriticTabularPI</cite> class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> (<em>tuple</em>) – Positional arguments to pass to the superclass’s <cite>__init__</cite> method.</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – The tolerance value for the update loop.</p></li>
+<li><p><strong>N_update_iters_max</strong> (<em>int</em>) – The maximum number of iterations for the update loop.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Keyword arguments to pass to the superclass’s <cite>__init__</cite> method.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticTabularPI.__init__" title="rcognita.critics.CriticTabularPI.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args[, tolerance, N_update_iters_max])</p></td>
+<td><p>Initialize a new instance of the <cite>CriticTabularPI</cite> class.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
+<td><p>Determine whether to accept or reject the given weights based on whether they violate the given constraints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache_weights</span></code>([weights])</p></td>
+<td><p>Stores a copy of the current model weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">initialize_buffers</span></code>()</p></td>
+<td><p>Initialize the action and observation buffers with zeros.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">objective</span></code>(observation, action)</p></td>
+<td><p>Calculate the value of a state given the action taken and the observation of the current state.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_weights</span></code>([time])</p></td>
+<td><p>Compute optimized critic weights, possibly subject to constraints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
+<td><p>Reset the outcome and current critic loss variables, and re-initialize the buffers.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_weights</span></code>()</p></td>
+<td><p>Restores the model weights to the cached weights.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code>()</p></td>
+<td><p>Update the value table.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_cache_weights</span></code>([weights])</p></td>
+<td><p>Update the model’s weights and cache the new values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_buffers</span></code>(observation, action)</p></td>
+<td><p>Updates the buffers of the critic with the given observation and action.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_outcome</span></code>(observation, action)</p></td>
+<td><p>Update the outcome variable based on the running objective and the current observation and action.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_single_cell</span></code>(observation)</p></td>
+<td><p>Update the value function for a single state.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_target</span></code>(new_target)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_weights</span></code>([weights])</p></td>
+<td><p>Update the weights of the critic model.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimizer_engine</span></code></p></td>
+<td><p>Returns the engine used by the optimizer.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="rcognita.critics.CriticOfObservation.html" class="btn btn-neutral float-left" title="rcognita.critics.CriticOfObservation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rcognita.critics.CriticTabularVI.html" class="btn btn-neutral float-right" title="rcognita.critics.CriticTabularVI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, AIDA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

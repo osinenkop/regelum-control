@@ -1,0 +1,23 @@
+rcognita.callbacks.ObjectiveCallback
+====================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: ObjectiveCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ObjectiveCallback.__init__
+      ~ObjectiveCallback.perform
+   
+   
+
+   
+   
+   

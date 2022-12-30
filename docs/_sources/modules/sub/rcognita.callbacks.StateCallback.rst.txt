@@ -1,0 +1,23 @@
+rcognita.callbacks.StateCallback
+================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: StateCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~StateCallback.__init__
+      ~StateCallback.perform
+   
+   
+
+   
+   
+   

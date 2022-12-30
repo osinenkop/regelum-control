@@ -1,0 +1,31 @@
+``rcognita.visualization.vis_2tank`` 
+====================================
+
+
+.. automodule:: rcognita.visualization.vis_2tank
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Animator2Tank
+   
+   
+
+   
+   
+   
+
+
+

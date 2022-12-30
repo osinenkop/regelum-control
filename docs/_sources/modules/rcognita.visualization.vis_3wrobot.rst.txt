@@ -1,0 +1,37 @@
+``rcognita.visualization.vis_3wrobot`` 
+======================================
+
+
+.. automodule:: rcognita.visualization.vis_3wrobot
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Animator3WRobot
+      Animator3WRobotNI
+      ControlDashboard
+      ControlDashboardNI
+      CostDashboard
+      RobotTrackingDasboard
+      SolutionDashboard
+   
+   
+
+   
+   
+   
+
+
+

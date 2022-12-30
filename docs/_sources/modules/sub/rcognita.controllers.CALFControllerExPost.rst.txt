@@ -1,0 +1,28 @@
+rcognita.controllers.CALFControllerExPost
+=========================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: CALFControllerExPost
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CALFControllerExPost.__init__
+      ~CALFControllerExPost.collect_critic_stats
+      ~CALFControllerExPost.compute_action
+      ~CALFControllerExPost.compute_action_sampled
+      ~CALFControllerExPost.compute_weights_displacement
+      ~CALFControllerExPost.invoke_safe_action
+      ~CALFControllerExPost.reset
+   
+   
+
+   
+   
+   

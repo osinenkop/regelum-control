@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_3wrobot.ControlDashboardNI
+======================================================
+
+.. currentmodule:: rcognita.visualization.vis_3wrobot
+
+.. autoclass:: ControlDashboardNI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControlDashboardNI.__init__
+      ~ControlDashboardNI.init_dashboard
+      ~ControlDashboardNI.perform_episodic_update
+      ~ControlDashboardNI.perform_iterative_update
+      ~ControlDashboardNI.perform_step_update
+      ~ControlDashboardNI.update
+   
+   
+
+   
+   
+   

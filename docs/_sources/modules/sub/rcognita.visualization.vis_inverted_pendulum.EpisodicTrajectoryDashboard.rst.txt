@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_inverted\_pendulum.EpisodicTrajectoryDashboard
+==========================================================================
+
+.. currentmodule:: rcognita.visualization.vis_inverted_pendulum
+
+.. autoclass:: EpisodicTrajectoryDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodicTrajectoryDashboard.__init__
+      ~EpisodicTrajectoryDashboard.init_dashboard
+      ~EpisodicTrajectoryDashboard.perform_episodic_update
+      ~EpisodicTrajectoryDashboard.perform_iterative_update
+      ~EpisodicTrajectoryDashboard.perform_step_update
+      ~EpisodicTrajectoryDashboard.update
+   
+   
+
+   
+   
+   

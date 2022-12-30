@@ -1,0 +1,36 @@
+``rcognita.scenarios`` 
+======================
+
+
+.. automodule:: rcognita.scenarios
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      EpisodicScenario
+      EpisodicScenarioAsyncAC
+      EpisodicScenarioREINFORCE
+      OnlineScenario
+      Scenario
+      TabularScenarioVI
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,25 @@
+rcognita.observers.KalmanFilter
+===============================
+
+.. currentmodule:: rcognita.observers
+
+.. autoclass:: KalmanFilter
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~KalmanFilter.__init__
+      ~KalmanFilter.compute_estimate
+      ~KalmanFilter.correct_state
+      ~KalmanFilter.predict_state
+   
+   
+
+   
+   
+   

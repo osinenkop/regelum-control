@@ -1,0 +1,31 @@
+rcognita.optimizers.BruteForceOptimizer
+=======================================
+
+.. currentmodule:: rcognita.optimizers
+
+.. autoclass:: BruteForceOptimizer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BruteForceOptimizer.__init__
+      ~BruteForceOptimizer.element_wise_maximization
+      ~BruteForceOptimizer.optimize
+      ~BruteForceOptimizer.verbose
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BruteForceOptimizer.engine
+   
+   

@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_3wrobot.CostDashboard
+=================================================
+
+.. currentmodule:: rcognita.visualization.vis_3wrobot
+
+.. autoclass:: CostDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CostDashboard.__init__
+      ~CostDashboard.init_dashboard
+      ~CostDashboard.perform_episodic_update
+      ~CostDashboard.perform_iterative_update
+      ~CostDashboard.perform_step_update
+      ~CostDashboard.update
+   
+   
+
+   
+   
+   

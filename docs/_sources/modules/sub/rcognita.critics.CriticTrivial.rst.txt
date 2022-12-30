@@ -1,0 +1,42 @@
+rcognita.critics.CriticTrivial
+==============================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticTrivial
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticTrivial.__init__
+      ~CriticTrivial.accept_or_reject_weights
+      ~CriticTrivial.cache_weights
+      ~CriticTrivial.get_optimized_weights
+      ~CriticTrivial.initialize_buffers
+      ~CriticTrivial.objective
+      ~CriticTrivial.optimize_weights
+      ~CriticTrivial.reset
+      ~CriticTrivial.restore_weights
+      ~CriticTrivial.update
+      ~CriticTrivial.update_and_cache_weights
+      ~CriticTrivial.update_buffers
+      ~CriticTrivial.update_outcome
+      ~CriticTrivial.update_target
+      ~CriticTrivial.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticTrivial.optimizer_engine
+   
+   

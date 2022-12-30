@@ -1,0 +1,27 @@
+rcognita.visualization.animator.Dashboard
+=========================================
+
+.. currentmodule:: rcognita.visualization.animator
+
+.. autoclass:: Dashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Dashboard.__init__
+      ~Dashboard.init_dashboard
+      ~Dashboard.perform_episodic_update
+      ~Dashboard.perform_iterative_update
+      ~Dashboard.perform_step_update
+      ~Dashboard.update
+   
+   
+
+   
+   
+   
