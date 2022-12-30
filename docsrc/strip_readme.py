@@ -41,7 +41,19 @@ with open(destination, "w") as f:
     f.write(s)
 
 import os
-os.system(f"pandoc {destination} -f rst -t markdown -o {destination.replace('.rst', '.md')}")
+os.system(f"rst2myst convert {destination}")
+
+with open(destination.replace(".rst", ".md"), "r") as f:
+    s = f.read()
+
+def replace_image_link(match):
+    link = match.group(1)
+    return f"![image]({link})"
+
+s = re.sub(r"```\{image\} (.*)\n```", replace_image_link, s)
+
+with open(destination.replace(".rst", ".md"), "w") as f:
+    f.write(s.replace(r"\*", "*").replace(r'\"', '"').replace(r"\'", "'"))
 
 
 with open(destination, "r") as f:

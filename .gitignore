@@ -159,3 +159,4 @@ cython_debug/
 diff.txt
 
 outputs
+/docsrc/modules/

@@ -44,15 +44,17 @@
             <li class="toctree-l1"><a class="reference internal" href="../../introduction.html">About</a></li>
             <li class="toctree-l1"><a class="reference internal"
                 href="../../introduction.html#installation">Installation</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#what-is-rcognita">What is
+                <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
             <li class="toctree-l1"><a class="reference internal"
-                href="../../introduction.html#general-description">General description</a></li>
-            <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#usage">Usage</a></li>
+                href="../../introduction.html#rcognita-s-config-pipeline"><code
+                  class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a>
+            </li>
+            <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#presets">Presets</a></li>
             <li class="toctree-l1"><a class="reference internal"
                 href="../../introduction.html#related-literature">Related literature</a></li>
             <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#closing-remarks">Closing
                 remarks</a></li>
-            <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#getting-started">Getting
-                started</a></li>
             <li class="toctree-l1"><a class="reference internal" href="../../introduction.html#for-developers">For
                 developers</a></li>
           </ul>
@@ -148,38 +150,40 @@
                       class="sig-name descname"><span class="pre">Simulator</span></span><span
                       class="sig-paren">(</span><em class="sig-param"><span class="n"><span
                           class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">sys_type</span></span></em>, <em class="sig-param"><span class="n"><span
                           class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">disturb_init</span></span><span class="o"><span class="pre">=</span></span><span
-                        class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span
-                        class="n"><span class="pre">action_init</span></span><span class="o"><span
-                          class="pre">=</span></span><span class="default_value"><span
+                          class="pre">sys_type</span></span><span class="o"><span class="pre">=</span></span><span
+                        class="default_value"><span class="pre">'diff_eqn'</span></span></em>, <em
+                      class="sig-param"><span class="n"><span class="pre">disturb_init</span></span><span
+                        class="o"><span class="pre">=</span></span><span class="default_value"><span
                           class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span
-                        class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span
-                        class="n"><span class="pre">time_final</span></span><span class="o"><span
-                          class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>,
-                    <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span
-                        class="o"><span class="pre">=</span></span><span class="default_value"><span
-                          class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">max_step</span></span><span class="o"><span class="pre">=</span></span><span
-                        class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span
-                        class="n"><span class="pre">first_step</span></span><span class="o"><span
-                          class="pre">=</span></span><span class="default_value"><span
-                          class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span
-                        class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span
-                        class="n"><span class="pre">rtol</span></span><span class="o"><span
-                          class="pre">=</span></span><span class="default_value"><span
-                          class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span
-                          class="pre">is_disturb</span></span><span class="o"><span class="pre">=</span></span><span
-                        class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span
-                        class="n"><span class="pre">is_dynamic_controller</span></span><span class="o"><span
+                          class="pre">action_init</span></span><span class="o"><span class="pre">=</span></span><span
+                        class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span
+                        class="n"><span class="pre">time_start</span></span><span class="o"><span
                           class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>,
-                    <em class="sig-param"><span class="n"><span class="pre">ode_backend</span></span><span
+                    <em class="sig-param"><span class="n"><span class="pre">time_final</span></span><span
                         class="o"><span class="pre">=</span></span><span class="default_value"><span
-                          class="pre">'SciPy'</span></span></em><span class="sig-paren">)</span><a class="headerlink"
-                      href="#rcognita.simulator.Simulator" title="Permalink to this definition"></a>
+                          class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span
+                          class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span
+                        class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span
+                        class="n"><span class="pre">max_step</span></span><span class="o"><span
+                          class="pre">=</span></span><span class="default_value"><span
+                          class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span
+                          class="pre">first_step</span></span><span class="o"><span class="pre">=</span></span><span
+                        class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span
+                        class="n"><span class="pre">atol</span></span><span class="o"><span
+                          class="pre">=</span></span><span class="default_value"><span
+                          class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span
+                          class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span
+                        class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span
+                        class="n"><span class="pre">is_disturb</span></span><span class="o"><span
+                          class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>,
+                    <em class="sig-param"><span class="n"><span class="pre">is_dynamic_controller</span></span><span
+                        class="o"><span class="pre">=</span></span><span class="default_value"><span
+                          class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span
+                          class="pre">ode_solver</span></span><span class="o"><span class="pre">=</span></span><span
+                        class="default_value"><span class="pre">'SciPy'</span></span></em><span
+                      class="sig-paren">)</span><a class="headerlink" href="#rcognita.simulator.Simulator"
+                      title="Permalink to this definition"></a>
                   </dt>
                   <dd>
                     <p>Class for simulating closed loops (system-controllers).</p>
@@ -347,10 +351,11 @@
                         <span class="sig-name descname"><span class="pre">__init__</span></span><span
                           class="sig-paren">(</span><em class="sig-param"><span class="n"><span
                               class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span
-                              class="pre">sys_type</span></span></em>, <em class="sig-param"><span class="n"><span
                               class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span
-                              class="pre">disturb_init</span></span><span class="o"><span
-                              class="pre">=</span></span><span class="default_value"><span
+                              class="pre">sys_type</span></span><span class="o"><span class="pre">=</span></span><span
+                            class="default_value"><span class="pre">'diff_eqn'</span></span></em>, <em
+                          class="sig-param"><span class="n"><span class="pre">disturb_init</span></span><span
+                            class="o"><span class="pre">=</span></span><span class="default_value"><span
                               class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span
                               class="pre">action_init</span></span><span class="o"><span
                               class="pre">=</span></span><span class="default_value"><span
@@ -378,10 +383,9 @@
                             class="n"><span class="pre">is_dynamic_controller</span></span><span class="o"><span
                               class="pre">=</span></span><span class="default_value"><span
                               class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span
-                              class="pre">ode_backend</span></span><span class="o"><span
-                              class="pre">=</span></span><span class="default_value"><span
-                              class="pre">'SciPy'</span></span></em><span class="sig-paren">)</span><a
-                          class="headerlink" href="#rcognita.simulator.Simulator.__init__"
+                              class="pre">ode_solver</span></span><span class="o"><span class="pre">=</span></span><span
+                            class="default_value"><span class="pre">'SciPy'</span></span></em><span
+                          class="sig-paren">)</span><a class="headerlink" href="#rcognita.simulator.Simulator.__init__"
                           title="Permalink to this definition"></a>
                       </dt>
                       <dd>
@@ -507,7 +511,7 @@
                           <td>
                             <p><a class="reference internal" href="#rcognita.simulator.Simulator.__init__"
                                 title="rcognita.simulator.Simulator.__init__"><code
-                                  class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(system, sys_type, state_init[, …])
+                                  class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(system, state_init[, sys_type, …])
                             </p>
                           </td>
                           <td>

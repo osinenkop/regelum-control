@@ -102,154 +102,355 @@ What is ``rcognita``?
 
 `To table of content <#Table-of-content>`__
 
+.. image:: https://gitflic.ru/project/aidynamicaction/rcognita/blob/raw?file=gfx%2Fflowchart.png&commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d
+
 ``rcognita`` Python package is designed for hybrid simulation of agents
-and environments (generally speaking, not necessarily reinforcement
-learning agents). Its main idea is to have an explicit implementation of
-sampled controls with user-defined sampling time specification.
+and environments (i.e. controllers and control-systems). ``rcognita`` allows one to
+simulate either discrete-time systems (environments) or continuous-time systems (environments)
+with sampled feedback (agents that react to their observations at a finite frequency).
 
-`This flowchart <./flowcharts/rcognita-flowchart-RLController.pdf>`__
-shows interaction of the core ``rcognita`` classes contained in the said
-modules (the latter are not shown on the diagram).
-
-The main module is a preset, on the flowchart a 3-wheel robot. It
-initializes the system (the environment), the controllers (the agents,
-e. g., a safe agent, a benchmarking agent, a reinforcement learning
-agent etc.), the visualization engine called animator, the logger and
-the simulator. The latter is a multi-purpose device for simulating
-agent-environment loops of different types (specified by ``sys_type``).
-
-Depending on ``sys_type``, the environment can either be described by a
-differential equation (including stochastic ones), a difference equation
-(for discrete-time systems), or by a probability distribution (for,
-e.g., Markov decision processes).
-
-The parameter ``dt`` determines the maximal step size for the numerical
-solver in case of differential equations. The main method of this class
-is ``sim_step`` which performs one solver step, whereas reset
-re-initializes the simulator after an episode.
-
-The ``Logger`` class is an interface defining stubs of a
-print-to-console method print sim step, and print-to-file method log
-data row, respectively. Concrete loggers realize these methods.
-
-A similar class inheritance scheme is used in ``Animator``, and
-``System``. The core data of ``Animator``\ ’s subclasses are
-``objects``, which include entities to be updated on the screen, and
-their parameters stored in ``pars``.
-
-A concrete realization of a system interface must realize ``sys_dyn``,
-which is the “right-handside” of the environment description, optionally
-disturbance dynamics via ``disturb_dyn``, optionally controller dynamics
-(if the latter is, e.g., time-varying), and the output function ``out``.
-The method ``receive_action`` gets a control action and stores it.
-Everything is packed together in the ``closed_loop_rhs`` for the use in
-``Simulator``.
-
-Finally, the ``controllers`` module contains various agent types. One of
-them is ``RLController`` – the class of predictive objective-optimizing
-agents (model-predictive control and predictive reinforcement learning)
-as shown in `this
-flowchart <./flowcharts/rcognita-flowchart-RLController.pdf>`__. Notice
-it contains an explicit specification of the sampling time ``dt``.
-
-The method ``critic`` computes a model of something related to the
-value, e.g., value function, Q-function or advantage. In turn,
-``cost`` defines a cost (loss) function to fit the critic
-(commonly based on temporal errors). The method ``get_optimized_weights``
-actually optimizes the critic cost. The principle is analogous with the
-actor, except that it optimizes an objective along a prediction horizon.
-The details can be found in the code documentation. The method
-``compute_action`` essentially watches the internal clock and performs
-an action updates when a time sample has elapsed.
-
-Auxiliary modules of the package are ``models`` and ``utilities`` which
-provide auxiliary functions and data structures, such as neural
-networks.
-
-Usage
-=====
-
-`To table of content <#Table-of-content>`__
-
-After the package is installed, you may just ``python`` run one of the
-presets found `here <./presets>`__, say,
+For instance, if you have a model of a robot and an agent of some kind, ``rcognita`` would allow
+you to see how the robot would behave if this agent controlled the robot by
+issuing its actions at a given rate.
 
 ::
 
-    python3 main_3wrobot_NI.py
+    import numpy as np
+    from rcognita.simulator import Simulator
+    from rcognita.systems import System
+    from rcognita.controllers import Controller
+    from scenarios import EpisodicScenario
 
-This will call the preset with default settings, description of which
-can be found in the preset accordingly.
+    class MyRobotSystem(System):
+        ...  ## Define the robot
 
-The naming convention is ``main_ACRONYM``, where ``ACRONYM`` is actually
-related to the system (environment). You may create your own by analogy.
+    class MyAgent(Controller):
+        ...  ## Define what your agent does
 
-For configuration of hyper-parameters, just call help on the required
-preset, say,
+    rate = 0.1  ## The agent performs actions once every 100ms
+    initial_state = np.zeros(...) ## In which state the robot will start
+
+    robot = MyRobotSystem(...)
+    controller = MyAgent(...)
+    simulator = Simulator(robot, initial_state, sampling_time=rate)
+    scenario = EpisodicScenario(simulator, controller)
+    scenario.run()
+
+Not only can you use ``rcognita`` to simulate things, but you can also
+use it to run your training and tuning. ``Scenario`` objects are also meant to
+manage your training pipeline for RL (if needed):
 
 ::
 
-    python3 main_3wrobot_NI.py -h
+    import numpy as np
+    from rcognita.simulator import Simulator
+    from rcognita.systems import System
+    from rcognita.controllers import RLController
+    from rcognita.actors import Actor
+    from rcognita.critics import Critic
+    from scenarios import EpisodicScenario
 
-Settings
---------
+    class MyRobotSystem(System):
+        ...  ## Define the robot
+
+    class MyActor(Actor):
+        ...  ## Your custom actor
+
+    class MyCritic(Critic):
+        ...  ## Your custom critic
+
+    def my_reward(state, action):
+        return ... ## How the agent is rewarded
+
+    rate = 0.1  ## The agent performs actions once every 100ms
+    initial_state = np.zeros(...) ## In which state the robot will start
+
+    robot = MyRobotSystem(...)
+    actor = MyActor(...)
+    critic = MyCritic(...)
+    controller = RLController(actor=actor, critic=critic)
+    simulator = Simulator(robot, initial_state, sampling_time=rate)
+    scenario = EpisodicScenario(simulator, controller, objective=my_reward)
+    scenario.run()
+
+The main intended advantages of ``rcognita`` are customizability and modularity.
+For instance if you wanted to try out your own numerical methods for integrating
+ODEs and whatnot, you could simply:
+::
+
+    class MySimulator(Simulator):
+        ... ## Your methods
+
+This applies to just about any entity in ``rcognita``. Want a more advanced
+training pipeline? All it takes is too derive your own ``Scenario``.
+Want to push the boundaries of what an RL agent looks like? Say no more:
+just derive a child from ``RLController`` and modify it to your heart's content.
+
+Be sure to hit the API docs (or the source code) if you want figure out the
+best way of deriving something yourself. In most cases you'll find that
+only a few methods need to be overriden to produce the desired result. In fact,
+in a great number of cases no deriving is necessary.
+
+``rcognita``'s config pipeline
+==============================
+RL and control theory are infamous for having overwhelmingly many
+entities to keep track of: agents, environments, models, training routines,
+integrators, predictors, observers, optimizers... Each of the above in turn
+has a number of parameters of its own, and to make things worse,
+your setup will most likely be highly sensitive to all of these. Therefore
+tweaking and tuning your setup may and will get tedeous unless you figure
+out a way to do it conveniently and systematically.
+
+Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+built on top of ``hydra``. It must be noted that a regular ``hydra``
+config will run on ``rcognita`` just fine (but not vice versa), since
+``rcognita`` includes all of the original features and syntaxes of ``hydra``.
+However ``rcognita`` additionally provides convenient syntactic sugars that
+``hydra`` does not posses.
+
+Keep in mind that **using rcognita's config pipeline IS NOT mandatory** and
+the examples mentioned in the previous section are totally valid. However, in
+a more realistic usecase one will often find that the utility of
+``rcognita``'s configs is **IMMEASURABLE**.
+The reader is thus encouraged to familiarize themselves
+with ``hydra``.
+
+Example 1
+---------
+Consider the following files in your hypothetical project.
+
+``my_utilities.py``:
+::
+
+    from rcognita.systems import System
+    from rcognita.controllers import Controller
+
+    class MyRobotSystem(System):
+        def __init__(x, y, z):
+            ...
+
+        def ...
+
+    class MyAgent(Controller):
+        def __init__(a, b, c):
+            ...
+
+        def ...
+
+
+``my_config.yaml``:
+::
+
+    rate: 0.1
+
+    initial_state: = numpy.zeros(5) # The '=' lets us evaluate this
+                                    # python code 'numpy.zeros(5)'
+
+    robot:
+        _target_: my_utilities.MyRobotSystem # '_target_' is a special field
+        x: 1                                 # that should point to a class
+        y: 2
+        z: 3
+
+    agent:
+        _target_: my_utilities.MyAgent
+        a: 3
+        b: 4
+        c: 5
+
+``main.py``:
+::
+
+    import rcognita as r
+    from rcognita.simulator import Simulator
+    from rcognita.scenarios import EpisodicScenario
+    import my_utilities
+    import numpy
+
+
+    @r.main(
+        config_path=".",
+        config_name="my_config",
+    )
+    def my_app(config):
+        robot = ~config.robot      # '~' instantiates the object
+        controller = ~config.agent # described in the corresponding
+                                   # field. It makes use of '_target_'.
+        simulator = Simulator(robot,
+                              config.initial_state,
+                              sampling_time=config.rate)
+        scenario = EpisodicScenario(simulator, controller)
+        scenario.run()
+
+
+    if __name__ == "__main__":
+        my_app()
+
+The above example project is the equivalent to the first example in section
+"What is ``rcognita``?". Here instead of providing args for
+MyRobotSystem and MyAgent inside the python script, we instead specify
+both the classes and their args in ``my_config.yaml``.
+
+Note, that the operator ``~`` is necessary to let rcognita know that
+the corresponding node within the config describes an instance of a class
+and we would like to instantiate it
+(as opposed to accessing it as a config-dictionary).
+
+In other words ``~config.robot`` evaluates to
+::
+    <my_utilities.MyRobotSystem object at 0x7fe53aa39220>
+
+, while ``config.robot`` evaluates to
+::
+
+    {'_target_':'my_utilities.MyRobotSystem', 'x':1, 'y':2, 'z':3}
+
+Example 2
+---------
+Note, that when using this config paradigm nothing impedes us from instantiating
+**literally everything** directly inside the config, leaving the python script
+almost empty. Here's an example of how this can be done:
+
+``my_utilities.py``:
+::
+
+    from rcognita.systems import System
+    from rcognita.controllers import Controller
+
+    class MyRobotSystem(System):
+        def __init__(x, y, z):
+            ...
+
+        def ...
+
+    class MyAgent(Controller):
+        def __init__(a, b, c):
+            ...
+
+        def ...
+
+
+``my_config.yaml``:
+::
+
+    _target_: rcognita.scenarios.Scenario
+
+    simulator:
+        _target_: rcognita.simulator.Simulator
+        robot:
+            _target_: my_utilities.MyRobotSystem
+            x: 1
+            y: 2
+            z: 3
+        initial_state: = numpy.zeros(5)
+        sampling_time: 0.1
+
+    controller:
+        _target_: my_utilities.MyAgent
+        a: 3
+        b: 4
+        c: 5
+
+``main.py``:
+::
+
+   import rcognita as r
+   import my_utilities
+   import numpy
+
+
+    @r.main(
+        config_path=".",
+        config_name="my_config",
+    )
+    def my_app(config):
+        scenario = ~config
+        scenario.run()
+
+
+    if __name__ == "__main__":
+        my_app()
+
+This way of doing it has numerous advantages. Notably, you can now
+conveniently override any input parameters, when running the script like so
+::
+
+    python3 main.py controller.a=10
+
+or even
+
+::
+
+    python3 main.py simulator._target_=MyOwnBetterSimulator
+
+
+Presets
+=======
 
 `To table of content <#Table-of-content>`__
 
-Some key settings are described below (full description is available via
-``-h`` option).
+To get started with using ``rcognita`` the reader is advised to examine some concrete usecases.
+``rcognita``'s `repository <https://gitflic.ru/project/aidynamicaction/rcognita>`_ contains an
+assortment of presets, which can be both studied and conveniently repurposed.
 
-+-------------------------+-----------+--------------------------------------------------------+
-| Parameter               | Type      | Description                                            |
-+=========================+===========+========================================================+
-| ``control_mode``           | string    | Controller mode                                     |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``dt``                  | number    | Controller sampling time                               |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``t1``                  | number    | Final time                                             |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``state_init``          | list      | Initial state                                          |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``is_log``              | binary    | Flag to log data                                       |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``no_visual``           | binary    | Flag to supress graphical output                       |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``no_print``            | binary    | Flag to supress printing of simulation step data       |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``is_est_model``        | binary    | If a model of the system is to be estimated online     |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``Nactor``              | integer   | Horizon length (in steps) for predictive controllers   |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``running_obj_struct``    | string    | Structure of running objective function              |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``Ncritic``             | integer   | Critic stack size (number of TDs)                      |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``gamma``               | number    | Discount factor                                        |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``critic_struct``       | string    | Structure of critic features                           |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``actor_struct``        | string    | Structure of actor features                            |
-+-------------------------+-----------+--------------------------------------------------------+
-| ``save_trajectory``     | binary    | Flag to store trajectory during the execution of the p |
-+-------------------------+-----------+--------------------------------------------------------+
+The ``presets`` directory contains several working  ``rcognita`` projects:
 
-Advanced customization
-----------------------
+- ``presets/3wrobot``: Parking a three wheeled robot.
+- ``presets/3wrobot_ni``: Parking a massless three wheeled robot.
+- ``presets/grid_world``: Path-finding in a gridworld.
+- ``presets/inverted_pendululm``: Balancing and inverted pendulum.
+- ``presets/2tank``: Equalizing water levels in a two-tank system.
 
-`To table of content <#Table-of-content>`__
+For instance, if one wanted to run the three wheeled robot parking project,
+all it would take is to execute the following:
+::
 
--  **Custom environments**: realize ``system`` interface in the
-   ``systems`` module. You might need nominal controllers for that, as
-   well as an animator, a logger etc.
--  **Custom running cost**: adjust ``rcost`` in controllers
--  **Custom AC method**: simplest way -- by adding a new mode and
-   updating ``cost``, ``cost`` and, possibly, ``_actor``,
-   ``critic``. For deep net AC structures, use, say,
-   `Torch <https://pytorch.org/>`__
--  **Custom model estimator**: so far, the framework offers a
-   state-space model structure. You may use any other one. In case of
-   neural nets, use, e.g., `Torch <https://pytorch.org/>`__
+    cd presets/3wrobot
+    python3 main.py
 
+One could also override some of the global parameters when running the script.
+For instance:
+::
+
+    python3 main.py sampling_time=0.2 time_final=20
+
+Below is a table detailing some of the available overridable parameters for
+the presets:
+
++-------------------------+-------------+--------------------------------------------------------+
+| Parameter               | Type        | Description                                            |
++=========================+=============+========================================================+
+| ``sampling_time`` *     | ``float``   | Controller sampling time                               |
++-------------------------+-------------+--------------------------------------------------------+
+| ``time_final`` *        | ``float``   | Final time                                             |
++-------------------------+-------------+--------------------------------------------------------+
+| ``state_init``          | ``ndarray`` | Initial state                                          |
++-------------------------+-------------+--------------------------------------------------------+
+| ``no_visual``           | ``bool``    | Flag to supress graphical output                       |
++-------------------------+-------------+--------------------------------------------------------+
+| ``prediction_horizon`` *| ``int``     | Horizon length (in steps) for predictive controllers   |
++-------------------------+-------------+--------------------------------------------------------+
+| ``data_buffer_size``    | ``int``     | Critic stack size (number of TDs)                      |
++-------------------------+-------------+--------------------------------------------------------+
+| ``discount_factor``     | ``float``   | Discount factor                                        |
++-------------------------+-------------+--------------------------------------------------------+
+| ``ode_backend`` *       | ``str``     | ODE solving backend for simulation. "SCIPY" or "CASADI"|
++-------------------------+-------------+--------------------------------------------------------+
+| ``animation_speedup``   | ``str``     | Makes the animation ``animation_speedup`` times faster.|
++-------------------------+-------------+--------------------------------------------------------+
+
+Parameters marked with a "*" are not present in ``presets/grid_world``.
+
+It must be noted that one could in theory override any of the parameters
+defined in the preset's config (i.e. ``presets/*/scenario.yaml``), because
+that's just how the config pipeline works.
+For instance, if you wanted to speed up you simulation you could try messing
+with the ODE solver's tolerances:
+::
+
+    python3 main.py simulator.atol=0.1 simulator.rtol=0.1
+
+You could, of course, instead just edit the config.
 
 Related literature
 ==================
