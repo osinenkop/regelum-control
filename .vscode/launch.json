@@ -25,7 +25,9 @@
             "request": "launch",
             "program": "/home/odinmaniac/Downloads/Repos/rcognita/presets/3wrobot/3wrobot.py",
             "justMyCode": false,
-            "args": [],
+            "args": [
+                "controller=calf_predictive"
+            ],
         },
         {
             "name": "Python: Current File with profiler casadi",

@@ -1,6 +1,8 @@
 defaults:
   - actor: calf
   - critic: calf
+  - override actor/optimizer: casadi
+  - override critic/optimizer: casadi
 
 _target_: rcognita.controllers.CALFControllerPredictive
 

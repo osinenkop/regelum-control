@@ -15,9 +15,26 @@ sys.path.insert(0, CUR_DIR)
 
 from __utilities import rc, rej_sampling_rvs
 import numpy as np
-import torch
-from torch import nn
-import torch.nn.functional as F
+import warnings
+
+try:
+    import torch
+    import torch.nn.functional as F
+    from torch import nn
+except ModuleNotFoundError:
+    warnings.warn_explicit(
+        "\nImporting pytorch failed. You may still use rcognita, but"
+        + " without pytorch optimization capability. ",
+        UserWarning,
+        __file__,
+        42,
+    )
+    from unittest.mock import MagicMock
+
+    torch = MagicMock()
+    nn = MagicMock()
+    F = MagicMock()
+
 import math
 from abc import ABC, abstractmethod
 from copy import deepcopy

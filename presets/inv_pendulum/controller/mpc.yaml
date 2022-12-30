@@ -1,6 +1,7 @@
 defaults:
   - actor: mpc
   - critic: trivial
+  - override actor/optimizer: casadi
 
 _target_: rcognita.controllers.RLController
 

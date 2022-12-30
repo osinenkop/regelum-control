@@ -351,7 +351,9 @@ class main:
                         )
                         self.__class__.callbacks.append(callback(self.__class__.logger))
                     delattr(cfg, "callbacks")
-                return old_app(ccfg)
+                res = old_app(ccfg)
+                ccfg.refresh()
+                return res
 
         app.__module__ = old_app.__module__
         path_main = os.path.abspath(inspect.getfile(old_app))
