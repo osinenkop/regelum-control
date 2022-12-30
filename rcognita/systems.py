@@ -229,7 +229,8 @@ class System(ABC):
         """
 
         rhs_full_state = utilities.rc.zeros(
-            self._dim_full_state, prototype=utilities.rc.concatenate((state_full, self.action))
+            self._dim_full_state,
+            prototype=utilities.rc.concatenate((state_full, self.action)),
         )
 
         state = state_full[0 : self.dim_state]
@@ -293,7 +294,9 @@ class SysInvertedPendulum(System):
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = utilities.rc.zeros(self.dim_state, prototype=utilities.rc.concatenate((state, action)),)
+        Dstate = utilities.rc.zeros(
+            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+        )
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
@@ -392,7 +395,9 @@ class Sys3WRobot(System):
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = utilities.rc.zeros(self.dim_state, prototype=utilities.rc.concatenate((state, action)),)
+        Dstate = utilities.rc.zeros(
+            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+        )
 
         m, I = self.pars[0], self.pars[1]
 
@@ -462,7 +467,9 @@ class Sys3WRobotNI(System):
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = utilities.rc.zeros(self.dim_state, prototype=utilities.rc.concatenate((state, action)))
+        Dstate = utilities.rc.zeros(
+            self.dim_state, prototype=utilities.rc.concatenate((state, action))
+        )
 
         if self.is_disturb and (disturb != []):
             Dstate[0] = action[0] * utilities.rc.cos(state[2]) + disturb[0]
@@ -507,8 +514,10 @@ class System2Tank(System):
 
         tau1, tau2, K1, K2, K3 = self.pars
 
-        Dstate = utilities.rc.zeros(self.dim_state, prototype=utilities.rc.concatenate((state, action)),)
-        Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action)
+        Dstate = utilities.rc.zeros(
+            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+        )
+        Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action[0])
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 
         return Dstate
@@ -519,7 +528,8 @@ class System2Tank(System):
 
         return utilities.rc.array(Ddisturb)
 
-    def out(self, state, time=None, action=None):
+    def out(self, observation, time=None, action=None):
+        state = observation
 
         return state
 

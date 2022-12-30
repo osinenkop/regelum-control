@@ -1,0 +1,5 @@
+defaults:
+  - default
+  - controller: pg
+
+  @controller.actor.predictor.prediction_horizon: 0

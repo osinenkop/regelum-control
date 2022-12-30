@@ -109,8 +109,8 @@ class RLController(Controller):
         All the learned parameters are retained.
 
         """
-        self.controller_clock = time_start
-        self.critic_clock = time_start
+        self.clock.reset()
+        self.critic.clock.reset()
         self.actor.action_old = self.actor.action_init
 
     def compute_action(

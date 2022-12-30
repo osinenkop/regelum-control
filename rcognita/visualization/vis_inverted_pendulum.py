@@ -127,7 +127,7 @@ class EpisodicTrajectoryDashboard(Dashboard):
         update_line(self.line_angle, time, angle)
 
     def perform_episodic_update(self):
-        self.perform_step_update()
+        # self.perform_step_update()
         x_data = self.line_angle.get_xdata()
         y_data = self.line_angle.get_ydata()
         handle = self.episodic_line_handles[self.scenario.episode_counter - 1]
@@ -211,38 +211,28 @@ class WeightsEpisodicDashboard(Dashboard):
 
 
 class AnimatorInvertedPendulum(Animator):
-    def __init__(self, objects=None, pars=None, subplot_grid_size=[2, 2]):
+    def __init__(self, scenario, subplot_grid_size=[2, 2]):
         super().__init__(subplot_grid_size=subplot_grid_size)
-        self.objects = objects
-        self.pars = pars
 
+        self.__dict__.update(scenario.__dict__)
+
+        self.scenario = scenario
+
+        self.system = self.scenario.simulator.system
+
+        self.sampling_time = self.scenario.controller.sampling_time
         # Unpack entities
-        (
-            self.simulator,
-            self.system,
-            self.safe_controller,
-            self.controller,
-            self.datafiles,
-            self.scenario,
-        ) = self.objects
-
-        (state_init, time_start, time_final, control_mode) = self.pars
 
         # Store some parameters for later use
         self.time_old = 0
         self.outcome = 0
-        self.time_start = time_start
-        self.state_init = state_init
-        self.time_final = time_final
-        self.control_mode = control_mode
-        self.no_print = True
 
-        self.angle_0 = state_init[0]
+        self.angle_0 = self.state_init[0]
         self.rod_length = self.system.pars[2]
 
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ################
         pendulum_tracking_dashboard = InvPendulumTrackingDashboard(
-            self.time_start, self.rod_length, state_init, self.scenario
+            self.time_start, self.rod_length, self.state_init, self.scenario
         )
         ########### SUBPLOT 2  --------- STEP-BY-STEP-SOLUTION ################
         episodic_trajectory_dashboard = EpisodicTrajectoryDashboard(
@@ -268,7 +258,6 @@ class AnimatorInvertedPendulum(Animator):
             weights_episodic_dashboard,
         )
         self.run_curr = 1
-        self.datafile_curr = self.datafiles[0]
 
     def reset(self):
         self.current_step = 0

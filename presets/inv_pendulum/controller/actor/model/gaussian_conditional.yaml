@@ -1,0 +1,9 @@
+defaults:
+  - expectation_function: nominal
+
+_target_: rcognita.models.ModelGaussianConditional
+
+###---Constructor arguments---###
+
+weights: = numpy.zeros(${simulator.system.dim_output})
+arg_condition: = numpy.array([numpy.pi, 0., 0.0])

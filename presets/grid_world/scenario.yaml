@@ -1,0 +1,11 @@
+defaults:
+  - actor: tabular
+  - critic: tabular_vi
+
+N_iterations: 200
+
+_target_: rcognita.scenarios.TabularScenarioVI
+
+
+is_playback: true
+

@@ -419,66 +419,50 @@ class Animator3WRobotNI(Animator):
 
     """
 
-    def __init__(self, objects=None, pars=None, subplot_grid_size=[2, 2]):
+    def __init__(self, scenario=None, subplot_grid_size=None):
+        if subplot_grid_size is None:
+            subplot_grid_size = [2, 2]
         super().__init__(subplot_grid_size=subplot_grid_size)
-        self.objects = objects
-        self.pars = pars
+        self.scenario = scenario
+        self.__dict__.update(scenario.__dict__)
 
         # Unpack entities
         (
-            self.simulator,
-            self.system,
-            self.nominal_controller,
-            self.controller,
-            self.datafiles,
-            self.logger,
-            self.actor_optimizer,
-            self.optimizer,
-            self.running_objective,
-            self.scenario,
-        ) = self.objects
-
-        (
-            state_init,
-            action_init,
-            time_start,
-            time_final,
             state_full_init,
             xMin,
             xMax,
             yMin,
             yMax,
-            control_mode,
-            action_manual,
             v_min,
             omega_min,
             v_max,
             omega_max,
-            no_print,
-            is_log,
-            is_playback,
             running_obj_init,
-        ) = self.pars
+        ) = (
+            self.scenario.simulator.state_full_init,
+            -10,
+            10,
+            -10,
+            10,
+            self.scenario.controller.action_bounds[0][0],
+            self.scenario.controller.action_bounds[0][1],
+            self.scenario.controller.action_bounds[1][0],
+            self.scenario.controller.action_bounds[1][1],
+            0,
+        )
         # Store some parameters for later use
         self.time_old = 0
         self.outcome = 0
-        self.time_start = time_start
         self.state_full_init = state_full_init
-        self.time_final = time_final
-        self.control_mode = control_mode
-        self.action_manual = action_manual
-        self.no_print = no_print
-        self.is_log = is_log
-        self.is_playback = is_playback
 
-        xCoord0 = state_init[0]
-        yCoord0 = state_init[1]
-        angle0 = state_init[2]
+        xCoord0 = self.state_init[0]
+        yCoord0 = self.state_init[1]
+        angle0 = self.state_init[2]
         angle_deg0 = angle0 / 2 / np.pi
 
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ###########################
         robot_tracking_dasboard = RobotTrackingDasboard(
-            time_start,
+            self.time_start,
             xMax,
             xMin,
             yMax,
@@ -490,8 +474,8 @@ class Animator3WRobotNI(Animator):
         )
         ########### SUBPLOT 2  --------- STEP-BY-STEP-SOLUTION #######################
         solution_dashboard = SolutionDashboard(
-            time_start,
-            time_final,
+            self.time_start,
+            self.time_final,
             xMax,
             xMin,
             yMax,
@@ -504,20 +488,28 @@ class Animator3WRobotNI(Animator):
 
         ########### SUBPLOT 3  --------- COST ########################################
 
-        if is_playback:
+        if self.is_playback:
             running_objective = running_obj_init
         else:
-            observation_init = self.system.out(state_init)
-            running_objective = self.running_objective(observation_init, action_init)
+            observation_init = self.system.out(self.state_init)
+            running_objective = self.running_objective(
+                observation_init, self.action_init
+            )
 
         cost_dashboard = CostDashboard(
-            time_start, time_final, running_objective, self.scenario
+            self.time_start, self.time_final, running_objective, self.scenario
         )
 
         ########### SUBPLOT 4  --------- CONTROL #####################################
 
         control_dashboard = ControlDashboardNI(
-            time_start, time_final, v_min, v_max, omega_min, omega_max, self.scenario
+            self.time_start,
+            self.time_final,
+            v_min,
+            v_max,
+            omega_min,
+            omega_max,
+            self.scenario,
         )
 
         ##############################################################################
