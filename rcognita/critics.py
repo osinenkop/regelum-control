@@ -355,7 +355,7 @@ class Critic(ABC):
         )
 
         self.cost_function = cost_function
-        self.constraint = constraints[0]
+        self.constraint = constraints
         self.weights_init = weights_init
         self.symbolic_var = symbolic_var
 
