@@ -17,7 +17,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="rcognita.actors" href="modules/rcognita.actors.html" />
+    <link rel="next" title="Configs and basic rcognita applications" href="tutorials.html" />
     <link rel="prev" title="Rcognita: A framework for DP and RL algorithm development, testing, and simulation" href="index.html" /> 
 </head>
 
@@ -66,6 +66,12 @@
 <li class="toctree-l2"><a class="reference internal" href="#forking">Forking</a></li>
 </ul>
 </li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul>
@@ -288,13 +294,13 @@ with <code class="docutils literal notranslate"><span class="pre">hydra</span></
 <span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="o">...</span>
 
 <span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="o">...</span>
@@ -373,13 +379,13 @@ almost empty. Here’s an example of how this can be done:</p>
 <span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="o">...</span>
 
 <span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="o">...</span>
@@ -390,7 +396,7 @@ almost empty. Here’s an example of how this can be done:</p>
 
 <span class="n">simulator</span><span class="p">:</span>
     <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
-    <span class="n">robot</span><span class="p">:</span>
+    <span class="n">system</span><span class="p">:</span>
         <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
         <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
         <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
@@ -433,6 +439,8 @@ conveniently override any input parameters, when running the script like so</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">_target_</span><span class="o">=</span><span class="n">MyOwnBetterSimulator</span>
 </pre></div>
 </div>
+<p>A more detailed tutorial on building <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications using the config pipeline
+can be found <a class="reference external" href="https://rcognita.website.yandexcloud.net/tutorials.html#">here</a> .</p>
 </div>
 </div>
 <div class="section" id="presets">
@@ -596,7 +604,7 @@ becomes clear that your fork is not in fact the original <code class="docutils l
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Rcognita: A framework for DP and RL algorithm development, testing, and simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="modules/rcognita.actors.html" class="btn btn-neutral float-right" title="rcognita.actors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tutorials.html" class="btn btn-neutral float-right" title="Configs and basic rcognita applications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

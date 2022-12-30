@@ -19,6 +19,13 @@ you'd like to browse releases or fork the repository.
 
 .. toctree::
    :hidden:
+   :caption: Tutorials
+   :maxdepth: 1
+
+   tutorials
+
+.. toctree::
+   :hidden:
    :caption: API Documentation
    :maxdepth: 5
    :glob:

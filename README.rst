@@ -226,13 +226,13 @@ Consider the following files in your hypothetical project.
     from rcognita.controllers import Controller
 
     class MyRobotSystem(System):
-        def __init__(x, y, z):
+        def __init__(self, x, y, z):
             ...
 
         def ...
 
     class MyAgent(Controller):
-        def __init__(a, b, c):
+        def __init__(self, a, b, c):
             ...
 
         def ...
@@ -318,13 +318,13 @@ almost empty. Here's an example of how this can be done:
     from rcognita.controllers import Controller
 
     class MyRobotSystem(System):
-        def __init__(x, y, z):
+        def __init__(self, x, y, z):
             ...
 
         def ...
 
     class MyAgent(Controller):
-        def __init__(a, b, c):
+        def __init__(self, a, b, c):
             ...
 
         def ...
@@ -337,7 +337,7 @@ almost empty. Here's an example of how this can be done:
 
     simulator:
         _target_: rcognita.simulator.Simulator
-        robot:
+        system:
             _target_: my_utilities.MyRobotSystem
             x: 1
             y: 2
@@ -383,6 +383,9 @@ or even
 
     python3 main.py simulator._target_=MyOwnBetterSimulator
 
+
+A more detailed tutorial on building ``rcognita`` applications using the config pipeline
+can be found `here <https://rcognita.website.yandexcloud.net/tutorials.html#>`__ .
 
 Presets
 =======

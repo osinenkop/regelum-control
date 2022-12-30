@@ -10,16 +10,6 @@
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree: sub
-   
-      memorize_instance
-      obtain
-      reset_instances
-      sub_map
-   
    
 
    

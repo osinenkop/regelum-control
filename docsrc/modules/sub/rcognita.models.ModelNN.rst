@@ -77,6 +77,5 @@ rcognita.models.ModelNN
       ~ModelNN.cache
       ~ModelNN.dump_patches
       ~ModelNN.model_name
-      ~ModelNN.training
    
    

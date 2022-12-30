@@ -1,3 +1,20 @@
+"""
+This module contains callbacks.
+Callbacks are lightweight event handlers, used mainly for logging.
+
+To make a method of a class trigger callbacks, one needs to
+decorate the class (or its base class) with ``@introduce_callbacks()`` and then
+also decorate the method with ``@apply_callbacks``.
+
+Callbacks can be registered by simply supplying them in the respective keyword argument:
+::
+
+    @rcognita.main(callbacks=[...], ...)
+    def my_app(config):
+        ...
+
+"""
+
 from abc import ABC, abstractmethod
 import rcognita.systems as systems
 import rcognita.actors as actors

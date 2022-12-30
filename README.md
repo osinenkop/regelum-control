@@ -4,6 +4,7 @@
 
 `rcognita` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
 reinforcement learning controllers. It is made for researchers and engineers in reinforcement learning and control theory.
+A detailed documentation is available [here](https://aidynamicaction.github.io/rcognita/).
 
 ## Example run with a mobile robot simulation
 
@@ -201,13 +202,13 @@ from rcognita.systems import System
 from rcognita.controllers import Controller
 
 class MyRobotSystem(System):
-    def __init__(x, y, z):
+    def __init__(self, x, y, z):
         ...
 
     def ...
 
 class MyAgent(Controller):
-    def __init__(a, b, c):
+    def __init__(self, a, b, c):
         ...
 
     def ...
@@ -298,13 +299,13 @@ from rcognita.systems import System
 from rcognita.controllers import Controller
 
 class MyRobotSystem(System):
-    def __init__(x, y, z):
+    def __init__(self, x, y, z):
         ...
 
     def ...
 
 class MyAgent(Controller):
-    def __init__(a, b, c):
+    def __init__(self, a, b, c):
         ...
 
     def ...
@@ -317,7 +318,7 @@ _target_: rcognita.scenarios.Scenario
 
 simulator:
     _target_: rcognita.simulator.Simulator
-    robot:
+    system:
         _target_: my_utilities.MyRobotSystem
         x: 1
         y: 2
@@ -365,6 +366,9 @@ or even
 ```
 python3 main.py simulator._target_=MyOwnBetterSimulator
 ```
+
+A more detailed tutorial on building `rcognita` applications using the config pipeline
+can be found [here](https://rcognita.website.yandexcloud.net/tutorials.html#) .
 
 # Presets
 
