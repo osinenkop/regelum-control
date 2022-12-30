@@ -26,8 +26,6 @@ critic_period_multiplier%%: 1
 
 ###---Overrides---###
 
-critic:
-  is_predictive: true
 
 actor:
   predictor:

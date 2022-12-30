@@ -425,6 +425,7 @@ class Animator3WRobotNI(Animator):
         super().__init__(subplot_grid_size=subplot_grid_size)
         self.scenario = scenario
         self.__dict__.update(scenario.__dict__)
+        self.sampling_time = self.scenario.controller.sampling_time
 
         # Unpack entities
         (

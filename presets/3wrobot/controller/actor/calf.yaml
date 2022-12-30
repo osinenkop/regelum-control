@@ -1,7 +1,7 @@
 defaults:
   - model: weight_container
-  - optimizer: scipy
-  - predictor: euler
+  - optimizer: casadi
+  - predictor: rk_casadi
   - safe_controller: pid
 
 _target_: rcognita.actors.ActorCALF
@@ -19,4 +19,4 @@ dim_input: $ simulator.system.dim_output
 discount_factor: 1.
 action_bounds: $ controller.action_bounds
 action_init: $ action_init
-critic: $ controller.critic
+critic: ~ controller.critic

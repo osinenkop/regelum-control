@@ -1,8 +1,9 @@
 defaults:
   - observation
-  - safe_controller: motion_primitive
 
 _target_: rcognita.critics.CriticCALF
+
+safe_controller: ~ controller.actor.safe_controller
 
 safe_decay_rate: 1.0E-3
 is_dynamic_decay_rate: true

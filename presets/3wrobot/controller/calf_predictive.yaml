@@ -27,5 +27,5 @@ critic_period_multiplier%%: 1
 
 actor:
   predictor:
-    prediction_horizon: 1
+    prediction_horizon: 0
 

@@ -1,11 +1,12 @@
 defaults:
   - observation
-  - safe_controller: pid
 
 _target_: rcognita.critics.CriticCALF
 
+safe_controller: ~ controller.actor.safe_controller
+
 safe_decay_rate: 1.0E+4
-is_dynamic_decay_rate: true
+is_dynamic_decay_rate: false
 observation_init: $ state_init
 
 penalty_param: 0
