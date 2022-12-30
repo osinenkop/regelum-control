@@ -12,7 +12,7 @@ import warnings
 try:
     from casadi import vertcat, nlpsol, DM, MX, Function
 
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     warnings.warn_explicit(
         "\nImporting casadi failed. You may still use rcognita, but"
         + " without symbolic optimization capability. ",

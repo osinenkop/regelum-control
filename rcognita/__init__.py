@@ -351,10 +351,14 @@ class main:
                         )
                         self.__class__.callbacks.append(callback(self.__class__.logger))
                     delattr(cfg, "callbacks")
-                return old_app(ccfg)
+                res = old_app(ccfg)
+                ccfg.refresh()
+                return res
 
         app.__module__ = old_app.__module__
-        os.chdir("/".join(inspect.getfile(old_app).split("/")[:-1]))
+        path_main = os.path.abspath(inspect.getfile(old_app))
+        path_parent = "/".join(path_main.split("/")[:-1])
+        os.chdir(path_parent)
         path = os.path.abspath(self.kwargs["config_path"])
         self.kwargs["config_path"] = path
         return hydramain(*self.args, **self.kwargs)(app)

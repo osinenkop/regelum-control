@@ -23,7 +23,7 @@ try:
     CASADI_TYPES = tuple(
         x[1] for x in inspect.getmembers(casadi.casadi, inspect.isclass)
     )
-except ModuleNotFoundError:
+except (ModuleNotFoundError, AttributeError):
     warnings.warn_explicit(
         "\nImporting casadi failed. You may still use rcognita, but"
         + " without symbolic optimization capability. ",
@@ -148,9 +148,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     is_force_row = True
 
-    def CasADi_primitive(
-        self, type: str = "MX", rc_type: RCType = NUMPY
-    ) -> Union[casadi.DM, casadi.MX, casadi.SX]:
+    def CasADi_primitive(self, type: str = "MX", rc_type: RCType = NUMPY):
         if type == "MX":
             return casadi.MX.sym("x", 1)
         elif type == "SX":

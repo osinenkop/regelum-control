@@ -181,9 +181,12 @@ class OnlineScenario(Scenario):
 
 
 class EpisodicScenario(OnlineScenario):
+    cache = dict()
+
     def __init__(
         self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
     ):
+        self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
         self.episode_REINFORCE_objective_gradients = []
@@ -264,7 +267,6 @@ class EpisodicScenario(OnlineScenario):
         If the scenario's triple ``(time, episode_counter, iteration_counter)`` is already contained in ``cache``, then the decorator returns a step method that simply reads from ``cache``.
         Otherwise, the scenario's simulator is called to do a step.
         """
-        cache = dict()
 
         def step_with_memory(self):
             triple = (
@@ -273,7 +275,7 @@ class EpisodicScenario(OnlineScenario):
                 self.iteration_counter,
             )
 
-            if triple in cache.keys():
+            if triple in self.cache.keys():
                 (
                     self.time,
                     self.episode_counter,
@@ -286,7 +288,7 @@ class EpisodicScenario(OnlineScenario):
                     self.actor.model.weights,
                     self.critic.model.weights,
                     self.current_scenario_status,
-                ) = cache[triple]
+                ) = self.cache[triple]
 
                 self.update_time_from_cache()
             else:
@@ -304,22 +306,24 @@ class EpisodicScenario(OnlineScenario):
                         self.critic.model.weights,
                         self.current_scenario_status,
                     ]
-                    cache[
+                    self.cache[
                         (self.time, self.episode_counter, self.iteration_counter)
                     ] = self.current_scenario_snapshot
 
                 self.current_scenario_status = step_method(self)
 
                 if self.current_scenario_status == "simulation_ended":
-                    for i, item in enumerate(cache.items()):
+                    for i, item in enumerate(self.cache.items()):
                         if i > self.speedup:
                             if item[1][10] != "episode_continues":
-                                key_i = list(cache.keys())[i]
+                                key_i = list(self.cache.keys())[i]
                                 for k in range(i - self.speedup + 1, i):
-                                    key_k = list(cache.keys())[k]
-                                    cache[key_k][10] = cache[key_i][10]
+                                    key_k = list(self.cache.keys())[k]
+                                    self.cache[key_k][10] = self.cache[key_i][10]
 
-                    self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
+                    self.cached_timeline = islice(
+                        iter(self.cache), 0, None, self.speedup
+                    )
 
             return self.current_scenario_status
 

@@ -23,13 +23,10 @@
             "name": "conf",
             "type": "python",
             "request": "launch",
-            "program": "/home/odinmaniac/Downloads/Repos/rcognita/presets/3wrobot.py",
+            "program": "/home/odinmaniac/Downloads/Repos/rcognita/presets/3wrobot/3wrobot.py",
             "justMyCode": false,
             "args": [
-                "controller=calf_predictive",
-                "controller/critic/optimizer=casadi",
-                "ode_backend=CASADI",
-                "controller/actor/optimizer=casadi"
+                "controller=calf_predictive"
             ],
         },
         {
