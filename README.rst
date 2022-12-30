@@ -48,7 +48,7 @@ terminal and Python3 interpreter.
 
     git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
     cd rcognita
-    python3 setup.py install
+    pip3 install .
 
 Notice that your Python 3 interpreter might be called something else,
 for instance, just ``python``.
@@ -71,7 +71,7 @@ or
 
     git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
     cd rcognita
-    python3 setup.py install .[TORCH]
+    pip3 install .[TORCH]
 
 With CasADi for nonlinear optimization
 ---------------------------------------
@@ -91,7 +91,7 @@ or
 
     git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
     cd rcognita
-    python3 setup.py install .[CASADI]
+    pip3 install .[CASADI]
 
 **You can use both CasADi and PyTorch. They are not mutually exclusive.**
 
