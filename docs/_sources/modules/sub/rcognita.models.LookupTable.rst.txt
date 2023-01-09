@@ -1,0 +1,33 @@
+rcognita.models.LookupTable
+===========================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: LookupTable
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LookupTable.__init__
+      ~LookupTable.cache_weights
+      ~LookupTable.forward
+      ~LookupTable.restore_weights
+      ~LookupTable.update_and_cache_weights
+      ~LookupTable.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LookupTable.model_name
+   
+   

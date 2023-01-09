@@ -1,0 +1,6 @@
+rcognita.models.force\_positive\_def
+====================================
+
+.. currentmodule:: rcognita.models
+
+.. autofunction:: force_positive_def

@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_inverted\_pendulum.InvPendulumTrackingDashboard
+===========================================================================
+
+.. currentmodule:: rcognita.visualization.vis_inverted_pendulum
+
+.. autoclass:: InvPendulumTrackingDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~InvPendulumTrackingDashboard.__init__
+      ~InvPendulumTrackingDashboard.init_dashboard
+      ~InvPendulumTrackingDashboard.perform_episodic_update
+      ~InvPendulumTrackingDashboard.perform_iterative_update
+      ~InvPendulumTrackingDashboard.perform_step_update
+      ~InvPendulumTrackingDashboard.update
+   
+   
+
+   
+   
+   

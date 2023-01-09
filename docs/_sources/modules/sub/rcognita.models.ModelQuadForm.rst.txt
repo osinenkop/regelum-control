@@ -1,0 +1,33 @@
+rcognita.models.ModelQuadForm
+=============================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelQuadForm
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelQuadForm.__init__
+      ~ModelQuadForm.cache_weights
+      ~ModelQuadForm.forward
+      ~ModelQuadForm.restore_weights
+      ~ModelQuadForm.update_and_cache_weights
+      ~ModelQuadForm.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelQuadForm.model_name
+   
+   

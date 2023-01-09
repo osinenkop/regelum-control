@@ -4,37 +4,38 @@ For instance, an online scenario is when the controller and system interact with
 
 """
 
-from re import S
-from rcognita.utilities import rc
-from rcognita.optimizers import TorchOptimizer
+
 from abc import ABC, abstractmethod
-import os
 import matplotlib.pyplot as plt
-import sys
 from itertools import islice
+import numpy as np
+from typing import Optional
+from unittest.mock import Mock, MagicMock
 
 
-class TabularScenarioBase:
-    """
-    A tabular scenario blueprint.
+from .__utilities import rc
+from .optimizers import TorchOptimizer
+from .actors import Actor
+from .critics import Critic
+from .simulator import Simulator
+from .controllers import Controller
+from .objectives import RunningObjective
 
-    """
 
-    def __init__(self, actor, critic, N_iterations):
-        self.actor = actor
-        self.critic = critic
-        self.N_iterations = N_iterations
-
-    def run(self):
-        for i in range(self.N_iterations):
-            self.iterate()
+class Scenario(ABC):
+    def __init__(self):
+        pass
 
     @abstractmethod
-    def iterate(self):
+    def run(self):
+        pass
+
+    @abstractmethod
+    def step(self):
         pass
 
 
-class TabularScenarioVI(TabularScenarioBase):
+class TabularScenarioVI(Scenario):
     """
     Tabular scenario for the use with tabular agents.
     Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
@@ -42,24 +43,23 @@ class TabularScenarioVI(TabularScenarioBase):
 
     """
 
-    def iterate(self):
+    def __init__(
+        self, actor: Actor, critic: Critic, N_iterations: int, is_playback=None
+    ):
+        self.actor = actor
+        self.critic = critic
+        self.N_iterations = N_iterations
+
+    def run(self):
+        for i in range(self.N_iterations):
+            self.step()
+
+    def step(self):
         self.actor.update()
         self.critic.update()
 
 
-class TabularScenarioPI(TabularScenarioBase):
-    """
-    Tabular scenario for the use with tabular agents.
-    Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
-    Implements a scenario for policy iteration (PI) update.
-    """
-
-    def iterate(self):
-        self.critic.update()
-        self.actor.update()
-
-
-class OnlineScenario:
+class OnlineScenario(Scenario):
     """
     Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
 
@@ -67,31 +67,37 @@ class OnlineScenario:
 
     def __init__(
         self,
-        system,
-        simulator,
-        controller,
-        actor,
-        critic,
-        logger,
-        datafiles,
-        time_final,
-        running_objective,
-        no_print=False,
-        is_log=False,
-        is_playback=False,
-        state_init=None,
+        simulator: Simulator,
+        controller: Controller,
+        running_objective: Optional[RunningObjective] = None,
+        no_print: bool = False,
+        is_log: bool = False,
+        is_playback: bool = False,
+        state_init: np.ndarray = None,
         action_init=None,
+        time_start: float = 0.0,
     ):
-        self.system = system
-        self.simulator = simulator
-        self.controller = controller
-        self.actor = actor
-        self.critic = critic
-        self.logger = logger
-        self.running_objective = running_objective
 
-        self.time_final = time_final
-        self.datafile = datafiles[0]
+        self.simulator = simulator
+
+        self.system = Mock() if not hasattr(simulator, "system") else simulator.system
+
+        self.controller = controller
+        self.actor = (
+            MagicMock() if not hasattr(controller, "actor") else controller.actor
+        )
+        self.critic = (
+            MagicMock() if not hasattr(controller, "critic") else controller.critic
+        )
+
+        self.running_objective = (
+            (lambda observation, action: 0)
+            if running_objective is None
+            else running_objective
+        )
+
+        self.time_start = time_start
+        self.time_final = self.simulator.time_final
         self.no_print = no_print
         self.is_log = is_log
         self.is_playback = is_playback
@@ -118,15 +124,6 @@ class OnlineScenario:
 
         if not self.no_print:
             self.logger.print_sim_step(
-                self.time,
-                self.state_full,
-                self.action,
-                self.running_objective_value,
-                self.outcome,
-            )
-        if self.is_log:
-            self.logger.log_data_row(
-                self.datafile,
                 self.time,
                 self.state_full,
                 self.action,
@@ -183,10 +180,13 @@ class OnlineScenario:
         self.outcome += self.running_objective(observation, action) * delta
 
 
-class EpisodicScenarioBase(OnlineScenario):
+class EpisodicScenario(OnlineScenario):
+    cache = dict()
+
     def __init__(
         self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
     ):
+        self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
         self.episode_REINFORCE_objective_gradients = []
@@ -258,7 +258,7 @@ class EpisodicScenarioBase(OnlineScenario):
         """
         This is a decorator for a simulator step method.
         It containes a ``cache`` field that in turn comprises of ``keys`` and ``values``.
-        The ``cache`` dictionary method `keys` returns a triple: 
+        The ``cache`` dictionary method `keys` returns a triple:
 
         - ``time``: the current time in an episode
         - ``episode_counter``: the current episode number
@@ -267,7 +267,6 @@ class EpisodicScenarioBase(OnlineScenario):
         If the scenario's triple ``(time, episode_counter, iteration_counter)`` is already contained in ``cache``, then the decorator returns a step method that simply reads from ``cache``.
         Otherwise, the scenario's simulator is called to do a step.
         """
-        cache = dict()
 
         def step_with_memory(self):
             triple = (
@@ -276,7 +275,7 @@ class EpisodicScenarioBase(OnlineScenario):
                 self.iteration_counter,
             )
 
-            if triple in cache.keys():
+            if triple in self.cache.keys():
                 (
                     self.time,
                     self.episode_counter,
@@ -289,11 +288,12 @@ class EpisodicScenarioBase(OnlineScenario):
                     self.actor.model.weights,
                     self.critic.model.weights,
                     self.current_scenario_status,
-                ) = cache[triple]
+                ) = self.cache[triple]
+
                 self.update_time_from_cache()
             else:
                 if self.is_playback:
-                    self.current_scenario_snapshot = (
+                    self.current_scenario_snapshot = [
                         self.time,
                         self.episode_counter,
                         self.iteration_counter,
@@ -305,15 +305,25 @@ class EpisodicScenarioBase(OnlineScenario):
                         self.actor.model.weights,
                         self.critic.model.weights,
                         self.current_scenario_status,
-                    )
-                    cache[
+                    ]
+                    self.cache[
                         (self.time, self.episode_counter, self.iteration_counter)
                     ] = self.current_scenario_snapshot
 
                 self.current_scenario_status = step_method(self)
 
                 if self.current_scenario_status == "simulation_ended":
-                    self.cached_timeline = islice(iter(cache), 0, None, self.speedup)
+                    for i, item in enumerate(self.cache.items()):
+                        if i > self.speedup:
+                            if item[1][10] != "episode_continues":
+                                key_i = list(self.cache.keys())[i]
+                                for k in range(i - self.speedup + 1, i):
+                                    key_k = list(self.cache.keys())[k]
+                                    self.cache[key_k][10] = self.cache[key_i][10]
+
+                    self.cached_timeline = islice(
+                        iter(self.cache), 0, None, self.speedup
+                    )
 
             return self.current_scenario_status
 
@@ -345,7 +355,7 @@ class EpisodicScenarioBase(OnlineScenario):
             return "episode_continues"
 
 
-class EpisodicScenarioREINFORCE(EpisodicScenarioBase):
+class EpisodicScenarioREINFORCE(EpisodicScenario):
     def __init__(
         self,
         *args,

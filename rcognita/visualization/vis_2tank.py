@@ -10,7 +10,7 @@ from .animator import (
 from mpldatacursor import datacursor
 from collections import namedtuple
 import matplotlib.patheffects as PathEffects
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 
@@ -20,7 +20,7 @@ class Animator2Tank(Animator):
 
     """
 
-    def __init__(self, objects=[], pars=[]):
+    def __init__(self, objects=None, pars=None):
         self.objects = objects
         self.pars = pars
 
@@ -44,7 +44,6 @@ class Animator2Tank(Animator):
             action_manual,
             action_min,
             action_max,
-            Nruns,
             no_print,
             is_log,
             is_playback,
@@ -58,7 +57,6 @@ class Animator2Tank(Animator):
         self.time_final = time_final
         self.control_mode = control_mode
         self.action_manual = action_manual
-        self.Nruns = Nruns
         self.no_print = no_print
         self.is_log = is_log
         self.is_playback = is_playback
@@ -119,7 +117,7 @@ class Animator2Tank(Animator):
             xlabel="Time [s]",
         )
 
-        text_outcome = r"$\int \mathrm{{Stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
+        text_outcome = r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
             outcome=0
         )
         self.text_outcome_handle = self.fig_sim.text(
@@ -137,7 +135,7 @@ class Animator2Tank(Animator):
             0,
             "g-",
             lw=0.5,
-            label=r"$\int \mathrm{Stage\,obj.} \,\mathrm{d}t$",
+            label=r"$\int \mathrm{stage\,obj.} \,\mathrm{d}t$",
         )
         self.axs_cost.legend(fancybox=True, loc="upper right")
 
@@ -244,7 +242,7 @@ class Animator2Tank(Animator):
         # Cost
         update_line(self.line_running_obj, time, running_objective)
         update_line(self.line_outcome, time, outcome)
-        text_outcome = r"$\int \mathrm{{Stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
+        text_outcome = r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
             outcome=np.squeeze(np.array(outcome))
         )
         update_text(self.text_outcome_handle, text_outcome)
@@ -263,10 +261,6 @@ class Animator2Tank(Animator):
 
             self.run_curr += 1
 
-            if self.run_curr > self.Nruns:
-                print("Animation done...")
-                self.stop_anm()
-                return
 
             if self.is_log:
                 self.datafile_curr = self.datafiles[self.run_curr - 1]

@@ -1,7 +1,7 @@
 import numpy as np
 from .animator import update_line, Animator
 import matplotlib.patheffects as PathEffects
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.cm as cm
@@ -11,8 +11,6 @@ import matplotlib.colors as mcolors
 class AnimatorGridWorld(Animator):
     def __init__(
         self,
-        actor,
-        critic,
         reward_cell_xy,
         starting_cell_xy,
         punishment_cells,
@@ -27,8 +25,8 @@ class AnimatorGridWorld(Animator):
             3: np.array([0, -0.01 * length]),
             4: np.array([0, 0]),
         }
-        self.actor = actor
-        self.critic = critic
+        self.actor = scenario.actor
+        self.critic = scenario.critic
         self.starting_cell_xy = starting_cell_xy
         self.reward_cell_xy = reward_cell_xy
         self.punishment_cells = punishment_cells
@@ -87,7 +85,7 @@ class AnimatorGridWorld(Animator):
             for j in range(width):
                 val = table[i, j]
                 action = self.actor.model.weights[i, j]
-                table_range = np.ptp(np.F_max(table, 70))
+                table_range = np.ptp(np.fmax(table, 70))
                 color = self.colormap((val - np.max([np.min(table), 70])) / table_range)
                 rectangle = self.rect_patch_pack[i * width + j]
                 arr_x, arr_y = self.map_action2arrow(action, rectangle)
@@ -233,5 +231,5 @@ class AnimatorGridWorld(Animator):
         return arr_x, arr_y
 
     def animate(self, k):
-        self.scenario.iterate()
+        self.scenario.step()
         self.update_grid(k)

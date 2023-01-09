@@ -1,0 +1,35 @@
+``rcognita.visualization.vis_inverted_pendulum`` 
+================================================
+
+
+.. automodule:: rcognita.visualization.vis_inverted_pendulum
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      AnimatorInvertedPendulum
+      EpisodicTrajectoryDashboard
+      InvPendulumTrackingDashboard
+      MeanEpisodicOutcomesDashboard
+      WeightsEpisodicDashboard
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,6 @@
+_target_: rcognita.predictors.TrivialPredictor
+
+system: 
+  _target_: rcognita.systems.GridWorld
+  dims: $ actor.dim_world
+  terminal_state: $ actor.terminal_state

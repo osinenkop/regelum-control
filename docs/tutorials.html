@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configs and basic rcognita applications &mdash; rcognita 0.2.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="rcognita.actors" href="modules/rcognita.actors.html" />
+    <link rel="prev" title="About" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> rcognita
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#what-is-rcognita">What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#rcognita-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#presets">Presets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#related-literature">Related literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#closing-remarks">Closing remarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#for-developers">For developers</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1-basics">Example 1: Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2-nested-instantiation">Example 2: Nested instantiation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#remark-on-overriding-and-forwarding">Remark on overriding and forwarding</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-3-config-groups">Example 3: Config groups</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#additional-remarks-on-defaults">Additional remarks on defaults</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-4-instantiating-referencing-and-inlining">Example 4: Instantiating, referencing and inlining</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#instantiation">Instantiation (<code class="docutils literal notranslate"><span class="pre">~</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reference">Reference (<code class="docutils literal notranslate"><span class="pre">$</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inline">Inline (<code class="docutils literal notranslate"><span class="pre">=</span></code>)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">rcognita</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="configs-and-basic-rcognita-applications">
+<h1>Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications<a class="headerlink" href="#configs-and-basic-rcognita-applications" title="Permalink to this headline"></a></h1>
+<p>RL and control theory are infamous for having overwhelmingly many
+entities to keep track of: agents, environments, models, training routines,
+integrators, predictors, observers, optimizers… Each of the above in turn
+has a number of parameters of its own, and to make things worse,
+your setup will most likely be highly sensitive to all of these. Therefore
+tweaking and tuning your setup may and will get tedeous unless you figure
+out a way to do it conveniently and systematically.</p>
+<p>Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+built on top of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>. It must be noted that a regular <code class="docutils literal notranslate"><span class="pre">hydra</span></code>
+config will run on <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> just fine (but not vice versa), since
+<code class="docutils literal notranslate"><span class="pre">rcognita</span></code> includes all of the original features and syntaxes of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.
+However <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> additionally provides convenient syntactic sugars that
+<code class="docutils literal notranslate"><span class="pre">hydra</span></code> does not posses.</p>
+<p>This tutorial is focused on explaining the structure and intended workflow of
+<code class="docutils literal notranslate"><span class="pre">rcognita</span></code> from the perspective of the config paradigm.</p>
+<p>The reader is encouraged to familiarize themselves
+with <code class="docutils literal notranslate"><span class="pre">hydra</span></code>. Some of the basic syntaxes along with the additional features will also
+be covered in the present tutorial.</p>
+<p>The first two examples may have been reused elsewhere in the documentation, so
+be sure to skip them if you’ve already seen them.</p>
+<div class="section" id="example-1-basics">
+<h2>Example 1: Basics<a class="headerlink" href="#example-1-basics" title="Permalink to this headline"></a></h2>
+<p>Consider the following files in your hypothetical project.</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rate</span><span class="p">:</span> <span class="mf">0.1</span>
+
+<span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="c1"># The &#39;=&#39; lets us evaluate this</span>
+                                <span class="c1"># python code &#39;numpy.zeros(5)&#39;</span>
+
+<span class="n">robot</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span> <span class="c1"># &#39;_target_&#39; is a special field</span>
+    <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>                                 <span class="c1"># that should point to a class</span>
+    <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
+    <span class="n">z</span><span class="p">:</span> <span class="mi">3</span>
+
+<span class="n">agent</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
+    <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">b</span><span class="p">:</span> <span class="mi">4</span>
+    <span class="n">c</span><span class="p">:</span> <span class="mi">5</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">rcognita.scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+<span class="kn">import</span> <span class="nn">my_utilities</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+<span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+    <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="n">robot</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">robot</span>      <span class="c1"># &#39;~&#39; instantiates the object</span>
+    <span class="n">controller</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">agent</span> <span class="c1"># described in the corresponding</span>
+                               <span class="c1"># field. It makes use of &#39;_target_&#39;.</span>
+    <span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span>
+                          <span class="n">config</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span>
+                          <span class="n">sampling_time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
+    <span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+    <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The above example project is the equivalent to the first example in section
+“What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?”. Here instead of providing args for
+MyRobotSystem and MyAgent inside the python script, we instead specify
+both the classes and their args in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.</p>
+<p>Note, that the operator <code class="docutils literal notranslate"><span class="pre">~</span></code> is necessary to let rcognita know that
+the corresponding node within the config describes an instance of a class
+and we would like to instantiate it
+(as opposed to accessing it as a config-dictionary).</p>
+<p>In other words <code class="docutils literal notranslate"><span class="pre">~config.robot</span></code> evaluates to</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe53aa39220</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>, while <code class="docutils literal notranslate"><span class="pre">config.robot</span></code> evaluates to</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;_target_&#39;</span><span class="p">:</span><span class="s1">&#39;my_utilities.MyRobotSystem&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2-nested-instantiation">
+<h2>Example 2: Nested instantiation<a class="headerlink" href="#example-2-nested-instantiation" title="Permalink to this headline"></a></h2>
+<p>Note, that when using this config paradigm nothing impedes us from instantiating
+<strong>literally everything</strong> directly inside the config, leaving the python script
+almost empty. Here’s an example of how this can be done:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+
+<span class="n">simulator</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">system</span><span class="p">:</span>
+        <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
+        <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
+        <span class="n">z</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
+
+<span class="n">controller</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
+    <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">b</span><span class="p">:</span> <span class="mi">4</span>
+    <span class="n">c</span><span class="p">:</span> <span class="mi">5</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">import</span> <span class="nn">my_utilities</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+ <span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+     <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+     <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+ <span class="p">)</span>
+ <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+     <span class="n">scenario</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span>
+     <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+ <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+     <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This way of doing it has numerous advantages. Notably, you can now
+conveniently override any input parameters, when running the script like so</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">.</span><span class="n">a</span><span class="o">=</span><span class="mi">10</span>
+</pre></div>
+</div>
+<p>or even</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">_target_</span><span class="o">=</span><span class="n">MyOwnBetterSimulator</span>
+</pre></div>
+</div>
+<div class="section" id="remark-on-overriding-and-forwarding">
+<h3>Remark on overriding and forwarding<a class="headerlink" href="#remark-on-overriding-and-forwarding" title="Permalink to this headline"></a></h3>
+<p>Sure, overriding individual parameters is nice, but writing
+<code class="docutils literal notranslate"><span class="pre">simulator.system.x=3</span></code> can be rather inconvenient as compared to simply writing
+<code class="docutils literal notranslate"><span class="pre">x=3</span></code>.</p>
+<p>Fortunately, <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s configs have a feature that allows you
+to <strong>forward</strong> a variable by simply adding the following line to you config:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@simulator</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">x</span>
+</pre></div>
+</div>
+<p>This way you can simply write</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">x</span><span class="o">=</span><span class="mi">10</span>
+</pre></div>
+</div>
+<p>and this will have the same effect as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">x</span><span class="o">=</span><span class="mi">10</span>
+</pre></div>
+</div>
+<p>Forwarding is intended to provide convenience for overriding the select few important
+parameters that may be deeply nested. Don’t overuse it though or you’ll lose the
+advantages of a hierarchical structure.</p>
+</div>
+</div>
+<div class="section" id="example-3-config-groups">
+<h2>Example 3: Config groups<a class="headerlink" href="#example-3-config-groups" title="Permalink to this headline"></a></h2>
+<p>Sure, we can override a parameters or two, but what if we came up against a case
+when we want to be able swap out an entire agent or an entire environment without
+rewriting the whole config?</p>
+<p>Consider the following example:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgentReliable</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span> <span class="c1">## You already know this one works</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgentExperimental</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span> <span class="c1">## Perhaps this one works even better</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+
+<span class="n">defaults</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">controller</span><span class="p">:</span> <span class="n">reliable</span>
+
+<span class="n">simulator</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">system</span><span class="p">:</span>
+        <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
+        <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
+        <span class="n">z</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">controller/reliable.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgentReliable</span>
+<span class="n">a</span><span class="p">:</span> <span class="mi">4</span>
+<span class="n">b</span><span class="p">:</span> <span class="mi">5</span>
+<span class="n">c</span><span class="p">:</span> <span class="mi">6</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">controller/experimental.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgentExperimental</span>
+<span class="n">e</span><span class="p">:</span> <span class="mi">7</span>
+<span class="n">f</span><span class="p">:</span> <span class="mi">8</span>
+<span class="n">g</span><span class="p">:</span> <span class="mi">9</span>
+<span class="n">h</span><span class="p">:</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">import</span> <span class="nn">my_utilities</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+ <span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+     <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+     <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+ <span class="p">)</span>
+ <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+     <span class="n">scenario</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span>
+     <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+ <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+     <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In the above project we are looking two alternative agents (controller):
+the first one called <code class="docutils literal notranslate"><span class="pre">MyAgentReliable</span></code> and the other called <code class="docutils literal notranslate"><span class="pre">MyAgentExperimental</span></code>.</p>
+<p>Observe the <code class="docutils literal notranslate"><span class="pre">default</span></code> syntax in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.  The line <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">controller:</span> <span class="pre">reliable</span></code>
+makes it so that the node <code class="docutils literal notranslate"><span class="pre">config.controller</span></code> is populated by the contents of
+<code class="docutils literal notranslate"><span class="pre">controller/reliable.yaml</span></code>. In this case if you wanted to instead try out the
+experimental agent (described by <code class="docutils literal notranslate"><span class="pre">controller/experimental.yaml</span></code>) you would simply
+need to execute the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">=</span><span class="n">experimental</span>
+</pre></div>
+</div>
+<p>As simple as that!</p>
+<p>Note that the directory <code class="docutils literal notranslate"><span class="pre">controller</span></code> matches the name of the node it populates.</p>
+<div class="section" id="additional-remarks-on-defaults">
+<h3>Additional remarks on defaults<a class="headerlink" href="#additional-remarks-on-defaults" title="Permalink to this headline"></a></h3>
+<p>Consider the following:</p>
+<p><code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">defaults</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">file</span>
+</pre></div>
+</div>
+<p>The above code will populate <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> with the contents of <code class="docutils literal notranslate"><span class="pre">file.yaml</span></code>.
+This feature can help you avoid a lot of unnecessary
+rewriting and duplication.</p>
+<p>Also, if you want to override a nested config group you need
+to use <code class="docutils literal notranslate"><span class="pre">/</span></code> instead of <code class="docutils literal notranslate"><span class="pre">.</span></code>. For instance, like so</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">/</span><span class="n">something_inside_my_controller</span><span class="o">=</span><span class="n">experimental</span>
+</pre></div>
+</div>
+<p>Yes, this syntax is a bit strange since some of the things in between those <code class="docutils literal notranslate"><span class="pre">/</span></code> may
+not even be actual directories, but rather just names of nodes. This however lets
+<code class="docutils literal notranslate"><span class="pre">hydra</span></code> distinguish between overriding a variable and overriding a config. So if you
+were to instead execute</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">.</span><span class="n">something_inside_the_controller</span><span class="o">=</span><span class="n">experimental</span>
+</pre></div>
+</div>
+<p>this would simply assign the string <code class="docutils literal notranslate"><span class="pre">&quot;experimental&quot;</span></code> to
+<code class="docutils literal notranslate"><span class="pre">config.controller.something_inside_my_controller</span></code> as opposed to swapping out the
+respective config file to <code class="docutils literal notranslate"><span class="pre">experimental.yaml</span></code>.</p>
+</div>
+</div>
+<div class="section" id="example-4-instantiating-referencing-and-inlining">
+<h2>Example 4: Instantiating, referencing and inlining<a class="headerlink" href="#example-4-instantiating-referencing-and-inlining" title="Permalink to this headline"></a></h2>
+<div class="section" id="instantiation">
+<h3>Instantiation (<code class="docutils literal notranslate"><span class="pre">~</span></code>)<a class="headerlink" href="#instantiation" title="Permalink to this headline"></a></h3>
+<p>Imagine the following: you are building an agent that explicitly
+accounts for the error of the simulations (for the purpose of improving offline learning).
+To be able to extract the necessary data it needs to have access to the simulator instance.
+Here’s how you could go about doing it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">simulator</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+
+<span class="n">simulator</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">system</span><span class="p">:</span>
+        <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
+        <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="n">y</span><span class="p">:</span> <span class="mi">2</span>
+        <span class="n">z</span><span class="p">:</span> <span class="mi">3</span>
+    <span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
+
+<span class="n">controller</span><span class="p">:</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
+    <span class="n">simulator</span><span class="p">:</span> <span class="o">~</span> <span class="n">simulator</span>  <span class="c1">## This is where the magic happens.</span>
+    <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>                    <span class="c1">## &#39;~&#39; instantiates config.simulator.</span>
+    <span class="n">b</span><span class="p">:</span> <span class="mi">4</span>                    <span class="c1">## Furthermore, this is going to be the exact</span>
+    <span class="n">c</span><span class="p">:</span> <span class="mi">5</span>                    <span class="c1">## same instance that is produced by ~config.simulator</span>
+                            <span class="c1">## when run in python</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">import</span> <span class="nn">my_utilities</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+ <span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+     <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+     <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+ <span class="p">)</span>
+ <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+     <span class="nb">print</span><span class="p">(</span><span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">is</span> <span class="n">config</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>    <span class="c1">## Will output True</span>
+     <span class="nb">print</span><span class="p">((</span><span class="o">~</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">is</span> <span class="n">config</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>   <span class="c1">## Will output True</span>
+
+
+ <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+     <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In configs <code class="docutils literal notranslate"><span class="pre">~</span></code> does the exact same thing that it does in Python: instantiates
+an object described by a config node (with a <code class="docutils literal notranslate"><span class="pre">_target_</span></code>).</p>
+<p>The most important aspect of this feature is your ability to assign
+different references of the same instance. By default, <code class="docutils literal notranslate"><span class="pre">~</span></code> will create
+a reference to the same object that is created during recursive instantiation,
+when, for instance, running <code class="docutils literal notranslate"><span class="pre">~config</span></code>. You can however insist on creating your own
+distinct instance by using</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">field</span><span class="p">:</span> <span class="n">my_instance_name</span> <span class="o">~</span> <span class="n">other</span><span class="o">.</span><span class="n">field</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">field:</span> <span class="pre">~</span> <span class="pre">something</span></code> is short for <code class="docutils literal notranslate"><span class="pre">field:</span> <span class="pre">~{something}</span></code>.</p>
+</div>
+<div class="section" id="reference">
+<h3>Reference (<code class="docutils literal notranslate"><span class="pre">$</span></code>)<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h3>
+<p>You can use <code class="docutils literal notranslate"><span class="pre">$</span></code> to reference other fields within the config. For
+instance if the <code class="docutils literal notranslate"><span class="pre">MyAgent</span></code> only needs to know the absolute tolerance <code class="docutils literal notranslate"><span class="pre">atol</span></code>
+to account for the accuracy of simulation, then one could implement that in
+the following way:</p>
+<p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+
+<span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>_target_: rcognita.scenarios.Scenario
+
+simulator:
+    _target_: rcognita.simulator.Simulator
+    system:
+        _target_: my_utilities.MyRobotSystem
+        x: 1
+        y: 2
+        z: 3
+    initial_state: = numpy.zeros(5)
+    sampling_time: 0.1
+    atol: 0.001
+
+controller:
+    _target_: my_utilities.MyAgent
+    atol: $ simulator.atol  ## This will insert 0.001
+    a: 3
+    b: 4
+    c: 5
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">field:</span> <span class="pre">$</span> <span class="pre">something</span></code> is short for <code class="docutils literal notranslate"><span class="pre">field:</span> <span class="pre">${something}</span></code>. You can make use of that,
+whe you want to compose something out of different fields. For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>a: 1
+b: 2
+a_plus_b: = ${a} + ${b}
+</pre></div>
+</div>
+<p>One could also use <code class="docutils literal notranslate"><span class="pre">$</span></code> to references entire config nodes. For instance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>stuff:
+   _target_: builtins.dict
+   x: 1
+   y: 1
+identical_to_stuff: $ stuff ## will be populated with contents of &quot;stuff&quot;
+</pre></div>
+</div>
+<p>This will however result in <code class="docutils literal notranslate"><span class="pre">stuff</span></code> and <code class="docutils literal notranslate"><span class="pre">identical_to_stuff</span></code> being
+different instances. I.e. <code class="docutils literal notranslate"><span class="pre">~config.stuff</span> <span class="pre">is</span> <span class="pre">~config.identical_to_stuff</span></code> will
+evaluate to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">$</span></code> is used for absolute references, while <code class="docutils literal notranslate"><span class="pre">$$</span></code> is used for relative references.</p>
+</div>
+<div class="section" id="inline">
+<h3>Inline (<code class="docutils literal notranslate"><span class="pre">=</span></code>)<a class="headerlink" href="#inline" title="Permalink to this headline"></a></h3>
+<p>This one is pretty simple. All it does is it executes Python code. Make sure
+that the relevant modules are imported in your <code class="docutils literal notranslate"><span class="pre">main.py</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pi</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">pi</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<blockquote>
+<div><p>import numpy as np
+…</p>
+</div></blockquote>
+<p><code class="docutils literal notranslate"><span class="pre">field:</span> <span class="pre">=</span> <span class="pre">something</span></code> is short for <code class="docutils literal notranslate"><span class="pre">field:</span> <span class="pre">={something}</span></code>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="callbacks-and-logging">
+<h1>Callbacks and Logging<a class="headerlink" href="#callbacks-and-logging" title="Permalink to this headline"></a></h1>
+<p>In <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> we avoid mixing logging routines with functional
+code. This is motivated by the fact that different applications
+may require very different logging behaviors from same objects.
+We thus introduce a lightweight event handling system that allows
+for flexible and convenient configuration of logging: Callbacks.</p>
+<p>A callback is a callable equipped with a logger and an even handling routine.</p>
+<p>Let’s write a callback the logs the objective every time it’s computed.
+<code class="docutils literal notranslate"><span class="pre">my_callbacks.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ObjectiveCallback</span><span class="p">(</span><span class="n">Callback</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">perform</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;objective&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The current objective is equal to </span><span class="si">{</span><span class="n">output</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To make this callback work we would need
+to decorate the <code class="docutils literal notranslate"><span class="pre">objective</span></code> method with <code class="docutils literal notranslate"><span class="pre">&#64;rcognita.callbacks.apply_callbacks</span></code> after
+decorating the respective class with <code class="docutils literal notranslate"><span class="pre">&#64;rcognita.callbacks.introduce_callbacks()</span></code>. This will
+make <code class="docutils literal notranslate"><span class="pre">objective</span></code> trigger callback events. To make sure the event is handled we will also need to
+register the callback. There are two way of doing so.</p>
+<p>You could either specify it in your Python script
+<code class="docutils literal notranslate"><span class="pre">main.py</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">import</span> <span class="nn">my_callbacks</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+
+ <span class="nd">@r</span><span class="o">.</span><span class="n">main</span><span class="p">(</span>
+     <span class="n">callbacks</span><span class="o">=</span><span class="p">[</span><span class="n">my_callbacks</span><span class="o">.</span><span class="n">ObjectiveCallback</span><span class="p">],</span> <span class="c1">## Do not instantiate it</span>
+     <span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+     <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
+ <span class="p">)</span>
+ <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+     <span class="o">...</span>
+
+
+ <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+     <span class="n">my_app</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>or you could just write the following
+to your config:
+<code class="docutils literal notranslate"><span class="pre">config.yaml</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">callbacks</span><span class="p">:</span>
+    <span class="o">-</span> <span class="n">my_callbacks</span><span class="o">.</span><span class="n">ObjectiveCallback</span>
+
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>The above will not mess with your instantiation parameters. <code class="docutils literal notranslate"><span class="pre">config.callbacks</span></code> gets
+deleted automatically as soon as <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> extracts the callbacks from it.</p>
+<p>By default <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> creates its own <code class="docutils literal notranslate"><span class="pre">Logger</span></code> instance and passes it to the callbacks.
+You can insist on your own logger with <code class="docutils literal notranslate"><span class="pre">&#64;r.main(logger=...,</span> <span class="pre">...)</span></code>.</p>
+<p>If you’d like to know more, be sure to read the <a class="reference internal" href="modules/rcognita.callbacks.html"><span class="doc">relevant API Docs</span></a>.</p>
+</div>
+<div class="section" id="what-if-i-still-don-t-know-what-i-m-doing">
+<h1>What if I still don’t know what I’m doing?<a class="headerlink" href="#what-if-i-still-don-t-know-what-i-m-doing" title="Permalink to this headline"></a></h1>
+<p>If after reading these tutorials you still don’t quite know where to start,
+do not be discouraged. You are now well equipped to understand the presets provided in
+<code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s repository. As soon as you examine a few of them, you should be able to write
+code of your own. In fact many of the presets can likely be conveniently repurposed for
+your own projects.</p>
+<p>Be sure to hit the API Docs when in doubt, and good luck with your experiments!</p>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="About" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="modules/rcognita.actors.html" class="btn btn-neutral float-right" title="rcognita.actors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, AIDA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

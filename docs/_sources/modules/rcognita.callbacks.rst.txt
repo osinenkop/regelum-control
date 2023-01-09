@@ -1,0 +1,42 @@
+``rcognita.callbacks`` 
+======================
+
+
+.. automodule:: rcognita.callbacks
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      apply_callbacks
+      method_callback
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Callback
+      ObjectiveCallback
+      StateCallback
+      introduce_callbacks
+   
+   
+
+   
+   
+   
+
+
+

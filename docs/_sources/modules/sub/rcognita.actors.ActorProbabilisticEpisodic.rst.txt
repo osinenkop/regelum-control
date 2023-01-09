@@ -1,0 +1,36 @@
+rcognita.actors.ActorProbabilisticEpisodic
+==========================================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorProbabilisticEpisodic
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorProbabilisticEpisodic.__init__
+      ~ActorProbabilisticEpisodic.accept_or_reject_weights
+      ~ActorProbabilisticEpisodic.cache_weights
+      ~ActorProbabilisticEpisodic.create_observation_constraints
+      ~ActorProbabilisticEpisodic.get_action
+      ~ActorProbabilisticEpisodic.optimize_weights
+      ~ActorProbabilisticEpisodic.receive_observation
+      ~ActorProbabilisticEpisodic.reset
+      ~ActorProbabilisticEpisodic.restore_weights
+      ~ActorProbabilisticEpisodic.set_action
+      ~ActorProbabilisticEpisodic.store_gradient
+      ~ActorProbabilisticEpisodic.update_action
+      ~ActorProbabilisticEpisodic.update_and_cache_weights
+      ~ActorProbabilisticEpisodic.update_weights
+      ~ActorProbabilisticEpisodic.update_weights_by_gradient
+   
+   
+
+   
+   
+   

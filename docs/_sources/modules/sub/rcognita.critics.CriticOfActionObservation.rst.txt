@@ -1,0 +1,40 @@
+rcognita.critics.CriticOfActionObservation
+==========================================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticOfActionObservation
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticOfActionObservation.__init__
+      ~CriticOfActionObservation.accept_or_reject_weights
+      ~CriticOfActionObservation.cache_weights
+      ~CriticOfActionObservation.initialize_buffers
+      ~CriticOfActionObservation.objective
+      ~CriticOfActionObservation.optimize_weights
+      ~CriticOfActionObservation.reset
+      ~CriticOfActionObservation.restore_weights
+      ~CriticOfActionObservation.update_and_cache_weights
+      ~CriticOfActionObservation.update_buffers
+      ~CriticOfActionObservation.update_outcome
+      ~CriticOfActionObservation.update_target
+      ~CriticOfActionObservation.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticOfActionObservation.optimizer_engine
+   
+   

@@ -4,12 +4,14 @@ Module that contains state or observation (depending on the context) predictors.
 """
 
 import numpy as np
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
-from .utilities import rc
+from .__utilities import rc
+from .systems import System
+from .solvers import create_CasADi_integrator
 
 
-class BasePredictor(metaclass=ABCMeta):
+class Predictor(ABC):
     """
     Blueprint of a predictor.
 
@@ -24,7 +26,7 @@ class BasePredictor(metaclass=ABCMeta):
         pass
 
 
-class EulerPredictor(BasePredictor):
+class EulerPredictor(Predictor):
     """
     Euler predictor uses a simple Euler discretization scheme.
     It does predictions by increments scaled by a sampling time times the velocity evaluated at each successive node.
@@ -33,16 +35,16 @@ class EulerPredictor(BasePredictor):
 
     def __init__(
         self,
-        pred_step_size,
-        compute_state_dynamics,
-        sys_out,
-        dim_output,
-        prediction_horizon,
+        pred_step_size: float,
+        system: System,
+        dim_input: int,
+        prediction_horizon: int,
     ):
+        self.system = system
         self.pred_step_size = pred_step_size
-        self.compute_state_dynamics = compute_state_dynamics
-        self.sys_out = sys_out
-        self.dim_output = dim_output
+        self.compute_state_dynamics = system.compute_dynamics
+        self.sys_out = system.out
+        self.dim_input = dim_input
         self.prediction_horizon = prediction_horizon
 
     def predict(self, current_state_or_observation, action):
@@ -56,14 +58,14 @@ class EulerPredictor(BasePredictor):
     def predict_sequence(self, observation, action_sequence):
 
         observation_sequence = rc.zeros(
-            [self.prediction_horizon, self.dim_output], prototype=action_sequence
+            [self.dim_input, self.prediction_horizon], prototype=action_sequence
         )
         current_observation = observation
 
         for k in range(self.prediction_horizon):
-            current_action = action_sequence[k, :]
+            current_action = action_sequence[:, k]
             next_observation = self.predict(current_observation, current_action)
-            observation_sequence[k, :] = self.sys_out(next_observation)
+            observation_sequence[:, k] = self.sys_out(next_observation).T
             current_observation = next_observation
         return observation_sequence
 
@@ -92,14 +94,31 @@ class EulerPredictorPendulum(EulerPredictor):
         return observation_sequence
 
 
-class TrivialPredictor(BasePredictor):
+class RKPredictor(EulerPredictor):
+    """
+    Predictor that makes use o Runge-Kutta finite difference methods.
+    """
+
+    def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.integrator = create_CasADi_integrator(
+            self.system, state_or_observation_init, action_init, self.pred_step_size,
+        )
+
+    def predict(self, current_state_or_observation, action):
+        state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
+        return state_new
+
+
+class TrivialPredictor(Predictor):
     """
     This predictor propagates the observation or state directly through the system dynamics law.
 
     """
 
-    def __init__(self, compute_dynamics):
-        self.compute_dynamics = compute_dynamics
+    def __init__(self, system):
+        self.compute_dynamics = system.compute_dynamics
 
     def predict(self, current_state_or_observation, action):
         return self.compute_dynamics(current_state_or_observation, action)

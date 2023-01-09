@@ -11,7 +11,7 @@ from .animator import (
 )
 from mpldatacursor import datacursor
 from collections import namedtuple
-from ..utilities import rc
+from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 
@@ -155,27 +155,27 @@ class SolutionDashboard(Dashboard):
         angle = state[2]
         # # Solution
         update_line(self.line_norm, time, la.norm([xCoord, yCoord]))
-        update_line(self.line_angle, time, angle)
+        update_line(self.line_angle, time, np.squeeze(angle))
 
 
 class CostDashboard(Dashboard):
-    def __init__(self, time_start, time_final, running_objective, scenario):
+    def __init__(self, time_start, time_final, running_objective_init, scenario):
         super().__init__()
         self.time_start = time_start
         self.time_final = time_final
-        self.running_objective = running_objective
+        self.running_objective_init = running_objective_init
         self.scenario = scenario
 
     def init_dashboard(self):
         self.axes_cost = plt.gca()
 
         self.axes_cost.set_xlim(self.time_start, self.time_final)
-        self.axes_cost.set_ylim(0, 1e4 * self.running_objective)
+        self.axes_cost.set_ylim(0, 1e4)
         self.axes_cost.set_yscale("symlog")
         self.axes_cost.set_xlabel("Time [s]")
         self.axes_cost.autoscale(False)
 
-        text_outcome = r"$\int \mathrm{{Stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
+        text_outcome = r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
             outcome=0
         )
         self.text_outcome_handle = self.axes_cost.text(
@@ -186,14 +186,18 @@ class CostDashboard(Dashboard):
             verticalalignment="center",
         )
         (self.line_running_obj,) = self.axes_cost.plot(
-            self.time_start, self.running_objective, "r-", lw=0.5, label="Running obj."
+            self.time_start,
+            self.running_objective_init,
+            "r-",
+            lw=0.5,
+            label="Running obj.",
         )
         (self.line_outcome,) = self.axes_cost.plot(
             self.time_start,
             0,
             "g-",
             lw=0.5,
-            label=r"$\int \mathrm{Stage\,obj.} \,\mathrm{d}t$",
+            label=r"$\int \mathrm{running\,obj.} \,\mathrm{d}t$",
         )
         self.artists.append(self.line_running_obj)
         self.artists.append(self.line_outcome)
@@ -201,12 +205,12 @@ class CostDashboard(Dashboard):
 
     def perform_step_update(self):
         time = self.scenario.time
-        running_objective_value = self.scenario.running_objective_value
+        running_objective_value = np.squeeze(self.scenario.running_objective_value)
         outcome = self.scenario.outcome
 
         update_line(self.line_running_obj, time, running_objective_value)
         update_line(self.line_outcome, time, outcome)
-        text_outcome = r"$\int \mathrm{{Stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
+        text_outcome = r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
             outcome=np.squeeze(np.array(outcome))
         )
         update_text(self.text_outcome_handle, text_outcome)
@@ -239,7 +243,7 @@ class ControlDashboard(Dashboard):
             [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
         )  # Help line
         self.lines_action = self.axis_action.plot(
-            self.time_start, rc.to_col(self.scenario.actor.action_init).T, lw=0.5
+            self.time_start, rc.force_column(self.scenario.action_init).T, lw=0.5
         )
         self.axis_action.legend(
             iter(self.lines_action),
@@ -251,10 +255,10 @@ class ControlDashboard(Dashboard):
 
     def perform_step_update(self):
         # Control
-        action = self.scenario.action
+        action = np.squeeze(self.scenario.action)
         time = self.scenario.time
 
-        for (line, action_single) in zip(self.lines_action, np.array(action)):
+        for (line, action_single) in zip(self.lines_action, action):
             update_line(line, time, action_single)
 
 
@@ -288,7 +292,7 @@ class ControlDashboardNI(Dashboard):
             [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
         )  # Help line
         self.lines_action = self.axis_action.plot(
-            self.time_start, rc.to_col(self.scenario.actor.action_init).T, lw=0.5
+            self.time_start, rc.force_column(self.scenario.action_init).T, lw=0.5
         )
         self.axis_action.legend(
             iter(self.lines_action),
@@ -313,69 +317,51 @@ class Animator3WRobot(Animator):
 
     """
 
-    def __init__(self, objects=[], pars=[], subplot_grid_size=[2, 2]):
+    def __init__(self, scenario=None, subplot_grid_size=None):
+        if subplot_grid_size is None:
+            subplot_grid_size = [2, 2]
         super().__init__(subplot_grid_size=subplot_grid_size)
-        self.objects = objects
-        self.pars = pars
-
-        # Unpack entities
-        (
-            self.simulator,
-            self.system,
-            self.nominal_controller,
-            self.controller,
-            self.datafiles,
-            self.logger,
-            self.actor_optimizer,
-            self.critic_optimizer,
-            self.running_objective,
-            self.scenario,
-        ) = self.objects
+        self.scenario = scenario
+        self.__dict__.update(scenario.__dict__)
 
         (
-            state_init,
-            action_init,
-            time_start,
-            time_final,
             state_full_init,
             xMin,
             xMax,
             yMin,
             yMax,
-            control_mode,
-            action_manual,
             F_min,
             M_min,
             F_max,
             M_max,
-            Nruns,
-            no_print,
-            is_log,
-            is_playback,
             running_obj_init,
-        ) = self.pars
+        ) = (
+            self.scenario.simulator.state_full_init,
+            -10,
+            10,
+            -10,
+            10,
+            self.scenario.controller.action_bounds[0][0],
+            self.scenario.controller.action_bounds[0][1],
+            self.scenario.controller.action_bounds[1][0],
+            self.scenario.controller.action_bounds[1][1],
+            0,
+        )
+        self.sampling_time = self.scenario.controller.sampling_time
 
         # Store some parameters for later use
         self.time_old = 0
         self.outcome = 0
-        self.time_start = time_start
         self.state_full_init = state_full_init
-        self.time_final = time_final
-        self.control_mode = control_mode
-        self.action_manual = action_manual
-        self.Nruns = Nruns
-        self.no_print = no_print
-        self.is_log = is_log
-        self.is_playback = is_playback
 
-        xCoord0 = state_init[0]
-        yCoord0 = state_init[1]
-        angle0 = state_init[2]
+        xCoord0 = self.state_init[0]
+        yCoord0 = self.state_init[1]
+        angle0 = self.state_init[2]
         angle_deg0 = angle0 / 2 / np.pi
 
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ###########################
         robot_tracking_dasboard = RobotTrackingDasboard(
-            time_start,
+            self.time_start,
             xMax,
             xMin,
             yMax,
@@ -387,8 +373,8 @@ class Animator3WRobot(Animator):
         )
         ########### SUBPLOT 2  --------- STEP-BY-STEP-SOLUTION #######################
         solution_dashboard = SolutionDashboard(
-            time_start,
-            time_final,
+            self.time_start,
+            self.time_final,
             xMax,
             xMin,
             yMax,
@@ -401,19 +387,21 @@ class Animator3WRobot(Animator):
 
         ########### SUBPLOT 3  --------- COST ########################################
 
-        if is_playback:
+        if self.is_playback:
             running_objective = running_obj_init
         else:
-            observation_init = self.system.out(state_init)
-            running_objective = self.running_objective(observation_init, action_init)
+            observation_init = self.system.out(self.state_init)
+            running_objective = self.running_objective(
+                observation_init, self.action_init
+            )
 
         cost_dashboard = CostDashboard(
-            time_start, time_final, running_objective, self.scenario
+            self.time_start, self.time_final, running_objective, self.scenario
         )
         ########### SUBPLOT 4  --------- CONTROL #####################################
 
         control_dashboard = ControlDashboard(
-            time_start, time_final, F_min, F_max, M_min, M_max, self.scenario
+            self.time_start, self.time_final, F_min, F_max, M_min, M_max, self.scenario
         )
         ##############################################################################
 
@@ -431,68 +419,51 @@ class Animator3WRobotNI(Animator):
 
     """
 
-    def __init__(self, objects=[], pars=[], subplot_grid_size=[2, 2]):
+    def __init__(self, scenario=None, subplot_grid_size=None):
+        if subplot_grid_size is None:
+            subplot_grid_size = [2, 2]
         super().__init__(subplot_grid_size=subplot_grid_size)
-        self.objects = objects
-        self.pars = pars
+        self.scenario = scenario
+        self.__dict__.update(scenario.__dict__)
+        self.sampling_time = self.scenario.controller.sampling_time
 
         # Unpack entities
         (
-            self.simulator,
-            self.system,
-            self.nominal_controller,
-            self.controller,
-            self.datafiles,
-            self.logger,
-            self.actor_optimizer,
-            self.optimizer,
-            self.running_objective,
-            self.scenario,
-        ) = self.objects
-
-        (
-            state_init,
-            action_init,
-            time_start,
-            time_final,
             state_full_init,
             xMin,
             xMax,
             yMin,
             yMax,
-            control_mode,
-            action_manual,
             v_min,
             omega_min,
             v_max,
             omega_max,
-            Nruns,
-            no_print,
-            is_log,
-            is_playback,
             running_obj_init,
-        ) = self.pars
+        ) = (
+            self.scenario.simulator.state_full_init,
+            -10,
+            10,
+            -10,
+            10,
+            self.scenario.controller.action_bounds[0][0],
+            self.scenario.controller.action_bounds[0][1],
+            self.scenario.controller.action_bounds[1][0],
+            self.scenario.controller.action_bounds[1][1],
+            0,
+        )
         # Store some parameters for later use
         self.time_old = 0
         self.outcome = 0
-        self.time_start = time_start
         self.state_full_init = state_full_init
-        self.time_final = time_final
-        self.control_mode = control_mode
-        self.action_manual = action_manual
-        self.Nruns = Nruns
-        self.no_print = no_print
-        self.is_log = is_log
-        self.is_playback = is_playback
 
-        xCoord0 = state_init[0]
-        yCoord0 = state_init[1]
-        angle0 = state_init[2]
+        xCoord0 = self.state_init[0]
+        yCoord0 = self.state_init[1]
+        angle0 = self.state_init[2]
         angle_deg0 = angle0 / 2 / np.pi
 
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ###########################
         robot_tracking_dasboard = RobotTrackingDasboard(
-            time_start,
+            self.time_start,
             xMax,
             xMin,
             yMax,
@@ -504,8 +475,8 @@ class Animator3WRobotNI(Animator):
         )
         ########### SUBPLOT 2  --------- STEP-BY-STEP-SOLUTION #######################
         solution_dashboard = SolutionDashboard(
-            time_start,
-            time_final,
+            self.time_start,
+            self.time_final,
             xMax,
             xMin,
             yMax,
@@ -518,20 +489,28 @@ class Animator3WRobotNI(Animator):
 
         ########### SUBPLOT 3  --------- COST ########################################
 
-        if is_playback:
+        if self.is_playback:
             running_objective = running_obj_init
         else:
-            observation_init = self.system.out(state_init)
-            running_objective = self.running_objective(observation_init, action_init)
+            observation_init = self.system.out(self.state_init)
+            running_objective = self.running_objective(
+                observation_init, self.action_init
+            )
 
         cost_dashboard = CostDashboard(
-            time_start, time_final, running_objective, self.scenario
+            self.time_start, self.time_final, running_objective, self.scenario
         )
 
         ########### SUBPLOT 4  --------- CONTROL #####################################
 
         control_dashboard = ControlDashboardNI(
-            time_start, time_final, v_min, v_max, omega_min, omega_max, self.scenario
+            self.time_start,
+            self.time_final,
+            v_min,
+            v_max,
+            omega_min,
+            omega_max,
+            self.scenario,
         )
 
         ##############################################################################

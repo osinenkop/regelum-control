@@ -1,0 +1,25 @@
+rcognita.controllers.RLController
+=================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: RLController
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RLController.__init__
+      ~RLController.compute_action
+      ~RLController.compute_action_sampled
+      ~RLController.reset
+   
+   
+
+   
+   
+   

@@ -1,0 +1,36 @@
+``rcognita.optimizers`` 
+=======================
+
+
+.. automodule:: rcognita.optimizers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      BruteForceOptimizer
+      CasADiOptimizer
+      GradientOptimizer
+      Optimizer
+      SciPyOptimizer
+      TorchOptimizer
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,27 @@
+rcognita.systems.System2Tank
+============================
+
+.. currentmodule:: rcognita.systems
+
+.. autoclass:: System2Tank
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~System2Tank.__init__
+      ~System2Tank.compute_closed_loop_rhs
+      ~System2Tank.compute_dynamics
+      ~System2Tank.out
+      ~System2Tank.receive_action
+      ~System2Tank.reset
+   
+   
+
+   
+   
+   

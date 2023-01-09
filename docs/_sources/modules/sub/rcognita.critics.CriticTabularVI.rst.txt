@@ -1,0 +1,42 @@
+rcognita.critics.CriticTabularVI
+================================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticTabularVI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticTabularVI.__init__
+      ~CriticTabularVI.accept_or_reject_weights
+      ~CriticTabularVI.cache_weights
+      ~CriticTabularVI.initialize_buffers
+      ~CriticTabularVI.objective
+      ~CriticTabularVI.optimize_weights
+      ~CriticTabularVI.reset
+      ~CriticTabularVI.restore_weights
+      ~CriticTabularVI.update
+      ~CriticTabularVI.update_and_cache_weights
+      ~CriticTabularVI.update_buffers
+      ~CriticTabularVI.update_outcome
+      ~CriticTabularVI.update_single_cell
+      ~CriticTabularVI.update_target
+      ~CriticTabularVI.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticTabularVI.optimizer_engine
+   
+   

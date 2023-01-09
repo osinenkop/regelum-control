@@ -1,0 +1,30 @@
+rcognita.optimizers.SciPyOptimizer
+==================================
+
+.. currentmodule:: rcognita.optimizers
+
+.. autoclass:: SciPyOptimizer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SciPyOptimizer.__init__
+      ~SciPyOptimizer.optimize
+      ~SciPyOptimizer.verbose
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SciPyOptimizer.engine
+   
+   

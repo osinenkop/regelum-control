@@ -1,0 +1,33 @@
+rcognita.models.ModelQuadLin
+============================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelQuadLin
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelQuadLin.__init__
+      ~ModelQuadLin.cache_weights
+      ~ModelQuadLin.forward
+      ~ModelQuadLin.restore_weights
+      ~ModelQuadLin.update_and_cache_weights
+      ~ModelQuadLin.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelQuadLin.model_name
+   
+   

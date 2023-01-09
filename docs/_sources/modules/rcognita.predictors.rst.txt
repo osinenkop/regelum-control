@@ -1,0 +1,35 @@
+``rcognita.predictors`` 
+=======================
+
+
+.. automodule:: rcognita.predictors
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      EulerPredictor
+      EulerPredictorPendulum
+      Predictor
+      RKPredictor
+      TrivialPredictor
+   
+   
+
+   
+   
+   
+
+
+

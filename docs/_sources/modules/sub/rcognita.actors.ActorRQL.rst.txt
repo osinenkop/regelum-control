@@ -1,0 +1,34 @@
+rcognita.actors.ActorRQL
+========================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorRQL
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorRQL.__init__
+      ~ActorRQL.accept_or_reject_weights
+      ~ActorRQL.cache_weights
+      ~ActorRQL.create_observation_constraints
+      ~ActorRQL.objective
+      ~ActorRQL.optimize_weights
+      ~ActorRQL.receive_observation
+      ~ActorRQL.reset
+      ~ActorRQL.restore_weights
+      ~ActorRQL.set_action
+      ~ActorRQL.update_action
+      ~ActorRQL.update_and_cache_weights
+      ~ActorRQL.update_weights
+   
+   
+
+   
+   
+   

@@ -1,0 +1,6 @@
+rcognita.solvers.create\_CasADi\_integrator
+===========================================
+
+.. currentmodule:: rcognita.solvers
+
+.. autofunction:: create_CasADi_integrator

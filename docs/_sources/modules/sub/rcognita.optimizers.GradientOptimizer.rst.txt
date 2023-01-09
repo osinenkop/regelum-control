@@ -1,0 +1,32 @@
+rcognita.optimizers.GradientOptimizer
+=====================================
+
+.. currentmodule:: rcognita.optimizers
+
+.. autoclass:: GradientOptimizer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GradientOptimizer.__init__
+      ~GradientOptimizer.grad_step
+      ~GradientOptimizer.optimize
+      ~GradientOptimizer.substitute_args
+      ~GradientOptimizer.verbose
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GradientOptimizer.engine
+   
+   

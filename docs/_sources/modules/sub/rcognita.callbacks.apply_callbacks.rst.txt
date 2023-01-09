@@ -1,0 +1,6 @@
+rcognita.callbacks.apply\_callbacks
+===================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autofunction:: apply_callbacks

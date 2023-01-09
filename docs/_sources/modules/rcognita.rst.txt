@@ -14,6 +14,14 @@
 
    
    
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      ComplementedConfig
+      main
+   
    
 
    
@@ -29,11 +37,20 @@
    :toctree:
    :recursive:
 
+   rcognita.ROS_harnesses
+   rcognita.actors
+   rcognita.callbacks
    rcognita.controllers
+   rcognita.critics
    rcognita.loggers
    rcognita.models
+   rcognita.objectives
+   rcognita.observers
+   rcognita.optimizers
+   rcognita.predictors
+   rcognita.scenarios
    rcognita.simulator
+   rcognita.solvers
    rcognita.systems
-   rcognita.utilities
-   rcognita.visuals
+   rcognita.visualization
 

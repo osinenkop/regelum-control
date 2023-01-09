@@ -1,0 +1,33 @@
+rcognita.models.ModelBiquadForm
+===============================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelBiquadForm
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelBiquadForm.__init__
+      ~ModelBiquadForm.cache_weights
+      ~ModelBiquadForm.forward
+      ~ModelBiquadForm.restore_weights
+      ~ModelBiquadForm.update_and_cache_weights
+      ~ModelBiquadForm.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelBiquadForm.model_name
+   
+   

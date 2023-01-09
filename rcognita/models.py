@@ -13,18 +13,38 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
-from utilities import rc, rej_sampling_rvs
+from __utilities import rc, rej_sampling_rvs
 import numpy as np
-import torch
-from torch import nn
-import torch.nn.functional as F
+import warnings
+
+try:
+    import torch
+    import torch.nn.functional as F
+    from torch import nn
+except ModuleNotFoundError:
+    from unittest.mock import MagicMock
+
+    torch = MagicMock()
+    nn = MagicMock()
+    F = MagicMock()
+
 import math
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from collections import OrderedDict
 
 
-class ModelAbstract(ABC):
+def force_positive_def(func):
+    def positive_def_wrapper(self, *args, **kwargs):
+        if self.force_positive_def:
+            return rc.soft_abs(func(self, *args, **kwargs))
+        else:
+            return func(self, *args, **kwargs)
+
+    return positive_def_wrapper
+
+
+class Model(ABC):
     """
     Blueprint of a model.
     """
@@ -37,7 +57,7 @@ class ModelAbstract(ABC):
             else:
                 return self.forward(*args, weights=self.weights)
         else:
-            return self.cache.forward(*args, weights=self.weights)
+            return self.cache.forward(*args, weights=self.cache.weights)
 
     @property
     @abstractmethod
@@ -52,13 +72,30 @@ class ModelAbstract(ABC):
     def forward(self):
         pass
 
-    def update_and_cache_weights(self, weights):
+    def update_weights(self, weights):
+        self.weights = weights
+
+    def cache_weights(self, weights=None):
         if "cache" not in self.__dict__.keys():
             self.cache = deepcopy(self)
 
-        self.weights = weights
+        if weights is None:
+            self.cache.weights = self.weights
+        else:
+            self.cache.weights = weights
 
-        self.cache.weights = weights
+    def update_and_cache_weights(self, weights):
+        self.cache_weights(weights)
+        self.update_weights(weights)
+
+    def restore_weights(self):
+        """
+        Assign the weights of the cached model to the active model.
+        This may be needed when pytorch optimizer resulted in unsatisfactory weights, for instance.
+
+        """
+
+        self.update_and_cache_weights(self.cache.weights)
 
 
 class ModelSS:
@@ -98,7 +135,7 @@ class ModelSS:
         self.initial_guessset = initial_guesssetNew
 
 
-class ModelQuadLin(ModelAbstract):
+class ModelQuadLin(Model):
     """
     Quadratic-linear model.
 
@@ -106,27 +143,32 @@ class ModelQuadLin(ModelAbstract):
 
     model_name = "quad-lin"
 
-    def __init__(self, input_dim, weight_min=1.0, weight_max=1e3):
-        self.dim_weights = int((input_dim + 1) * input_dim / 2 + input_dim)
-        self.weight_min = weight_min * np.ones(self.dim_weights)
-        self.weight_max = weight_max * np.ones(self.dim_weights)
-        self.weights = self.weight_min
+    def __init__(
+        self, dim_input, weight_min=1e-6, weight_max=1e2, force_positive_def=True
+    ):
+        self.dim_weights = int((dim_input + 1) * dim_input / 2 + dim_input)
+        self.weight_min = weight_min * rc.ones(self.dim_weights)
+        self.weight_max = weight_max * rc.ones(self.dim_weights)
+        self.weights_init = (self.weight_min + self.weight_max) / 20.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
         self.update_and_cache_weights(self.weights)
 
-    def forward(self, *argin, weights):
-        if len(vec) > 1:
+    @force_positive_def
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
         else:
             vec = argin[0]
 
         polynom = rc.uptria2vec(rc.outer(vec, vec))
-        polynom = rc.concatenate([polynom, vec]) ** 2
+        polynom = rc.concatenate([polynom, vec])
         result = rc.dot(weights, polynom)
 
         return result
 
 
-class ModelQuadratic(ModelAbstract):
+class ModelQuadratic(Model):
     """
     Quadratic model. May contain mixed terms.
 
@@ -134,26 +176,54 @@ class ModelQuadratic(ModelAbstract):
 
     model_name = "quadratic"
 
-    def __init__(self, input_dim, single_weight_min=1.0, single_weight_max=1e3):
-        self.dim_weights = int((input_dim + 1) * input_dim / 2)
-        self.weight_min = single_weight_min * np.ones(self.dim_weights)
-        self.weight_max = single_weight_max * np.ones(self.dim_weights)
-        self.weights = self.weight_min
+    def __init__(
+        self,
+        dim_input,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
+        force_positive_def=True,
+    ):
+        self.dim_weights = int((dim_input + 1) * dim_input / 2)
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
         self.update_and_cache_weights(self.weights)
 
-    def forward(self, *argin, weights):
-        if len(vec) > 1:
+    @force_positive_def
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
             vec = rc.concatenate(tuple(argin))
         else:
             vec = argin[0]
 
-        polynom = rc.to_col(rc.uptria2vec(rc.outer(vec, vec))) ** 2
+        if isinstance(vec, tuple):
+            vec = vec[0]
+
+        polynom = rc.uptria2vec(rc.outer(vec, vec))
         result = rc.dot(weights, polynom)
 
         return result
 
 
-class ModelQuadNoMix(ModelAbstract):
+class ModelQuadraticSquared(ModelQuadratic):
+    """
+    Quadratic model. May contain mixed terms.
+
+    """
+
+    model_name = "quadratic-squared"
+
+    def forward(self, *argin, weights=None):
+        result = super().forward(*argin, weights=weights)
+
+        result = result ** 2 / 1e5
+
+        return result
+
+
+class ModelQuadNoMix(Model):
     """
     Quadratic model (no mixed terms).
 
@@ -161,11 +231,15 @@ class ModelQuadNoMix(ModelAbstract):
 
     model_name = "quad-nomix"
 
-    def __init__(self, input_dim, single_weight_min=1e-3, single_weight_max=1e3):
-        self.dim_weights = input_dim
-        self.weight_min = single_weight_min * np.ones(self.dim_weights)
-        self.weight_max = single_weight_max * np.ones(self.dim_weights)
-        self.weights = self.weight_min
+    def __init__(
+        self, dim_input, single_weight_min=1e-6, single_weight_max=1e2,
+    ):
+        self.dim_weights = dim_input
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
         self.update_and_cache_weights(self.weights)
 
     def forward(self, *argin, weights=None):
@@ -174,51 +248,92 @@ class ModelQuadNoMix(ModelAbstract):
         else:
             vec = argin[0]
 
+        if isinstance(vec, tuple):
+            vec = vec[0]
+
         polynom = vec * vec
+
         result = rc.dot(weights, polynom)
 
         return result
 
 
-class ModelWeightContainer(ModelAbstract):
+class ModelQuadNoMix2D(Model):
     """
     Quadratic model (no mixed terms).
 
     """
 
+    model_name = "quad-nomix"
+
+    def __init__(
+        self, dim_input, single_weight_min=1e-6, single_weight_max=1e2,
+    ):
+        self.dim_weights = dim_input
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)[:2]
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)[:2]
+        self.weights_init = (self.weight_min + self.weight_max) / 2.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
+
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
+            vec = rc.concatenate(tuple(argin))
+        else:
+            vec = argin[0]
+
+        if isinstance(vec, tuple):
+            vec = vec[0]
+
+        polynom = vec[:2] * vec[:2]
+
+        result = rc.dot(weights, polynom)
+
+        return result
+
+
+class ModelWeightContainer(Model):
+    """
+    Trivial model, which is typically used in actor in which actions are being optimized directly.
+
+    """
+
     model_name = "action-sequence"
 
-    def __init__(self, weights_init=None):
+    def __init__(self, dim_output, weights_init=None):
+        self.dim_output = dim_output
         self.weights = weights_init
         self.weights_init = weights_init
         self.update_and_cache_weights(self.weights)
 
-    def forward(self, *argin):
-        return self.weights
+    def forward(self, *argin, weights=None):
+        return weights[: self.dim_output]
 
 
-# class ModelQuadMix(ModelBase):
-#     model_name = "quad-mix"
+class ModelQuadMix(Model):
+    model_name = "quad-mix"
 
-#     def __init__(self, input_dim, weight_min=1.0, weight_max=1e3):
-#         self.dim_weights = int(
-#             self.dim_output + self.dim_output * self.dim_input + self.dim_input
-#         )
-#         self.weight_min = weight_min * np.ones(self.dim_weights)
-#         self.weight_max = weight_max * np.ones(self.dim_weights)
+    def __init__(self, dim_input, weight_min=1.0, weight_max=1e3):
 
-#     def _forward(self, vec, weights):
+        self.dim_weights = int(
+            self.dim_output + self.dim_output * self.dim_input + self.dim_input
+        )
+        self.weight_min = weight_min * np.ones(self.dim_weights)
+        self.weight_max = weight_max * np.ones(self.dim_weights)
 
-#         v1 = rc.to_col(v1)
-#         v2 = rc.to_col(v2)
+    def _forward(self, vec, weights):
 
-#         polynom = rc.concatenate([v1 ** 2, rc.kron(v1, v2), v2 ** 2])
-#         result = rc.dot(weights, polynom)
+        v1 = rc.force_column(v1)
+        v2 = rc.force_column(v2)
 
-#         return result
+        polynom = rc.concatenate([v1 ** 2, rc.kron(v1, v2), v2 ** 2])
+        result = rc.dot(weights, polynom)
+
+        return result
 
 
-class ModelQuadForm(ModelAbstract):
+class ModelQuadForm(Model):
     """
     Quadratic form.
 
@@ -229,7 +344,7 @@ class ModelQuadForm(ModelAbstract):
     def __init__(self, weights=None):
         self.weights = weights
 
-    def forward(self, *argin, weights):
+    def forward(self, *argin, weights=None):
 
         if len(argin) != 2:
             raise ValueError("ModelQuadForm assumes two vector arguments!")
@@ -243,7 +358,7 @@ class ModelQuadForm(ModelAbstract):
         return result
 
 
-class ModelBiquadForm(ModelAbstract):
+class ModelBiquadForm(Model):
     """
     Bi-quadratic form.
 
@@ -254,13 +369,13 @@ class ModelBiquadForm(ModelAbstract):
     def __init__(self, weights):
         self.weights = weights
 
-    def forward(self, *argin, weights):
+    def forward(self, *argin, weights=None):
         if len(argin) != 2:
             raise ValueError("ModelBiquadForm assumes two vector arguments!")
-        result = (
-            argin[0].T ** 2,
-            weights[0] @ argin[1] ** 2 + argin[0].T @ weights[1] @ argin[1],
-        )
+
+        vec = rc.concatenate(tuple(argin))
+
+        result = vec.T ** 2 @ weights[0] @ vec ** 2 + vec.T @ weights[1] @ vec
 
         result = rc.squeeze(result)
 
@@ -269,8 +384,9 @@ class ModelBiquadForm(ModelAbstract):
 
 class ModelNN(nn.Module):
     """
-    pytorch neural network of three layers: fully connected, ReLU, fully connected.
-
+    Class of pytorch neural network models. This class is not to be used barebones.
+    Instead, you should inherit from it and specify your concrete architecture.
+    
     """
 
     model_name = "NN"
@@ -397,7 +513,19 @@ class ModelNN(nn.Module):
 
 
 class ModelQuadNoMixTorch(ModelNN):
-    def __init__(self, dim_observation, dim_action, dim_hidden=20, weights=None):
+    """
+    pytorch neural network of one layer: fully connected.
+
+    """
+
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden=20,
+        weights=None,
+        force_positive_def=False,
+    ):
         super().__init__()
 
         self.fc1 = nn.Linear(dim_observation + dim_action, 1, bias=False)
@@ -407,7 +535,10 @@ class ModelQuadNoMixTorch(ModelNN):
 
         self.double()
         self.cache_weights()
+        self.weights = self.parameters()
+        self.force_positive_def = force_positive_def
 
+    @force_positive_def
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
@@ -421,12 +552,12 @@ class ModelQuadNoMixTorch(ModelNN):
         return x
 
 
-class LookupTable(ModelAbstract):
+class LookupTable(Model):
     model_name = "lookup-table"
 
     def __init__(self, *dims):
         dims = tuple(
-            np.concatenate(tuple([np.atleast_1d(dim) for dim in dims])).astype(int)
+            rc.concatenate(tuple([rc.atleast_1d(dim) for dim in dims])).astype(int)
         )
         self.weights = rc.zeros(dims)
         self.update_and_cache_weights(self.weights)
@@ -439,16 +570,16 @@ class LookupTable(ModelAbstract):
             result = self.cache.forward(*argin)
         return result
 
-    def forward(self, *argin):
+    def forward(self, *argin, weights=None):
         indices = tuple(
-            np.squeeze(
-                np.concatenate(tuple([np.atleast_1d(np.array(ind)) for ind in argin]))
+            rc.squeeze(
+                rc.concatenate(tuple([rc.atleast_1d(rc.array(ind)) for ind in argin]))
             ).astype(int)
         )
         return self.weights[indices]
 
 
-class ModelGaussianConditional(ModelAbstract):
+class ModelGaussianConditional(Model):
     """
     Gaussian probability distribution model with `weights[0]` being an expectation vector
     and `weights[1]` being a covariance matrix.
@@ -458,12 +589,15 @@ class ModelGaussianConditional(ModelAbstract):
     model_name = "model-gaussian"
 
     def __init__(
-        self, expectation_function=None, arg_condition=[], weights=None, jitter=1e-6,
+        self, expectation_function=None, arg_condition=None, weights=None, jitter=1e-6,
     ):
 
-        self.weights = np.array(weights)
+        self.weights = rc.array(weights)
         self.weights_init = self.weights
         self.expectation_function = expectation_function
+        if arg_condition is None:
+            arg_condition = []
+
         self.arg_condition = arg_condition
         self.arg_condition_init = arg_condition
         self.jitter = jitter
@@ -486,6 +620,9 @@ class ModelGaussianConditional(ModelAbstract):
         return grad
 
     def update(self, new_weights):
+        # We clip the weights here to discard the too large ones.
+        # It is somewhat artificial, but convenient in practice, especially for plotting weights.
+        # For clipping, we use numpy explicitly without resorting to rc
         self.weights = np.clip(new_weights, 0, 100)
         self.update_expectation(self.arg_condition_init)
         self.update_covariance()
@@ -494,7 +631,8 @@ class ModelGaussianConditional(ModelAbstract):
         self.update_expectation(argin)
         self.update_covariance()
 
-        return np.array([np.random.normal(self.expectation, self.covariance)])
+        # As rc does not have random sampling, we use numpy here.
+        return rc.array([np.random.normal(self.expectation, self.covariance)])
 
-    def forward(self,):
-        pass
+    def forward(self, *args, weights=None):
+        return weights

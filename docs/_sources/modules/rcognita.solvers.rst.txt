@@ -1,0 +1,40 @@
+``rcognita.solvers`` 
+====================
+
+
+.. automodule:: rcognita.solvers
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      create_CasADi_integrator
+      create_ODE_solver
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      CasADiSolver
+      Solver
+   
+   
+
+   
+   
+   
+
+
+

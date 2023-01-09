@@ -19,10 +19,13 @@
    .. autosummary::
       :toctree: sub
    
-      Sys2Tank
+      GridWorld
       Sys3WRobot
       Sys3WRobotNI
+      SysInvertedPendulum
+      SysInvertedPendulumPD
       System
+      System2Tank
    
    
 

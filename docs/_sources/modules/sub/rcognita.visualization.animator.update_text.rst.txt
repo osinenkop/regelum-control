@@ -1,0 +1,6 @@
+rcognita.visualization.animator.update\_text
+============================================
+
+.. currentmodule:: rcognita.visualization.animator
+
+.. autofunction:: update_text

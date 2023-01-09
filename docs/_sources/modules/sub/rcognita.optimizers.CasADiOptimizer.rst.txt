@@ -1,0 +1,30 @@
+rcognita.optimizers.CasADiOptimizer
+===================================
+
+.. currentmodule:: rcognita.optimizers
+
+.. autoclass:: CasADiOptimizer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CasADiOptimizer.__init__
+      ~CasADiOptimizer.optimize
+      ~CasADiOptimizer.verbose
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CasADiOptimizer.engine
+   
+   

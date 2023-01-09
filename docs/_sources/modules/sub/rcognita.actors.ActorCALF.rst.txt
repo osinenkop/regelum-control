@@ -1,0 +1,36 @@
+rcognita.actors.ActorCALF
+=========================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorCALF
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorCALF.CALF_decay_constraint_for_actor
+      ~ActorCALF.CALF_decay_constraint_for_actor_same_critic
+      ~ActorCALF.__init__
+      ~ActorCALF.accept_or_reject_weights
+      ~ActorCALF.cache_weights
+      ~ActorCALF.create_observation_constraints
+      ~ActorCALF.objective
+      ~ActorCALF.optimize_weights
+      ~ActorCALF.receive_observation
+      ~ActorCALF.reset
+      ~ActorCALF.restore_weights
+      ~ActorCALF.set_action
+      ~ActorCALF.update_action
+      ~ActorCALF.update_and_cache_weights
+      ~ActorCALF.update_weights
+   
+   
+
+   
+   
+   

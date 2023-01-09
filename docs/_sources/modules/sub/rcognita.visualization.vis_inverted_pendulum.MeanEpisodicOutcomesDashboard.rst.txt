@@ -1,0 +1,27 @@
+rcognita.visualization.vis\_inverted\_pendulum.MeanEpisodicOutcomesDashboard
+============================================================================
+
+.. currentmodule:: rcognita.visualization.vis_inverted_pendulum
+
+.. autoclass:: MeanEpisodicOutcomesDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MeanEpisodicOutcomesDashboard.__init__
+      ~MeanEpisodicOutcomesDashboard.init_dashboard
+      ~MeanEpisodicOutcomesDashboard.perform_episodic_update
+      ~MeanEpisodicOutcomesDashboard.perform_iterative_update
+      ~MeanEpisodicOutcomesDashboard.perform_step_update
+      ~MeanEpisodicOutcomesDashboard.update
+   
+   
+
+   
+   
+   

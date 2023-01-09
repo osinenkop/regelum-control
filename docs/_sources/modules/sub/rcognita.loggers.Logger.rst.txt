@@ -16,6 +16,7 @@ rcognita.loggers.Logger
       ~Logger.__init__
       ~Logger.log_data_row
       ~Logger.print_sim_step
+      ~Logger.reset
    
    
 

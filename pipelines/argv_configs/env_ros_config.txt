@@ -1,1 +1,0 @@
---control_mode SQL --sampling_time 0.1 --prediction_horizon 4 --pred_step_size_multiplier 2 --state_init 2 2 pi

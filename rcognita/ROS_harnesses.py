@@ -6,8 +6,11 @@ import rcognita
 
 import numpy as np
 
-from rcognita.obstacles_parser import Obstacles_parser
+from rcognita.__obstacles_parser import Obstacles_parser
 from shapely.geometry import Point
+from .controllers import Controller
+from .systems import System
+from .loggers import Logger
 
 # ------------------------------------imports for interaction with ROS
 
@@ -20,7 +23,7 @@ from nav_msgs.msg import Odometry
 import tf.transformations as tftr
 from geometry_msgs.msg import Twist
 import math
-from numpy import cos, sin, cos
+from numpy import cos, sin
 import time as time_lib
 from sensor_msgs.msg import LaserScan
 from scipy.signal import medfilt
@@ -29,18 +32,18 @@ from scipy.signal import medfilt
 class ROSHarness:
     def __init__(
         self,
-        control_mode,
-        state_init,
-        state_goal,
-        nominal_controller,
-        system,
-        controller,
-        action_manual,
+        control_mode: str,
+        state_init: np.ndarray,
+        state_goal: np.ndarray,
+        nominal_controller: Controller,
+        system: System,
+        controller: Controller,
+        action_manual: np.ndarray,
         running_objective,
-        logger=None,
+        logger: Logger = None,
         datafiles=None,
-        sampling_time=0.05,
-        pred_step_size=1.0,
+        sampling_time: float = 0.05,
+        pred_step_size: float = 1.0,
     ):
         self.outcome_value = 0
         self.running_objective = running_objective

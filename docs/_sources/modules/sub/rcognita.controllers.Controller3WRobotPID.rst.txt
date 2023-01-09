@@ -1,0 +1,29 @@
+rcognita.controllers.Controller3WRobotPID
+=========================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: Controller3WRobotPID
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Controller3WRobotPID.__init__
+      ~Controller3WRobotPID.compute_LF
+      ~Controller3WRobotPID.compute_action
+      ~Controller3WRobotPID.compute_action_sampled
+      ~Controller3WRobotPID.compute_square_of_norm
+      ~Controller3WRobotPID.get_SP_for_PID_angle_arctan
+      ~Controller3WRobotPID.reset
+      ~Controller3WRobotPID.reset_all_PID_controllers
+   
+   
+
+   
+   
+   

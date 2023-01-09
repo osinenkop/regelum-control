@@ -1,0 +1,31 @@
+rcognita.visualization.animator.Animator
+========================================
+
+.. currentmodule:: rcognita.visualization.animator
+
+.. autoclass:: Animator
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Animator.__init__
+      ~Animator.animate
+      ~Animator.collect_dashboards
+      ~Animator.get_anm
+      ~Animator.get_index
+      ~Animator.init_anim
+      ~Animator.playback
+      ~Animator.set_sim_data
+      ~Animator.stop_anm
+      ~Animator.update_dashboards
+   
+   
+
+   
+   
+   

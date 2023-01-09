@@ -1,0 +1,3 @@
+defaults:
+  - controller: mpc
+  - default_${controller}

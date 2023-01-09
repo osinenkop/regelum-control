@@ -1,0 +1,33 @@
+rcognita.models.ModelQuadNoMix
+==============================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelQuadNoMix
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelQuadNoMix.__init__
+      ~ModelQuadNoMix.cache_weights
+      ~ModelQuadNoMix.forward
+      ~ModelQuadNoMix.restore_weights
+      ~ModelQuadNoMix.update_and_cache_weights
+      ~ModelQuadNoMix.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelQuadNoMix.model_name
+   
+   

@@ -1,0 +1,42 @@
+rcognita.critics.CriticTabularPI
+================================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticTabularPI
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticTabularPI.__init__
+      ~CriticTabularPI.accept_or_reject_weights
+      ~CriticTabularPI.cache_weights
+      ~CriticTabularPI.initialize_buffers
+      ~CriticTabularPI.objective
+      ~CriticTabularPI.optimize_weights
+      ~CriticTabularPI.reset
+      ~CriticTabularPI.restore_weights
+      ~CriticTabularPI.update
+      ~CriticTabularPI.update_and_cache_weights
+      ~CriticTabularPI.update_buffers
+      ~CriticTabularPI.update_outcome
+      ~CriticTabularPI.update_single_cell
+      ~CriticTabularPI.update_target
+      ~CriticTabularPI.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticTabularPI.optimizer_engine
+   
+   

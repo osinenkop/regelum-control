@@ -1,0 +1,34 @@
+rcognita.actors.ActorMPC
+========================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorMPC
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorMPC.__init__
+      ~ActorMPC.accept_or_reject_weights
+      ~ActorMPC.cache_weights
+      ~ActorMPC.create_observation_constraints
+      ~ActorMPC.objective
+      ~ActorMPC.optimize_weights
+      ~ActorMPC.receive_observation
+      ~ActorMPC.reset
+      ~ActorMPC.restore_weights
+      ~ActorMPC.set_action
+      ~ActorMPC.update_action
+      ~ActorMPC.update_and_cache_weights
+      ~ActorMPC.update_weights
+   
+   
+
+   
+   
+   

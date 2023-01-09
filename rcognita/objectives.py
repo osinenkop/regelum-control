@@ -4,10 +4,7 @@ For instance, a running objective can be used commonly by a generic optimal cont
 
 """
 
-from .utilities import rc
 from abc import ABC, abstractmethod
-from torch.nn import Module
-import actors
 
 
 class Objective(ABC):
@@ -26,9 +23,25 @@ class RunningObjective(Objective):
     """
 
     def __init__(self, model):
+        """
+        Initialize a RunningObjective instance.
+
+        :param model: function that calculates the running objective for a given observation and action.
+        :type model: function
+        """
         self.model = model
 
     def __call__(self, observation, action):
+        """
+        Calculate the running objective for a given observation and action.
+
+        :param observation: current observation.
+        :type observation: numpy array
+        :param action: current action.
+        :type action: numpy array
+        :return: running objective value.
+        :rtype: float
+        """
 
         running_objective = self.model(observation, action)
 
