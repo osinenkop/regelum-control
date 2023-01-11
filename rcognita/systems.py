@@ -13,6 +13,7 @@ import numpy as np
 from numpy.random import randn
 from rcognita import __utilities as utilities
 from abc import ABC, abstractmethod
+from rcognita.__utilities import rc
 
 
 class System(ABC):
@@ -295,13 +296,14 @@ class SysInvertedPendulum(System):
     def compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
         )
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
         Dstate[0] = state[1]
-        Dstate[1] = g / l * utilities.rc.sin(state[0]) + action[0] / (m * l ** 2)
+        Dstate[1] = g / l * utilities.rc.sin(state[0]) + action[0] / (m * l**2)
 
         return Dstate
 
@@ -396,7 +398,8 @@ class Sys3WRobot(System):
     def compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
         )
 
         m, I = self.pars[0], self.pars[1]
@@ -515,7 +518,8 @@ class System2Tank(System):
         tau1, tau2, K1, K2, K3 = self.pars
 
         Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
         )
         Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action[0])
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
@@ -561,3 +565,61 @@ class GridWorld(System):
             if current_state[0] < self.dims[0] - 1:
                 return (current_state[0] + 1, current_state[1])
         return current_state
+
+
+class CartPole(System):
+    """
+    Cart pole system without friction. link:
+    https://coneural.org/florian/papers/05_cart_pole.pdf
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.name = "2wrobot"
+
+    def compute_dynamics(self, time, state, action, disturb=None):
+
+        Dstate = utilities.rc.zeros(
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
+        )
+
+        m_c, m_p, g, l = self.pars
+        theta = state[0]
+        x = state[1]
+        theta_dot = state[2]
+        x_dot = state[3]
+
+        Dstate[0] = theta_dot
+
+        Dstate[1] = x_dot
+
+        Dstate[2] = (
+            (
+                g * rc.sin(theta)
+                - rc.cos(theta)
+                * (action[0] + m_p * l * theta_dot**2 * rc.sin(theta))
+                / (m_c + m_p)
+            )
+            / l
+            * (4 / 3 - m_p * (rc.cos(theta) ** 2) / (m_c + m_p))
+        )
+        Dstate[3] = (
+            action[0]
+            + m_p * l * (theta_dot**2 * rc.sin(theta) - Dstate[0] * rc.cos(theta))
+        ) / (m_c + m_p)
+
+        return Dstate
+
+    def _compute_disturbance_dynamics(self, time, disturb):
+
+        Ddisturb = utilities.rc.zeros(self.dim_disturb)
+
+        return utilities.rc.array(Ddisturb)
+
+    def out(self, observation, time=None, action=None):
+        state = observation
+
+        return state

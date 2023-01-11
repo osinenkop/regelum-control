@@ -1,0 +1,19 @@
+defaults:
+  - actor: sql
+  - critic: action_observation
+
+_target_: rcognita.controllers.RLController
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: 1.0E-2
+is_fixed_critic_weights: false
+
+F_min%%: -300.
+F_max%%: 300.
+
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+action_bounds: = numpy.array([[${.F_min%%}, ${.F_max%%}]])
+
+critic_period_multiplier%%: 1

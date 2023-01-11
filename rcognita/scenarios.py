@@ -20,6 +20,7 @@ from .critics import Critic
 from .simulator import Simulator
 from .controllers import Controller
 from .objectives import RunningObjective
+from .callbacks import introduce_callbacks, apply_callbacks
 
 
 class Scenario(ABC):
@@ -59,6 +60,7 @@ class TabularScenarioVI(Scenario):
         self.critic.update()
 
 
+@introduce_callbacks()
 class OnlineScenario(Scenario):
     """
     Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
@@ -74,7 +76,7 @@ class OnlineScenario(Scenario):
         is_log: bool = False,
         is_playback: bool = False,
         state_init: np.ndarray = None,
-        action_init=None,
+        action_init: np.ndarray = None,
         time_start: float = 0.0,
     ):
 
@@ -116,20 +118,19 @@ class OnlineScenario(Scenario):
         self.time_old = 0
         self.delta_time = 0
 
+    @apply_callbacks
     def perform_post_step_operations(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
         self.update_outcome(self.observation, self.action, self.delta_time)
 
-        if not self.no_print:
-            self.logger.print_sim_step(
-                self.time,
-                self.state_full,
-                self.action,
-                self.running_objective_value,
-                self.outcome,
-            )
+        if self.no_print:
+
+            return None
+
+        else:
+            return self.running_objective_value
 
     def run(self):
 
@@ -184,7 +185,12 @@ class EpisodicScenario(OnlineScenario):
     cache = dict()
 
     def __init__(
-        self, N_episodes, N_iterations, *args, speedup=1, **kwargs,
+        self,
+        N_episodes,
+        N_iterations,
+        *args,
+        speedup=1,
+        **kwargs,
     ):
         self.cache.clear()
         self.N_episodes = N_episodes
@@ -313,12 +319,13 @@ class EpisodicScenario(OnlineScenario):
                 self.current_scenario_status = step_method(self)
 
                 if self.current_scenario_status == "simulation_ended":
+                    keys = list(self.cache.keys())
                     for i, item in enumerate(self.cache.items()):
                         if i > self.speedup:
                             if item[1][10] != "episode_continues":
-                                key_i = list(self.cache.keys())[i]
+                                key_i = keys[i]
                                 for k in range(i - self.speedup + 1, i):
-                                    key_k = list(self.cache.keys())[k]
+                                    key_k = keys[k]
                                     self.cache[key_k][10] = self.cache[key_i][10]
 
                     self.cached_timeline = islice(
@@ -453,3 +460,9 @@ class EpisodicScenarioAsyncAC(EpisodicScenarioREINFORCE):
     def reset_iteration(self):
         self.squared_TD_sums_of_episodes = []
         super().reset_iteration()
+
+
+class EpisodicScenarioMultirun(EpisodicScenario):
+    def __init__(self, repeat_num: float = 1.0, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.repeat_num = repeat_num
