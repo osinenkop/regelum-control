@@ -1,0 +1,14 @@
+_target_: rcognita.systems.LunarLander
+
+###---Constructor arguments---###
+
+dim_input: 2
+dim_output: 6
+sys_type: diff_eqn
+dim_state: 6
+dim_disturb: 6
+pars: = [${.m%%}, ${.J%%}, ${.g%%}]
+
+m%%: 30
+J%%: 7.
+g%%: 1.625

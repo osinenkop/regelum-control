@@ -6,7 +6,7 @@ _target_: rcognita.scenarios.EpisodicScenario
 
 ###---Constructor arguments---###
 
-no_print: true
+no_print: false
 is_log: false
 is_playback: true
 state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4., 10., 3.])

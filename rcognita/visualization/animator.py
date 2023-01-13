@@ -15,6 +15,7 @@ from ..__utilities import rc
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage
+import numpy as np
 
 # !pip install mpldatacursor <-- to install this
 from mpldatacursor import datacursor
@@ -118,6 +119,8 @@ class Animator:
     def init_anim(self):
         self.main_figure = plt.figure(figsize=(10, 10))
         self.axes_array = self.main_figure.subplots(*self.subplot_grid_size)
+        if self.subplot_grid_size == [1, 1]:
+            self.axes_array = np.array([[self.axes_array]])
         for r, c in product(
             range(self.subplot_grid_size[0]), range(self.subplot_grid_size[1])
         ):
@@ -233,4 +236,3 @@ class RobotMarker:
             angle - self.angle
         )
         self.angle = angle
-

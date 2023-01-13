@@ -440,6 +440,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             # elif rc_type == TORCH:
             #     return torch.reshape(argin, (1, argin.size()[0]))
 
+    def cross(self, A, B, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            return np.cross(A, B)
+        elif rc_type == TORCH:
+            return torch.cross(A, B)
+        elif rc_type == CASADI:
+            return casadi.cross(A, B)
+
     def dot(self, A, B, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:
