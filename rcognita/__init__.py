@@ -112,7 +112,7 @@ OmegaConf.register_new_resolver(name="get", resolver=__obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 
-from hydra import main as hydramain
+from .__hydra_main import main as hydramain
 
 
 class ComplementedConfig:
@@ -326,6 +326,8 @@ class main:
         :type logger: Logger, optional
 
         """
+        sys.argv.insert(1, "--multirun")
+        sys.argv.insert(-1, "hydra/launcher=joblib")
         self.args = args
         self.kwargs = kwargs
         self.kwargs["version_base"] = (
@@ -338,7 +340,7 @@ class main:
         self.__class__.logger = logger
 
     def __call__(self, old_app):
-        def app(cfg):
+        def app(cfg, callbacks=self.__class__.callbacks):
             with omegaconf.flag_override(cfg, "allow_objects", True):
                 ccfg = ComplementedConfig(cfg)
                 self.apply_assignments(ccfg)
@@ -349,11 +351,12 @@ class main:
                             if isinstance(callback, str)
                             else callback
                         )
-                        self.__class__.callbacks.append(callback(self.__class__.logger))
+                        callbacks.append(callback(self.__class__.logger))
                     delattr(cfg, "callbacks")
+                self.__class__.callbacks = callbacks
                 res = old_app(ccfg)
                 ccfg.refresh()
-                return res
+                return self.__class__.callbacks
 
         app.__module__ = old_app.__module__
         path_main = os.path.abspath(inspect.getfile(old_app))
