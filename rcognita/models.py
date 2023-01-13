@@ -22,13 +22,6 @@ try:
     import torch.nn.functional as F
     from torch import nn
 except ModuleNotFoundError:
-    warnings.warn_explicit(
-        "\nImporting pytorch failed. You may still use rcognita, but"
-        + " without pytorch optimization capability. ",
-        UserWarning,
-        __file__,
-        42,
-    )
     from unittest.mock import MagicMock
 
     torch = MagicMock()

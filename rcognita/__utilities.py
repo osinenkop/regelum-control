@@ -24,13 +24,6 @@ try:
         x[1] for x in inspect.getmembers(casadi.casadi, inspect.isclass)
     )
 except (ModuleNotFoundError, AttributeError):
-    warnings.warn_explicit(
-        "\nImporting casadi failed. You may still use rcognita, but"
-        + " without symbolic optimization capability. ",
-        UserWarning,
-        __file__,
-        42,
-    )
     CASADI_TYPES = tuple()
 import types
 
@@ -39,13 +32,6 @@ try:
 
     TORCH_TYPES = tuple(x[1] for x in inspect.getmembers(torch, inspect.isclass))
 except ModuleNotFoundError:
-    warnings.warn_explicit(
-        "\nImporting pytorch failed. You may still use rcognita, but"
-        + " without pytorch optimization capability. ",
-        UserWarning,
-        __file__,
-        42,
-    )
     TORCH_TYPES = tuple()
 
 

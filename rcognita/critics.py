@@ -20,7 +20,14 @@ from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC, abstractmethod
 import scipy as sp
 from functools import partial
-import torch
+
+try:
+    import torch
+except:
+    from unittest.mock import MagicMock
+
+    torch = MagicMock()
+
 from copy import deepcopy
 from multiprocessing import Pool
 from .models import ModelWeightContainer

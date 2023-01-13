@@ -159,4 +159,5 @@ cython_debug/
 diff.txt
 
 outputs
+multirun
 /docsrc/modules/

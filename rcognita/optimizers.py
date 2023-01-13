@@ -13,13 +13,7 @@ try:
     from casadi import vertcat, nlpsol, DM, MX, Function
 
 except (ModuleNotFoundError, ImportError):
-    warnings.warn_explicit(
-        "\nImporting casadi failed. You may still use rcognita, but"
-        + " without symbolic optimization capability. ",
-        UserWarning,
-        __file__,
-        42,
-    )
+    pass
 
 from abc import ABC, abstractmethod
 import time
@@ -29,13 +23,7 @@ try:
     import torch
 
 except ModuleNotFoundError:
-    warnings.warn_explicit(
-        "\nImporting Torch failed. You may still use rcognita, but"
-        + " without PyTorch. ",
-        UserWarning,
-        __file__,
-        42,
-    )
+    pass
 
 
 class Optimizer(ABC):

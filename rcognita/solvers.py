@@ -4,9 +4,7 @@ import warnings
 try:
     import casadi
 except ModuleNotFoundError:
-    warnings.warn_explicit(
-        "\n CasADiSolver is not available", UserWarning, __file__, 42,
-    )
+    pass
 
 import numpy as np
 from .systems import System

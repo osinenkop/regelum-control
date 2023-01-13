@@ -298,6 +298,7 @@ and we would like to instantiate it
 
 In other words ``~config.robot`` evaluates to
 ::
+
     <my_utilities.MyRobotSystem object at 0x7fe53aa39220>
 
 , while ``config.robot`` evaluates to

@@ -1,0 +1,45 @@
+defaults:
+  - simulator: default
+  - running_objective: running_objective
+
+_target_: rcognita.scenarios.EpisodicScenarioMultirun
+
+###---Constructor arguments---###
+
+no_print: true
+is_log: false
+is_playback: true
+state_init: = numpy.array([numpy.random.uniform(-0.1, 0.1) + numpy.pi, 0., 0., 0.])
+action_init: = numpy.ones(1)
+N_episodes: 1
+N_iterations: 1
+speedup: 75
+
+
+### A set of parameters forwarded into a global scope
+
+
+@simulator.ode_backend: SCIPY
+@controller.sampling_time: 1.0E-2
+
+@simulator.time_start: 0.
+@simulator.time_final: 10.
+
+@controller.F_min%%: -30.
+@controller.F_max%%: 30.
+
+
+@running_objective.model.R1_diag%%: = [10, 1, 0, 0, 0]
+@running_objective.model.R2_diag%%: = [10, 1, 0, 0, 0]
+
+
+
+observation_target%%: = []
+
+### Solver
+
+@simulator.atol: 1.0E-5
+@simulator.rtol: 1.0E-3
+
+
+@controller.actor.predictor.prediction_horizon: 5
