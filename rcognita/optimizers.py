@@ -131,7 +131,7 @@ class SciPyOptimizer(Optimizer):
 class CasADiOptimizer(Optimizer):
     engine = "CasADi"
 
-    def __init__(self, opt_method, opt_options, verbose=False):
+    def __init__(self, opt_method, opt_options, verbose=True):
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.verbose = verbose
@@ -157,7 +157,7 @@ class CasADiOptimizer(Optimizer):
     ):
         """
         Optimize the given objective function using the CasADi optimization engine.
-        
+
         :param objective: The objective function to optimize.
         :type objective: function
         :param initial_guess: The initial guess for the optimization variables.
@@ -185,7 +185,10 @@ class CasADiOptimizer(Optimizer):
 
         try:
             solver = nlpsol(
-                "solver", self.opt_method, optimization_problem, self.opt_options,
+                "solver",
+                self.opt_method,
+                optimization_problem,
+                self.opt_options,
             )
         except Exception as e:
             print(e)
@@ -248,7 +251,7 @@ class GradientOptimizer(CasADiOptimizer):
     def optimize(self, initial_guess, *args):
         """
         Optimize the given objective function using the CasADi optimization engine.
-        
+
         :param objective: The objective function to optimize.
         :type objective: function
         :param initial_guess: The initial guess for the optimization variables.
@@ -278,7 +281,7 @@ class TorchOptimizer(Optimizer):
     def __init__(self, opt_options, iterations=1, opt_method=None, verbose=False):
         """
         Initialize an instance of TorchOptimizer.
-        
+
         :param opt_options: Options for the PyTorch optimizer.
         :type opt_options: dict
         :param iterations: Number of iterations to optimize the model.
@@ -300,7 +303,7 @@ class TorchOptimizer(Optimizer):
     def optimize(self, objective, model, model_input):
         """
         Optimize the model with the given objective.
-        
+
         :param objective: Objective function to optimize.
         :type objective: callable
         :param model: Model to optimize.
@@ -349,7 +352,7 @@ class BruteForceOptimizer(Optimizer):
     def element_wise_maximization(self, x):
         """
         Find the variant that maximizes the reward for a given element.
-        
+
         :param x: element to optimize
         :type x: tuple
         :return: variant that maximizes the reward
@@ -363,7 +366,7 @@ class BruteForceOptimizer(Optimizer):
     def optimize(self, objective, weights):
         """
         Maximize the objective function over the possible variants.
-        
+
         :param objective: The objective function to maximize.
         :type objective: Callable
         :param weights: The weights to optimize.

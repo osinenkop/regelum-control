@@ -130,7 +130,11 @@ class OnlineScenario(Scenario):
             return None
 
         else:
-            return self.running_objective_value
+            return (
+                np.around(self.running_objective_value, decimals=2),
+                self.observation.round(decimals=2),
+                self.action.round(2),
+            )
 
     def run(self):
 
@@ -463,6 +467,6 @@ class EpisodicScenarioAsyncAC(EpisodicScenarioREINFORCE):
 
 
 class EpisodicScenarioMultirun(EpisodicScenario):
-    def __init__(self, repeat_num: float = 1.0, *args, **kwargs):
+    def __init__(self, repeat_num: float = 1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.repeat_num = repeat_num

@@ -1,0 +1,12 @@
+defaults:
+  - controller: mpc
+  - default_${controller}
+  - override hydra/launcher: joblib
+
+
+callbacks:
+
+hydra:
+  launcher:
+    # override the number of jobs for joblib
+    n_jobs: 5
