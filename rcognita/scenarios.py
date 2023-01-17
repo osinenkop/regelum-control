@@ -241,6 +241,7 @@ class EpisodicScenario(OnlineScenario):
         self.reset_iteration()
         self.reset_simulation()
 
+
     def reset_iteration(self):
         self.episode_counter = 0
         self.iteration_counter += 1

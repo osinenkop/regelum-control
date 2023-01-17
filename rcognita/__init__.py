@@ -41,7 +41,7 @@ from . import predictors
 from . import actors
 from . import visualization
 
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 from hydra._internal.utils import _locate
 
 from . import __instantiate as inst
@@ -328,6 +328,12 @@ class main:
         """
         sys.argv.insert(1, "--multirun")
         sys.argv.insert(-1, "hydra/launcher=joblib")
+        if "--sweep" in sys.argv:
+            sys.argv.insert(-1, "hydra/sweeper=ax")
+            sys.argv.pop(sys.argv.index("--sweep"))
+            self.is_sweep = True
+        else:
+            self.is_sweep = False
         self.args = args
         self.kwargs = kwargs
         self.kwargs["version_base"] = (
@@ -356,7 +362,11 @@ class main:
                 self.__class__.callbacks = callbacks
                 res = old_app(ccfg)
                 ccfg.refresh()
-                return self.__class__.callbacks
+                if self.is_sweep:
+                    return res
+                else:
+                    return {"result" : res, "callbacks" : self.__class__.callbacks}
+
 
         app.__module__ = old_app.__module__
         path_main = os.path.abspath(inspect.getfile(old_app))

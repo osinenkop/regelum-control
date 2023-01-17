@@ -17,11 +17,12 @@ import matplotlib.pyplot as plt
 def launch(scenario_config):
     scenario = ~scenario_config
     scenario.run()
-    if scenario.is_playback:
-        animator = Animator3WRobot(scenario)
-        animator.playback()
-        plt.show()
+    return scenario.running_objective_value
+    # if scenario.is_playback:
+    #     animator = Animator3WRobot(scenario)
+    #     animator.playback()
+    #     plt.show()
 
 
 if __name__ == "__main__":
-    launch()
+    print(launch())

@@ -87,13 +87,15 @@ def main(
                 else:
                     # no return value from run_hydra() as it may sometime actually run the task_function
                     # multiple times (--multirun)
-                    return _run_hydra(
+                    res = _run_hydra(
                         args=args,
                         args_parser=args_parser,
                         task_function=task_function,
                         config_path=config_path,
                         config_name=config_name,
                     )
+
+                    return res
 
         return decorated_main
 

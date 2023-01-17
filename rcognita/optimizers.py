@@ -131,7 +131,7 @@ class SciPyOptimizer(Optimizer):
 class CasADiOptimizer(Optimizer):
     engine = "CasADi"
 
-    def __init__(self, opt_method, opt_options, verbose=True):
+    def __init__(self, opt_method, opt_options, verbose=False):
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.verbose = verbose
