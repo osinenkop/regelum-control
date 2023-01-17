@@ -95,7 +95,7 @@ def main(
                         config_name=config_name,
                     )
 
-                    return res
+                    return res[0] if res else []
 
         return decorated_main
 

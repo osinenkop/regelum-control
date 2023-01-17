@@ -25,4 +25,5 @@ def launch(scenario_config):
 
 
 if __name__ == "__main__":
-    print(launch())
+    result = launch()
+    print(len(result))
