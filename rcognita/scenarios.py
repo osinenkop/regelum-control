@@ -134,6 +134,7 @@ class OnlineScenario(Scenario):
                 np.around(self.running_objective_value, decimals=2),
                 self.observation.round(decimals=2),
                 self.action.round(2),
+                self.outcome,
             )
 
     def run(self):
@@ -240,7 +241,6 @@ class EpisodicScenario(OnlineScenario):
         self.reset_episode()
         self.reset_iteration()
         self.reset_simulation()
-
 
     def reset_iteration(self):
         self.episode_counter = 0

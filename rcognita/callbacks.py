@@ -95,10 +95,17 @@ class Callback(ABC):
     def __call__(self, obj, method, output):
         self.performed_bases = []
         for base in self.__class__.__bases__:
-            if base is not Callback and base not in self.peformed_bases:
+            if ABC not in base.__bases__ and base not in self.peformed_bases:
                 base(self, obj, method, output)
                 self.performed_bases.append(base)
         self.perform(obj, method, output)
+
+
+class HistoricalCallback(Callback, ABC):
+    @property
+    @abstractmethod
+    def data(self):
+        pass
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):

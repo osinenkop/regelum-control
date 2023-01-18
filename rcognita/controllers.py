@@ -1306,6 +1306,8 @@ class Controller3WRobotNIMotionPrimitive:
 
     def reset(self, time_start=0):
         self.controller_clock = time_start
+        self.Ls = []
+        self.times = []
 
     def compute_LF(self, observation):
         pass

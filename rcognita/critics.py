@@ -519,6 +519,7 @@ class CriticCALF(CriticOfObservation):
         self.is_dynamic_decay_rate = is_dynamic_decay_rate
         self.safe_controller = safe_controller
         self.predictor = predictor
+        self.observation_init = observation_init
         self.observation_last_good = observation_init
         self.lb_constraint_violations = []
         self.ub_constraint_violations = []
@@ -544,6 +545,13 @@ class CriticCALF(CriticOfObservation):
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
         ]
+    
+    def reset(self):
+        """
+        Reset the actor to its initial state.
+        """
+        super().reset()
+        self.observation_last_good = self.observation_init
 
     def update_buffers(self, observation, action):
         """

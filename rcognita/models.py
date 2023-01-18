@@ -218,7 +218,7 @@ class ModelQuadraticSquared(ModelQuadratic):
     def forward(self, *argin, weights=None):
         result = super().forward(*argin, weights=weights)
 
-        result = result ** 2 / 1e5
+        result = result**2 / 1e5
 
         return result
 
@@ -232,7 +232,10 @@ class ModelQuadNoMix(Model):
     model_name = "quad-nomix"
 
     def __init__(
-        self, dim_input, single_weight_min=1e-6, single_weight_max=1e2,
+        self,
+        dim_input,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
     ):
         self.dim_weights = dim_input
         self.weight_min = single_weight_min * rc.ones(self.dim_weights)
@@ -267,7 +270,10 @@ class ModelQuadNoMix2D(Model):
     model_name = "quad-nomix"
 
     def __init__(
-        self, dim_input, single_weight_min=1e-6, single_weight_max=1e2,
+        self,
+        dim_input,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
     ):
         self.dim_weights = dim_input
         self.weight_min = single_weight_min * rc.ones(self.dim_weights)[:2]
@@ -327,7 +333,7 @@ class ModelQuadMix(Model):
         v1 = rc.force_column(v1)
         v2 = rc.force_column(v2)
 
-        polynom = rc.concatenate([v1 ** 2, rc.kron(v1, v2), v2 ** 2])
+        polynom = rc.concatenate([v1**2, rc.kron(v1, v2), v2**2])
         result = rc.dot(weights, polynom)
 
         return result
@@ -375,7 +381,7 @@ class ModelBiquadForm(Model):
 
         vec = rc.concatenate(tuple(argin))
 
-        result = vec.T ** 2 @ weights[0] @ vec ** 2 + vec.T @ weights[1] @ vec
+        result = vec.T**2 @ weights[0] @ vec**2 + vec.T @ weights[1] @ vec
 
         result = rc.squeeze(result)
 
@@ -386,7 +392,7 @@ class ModelNN(nn.Module):
     """
     Class of pytorch neural network models. This class is not to be used barebones.
     Instead, you should inherit from it and specify your concrete architecture.
-    
+
     """
 
     model_name = "NN"
@@ -546,7 +552,7 @@ class ModelQuadNoMixTorch(ModelNN):
         x = input_tensor
         x = self.fc1(x)
 
-        x = -(x ** 2)
+        x = -(x**2)
         x = torch.sum(x)
 
         return x
@@ -589,7 +595,11 @@ class ModelGaussianConditional(Model):
     model_name = "model-gaussian"
 
     def __init__(
-        self, expectation_function=None, arg_condition=None, weights=None, jitter=1e-6,
+        self,
+        expectation_function=None,
+        arg_condition=None,
+        weights=None,
+        jitter=1e-6,
     ):
 
         self.weights = rc.array(weights)
