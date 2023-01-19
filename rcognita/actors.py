@@ -35,7 +35,7 @@ class Actor:
     def __call__(self, observation):
         """
         Return the most recent action taken by the actor.
-        
+
         :param observation: Current observation of the system.
         :type observation: ndarray
         :returns: Most recent action taken by the actor.
@@ -66,7 +66,7 @@ class Actor:
     ):
         """
         Initialize an actor.
-        
+
         :param prediction_horizon: Number of time steps to look into the future.
         :type prediction_horizon: int
         :param dim_input: Dimension of the observation.
@@ -269,7 +269,7 @@ class Actor:
     ):
         """
         Determines whether the given weights should be accepted or rejected based on the specified constraints.
-        
+
         :param weights: Array of weights to be evaluated.
         :type weights: np.ndarray
         :param constraint_functions: List of constraint functions to be evaluated.
@@ -312,7 +312,8 @@ class Actor:
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
         action_sequence_init_reshaped = rc.reshape(
-            action_sequence, [final_count_of_actions * self.dim_output],
+            action_sequence,
+            [final_count_of_actions * self.dim_output],
         )
 
         constraints = []
@@ -359,7 +360,8 @@ class Actor:
 
         elif self.optimizer.engine == "SciPy":
             actor_objective = rc.function_to_lambda_with_params(
-                self.objective, self.observation,
+                self.objective,
+                self.observation,
             )
 
             if constraint_functions is not None:
@@ -374,7 +376,11 @@ class Actor:
                 )
             if self.intrinsic_constraints:
                 intrinsic_constraints = [
-                    sp.optimize.NonlinearConstraint(constraint_function, -np.inf, 0,)
+                    sp.optimize.NonlinearConstraint(
+                        constraint_function,
+                        -np.inf,
+                        0,
+                    )
                     for constraint_function in self.intrinsic_constraints
                 ]
             else:
@@ -423,7 +429,9 @@ class ActorMPC(Actor):
     """
 
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Calculates the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
@@ -451,7 +459,7 @@ class ActorMPC(Actor):
 
         actor_objective = 0
         for k in range(self.prediction_horizon + 1):
-            actor_objective += self.discount_factor ** k * self.running_objective(
+            actor_objective += self.discount_factor**k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
         return actor_objective
@@ -476,11 +484,13 @@ class ActorSQL(Actor):
     """
 
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Calculates the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
-        
+
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
         :param observation: numpy array of shape (dim_output,) representing the current observation
@@ -500,7 +510,10 @@ class ActorSQL(Actor):
         )
 
         observation_sequence = rc.column_stack(
-            (observation, observation_sequence_predicted,)
+            (
+                observation,
+                observation_sequence_predicted,
+            )
         )
 
         actor_objective = 0
@@ -536,11 +549,13 @@ class ActorRQL(Actor):
     """
 
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Calculates the actor objective for the given action sequence and observation using Rollout Q-learning (RQL).
-        
+
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
         :param observation: numpy array of shape (dim_output,) representing the current observation
@@ -559,13 +574,16 @@ class ActorRQL(Actor):
         )
 
         observation_sequence = rc.column_stack(
-            (observation, observation_sequence_predicted,)
+            (
+                observation,
+                observation_sequence_predicted,
+            )
         )
 
         actor_objective = 0
 
         for k in range(self.prediction_horizon):
-            actor_objective += self.discount_factor ** k * self.running_objective(
+            actor_objective += self.discount_factor**k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
 
@@ -595,11 +613,13 @@ class ActorRPO(Actor):
     """
 
     def objective(
-        self, action_sequence, observation,
+        self,
+        action_sequence,
+        observation,
     ):
         """
         Calculates the actor objective for the given action sequence and observation using Running Plus Optimal (RPO).
-        
+
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
         :param observation: numpy array of shape (dim_input,) representing the current observation
@@ -732,11 +752,13 @@ class ActorCLF(ActorCALF):
         self.intrinsic_constraints = []
 
     def objective(
-        self, action, observation,
+        self,
+        action,
+        observation,
     ):
         """
         Computes the anticipated decay of the CLF.
-        
+
         :param action: Action taken by the actor.
         :type action: ndarray
         :param observation: Observation of the system.
@@ -829,7 +851,9 @@ class ActorTabular(ActorRPO):
         self.model.update_and_cache_weights(new_action_table)
 
     def objective(
-        self, action, observation,
+        self,
+        action,
+        observation,
     ):
         """
         Calculates the actor objective for a given action and observation.
@@ -950,7 +974,7 @@ class ActorProbabilisticEpisodicAC(ActorProbabilisticEpisodic):
         """
         Samples an action from the actor's distribution, updates the action and action_old attributes,
         and stores the current gradient in the gradients list.
-        
+
         :param observation: The current observation of the environment.
         """
         action_sample = self.model.sample_from_distribution(observation)
