@@ -661,7 +661,7 @@ class ActorCALF(ActorRPO):
         safe_action = self.safe_controller.compute_action(
             self.critic.observation_last_good
         )
-        self.action = safe_action
+        self.action_init = self.action = safe_action
         self.model.update_and_cache_weights(safe_action)
 
     def CALF_decay_constraint_for_actor(self, weights):

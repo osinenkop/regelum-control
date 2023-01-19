@@ -118,7 +118,7 @@ class Critic(ABC):
     @property
     def optimizer_engine(self):
         """Returns the engine used by the optimizer.
-        
+
         :return: A string representing the engine used by the optimizer.
             Can be one of 'Torch', 'CasADi', or 'Numpy'.
         """
@@ -132,7 +132,7 @@ class Critic(ABC):
     def __call__(self, *args, use_stored_weights=False):
         """
         Compute the value of the critic function for a given observation and/or action.
-        
+
         :param args: tuple of the form (observation, action) or (observation,)
         :type args: tuple
         :param use_stored_weights: flag indicating whether to use the stored weights of the critic model or the current weights
@@ -149,7 +149,7 @@ class Critic(ABC):
     def update_weights(self, weights=None):
         """
         Update the weights of the critic model.
-        
+
         :param weights: new weights to be used for the critic model, if not provided the optimized weights will be used
         :type weights: numpy array
         """
@@ -161,7 +161,7 @@ class Critic(ABC):
     def cache_weights(self, weights=None):
         """
         Stores a copy of the current model weights.
-        
+
         :param weights: An optional ndarray of weights to store. If not provided, the current
             model weights are stored. Default is None.
         """
@@ -215,7 +215,8 @@ class Critic(ABC):
             return "rejected"
 
     def optimize_weights(
-        self, time=None,
+        self,
+        time=None,
     ):
         """
         Compute optimized critic weights, possibly subject to constraints.
@@ -325,7 +326,10 @@ class Critic(ABC):
             )
 
         optimized_weights = self.optimizer.optimize(
-            cost_function, weights_init, weight_bounds, constraints=constraints,
+            cost_function,
+            weights_init,
+            weight_bounds,
+            constraints=constraints,
         )
         return optimized_weights
 
@@ -376,7 +380,9 @@ class Critic(ABC):
         }
 
         self.optimizer.optimize(
-            objective=self.objective, model=self.model, model_input=data_buffer,
+            objective=self.objective,
+            model=self.model,
+            model_input=data_buffer,
         )
 
         self.current_critic_loss = self.objective(data_buffer).detach().numpy()
@@ -434,7 +440,7 @@ class CriticOfObservation(Critic):
                 - self.running_objective(observation_old, action_old)
             )
 
-            critic_objective += 1 / 2 * temporal_difference ** 2 + regularization_term
+            critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
 
         return critic_objective
 
@@ -483,7 +489,7 @@ class CriticOfActionObservation(Critic):
                 - self.running_objective(observation_old, action_old)
             )
 
-            critic_objective += 1 / 2 * temporal_difference ** 2
+            critic_objective += 1 / 2 * temporal_difference**2
 
         return critic_objective
 
@@ -545,10 +551,10 @@ class CriticCALF(CriticOfObservation):
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
         ]
-    
+
     def reset(self):
         """
-        Reset the actor to its initial state.
+        Reset the critic to its initial state.
         """
         super().reset()
         self.observation_last_good = self.observation_init
@@ -605,7 +611,8 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(
-        self, weights,
+        self,
+        weights,
     ):
         """
         Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
