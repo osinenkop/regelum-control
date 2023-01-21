@@ -56,7 +56,10 @@ def __memorize_instance(resolver):
     objects_created = {}
 
     def inner(
-        key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
+        key: str,
+        default: Any = _DEFAULT_MARKER_,
+        *,
+        _parent_: Container,
     ):
         obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
         if default == _DEFAULT_MARKER_:
@@ -327,7 +330,10 @@ class main:
 
         """
         sys.argv.insert(1, "--multirun")
-        sys.argv.insert(-1, "hydra/launcher=joblib")
+        if not "--single-thread" in sys.argv:
+            sys.argv.insert(-1, "hydra/launcher=joblib")
+        else:
+            sys.argv.pop(sys.argv.index("--single-thread"))
         if "--sweep" in sys.argv:
             sys.argv.insert(-1, "hydra/sweeper=ax")
             sys.argv.pop(sys.argv.index("--sweep"))
@@ -365,8 +371,7 @@ class main:
                 if self.is_sweep:
                     return res
                 else:
-                    return {"result" : res, "callbacks" : self.__class__.callbacks}
-
+                    return {"result": res, "callbacks": self.__class__.callbacks}
 
         app.__module__ = old_app.__module__
         path_main = os.path.abspath(inspect.getfile(old_app))

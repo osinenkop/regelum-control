@@ -117,8 +117,10 @@ class Animator2Tank(Animator):
             xlabel="Time [s]",
         )
 
-        text_outcome = r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
-            outcome=0
+        text_outcome = (
+            r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
+                outcome=0
+            )
         )
         self.text_outcome_handle = self.fig_sim.text(
             0.05,
@@ -215,7 +217,7 @@ class Animator2Tank(Animator):
 
             time, state, observation, state_full = self.simulator.get_sim_step_data()
 
-            action = self.controller.compute_action(time, observation)
+            action = self.controller.compute_action(observation, time=time)
 
             self.system.receive_action(action)
             self.controller.update_outcome(observation, action)
@@ -242,8 +244,10 @@ class Animator2Tank(Animator):
         # Cost
         update_line(self.line_running_obj, time, running_objective)
         update_line(self.line_outcome, time, outcome)
-        text_outcome = r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
-            outcome=np.squeeze(np.array(outcome))
+        text_outcome = (
+            r"$\int \mathrm{{stage\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
+                outcome=np.squeeze(np.array(outcome))
+            )
         )
         update_text(self.text_outcome_handle, text_outcome)
 
@@ -260,7 +264,6 @@ class Animator2Tank(Animator):
                 )
 
             self.run_curr += 1
-
 
             if self.is_log:
                 self.datafile_curr = self.datafiles[self.run_curr - 1]

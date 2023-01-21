@@ -9,7 +9,7 @@ import numpy as np
 import rcognita as r
 import omegaconf
 from omegaconf import DictConfig, OmegaConf, flag_override
-from rcognita.visualization.vis_3wrobot import Animator3WRobotNI
+from rcognita.visualization.vis_3wrobot import Animator3WRobotNI, Animator3WRobot
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
 from rcognita.callbacks import HistoricalCallback
@@ -61,7 +61,7 @@ class ObjectiveCallbackMultirun(HistoricalCallback):
         return cache_transformed
 
 
-PRESET = "3wrobot_ni"
+PRESET = "cartpole"
 
 
 @r.main(
@@ -73,7 +73,7 @@ def launch(scenario_config):
     scenario = ~scenario_config
     scenario.run()
     if scenario.is_playback:
-        animator = Animator3WRobotNI(scenario)
+        animator = Animator3WRobot(scenario)
         animator.playback()
         plt.show()
 

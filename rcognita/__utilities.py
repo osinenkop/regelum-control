@@ -240,7 +240,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.reshape(array, dim_params)
 
     def array(
-        self, array, prototype=None, rc_type: RCType = NUMPY,
+        self,
+        array,
+        prototype=None,
+        rc_type: RCType = NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -256,7 +259,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self._array
 
     def ones(
-        self, argin, prototype=None, rc_type: RCType = NUMPY,
+        self,
+        argin,
+        prototype=None,
+        rc_type: RCType = NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -272,7 +278,10 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self._array
 
     def zeros(
-        self, argin, prototype=None, rc_type: RCType = NUMPY,
+        self,
+        argin,
+        prototype=None,
+        rc_type: RCType = NUMPY,
     ):
 
         if rc_type == NUMPY:
@@ -389,11 +398,11 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             rc_type = type_inference(*array)
 
         if rc_type == NUMPY:
-            return np.sum(array ** 2)
+            return np.sum(array**2)
         elif rc_type == TORCH:
-            return torch.sum(array ** 2)
+            return torch.sum(array**2)
         elif rc_type == CASADI:
-            return casadi.sum1(array ** 2)
+            return casadi.sum1(array**2)
 
     def mean(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
@@ -497,6 +506,15 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     def lambda2symb(self, lambda_function, *x_symb, rc_type: RCType = NUMPY):
         return lambda_function(*x_symb)
+
+    def torch_tensor(self, x, requires_grad=True, rc_type: RCType = NUMPY):
+        return torch.tensor(x, requires_grad=requires_grad)
+
+    def add_torch_grad(x, rc_type: RCType = NUMPY):
+        if rc_type == TORCH:
+            x.requires_grad = True
+        else:
+            raise TypeError("Cannot assign grad to non-torch type variable")
 
     def tanh(self, x, rc_type: RCType = NUMPY):
         if rc_type == CASADI:
@@ -637,7 +655,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return casadi.Function("f", [symbolic_var], [symbolic_expression])
 
     def soft_abs(self, x, a=20, rc_type: RCType = NUMPY):
-        return a * rc.abs(x) ** 3 / (1 + a * x ** 2)
+        return a * rc.abs(x) ** 3 / (1 + a * x**2)
 
 
 rc = RCTypeHandler()
@@ -916,4 +934,3 @@ class introduce_callbacks:
                 self.callbacks = callbacks
 
         return whatever
-

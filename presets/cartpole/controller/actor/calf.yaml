@@ -2,7 +2,7 @@ defaults:
   - model: weight_container
   - optimizer: casadi
   - predictor: rk_casadi
-  - safe_controller: pid
+  - safe_controller: mpc_safe
 
 _target_: rcognita.actors.ActorCALF
 

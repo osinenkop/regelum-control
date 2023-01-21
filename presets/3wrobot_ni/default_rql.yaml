@@ -2,7 +2,7 @@ defaults:
   - simulator: default
   - running_objective: running_objective
 
-_target_: rcognita.scenarios.EpisodicScenario
+_target_: rcognita.scenarios.EpisodicScenarioMultirun
 
 ###---Constructor arguments---###
 

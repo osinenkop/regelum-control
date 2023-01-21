@@ -300,7 +300,9 @@ class TorchOptimizer(Optimizer):
         self.loss_history = []
 
     @Optimizer.verbose
-    def optimize(self, objective, model, model_input):
+    def optimize(
+        self, objective, model, model_input
+    ):  # remove model and add parameters instead
         """
         Optimize the model with the given objective.
 
@@ -319,15 +321,92 @@ class TorchOptimizer(Optimizer):
         for _ in range(self.iterations):
             optimizer.zero_grad()
             loss = objective(model_input)
-            loss_before = loss.detach().numpy()
+            # loss_before = loss.detach().numpy()
             loss.backward()
             optimizer.step()
             # optimizer.zero_grad()
-            loss_after = objective(model_input).detach().numpy()
-            print(loss_before - loss_after)
+            # loss_after = objective(model_input).detach().numpy()
+            # print(loss_before - loss_after)
+            # if self.verbose:
+            #     print(objective(model_input))
+        # self.loss_history.append([loss_before, loss_after])
+
+
+class TorchProjectiveOptimizer(Optimizer):
+    """
+    Optimizer class that uses PyTorch as its optimization engine.
+    """
+
+    engine = "Torch"
+
+    def __init__(
+        self,
+        bounds,
+        opt_options,
+        prediction_horizon=0,
+        iterations=1,
+        opt_method=None,
+        verbose=False,
+    ):
+        """
+        Initialize an instance of TorchOptimizer.
+
+        :param opt_options: Options for the PyTorch optimizer.
+        :type opt_options: dict
+        :param iterations: Number of iterations to optimize the model.
+        :type iterations: int
+        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
+        :type opt_method: torch.optim.Optimizer
+        :param verbose: Whether to print optimization progress.
+        :type verbose: bool
+        """
+        self.bounds = bounds
+        if opt_method is None:
+            opt_method = torch.optim.Adam
+        self.opt_method = opt_method
+        self.opt_options = opt_options
+        self.iterations = iterations
+        self.verbose = verbose
+        self.loss_history = []
+        self.action_size = self.bounds[:, 1].shape[0]
+        self.upper_bound = torch.squeeze(
+            torch.tile(torch.tensor(self.bounds[:, 1]), (1, prediction_horizon + 1))
+        )
+
+    def optimize(self, *model_input, objective, model):
+        """
+        Optimize the model with the given objective.
+
+        :param objective: Objective function to optimize.
+        :type objective: callable
+        :param model: Model to optimize.
+        :type model: torch.nn.Module
+        :param model_input: Inputs to the model.
+        :type model_input: torch.Tensor
+        """
+        optimizer = self.opt_method([model_input[0]], **self.opt_options)
+        # optimizer.zero_grad()
+
+        for _ in range(self.iterations):
+            optimizer.zero_grad()
+            loss = objective(*model_input)
+            # loss_before = loss.detach().numpy()
+            loss.backward()
+            optimizer.step()
+            for param in [model_input[0]]:
+                param.requires_grad = False
+                param /= self.upper_bound
+                param.clamp_(-1, 1)
+                param *= self.upper_bound
+                param.requires_grad = True
+            # optimizer.zero_grad()
+            # loss_after = objective(*model_input).detach().numpy()
+            # print(loss_before - loss_after)
             if self.verbose:
-                print(objective(model_input))
-        self.loss_history.append([loss_before, loss_after])
+                print(objective(*model_input))
+        # self.loss_history.append([loss_before, loss_after])
+        model.weights = torch.nn.Parameter(model_input[0][: self.action_size])
+        return model_input[0]
 
 
 class BruteForceOptimizer(Optimizer):

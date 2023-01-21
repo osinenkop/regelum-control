@@ -42,4 +42,6 @@ observation_target%%: = []
 @simulator.rtol: 1.0E-3
 
 
-@controller.actor.predictor.prediction_horizon: 5
+@controller.actor.predictor.prediction_horizon: 8
+@controller.actor.predictor.pred_step_size_multiplier%%: 12
+@controller.actor.predictor.n_steps: 6

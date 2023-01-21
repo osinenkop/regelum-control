@@ -52,7 +52,9 @@ class Controller(ABC):
         if is_time_for_new_sample:  # New sample
             # Update controller's internal clock
 
-            self.compute_action(time, observation, is_critic_update=is_critic_update)
+            self.compute_action(
+                observation, time=time, is_critic_update=is_critic_update
+            )
 
         return self.actor.action
 
@@ -113,12 +115,7 @@ class RLController(Controller):
         self.critic.clock.reset()
         self.actor.action_old = self.actor.action_init
 
-    def compute_action(
-        self,
-        time,
-        observation,
-        is_critic_update=True,
-    ):
+    def compute_action(self, observation, is_critic_update=True, time=0):
         ### store current action and observation in critic's data buffer
         self.critic.update_buffers(observation, self.actor.action)
 
@@ -156,12 +153,7 @@ class CALFControllerExPost(RLController):
         self.actor.set_action(action)
         self.actor.model.update_and_cache_weights(action)
 
-    def compute_action(
-        self,
-        time,
-        observation,
-        is_critic_update=False,
-    ):
+    def compute_action(self, observation, is_critic_update=False, time=0):
         # Update data buffers
         self.critic.update_buffers(
             observation, self.actor.action
@@ -232,12 +224,7 @@ class CALFControllerExPost(RLController):
 
 
 class CALFControllerPredictive(CALFControllerExPost):
-    def compute_action(
-        self,
-        time,
-        observation,
-        is_critic_update=False,
-    ):
+    def compute_action(self, observation, is_critic_update=False, time=0):
 
         # Update data buffers
         self.critic.update_buffers(
@@ -275,7 +262,7 @@ class CALFControllerPredictive(CALFControllerExPost):
         else:
             self.invoke_safe_action(observation)
 
-        self.collect_critic_stats(time)
+        # self.collect_critic_stats(time)
 
         # plot_optimization_results(
         #     self.critic.cost_function,
@@ -580,7 +567,7 @@ class Controller3WRobotDisassembledCLF:
         else:
             return self.action_old
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, time=0):
         """
         Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
 
@@ -660,7 +647,7 @@ class ControllerPID:
         self.error_old = error
         return error_derivative
 
-    def compute_action(self, PV, error_derivative=None):
+    def compute_action(self, PV, error_derivative=None, ime=0):
 
         error = self.compute_error(PV)
         integral = self.compute_integral(error)
@@ -754,7 +741,7 @@ class Controller3WRobotPID:
     def compute_square_of_norm(self, x, y):
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, time=0):
         x = observation[0]
         y = observation[1]
         angle = rc.array([observation[2]])
@@ -914,7 +901,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.action_old = rc.zeros(2)
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, time=0):
         x = observation[0]
         y = observation[1]
         angle = observation[2]
@@ -1186,7 +1173,7 @@ class Controller3WRobotNIDisassembledCLF:
         else:
             return self.action_old
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, time=0):
         """
         Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
 
@@ -1223,7 +1210,7 @@ class NominalControllerInvertedPendulum:
     def __call__(self, observation):
         return self.compute_action(observation)
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, time=0):
         self.observation = observation
         return np.array([-((observation[0]) + (observation[1])) * self.controller_gain])
 
@@ -1242,7 +1229,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.action_old = rc.zeros(2)
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, time=0):
         x = observation[0]
         y = observation[1]
         angle = observation[2]

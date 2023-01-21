@@ -1,0 +1,5 @@
+_target_: rcognita.models.ModelDQN
+
+dim_observation: $ simulator.system.dim_output
+dim_action: $ simulator.system.dim_input
+dim_hidden: 20

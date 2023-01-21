@@ -357,7 +357,10 @@ class ModelQuadForm(Model):
 
         vec = rc.concatenate(tuple(argin))
 
-        result = vec.T @ weights @ vec
+        try:
+            result = vec.T @ weights @ vec
+        except RuntimeError:
+            result = vec.T @ torch.tensor(weights, requires_grad=False).double() @ vec
 
         result = rc.squeeze(result)
 
@@ -424,7 +427,7 @@ class ModelNN(nn.Module):
         for variable in self.parameters():
             variable.detach_()
 
-    def cache_weights(self):
+    def cache_weights(self, whatever=None):
         """
         Assign the active model weights to the cached model followed by a detach.
 
@@ -438,12 +441,8 @@ class ModelNN(nn.Module):
         self.cache.load_state_dict(self.state_dict())
         self.cache.detach_weights()
 
-    def update(self, weights):
-        if not isinstance(weights, OrderedDict):
-            weights_dict = self.weights2dict(weights)
-        elif not isinstance(weights, list):
-            raise TypeError("weights must be passed as either OrderedDict or list type")
-        self.load_state_dict(weights_dict)
+    def update_weights(self, whatever=None):
+        pass
 
     def weights2dict(self, weights_to_parse):
         """
@@ -504,8 +503,10 @@ class ModelNN(nn.Module):
     def __call__(self, *argin, weights=None, use_stored_weights=False):
         if len(argin) > 1:
             argin = rc.concatenate(argin)
+        else:
+            argin = argin[0]
 
-        argin = torch.tensor(argin)
+        argin = argin if isinstance(argin, torch.Tensor) else torch.tensor(argin)
 
         if use_stored_weights is False:
             if weights is not None:
@@ -534,7 +535,10 @@ class ModelQuadNoMixTorch(ModelNN):
     ):
         super().__init__()
 
-        self.fc1 = nn.Linear(dim_observation + dim_action, 1, bias=False)
+        # self.fc1 = nn.Linear(dim_observation + dim_action, 1, bias=False)
+        self.w1 = torch.nn.Parameter(
+            torch.ones(dim_observation + dim_action, requires_grad=True)
+        )
 
         if weights is not None:
             self.load_state_dict(weights)
@@ -544,18 +548,75 @@ class ModelQuadNoMixTorch(ModelNN):
         self.weights = self.parameters()
         self.force_positive_def = force_positive_def
 
-    @force_positive_def
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        x = input_tensor**2
+        x = self.w1**2 @ x
+
+        return x
+
+
+class ModelDQN(ModelNN):
+    """
+    pytorch neural network DQN
+
+    """
+
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden=20,
+        weights=None,
+        force_positive_def=False,
+    ):
+        super().__init__()
+
+        self.fc1 = nn.Linear(dim_observation + dim_action, dim_hidden)
+        self.a1 = nn.ReLU()
+        self.fc2 = nn.Linear(dim_hidden, 1)
+
+        if weights is not None:
+            self.load_state_dict(weights)
+
+        self.double()
+        self.cache_weights()
+        self.weights = self.parameters()
+        self.force_positive_def = force_positive_def
+
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
 
         x = input_tensor
         x = self.fc1(x)
+        x = self.a1(x)
+        x = self.fc2(x)
 
-        x = -(x**2)
-        x = torch.sum(x)
+        return torch.squeeze(x)
 
-        return x
+
+class ModelWeightContainerTorch(ModelNN):
+    """
+    Pytorch weight container for actor
+
+    """
+
+    def __init__(self, action_init):
+        super().__init__()
+
+        self.weights = torch.nn.Parameter(torch.tensor(action_init, requires_grad=True))
+
+        self.double()
+        self.cache_weights()
+
+        self.force_positive_def = force_positive_def
+
+    def forward(self, observation):
+
+        return self.weights
 
 
 class LookupTable(Model):
