@@ -6,14 +6,20 @@ import numpy as np
 def plot_objectives(job_results, environment):
     controller_override_index = [
         i for i, v in enumerate(job_results.overrides[0]) if "controller=" in v
-    ][0]
+    ]
+    if controller_override_index:
 
-    group_df = job_results.groupby(
-        job_results.overrides.map(lambda x: x[controller_override_index].split("=")[1])
-    )
-    controllers = job_results.overrides.map(
-        lambda x: x[controller_override_index].split("=")[1]
-    ).unique()
+        group_df = job_results.groupby(
+            job_results.overrides.map(
+                lambda x: x[controller_override_index].split("=")[1]
+            )
+        )
+        controllers = job_results.overrides.map(
+            lambda x: x[controller_override_index].split("=")[1]
+        ).unique()
+
+    else:
+        controllers = ["MPC"]
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.subplots()
@@ -48,7 +54,7 @@ def plot_objectives_per_controller(df, callbacks, controller, axes):
 
     plt.fill_between(df.index, low, high, color="r", alpha=0.2)
 
-    # axes.plot(df.index, df.values, color="r", alpha=0.2)
+    axes.plot(df.index, df.values, color="r", alpha=0.2)
     df["mean_traj"] = df.mean(axis=1)
     axes.plot(
         df.index,

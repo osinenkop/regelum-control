@@ -14,7 +14,7 @@ rcognita.scenarios.OnlineScenario
    .. autosummary::
    
       ~OnlineScenario.__init__
-      ~OnlineScenario.perform_post_step_operations
+      ~OnlineScenario.post_step
       ~OnlineScenario.run
       ~OnlineScenario.step
       ~OnlineScenario.update_outcome

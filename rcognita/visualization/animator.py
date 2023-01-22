@@ -172,7 +172,7 @@ class Animator:
         """
         self.anm.event_source.stop()
         # plt.close('all')
-        raise Exception("exit")
+        # raise Exception("exit")
 
     def set_sim_data(self, **kwargs):
         """

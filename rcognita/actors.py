@@ -18,7 +18,8 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from .__utilities import rc
-from .callbacks import introduce_callbacks, apply_callbacks
+
+from rcognita.callbacks import apply_callbacks
 from .predictors import Predictor
 from .optimizers import Optimizer
 from .critics import Critic

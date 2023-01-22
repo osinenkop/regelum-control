@@ -35,7 +35,7 @@ speedup: 75
 @running_objective.model.R1_diag%%: = [10, 10, 1, 0, 0, 0, 0]
 @running_objective.model.R2_diag%%: = [1, 10, 1, 0, 0, 0, 0]
 
-@controller.critic.critic_regularization_param: 0.
+
 
 
 observation_target%%: = []
@@ -44,6 +44,3 @@ observation_target%%: = []
 
 @simulator.atol: 1.0E-5
 @simulator.rtol: 1.0E-3
-
-
-# stabilizing policy total objective ~ 5090

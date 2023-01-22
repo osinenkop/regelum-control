@@ -187,7 +187,7 @@ class CALFControllerExPost(RLController):
         else:
             self.invoke_safe_action(observation)
 
-        self.collect_critic_stats(time)
+        # self.collect_critic_stats(time)
 
         return self.actor.action
 
@@ -865,7 +865,6 @@ class Controller3WRobotPID:
 
             self.action_old = action
 
-            print(action)
             return action
 
         else:
@@ -1202,17 +1201,57 @@ class Controller3WRobotNIDisassembledCLF:
 
 
 class NominalControllerInvertedPendulum:
-    def __init__(self, action_bounds, controller_gain):
+    def compute_action_sampled(self, time, observation, constraints=()):
+
+        is_time_for_new_sample = self.clock.check_time(time)
+        is_time_for_critic_update = self.critic.clock.check_time(time)
+
+        is_critic_update = (
+            is_time_for_critic_update and not self.is_fixed_critic_weights
+        )
+
+        if is_time_for_new_sample:  # New sample
+            # Update controller's internal clock
+
+            self.compute_action(
+                observation, time=time, is_critic_update=is_critic_update
+            )
+
+        return self.actor.action
+
+    def __init__(
+        self,
+        action_bounds,
+        controller_gain,
+        time_start: float = 0,
+        sampling_time: float = 0.1,
+    ):
         self.action_bounds = action_bounds
         self.controller_gain = controller_gain
         self.observation = np.array([np.pi, 0])
+        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.sampling_time = sampling_time
+        self.action = np.array([np.mean(action_bounds)])
+
+    def compute_action_sampled(self, time, observation, constraints=()):
+
+        is_time_for_new_sample = self.clock.check_time(time)
+
+        if is_time_for_new_sample:
+
+            self.action = self.compute_action(observation, time=time)
+            self.action = np.clip(
+                self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
+            )
+
+        return self.action
 
     def __call__(self, observation):
         return self.compute_action(observation)
 
     def compute_action(self, observation, time=0):
         self.observation = observation
-        return np.array([-((observation[0]) + (observation[1])) * self.controller_gain])
+        return np.array([-((observation[0]) + (observation[2])) * self.controller_gain])
 
 
 class Controller3WRobotNIMotionPrimitive:

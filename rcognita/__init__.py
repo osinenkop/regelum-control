@@ -330,6 +330,7 @@ class main:
 
         """
         sys.argv.insert(1, "--multirun")
+        sys.argv.insert(-1, "hydra.job.chdir=True")
         if not "--single-thread" in sys.argv:
             sys.argv.insert(-1, "hydra/launcher=joblib")
         else:
@@ -371,7 +372,11 @@ class main:
                 if self.is_sweep:
                     return res
                 else:
-                    return {"result": res, "callbacks": self.__class__.callbacks}
+                    return {
+                        "result": res,
+                        "callbacks": self.__class__.callbacks,
+                        "directory": os.getcwd(),
+                    }
 
         app.__module__ = old_app.__module__
         path_main = os.path.abspath(inspect.getfile(old_app))

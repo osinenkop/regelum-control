@@ -9,75 +9,47 @@ import numpy as np
 import rcognita as r
 import omegaconf
 from omegaconf import DictConfig, OmegaConf, flag_override
-from rcognita.visualization.vis_3wrobot import Animator3WRobotNI, Animator3WRobot
+from rcognita.visualization.vis_3wrobot import (
+    Animator3WRobotNI,
+    Animator3WRobot,
+)
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
-from rcognita.callbacks import HistoricalCallback
+from rcognita.callbacks import ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun
 from rcognita.scenarios import Scenario
 import matplotlib.pyplot as plt
 import pandas as pd
+import pickle
 
 np.random.seed(42)
 
 
-class ObjectiveCallbackMultirun(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.cache = {}
-        self.timeline = []
-        self.num_launch = 1
-
-    def perform(self, obj, method, output):
-        if isinstance(obj, Scenario) and method == "perform_post_step_operations":
-            self.log(
-                f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, outcome: {output[3]}"
-            )
-            key = (self.num_launch, obj.time)
-            if key in self.cache.keys():
-                self.num_launch += 1
-                key = (self.num_launch, obj.time)
-
-            self.cache[key] = output[0]
-            if self.timeline != []:
-                if self.timeline[-1] < key[1]:
-                    self.timeline.append(key[1])
-
-            else:
-                self.timeline.append(key[1])
-
-    @property
-    def data(self):
-        keys = list(self.cache.keys())
-        run_numbers = sorted(list(set([k[0] for k in keys])))
-        cache_transformed = {key: list() for key in run_numbers}
-        for k, v in self.cache.items():
-            cache_transformed[k[0]].append(v)
-        return cache_transformed
-
-
-PRESET = "cartpole"
+PRESET = "inv_pendulum"
 
 
 @r.main(
     config_path=f"./{PRESET}",
     config_name=f"scenario",
-    callbacks=[ObjectiveCallbackMultirun],
+    callbacks=[ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun],
 )
 def launch(scenario_config):
+    print(os.getcwd())
     scenario = ~scenario_config
     scenario.run()
-    if scenario.is_playback:
-        animator = Animator3WRobot(scenario)
-        animator.playback()
-        plt.show()
+    # if scenario.is_playback:
+    #     animator = AnimatorLunarLander(scenario)
+    #     animator.playback()
+    #     plt.show()
 
 
 if __name__ == "__main__":
     job_results = launch()
-    plot_multirun.plot_objectives(job_results, PRESET)
+    # plot_multirun.plot_objectives(job_results, PRESET)
+
+    with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
+        df = pickle.load(f)
+
+    callbacks = df.TotalObjectiveCallbackMultirun
+    plt.plot(callbacks[0].data)
+    plt.show()
+    # print(callbacks[0].data)

@@ -34,7 +34,7 @@ class ObjectiveCallbackMultirun(HistoricalCallback):
         self.num_launch = 1
 
     def perform(self, obj, method, output):
-        if isinstance(obj, Scenario) and method == "perform_post_step_operations":
+        if isinstance(obj, Scenario) and method == "post_step":
             self.log(f"Current objective: {output[0]}, observation: {output[1]}")
             key = (self.num_launch, obj.time)
             if key in self.cache.keys():

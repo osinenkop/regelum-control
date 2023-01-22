@@ -16,7 +16,7 @@ from unittest.mock import Mock, MagicMock
 from .__utilities import rc
 from .optimizers import TorchOptimizer
 from .actors import Actor
-from .critics import Critic
+from .critics import Critic, CriticTrivial
 from .simulator import Simulator
 from .controllers import Controller
 from .objectives import RunningObjective
@@ -89,7 +89,9 @@ class OnlineScenario(Scenario):
             MagicMock() if not hasattr(controller, "actor") else controller.actor
         )
         self.critic = (
-            MagicMock() if not hasattr(controller, "critic") else controller.critic
+            CriticTrivial(running_objective)
+            if not hasattr(controller, "critic")
+            else controller.critic
         )
 
         self.running_objective = (
@@ -119,7 +121,7 @@ class OnlineScenario(Scenario):
         self.delta_time = 0
 
     @apply_callbacks
-    def perform_post_step_operations(self):
+    def post_step(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
@@ -170,7 +172,7 @@ class OnlineScenario(Scenario):
             )
             self.system.receive_action(self.action)
 
-            self.perform_post_step_operations()
+            self.post_step()
 
             return True
 
@@ -212,10 +214,12 @@ class EpisodicScenario(OnlineScenario):
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
 
+    @apply_callbacks
     def reload_pipeline(self):
         self.sim_status = 1
         self.time = 0
         self.time_old = 0
+        outcome = self.outcome
         self.outcome = 0
         self.action = self.action_init
         self.system.reset()
@@ -225,6 +229,7 @@ class EpisodicScenario(OnlineScenario):
         self.simulator.reset()
         self.observation = self.system.out(self.state_init, time=0)
         self.sim_status = 0
+        return outcome
 
     def run(self):
         for _ in range(self.N_iterations):
@@ -251,6 +256,7 @@ class EpisodicScenario(OnlineScenario):
     def reset_episode(self):
         self.outcomes_of_episodes.append(self.critic.outcome)
         self.episode_counter += 1
+        return self.critic.outcome
 
     def reset_simulation(self):
         self.current_scenario_status = "episode_continues"

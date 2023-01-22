@@ -17,6 +17,8 @@ from hydra.core.utils import _flush_loggers, configure_log
 from hydra.types import TaskFunction
 import pandas as pd
 
+import os, pickle
+
 _UNSPECIFIED_: Any = object()
 
 
@@ -52,9 +54,11 @@ def to_dataframe(jobreturns):
     cfg_ = [res.cfg for res in jobreturns]
     overrides_ = [res.overrides for res in jobreturns]
     result_ = [res.return_value["result"] for res in jobreturns]
+    directory_ = [res.return_value["directory"] for res in jobreturns]
     callbacks["cfg"] = cfg_
     callbacks["overrides"] = overrides_
     callbacks["result"] = result_
+    callbacks["directory"] = directory_
     return callbacks
 
 
@@ -110,8 +114,17 @@ def main(
                         config_path=config_path,
                         config_name=config_name,
                     )
-
-                    return to_dataframe(res[0]) if res else []
+                    if res:
+                        res = to_dataframe(res[0])
+                        path = (
+                            os.path.abspath(res["directory"][0] + "/..")
+                            + "/output.pickle"
+                        )
+                        with open(path, "wb") as f:
+                            pickle.dump(res, f)
+                        return res
+                    else:
+                        return NotImplemented
 
         return decorated_main
 

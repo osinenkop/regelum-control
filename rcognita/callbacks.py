@@ -16,14 +16,9 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 """
 
 from abc import ABC, abstractmethod
-import rcognita.systems as systems
-import rcognita.actors as actors
-import rcognita.controllers as controllers
-import rcognita.critics as critics
-import rcognita.models as models
-import rcognita.objectives as objectives
-import rcognita.observers as observers
+
 import rcognita
+import pandas as pd
 
 
 def apply_callbacks(method):
@@ -148,8 +143,8 @@ class StateCallback(Callback):
 
     def perform(self, obj, method, output):
         if (
-            isinstance(obj, systems.System)
-            and method == systems.System.compute_closed_loop_rhs.__name__
+            isinstance(obj, rcognita.systems.System)
+            and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
         ):
             self.log(f"System's state: {obj._state}")
 
@@ -165,5 +160,67 @@ class ObjectiveCallback(Callback):
     """
 
     def perform(self, obj, method, output):
-        if isinstance(obj, actors.Actor) and method == "objective":
+        if isinstance(obj, rcognita.actors.Actor) and method == "objective":
             self.log(f"Current objective: {output}")
+
+
+class ObjectiveCallbackMultirun(HistoricalCallback):
+    """
+    A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cache = {}
+        self.timeline = []
+        self.num_launch = 1
+
+    def perform(self, obj, method, output):
+        if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
+            self.log(
+                f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, outcome: {output[3]}"
+            )
+            key = (self.num_launch, obj.time)
+            if key in self.cache.keys():
+                self.num_launch += 1
+                key = (self.num_launch, obj.time)
+
+            self.cache[key] = output[0]
+            if self.timeline != []:
+                if self.timeline[-1] < key[1]:
+                    self.timeline.append(key[1])
+
+            else:
+                self.timeline.append(key[1])
+
+    @property
+    def data(self):
+        keys = list(self.cache.keys())
+        run_numbers = sorted(list(set([k[0] for k in keys])))
+        cache_transformed = {key: list() for key in run_numbers}
+        for k, v in self.cache.items():
+            cache_transformed[k[0]].append(v)
+        return cache_transformed
+
+
+class TotalObjectiveCallbackMultirun(HistoricalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cache = pd.DataFrame()
+
+    def perform(self, obj, method, output):
+        if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
+            self.log(f"Current total objective: {output}")
+            episode = (
+                obj.episode_counter
+                if obj.episode_counter != 0
+                else self.cache.index.max() + 1
+            )
+            row = pd.DataFrame({"outcome": output}, index=[episode])
+            self.cache = pd.concat([self.cache, row])
+
+    @property
+    def data(self):
+        return self.cache.iloc[:-1]

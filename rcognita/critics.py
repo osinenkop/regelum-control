@@ -559,6 +559,9 @@ class CriticCALF(CriticOfObservation):
         super().reset()
         self.observation_last_good = self.observation_init
 
+        if hasattr(self.safe_controller, "reset_all_PID_controllers"):
+            self.safe_controller.reset_all_PID_controllers()
+
     def update_buffers(self, observation, action):
         """
         Update data buffers and dynamic safe decay rate.
