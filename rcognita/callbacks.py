@@ -19,7 +19,7 @@ from abc import ABC, abstractmethod
 
 import rcognita
 import pandas as pd
-
+import time
 
 def apply_callbacks(method):
     """
@@ -68,6 +68,7 @@ class introduce_callbacks:
 
 
 class Callback(ABC):
+    cooldown = None
     """
     This is the base class for a callback object. Callback objects are used to perform some action or computation after a method has been called.
     """
@@ -82,12 +83,25 @@ class Callback(ABC):
         :type log_level: str
         """
         self.log = logger.__getattribute__(log_level)
+        self.last_trigger = 0.0
+
+    def ready(self):
+        if not self.cooldown:
+            return True
+        if time.time() - self.last_trigger > self.cooldown:
+            self.last_trigger = time.time()
+            return True
+        else:
+            return False
+
 
     @abstractmethod
     def perform(self, obj, method, output):
         pass
 
     def __call__(self, obj, method, output):
+        if not self.ready():
+            return
         self.performed_bases = []
         for base in self.__class__.__bases__:
             if ABC not in base.__bases__ and base not in self.peformed_bases:

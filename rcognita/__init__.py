@@ -331,6 +331,15 @@ class main:
         """
         sys.argv.insert(1, "--multirun")
         sys.argv.insert(-1, "hydra.job.chdir=True")
+        if "--disable-logging" in sys.argv:
+            sys.argv.pop(sys.argv.index("--disable-logging"))
+            sys.argv.insert(-1, "hydra/job_logging=disabled")
+        self.cooldown_factor = 1.0
+        for i, arg in enumerate(sys.argv):
+            if "--cooldown-factor" in arg:
+                self.cooldown_factor = float(arg.split("=")[-1])
+                sys.argv.pop(i)
+                break
         if not "--single-thread" in sys.argv:
             sys.argv.insert(-1, "hydra/launcher=joblib")
         else:
@@ -367,6 +376,9 @@ class main:
                         callbacks.append(callback(self.__class__.logger))
                     delattr(cfg, "callbacks")
                 self.__class__.callbacks = callbacks
+                for callback in self.__class__.callbacks:
+                    if callback.cooldown:
+                        callback.cooldown *= self.cooldown_factor
                 res = old_app(ccfg)
                 ccfg.refresh()
                 if self.is_sweep:
