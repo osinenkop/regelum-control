@@ -70,6 +70,21 @@ class EulerPredictor(Predictor):
         return observation_sequence
 
 
+class EulerPredictorMultistep(EulerPredictor):
+    def __init__(self, *args, n_steps=5, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.n_steps = n_steps
+        self.pred_step_size /= self.n_steps
+
+    def predict(self, current_state_or_observation, action):
+        next_state_or_observation = current_state_or_observation
+        for _ in range(self.n_steps):
+            next_state_or_observation = super().predict(
+                next_state_or_observation, action
+            )
+        return next_state_or_observation
+
+
 class EulerPredictorPendulum(EulerPredictor):
     def predict(self, current_state_or_observation, action):
         rhs = self.compute_state_dynamics([], current_state_or_observation, action)
@@ -103,7 +118,10 @@ class RKPredictor(EulerPredictor):
         super().__init__(*args, **kwargs)
 
         self.integrator = create_CasADi_integrator(
-            self.system, state_or_observation_init, action_init, self.pred_step_size,
+            self.system,
+            state_or_observation_init,
+            action_init,
+            self.pred_step_size,
         )
 
     def predict(self, current_state_or_observation, action):

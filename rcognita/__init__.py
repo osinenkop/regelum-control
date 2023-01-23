@@ -41,7 +41,7 @@ from . import predictors
 from . import actors
 from . import visualization
 
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 from hydra._internal.utils import _locate
 
 from . import __instantiate as inst
@@ -56,7 +56,10 @@ def __memorize_instance(resolver):
     objects_created = {}
 
     def inner(
-        key: str, default: Any = _DEFAULT_MARKER_, *, _parent_: Container,
+        key: str,
+        default: Any = _DEFAULT_MARKER_,
+        *,
+        _parent_: Container,
     ):
         obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
         if default == _DEFAULT_MARKER_:
@@ -112,7 +115,7 @@ OmegaConf.register_new_resolver(name="get", resolver=__obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 
-from hydra import main as hydramain
+from .__hydra_main import main as hydramain
 
 
 class ComplementedConfig:
@@ -326,6 +329,27 @@ class main:
         :type logger: Logger, optional
 
         """
+        sys.argv.insert(1, "--multirun")
+        sys.argv.insert(-1, "hydra.job.chdir=True")
+        if "--disable-logging" in sys.argv:
+            sys.argv.pop(sys.argv.index("--disable-logging"))
+            sys.argv.insert(-1, "hydra/job_logging=disabled")
+        self.cooldown_factor = 1.0
+        for i, arg in enumerate(sys.argv):
+            if "--cooldown-factor" in arg:
+                self.cooldown_factor = float(arg.split("=")[-1])
+                sys.argv.pop(i)
+                break
+        if not "--single-thread" in sys.argv:
+            sys.argv.insert(-1, "hydra/launcher=joblib")
+        else:
+            sys.argv.pop(sys.argv.index("--single-thread"))
+        if "--sweep" in sys.argv:
+            sys.argv.insert(-1, "hydra/sweeper=ax")
+            sys.argv.pop(sys.argv.index("--sweep"))
+            self.is_sweep = True
+        else:
+            self.is_sweep = False
         self.args = args
         self.kwargs = kwargs
         self.kwargs["version_base"] = (
@@ -338,7 +362,7 @@ class main:
         self.__class__.logger = logger
 
     def __call__(self, old_app):
-        def app(cfg):
+        def app(cfg, callbacks=self.__class__.callbacks):
             with omegaconf.flag_override(cfg, "allow_objects", True):
                 ccfg = ComplementedConfig(cfg)
                 self.apply_assignments(ccfg)
@@ -349,11 +373,22 @@ class main:
                             if isinstance(callback, str)
                             else callback
                         )
-                        self.__class__.callbacks.append(callback(self.__class__.logger))
+                        callbacks.append(callback(self.__class__.logger))
                     delattr(cfg, "callbacks")
+                self.__class__.callbacks = callbacks
+                for callback in self.__class__.callbacks:
+                    if callback.cooldown:
+                        callback.cooldown *= self.cooldown_factor
                 res = old_app(ccfg)
                 ccfg.refresh()
-                return res
+                if self.is_sweep:
+                    return res
+                else:
+                    return {
+                        "result": res,
+                        "callbacks": self.__class__.callbacks,
+                        "directory": os.getcwd(),
+                    }
 
         app.__module__ = old_app.__module__
         path_main = os.path.abspath(inspect.getfile(old_app))

@@ -35,6 +35,10 @@ setup(
         "recursive_monkey_patch==0.4.0",
         "omegaconf>=2.3.0",
         "hydra-core>=1.3.1",
+        "hydra-joblib-launcher>=1.2.0",
+        "pandas==1.4.0",
+        "gpytorch==1.8.0"
+
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],

@@ -13,6 +13,7 @@ import numpy as np
 from numpy.random import randn
 from rcognita import __utilities as utilities
 from abc import ABC, abstractmethod
+import rcognita.__utilities as utilities
 
 
 class System(ABC):
@@ -295,13 +296,14 @@ class SysInvertedPendulum(System):
     def compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
         )
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
 
         Dstate[0] = state[1]
-        Dstate[1] = g / l * utilities.rc.sin(state[0]) + action[0] / (m * l ** 2)
+        Dstate[1] = g / l * utilities.rc.sin(state[0]) + action[0] / (m * l**2)
 
         return Dstate
 
@@ -323,7 +325,7 @@ class SysInvertedPendulum(System):
         delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
-        return utilities.rc.array([state[0], self.integral_alpha, state[1]])
+        return state  # utilities.rc.array([state[0], self.integral_alpha, state[1]])
 
     def reset(self):
         self.time_old = 0
@@ -396,7 +398,8 @@ class Sys3WRobot(System):
     def compute_dynamics(self, time, state, action, disturb=None):
 
         Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
         )
 
         m, I = self.pars[0], self.pars[1]
@@ -515,7 +518,8 @@ class System2Tank(System):
         tau1, tau2, K1, K2, K3 = self.pars
 
         Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action)),
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
         )
         Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action[0])
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
@@ -561,3 +565,189 @@ class GridWorld(System):
             if current_state[0] < self.dims[0] - 1:
                 return (current_state[0] + 1, current_state[1])
         return current_state
+
+
+class CartPole(System):
+    """
+    Cart pole system without friction. link:
+    https://coneural.org/florian/papers/05_cart_pole.pdf
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.name = "2wrobot"
+
+    def compute_dynamics(self, time, state, action, disturb=None):
+
+        Dstate = utilities.rc.zeros(
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
+        )
+
+        m_c, m_p, g, l = self.pars
+        theta = state[0]
+        x = state[1]
+        theta_dot = state[2]
+        x_dot = state[3]
+
+        Dstate[0] = theta_dot
+
+        Dstate[1] = x_dot
+
+        Dstate[2] = (
+            (
+                g * utilities.rc.sin(theta)
+                - utilities.rc.cos(theta)
+                * (action[0] + m_p * l * theta_dot**2 * utilities.rc.sin(theta))
+                / (m_c + m_p)
+            )
+            / l
+            / (4 / 3 - m_p * (utilities.rc.cos(theta) ** 2) / (m_c + m_p))
+        )
+        Dstate[3] = (
+            action[0]
+            + m_p
+            * l
+            * (
+                theta_dot**2 * utilities.rc.sin(theta)
+                - Dstate[0] * utilities.rc.cos(theta)
+            )
+        ) / (m_c + m_p)
+
+        return Dstate
+
+    def _compute_disturbance_dynamics(self, time, disturb):
+
+        Ddisturb = utilities.rc.zeros(self.dim_disturb)
+
+        return utilities.rc.array(Ddisturb)
+
+    def out(self, observation, time=None, action=None):
+        state = observation
+
+        return state
+
+
+class LunarLander(System):
+    """
+    Lunar lander system. link:
+    https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.name = "lander"
+        self.a = 1
+        self.r = 1
+        self.sigma = 1
+        self.state_cache = []
+
+    def compute_dynamics(self, time, state, action, disturb=None):
+
+        Dstate = utilities.rc.zeros(
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
+        )
+
+        m, J, g = self.pars
+
+        F_g = m * g * utilities.rc.array([0, 1], prototype=Dstate)
+
+        theta = state[2]
+        x_dot = state[3]
+        y_dot = state[4]
+        theta_dot = state[5]
+
+        left_support, right_support = self.compute_supports_geometry(state[:2], theta)
+        # l_reaction = self.compute_reaction(state[:2], left_support)
+        # r_reaction = self.compute_reaction(state[:2], right_support)
+
+        F_l = action[0]
+        F_t = action[1]
+
+        # M_l = utilities.rc.cross(
+        #     utilities.rc.concatenate(
+        #         (left_support - state[:2], utilities.rc.array([0]))
+        #     ),
+        #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
+        # )[2] * utilities.rc.if_else(left_support[1] < 0, 1, 0)
+        # M_r = utilities.rc.cross(
+        #     utilities.rc.concatenate(
+        #         (right_support - state[:2], utilities.rc.array([0]))
+        #     ),
+        #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
+        # )[2] * utilities.rc.if_else(right_support[1] < 0, 1, 0)
+
+        Dstate[0] = x_dot
+
+        Dstate[1] = y_dot
+
+        Dstate[2] = theta_dot
+
+        Dstate[3] = (
+            1 / m * (F_l * utilities.rc.cos(theta) - F_t * utilities.rc.sin(theta))
+        )
+
+        Dstate[4] = (
+            1 / m * (F_l * utilities.rc.sin(theta) + F_t * utilities.rc.cos(theta)) - g
+        )
+
+        # Dstate[5] = (4 * F_l + M_l + M_r) / J
+        Dstate[5] = (4 * F_l) / J
+
+        # Dstate = Dstate * utilities.rc.if_else(state[1] >= 1, 1, 0)
+
+        return Dstate
+
+    def _compute_disturbance_dynamics(self, time, disturb):
+
+        Ddisturb = utilities.rc.zeros(self.dim_disturb)
+
+        return utilities.rc.array(Ddisturb)
+
+    def compute_supports_geometry(self, xi, theta):
+        A = utilities.rc.zeros((2, 2), prototype=xi)
+        xi_2 = utilities.rc.zeros(2, prototype=xi)
+        xi_3 = utilities.rc.zeros(2, prototype=xi)
+
+        A[0, 0] = utilities.rc.cos(theta)
+        A[0, 1] = -utilities.rc.sin(theta)
+        A[1, 0] = utilities.rc.sin(theta)
+        A[1, 1] = utilities.rc.cos(theta)
+
+        xi_2[0] = xi[0] - self.a
+        xi_2[1] = xi[1] - self.r
+        xi_3[0] = xi[0] + self.a
+        xi_3[1] = xi[1] - self.r
+
+        xi_2_d = xi_2 - xi
+        xi_3_d = xi_3 - xi
+
+        xi_2_d_rot = A @ xi_2_d
+        xi_3_d_rot = A @ xi_3_d
+        xi_2_new = xi + xi_2_d_rot
+        xi_3_new = xi + xi_3_d_rot
+        return xi_2_new, xi_3_new
+
+    def compute_reaction(self, r, r_support):
+        m, J, g = self.pars
+        lvl = r_support[1]
+        e = (r - r_support) / utilities.rc.sqrt(utilities.rc.norm_2(r - r_support))
+        reaction = utilities.rc.if_else(
+            lvl <= 0,
+            e
+            * utilities.rc.dot(e, m * g * utilities.rc.array([0, 1]))
+            * lvl
+            * self.sigma,
+            utilities.rc.array([0.0, 0.0]),
+        )
+        return -reaction
+
+    def out(self, observation, time=None, action=None):
+        state = observation
+
+        return state

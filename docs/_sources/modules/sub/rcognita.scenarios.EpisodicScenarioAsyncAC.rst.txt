@@ -18,7 +18,7 @@ rcognita.scenarios.EpisodicScenarioAsyncAC
       ~EpisodicScenarioAsyncAC.get_mean_REINFORCE_gradient
       ~EpisodicScenarioAsyncAC.iteration_update
       ~EpisodicScenarioAsyncAC.memorize
-      ~EpisodicScenarioAsyncAC.perform_post_step_operations
+      ~EpisodicScenarioAsyncAC.post_step
       ~EpisodicScenarioAsyncAC.plot_critic
       ~EpisodicScenarioAsyncAC.reload_pipeline
       ~EpisodicScenarioAsyncAC.reset_episode

@@ -1,6 +1,5 @@
 defaults:
   - observation
-  - safe_controller: motion_primitive
 
 _target_: rcognita.critics.CriticCALF
 
@@ -12,3 +11,4 @@ penalty_param: 0
 is_predictive: true
 
 predictor: ~ controller.actor.predictor
+safe_controller: ~ controller.actor.safe_controller

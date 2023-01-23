@@ -16,7 +16,7 @@ rcognita.scenarios.EpisodicScenario
       ~EpisodicScenario.__init__
       ~EpisodicScenario.iteration_update
       ~EpisodicScenario.memorize
-      ~EpisodicScenario.perform_post_step_operations
+      ~EpisodicScenario.post_step
       ~EpisodicScenario.reload_pipeline
       ~EpisodicScenario.reset_episode
       ~EpisodicScenario.reset_iteration

@@ -7,6 +7,17 @@ For instance, a running objective can be used commonly by a generic optimal cont
 from abc import ABC, abstractmethod
 
 
+def inject_observation_target(observation_target):
+    def decorator(objective):
+        def wrapper(self, observation, action):
+            observation -= observation_target
+            return objective(self, observation, action)
+
+        return wrapper
+
+    return decorator
+
+
 class Objective(ABC):
     def __init__(self):
         pass
@@ -43,6 +54,10 @@ class RunningObjective(Objective):
         :rtype: float
         """
 
-        running_objective = self.model(observation, action)
+        if hasattr(self, "observation_target"):
+            observation_new = observation - self.observation_target
+            running_objective = self.model(observation_new, action)
+        else:
+            running_objective = self.model(observation, action)
 
         return running_objective

@@ -18,7 +18,7 @@ rcognita.scenarios.EpisodicScenarioREINFORCE
       ~EpisodicScenarioREINFORCE.get_mean_REINFORCE_gradient
       ~EpisodicScenarioREINFORCE.iteration_update
       ~EpisodicScenarioREINFORCE.memorize
-      ~EpisodicScenarioREINFORCE.perform_post_step_operations
+      ~EpisodicScenarioREINFORCE.post_step
       ~EpisodicScenarioREINFORCE.plot_critic
       ~EpisodicScenarioREINFORCE.reload_pipeline
       ~EpisodicScenarioREINFORCE.reset_episode

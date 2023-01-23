@@ -12,7 +12,7 @@ disturb_init: = None
 time_start: 0
 time_final: 10
 sampling_time: $ controller.sampling_time
-max_step: = ${controller.sampling_time} / 10.
+max_step: = ${controller.sampling_time} / 2.
 first_step: 1.0E-6
 atol: 1.0E-5
 rtol: 1.0E-3
