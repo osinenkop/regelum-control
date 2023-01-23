@@ -36,7 +36,7 @@ repeat_num: 0
 
 
 
-observation_target%%: = []
+observation_target: = [0, 1, 0, 0, 0, 0]
 
 ### Solver
 
@@ -44,7 +44,7 @@ observation_target%%: = []
 @simulator.rtol: 1.0E-3
 
 @controller.actor.safe_controller.actor.predictor.prediction_horizon: 10
-@controller.actor.safe_controller.actor.predictor.pred_step_size_multiplier%%: 1
-@controller.actor.safe_controller.actor.predictor.n_steps: 8
+@controller.actor.safe_controller.actor.predictor.pred_step_size_multiplier%%: 8
+@controller.actor.safe_controller.actor.predictor.n_steps: 16
 
-# safe policy total objective: 147.6981
+# safe policy total objective: 94

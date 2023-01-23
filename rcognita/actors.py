@@ -477,6 +477,59 @@ class ActorMPC(Actor):
         return actor_objective
 
 
+class ActorMPCTerminal(Actor):
+    """
+    Model-predictive control (MPC) actor.
+    Optimizes the following actor objective:
+    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
+
+    Notation:
+
+    * :math:`y`: observation
+    * :math:`u`: action
+    * :math:`N_a`: prediction horizon
+    * :math:`gamma`: discount factor
+    * :math:`r`: running objective function
+    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    """
+
+    def objective(
+        self,
+        action_sequence,
+        observation,
+    ):
+        """
+        Calculates the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
+
+        :param action_sequence: sequence of actions to be evaluated in the objective function
+        :type action_sequence: numpy.ndarray
+        :param observation: current observation
+        :type observation: numpy.ndarray
+        :return: the actor objective for the given action sequence
+        :rtype: float
+        """
+        action_sequence_reshaped = rc.reshape(
+            action_sequence, [self.prediction_horizon + 1, self.dim_output]
+        ).T
+
+        observation_sequence = [observation]
+
+        observation_sequence_predicted = self.predictor.predict_sequence(
+            observation, action_sequence_reshaped
+        )
+
+        observation_sequence = rc.column_stack(
+            (observation, observation_sequence_predicted)
+        )
+        actor_objective = 0
+
+        actor_objective += self.running_objective(
+            observation_sequence[:, -1], action_sequence_reshaped[:, -1]
+        )
+        return actor_objective
+
+
 class ActorSQL(Actor):
     """
     Staked Q-learning (SQL) actor.

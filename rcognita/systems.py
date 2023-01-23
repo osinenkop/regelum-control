@@ -669,18 +669,18 @@ class LunarLander(System):
         F_l = action[0]
         F_t = action[1]
 
-        M_l = utilities.rc.cross(
-            utilities.rc.concatenate(
-                (left_support - state[:2], utilities.rc.array([0]))
-            ),
-            utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
-        )[2] * utilities.rc.if_else(left_support[1] < 0, 1, 0)
-        M_r = utilities.rc.cross(
-            utilities.rc.concatenate(
-                (right_support - state[:2], utilities.rc.array([0]))
-            ),
-            utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
-        )[2] * utilities.rc.if_else(right_support[1] < 0, 1, 0)
+        # M_l = utilities.rc.cross(
+        #     utilities.rc.concatenate(
+        #         (left_support - state[:2], utilities.rc.array([0]))
+        #     ),
+        #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
+        # )[2] * utilities.rc.if_else(left_support[1] < 0, 1, 0)
+        # M_r = utilities.rc.cross(
+        #     utilities.rc.concatenate(
+        #         (right_support - state[:2], utilities.rc.array([0]))
+        #     ),
+        #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
+        # )[2] * utilities.rc.if_else(right_support[1] < 0, 1, 0)
 
         Dstate[0] = x_dot
 
@@ -696,9 +696,10 @@ class LunarLander(System):
             1 / m * (F_l * utilities.rc.sin(theta) + F_t * utilities.rc.cos(theta)) - g
         )
 
-        Dstate[5] = (4 * F_l + M_l + M_r) / J
+        # Dstate[5] = (4 * F_l + M_l + M_r) / J
+        Dstate[5] = (4 * F_l) / J
 
-        Dstate = Dstate * utilities.rc.if_else(state[1] >= 1, 1, 0)
+        # Dstate = Dstate * utilities.rc.if_else(state[1] >= 1, 1, 0)
 
         return Dstate
 
