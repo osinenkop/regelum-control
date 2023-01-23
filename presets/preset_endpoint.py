@@ -13,6 +13,9 @@ from rcognita.visualization.vis_3wrobot import (
     Animator3WRobotNI,
     Animator3WRobot,
 )
+from rcognita.visualization.vis_lunar_lander import (
+    AnimatorLunarLander,
+)
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
 from rcognita.callbacks import ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun
@@ -39,11 +42,13 @@ for i, arg in enumerate(sys.argv):
 def launch(scenario_config):
     scenario = ~scenario_config
     outcome = scenario.run()
+
+    if scenario.is_playback:
+        animator = AnimatorLunarLander(scenario)
+        animator.playback()
+        plt.show()
+
     return outcome
-    # if scenario.is_playback:
-    #     animator = AnimatorLunarLander(scenario)
-    #     animator.playback()
-    #     plt.show()
 
 
 def plot_multirun_total_objective(callbacks, preset_name):

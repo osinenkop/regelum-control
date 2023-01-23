@@ -663,8 +663,8 @@ class LunarLander(System):
         theta_dot = state[5]
 
         left_support, right_support = self.compute_supports_geometry(state[:2], theta)
-        l_reaction = self.compute_reaction(state[:2], left_support)
-        r_reaction = self.compute_reaction(state[:2], right_support)
+        # l_reaction = self.compute_reaction(state[:2], left_support)
+        # r_reaction = self.compute_reaction(state[:2], right_support)
 
         F_l = action[0]
         F_t = action[1]
@@ -690,18 +690,15 @@ class LunarLander(System):
 
         Dstate[3] = (
             1 / m * (F_l * utilities.rc.cos(theta) - F_t * utilities.rc.sin(theta))
-            + l_reaction[0]
-            + r_reaction[0]
         )
 
         Dstate[4] = (
-            1 / m * (F_l * utilities.rc.sin(theta) + F_t * utilities.rc.cos(theta))
-            - g
-            + l_reaction[1]
-            + r_reaction[1]
+            1 / m * (F_l * utilities.rc.sin(theta) + F_t * utilities.rc.cos(theta)) - g
         )
 
         Dstate[5] = (4 * F_l + M_l + M_r) / J
+
+        Dstate = Dstate * utilities.rc.if_else(state[1] >= 1, 1, 0)
 
         return Dstate
 

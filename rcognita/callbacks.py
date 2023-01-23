@@ -194,7 +194,7 @@ class ObjectiveCallbackMultirun(HistoricalCallback):
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
             self.log(
-                f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, outcome: {output[3]}"
+                f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%)"
             )
             key = (self.num_launch, obj.time)
             if key in self.cache.keys():

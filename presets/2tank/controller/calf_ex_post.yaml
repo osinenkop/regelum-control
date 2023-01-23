@@ -1,8 +1,10 @@
 defaults:
-  - actor: mpc
-  - critic: trivial
+  - actor: calf
+  - critic: calf
+  - override actor/optimizer: casadi
+  - override critic/optimizer: casadi
 
-_target_: rcognita.controllers.RLController
+_target_: rcognita.controllers.CALFControllerExPost
 
 ###---Constructor arguments---###
 
@@ -17,4 +19,16 @@ critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 action_bounds: = numpy.array([[[${.action_min%%}], [${.action_max%%}]]])
 
 critic_period_multiplier%%: 1
+
+###---Overrides---###
+
+critic:
+  is_predictive: false
+
+actor:
+  predictor:
+    prediction_horizon: 1
+
+
+
 

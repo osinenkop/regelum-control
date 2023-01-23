@@ -20,7 +20,7 @@ repeat_num: 0
 
 
 @simulator.ode_backend: SCIPY
-@controller.sampling_time: 1.0E-2
+@controller.sampling_time: 1.5E-1
 
 @simulator.time_start: 0.
 @simulator.time_final: 10.
@@ -31,12 +31,12 @@ repeat_num: 0
 @controller.F_t_max%%: 300.
 
 
-@running_objective.model.R1_diag%%: = [3, 3, 3, 5, 5, 5, 0, 0]
+@running_objective.model.R1_diag%%: = [5, 3, 3, 5, 5, 5, 0, 0]
 @running_objective.model.R2_diag%%: = [3, 3, 3, 5, 5, 5, 0, 0]
 
 
 
-observation_target%%: = []
+observation_target%%: = [0, 1, 0, 0, 0, 0]
 
 ### Solver
 
@@ -44,8 +44,7 @@ observation_target%%: = []
 @simulator.rtol: 1.0E-3
 
 
-@controller.actor.predictor.prediction_horizon: 5
 
-@controller.actor.predictor.prediction_horizon: 4
-@controller.actor.predictor.pred_step_size_multiplier%%: 12
-@controller.actor.predictor.n_steps: 6
+@controller.actor.predictor.prediction_horizon: 10
+@controller.actor.predictor.pred_step_size_multiplier%%: 1
+@controller.actor.predictor.n_steps: 8

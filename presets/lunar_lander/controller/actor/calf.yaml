@@ -2,7 +2,7 @@ defaults:
   - model: weight_container
   - optimizer: casadi
   - predictor: rk_casadi
-  - safe_controller: pid
+  - safe_controller: mpc_safe
 
 _target_: rcognita.actors.ActorCALF
 
@@ -13,10 +13,13 @@ running_objective: $ running_objective
 actor_constraints_on: true
 penalty_param: 0
 actor_regularization_param: 0
-prediction_horizon: $ controller.actor.predictor.prediction_horizon
+prediction_horizon: 1
 dim_output: $ simulator.system.dim_input
 dim_input: $ simulator.system.dim_output
 discount_factor: 1.
 action_bounds: $ controller.action_bounds
 action_init: $ action_init
 critic: ~ controller.critic
+
+predictor:
+  prediction_horizon: 1

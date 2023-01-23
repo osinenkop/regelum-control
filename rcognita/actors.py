@@ -469,7 +469,6 @@ class ActorMPC(Actor):
         observation_sequence = rc.column_stack(
             (observation, observation_sequence_predicted)
         )
-        print(self.prediction_horizon + 1)
         actor_objective = 0
         for k in range(self.prediction_horizon + 1):
             actor_objective += self.discount_factor**k * self.running_objective(

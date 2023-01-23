@@ -7,16 +7,16 @@ _target_: rcognita.controllers.RLController
 ###---Constructor arguments---###
 
 time_start: $ simulator.time_start
-sampling_time: 1.0E-2
+sampling_time: 1.0E-1
 is_fixed_critic_weights: false
 
-v_min%%: -25.
-v_max%%: 25.
-omega_min%%: -5.
-omega_max%%: 5.
+F_l_min%%: -300.
+F_l_max%%: 300.
+F_t_min%%: -300.
+F_t_max%%: 300.
 
 critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
-action_bounds: = numpy.array([[${.v_min%%}, ${.v_max%%}], [${.omega_min%%}, ${.omega_max%%}]])
+action_bounds: = numpy.array([[${.F_l_min%%}, ${.F_l_max%%}], [${.F_t_min%%}, ${.F_t_max%%}]])
 
 critic_period_multiplier%%: 1
 
