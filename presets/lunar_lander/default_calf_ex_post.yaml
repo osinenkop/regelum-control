@@ -46,3 +46,5 @@ observation_target%%: = []
 @controller.actor.safe_controller.actor.predictor.prediction_horizon: 10
 @controller.actor.safe_controller.actor.predictor.pred_step_size_multiplier%%: 1
 @controller.actor.safe_controller.actor.predictor.n_steps: 8
+
+# safe policy total objective: 147.6981
