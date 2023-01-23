@@ -104,7 +104,7 @@ class RLController(Controller):
         self.critic_period = critic_period
         self.weights_difference_norms = []
 
-    def reset(self, time_start):
+    def reset(self):
         """
         Resets agent for use in multi-episode simulation.
         Only internal clock and current actions are reset.
@@ -348,7 +348,7 @@ class Controller3WRobotDisassembledCLF:
                 opt_method="ipopt", opt_options=casadi_opt_options
             )
 
-    def reset(self, time_start):
+    def reset(self):
 
         """
         Resets controller for use in multi-episode simulation.
@@ -709,6 +709,7 @@ class Controller3WRobotPID:
 
         self.controller_clock = time_start
         self.sampling_time = sampling_time
+        self.time_start = time_start
 
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.Ls = []
@@ -878,9 +879,9 @@ class Controller3WRobotPID:
         self.PID_angle_origin.reset()
         self.PID_angle_origin.reset_buffer()
 
-    def reset(self, time_start=0):
-
-        self.controller_clock = time_start
+    def reset(self):
+        self.clock.reset()
+        self.controller_clock = self.time_start
 
     def compute_LF(self, observation):
         pass
@@ -899,6 +900,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.times = []
         self.action_old = rc.zeros(2)
         self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.time_start = time_start
 
     def compute_action(self, observation, time=0):
         x = observation[0]
@@ -962,8 +964,9 @@ class Controller3WRobotNIMotionPrimitive:
         else:
             return self.action_old
 
-    def reset(self, time_start=0):
-        self.controller_clock = time_start
+    def reset(self):
+        self.clock.reset()
+        self.controller_clock = self.time_start
 
     def compute_LF(self, observation):
         pass
@@ -982,19 +985,20 @@ class Controller3WRobotNIDisassembledCLF:
         self.controller_gain = controller_gain
         self.action_bounds = action_bounds
         self.controller_clock = time_start
+        self.time_start = time_start
         self.sampling_time = sampling_time
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
-    def reset(self, time_start):
+    def reset(self):
 
         """
         Resets controller for use in multi-episode simulation.
 
         """
-        self.controller_clock = time_start
+        self.controller_clock = self.time_start
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI):
@@ -1251,7 +1255,10 @@ class NominalControllerInvertedPendulum:
 
     def compute_action(self, observation, time=0):
         self.observation = observation
-        return np.array([-((observation[0]) + (observation[2])) * self.controller_gain])
+        return np.array([-((observation[0]) + (observation[1])) * self.controller_gain])
+
+    def reset(self):
+        self.clock.reset()
 
 
 class Controller3WRobotNIMotionPrimitive:
@@ -1267,6 +1274,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.times = []
         self.action_old = rc.zeros(2)
         self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.time_start = time_start
 
     def compute_action(self, observation, time=0):
         x = observation[0]
@@ -1330,8 +1338,8 @@ class Controller3WRobotNIMotionPrimitive:
         else:
             return self.action_old
 
-    def reset(self, time_start=0):
-        self.controller_clock = time_start
+    def reset(self):
+        self.controller_clock = self.time_start
         self.Ls = []
         self.times = []
 

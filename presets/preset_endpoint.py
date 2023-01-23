@@ -23,8 +23,12 @@ import pickle
 
 np.random.seed(42)
 
-
-PRESET = "inv_pendulum"
+PRESET = None
+for i, arg in enumerate(sys.argv):
+    if "--preset" in arg:
+        PRESET = arg.split("=")[-1]
+        sys.argv.pop(i)
+        break
 
 
 @r.main(
@@ -33,9 +37,9 @@ PRESET = "inv_pendulum"
     callbacks=[ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun],
 )
 def launch(scenario_config):
-    print(os.getcwd())
     scenario = ~scenario_config
-    scenario.run()
+    outcome = scenario.run()
+    return outcome
     # if scenario.is_playback:
     #     animator = AnimatorLunarLander(scenario)
     #     animator.playback()
@@ -45,11 +49,12 @@ def launch(scenario_config):
 if __name__ == "__main__":
     job_results = launch()
     # plot_multirun.plot_objectives(job_results, PRESET)
+    try:
+        with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
+            df = pickle.load(f)
 
-    with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
-        df = pickle.load(f)
-
-    callbacks = df.TotalObjectiveCallbackMultirun
-    plt.plot(callbacks[0].data)
-    plt.show()
-    # print(callbacks[0].data)
+        callbacks = df.TotalObjectiveCallbackMultirun
+        plt.plot(callbacks[0].data)
+        plt.show()
+    except:
+        pass

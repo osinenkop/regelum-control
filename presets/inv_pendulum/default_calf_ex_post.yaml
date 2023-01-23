@@ -40,4 +40,8 @@ observation_target%%: = []
 
 @running_objective.model.R1_diag%%: = [7., 3., 0.]
 
-@controller.controller_gain: 15
+@controller.actor.safe_controller.controller_gain: 15
+@controller.critic.safe_decay_rate: 5000
+@controller.critic.critic_regularization_param: 100
+
+# default nominal total obj is 1356.29

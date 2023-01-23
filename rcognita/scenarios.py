@@ -225,7 +225,8 @@ class EpisodicScenario(OnlineScenario):
         self.system.reset()
         self.actor.reset()
         self.critic.reset()
-        self.controller.reset(time_start=0)
+        if hasattr(self.controller, "reset"):
+            self.controller.reset()
         self.simulator.reset()
         self.observation = self.system.out(self.state_init, time=0)
         self.sim_status = 0
@@ -242,10 +243,11 @@ class EpisodicScenario(OnlineScenario):
                     self.sim_status = self.step()
 
                 self.reload_pipeline()
-
+        outcome = self.outcome
         self.reset_episode()
         self.reset_iteration()
         self.reset_simulation()
+        return outcome
 
     def reset_iteration(self):
         self.episode_counter = 0

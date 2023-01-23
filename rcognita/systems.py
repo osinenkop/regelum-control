@@ -325,7 +325,7 @@ class SysInvertedPendulum(System):
         delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
-        return utilities.rc.array([state[0], self.integral_alpha, state[1]])
+        return state  # utilities.rc.array([state[0], self.integral_alpha, state[1]])
 
     def reset(self):
         self.time_old = 0

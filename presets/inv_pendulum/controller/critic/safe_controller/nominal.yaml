@@ -1,0 +1,12 @@
+_target_: rcognita.controllers.NominalControllerInvertedPendulum
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: 1.0E-2
+
+action_bounds: = numpy.array([[${.M_min%%}, ${.M_max%%}]])
+controller_gain: 20
+
+M_min%%: -40.
+M_max%%: 40.

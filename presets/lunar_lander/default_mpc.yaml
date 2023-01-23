@@ -25,10 +25,10 @@ repeat_num: 0
 @simulator.time_start: 0.
 @simulator.time_final: 10.
 
-@controller.F_l_min%%: -30.
-@controller.F_l_max%%: 30.
-@controller.F_t_min%%: -30.
-@controller.F_t_max%%: 30.
+@controller.F_l_min%%: -300.
+@controller.F_l_max%%: 300.
+@controller.F_t_min%%: -300.
+@controller.F_t_max%%: 300.
 
 
 @running_objective.model.R1_diag%%: = [3, 3, 3, 5, 5, 5, 0, 0]
@@ -45,3 +45,7 @@ observation_target%%: = []
 
 
 @controller.actor.predictor.prediction_horizon: 5
+
+@controller.actor.predictor.prediction_horizon: 4
+@controller.actor.predictor.pred_step_size_multiplier%%: 12
+@controller.actor.predictor.n_steps: 6
