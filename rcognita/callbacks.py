@@ -21,6 +21,7 @@ import rcognita
 import pandas as pd
 import time
 
+
 def apply_callbacks(method):
     """
     Decorator that applies a list of callbacks to a given method of an object.
@@ -93,7 +94,6 @@ class Callback(ABC):
             return True
         else:
             return False
-
 
     @abstractmethod
     def perform(self, obj, method, output):
@@ -237,4 +237,4 @@ class TotalObjectiveCallbackMultirun(HistoricalCallback):
 
     @property
     def data(self):
-        return self.cache.iloc[:-1]
+        return self.cache.iloc[:, -1]

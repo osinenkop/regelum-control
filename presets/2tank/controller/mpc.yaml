@@ -11,7 +11,7 @@ sampling_time: 1.0E-2
 is_fixed_critic_weights: false
 
 action_min%%: 0.
-action_max%%: 1
+action_max%%: 1.
 
 critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 action_bounds: = numpy.array([[[${.action_min%%}], [${.action_max%%}]]])

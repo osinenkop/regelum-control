@@ -144,11 +144,15 @@ class ModelQuadLin(Model):
     model_name = "quad-lin"
 
     def __init__(
-        self, dim_input, weight_min=1e-6, weight_max=1e2, force_positive_def=True
+        self,
+        dim_input,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
+        force_positive_def=True,
     ):
         self.dim_weights = int((dim_input + 1) * dim_input / 2 + dim_input)
-        self.weight_min = weight_min * rc.ones(self.dim_weights)
-        self.weight_max = weight_max * rc.ones(self.dim_weights)
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
         self.weights_init = (self.weight_min + self.weight_max) / 20.0
         self.weights = self.weights_init
         self.force_positive_def = force_positive_def

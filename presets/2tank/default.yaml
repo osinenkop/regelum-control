@@ -27,14 +27,14 @@ speedup: 25
 
 
 
-@running_objective.model.R1_diag%%: = [1., 10., 1.]
-@running_objective.model.R2_diag%%: = [1., 10., 1.]
+@running_objective.model.R1_diag%%: = [10., 10., 1.]
+@running_objective.model.R2_diag%%: = [10., 10., 1.]
 
 ### Actor and Critic
 
 
 
-observation_target%%: = numpy.array([0.5, 0.5])
+observation_target: = numpy.array([0.5, 0.5])
 
 ### Solver
 

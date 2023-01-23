@@ -207,7 +207,7 @@ class Critic(ABC):
         else:
             not_violated = [cond(weights) <= atol for cond in constraint_functions]
             constraints_not_violated = all(not_violated)
-            print(not_violated)
+            # print(not_violated)
 
         if constraints_not_violated:
             return "accepted"
@@ -589,7 +589,7 @@ class CriticCALF(CriticOfObservation):
         self.current_action = action
 
         if self.is_dynamic_decay_rate:
-            print(self.safe_decay_rate)
+            # print(self.safe_decay_rate)
             self.safe_decay_rate = 1e2 * rc.norm_2(observation)
 
     def CALF_decay_constraint_no_prediction(self, weights):

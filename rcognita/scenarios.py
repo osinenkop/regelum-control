@@ -78,6 +78,7 @@ class OnlineScenario(Scenario):
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
         time_start: float = 0.0,
+        observation_target=[],
     ):
 
         self.simulator = simulator
@@ -99,7 +100,16 @@ class OnlineScenario(Scenario):
             if running_objective is None
             else running_objective
         )
-
+        if observation_target != []:
+            self.running_objective.observation_target = rc.array(observation_target)
+            if hasattr(self.actor, "running_objective"):
+                self.actor.running_objective.observation_target = rc.array(
+                    observation_target
+                )
+            if hasattr(self.critic, "running_objective"):
+                self.critic.running_objective.observation_target = rc.array(
+                    observation_target
+                )
         self.time_start = time_start
         self.time_final = self.simulator.time_final
         self.no_print = no_print

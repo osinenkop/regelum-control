@@ -291,7 +291,7 @@ class Actor:
         else:
             not_violated = [cond(weights) <= atol for cond in constraint_functions]
             constraints_not_violated = all(not_violated)
-            print(not_violated)
+            # print(not_violated)
 
         if constraints_not_violated:
             return "accepted"
@@ -469,7 +469,7 @@ class ActorMPC(Actor):
         observation_sequence = rc.column_stack(
             (observation, observation_sequence_predicted)
         )
-
+        print(self.prediction_horizon + 1)
         actor_objective = 0
         for k in range(self.prediction_horizon + 1):
             actor_objective += self.discount_factor**k * self.running_objective(

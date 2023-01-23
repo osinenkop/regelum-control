@@ -46,15 +46,26 @@ def launch(scenario_config):
     #     plt.show()
 
 
+def plot_multirun_total_objective(callbacks, preset_name):
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.subplots()
+    ax.set_xlabel("episode")
+    ax.set_ylabel("Total objective")
+    df = pd.DataFrame()
+    for callback in callbacks:
+        df = pd.concat([df, callback.data], axis=1)
+
+    plt.plot(df)
+    plt.grid()
+    plt.title(f"{preset_name}")
+    plt.show()
+
+
 if __name__ == "__main__":
     job_results = launch()
     # plot_multirun.plot_objectives(job_results, PRESET)
-    try:
-        with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
-            df = pickle.load(f)
+    with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
+        df = pickle.load(f)
 
-        callbacks = df.TotalObjectiveCallbackMultirun
-        plt.plot(callbacks[0].data)
-        plt.show()
-    except:
-        pass
+    callbacks = df.TotalObjectiveCallbackMultirun
+    plot_multirun_total_objective(callbacks, PRESET)
