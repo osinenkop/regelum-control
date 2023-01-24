@@ -1,4 +1,18 @@
 defaults:
-  - action_observation
+  - model: quad_no_mix
+  - optimizer: scipy
 
-dim_critic_model_input%%: $ simulator.system.dim_output
+_target_: rcognita.critics.CriticOfObservation
+
+###---Constructor arguments---###
+
+system_dim_input: $ simulator.system.dim_input
+system_dim_output: $ simulator.system.dim_output
+data_buffer_size: 2
+running_objective: $ running_objective
+discount_factor: $ controller.actor.discount_factor
+sampling_time: $ controller.sampling_time
+critic_regularization_param: 0
+
+dim_critic_model_input%%: = ${.system_dim_output}
+
