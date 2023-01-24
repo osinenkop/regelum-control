@@ -43,3 +43,5 @@ observation_target%%: = []
 
 @simulator.atol: 1.0E-5
 @simulator.rtol: 1.0E-3
+
+@controller.actor.predictor.prediction_horizon: 0

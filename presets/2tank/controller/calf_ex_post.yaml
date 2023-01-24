@@ -27,7 +27,7 @@ critic:
 
 actor:
   predictor:
-    prediction_horizon: 1
+    prediction_horizon: 0
 
 
 

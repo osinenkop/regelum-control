@@ -27,7 +27,3 @@ critic_period_multiplier%%: 1
 
 ###---Overrides---###
 
-actor:
-  predictor:
-    prediction_horizon: 0
-

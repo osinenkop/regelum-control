@@ -11,8 +11,8 @@ is_log: false
 is_playback: true
 state_init: = numpy.array([numpy.pi, 0.0])
 action_init: = numpy.ones(${simulator.system.dim_input})
-N_episodes: 7
-N_iterations: 20
+N_episodes: 1
+N_iterations: 1
 speedup: 25
 
 
@@ -38,6 +38,6 @@ observation_target%%: = []
 
 
 
-@running_objective.model.R1_diag%%: = [7., 3., 0.]
+@running_objective.model.R1_diag%%: = [7., 0., 3.]
 
-@controller.controller_gain: 15
+@controller.controller_gain: 20

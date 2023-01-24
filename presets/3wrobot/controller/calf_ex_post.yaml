@@ -27,10 +27,6 @@ critic_period_multiplier%%: 1
 critic:
   is_predictive: false
 
-actor:
-  predictor:
-    prediction_horizon: 1
-
 
 
 
