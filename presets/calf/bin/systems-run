@@ -1,0 +1,4 @@
+#!/beegfs/home/bolychev.anton/CALF/rcognita/presets/calf/bin/python3
+
+import systems.parse
+systems.parse.main()
