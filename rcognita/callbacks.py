@@ -19,7 +19,8 @@ from abc import ABC, abstractmethod
 
 import rcognita
 import pandas as pd
-import time
+import time, datetime
+import dill, os
 
 
 def apply_callbacks(method):
@@ -84,6 +85,7 @@ class Callback(ABC):
         :type log_level: str
         """
         self.log = logger.__getattribute__(log_level)
+        self.exception = logger.exception
         self.last_trigger = 0.0
 
     def ready(self):
@@ -107,7 +109,11 @@ class Callback(ABC):
             if ABC not in base.__bases__ and base not in self.peformed_bases:
                 base(self, obj, method, output)
                 self.performed_bases.append(base)
-        self.perform(obj, method, output)
+        try:
+            self.perform(obj, method, output)
+        except Exception as e:
+            self.log(f"Callback {self.__class__.__name__} failed.")
+            self.exception(e)
 
 
 class HistoricalCallback(Callback, ABC):
@@ -239,3 +245,48 @@ class TotalObjectiveCallbackMultirun(HistoricalCallback):
     @property
     def data(self):
         return self.cache.iloc[:, -1]
+
+
+class SaveProgressCallback(Callback):
+    def perform(self, obj, method, output):
+        if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
+            start = time.time()
+            episode = obj.episode_counter
+            filename = f"scenario_at_episode_{episode}.dill"
+            prev_filename = f"scenario_at_episode_{episode - 1}.dill"
+            with open(filename, "wb") as f:
+                dill.dump(obj, f)
+            if episode > 1:
+                os.remove(os.path.abspath(prev_filename))
+            self.log(
+                f"Saved the scenario to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
+            )
+
+
+class TimeRemainingCallback(Callback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.time_episode = []
+
+    def perform(self, obj, method, output):
+        if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
+            self.time_episode.append(time.time())
+            total_episodes = obj.N_episodes
+            current_episode = obj.episode_counter
+            if len(self.time_episode) > 3:
+                average_interval = 0
+                previous = self.time_episode[-1]
+                for current in self.time_episode[-2:-12:-1]:
+                    average_interval -= current - previous
+                    previous = current
+                average_interval /= len(self.time_episode[-2:-12:-1])
+                td = datetime.timedelta(
+                    seconds=int(average_interval * (total_episodes - current_episode))
+                )
+                remaining = f" Estimated remaining time: {str(td)}."
+            else:
+                remaining = ""
+            self.log(
+                f"Completed episode {current_episode}/{total_episodes} ({100*current_episode/total_episodes:.1f}%)."
+                + remaining
+            )

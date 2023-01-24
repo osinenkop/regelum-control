@@ -187,7 +187,6 @@ class Simulator:
             ode_backend=self.ode_backend,
         )
 
-    @simulation_progress(bar_length=40)
     def do_sim_step(self):
         """
         Do one simulation step and update current simulation data (time, system state and output).

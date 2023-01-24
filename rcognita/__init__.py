@@ -284,6 +284,7 @@ class main:
     logger = None
     assignments = []
     weak_assignments = []
+    builtin_callbacks = [SaveProgressCallback, TimeRemainingCallback]
 
     @classmethod
     def post_weak_assignment(cls, key, value):
@@ -313,7 +314,7 @@ class main:
         self,
         *args,
         logger=logging.getLogger("rcognita"),
-        callbacks=[StateCallback, ObjectiveCallback],
+        callbacks=[],
         **kwargs,
     ):
         """
@@ -329,6 +330,7 @@ class main:
         :type logger: Logger, optional
 
         """
+        callbacks = callbacks + self.builtin_callbacks
         sys.argv.insert(1, "--multirun")
         sys.argv.insert(-1, "hydra.job.chdir=True")
         if "--disable-logging" in sys.argv:
