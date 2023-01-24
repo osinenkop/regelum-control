@@ -248,15 +248,19 @@ class TotalObjectiveCallbackMultirun(HistoricalCallback):
 
 
 class SaveProgressCallback(Callback):
+    once_in = 2
+
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
             start = time.time()
             episode = obj.episode_counter
+            if episode % self.once_in:
+                return
             filename = f"scenario_at_episode_{episode}.dill"
-            prev_filename = f"scenario_at_episode_{episode - 1}.dill"
+            prev_filename = f"scenario_at_episode_{episode - self.once_in}.dill"
             with open(filename, "wb") as f:
                 dill.dump(obj, f)
-            if episode > 1:
+            if episode > self.once_in:
                 os.remove(os.path.abspath(prev_filename))
             self.log(
                 f"Saved the scenario to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
