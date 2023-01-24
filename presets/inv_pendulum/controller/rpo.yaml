@@ -1,0 +1,21 @@
+defaults:
+  - actor: rpo
+  - critic: observation
+  - override actor/optimizer: casadi
+
+_target_: rcognita.controllers.RLController
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: 1.0E-2
+is_fixed_critic_weights: false
+
+M_min%%: -30.
+M_max%%: 30.
+
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+action_bounds: = numpy.array([[${.M_min%%}, ${.M_max%%}]])
+
+critic_period_multiplier%%: 1
+

@@ -190,6 +190,7 @@ class ObjectiveCallbackMultirun(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
+        self.cooldown = 2
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
