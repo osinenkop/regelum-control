@@ -64,6 +64,8 @@ class Actor:
         running_objective=None,
         model: Model = None,
         discount_factor=1,
+        epsilon_greedy=False,
+        epsilon_greedy_parameter=0.0,
     ):
         """
         Initialize an actor.
@@ -101,6 +103,8 @@ class Actor:
         self.model = model
         self.predictor = predictor
         self.discount_factor = discount_factor
+        self.epsilon_greedy = epsilon_greedy
+        self.epsilon_greedy_parameter = epsilon_greedy_parameter
 
         if isinstance(self.action_bounds, (list, np.ndarray)):
             if len(self.action_bounds) > 0:
@@ -129,7 +133,9 @@ class Actor:
         self.action_sequence_max = rc.rep_mat(
             self.action_max, 1, prediction_horizon + 1
         )
-        self.action_bounds = [self.action_sequence_min, self.action_sequence_max]
+        self.action_bounds = np.array(
+            [self.action_sequence_min, self.action_sequence_max]
+        )
         self.action = self.action_old
         self.intrinsic_constraints = []
 
@@ -225,10 +231,30 @@ class Actor:
         if observation is None:
             observation = self.observation
 
-        try:
-            self.action = self.model(observation).detach().numpy()
-        except AttributeError:
-            self.action = self.model(observation)
+        if self.epsilon_greedy:
+            is_exploration = bool(
+                np.random.choice(
+                    2,
+                    1,
+                    p=[
+                        1 - self.epsilon_greedy_parameter,
+                        self.epsilon_greedy_parameter,
+                    ],
+                )
+            )
+            print(f"Exploration: {is_exploration}")
+            if not is_exploration:
+                try:
+                    self.action = self.model(observation).detach().numpy()
+                except AttributeError:
+                    self.action = self.model(observation)
+            else:
+                self.action = np.array(
+                    [
+                        np.random.uniform(self.action_min[k], self.action_max[k])
+                        for k in range(len(self.action))
+                    ]
+                )
 
     def update_weights(self, weights=None):
         """
@@ -312,6 +338,7 @@ class Actor:
         :returns: String indicating whether the optimization process was accepted or rejected.
         :rtype: str
         """
+
         final_count_of_actions = self.prediction_horizon + 1
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
 
