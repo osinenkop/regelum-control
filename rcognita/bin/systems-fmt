@@ -1,0 +1,4 @@
+#!/home/gor/JoraProgramming/CALF_research/rcognita/rcognita/bin/python3
+
+import systems.format
+systems.format.main()
