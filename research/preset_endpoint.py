@@ -85,4 +85,4 @@ if __name__ == "__main__":
     plot_multirun_total_objective(callbacks_objective, EXPERIMENT)
     callbacks_calf = df.CalfCallback
     for i, callback in enumerate(callbacks_calf):
-        callback.plot_data(tag=i, is_plot=False)
+        callback.plot_data()

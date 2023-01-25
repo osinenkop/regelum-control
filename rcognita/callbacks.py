@@ -196,7 +196,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = 2
+        self.cooldown = None
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
@@ -319,17 +319,13 @@ class CalfCallback(HistoricalCallback):
             )
             self.log(f"current CALF value:{current_CALF}")
             time = obj.clock.time
-            if hasattr(self, "time_final"):
-                time = time + self.time_final
+            current_weights = obj.critic.model.weights
             is_calf = (
                 obj.critic.weights_acceptance_status == "accepted"
                 and obj.actor.weights_acceptance_status == "accepted"
             )
             if not self.cache.empty:
                 CALF_prev = self.cache["J_hat"].iloc[-1]
-                if time < self.cache.index[-1]:
-                    self.time_final = self.cache.index[-1]
-                    time = time + self.time_final
             else:
                 CALF_prev = current_CALF
 
@@ -350,7 +346,7 @@ class CalfCallback(HistoricalCallback):
     def data(self):
         return self.cache
 
-    def plot_data(self, tag=None, is_plot=True):
+    def plot_data(self):
         import matplotlib.pyplot as plt
 
         fig = plt.figure(figsize=(10, 10))
@@ -362,9 +358,8 @@ class CalfCallback(HistoricalCallback):
 
         plt.grid()
         plt.legend()
-        plt.savefig(f"./CALF_{tag}.png", format="png")
-        if is_plot:
-            try:
-                plt.show()
-            except:
-                pass
+        plt.savefig("./CALF.png", format="png")
+        try:
+            plt.show()
+        except:
+            pass
