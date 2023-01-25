@@ -1,6 +1,6 @@
 defaults:
-  - actor: calf
-  - critic: calf
+  - actor: calf_${simulator.system}
+  - critic: calf_${simulator.system}
   - override actor/optimizer: casadi
   - override critic/optimizer: casadi
 
