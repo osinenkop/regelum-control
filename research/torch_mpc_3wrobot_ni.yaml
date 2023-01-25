@@ -1,0 +1,70 @@
+#############################
+###---A "defaults" list---###
+#############################
+
+defaults:
+  - simulator: casadi
+  - running_objective: running_objective
+  - controller: mpc
+  - override controller/actor/optimizer: torch_projective
+  - override controller/actor/model: weight_container_${controller/actor/optimizer}
+  - override simulator/system: 3wrobot_ni
+  - override controller/actor/predictor: euler_multistep
+
+#################################
+###---Constructor arguments---###
+#################################
+
+_target_: rcognita.scenarios.EpisodicScenarioMultirun
+
+no_print: false
+is_log: false
+is_playback: true
+state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4.])
+action_init: = numpy.ones(2)
+N_episodes: 1
+N_iterations: 1
+speedup: 75
+observation_target: = []
+
+#############################################################
+###---A set of parameters forwarded into a global scope---###
+#############################################################
+
+######################
+###---controller---###
+######################
+
+@controller.sampling_time: 1.0E-2
+@controller.action_bounds: = numpy.array([[${.v_min%%}, ${.v_max%%}], [${.omega_min%%}, ${.omega_max%%}]])
+v_min%%: -25.
+v_max%%: 25.
+omega_min%%: -5.
+omega_max%%: 5.
+
+#####################
+###---Simulator---###
+#####################
+
+@simulator.time_start: 0.
+@simulator.time_final: 10.
+@simulator.atol: 1.0E-5
+@simulator.rtol: 1.0E-3
+
+#############################
+###---running objective---###
+#############################
+
+@running_objective.model.R1_diag%%: = [10, 10, 1, 0, 0]
+
+##############
+###---AC---###
+##############
+
+@controller.actor.predictor.prediction_horizon: 5
+@controller.actor.predictor.n_steps: 4
+@controller.actor.predictor.pred_step_size_multiplier%%: 1
+
+@controller.actor.optimizer.opt_options.lr: 0.05
+@controller.actor.optimizer.iterations: 50
+

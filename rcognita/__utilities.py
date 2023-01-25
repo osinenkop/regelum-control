@@ -317,6 +317,12 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def atleast_1d(self, dim, rc_type: RCType = NUMPY):
         return np.atleast_1d(dim)
 
+    def transpose(self, A, rc_type: RCType = NUMPY):
+        if rc_type == TORCH:
+            return A.mT if len(A.shape) > 1 else A.T
+        else:
+            return A.T
+
     def rep_mat(self, array, n, m, rc_type: RCType = NUMPY):
 
         if rc_type == NUMPY:

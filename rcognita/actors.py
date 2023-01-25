@@ -242,7 +242,6 @@ class Actor:
                     ],
                 )
             )
-            print(f"Exploration: {is_exploration}")
             if not is_exploration:
                 try:
                     self.action = self.model(observation).detach().numpy()
@@ -255,6 +254,11 @@ class Actor:
                         for k in range(len(self.action))
                     ]
                 )
+        else:
+            try:
+                self.action = self.model(observation).detach().numpy()
+            except AttributeError:
+                self.action = self.model(observation)
 
     def update_weights(self, weights=None):
         """
@@ -683,11 +687,7 @@ class ActorRQL(Actor):
             action_sequence_reshaped[:, -1], observation_sequence[:, -1]
         )
 
-        return (
-            actor_objective
-            if self.optimizer.engine != "Torch"
-            else actor_objective.detach()
-        )
+        return actor_objective
 
 
 class ActorRPO(Actor):

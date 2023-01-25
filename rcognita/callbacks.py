@@ -248,7 +248,7 @@ class TotalObjectiveCallbackMultirun(HistoricalCallback):
 
 
 class SaveProgressCallback(Callback):
-    once_in = 2
+    once_in = 1
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":

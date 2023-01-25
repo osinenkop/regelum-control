@@ -572,15 +572,18 @@ class ModelDQN(ModelNN):
         self,
         dim_observation,
         dim_action,
-        dim_hidden=20,
+        dim_hidden=40,
         weights=None,
-        force_positive_def=False,
+        force_positive_def=True,
     ):
         super().__init__()
 
         self.fc1 = nn.Linear(dim_observation + dim_action, dim_hidden)
         self.a1 = nn.ReLU()
-        self.fc2 = nn.Linear(dim_hidden, 1)
+        self.fc2 = nn.Linear(dim_hidden, dim_hidden)
+        self.a2 = nn.ReLU()
+        self.fc3 = nn.Linear(dim_hidden, 1)
+        self.force_positive_def = force_positive_def
 
         if weights is not None:
             self.load_state_dict(weights)
@@ -588,8 +591,8 @@ class ModelDQN(ModelNN):
         self.double()
         self.cache_weights()
         self.weights = self.parameters()
-        self.force_positive_def = force_positive_def
 
+    @force_positive_def
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
@@ -598,6 +601,8 @@ class ModelDQN(ModelNN):
         x = self.fc1(x)
         x = self.a1(x)
         x = self.fc2(x)
+        x = self.a2(x)
+        x = self.fc3(x)
 
         return torch.squeeze(x)
 
