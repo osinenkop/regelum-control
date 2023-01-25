@@ -300,8 +300,8 @@ def instantiate_node(
     partial: bool = False,
     path=None,
 ) -> Any:
-    if path in rcognita.objects_created:
-        return rcognita.objects_created[path]
+    if path in rcognita.main.objects_created:
+        return rcognita.main.objects_created[path]
     # Return None if config is None
     if node is None or (OmegaConf.is_config(node) and node._is_none()):
         return None
@@ -371,7 +371,7 @@ def instantiate_node(
 
             res = _call_target(_target_, partial, args, kwargs, full_key)
             if path:
-                rcognita.objects_created[path] = res
+                rcognita.main.objects_created[path] = res
             return res
         else:
             # If ALL or PARTIAL non structured or OBJECT non structured,

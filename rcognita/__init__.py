@@ -48,13 +48,8 @@ from . import __instantiate as inst
 
 mock = Mock()
 
-objects_created = None
-
 
 def __memorize_instance(resolver):
-    global objects_created
-    objects_created = {}
-
     def inner(
         key: str,
         default: Any = _DEFAULT_MARKER_,
@@ -65,10 +60,10 @@ def __memorize_instance(resolver):
         if default == _DEFAULT_MARKER_:
             default = key.strip()
         instance_name = str(default)
-        if instance_name in objects_created:
-            return objects_created[instance_name]
+        if instance_name in main.objects_created:
+            return main.objects_created[instance_name]
         else:
-            objects_created[instance_name] = obj
+            main.objects_created[instance_name] = obj
             return obj
 
     return inner
@@ -133,7 +128,7 @@ class ComplementedConfig:
         Call this if you made changes to your config dynamically and would like those change to take
         effect in forthcoming instantiations.
         """
-        objects_created.clear()
+        main.objects_created.clear()
 
     def __getattr__(self, item):
         cfg = object.__getattribute__(self, "_ComplementedConfig__hydra_config")
@@ -254,11 +249,11 @@ class ComplementedConfig:
             return inst.instantiate(self.__hydra_config, path=self.config_path)
         else:
             instance_name = self.config_path.strip()
-            if instance_name in objects_created:
-                return objects_created[instance_name]
+            if instance_name in self.objects_created:
+                return self.objects_created[instance_name]
             else:
                 res = inst.instantiate(self.__hydra_config, path=self.config_path)
-                objects_created[instance_name] = res
+                self.objects_created[instance_name] = res
                 return res
 
 
@@ -285,6 +280,7 @@ class main:
     assignments = []
     weak_assignments = []
     builtin_callbacks = [SaveProgressCallback, TimeRemainingCallback]
+    objects_created = {}
 
     @classmethod
     def post_weak_assignment(cls, key, value):
