@@ -8,7 +8,7 @@ defaults:
   - controller: calf
   - override controller/actor/optimizer: casadi
   - override controller/actor/model: weight_container_${controller/actor/optimizer}
-  - override controller/actor/predictor: euler_multistep
+  - override controller/actor/predictor: euler
 
 #################################
 ###---Constructor arguments---###
@@ -18,8 +18,8 @@ _target_: rcognita.scenarios.EpisodicScenarioMultirun
 
 no_print: false
 is_log: false
-is_playback: true
-state_init: = numpy.array([5., 5., 3. * numpy.pi / 4., 0., 0.])
+is_playback: false
+state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4., 10., 3.])
 action_init: = numpy.ones(2)
 N_episodes: 1
 N_iterations: 1
@@ -46,8 +46,8 @@ observation_target: = []
 #####################
 
 @simulator.time_start: 0.
-@simulator.time_final: 10.
-@simulator.atol: 1.0E-7
+@simulator.time_final: 10
+@simulator.atol: 1.0E-5
 @simulator.rtol: 1.0E-3
 
 #############################
@@ -61,3 +61,9 @@ observation_target: = []
 ##############
 
 @controller.actor.predictor.prediction_horizon: 0
+@controller.safe_only: false
+@controller.critic.safe_decay_rate: 1.0E+4
+@controller.critic.is_predictive: true
+
+# Nominal: 1235.11
+

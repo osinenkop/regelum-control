@@ -139,6 +139,15 @@ class RLController(Controller):
 
 
 class CALFControllerExPost(RLController):
+    def __init__(self, *args, safe_only=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        if safe_only:
+            self.compute_action = self.actor.safe_controller.compute_action
+            self.compute_action_sampled = (
+                self.actor.safe_controller.compute_action_sampled
+            )
+        self.safe_only = safe_only
+
     def compute_weights_displacement(self, agent):
         self.weights_difference_norm = rc.norm_2(
             self.critic.model.cache.weights - self.critic.optimized_weights

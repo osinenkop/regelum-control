@@ -28,7 +28,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
 
-np.random.seed(42)
 
 EXPERIMENT = None
 for i, arg in enumerate(sys.argv):
@@ -47,11 +46,12 @@ for i, arg in enumerate(sys.argv):
     ],
 )
 def launch(scenario_config):
+    np.random.seed(42)
     scenario = ~scenario_config
     outcome = scenario.run()
 
     if scenario.is_playback:
-        animator = AnimatorLunarLander(scenario)
+        animator = Animator3WRobot(scenario)
         animator.playback()
         plt.show()
 

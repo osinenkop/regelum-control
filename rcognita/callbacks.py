@@ -196,7 +196,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = 2
+        self.cooldown = None
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
@@ -256,8 +256,8 @@ class SaveProgressCallback(Callback):
             episode = obj.episode_counter
             if episode % self.once_in:
                 return
-            filename = f"callbacks_at_episode_{episode}.dill"
-            prev_filename = f"callbacks_at_episode_{episode - self.once_in}.dill"
+            filename = f"callbacks_at_episode_{episode + 1}.dill"
+            prev_filename = f"callbacks_at_episode_{episode + 1 - self.once_in}.dill"
             with open(filename, "wb") as f:
                 dill.dump(rcognita.main.callbacks, f)
             if episode > self.once_in:
@@ -276,7 +276,7 @@ class TimeRemainingCallback(Callback):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
             self.time_episode.append(time.time())
             total_episodes = obj.N_episodes
-            current_episode = obj.episode_counter
+            current_episode = obj.episode_counter + 1
             if len(self.time_episode) > 3:
                 average_interval = 0
                 previous = self.time_episode[-1]

@@ -137,17 +137,12 @@ class OnlineScenario(Scenario):
         )
         self.update_outcome(self.observation, self.action, self.delta_time)
 
-        if self.no_print:
-
-            return None
-
-        else:
-            return (
-                np.around(self.running_objective_value, decimals=2),
-                self.observation.round(decimals=2),
-                self.action.round(2),
-                self.outcome,
-            )
+        return (
+            np.around(self.running_objective_value, decimals=2),
+            self.observation.round(decimals=2),
+            self.action.round(2),
+            self.outcome,
+        )
 
     def run(self):
 
