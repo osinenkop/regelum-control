@@ -1,0 +1,3 @@
+action_min%%: 0.
+action_max%%: 1.
+action_bounds: = numpy.array([[[${.action_min%%}], [${.action_max%%}]]])

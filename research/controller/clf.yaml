@@ -1,4 +1,0 @@
-defaults:
-  - mpc
-  - override actor: clf
-  - override critic: calf
