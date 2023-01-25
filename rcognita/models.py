@@ -562,6 +562,116 @@ class ModelQuadNoMixTorch(ModelNN):
         return x
 
 
+class ModelDDQNAdvantage(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden=40,
+        force_positive_def=True,
+    ):
+        super().__init__()
+
+        self.fc1 = nn.Linear(dim_observation + dim_action, dim_hidden)
+        self.a1 = nn.ReLU()
+        self.fc2 = nn.Linear(dim_hidden, dim_hidden)
+        self.a2 = nn.ReLU()
+        self.fc3 = nn.Linear(dim_hidden, 1)
+        self.force_positive_def = force_positive_def
+
+    def forward(self, input_tensor):
+
+        x = input_tensor
+        x = self.fc1(x)
+        x = self.a1(x)
+        x = self.fc2(x)
+        x = self.a2(x)
+        x = self.fc3(x)
+
+        return torch.squeeze(x)
+
+
+class ModelDeepObjective(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        dim_hidden=40,
+        force_positive_def=False,
+    ):
+        super().__init__()
+
+        self.fc1 = nn.Linear(dim_observation, dim_hidden)
+        self.a1 = nn.ReLU()
+        self.fc2 = nn.Linear(dim_hidden, dim_hidden)
+        self.a2 = nn.ReLU()
+        self.fc3 = nn.Linear(dim_hidden, 1)
+        self.force_positive_def = force_positive_def
+
+    @force_positive_def
+    def forward(self, input_tensor):
+        x = input_tensor
+        x = self.fc1(x)
+        x = self.a1(x)
+        x = self.fc2(x)
+        x = self.a2(x)
+        x = self.fc3(x)
+
+        return torch.squeeze(x)
+
+
+class ModelDDQN(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        actions_grid,
+        dim_hidden=40,
+        weights=None,
+        critic_force_positive_def=True,
+    ):
+        super().__init__()
+
+        self.dim_observation = dim_observation
+        self.actions_grid = actions_grid
+        self.critic = ModelDeepObjective(
+            dim_observation=dim_observation,
+            dim_hidden=dim_hidden,
+            force_positive_def=critic_force_positive_def,
+        )
+        self.advantage = ModelDDQNAdvantage(
+            dim_observation=dim_observation,
+            dim_action=dim_action,
+            dim_hidden=dim_hidden,
+        )
+
+        if weights is not None:
+            self.load_state_dict(weights)
+
+        self.cache_weights()
+        self.weights = self.parameters()
+
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        observation_action, observation = (
+            input_tensor,
+            input_tensor[: self.dim_observation],
+        )
+
+        objective = self.critic(observation)
+        advantage = self.advantage(observation_action)
+
+        advantage_grid_mean = sum(
+            [
+                self.advantage(torch.cat([observation, action_grid_item], dim=0))
+                for action_grid_item in self.actions_grid
+            ]
+        ) / len(self.actions_grid)
+
+        return objective + (advantage - advantage_grid_mean)
+
+
 class ModelDQN(ModelNN):
     """
     pytorch neural network DQN
@@ -588,7 +698,6 @@ class ModelDQN(ModelNN):
         if weights is not None:
             self.load_state_dict(weights)
 
-        self.double()
         self.cache_weights()
         self.weights = self.parameters()
 
