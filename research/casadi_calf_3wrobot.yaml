@@ -21,7 +21,7 @@ is_log: false
 is_playback: false
 state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4., 10., 3.])
 action_init: = numpy.ones(2)
-N_episodes: 1
+N_episodes: 4
 N_iterations: 1
 speedup: 75
 observation_target: = []
@@ -63,7 +63,7 @@ observation_target: = []
 @controller.actor.predictor.prediction_horizon: 0
 @controller.safe_only: false
 @controller.critic.safe_decay_rate: 1.0E+4
-@controller.critic.is_predictive: true
+@controller.critic.is_predictive: false
 
 # Nominal: 1235.11
 

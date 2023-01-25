@@ -19,8 +19,10 @@ from scipy.optimize import minimize
 from .__utilities import rc, Clock
 from .optimizers import CasADiOptimizer, SciPyOptimizer
 from .__w_plotting import plot_optimization_results
+from .callbacks import introduce_callbacks, apply_callbacks
 
 
+@introduce_callbacks()
 class Controller(ABC):
     """
     A blueprint of optimal controllers.
@@ -162,6 +164,7 @@ class CALFControllerExPost(RLController):
         self.actor.set_action(action)
         self.actor.model.update_and_cache_weights(action)
 
+    @apply_callbacks
     def compute_action(self, observation, is_critic_update=False, time=0):
         # Update data buffers
         self.critic.update_buffers(

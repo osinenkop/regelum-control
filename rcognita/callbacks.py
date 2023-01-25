@@ -302,3 +302,69 @@ class CriticObjectiveCallback(Callback):
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.critics.Critic) and method == "objective":
             self.log(f"Current TD value: {output}")
+
+
+class CalfCallback(HistoricalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cache = pd.DataFrame()
+
+    def perform(self, obj, method, output):
+        if (
+            isinstance(obj, rcognita.controllers.Controller)
+            and method == "compute_action"
+        ):
+            current_CALF = obj.critic(
+                obj.critic.observation_last_good, use_stored_weights=True
+            )
+            self.log(f"current CALF value:{current_CALF}")
+            time = obj.clock.time
+            if hasattr(self, "time_final"):
+                time = time + self.time_final
+            is_calf = (
+                obj.critic.weights_acceptance_status == "accepted"
+                and obj.actor.weights_acceptance_status == "accepted"
+            )
+            if not self.cache.empty:
+                CALF_prev = self.cache["J_hat"].iloc[-1]
+                if time < self.cache.index[-1]:
+                    self.time_final = self.cache.index[-1]
+                    time = time + self.time_final
+            else:
+                CALF_prev = current_CALF
+
+            delta_CALF = CALF_prev - current_CALF
+            row = pd.DataFrame(
+                {
+                    "J_hat": [current_CALF],
+                    "is_CALF": [is_calf],
+                    # "weights": [current_weights],
+                    "delta": [delta_CALF],
+                    "time": time,
+                }
+            )
+            row.set_index("time", inplace=True)
+            self.cache = pd.concat([self.cache, row], axis=0)
+
+    @property
+    def data(self):
+        return self.cache
+
+    def plot_data(self, tag=None, is_plot=True):
+        import matplotlib.pyplot as plt
+
+        fig = plt.figure(figsize=(10, 10))
+
+        ax_calf, ax_switch, ax_delta = fig.subplots(1, 3)
+        ax_calf.plot(self.data.iloc[:, 0], label="CALF")
+        ax_switch.plot(self.data.iloc[:, 1], label="CALF persistency")
+        ax_delta.plot(self.data.iloc[:, 2], label="delta decay")
+
+        plt.grid()
+        plt.legend()
+        plt.savefig(f"./CALF_{tag}.png", format="png")
+        if is_plot:
+            try:
+                plt.show()
+            except:
+                pass
