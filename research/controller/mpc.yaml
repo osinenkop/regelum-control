@@ -1,6 +1,7 @@
 defaults:
   - actor: mpc
   - critic: trivial
+  - ignore_config_${simulator.system}
 
 _target_: rcognita.controllers.RLController
 

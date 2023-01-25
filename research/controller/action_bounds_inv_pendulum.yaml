@@ -1,0 +1,4 @@
+action_bounds: = numpy.array([[${.M_min%%}, ${.M_max%%}]])
+
+M_min%%: -40.
+M_max%%: 40.

@@ -196,7 +196,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = None
+        self.cooldown = 2
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
@@ -276,7 +276,9 @@ class TimeRemainingCallback(Callback):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
             self.time_episode.append(time.time())
             total_episodes = obj.N_episodes
-            current_episode = obj.episode_counter + 1
+            current_episode = (
+                obj.episode_counter if obj.episode_counter != 0 else obj.N_episodes
+            )
             if len(self.time_episode) > 3:
                 average_interval = 0
                 previous = self.time_episode[-1]
@@ -318,8 +320,6 @@ class CalfCallback(HistoricalCallback):
                 obj.critic.observation_last_good, use_stored_weights=True
             )
             self.log(f"current CALF value:{current_CALF}")
-            time = obj.clock.time
-            current_weights = obj.critic.model.weights
             is_calf = (
                 obj.critic.weights_acceptance_status == "accepted"
                 and obj.actor.weights_acceptance_status == "accepted"
@@ -336,10 +336,8 @@ class CalfCallback(HistoricalCallback):
                     "is_CALF": [is_calf],
                     # "weights": [current_weights],
                     "delta": [delta_CALF],
-                    "time": time,
                 }
             )
-            row.set_index("time", inplace=True)
             self.cache = pd.concat([self.cache, row], axis=0)
 
     @property
@@ -347,14 +345,15 @@ class CalfCallback(HistoricalCallback):
         return self.cache
 
     def plot_data(self):
+        self.data.reset_index(inplace=True)
         import matplotlib.pyplot as plt
 
         fig = plt.figure(figsize=(10, 10))
 
         ax_calf, ax_switch, ax_delta = fig.subplots(1, 3)
-        ax_calf.plot(self.data.iloc[:, 0], label="CALF")
-        ax_switch.plot(self.data.iloc[:, 1], label="CALF persistency")
-        ax_delta.plot(self.data.iloc[:, 2], label="delta decay")
+        ax_calf.plot(self.data.iloc[:, 1], label="CALF")
+        ax_switch.plot(self.data.iloc[:, 2], label="CALF persistency")
+        ax_delta.plot(self.data.iloc[:, 3], label="delta decay")
 
         plt.grid()
         plt.legend()

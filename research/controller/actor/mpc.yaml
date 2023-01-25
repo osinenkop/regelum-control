@@ -1,5 +1,5 @@
 defaults:
-  - model: weight_container
+  - model: weight_container_${controller.actor.optimizer}
   - optimizer: scipy
   - predictor: euler
 
