@@ -574,7 +574,7 @@ class ModelDQN(ModelNN):
         dim_action,
         dim_hidden=40,
         weights=None,
-        force_positive_def=True,
+        force_positive_def=False,
     ):
         super().__init__()
 

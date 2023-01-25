@@ -114,6 +114,10 @@ class Critic(ABC):
         self.intrinsic_constraints = []
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
+        if self.optimizer.engine == "torch":
+            import torch
+
+            self.model = model.cuda(torch.device("cuda:0"))
 
     @property
     def optimizer_engine(self):

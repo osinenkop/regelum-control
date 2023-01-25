@@ -40,6 +40,6 @@ actor:
 critic:
   optimizer:
     opt_options:
-      lr: 1.0E-5
-    iterations: 3
+      lr: 1.0E-7
+    iterations: 1
 

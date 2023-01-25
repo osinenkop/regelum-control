@@ -48,7 +48,7 @@ observation_target: = []
 #####################
 
 @simulator.time_start: 0.
-@simulator.time_final: 10.
+@simulator.time_final: 3
 @simulator.atol: 1.0E-5
 @simulator.rtol: 1.0E-3
 
@@ -68,7 +68,7 @@ observation_target: = []
 @controller.actor.epsilon_greedy: true
 @controller.actor.epsilon_greedy_parameter: 0.1
 
-@controller.actor.optimizer.opt_options.lr: 1
-@controller.actor.optimizer.iterations: 100
+@controller.actor.optimizer.opt_options.lr: 0.5
+@controller.actor.optimizer.iterations: 150
 
 @controller.critic.data_buffer_size: 2

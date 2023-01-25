@@ -384,6 +384,7 @@ class TorchProjectiveOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
+        model = model.cuda()
         optimizer = self.opt_method([model_input[0]], **self.opt_options)
         # optimizer.zero_grad()
 
