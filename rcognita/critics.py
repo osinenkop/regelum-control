@@ -35,8 +35,10 @@ from .optimizers import Optimizer
 from .models import Model
 from .objectives import Objective
 from typing import Optional, Union
+from .callbacks import apply_callbacks, introduce_callbacks
 
 
+@introduce_callbacks()
 class Critic(ABC):
     """
     Critic base class.
@@ -379,8 +381,8 @@ class Critic(ABC):
     def _Torch_update(self):
 
         data_buffer = {
-            "observation_buffer": torch.tensor(self.observation_buffer),
-            "action_buffer": torch.tensor(self.action_buffer),
+            "observation_buffer": self.observation_buffer,
+            "action_buffer": self.action_buffer,
         }
 
         self.optimizer.optimize(
@@ -454,6 +456,7 @@ class CriticOfActionObservation(Critic):
     This is the class of critics that are represented as functions of observation only.
     """
 
+    @apply_callbacks
     def objective(self, data_buffer=None, weights=None):
         """
         Compute the objective function of the critic, which is typically a squared temporal difference.

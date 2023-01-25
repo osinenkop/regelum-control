@@ -184,7 +184,7 @@ class ObjectiveCallback(Callback):
             self.log(f"Current objective: {output}")
 
 
-class ObjectiveCallbackMultirun(HistoricalCallback):
+class HistoricalObjectiveCallback(HistoricalCallback):
     """
     A callback which allows to store desired data
     collected among different runs inside multirun execution runtime
@@ -226,7 +226,7 @@ class ObjectiveCallbackMultirun(HistoricalCallback):
         return cache_transformed
 
 
-class TotalObjectiveCallbackMultirun(HistoricalCallback):
+class TotalObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
@@ -294,3 +294,11 @@ class TimeRemainingCallback(Callback):
                 f"Completed episode {current_episode}/{total_episodes} ({100*current_episode/total_episodes:.1f}%)."
                 + remaining
             )
+
+
+class CriticObjectiveCallback(Callback):
+    cooldown = 0.5
+
+    def perform(self, obj, method, output):
+        if isinstance(obj, rcognita.critics.Critic) and method == "objective":
+            self.log(f"Current TD value: {output}")

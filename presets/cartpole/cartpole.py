@@ -20,7 +20,7 @@ import pandas as pd
 np.random.seed(42)
 
 
-class ObjectiveCallbackMultirun(HistoricalCallback):
+class ObjectiveCallback(HistoricalCallback):
     """
     A callback which allows to store desired data
     collected among different runs inside multirun execution runtime
@@ -59,7 +59,7 @@ class ObjectiveCallbackMultirun(HistoricalCallback):
         return cache_transformed
 
 
-@r.main(config_name="scenario", callbacks=[ObjectiveCallbackMultirun])
+@r.main(config_name="scenario", callbacks=[ObjectiveCallback])
 def launch(scenario_config):
     scenario = ~scenario_config
     scenario.run()

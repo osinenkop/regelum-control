@@ -29,7 +29,7 @@ def plot_objectives(job_results, environment):
     for controller in controllers:
 
         df = group_df.get_group(controller)
-        callbacks = df["ObjectiveCallbackMultirun"].values
+        callbacks = df["ObjectiveCallback"].values
 
         dfs = [pd.DataFrame(callback.data) for callback in callbacks]
         df = pd.concat(dfs, axis=1)

@@ -25,7 +25,10 @@ try:
 except ModuleNotFoundError:
     pass
 
+from rcognita.callbacks import introduce_callbacks, apply_callbacks
 
+
+@introduce_callbacks()
 class Optimizer(ABC):
     """
     Abstract base class for optimizers.
@@ -299,7 +302,6 @@ class TorchOptimizer(Optimizer):
         self.verbose = verbose
         self.loss_history = []
 
-    @Optimizer.verbose
     def optimize(
         self, objective, model, model_input
     ):  # remove model and add parameters instead
@@ -313,9 +315,7 @@ class TorchOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-        optimizer = self.opt_method(
-            model.parameters(), **self.opt_options, weight_decay=0
-        )
+        optimizer = self.opt_method(model.parameters(), **self.opt_options)
         # optimizer.zero_grad()
 
         for _ in range(self.iterations):

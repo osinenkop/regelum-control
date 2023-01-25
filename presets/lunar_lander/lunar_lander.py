@@ -19,7 +19,7 @@ import pandas as pd
 np.random.seed(42)
 
 
-class ObjectiveCallbackMultirun(Callback):
+class ObjectiveCallback(Callback):
     """
     A callback which allows to store desired data
     collected among different runs inside multirun execution runtime
@@ -83,12 +83,12 @@ class ObjectiveCallbackMultirun(Callback):
         plt.show()
 
 
-@r.main(config_name="scenario", callbacks=[ObjectiveCallbackMultirun])
+@r.main(config_name="scenario", callbacks=[ObjectiveCallback])
 def launch(scenario_config):
     scenario = ~scenario_config
     scenario.run()
     if scenario.repeat_num == 49:
-        ObjectiveCallbackMultirun.plot_results()
+        ObjectiveCallback.plot_results()
 
     if scenario.is_playback:
         animator = AnimatorLunarLander(scenario)

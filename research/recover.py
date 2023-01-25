@@ -18,7 +18,7 @@ from rcognita.visualization.vis_lunar_lander import (
 )
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
-from rcognita.callbacks import ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun
+from rcognita.callbacks import ObjectiveCallback, TotalObjectiveCallback
 from rcognita.scenarios import Scenario
 import matplotlib.pyplot as plt
 import pandas as pd

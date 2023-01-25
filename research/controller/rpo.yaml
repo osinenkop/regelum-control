@@ -3,8 +3,8 @@
 #############################
 
 defaults:
-  - actor: rql
-  - critic: action_observation
+  - actor: rpo
+  - critic: observation
   - override actor/optimizer: torch_projective
   - override actor/model: weight_container
   - override critic/model: dqn
@@ -41,6 +41,6 @@ critic:
   optimizer:
     opt_options:
       lr: 1.0E-5
-      weight_decay: 
+      weight_decay: 0.1 
     iterations: 1
 

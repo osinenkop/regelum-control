@@ -5,7 +5,7 @@
 defaults:
   - simulator: casadi
   - running_objective: running_objective
-  - controller: sarsa
+  - controller: rpo
   - override controller/actor/optimizer: torch_projective
   - override controller/actor/model: weight_container_${controller/actor/optimizer}
   - override controller/actor/predictor: euler_multistep

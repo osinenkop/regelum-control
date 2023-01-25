@@ -5,11 +5,10 @@
 defaults:
   - simulator: casadi
   - running_objective: running_objective
-  - controller: sarsa
+  - controller: calf
   - override controller/actor/optimizer: torch_projective
   - override controller/actor/model: weight_container_${controller/actor/optimizer}
   - override controller/actor/predictor: euler_multistep
-  - override controller/critic/model: dqn
   - override controller/critic/optimizer: torch
 
 #################################
@@ -21,9 +20,9 @@ _target_: rcognita.scenarios.EpisodicScenarioMultirun
 no_print: false
 is_log: false
 is_playback: true
-state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4., 0., 0.])
+state_init: = numpy.array([5., 5., 3. * numpy.pi / 4., 0., 0.])
 action_init: = numpy.ones(2)
-N_episodes: 30
+N_episodes: 1
 N_iterations: 1
 speedup: 75
 observation_target: = []
@@ -48,8 +47,8 @@ observation_target: = []
 #####################
 
 @simulator.time_start: 0.
-@simulator.time_final: 3
-@simulator.atol: 1.0E-5
+@simulator.time_final: 10.
+@simulator.atol: 1.0E-7
 @simulator.rtol: 1.0E-3
 
 #############################
@@ -63,10 +62,3 @@ observation_target: = []
 ##############
 
 @controller.actor.predictor.prediction_horizon: 0
-@controller.actor.epsilon_greedy: true
-@controller.actor.epsilon_greedy_parameter: 0.1
-
-@controller.actor.optimizer.opt_options.lr: 0.5
-@controller.actor.optimizer.iterations: 150
-
-@controller.critic.data_buffer_size: 2

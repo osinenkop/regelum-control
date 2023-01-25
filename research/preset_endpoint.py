@@ -18,7 +18,11 @@ from rcognita.visualization.vis_lunar_lander import (
 )
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
-from rcognita.callbacks import ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun
+from rcognita.callbacks import (
+    HistoricalObjectiveCallback,
+    TotalObjectiveCallback,
+    CriticObjectiveCallback,
+)
 from rcognita.scenarios import Scenario
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,7 +40,11 @@ for i, arg in enumerate(sys.argv):
 
 @r.main(
     config_name=f"{EXPERIMENT}",
-    callbacks=[ObjectiveCallbackMultirun, TotalObjectiveCallbackMultirun],
+    callbacks=[
+        HistoricalObjectiveCallback,
+        TotalObjectiveCallback,
+        CriticObjectiveCallback,
+    ],
 )
 def launch(scenario_config):
     scenario = ~scenario_config
@@ -71,5 +79,5 @@ if __name__ == "__main__":
     with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
         df = pickle.load(f)
 
-    callbacks = df.TotalObjectiveCallbackMultirun
+    callbacks = df.TotalObjectiveCallback
     plot_multirun_total_objective(callbacks, EXPERIMENT)
