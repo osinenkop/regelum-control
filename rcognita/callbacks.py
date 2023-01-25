@@ -256,14 +256,14 @@ class SaveProgressCallback(Callback):
             episode = obj.episode_counter
             if episode % self.once_in:
                 return
-            filename = f"scenario_at_episode_{episode}.dill"
-            prev_filename = f"scenario_at_episode_{episode - self.once_in}.dill"
+            filename = f"callbacks_at_episode_{episode}.dill"
+            prev_filename = f"callbacks_at_episode_{episode - self.once_in}.dill"
             with open(filename, "wb") as f:
-                dill.dump(obj, f)
+                dill.dump(rcognita.main.callbacks, f)
             if episode > self.once_in:
                 os.remove(os.path.abspath(prev_filename))
             self.log(
-                f"Saved the scenario to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
+                f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
             )
 
 
