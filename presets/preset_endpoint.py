@@ -30,6 +30,7 @@ import pandas as pd
 import pickle
 import dill
 
+np.random.seed(42)
 
 EXPERIMENT = None
 for i, arg in enumerate(sys.argv):
@@ -50,7 +51,7 @@ for i, arg in enumerate(sys.argv):
     ],
 )
 def launch(scenario_config):
-    np.random.seed(42)
+
     scenario = ~scenario_config
     outcome = scenario.run()
 
@@ -62,23 +63,24 @@ def launch(scenario_config):
     return outcome
 
 
-def plot_multirun_total_objective(callbacks, preset_name):
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.subplots()
-    ax.set_xlabel("episode")
-    ax.set_ylabel("Total objective")
-    df = pd.DataFrame()
-    for callback in callbacks:
-        df = pd.concat([df, callback.data], axis=1)
+# def plot_multirun_total_objective(callbacks, preset_name):
+#     fig = plt.figure(figsize=(10, 10))
+#     ax = fig.subplots()
+#     ax.set_xlabel("episode")
+#     ax.set_ylabel("Total objective")
+#     df = pd.DataFrame()
+#     for callback in callbacks:
+#         df = pd.concat([df, callback.data], axis=1)
 
-    plt.plot(df)
-    plt.grid()
-    plt.title(f"{preset_name}")
-    plt.show()
+#     plt.plot(df)
+#     plt.grid()
+#     plt.title(f"{preset_name}")
+#     plt.show()
 
 
 if __name__ == "__main__":
     job_results = launch()
+
     # plot_multirun.plot_objectives(job_results, PRESET)
     with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
         df = pickle.load(f)
@@ -86,6 +88,7 @@ if __name__ == "__main__":
     total_objective_path = os.path.join(
         job_results["directory"][0], "total_objectives.png"
     )
+    plot_multirun.plot_objectives(df.TotalObjectiveCallback, EXPERIMENT)
     plt.plot(df.TotalObjectiveCallback.values[0].data)
     plt.grid()
     plt.xticks(range(1, len(df.TotalObjectiveCallback.values[0].data) + 1))

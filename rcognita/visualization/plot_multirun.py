@@ -3,47 +3,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_objectives(job_results, environment):
-    controller_override_index = [
-        i for i, v in enumerate(job_results.overrides[0]) if "controller=" in v
-    ]
-    if controller_override_index:
-
-        group_df = job_results.groupby(
-            job_results.overrides.map(
-                lambda x: x[controller_override_index].split("=")[1]
-            )
-        )
-        controllers = job_results.overrides.map(
-            lambda x: x[controller_override_index].split("=")[1]
-        ).unique()
-
-    else:
-        controllers = ["MPC"]
+def plot_objectives(total_obj_callbacks, environment):
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.subplots()
-    ax.set_xlabel("time")
-    ax.set_ylabel("running cost")
+    ax.set_xlabel("episode")
+    ax.set_ylabel("Total objective")
 
-    for controller in controllers:
+    dfs = [pd.DataFrame(callback.data) for callback in total_obj_callbacks]
+    df = pd.concat(dfs, axis=1)
 
-        df = group_df.get_group(controller)
-        callbacks = df["ObjectiveCallback"].values
-
-        dfs = [pd.DataFrame(callback.data) for callback in callbacks]
-        df = pd.concat(dfs, axis=1)
-
-        plot_objectives_per_controller(df, callbacks, controller, ax)
+    plot_objectives_per_controller(df, total_obj_callbacks, environment, ax)
 
     plt.legend()
     plt.title(f"{environment}")
     plt.show()
 
 
-def plot_objectives_per_controller(df, callbacks, controller, axes):
+def plot_objectives_per_controller(df, callbacks, environment, axes):
 
-    df["time"] = callbacks[0].timeline
+    df["time"] = callbacks[0].data.index
     df.set_index("time", inplace=True)
     print(df)
 
@@ -60,5 +39,5 @@ def plot_objectives_per_controller(df, callbacks, controller, axes):
         df.index,
         df.mean_traj.values,
         color="b",
-        label=f"mean {controller} running cost",
+        label=f"mean {environment} Total objective",
     )

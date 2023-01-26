@@ -1,6 +1,10 @@
 defaults:
   - simulator: default
   - running_objective: running_objective
+  - override actor/model: weight_container
+  - override critic/model: deep_objective
+  - override actor/optimizer: torch_projective
+  - override critic/optimizer: torch
 
 _target_: rcognita.scenarios.EpisodicScenario
 
