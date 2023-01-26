@@ -2,7 +2,7 @@ defaults:
   - simulator: default
   - running_objective: running_objective
 
-_target_: rcognita.scenarios.EpisodicScenario
+_target_: rcognita.scenarios.EpisodicScenarioMultirun
 
 ###---Constructor arguments---###
 
@@ -14,6 +14,7 @@ action_init: = numpy.ones(2)
 N_episodes: 1
 N_iterations: 1
 speedup: 75
+repeat_num: 1
 
 
 ### A set of parameters forwarded into a global scope

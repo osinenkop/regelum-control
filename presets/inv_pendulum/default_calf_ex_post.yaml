@@ -14,7 +14,7 @@ action_init: = numpy.ones(${simulator.system.dim_input})
 N_episodes: 1
 N_iterations: 1
 speedup: 25
-
+repeat_num: 1
 
 ### A set of parameters forwarded into a global scope
 
@@ -45,5 +45,6 @@ observation_target%%: = []
 @controller.critic.critic_regularization_param: 0.
 
 @controller.actor.predictor.prediction_horizon: 0
+
 
 # default nominal total obj is 203.279
