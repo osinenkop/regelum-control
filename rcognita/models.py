@@ -572,11 +572,13 @@ class ModelDDQNAdvantage(ModelNN):
     ):
         super().__init__()
 
-        self.fc1 = nn.Linear(dim_observation + dim_action, dim_hidden)
+        self.fc1 = nn.Linear(dim_observation, dim_hidden)
         self.a1 = nn.ReLU()
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
         self.a2 = nn.ReLU()
-        self.fc3 = nn.Linear(dim_hidden, 1)
+        self.fc3 = nn.Linear(dim_hidden, dim_hidden)
+        self.a3 = nn.ReLU()
+        self.fc4 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
         self.double()
@@ -589,6 +591,8 @@ class ModelDDQNAdvantage(ModelNN):
         x = self.fc2(x)
         x = self.a2(x)
         x = self.fc3(x)
+        x = self.a3(x)
+        x = self.fc4(x)
 
         return torch.squeeze(x)
 
@@ -606,7 +610,9 @@ class ModelDeepObjective(ModelNN):
         self.a1 = nn.ReLU()
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
         self.a2 = nn.ReLU()
-        self.fc3 = nn.Linear(dim_hidden, 1)
+        self.fc3 = nn.Linear(dim_hidden, dim_hidden)
+        self.a3 = nn.ReLU()
+        self.fc4 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
         self.double()
@@ -619,6 +625,8 @@ class ModelDeepObjective(ModelNN):
         x = self.fc2(x)
         x = self.a2(x)
         x = self.fc3(x)
+        x = self.a3(x)
+        x = self.fc4(x)
 
         return torch.squeeze(x)
 
@@ -702,7 +710,9 @@ class ModelDQN(ModelNN):
         self.a1 = nn.ReLU()
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
         self.a2 = nn.ReLU()
-        self.fc3 = nn.Linear(dim_hidden, 1)
+        self.fc3 = nn.Linear(dim_hidden, dim_hidden)
+        self.a3 = nn.ReLU()
+        self.fc4 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
         self.double()
@@ -724,6 +734,8 @@ class ModelDQN(ModelNN):
         x = self.fc2(x)
         x = self.a2(x)
         x = self.fc3(x)
+        x = self.a3(x)
+        x = self.fc4(x)
 
         return torch.squeeze(x)
 

@@ -8,7 +8,6 @@ with open(os.path.abspath(__file__ + "/../rcognita/__init__.py"), "r") as f:
         if "__version__" in line:
             exec(line)
             break
-
 setup(
     name="rcognita",
     version=__version__,
@@ -37,8 +36,10 @@ setup(
         "hydra-core>=1.3.1",
         "hydra-joblib-launcher>=1.2.0",
         "pandas==1.4.0",
-        "gpytorch==1.8.0"
-
+        "gpytorch==1.8.0",
+        "torch>=1.12.1",
+        "casadi>=3.5.5",
+        "dill==0.3.6",
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],
