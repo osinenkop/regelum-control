@@ -12,7 +12,7 @@ is_log: false
 is_playback: true
 state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4., 10., 3.])
 action_init: = numpy.ones(2)
-N_episodes: 1
+N_episodes: 7
 N_iterations: 1
 speedup: 75
 
@@ -20,11 +20,11 @@ speedup: 75
 ### A set of parameters forwarded into a global scope
 
 
-@simulator.ode_backend: SCIPY
+@simulator.ode_backend: CASADI
 @controller.sampling_time: 1.0E-2
 
 @simulator.time_start: 0.
-@simulator.time_final: 10.
+@simulator.time_final: 8.
 
 @controller.F_min%%: -300.
 @controller.F_max%%: 300.
