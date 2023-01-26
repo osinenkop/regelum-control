@@ -24,7 +24,7 @@ speedup: 75
 @controller.sampling_time: 1.0E-2
 
 @simulator.time_start: 0.
-@simulator.time_final: 8.
+@simulator.time_final: 10.
 
 @controller.F_min%%: -300.
 @controller.F_max%%: 300.
@@ -45,3 +45,5 @@ observation_target%%: = []
 @simulator.rtol: 1.0E-3
 
 @controller.actor.predictor.prediction_horizon: 0
+
+@controller.critic.safe_decay_param: 1000
