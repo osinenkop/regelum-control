@@ -423,7 +423,7 @@ class CriticOfObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_old = action_buffer[:, k - 1]
+            action_next = action_buffer[:, k - 1]
 
             # Temporal difference
 
@@ -443,7 +443,7 @@ class CriticOfObservation(Critic):
             temporal_difference = (
                 critic_old
                 - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_old)
+                - self.running_objective(observation_old, action_next)
             )
 
             critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
@@ -480,12 +480,12 @@ class CriticOfActionObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_old = action_buffer[:, k - 1]
+            action_next = action_buffer[:, k - 1]
             action_next = action_buffer[:, k]
 
             # Temporal difference
 
-            critic_old = self.model(observation_old, action_old, weights=weights)
+            critic_old = self.model(observation_old, action_next, weights=weights)
             critic_next = self.model(
                 observation_next, action_next, use_stored_weights=True
             )
@@ -493,7 +493,7 @@ class CriticOfActionObservation(Critic):
             temporal_difference = (
                 critic_old
                 - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_old)
+                - self.running_objective(observation_old, action_next)
             )
 
             critic_objective += 1 / 2 * temporal_difference**2
@@ -534,14 +534,14 @@ class CriticOffPolicy(Critic):
         observation_old = observation_buffer[:, 0]
         observation_next = observation_buffer[:, 1]
 
-        action_old = action_buffer[:, 1]
+        action_next = action_buffer[:, 1]
 
-        critic_old = self.model(observation_old, action_old, weights=weights)
+        critic_old = self.model(observation_old, action_next, weights=weights)
         critic_next = sp.optimize.minimize(
             lambda action: self.model(
                 observation_next, torch.tensor(action).double(), use_stored_weights=True
             ),
-            x0=action_old,
+            x0=action_next,
             method="SLSQP",
             tol=1e-4,
             bounds=self.action_bounds,
@@ -550,7 +550,7 @@ class CriticOffPolicy(Critic):
         temporal_difference = (
             critic_old
             - self.discount_factor * torch.tensor(critic_next).double()
-            - self.running_objective(observation_old, action_old)
+            - self.running_objective(observation_old, action_next)
         )
 
         critic_objective += 1 / 2 * temporal_difference**2

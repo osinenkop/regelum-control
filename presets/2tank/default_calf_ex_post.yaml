@@ -48,6 +48,8 @@ observation_target: = numpy.array([0.4, 0.4])
 @controller.actor.safe_controller.actor.predictor.n_steps: 11
 @controller.actor.safe_controller.actor.predictor.pred_step_size_multiplier%%: 10
 
+
+
 @controller.critic.safe_decay_param: 10
 @controller.critic.is_dynamic_decay_rate: false
 
