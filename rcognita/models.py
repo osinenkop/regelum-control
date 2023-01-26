@@ -579,6 +579,8 @@ class ModelDDQNAdvantage(ModelNN):
         self.fc3 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
+        self.double()
+
     def forward(self, input_tensor):
 
         x = input_tensor
@@ -606,6 +608,8 @@ class ModelDeepObjective(ModelNN):
         self.a2 = nn.ReLU()
         self.fc3 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
+
+        self.double()
 
     @force_positive_def
     def forward(self, input_tensor):
@@ -644,11 +648,13 @@ class ModelDDQN(ModelNN):
             dim_hidden=dim_hidden,
         )
 
+        self.double()
+
         if weights is not None:
             self.load_state_dict(weights)
 
+        self.weights = list(self.parameters())
         self.cache_weights()
-        self.weights = self.parameters()
 
     def forward(self, input_tensor, weights=None):
         if weights is not None:
@@ -664,7 +670,11 @@ class ModelDDQN(ModelNN):
 
         advantage_grid_mean = sum(
             [
-                self.advantage(torch.cat([observation, action_grid_item], dim=0))
+                self.advantage(
+                    torch.cat(
+                        [observation, torch.tensor(action_grid_item).double()], dim=0
+                    )
+                )
                 for action_grid_item in self.actions_grid
             ]
         ) / len(self.actions_grid)
@@ -698,8 +708,8 @@ class ModelDQN(ModelNN):
         if weights is not None:
             self.load_state_dict(weights)
 
-        self.cache_weights()
         self.weights = self.parameters()
+        self.cache_weights()
 
     @force_positive_def
     def forward(self, input_tensor, weights=None):
