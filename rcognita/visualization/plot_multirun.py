@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_objectives(total_obj_callbacks, environment):
+def plot_objectives(total_obj_callbacks, environment, path=None):
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.subplots()
@@ -17,7 +17,7 @@ def plot_objectives(total_obj_callbacks, environment):
 
     plt.legend()
     plt.title(f"{environment}")
-    plt.show()
+    plt.savefig(path)
 
 
 def plot_objectives_per_controller(df, callbacks, environment, axes):

@@ -29,6 +29,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
 import dill
+from omegaconf import OmegaConf
+
 
 np.random.seed(42)
 
@@ -88,7 +90,15 @@ if __name__ == "__main__":
     total_objective_path = os.path.join(
         job_results["directory"][0], "total_objectives.png"
     )
-    plot_multirun.plot_objectives(df.TotalObjectiveCallback, EXPERIMENT)
+    overrides_path = os.path.join(job_results["directory"][0], ".hydra/overrides.yaml")
+    algo = OmegaConf.load(overrides_path)[0].split("=")[1]
+    plot_multirun.plot_objectives(
+        df.TotalObjectiveCallback,
+        EXPERIMENT,
+        os.path.join(
+            job_results["directory"][0] + f"/../{EXPERIMENT.lower()}_{algo.lower()}.png"
+        ),
+    )
     plt.plot(df.TotalObjectiveCallback.values[0].data)
     plt.grid()
     plt.xticks(range(1, len(df.TotalObjectiveCallback.values[0].data) + 1))
