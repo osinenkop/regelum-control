@@ -553,6 +553,8 @@ class CriticOffPolicy(Critic):
         return critic_objective
 
 
+
+
 class CriticCALF(CriticOfObservation):
     def __init__(
         self,
@@ -564,6 +566,7 @@ class CriticCALF(CriticOfObservation):
         safe_controller=None,
         penalty_param=0,
         is_predictive=True,
+        action_init=None,
         **kwargs
     ):
         """
@@ -587,7 +590,10 @@ class CriticCALF(CriticOfObservation):
         self.safe_controller = safe_controller
         self.predictor = predictor
         self.observation_init = observation_init
+        self.action_init = action_init
         self.observation_last_good = observation_init
+        self.r_prev = self.running_objective(self.observation_init, self.action_init)
+
         self.lb_constraint_violations = []
         self.ub_constraint_violations = []
         self.stabilizing_constraint_violations = []
@@ -754,25 +760,70 @@ class CriticCALF(CriticOfObservation):
         )
         return self.stabilizing_constraint_violation
 
-    def objective(self, *args, **kwargs):
-        """
-        Objective of the critic, which is the sum of the squared temporal difference and the penalty
-        for violating the CALF decay constraint, if the penalty parameter is non-zero.
+    # def objective(self, *args, **kwargs):
+    #     """
+    #     Objective of the critic, which is the sum of the squared temporal difference and the penalty
+    #     for violating the CALF decay constraint, if the penalty parameter is non-zero.
 
-        :param args: Positional arguments to be passed to the parent class's `objective` method.
-        :param kwargs: Keyword arguments to be passed to the parent class's `objective` method.
-        :return: Value of the objective.
-        :rtype: float
-        """
-        objective = super().objective(*args, **kwargs)
+    #     :param args: Positional arguments to be passed to the parent class's `objective` method.
+    #     :param kwargs: Keyword arguments to be passed to the parent class's `objective` method.
+    #     :return: Value of the objective.
+    #     :rtype: float
+    #     """
+    #     objective = super().objective(*args, **kwargs)
 
-        weights = kwargs.get("weights")
-        if self.penalty_param != 0:
-            objective += rc.penalty_function(
-                self.CALF_decay_constraint(weights), self.penalty_param
+    #     weights = kwargs.get("weights")
+    #     if self.penalty_param != 0:
+    #         objective += rc.penalty_function(
+    #             self.CALF_decay_constraint(weights), self.penalty_param
+    #         )
+
+    #     return objective
+
+    def objective(self, data_buffer=None, weights=None):
+        """
+        Objective of the critic, say, a squared temporal difference.
+
+        """
+        if data_buffer is None:
+            observation_buffer = self.observation_buffer
+            action_buffer = self.action_buffer
+        else:
+            observation_buffer = data_buffer["observation_buffer"]
+            action_buffer = data_buffer["action_buffer"]
+
+        critic_objective = 0
+
+        for k in range(self.data_buffer_size - 1, 0, -1):
+            observation_old = observation_buffer[:, k - 1]
+            observation_next = observation_buffer[:, k]
+            action_next = action_buffer[:, k - 1]
+
+            # Temporal difference
+
+            critic_old = self.model(observation_old, weights=weights)
+            critic_next = self.model(observation_next, use_stored_weights=True)
+
+            weights_current = weights
+            weights_last_good = self.model.cache.weights
+            if self.critic_regularization_param > 0:
+                regularization_term = (
+                    rc.sum_2(weights_current - weights_last_good)
+                    * self.critic_regularization_param
+                )
+            else:
+                regularization_term = 0
+
+            temporal_difference = (
+                critic_old
+                - self.discount_factor * critic_next
+                - self.r_prev
             )
 
-        return objective
+            critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
+
+        return critic_objective
+        
 
 
 class CriticTrivial(Critic):

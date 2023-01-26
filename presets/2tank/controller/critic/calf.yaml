@@ -6,6 +6,7 @@ _target_: rcognita.critics.CriticCALF
 safe_decay_param: 1.0E-3
 is_dynamic_decay_rate: true
 observation_init: $ state_init
+action_init: $ action_init
 
 penalty_param: 0
 is_predictive: true

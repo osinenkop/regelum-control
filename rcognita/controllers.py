@@ -163,6 +163,7 @@ class CALFControllerExPost(RLController):
 
         self.actor.set_action(action)
         self.actor.model.update_and_cache_weights(action)
+        self.critic.r_prev += self.actor.running_objective(observation, action)
 
     @apply_callbacks
     def compute_action(self, observation, is_critic_update=False, time=0):
@@ -194,6 +195,7 @@ class CALFControllerExPost(RLController):
 
                 self.critic.observation_last_good = observation
                 self.critic.cache_weights()
+                self.critic.r_prev = self.actor.running_objective(observation, self.actor.action)
             else:
                 self.invoke_safe_action(observation)
         else:

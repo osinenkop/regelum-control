@@ -9,10 +9,11 @@ _target_: rcognita.scenarios.EpisodicScenarioMultirun
 
 no_print: false
 is_log: false
-is_playback: false
-state_init: = numpy.array([-5. + numpy.random.uniform(), 5. + numpy.random.uniform(), 3. * numpy.pi / 4. + numpy.random.uniform(), 0., 0.])
+is_playback: True
+#state_init: = numpy.array([-5. + numpy.random.uniform(), 5. + numpy.random.uniform(), 3. * numpy.pi / 4. + numpy.random.uniform(), 0., 0.])
+state_init: = numpy.array([-5. + numpy.random.uniform(), 5., 3. * numpy.pi / 4., 0., 0.])
 action_init: = numpy.ones(2)
-N_episodes: 15
+N_episodes: 1
 N_iterations: 1
 speedup: 75
 repeat_num: 1
@@ -24,7 +25,7 @@ repeat_num: 1
 @controller.sampling_time: 1.0E-2
 
 @simulator.time_start: 0.
-@simulator.time_final: 7.
+@simulator.time_final: 4.
 
 @controller.F_min%%: -300.
 @controller.F_max%%: 300.
