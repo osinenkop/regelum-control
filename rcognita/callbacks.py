@@ -22,6 +22,8 @@ import pandas as pd
 import time, datetime
 import dill, os
 
+import matplotlib.pyplot as plt
+
 
 def apply_callbacks(method):
     """
@@ -114,6 +116,9 @@ class Callback(ABC):
         except Exception as e:
             self.log(f"Callback {self.__class__.__name__} failed.")
             self.exception(e)
+    
+    def on_termination(self):
+        pass
 
 
 class HistoricalCallback(Callback, ABC):
@@ -241,10 +246,15 @@ class TotalObjectiveCallback(HistoricalCallback):
             )
             row = pd.DataFrame({"outcome": output}, index=[episode])
             self.cache = pd.concat([self.cache, row])
+            plt.plot(self.data)
+            plt.grid()
+            plt.xticks(range(1, len(self.data) + 1))
+            plt.savefig("total_objective.png")
 
     @property
     def data(self):
         return self.cache.iloc[:, -1]
+
 
 
 class SaveProgressCallback(Callback):
@@ -360,7 +370,3 @@ class CalfCallback(HistoricalCallback):
         plt.grid()
         plt.legend()
         plt.savefig("./CALF.png", format="png")
-        try:
-            plt.show()
-        except:
-            pass
