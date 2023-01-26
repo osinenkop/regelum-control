@@ -11,7 +11,7 @@ is_log: false
 is_playback: true
 state_init: = numpy.array([-5., 5., 3. * numpy.pi / 4., 10., 3.])
 action_init: = numpy.ones(2)
-N_episodes: 10
+N_episodes: 30
 N_iterations: 1
 speedup: 25
 
@@ -23,7 +23,7 @@ speedup: 25
 @controller.sampling_time: 1.0E-2
 
 @simulator.time_start: 0.
-@simulator.time_final: 4.
+@simulator.time_final: 7.
 
 @controller.critic.model.dim_hidden: 100
 

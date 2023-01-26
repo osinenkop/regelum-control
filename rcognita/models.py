@@ -572,7 +572,7 @@ class ModelDDQNAdvantage(ModelNN):
     ):
         super().__init__()
 
-        self.fc1 = nn.Linear(dim_observation, dim_hidden)
+        self.fc1 = nn.Linear(dim_observation + dim_action, dim_hidden)
         self.a1 = nn.ReLU()
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
         self.a2 = nn.ReLU()
