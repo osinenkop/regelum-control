@@ -83,8 +83,8 @@ if __name__ == "__main__":
     with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
         df = pickle.load(f)
 
-    callbacks_objective = df.TotalObjectiveCallback
-    plot_multirun_total_objective(callbacks_objective, EXPERIMENT)
-    callbacks_calf = df.CalfCallback
-    for i, callback in enumerate(callbacks_calf):
-        callback.plot_data()
+    # callbacks_objective = df.TotalObjectiveCallback
+    # plot_multirun_total_objective(callbacks_objective, EXPERIMENT)
+    # callbacks_calf = df.CalfCallback
+    # for i, callback in enumerate(callbacks_calf):
+    #     callback.plot_data()

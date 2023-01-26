@@ -675,7 +675,7 @@ class ModelDDQN(ModelNN):
                         [observation, torch.tensor(action_grid_item).double()], dim=0
                     )
                 )
-                for action_grid_item in self.actions_grid
+                for action_grid_item in self.actions_grid.T
             ]
         ) / len(self.actions_grid)
 
