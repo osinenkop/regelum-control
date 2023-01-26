@@ -105,8 +105,6 @@ class Actor:
         if self.optimizer.engine == "torch":
             import torch
 
-            self.model = model.cuda(torch.device("cuda:0"))
-
         self.predictor = predictor
         self.discount_factor = discount_factor
         self.epsilon_greedy = epsilon_greedy
