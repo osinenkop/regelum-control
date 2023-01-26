@@ -83,6 +83,14 @@ if __name__ == "__main__":
     with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
         df = pickle.load(f)
 
+    total_objective_path = os.path.join(
+        job_results["directory"][0], "total_objectives.png"
+    )
+    plt.plot(df.TotalObjectiveCallback.values[0].data)
+    plt.grid()
+    plt.xticks(range(1, len(df.TotalObjectiveCallback.values[0].data) + 1))
+    plt.savefig(total_objective_path)
+
     # callbacks_objective = df.TotalObjectiveCallback
     # plot_multirun_total_objective(callbacks_objective, EXPERIMENT)
     # callbacks_calf = df.CalfCallback
