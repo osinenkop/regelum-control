@@ -196,7 +196,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = 2
+        self.cooldown = 0.0
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
@@ -319,7 +319,9 @@ class CalfCallback(HistoricalCallback):
             current_CALF = obj.critic(
                 obj.critic.observation_last_good, use_stored_weights=True
             )
-            self.log(f"current CALF value:{current_CALF}")
+            self.log(
+                f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_param}"
+            )
             is_calf = (
                 obj.critic.weights_acceptance_status == "accepted"
                 and obj.actor.weights_acceptance_status == "accepted"

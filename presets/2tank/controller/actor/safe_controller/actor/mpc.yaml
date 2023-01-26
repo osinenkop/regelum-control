@@ -2,6 +2,7 @@ defaults:
   - model: weight_container
   - optimizer: casadi
   - predictor: euler_multistep
+  - running_objective: running_objective_safe
 
 _target_: rcognita.actors.ActorMPC
 
@@ -14,4 +15,4 @@ discount_factor: 1.
 action_bounds: $ controller.actor.safe_controller.action_bounds
 action_init: $ action_init
 critic: ~ controller.actor.safe_controller.critic
-running_objective: ~ running_objective
+

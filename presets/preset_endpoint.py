@@ -18,33 +18,44 @@ from rcognita.visualization.vis_lunar_lander import (
 )
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
-from rcognita.callbacks import ObjectiveCallback, TotalObjectiveCallback
+from rcognita.callbacks import (
+    HistoricalObjectiveCallback,
+    TotalObjectiveCallback,
+    CriticObjectiveCallback,
+    CalfCallback,
+)
 from rcognita.scenarios import Scenario
 import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
+import dill
 
-np.random.seed(42)
 
-PRESET = None
+EXPERIMENT = None
 for i, arg in enumerate(sys.argv):
-    if "--preset" in arg:
-        PRESET = arg.split("=")[-1]
+    if "--experiment" in arg:
+        EXPERIMENT = arg.split("=")[-1]
         sys.argv.pop(i)
         break
 
 
 @r.main(
-    config_path=f"./{PRESET}",
-    config_name=f"scenario",
-    callbacks=[ObjectiveCallback, TotalObjectiveCallback],
+    config_path=f"{EXPERIMENT}",
+    config_name="scenario",
+    callbacks=[
+        HistoricalObjectiveCallback,
+        TotalObjectiveCallback,
+        CriticObjectiveCallback,
+        CalfCallback,
+    ],
 )
 def launch(scenario_config):
+    np.random.seed(42)
     scenario = ~scenario_config
     outcome = scenario.run()
 
     if scenario.is_playback:
-        animator = AnimatorLunarLander(scenario)
+        animator = Animator3WRobot(scenario)
         animator.playback()
         plt.show()
 
@@ -72,5 +83,8 @@ if __name__ == "__main__":
     with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
         df = pickle.load(f)
 
-    callbacks = df.TotalObjectiveCallback
-    plot_multirun_total_objective(callbacks, PRESET)
+    callbacks_objective = df.TotalObjectiveCallback
+    plot_multirun_total_objective(callbacks_objective, EXPERIMENT)
+    callbacks_calf = df.CalfCallback
+    for i, callback in enumerate(callbacks_calf):
+        callback.plot_data()

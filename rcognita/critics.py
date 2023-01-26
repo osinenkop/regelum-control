@@ -554,7 +554,7 @@ class CriticCALF(CriticOfObservation):
     def __init__(
         self,
         *args,
-        safe_decay_rate=1e-3,
+        safe_decay_param=1e-3,
         is_dynamic_decay_rate=True,
         predictor=None,
         observation_init=None,
@@ -567,7 +567,7 @@ class CriticCALF(CriticOfObservation):
         Initialize a CriticCALF object.
 
         :param args: Arguments to be passed to the base class `CriticOfObservation`.
-        :param safe_decay_rate: Rate at which the safe set shrinks over time.
+        :param safe_decay_param: Rate at which the safe set shrinks over time.
         :param is_dynamic_decay_rate: Whether the decay rate should be dynamic or not.
         :param predictor: A predictor object to be used to predict future observations.
         :param observation_init: Initial observation to be used to initialize the safe set.
@@ -577,8 +577,10 @@ class CriticCALF(CriticOfObservation):
         :param kwargs: Keyword arguments to be passed to the base class `CriticOfObservation`.
         """
         super().__init__(*args, **kwargs)
-        self.safe_decay_rate = safe_decay_rate
+        self.safe_decay_param = safe_decay_param
         self.is_dynamic_decay_rate = is_dynamic_decay_rate
+        if not self.is_dynamic_decay_rate:
+            self.safe_decay_rate = self.safe_decay_param
         self.safe_controller = safe_controller
         self.predictor = predictor
         self.observation_init = observation_init
@@ -645,13 +647,14 @@ class CriticCALF(CriticOfObservation):
         self.current_action = action
 
         if self.is_dynamic_decay_rate:
-            # print(self.safe_decay_rate)
-            self.safe_decay_rate = 1e2 * rc.norm_2(observation)
+            # print(self.safe_decay_param)
+            self.safe_decay_rate = self.safe_decay_param * rc.norm_2(observation)
+            # self.safe_decay_param = self.safe_deay_rate_param * rc norm ...
 
     def CALF_decay_constraint_no_prediction(self, weights):
         """
         Constraint that ensures that the CALF value is decreasing by a certain rate. The rate is determined by the
-        `safe_decay_rate` parameter. This constraint is used when there is no prediction of the next state.
+        `safe_decay_param` parameter. This constraint is used when there is no prediction of the next state.
 
         :param weights: critic weights to be evaluated
         :type weights: ndarray
@@ -725,7 +728,7 @@ class CriticCALF(CriticOfObservation):
         self.stabilizing_constraint_violation = (
             self.critic_next
             - self.critic_current
-            + self.predictor.pred_step_size * self.safe_decay_rate
+            + self.predictor.pred_step_size * self.safe_decay_param
         )
         return self.stabilizing_constraint_violation
 
@@ -744,7 +747,7 @@ class CriticCALF(CriticOfObservation):
         self.stabilizing_constraint_violation = (
             self.model(predicted_observation, weights=weights)
             - self.model(self.observation_last_good, use_stored_weights=True)
-            + self.predictor.pred_step_size * self.safe_decay_rate
+            + self.predictor.pred_step_size * self.safe_decay_param
         )
         return self.stabilizing_constraint_violation
 

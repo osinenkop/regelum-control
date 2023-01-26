@@ -7,7 +7,7 @@ defaults:
   - running_objective: running_objective
   - controller: calf
   - override controller/actor/optimizer: casadi
-  - override controller/actor/model: weight_container_${controller/actor/optimizer}
+  - override controller/actor/model: weight_container_${controlleractor/optimizer}
   - override controller/actor/predictor: euler
 
 #################################
@@ -62,7 +62,7 @@ observation_target: = []
 
 @controller.actor.predictor.prediction_horizon: 0
 @controller.safe_only: false
-@controller.critic.safe_decay_rate: 1.0E+4
+@controller.critic.safe_decay_param: 1.0E+4
 @controller.critic.is_predictive: false
 
 # Nominal: 1235.11

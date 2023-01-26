@@ -23,12 +23,34 @@ from rcognita.scenarios import Scenario
 import matplotlib.pyplot as plt
 import pandas as pd
 import dill
+import pickle
 
 np.random.seed(42)
 
 
+def plot_multirun_total_objective(callbacks, preset_name):
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.subplots()
+    ax.set_xlabel("Episode")
+    ax.set_ylabel("Total objective")
+    df = pd.DataFrame()
+    for callback in callbacks:
+        df = pd.concat([df, callback.data], axis=1)
+
+    plt.plot(df)
+    print(df)
+    plt.grid()
+    plt.title(f"{preset_name}")
+    plt.savefig("outcomes.png", format="png")
+
+
 if __name__ == "__main__":
     # plot_multirun.plot_objectives(job_results, PRESET)
-    with open("presets/scenario_at_episode_11.dill", "rb") as f:
-        scenario = dill.load(f)
-        print(scenario.episode_counter)
+    with open(
+        "/home/gvidon/JoraProgramming/rcognita/presets/callbacks_at_episode_5.dill",
+        "rb",
+    ) as f:
+        callbacks = dill.load(f)
+        callbacks = callbacks[1]
+
+        plot_multirun_total_objective([callbacks], "inv_pendulum")

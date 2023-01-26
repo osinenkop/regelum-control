@@ -171,7 +171,7 @@ class CALFControllerExPost(RLController):
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
 
-        # self.critic.safe_decay_rate = 1e-1 * rc.norm_2(observation)
+        # self.critic.safe_decay_param = 1e-1 * rc.norm_2(observation)
         self.actor.receive_observation(
             observation
         )  ### store current observation in actor
@@ -1267,7 +1267,9 @@ class NominalControllerInvertedPendulum:
 
     def compute_action(self, observation, time=0):
         self.observation = observation
-        return np.array([-((observation[0]) + (observation[1])) * self.controller_gain])
+        return np.array(
+            [-((observation[0]) + 0.2 * (observation[1])) * self.controller_gain]
+        )
 
     def reset(self):
         self.clock.reset()

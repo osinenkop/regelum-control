@@ -2,7 +2,7 @@ defaults:
   - model: weight_container
   - optimizer: casadi
   - predictor: rk_casadi
-  - safe_controller: safe_${simulator.system}
+  - safe_controller: safe_2tank
 
 _target_: rcognita.actors.ActorCALF
 
@@ -20,3 +20,8 @@ discount_factor: 1.
 action_bounds: $ controller.action_bounds
 action_init: $ action_init
 critic: ~ controller.critic
+
+
+action_min%%: 0.
+action_max%%: 1.
+action_bounds: = numpy.array([[[${.action_min%%}], [${.action_max%%}]]])

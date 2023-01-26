@@ -1,9 +1,8 @@
 defaults:
-  - actor: calf_${simulator.system}
-  - critic: calf_${simulator.system}
+  - actor: calf
+  - critic: calf
   - override actor/optimizer: casadi
   - override critic/optimizer: casadi
-  - action_bounds_${simulator.system}
 
 _target_: rcognita.controllers.CALFControllerExPost
 
@@ -23,6 +22,10 @@ critic:
 actor:
   predictor:
     prediction_horizon: 0
+
+action_min%%: 0.
+action_max%%: 1.
+action_bounds: = numpy.array([[[${.action_min%%}], [${.action_max%%}]]])
 
 
 

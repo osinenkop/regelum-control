@@ -24,7 +24,7 @@ repeat_num: 0
 @controller.sampling_time: 1.0E-1
 
 @simulator.time_start: 0.
-@simulator.time_final: 10.
+@simulator.time_final: 35.
 
 
 
@@ -46,6 +46,9 @@ observation_target: = numpy.array([0.4, 0.4])
 
 @controller.actor.safe_controller.actor.predictor.prediction_horizon: 5
 @controller.actor.safe_controller.actor.predictor.n_steps: 11
-@controller.actor.safe_controller.actor.predictor.pred_step_size_multiplier%%: 220
+@controller.actor.safe_controller.actor.predictor.pred_step_size_multiplier%%: 10
 
-# nominal policy total objective: 201.1756
+@controller.critic.safe_decay_param: 10
+@controller.critic.is_dynamic_decay_rate: false
+
+# nominal policy total objective: 567.5

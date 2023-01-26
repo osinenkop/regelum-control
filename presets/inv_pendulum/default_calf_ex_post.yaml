@@ -41,8 +41,8 @@ observation_target%%: = []
 @running_objective.model.R1_diag%%: = [7., 0., 3.]
 
 @controller.actor.safe_controller.controller_gain: 20
-@controller.critic.safe_decay_rate: 10
-@controller.critic.critic_regularization_param: 20.
+@controller.critic.safe_decay_param: 100
+@controller.critic.critic_regularization_param: 0.
 
 @controller.actor.predictor.prediction_horizon: 0
 

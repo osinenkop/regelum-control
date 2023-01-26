@@ -1,5 +1,5 @@
 defaults:
-  - system: 3wrobot
+  - system: 2tank
 
 _target_: rcognita.simulator.Simulator
 

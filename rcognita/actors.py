@@ -810,7 +810,7 @@ class ActorCALF(ActorRPO):
         self.predictive_constraint_violation = (
             self.critic_next
             - self.critic_current
-            + self.critic.sampling_time * self.critic.safe_decay_rate
+            + self.critic.sampling_time * self.critic.safe_decay_param
         )
         return self.predictive_constraint_violation
 
@@ -834,7 +834,7 @@ class ActorCALF(ActorRPO):
         self.predictive_constraint_violation = (
             self.critic(predicted_observation)
             - self.critic(observation_last_good)
-            + self.critic.sampling_time * self.critic.safe_decay_rate
+            + self.critic.sampling_time * self.critic.safe_decay_param
         )
 
         return self.predictive_constraint_violation

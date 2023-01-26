@@ -279,7 +279,7 @@ class main:
     logger = None
     assignments = []
     weak_assignments = []
-    builtin_callbacks = [SaveProgressCallback, TimeRemainingCallback]
+    builtin_callbacks = [TimeRemainingCallback, SaveProgressCallback]
     objects_created = {}
 
     @classmethod
