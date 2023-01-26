@@ -1,0 +1,24 @@
+defaults:
+  - model: dqn
+  - optimizer: torch
+
+_target_: rcognita.critics.CriticOffPolicy
+
+
+
+system_dim_input: $ simulator.system.dim_input
+system_dim_output: $ simulator.system.dim_output
+data_buffer_size: 4
+running_objective: $ running_objective
+discount_factor: $ controller.actor.discount_factor
+sampling_time: $ controller.sampling_time
+critic_regularization_param: 0
+
+dim_critic_model_input%%: = ${.system_dim_input} + ${.system_dim_output}
+
+action_bounds: = numpy.array([[${.F_min%%}, ${.F_max%%}], [${.M_min%%}, ${.M_max%%}]])
+
+F_min%%: -300.
+F_max%%: 300.
+M_min%%: -100.
+M_max%%: 100.

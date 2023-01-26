@@ -705,10 +705,12 @@ class ModelDQN(ModelNN):
         self.fc3 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
+        self.double()
+
         if weights is not None:
             self.load_state_dict(weights)
 
-        self.weights = self.parameters()
+        self.weights = list(self.parameters())
         self.cache_weights()
 
     @force_positive_def
