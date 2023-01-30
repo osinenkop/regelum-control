@@ -122,6 +122,47 @@ class ComplementedConfig:
         self.__hydra_config = cfg
         self.config_path = config_path
 
+    def treemap(self):
+        import plotly.express as px
+        def format(parent_name,  parent_node, occupied=set()):
+            labels=[]
+            parents=[]
+            for name, value in parent_node.items():
+                # check if node as attribute value
+                parents.append(parent_name)
+                if isinstance(value, ComplementedConfig):
+                    while name in occupied:
+                        name += " "
+                    labels.append(name)
+                    subnode_parents, subnode_labels = format(name,
+                                                             value,
+                                                             occupied=occupied)
+                    for i, subnode_label in enumerate(subnode_labels):
+                        if subnode_label in labels or subnode_label in parents:
+                            subnode_labels[i] = subnode_labels[i] + " "
+                    labels += subnode_labels
+                    parents += subnode_parents
+                else:
+                    name = f"{name}: {str(value)}"
+                    while name in occupied:
+                        name += " "
+                    labels.append(name)
+                occupied.add(labels[-1])
+            occupied.add(parent_name)
+            return parents, labels
+
+                # append attributes for root
+        parents, labels = format("config", self)
+        # parents = [parent[:-1] if "_" in parent else parent for parent in parents]
+        # parents = [""] + parents
+        # labels = ["config"] + labels
+        fig = px.treemap(
+            names=labels,
+            parents=parents
+        )
+        fig.show()
+
+
     def refresh(self):
         """
         Reset all cached instances.
@@ -216,7 +257,7 @@ class ComplementedConfig:
     def keys(self):
         return [key.replace("__IGNORE__", "") for key in self.__hydra_config.keys()]
 
-    def values(self):
+    def items(self):
         return [
             (
                 key.replace("__IGNORE__", ""),
@@ -228,9 +269,25 @@ class ComplementedConfig:
                     config_path=key
                     if not self.config_path
                     else f"{self.config_path}.{key}",
-                ),
+                )
             )
-            for key, value in self.__hydra_config.values()
+            for key, value in self.__hydra_config.items()
+        ]
+
+    def values(self):
+        return [
+            (
+                value
+                if not isinstance(value, DictConfig)
+                and not isinstance(value, ListConfig)
+                else ComplementedConfig(
+                    value,
+                    config_path=key
+                    if not self.config_path
+                    else f"{self.config_path}.{key}",
+                )
+            )
+            for key, value in self.__hydra_config.items()
         ]
 
     def __delitem__(self, key):

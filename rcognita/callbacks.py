@@ -127,6 +127,12 @@ class HistoricalCallback(Callback, ABC):
     def data(self):
         pass
 
+    def plot(self):
+        plt.plot(self.data)
+        plt.grid()
+        plt.xticks(range(1, len(self.data) + 1))
+
+
 
 def method_callback(method_name, class_name=None, log_level="debug"):
     """

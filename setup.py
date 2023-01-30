@@ -40,6 +40,7 @@ setup(
         "torch>=1.12.1",
         "casadi>=3.5.5",
         "dill==0.3.6",
+        "plotly==5.13.0",
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],
