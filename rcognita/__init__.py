@@ -48,6 +48,7 @@ from . import __instantiate as inst
 
 mock = Mock()
 
+import plotly.graph_objects as go
 
 def __memorize_instance(resolver):
     def inner(
@@ -123,44 +124,66 @@ class ComplementedConfig:
         self.config_path = config_path
 
     def treemap(self):
-        import plotly.express as px
-        def format(parent_name,  parent_node, occupied=set()):
+        def format(parent_name,  parent_node, parent_node_raw, occupied=set(), parent_color=50):
             labels=[]
             parents=[]
+            colors=[]
+            text = []
             for name, value in parent_node.items():
                 # check if node as attribute value
                 parents.append(parent_name)
+                if type(parent_node_raw) is str:
+                    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__hydra_config)
                 if isinstance(value, ComplementedConfig):
                     while name in occupied:
                         name += " "
+                    text.append("")
                     labels.append(name)
-                    subnode_parents, subnode_labels = format(name,
-                                                             value,
-                                                             occupied=occupied)
+                    colors.append((parent_color * 1.2) % 100)
+                    subnode_parents, subnode_labels, subnode_colors, subnode_text = \
+                        format(name,
+                               value,
+                               parent_node_raw[name.strip()],
+                               occupied=occupied,
+                               parent_color=(parent_color * 1.2) % 100)
                     for i, subnode_label in enumerate(subnode_labels):
                         if subnode_label in labels or subnode_label in parents:
                             subnode_labels[i] = subnode_labels[i] + " "
                     labels += subnode_labels
                     parents += subnode_parents
+                    colors += subnode_colors
+                    text += subnode_text
                 else:
+                    real_name = name if name in parent_node_raw else name + "__IGNORE__"
+                    if type(parent_node_raw[real_name]) is str and "$" in parent_node_raw[real_name]:
+                        text.append(parent_node_raw[real_name].replace("__IGNORE__", "%%"))
+                    else:
+                        text.append("")
+                    colors.append(hash(name) % 100)
                     name = f"{name}: {str(value)}"
                     while name in occupied:
                         name += " "
                     labels.append(name)
+
                 occupied.add(labels[-1])
             occupied.add(parent_name)
-            return parents, labels
+            return parents, labels, colors, text
 
                 # append attributes for root
-        parents, labels = format("config", self)
+        parents, labels, colors, text = format("config", self, omegaconf.OmegaConf.to_container(self.__hydra_config))
         # parents = [parent[:-1] if "_" in parent else parent for parent in parents]
         # parents = [""] + parents
         # labels = ["config"] + labels
-        fig = px.treemap(
-            names=labels,
-            parents=parents
-        )
-        fig.show()
+        fig = go.Figure(go.Treemap(
+            labels=labels,
+            parents=parents,
+            marker=dict(
+                colors=colors,
+                colorscale='RdBu',
+                cmid=50),
+            text=text
+        ))
+        return fig
 
 
     def refresh(self):
@@ -434,6 +457,7 @@ class main:
                 for callback in self.__class__.callbacks:
                     if callback.cooldown:
                         callback.cooldown *= self.cooldown_factor
+                ccfg.treemap().write_html("CONFIG DIAGRAM.html")
                 res = old_app(ccfg)
                 ccfg.refresh()
                 if self.is_sweep:
