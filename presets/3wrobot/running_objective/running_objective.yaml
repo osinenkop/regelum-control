@@ -1,6 +1,0 @@
-defaults:
-  - model: quad_form_ddqn
-
-###---Constructor arguments---###
-
-_target_: rcognita.objectives.RunningObjective

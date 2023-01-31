@@ -1,4 +1,0 @@
-defaults:
-  - controller: pg
-  - default_${controller}
-

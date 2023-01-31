@@ -31,6 +31,7 @@ import pandas as pd
 import pickle
 import dill
 from omegaconf import OmegaConf
+from dataclasses import dataclass
 
 
 np.random.seed(42)
@@ -43,30 +44,20 @@ for i, arg in enumerate(sys.argv):
         break
 
 
-@r.main(
-    config_path=f"{EXPERIMENT}",
-    config_name="scenario",
-    callbacks=[
-        HistoricalObjectiveCallback,
-        TotalObjectiveCallback,
-        CriticObjectiveCallback,
-        CalfCallback,
-        HistoricalObservationCallback,
-    ],
-)
-def launch(scenario_config):
-    HistoricalObservationCallback.name_observation_components(
-        ["theta", "x", "theta_dot", "x_dot"]
-    )
-    scenario = ~scenario_config
-    outcome = scenario.run()
+@r.main(config_path="general", config_name="main")
+def launch(cfg):
+    observation_naming = (~cfg.observation_naming).observation
+    HistoricalObservationCallback.name_observation_components(observation_naming)
+
+    scenario = ~cfg.scenario
+    total_objective = scenario.run()
 
     if scenario.is_playback:
         animator = Animator3WRobot(scenario)
         animator.playback()
         plt.show()
 
-    return outcome
+    return total_objective
 
 
 def plot_multirun_total_objective(callbacks, preset_name):

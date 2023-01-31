@@ -1,3 +1,0 @@
-_target_: rcognita.models.LookupTable
-
-_args_: $ critic.dim_state_space

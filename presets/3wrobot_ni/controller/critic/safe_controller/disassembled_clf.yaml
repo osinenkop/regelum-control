@@ -1,5 +1,0 @@
-_target_: rcognita.controllers.Controller3WRobotNIDisassembledCLF
-
-action_bounds: $ controller.action_bounds
-time_start: $ simulator.time_start
-sampling_time: $ controller.sampling_time

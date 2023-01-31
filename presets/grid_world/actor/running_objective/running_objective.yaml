@@ -1,7 +1,0 @@
-_target_: rcognita.objectives.RunningObjective
-
-model:
-  _target_: rcognita.models.LookupTable
-  _args_:
-    - ${actor.dim_world} 
-    - = len(${actor.optimizer.possible_variants})

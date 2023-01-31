@@ -1,6 +1,0 @@
-_target_: rcognita.controllers.NominalControllerInvertedPendulum
-
-###---Constructor arguments---###
-
-action_bounds: $ controller.action_bounds
-controller_gain: 1
