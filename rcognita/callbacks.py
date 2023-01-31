@@ -131,6 +131,7 @@ class ConfigDiagramCallback(Callback):
         pass
 
     def on_launch(self, cfg, metadata):
+        start = time.time()
         name = metadata["config_path"].split("/")[-1].split(".")[0]
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
@@ -196,6 +197,9 @@ class ConfigDiagramCallback(Callback):
         )
         with open("SUMMARY.html", "w") as f:
             f.write(html)
+        self.log(
+            f"Saved summary to {os.path.abspath('SUMMARY.html')}. ({int(1000 * (time.time() - start))}ms)"
+        )
 
     def on_termination(self):
         with open("SUMMARY.html", "r") as f:
