@@ -1,5 +1,5 @@
 defaults:
-  - system: inv_perndulum 
+  - system: inv_pendulum 
   - scenario: episodic
   - simulator: casadi
   - optional nominal_controller: nominal_${system}
