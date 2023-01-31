@@ -8,10 +8,10 @@ sys_type: diff_eqn
 dim_state: ${.dim_kin_point_system%%}
 dim_disturb: ${.dim_kin_point_system%%}
 
-dim_kin_point_system%%: 2
+dim_kin_point_system%%: 1
 
 pars: = []
 
 bound%%: 50
-action_bounds%%: = numpy.hstack([numpy.full((${.dim_kin_point_system%%}, 1), -${.bound%%}), numpy.full((${.dim_kin_point_system%%}, 1), ${.bound%%})])
+action_bounds%%: = numpy.array([-${.bound%%}, ${.bound%%}])
 

@@ -1,8 +1,7 @@
 defaults:
-  - system: inv_pendulum 
+  - system: kin_point 
   - scenario: episodic
   - simulator: casadi
-  - optional nominal_controller: nominal_${system}
   - controller: dqn
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
