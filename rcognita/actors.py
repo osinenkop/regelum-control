@@ -771,7 +771,7 @@ class ActorCALF(ActorRPO):
         self.predictive_constraint_violations = []
         self.intrinsic_constraints = (
             [
-                self.CALF_decay_constraint_for_actor,
+                # self.CALF_decay_constraint_for_actor,
                 # self.CALF_decay_constraint_for_actor_same_critic
             ]
             if actor_constraints_on

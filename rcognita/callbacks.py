@@ -121,7 +121,7 @@ class Callback(ABC):
         except Exception as e:
             self.log(f"Callback {self.__class__.__name__} failed.")
             self.exception(e)
-    
+
     def on_termination(self):
         pass
 
@@ -131,25 +131,32 @@ class ConfigDiagramCallback(Callback):
         pass
 
     def on_launch(self, cfg, metadata):
-        name = metadata["config_path"].split('/')[-1].split('.')[0]
+        name = metadata["config_path"].split("/")[-1].split(".")[0]
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
             html = f.read()
         try:
-            stream = os.popen('git log --name-status HEAD^..HEAD')
+            stream = os.popen("git log --name-status HEAD^..HEAD")
             commit_hash = stream.read().split()[1]
-            stream = os.popen('git status').read()
+            stream = os.popen("git status").read()
             if not "is up to date" in stream or "not staged" in stream:
-                commit_hash += ' <font color="red">(uncommitted/unstaged changes)</font>'
+                commit_hash += (
+                    ' <font color="red">(uncommitted/unstaged changes)</font>'
+                )
                 if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
-                    raise Exception("Running experiments without commiting is disallowed. Please, commit your changes.")
+                    raise Exception(
+                        "Running experiments without commiting is disallowed. Please, commit your changes."
+                    )
         except:
             commit_hash = None
             if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
-                raise Exception("Running experiments without commiting is disallowed. Please, commit your changes.")
+                raise Exception(
+                    "Running experiments without commiting is disallowed. Please, commit your changes."
+                )
         cfg_hash = hex(hash(cfg))
-        html = html.replace("</body>",
-                            f"""
+        html = html.replace(
+            "</body>",
+            f"""
                             <br>
                             <table>
                             <tbody>
@@ -161,7 +168,8 @@ class ConfigDiagramCallback(Callback):
                             </tbody>
                             </table>
                              </body>
-                             """)
+                             """,
+        )
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
         with open("SUMMARY.html", "w") as f:
             f.write(html)
@@ -180,8 +188,9 @@ class ConfigDiagramCallback(Callback):
             images.append(images[-1])
         for i in range(0, len(images), 2):
             table_lines += f'<tr><td><img src="{images[i]}"></td> <td><img src="{images[i + 1]}"></td></tr>\n'
-        html = html.replace("</body>",
-                            f"""
+        html = html.replace(
+            "</body>",
+            f"""
                             <br>
                             <table>
                             <tbody>
@@ -189,7 +198,8 @@ class ConfigDiagramCallback(Callback):
                             </tbody>
                             </table>
                              </body>
-                             """)
+                             """,
+        )
         with open("SUMMARY.html", "w") as f:
             f.write(html)
 
@@ -220,9 +230,6 @@ class HistoricalCallback(Callback, ABC):
             name = self.__class__.__name__
         self.plot(name=name)
         plt.savefig(f"gfx/{name}.png")
-
-
-
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
@@ -298,7 +305,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = 1.0
+        self.cooldown = 0.0
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
@@ -328,6 +335,59 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         return cache_transformed
 
 
+class HistoricalObservationCallback(HistoricalCallback):
+    """
+    A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cache = {}
+        self.timeline = []
+        self.num_launch = 1
+        self.cooldown = 0.0
+
+    def perform(self, obj, method, output):
+        if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
+            key = (self.num_launch, obj.time)
+            if key in self.cache.keys():
+                self.num_launch += 1
+                key = (self.num_launch, obj.time)
+
+            self.cache[key] = output[1]
+            if self.timeline != []:
+                if self.timeline[-1] < key[1]:
+                    self.timeline.append(key[1])
+
+            else:
+                self.timeline.append(key[1])
+
+    @property
+    def data(self):
+        import numpy as np
+
+        keys = list(self.cache.keys())
+        run_numbers = sorted(list(set([k[0] for k in keys])))
+        cache_transformed = {key: list() for key in run_numbers}
+        for k, v in self.cache.items():
+            cache_transformed[k[0]].append(v)
+
+        dfs = [pd.DataFrame(np.array(cache_transformed[n])) for n in run_numbers]
+        for df in dfs:
+            if hasattr(self, "columns"):
+                df.columns = self.columns
+            else:
+                df.columns = pd.RangeIndex(1, len(df.columns) + 1)
+
+        return dfs
+
+    @classmethod
+    def name_observation_components(cls, columns):
+        cls.columns = columns
+
+
 class TotalObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -348,7 +408,6 @@ class TotalObjectiveCallback(HistoricalCallback):
     @property
     def data(self):
         return self.cache
-
 
 
 class SaveProgressCallback(Callback):
@@ -403,7 +462,7 @@ class TimeRemainingCallback(Callback):
 
 
 class CriticObjectiveCallback(Callback):
-    cooldown = 0.5
+    cooldown = 1
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.critics.Critic) and method == "objective":
@@ -424,7 +483,7 @@ class CalfCallback(HistoricalCallback):
                 obj.critic.observation_last_good, use_stored_weights=True
             )
             self.log(
-                f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_param}"
+                f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.critic.observation_buffer[:,-1]}"
             )
             is_calf = (
                 obj.critic.weights_acceptance_status == "accepted"
@@ -462,4 +521,3 @@ class CalfCallback(HistoricalCallback):
 
         plt.grid()
         plt.legend()
-

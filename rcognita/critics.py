@@ -553,8 +553,6 @@ class CriticOffPolicy(Critic):
         return critic_objective
 
 
-
-
 class CriticCALF(CriticOfObservation):
     def __init__(
         self,
@@ -592,7 +590,9 @@ class CriticCALF(CriticOfObservation):
         self.observation_init = observation_init
         self.action_init = action_init
         self.observation_last_good = observation_init
-        self.r_prev = self.running_objective(self.observation_init, self.action_init)
+        self.r_prev_init = self.r_prev = self.running_objective(
+            self.observation_init, self.action_init
+        )
 
         self.lb_constraint_violations = []
         self.ub_constraint_violations = []
@@ -625,6 +625,7 @@ class CriticCALF(CriticOfObservation):
         """
         super().reset()
         self.observation_last_good = self.observation_init
+        self.r_prev = self.r_prev_init
 
         if hasattr(self.safe_controller, "reset_all_PID_controllers"):
             self.safe_controller.reset_all_PID_controllers()
@@ -809,21 +810,18 @@ class CriticCALF(CriticOfObservation):
             if self.critic_regularization_param > 0:
                 regularization_term = (
                     rc.sum_2(weights_current - weights_last_good)
-                    * self.critic_regularization_param
-                )
+                    * self.critic_regularization_param**-2
+                ) ** 10
             else:
                 regularization_term = 0
 
             temporal_difference = (
-                critic_old
-                - self.discount_factor * critic_next
-                - self.r_prev
+                critic_old - self.discount_factor * critic_next - self.r_prev
             )
 
             critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
 
         return critic_objective
-        
 
 
 class CriticTrivial(Critic):

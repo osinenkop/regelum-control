@@ -1,0 +1,14 @@
+_target_: rcognita.models.ModelDDQN
+
+dim_observation: $ system.dim_output
+dim_action: $ system.dim_input
+dim_hidden: 20
+
+F_min%%: $ controller.critic.F_min%%
+F_max%%: $ controller.critic.F_max%%
+M_min%%: $ controller.critic.M_min%%
+M_max%%: $ controller.critic.M_max%%
+
+grid_dim%%: 3
+
+actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.F_min%%}, ${.F_max%%}, ${.grid_dim%%}), numpy.linspace(${.M_min%%}, ${.M_max%%}, ${.grid_dim%%}))))

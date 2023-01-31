@@ -1,0 +1,19 @@
+_target_: rcognita.systems.Sys3WRobot
+
+###---Constructor arguments---###
+
+dim_input: 2
+dim_output: 5
+sys_type: diff_eqn
+dim_state: 5
+dim_disturb: 5
+pars: = [${.m%%}, ${.I%%}]
+
+m%%: 10.
+I%%: 1.
+
+F_min%%: -300.
+F_max%%: 300.
+M_min%%: -100.
+M_max%%: 100.
+action_bounds%%: = numpy.array([[${.F_min%%}, ${.F_max%%}], [${.M_min%%}, ${.M_max%%}]])

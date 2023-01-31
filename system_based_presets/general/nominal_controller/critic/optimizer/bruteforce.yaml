@@ -1,0 +1,5 @@
+_target_: rcognita.optimizers.BruteForceOptimizer
+
+###---Constructor arguments---###
+
+possible_variants: $ controller.actor.optimizer.possible_variants

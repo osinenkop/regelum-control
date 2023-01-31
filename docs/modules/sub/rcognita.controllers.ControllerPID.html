@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.controllers.ControllerPID &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.controllers.ControllerMemoryPID &mdash; rcognita 0.2.0 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -65,7 +65,7 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotNIDisassembledCLF.html">rcognita.controllers.Controller3WRobotNIDisassembledCLF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotNIMotionPrimitive.html">rcognita.controllers.Controller3WRobotNIMotionPrimitive</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotPID.html">rcognita.controllers.Controller3WRobotPID</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.controllers.ControllerPID</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.controllers.ControllerMemoryPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerStabilizing.html">rcognita.controllers.ControllerStabilizing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.NominalControllerInvertedPendulum.html">rcognita.controllers.NominalControllerInvertedPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.RLController.html">rcognita.controllers.RLController</a></li>
@@ -105,7 +105,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../index.html" class="icon icon-home"></a></li>
           <li class="breadcrumb-item"><a href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
-      <li class="breadcrumb-item active">rcognita.controllers.ControllerPID</li>
+      <li class="breadcrumb-item active">rcognita.controllers.ControllerMemoryPID</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -114,14 +114,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="rcognita-controllers-controllerpid">
-<h1>rcognita.controllers.ControllerPID<a class="headerlink" href="#rcognita-controllers-controllerpid" title="Permalink to this headline"></a></h1>
+  <div class="section" id="rcognita-controllers-ControllerMemoryPID">
+<h1>rcognita.controllers.ControllerMemoryPID<a class="headerlink" href="#rcognita-controllers-ControllerMemoryPID" title="Permalink to this headline"></a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="rcognita.controllers.ControllerPID">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.controllers.</span></span><span class="sig-name descname"><span class="pre">ControllerPID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-</span> <span class="pre">5,</span> <span class="pre">-</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.ControllerPID" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="rcognita.controllers.ControllerMemoryPID">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.controllers.</span></span><span class="sig-name descname"><span class="pre">ControllerMemoryPID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-</span> <span class="pre">5,</span> <span class="pre">-</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.ControllerMemoryPID" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
-<dt class="sig sig-object py" id="rcognita.controllers.ControllerPID.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-</span> <span class="pre">5,</span> <span class="pre">-</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.ControllerPID.__init__" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="rcognita.controllers.ControllerMemoryPID.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">P</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SP</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-</span> <span class="pre">5,</span> <span class="pre">-</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.ControllerMemoryPID.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
 </dd></dl>
 
@@ -132,7 +132,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.controllers.ControllerPID.__init__" title="rcognita.controllers.ControllerPID.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(P, I, D[, SP, sampling_time, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.controllers.ControllerMemoryPID.__init__" title="rcognita.controllers.ControllerMemoryPID.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(P, I, D[, SP, sampling_time, …])</p></td>
 <td><p>Initialize self.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action</span></code>(PV[, error_derivative])</p></td>

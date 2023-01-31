@@ -1,0 +1,19 @@
+_target_: rcognita.systems.CartPole
+
+###---Constructor arguments---###
+
+dim_input: 1
+dim_output: 4
+sys_type: diff_eqn
+dim_state: 4
+dim_disturb: 4
+pars: = [${.m_c%%}, ${.m_p%%}, ${.g%%}, ${.l%%}]
+
+m_c%%: 0.1
+m_p%%: 2.
+g%%: 9.81
+l%%: 0.5
+
+F_min%%: -300.
+F_max%%: 300.
+action_bounds%%: = numpy.array([[${.F_min%%}, ${.F_max%%}]])

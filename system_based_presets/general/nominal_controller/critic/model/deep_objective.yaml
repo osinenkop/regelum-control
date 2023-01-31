@@ -1,0 +1,5 @@
+_target_: rcognita.models.ModelDeepObjective
+
+dim_observation: $ system.dim_output
+dim_hidden: 20
+force_positive_def: true

@@ -1,0 +1,26 @@
+defaults:
+  - actor: calf
+  - critic: calf
+  - override actor/optimizer: casadi
+  - override critic/optimizer: casadi
+
+_target_: rcognita.controllers.CALFControllerPredictive
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: 1.0E-2
+is_fixed_critic_weights: false
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+action_bounds: $ system.action_bounds%%
+
+critic_period_multiplier%%: 1
+
+###---Overrides---###
+
+critic:
+  is_predictive: true
+
+
+
+

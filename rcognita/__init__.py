@@ -54,8 +54,10 @@ mock = Mock()
 import plotly.graph_objects as go
 import json
 
+
 def hash_string(s):
-    return int(hashlib.sha1(s.encode('utf-8')).hexdigest(), base=16)
+    return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
+
 
 def __memorize_instance(resolver):
     def inner(
@@ -84,7 +86,7 @@ def __sub_map(pattern, f, s):
     return re.sub(pattern, map_match, s)
 
 
-def __obtain(obj_repr):
+def obtain(obj_repr):
     if not isinstance(obj_repr, str):
         obj_repr = str(obj_repr)
     obj_repr = (
@@ -114,7 +116,7 @@ def __obtain(obj_repr):
 
 
 OmegaConf.register_new_resolver("same", __memorize_instance(oc.select))
-OmegaConf.register_new_resolver(name="get", resolver=__obtain)
+OmegaConf.register_new_resolver(name="get", resolver=obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 
@@ -132,15 +134,17 @@ class ComplementedConfig:
         self.__saved_hash = None
 
     def treemap(self, root="config"):
-        def format(parent_name,  parent_node, parent_node_raw, occupied=set(), parent_color=50):
-            labels=[]
-            parents=[]
-            colors=[]
+        def format(
+            parent_name, parent_node, parent_node_raw, occupied=set(), parent_color=50
+        ):
+            labels = []
+            parents = []
+            colors = []
             text = []
             for name, value in parent_node.items():
                 # check if node as attribute value
                 parents.append(parent_name)
-                #if type(parent_node_raw) is str:
+                # if type(parent_node_raw) is str:
                 #    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__hydra_config)
                 if isinstance(value, ComplementedConfig):
                     while name in occupied:
@@ -148,17 +152,25 @@ class ComplementedConfig:
                     node_raw = parent_node_raw[name.strip()]
                     if type(node_raw) is str:
                         text.append(node_raw.replace("__IGNORE__", "%%"))
-                        node_raw = omegaconf.OmegaConf.to_container(value.__hydra_config)
+                        node_raw = omegaconf.OmegaConf.to_container(
+                            value.__hydra_config
+                        )
                     else:
                         text.append("")
                     labels.append(name)
                     colors.append((parent_color * 1.2) % 100)
-                    subnode_parents, subnode_labels, subnode_colors, subnode_text = \
-                        format(name,
-                               value,
-                               node_raw,
-                               occupied=occupied,
-                               parent_color=(parent_color * 1.2) % 100)
+                    (
+                        subnode_parents,
+                        subnode_labels,
+                        subnode_colors,
+                        subnode_text,
+                    ) = format(
+                        name,
+                        value,
+                        node_raw,
+                        occupied=occupied,
+                        parent_color=(parent_color * 1.2) % 100,
+                    )
                     for i, subnode_label in enumerate(subnode_labels):
                         if subnode_label in labels or subnode_label in parents:
                             subnode_labels[i] = subnode_labels[i] + " "
@@ -168,8 +180,13 @@ class ComplementedConfig:
                     text += subnode_text
                 else:
                     real_name = name if name in parent_node_raw else name + "__IGNORE__"
-                    if type(parent_node_raw[real_name]) is str and "$" in parent_node_raw[real_name]:
-                        text.append(parent_node_raw[real_name].replace("__IGNORE__", "%%"))
+                    if (
+                        type(parent_node_raw[real_name]) is str
+                        and "$" in parent_node_raw[real_name]
+                    ):
+                        text.append(
+                            parent_node_raw[real_name].replace("__IGNORE__", "%%")
+                        )
                     else:
                         text.append("")
                     colors.append(hash_string(name) % 100)
@@ -182,24 +199,25 @@ class ComplementedConfig:
             occupied.add(parent_name)
             return parents, labels, colors, text
 
-                # append attributes for root
+            # append attributes for root
+
         raw_self = omegaconf.OmegaConf.to_container(self.__hydra_config)
         self.__saved_hash = hash_string(json.dumps(raw_self, sort_keys=True))
-        parents, labels, colors, text = format(f"{root} {hex(hash(self))}", self, raw_self)
+        parents, labels, colors, text = format(
+            f"{root} {hex(hash(self))}", self, raw_self
+        )
         # parents = [parent[:-1] if "_" in parent else parent for parent in parents]
         # parents = [""] + parents
         # labels = ["config"] + labels
-        fig = go.Figure(go.Treemap(
-            labels=labels,
-            parents=parents,
-            marker=dict(
-                colors=colors,
-                colorscale='RdBu',
-                cmid=50),
-            text=text
-        ))
+        fig = go.Figure(
+            go.Treemap(
+                labels=labels,
+                parents=parents,
+                marker=dict(colors=colors, colorscale="RdBu", cmid=50),
+                text=text,
+            )
+        )
         return fig
-
 
     def refresh(self):
         """
@@ -317,7 +335,7 @@ class ComplementedConfig:
                     config_path=key
                     if not self.config_path
                     else f"{self.config_path}.{key}",
-                )
+                ),
             )
             for key, value in self.__hydra_config.items()
         ]
@@ -350,16 +368,16 @@ class ComplementedConfig:
 
         ``_target_`` has to be specified.
         """
-        if not self.config_path:
-            return inst.instantiate(self.__hydra_config, path=self.config_path)
-        else:
-            instance_name = self.config_path.strip()
-            if instance_name in self.objects_created:
-                return self.objects_created[instance_name]
-            else:
-                res = inst.instantiate(self.__hydra_config, path=self.config_path)
-                self.objects_created[instance_name] = res
-                return res
+        # if not self.config_path:
+        return inst.instantiate(self.__hydra_config, path=self.config_path)
+        # else:
+        #     instance_name = self.config_path.strip()
+        #     if instance_name in self.objects_created:
+        #         return self.objects_created[instance_name]
+        #     else:
+        #         res = inst.instantiate(self.__hydra_config, path=self.config_path)
+        #         self.objects_created[instance_name] = res
+        #         return res
 
 
 from .callbacks import *
@@ -384,7 +402,11 @@ class main:
     logger = None
     assignments = []
     weak_assignments = []
-    builtin_callbacks = [ConfigDiagramCallback, TimeRemainingCallback, SaveProgressCallback]
+    builtin_callbacks = [
+        ConfigDiagramCallback,
+        TimeRemainingCallback,
+        SaveProgressCallback,
+    ]
     objects_created = {}
 
     @classmethod
@@ -472,7 +494,8 @@ class main:
         os.chdir(path_parent)
         path = os.path.abspath(self.kwargs["config_path"])
         self.kwargs["config_path"] = path
-        def app(cfg, callbacks=self.__class__.callbacks):
+
+        def app(cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger):
             os.mkdir("gfx")
             with omegaconf.flag_override(cfg, "allow_objects", True):
                 ccfg = ComplementedConfig(cfg)
@@ -480,18 +503,18 @@ class main:
                 if "callbacks" in cfg:
                     for callback in cfg.callbacks:
                         callback = (
-                            __obtain(callback)
-                            if isinstance(callback, str)
-                            else callback
+                            obtain(callback) if isinstance(callback, str) else callback
                         )
-                        callbacks.append(callback(self.__class__.logger))
+                        callbacks.append(callback(logger))
                     delattr(cfg, "callbacks")
                 self.__class__.callbacks = callbacks
                 for callback in self.__class__.callbacks:
                     if callback.cooldown:
                         callback.cooldown *= self.cooldown_factor
-                    callback.on_launch(ccfg, {"script_path": script_path,
-                                              "config_path": path + ".yaml"})
+                    callback.on_launch(
+                        ccfg,
+                        {"script_path": script_path, "config_path": path + ".yaml"},
+                    )
                 res = old_app(ccfg)
                 for callback in self.__class__.callbacks:
                     callback.on_termination()

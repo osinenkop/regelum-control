@@ -195,7 +195,9 @@ class CALFControllerExPost(RLController):
 
                 self.critic.observation_last_good = observation
                 self.critic.cache_weights()
-                self.critic.r_prev = self.actor.running_objective(observation, self.actor.action)
+                self.critic.r_prev = self.actor.running_objective(
+                    observation, self.actor.action
+                )
             else:
                 self.invoke_safe_action(observation)
         else:
@@ -612,7 +614,7 @@ class Controller3WRobotDisassembledCLF:
         return self._Fc(xNI, eta, theta_star)
 
 
-class ControllerPID:
+class ControllerMemoryPID:
     def __init__(
         self,
         P,
@@ -729,13 +731,13 @@ class Controller3WRobotPID:
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
-        self.PID_angle_arctan = ControllerPID(
+        self.PID_angle_arctan = ControllerMemoryPID(
             -35, 0.0, -10, initial_point=self.state_init[2]
         )
-        self.PID_v_zero = ControllerPID(
+        self.PID_v_zero = ControllerMemoryPID(
             -35, 0.0, 1.2, initial_point=self.state_init[3], SP=0.0
         )
-        self.PID_x_y_origin = ControllerPID(
+        self.PID_x_y_origin = ControllerMemoryPID(
             -35,
             0.0,
             -35,
@@ -743,7 +745,7 @@ class Controller3WRobotPID:
             initial_point=self.state_init[:2],
             # buffer_length=100,
         )
-        self.PID_angle_origin = ControllerPID(
+        self.PID_angle_origin = ControllerMemoryPID(
             -30, 0.0, -10, SP=0.0, initial_point=self.state_init[2]
         )
         self.stabilization_tollerance = 1e-3
@@ -899,6 +901,75 @@ class Controller3WRobotPID:
 
     def compute_LF(self, observation):
         pass
+
+
+class ControllerCartPolePID:
+    def __init__(
+        self,
+        action_bounds,
+        time_start: float = 0,
+        state_init=rc.array([np.pi, 0, 0, 0]),
+        sampling_time: float = 0.01,
+        PID_swing_up_parameters=[1, 0, 0],
+        PID_cart_parameters=[10, 0, 0],
+        swing_up_tol=0.1,
+    ):
+        self.action_bounds = action_bounds
+        self.state_init = state_init
+        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.sampling_time = sampling_time
+        self.action = np.array([np.mean(action_bounds)])
+        self.PID_swingup = ControllerMemoryPID(
+            *PID_swing_up_parameters, initial_point=rc.array([1.5]), SP=rc.array([0])
+        )
+        self.PID_cart_stabilize = ControllerMemoryPID(
+            *PID_cart_parameters, initial_point=rc.array([0]), SP=rc.array([0])
+        )
+        self.swing_up_tol = swing_up_tol
+
+    def compute_action_sampled(self, time, observation):
+        """
+        Compute sampled action.
+
+        """
+
+        is_time_for_new_sample = self.clock.check_time(time)
+
+        if is_time_for_new_sample:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+
+            if self.action_bounds != []:
+                for k in range(len(self.action_bounds)):
+                    action[k] = np.clip(
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+                    )
+
+            self.action_old = action
+            print(action)
+            return action
+
+        else:
+            return self.action
+
+    def compute_action(self, observation, time=0):
+        # if rc.abs(observation[0]) > np.pi / 2:
+        #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
+        # else:
+        #     action = self.compute_stabilizing_action(observation)
+        if abs(observation[0]) < 1.4:
+            error_derivative = observation[2]
+            self.action = self.PID_cart_stabilize.compute_action(
+                [rc.array(observation[0])], error_derivative=error_derivative
+            )
+        else:
+            error_derivative = -observation[2]
+            self.action = self.PID_swingup.compute_action(
+                [rc.array(observation[0])], error_derivative=error_derivative
+            )
+        return self.action
 
 
 class Controller3WRobotNIMotionPrimitive:
@@ -1270,7 +1341,7 @@ class NominalControllerInvertedPendulum:
     def compute_action(self, observation, time=0):
         self.observation = observation
         return np.array(
-            [-((observation[0]) + 0.2 * (observation[1])) * self.controller_gain]
+            [-((observation[0]) + 0.1 * (observation[1])) * self.controller_gain]
         )
 
     def reset(self):

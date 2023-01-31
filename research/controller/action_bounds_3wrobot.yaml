@@ -1,5 +1,0 @@
-F_min%%: -300.
-F_max%%: 300.
-M_min%%: -100.
-M_max%%: 100.
-action_bounds: = numpy.array([[${.F_min%%}, ${.F_max%%}], [${.M_min%%}, ${.M_max%%}]])

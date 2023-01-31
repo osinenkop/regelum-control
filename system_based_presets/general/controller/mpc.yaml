@@ -1,0 +1,15 @@
+defaults:
+  - actor: mpc
+  - critic: trivial
+
+_target_: rcognita.controllers.RLController
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: 1.0E-2
+is_fixed_critic_weights: false
+action_bounds: $ system.action_bounds%%
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+critic_period_multiplier%%: 1
+

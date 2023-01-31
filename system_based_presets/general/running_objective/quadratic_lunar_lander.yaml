@@ -1,0 +1,9 @@
+defaults:
+  - model: quad_form_ddqn
+
+###---Constructor arguments---###
+
+_target_: rcognita.objectives.RunningObjective
+
+model:
+  R1_diag%%: = [5, 3, 3, 5, 5, 5, 0, 0]
