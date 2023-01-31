@@ -131,7 +131,7 @@ class ComplementedConfig:
         self.config_path = config_path
         self.__saved_hash = None
 
-    def treemap(self):
+    def treemap(self, root="config"):
         def format(parent_name,  parent_node, parent_node_raw, occupied=set(), parent_color=50):
             labels=[]
             parents=[]
@@ -185,7 +185,7 @@ class ComplementedConfig:
                 # append attributes for root
         raw_self = omegaconf.OmegaConf.to_container(self.__hydra_config)
         self.__saved_hash = hash_string(json.dumps(raw_self, sort_keys=True))
-        parents, labels, colors, text = format("config", self, raw_self)
+        parents, labels, colors, text = format(f"{root} {hex(hash(self))}", self, raw_self)
         # parents = [parent[:-1] if "_" in parent else parent for parent in parents]
         # parents = [""] + parents
         # labels = ["config"] + labels
@@ -209,12 +209,15 @@ class ComplementedConfig:
         """
         main.objects_created.clear()
 
+    def __contains__(self, item):
+        return item in self.__hydra_config or item + "__IGNORE__" in self.__hydra_config
+
     def __getattr__(self, item):
         cfg = object.__getattribute__(self, "_ComplementedConfig__hydra_config")
         try:
             name = item
             attr = cfg.__getattr__(name)
-        except (IndexError, KeyError, AttributeError) as e:
+        except (IndexError, KeyError, AttributeError, ConfigKeyError) as e:
             name = item + "__IGNORE__"
             attr = cfg.__getattr__(name)
         if isinstance(attr, DictConfig) or isinstance(attr, ListConfig):
@@ -239,7 +242,7 @@ class ComplementedConfig:
         try:
             name = key
             item = cfg[name]
-        except (IndexError, KeyError, AttributeError) as e:
+        except (IndexError, KeyError, AttributeError, ConfigKeyError) as e:
             if isinstance(key, str):
                 name = key + "__IGNORE__"
                 item = cfg[name]
@@ -463,7 +466,14 @@ class main:
         self.__class__.logger = logger
 
     def __call__(self, old_app):
+        script_path = inspect.getfile(old_app)
+        path_main = os.path.abspath(script_path)
+        path_parent = "/".join(path_main.split("/")[:-1])
+        os.chdir(path_parent)
+        path = os.path.abspath(self.kwargs["config_path"])
+        self.kwargs["config_path"] = path
         def app(cfg, callbacks=self.__class__.callbacks):
+            os.mkdir("gfx")
             with omegaconf.flag_override(cfg, "allow_objects", True):
                 ccfg = ComplementedConfig(cfg)
                 self.apply_assignments(ccfg)
@@ -480,8 +490,11 @@ class main:
                 for callback in self.__class__.callbacks:
                     if callback.cooldown:
                         callback.cooldown *= self.cooldown_factor
-                    callback.on_launch(ccfg)
+                    callback.on_launch(ccfg, {"script_path": script_path,
+                                              "config_path": path + ".yaml"})
                 res = old_app(ccfg)
+                for callback in self.__class__.callbacks:
+                    callback.on_termination()
                 ccfg.refresh()
                 if self.is_sweep:
                     return res
@@ -493,11 +506,6 @@ class main:
                     }
 
         app.__module__ = old_app.__module__
-        path_main = os.path.abspath(inspect.getfile(old_app))
-        path_parent = "/".join(path_main.split("/")[:-1])
-        os.chdir(path_parent)
-        path = os.path.abspath(self.kwargs["config_path"])
-        self.kwargs["config_path"] = path
         return hydramain(*self.args, **self.kwargs)(app)
 
 

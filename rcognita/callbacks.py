@@ -101,7 +101,7 @@ class Callback(ABC):
         else:
             return False
 
-    def on_launch(self, cfg):
+    def on_launch(self, cfg, metadata):
         pass
 
     @abstractmethod
@@ -130,34 +130,98 @@ class ConfigDiagramCallback(Callback):
     def perform(self, *args, **kwargs):
         pass
 
-    def on_launch(self, cfg):
-        cfg.treemap().write_html("CONFIG SUMMARY.html")
-        with open("CONFIG SUMMARY.html", "r") as f:
+    def on_launch(self, cfg, metadata):
+        name = metadata["config_path"].split('/')[-1].split('.')[0]
+        cfg.treemap(root=name).write_html("SUMMARY.html")
+        with open("SUMMARY.html", "r") as f:
             html = f.read()
         try:
             stream = os.popen('git log --name-status HEAD^..HEAD')
             commit_hash = stream.read().split()[1]
-            # os.popen('git log --name-status HEAD^..HEAD')
+            stream = os.popen('git status').read()
+            if not "is up to date" in stream or "not staged" in stream:
+                commit_hash += ' <font color="red">(uncommitted/unstaged changes)</font>'
+                if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
+                    raise Exception("Running experiments without commiting is disallowed. Please, commit your changes.")
         except:
             commit_hash = None
-        html = html.replace("<body>",
-                            f"""<body>
-                             <H1>Config hash: {hex(hash(cfg))}</H1>
-                             <H1>Commit hash: {commit_hash}</H1>
+            if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
+                raise Exception("Running experiments without commiting is disallowed. Please, commit your changes.")
+        cfg_hash = hex(hash(cfg))
+        html = html.replace("</body>",
+                            f"""
+                            <br>
+                            <table>
+                            <tbody>
+                            <tr><td>Config hash:  </td> <td>{cfg_hash}</td></tr>
+                            <tr><td>Commit hash: </td><td>{commit_hash} </td></tr>
+                            <tr><td>Date and time: </td><td>{datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S")} </td></tr>
+                            <tr><td>Script path: </td><td>{metadata["script_path"]} </td></tr>
+                            <tr><td>Config path: </td><td>{metadata["config_path"]}</td></tr>
+                            </tbody>
+                            </table>
+                             </body>
                              """)
-        with open("CONFIG SUMMARY.html", "w") as f:
+        html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
+        with open("SUMMARY.html", "w") as f:
             f.write(html)
 
+    def on_termination(self):
+        with open("SUMMARY.html", "r") as f:
+            html = f.read()
+        table_lines = ""
+        images = []
+        directory = os.fsencode("gfx")
+
+        for file in os.listdir(directory):
+            filename = os.fsdecode(file)
+            images.append(f"gfx/{filename}")
+        if len(images) % 2:
+            images.append(images[-1])
+        for i in range(0, len(images), 2):
+            table_lines += f'<tr><td><img src="{images[i]}"></td> <td><img src="{images[i + 1]}"></td></tr>\n'
+        html = html.replace("</body>",
+                            f"""
+                            <br>
+                            <table>
+                            <tbody>
+                            {table_lines}
+                            </tbody>
+                            </table>
+                             </body>
+                             """)
+        with open("SUMMARY.html", "w") as f:
+            f.write(html)
+
+
 class HistoricalCallback(Callback, ABC):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.xlabel = "Time"
+        self.ylabel = "Value"
+
     @property
     @abstractmethod
     def data(self):
         pass
 
-    def plot(self):
-        plt.plot(self.data)
+    def plot(self, name=None):
+        if not name:
+            name = self.__class__.__name__
+        self.data.plot()
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
+        plt.title(name)
         plt.grid()
         plt.xticks(range(1, len(self.data) + 1))
+
+    def save_plot(self, name=None):
+        if not name:
+            name = self.__class__.__name__
+        self.plot(name=name)
+        plt.savefig(f"gfx/{name}.png")
+
+
 
 
 
@@ -277,16 +341,13 @@ class TotalObjectiveCallback(HistoricalCallback):
                 if obj.episode_counter != 0
                 else self.cache.index.max() + 1
             )
-            row = pd.DataFrame({"outcome": output}, index=[episode])
+            row = pd.DataFrame({"objective": output}, index=[episode])
             self.cache = pd.concat([self.cache, row])
-            plt.plot(self.data)
-            plt.grid()
-            plt.xticks(range(1, len(self.data) + 1))
-            plt.savefig("total_objective.png")
+            self.save_plot("Total objective")
 
     @property
     def data(self):
-        return self.cache.iloc[:, -1]
+        return self.cache
 
 
 
@@ -389,9 +450,8 @@ class CalfCallback(HistoricalCallback):
     def data(self):
         return self.cache
 
-    def plot_data(self):
+    def plot(self):
         self.data.reset_index(inplace=True)
-        import matplotlib.pyplot as plt
 
         fig = plt.figure(figsize=(10, 10))
 
@@ -402,4 +462,4 @@ class CalfCallback(HistoricalCallback):
 
         plt.grid()
         plt.legend()
-        plt.savefig("./CALF.png", format="png")
+
