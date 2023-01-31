@@ -1,9 +1,9 @@
 defaults:
-  - system: 3wrobot
+  - system: inv_perndulum 
   - scenario: episodic
   - simulator: casadi
   - optional nominal_controller: nominal_${system}
-  - controller: mpc
+  - controller: dqn
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
   - observation_naming: naming_${system}

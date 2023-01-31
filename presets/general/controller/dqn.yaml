@@ -1,5 +1,5 @@
 defaults:
-  - actor: ddqn
+  - actor: dqn
   - critic: dqn
 
 _target_: rcognita.controllers.RLController
@@ -15,6 +15,6 @@ critic_period_multiplier%%: 1
 
 actor:
   epsilon_greedy: true
-  epsilon_greedy_parameter: 0.15
+  epsilon_greedy_parameter: 0.05
   predictor:
     prediction_horizon: 0
