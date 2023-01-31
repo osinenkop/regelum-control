@@ -162,9 +162,10 @@ class ConfigDiagramCallback(Callback):
             content = content[content.find("task:"):]
             content = content[:content.find("job:")]
             content = content.replace("-", "").split()[1:]
-            for line in content:
-                field, value = line.split("=")
-                overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
+            if content[0] != "[]":
+                for line in content:
+                    field, value = line.split("=")
+                    overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
         html = html.replace(
             "<body>",
             f"""
