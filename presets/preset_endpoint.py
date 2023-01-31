@@ -16,6 +16,7 @@ from rcognita.visualization.vis_3wrobot import (
 from rcognita.visualization.vis_lunar_lander import (
     AnimatorLunarLander,
 )
+from rcognita.visualization.vis_inverted_pendulum import AnimatorInvertedPendulum
 from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
 from rcognita.callbacks import (
@@ -53,7 +54,7 @@ def launch(cfg):
     total_objective = scenario.run()
 
     if scenario.is_playback:
-        animator = Animator3WRobot(scenario)
+        animator = AnimatorInvertedPendulum(scenario)
         animator.playback()
         plt.show()
 
