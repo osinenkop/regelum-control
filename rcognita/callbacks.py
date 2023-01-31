@@ -22,6 +22,8 @@ import pandas as pd
 import time, datetime
 import dill, os
 
+import omegaconf, json
+
 import matplotlib.pyplot as plt
 
 
@@ -99,6 +101,9 @@ class Callback(ABC):
         else:
             return False
 
+    def on_launch(self, cfg):
+        pass
+
     @abstractmethod
     def perform(self, obj, method, output):
         pass
@@ -120,6 +125,28 @@ class Callback(ABC):
     def on_termination(self):
         pass
 
+
+class ConfigDiagramCallback(Callback):
+    def perform(self, *args, **kwargs):
+        pass
+
+    def on_launch(self, cfg):
+        cfg.treemap().write_html("CONFIG SUMMARY.html")
+        with open("CONFIG SUMMARY.html", "r") as f:
+            html = f.read()
+        try:
+            stream = os.popen('git log --name-status HEAD^..HEAD')
+            commit_hash = stream.read().split()[1]
+            # os.popen('git log --name-status HEAD^..HEAD')
+        except:
+            commit_hash = None
+        html = html.replace("<body>",
+                            f"""<body>
+                             <H1>Config hash: {hex(hash(cfg))}</H1>
+                             <H1>Commit hash: {commit_hash}</H1>
+                             """)
+        with open("CONFIG SUMMARY.html", "w") as f:
+            f.write(html)
 
 class HistoricalCallback(Callback, ABC):
     @property

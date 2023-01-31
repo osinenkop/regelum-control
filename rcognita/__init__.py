@@ -4,6 +4,7 @@ import sys, os, inspect
 import logging
 import warnings
 
+import random
 import omegaconf
 
 from omegaconf import DictConfig, OmegaConf, ListConfig
@@ -19,6 +20,8 @@ from omegaconf.errors import ConfigKeyError
 from omegaconf.grammar_parser import *
 
 from recursive_monkey_patch import monkey_patch
+
+import hashlib
 
 import hydra.core.plugins
 import hydra._internal.config_loader_impl
@@ -49,6 +52,10 @@ from . import __instantiate as inst
 mock = Mock()
 
 import plotly.graph_objects as go
+import json
+
+def hash_string(s):
+    return int(hashlib.sha1(s.encode('utf-8')).hexdigest(), base=16)
 
 def __memorize_instance(resolver):
     def inner(
@@ -122,6 +129,7 @@ class ComplementedConfig:
     def __init__(self, cfg, config_path=""):
         self.__hydra_config = cfg
         self.config_path = config_path
+        self.__saved_hash = None
 
     def treemap(self):
         def format(parent_name,  parent_node, parent_node_raw, occupied=set(), parent_color=50):
@@ -132,18 +140,23 @@ class ComplementedConfig:
             for name, value in parent_node.items():
                 # check if node as attribute value
                 parents.append(parent_name)
-                if type(parent_node_raw) is str:
-                    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__hydra_config)
+                #if type(parent_node_raw) is str:
+                #    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__hydra_config)
                 if isinstance(value, ComplementedConfig):
                     while name in occupied:
                         name += " "
-                    text.append("")
+                    node_raw = parent_node_raw[name.strip()]
+                    if type(node_raw) is str:
+                        text.append(node_raw.replace("__IGNORE__", "%%"))
+                        node_raw = omegaconf.OmegaConf.to_container(value.__hydra_config)
+                    else:
+                        text.append("")
                     labels.append(name)
                     colors.append((parent_color * 1.2) % 100)
                     subnode_parents, subnode_labels, subnode_colors, subnode_text = \
                         format(name,
                                value,
-                               parent_node_raw[name.strip()],
+                               node_raw,
                                occupied=occupied,
                                parent_color=(parent_color * 1.2) % 100)
                     for i, subnode_label in enumerate(subnode_labels):
@@ -159,7 +172,7 @@ class ComplementedConfig:
                         text.append(parent_node_raw[real_name].replace("__IGNORE__", "%%"))
                     else:
                         text.append("")
-                    colors.append(hash(name) % 100)
+                    colors.append(hash_string(name) % 100)
                     name = f"{name}: {str(value)}"
                     while name in occupied:
                         name += " "
@@ -170,7 +183,9 @@ class ComplementedConfig:
             return parents, labels, colors, text
 
                 # append attributes for root
-        parents, labels, colors, text = format("config", self, omegaconf.OmegaConf.to_container(self.__hydra_config))
+        raw_self = omegaconf.OmegaConf.to_container(self.__hydra_config)
+        self.__saved_hash = hash_string(json.dumps(raw_self, sort_keys=True))
+        parents, labels, colors, text = format("config", self, raw_self)
         # parents = [parent[:-1] if "_" in parent else parent for parent in parents]
         # parents = [""] + parents
         # labels = ["config"] + labels
@@ -248,7 +263,7 @@ class ComplementedConfig:
         return self.__class__.__name__ + "( " + repr(self.__hydra_config) + ")"
 
     def __setattr__(self, key, value):
-        if key == "config_path":
+        if key in ["config_path", "_ComplementedConfig__saved_hash"]:
             object.__setattr__(self, key, value)
             return
         if hasattr(self, "_ComplementedConfig__hydra_config"):
@@ -258,6 +273,13 @@ class ComplementedConfig:
                 self.__hydra_config.__setattr__(key, value)
         else:
             object.__setattr__(self, key, value)
+
+    def __hash__(self):
+        if not self.__saved_hash:
+            real_config = omegaconf.OmegaConf.to_container(self.__hydra_config)
+            return hash_string(json.dumps(real_config, sort_keys=True))
+        else:
+            return self.__saved_hash
 
     def copy(self):
         return ComplementedConfig(
@@ -359,7 +381,7 @@ class main:
     logger = None
     assignments = []
     weak_assignments = []
-    builtin_callbacks = [TimeRemainingCallback, SaveProgressCallback]
+    builtin_callbacks = [ConfigDiagramCallback, TimeRemainingCallback, SaveProgressCallback]
     objects_created = {}
 
     @classmethod
@@ -406,6 +428,7 @@ class main:
         :type logger: Logger, optional
 
         """
+        # os.environ["PYTHONHASHSEED"] = "0"
         callbacks = callbacks + self.builtin_callbacks
         sys.argv.insert(1, "--multirun")
         sys.argv.insert(-1, "hydra.job.chdir=True")
@@ -457,7 +480,7 @@ class main:
                 for callback in self.__class__.callbacks:
                     if callback.cooldown:
                         callback.cooldown *= self.cooldown_factor
-                ccfg.treemap().write_html("CONFIG DIAGRAM.html")
+                    callback.on_launch(ccfg)
                 res = old_app(ccfg)
                 ccfg.refresh()
                 if self.is_sweep:
