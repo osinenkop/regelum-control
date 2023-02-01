@@ -27,6 +27,8 @@ import omegaconf, json
 import matplotlib.pyplot as plt
 import re
 
+import pkg_resources
+
 def apply_callbacks(method):
     """
     Decorator that applies a list of callbacks to a given method of an object.
@@ -195,6 +197,46 @@ class ConfigDiagramCallback(Callback):
                             </table>
                             </div>
             ''',
+        )
+        installed_packages = pkg_resources.working_set
+        installed_packages_list = sorted([(i.key, i.version)
+                                          for i in installed_packages])
+        packages_table = []
+        for package, version in installed_packages_list:
+            if package in ["matplotlib",
+                            "numpy",
+                            "scipy",
+                            "omegaconf",
+                            "hydra-core",
+                            "hydra-joblib-launcher",
+                            "pandas",
+                            "gpytorch",
+                            "torch",
+                            "casadi",
+                            "dill",
+                            "plotly",
+                            "rcognita"]:
+                packages_table = [f'<tr><td><font face="Courier New" color="red">{package}</font></td> <td><font face="Courier New" color="red"> == </font></td>  <td><font face="Courier New" color="red">{version}</font></td> </tr>\n'] + packages_table
+            else:
+                packages_table.append(f'<tr><td><font face="Courier New">{package}</font></td> <td><font face="Courier New"> == </font></td>  <td><font face="Courier New">{version}</font></td> </tr>\n')
+
+        html = html.replace(
+            "</body>",
+            f"""
+                            <br>
+                            <details>
+                            <summary> Environment details </summary>
+                            <table>
+                            <tr style="vertical-align:top"> 
+                            <td> <table>  {"".join(packages_table[:len(packages_table) // 4 ])}  </table> </td>
+                            <td> <table>  {"".join(packages_table[len(packages_table) // 4 :2 * len(packages_table) // 4])}  </table> </td>
+                            <td> <table>  {"".join(packages_table[2 *  len(packages_table) // 4: 3 * len(packages_table) // 4])}  </table> </td>
+                            <td> <table>  {"".join(packages_table[3 *  len(packages_table) // 4:])}  </table> </td>
+                            </tr>
+                            </table>
+                            </details>
+                             </body>
+            """,
         )
         with open("SUMMARY.html", "w") as f:
             f.write(html)
