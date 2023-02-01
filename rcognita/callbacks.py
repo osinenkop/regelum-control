@@ -265,7 +265,7 @@ class ConfigDiagramCallback(Callback):
         if len(images) % 2:
             images.append("")
         for i in range(0, len(images), 2):
-            table_lines += f'<tr><td>{images[i]}</td> <td>{images[i + 1]}</td></tr>\n'
+            table_lines += f"<tr><td>{images[i]}</td> <td>{images[i + 1]}</td></tr>\n"
         html = html.replace(
             "</body>",
             f"""
@@ -490,6 +490,45 @@ class TotalObjectiveCallback(HistoricalCallback):
         return self.cache
 
 
+class QFunctionCallback(HistoricalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cache = {}
+        self.episodic_cache = {}
+        self.timeline = []
+        self.num_launch = 1
+        self.cooldown = 0.0
+        self.current_episode = None
+
+    def perform(self, obj, method, output):
+        if (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "post_step"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            key = obj.time
+            self.episodic_cache[key] = {
+                "observation": obj.observation,
+                "action": obj.action,
+                "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
+                .detach()
+                .cpu()
+                .numpy(),
+            }
+            self.current_episode = obj.episode_counter
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "reload_pipeline"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            self.cache[self.current_episode] = self.episodic_cache
+
+    @property
+    def data(self):
+        return self.cache
+
+
 class SaveProgressCallback(Callback):
     once_in = 1
 
@@ -541,12 +580,24 @@ class TimeRemainingCallback(Callback):
             )
 
 
-class CriticObjectiveCallback(Callback):
-    cooldown = 1
+class CriticObjectiveCallback(HistoricalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cache = []
+        self.timeline = []
+        self.num_launch = 1
+        self.cooldown = 0.0
+        self.current_episode = None
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.critics.Critic) and method == "objective":
             self.log(f"Current TD value: {output}")
+            self.cache.append(output)
+
+    @property
+    def data(self):
+        return self.cache
 
 
 class CalfCallback(HistoricalCallback):

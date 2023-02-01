@@ -75,38 +75,3 @@ def plot_multirun_total_objective(callbacks, preset_name):
 
 if __name__ == "__main__":
     job_results = launch()
-
-    # plot_multirun.plot_objectives(job_results, EXPERIMENT)
-    with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
-        df = pickle.load(f)
-
-    # observation_naming = (
-    #     ~r.ComplementedConfig(df.cfg[0]).observation_naming
-    # ).observation
-    # observation_history_callback = df.HistoricalObservationCallback[0]
-    # observation_history_callback.name_observation_components(observation_naming)
-    # observation_history = observation_history_callback.data[0]
-    # observation_history.plot(subplots=True, layout=(1, len(observation_naming)))
-    # plt.show()
-    # total_objective_path = os.path.join(
-    #     job_results["directory"][0], "total_objectives.png"
-    # )
-    # overrides_path = os.path.join(job_results["directory"][0], ".hydra/overrides.yaml")
-    # algo = OmegaConf.load(overrides_path)[0].split("=")[1]
-    # plot_multirun.plot_objectives(
-    #     df.TotalObjectiveCallback,
-    #     EXPERIMENT,
-    #     os.path.join(
-    #         job_results["directory"][0] + f"/../{EXPERIMENT.lower()}_{algo.lower()}.png"
-    #     ),
-    # )
-    # plt.plot(df.TotalObjectiveCallback.values[0].data)
-    # plt.grid()
-    # plt.xticks(range(1, len(df.TotalObjectiveCallback.values[0].data) + 1))
-    # plt.savefig(total_objective_path)
-
-    # callbacks_objective = df.TotalObjectiveCallback
-    # plot_multirun_total_objective(callbacks_objective, EXPERIMENT)
-    # callbacks_calf = df.CalfCallback
-    # for i, callback in enumerate(callbacks_calf):
-    #     callback.plot_data()
