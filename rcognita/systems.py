@@ -285,8 +285,8 @@ class SysKinematicPoint(System):
             prototype=utilities.rc.concatenate((state, action)),
         )
 
-        for i, value in action:
-            Dstate[i] = value
+        for i in range(utilities.rc.shape(action)[0]):
+            Dstate[i] = action[i]
 
         return Dstate
 
