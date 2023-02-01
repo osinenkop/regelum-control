@@ -25,7 +25,7 @@ import dill, os
 import omegaconf, json
 
 import matplotlib.pyplot as plt
-
+import re
 
 def apply_callbacks(method):
     """
@@ -131,6 +131,7 @@ class ConfigDiagramCallback(Callback):
         pass
 
     def on_launch(self, cfg, metadata):
+        start = time.time()
         name = metadata["config_path"].split("/")[-1].split(".")[0]
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
@@ -145,19 +146,31 @@ class ConfigDiagramCallback(Callback):
                 )
                 if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
                     raise Exception(
-                        "Running experiments without commiting is disallowed. Please, commit your changes."
+                        "Running experiments without committing is disallowed. Please, commit your changes."
                     )
         except:
             commit_hash = None
             if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
                 raise Exception(
-                    "Running experiments without commiting is disallowed. Please, commit your changes."
+                    "Running experiments without committing is disallowed. Please, commit your changes."
                 )
         cfg_hash = hex(hash(cfg))
+        html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
+        overrides_table=""
+        with open(".hydra/hydra.yaml", "r") as f:
+            content = f.read()
+            content = content[content.find("task:"):]
+            content = content[:content.find("job:")]
+            content = content.replace("-", "").split()[1:]
+            if content[0] != "[]":
+                for line in content:
+                    field, value = line.split("=")
+                    overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
         html = html.replace(
-            "</body>",
+            "<body>",
             f"""
-                            <br>
+                            <body>
+                            <div style="float: left; width: 50%">
                             <table>
                             <tbody>
                             <tr><td>Config hash:  </td> <td>{cfg_hash}</td></tr>
@@ -167,12 +180,27 @@ class ConfigDiagramCallback(Callback):
                             <tr><td>Config path: </td><td>{metadata["config_path"]}</td></tr>
                             </tbody>
                             </table>
-                             </body>
-                             """,
+                            </div>
+            """ + "<br>" * (max(len(content), 5) + 1),
         )
-        html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
+        html = html.replace(
+            "<body>",
+            f'''
+                            <body>
+                            <div style="float: right; width: 50%">
+                            <table>
+                            <tbody>
+                            {overrides_table}
+                            </tbody>
+                            </table>
+                            </div>
+            ''',
+        )
         with open("SUMMARY.html", "w") as f:
             f.write(html)
+        self.log(
+            f"Saved summary to {os.path.abspath('SUMMARY.html')}. ({int(1000 * (time.time() - start))}ms)"
+        )
 
     def on_termination(self):
         with open("SUMMARY.html", "r") as f:
