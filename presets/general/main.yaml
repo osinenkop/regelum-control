@@ -7,7 +7,7 @@ defaults:
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
   - observation_naming: naming_${system}
-  - system_specific: spec_${system}
+  - optional system_specific: spec_${system}
 
 
 callbacks:
