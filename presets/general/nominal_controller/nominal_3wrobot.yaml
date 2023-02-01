@@ -6,4 +6,4 @@ state_init: $ initial_conditions.state_init
 params: $ system.pars
 time_start: $ simulator.time_start
 sampling_time: 1.0E-2
-action_bounds: system.action_bounds
+action_bounds: $ system.action_bounds%%

@@ -6,5 +6,5 @@ action_bounds: $ system.action_bounds%%
 time_start: $ simulator.time_start
 state_init: $ initial_conditions.state_init
 sampling_time: 1.0E-2
-PID_swing_up_parameters: = [-15, 0, -10]
-PID_cart_parameters: = [30, 3, 7]
+PID_swing_up_parameters: = [10, 0, 50]
+PID_cart_parameters: = [5, 0, 50]

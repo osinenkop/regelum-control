@@ -12,7 +12,7 @@ Remarks:
 from abc import ABC, abstractmethod
 
 import numpy as np
-import scipy as sp
+import scipy as setpoint
 from numpy.random import rand
 from scipy.optimize import minimize
 
@@ -150,7 +150,7 @@ class CALFControllerExPost(RLController):
             )
         self.safe_only = safe_only
 
-    def compute_weights_displacement(self, agent):
+    def compute_weights_disetpointlacement(self, agent):
         self.weights_difference_norm = rc.norm_2(
             self.critic.model.cache.weights - self.critic.optimized_weights
         )
@@ -324,7 +324,7 @@ class Controller3WRobotDisassembledCLF:
     ..   [2] Matsumoto, R., Nakamura, H., Satoh, Y., and Kimura, S. (2015). Position control of two-wheeled mobile robot
              via semiconcave function backstepping. In 2015 IEEE Conference on Control Applications (CCA), 882–887
 
-    ..   [3] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational aspects." arXiv preprint arXiv:2006.14013 (2020)
+    ..   [3] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational asetpointects." arXiv preprint arXiv:2006.14013 (2020)
 
     """
 
@@ -453,8 +453,8 @@ class Controller3WRobotDisassembledCLF:
 
         objective_lambda = lambda theta: self._Fc(xNI, eta, theta)
         if self.optimizer_engine == "SciPy":
-            bnds = sp.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
-            options = {"maxiter": 50, "disp": False}
+            bnds = setpoint.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
+            options = {"maxiter": 50, "disetpoint": False}
             theta_val = minimize(
                 objective_lambda,
                 thetaInit,
@@ -550,7 +550,7 @@ class Controller3WRobotDisassembledCLF:
         .. [1] Matsumoto, R., Nakamura, H., Satoh, Y., and Kimura, S. (2015). Position control of two-wheeled mobile robot
                via semiconcave function backstepping. In 2015 IEEE Conference on Control Applications (CCA), 882–887
 
-        .. [2] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational aspects." arXiv preprint arXiv:2006.14013 (2020)
+        .. [2] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational asetpointects." arXiv preprint arXiv:2006.14013 (2020)
 
         """
         is_time_for_new_sample = self.clock.check_time(time)
@@ -620,7 +620,7 @@ class ControllerMemoryPID:
         P,
         I,
         D,
-        SP=None,
+        setpoint=None,
         sampling_time=0.01,
         initial_point=(-5, -5),
         buffer_length=30,
@@ -629,49 +629,49 @@ class ControllerMemoryPID:
         self.I = I
         self.D = D
 
-        self.SP = SP
+        self.setpoint = setpoint
         self.integral = 0.0
         self.error_old = 0.0
         self.sampling_time = sampling_time
         self.clock = Clock(period=sampling_time, time_start=0)
         self.initial_point = initial_point
         if isinstance(initial_point, (float, int)):
-            self.state_size = 1
+            self.observation_size = 1
         else:
-            self.state_size = len(initial_point)
+            self.observation_size = len(initial_point)
 
         self.buffer_length = buffer_length
-        self.observation_buffer = rc.ones((self.state_size, buffer_length)) * 1e3
+        self.observation_buffer = rc.ones((self.observation_size, buffer_length)) * 1e3
 
-    def compute_error(self, PV):
-        if isinstance(PV, (float, int)):
-            error = PV - self.SP
+    def compute_error(self, process_variable):
+        if isinstance(process_variable, (float, int)):
+            error = process_variable - self.setpoint
         else:
-            if len(PV) == 1:
-                error = PV - self.SP
+            if len(process_variable) == 1:
+                error = process_variable - self.setpoint
             else:
-                norm = rc.norm_2(self.SP - PV)
-                error = norm * rc.sign(rc.dot(self.initial_point, PV))
+                norm = rc.norm_2(self.setpoint - process_variable)
+                error = norm * rc.sign(rc.dot(self.initial_point, process_variable))
         return error
 
     def compute_integral(self, error):
         self.integral += error * self.sampling_time
         return self.integral
 
-    def compute_error_derivative(self, error):
-        error_derivative = (error - self.error_old) / self.sampling_time / 10.0
+    def compute_error_derivative_numerically(self, error):
+        error_derivative = (error - self.error_old) / self.sampling_time
         self.error_old = error
         return error_derivative
 
-    def compute_action(self, PV, error_derivative=None, ime=0):
+    def compute_action(self, process_variable, error_derivative=None, ime=0):
 
-        error = self.compute_error(PV)
+        error = self.compute_error(process_variable)
         integral = self.compute_integral(error)
 
         if error_derivative is None:
-            error_derivative = self.compute_error_derivative(error)
+            error_derivative = self.compute_error_derivative_numerically(error)
 
-        PID_signal = self.P * error + self.I * integral + self.D * error_derivative
+        PID_signal = -(self.P * error + self.I * integral + self.D * error_derivative)
 
         ### DEBUG ==============================
         # print(error, integral, error_derivative)
@@ -679,8 +679,8 @@ class ControllerMemoryPID:
 
         return PID_signal
 
-    def set_SP(self, SP):
-        self.SP = SP
+    def set_setpoint(self, setpoint):
+        self.setpoint = setpoint
 
     def update_observation_buffer(self, observation):
         self.observation_buffer = rc.push_vec(self.observation_buffer, observation)
@@ -693,12 +693,14 @@ class ControllerMemoryPID:
         self.error_old = 0.0
 
     def reset_buffer(self):
-        self.observation_buffer = rc.ones((self.state_size, self.buffer_length)) * 1e3
+        self.observation_buffer = (
+            rc.ones((self.observation_size, self.buffer_length)) * 1e3
+        )
 
     def is_stabilized(self, stabilization_tollerance=1e-3):
         is_stabilized = np.allclose(
             self.observation_buffer,
-            rc.rep_mat(rc.reshape(self.SP, (-1, 1)), 1, self.buffer_length),
+            rc.rep_mat(rc.reshape(self.setpoint, (-1, 1)), 1, self.buffer_length),
             atol=stabilization_tollerance,
         )
         return is_stabilized
@@ -732,27 +734,27 @@ class Controller3WRobotPID:
         self.times = []
         self.action_old = rc.zeros(2)
         self.PID_angle_arctan = ControllerMemoryPID(
-            -35, 0.0, -10, initial_point=self.state_init[2]
+            35, 0.0, 10, initial_point=self.state_init[2]
         )
         self.PID_v_zero = ControllerMemoryPID(
-            -35, 0.0, 1.2, initial_point=self.state_init[3], SP=0.0
+            35, 0.0, 1.2, initial_point=self.state_init[3], setpoint=0.0
         )
         self.PID_x_y_origin = ControllerMemoryPID(
-            -35,
+            35,
             0.0,
-            -35,
-            SP=rc.array([0.0, 0.0]),
+            35,
+            setpoint=rc.array([0.0, 0.0]),
             initial_point=self.state_init[:2],
             # buffer_length=100,
         )
         self.PID_angle_origin = ControllerMemoryPID(
-            -30, 0.0, -10, SP=0.0, initial_point=self.state_init[2]
+            30, 0.0, 10, setpoint=0.0, initial_point=self.state_init[2]
         )
         self.stabilization_tollerance = 1e-3
         self.current_F = 0
         self.current_M = 0
 
-    def get_SP_for_PID_angle_arctan(self, x, y):
+    def get_setpoint_for_PID_angle_arctan(self, x, y):
         return np.arctan2(y, x)
 
     def compute_square_of_norm(self, x, y):
@@ -765,10 +767,10 @@ class Controller3WRobotPID:
         v = rc.array([observation[3]])
         omega = rc.array([observation[4]])
 
-        angle_SP = rc.array([self.get_SP_for_PID_angle_arctan(x, y)])
+        angle_setpoint = rc.array([self.get_setpoint_for_PID_angle_arctan(x, y)])
 
-        if self.PID_angle_arctan.SP is None:
-            self.PID_angle_arctan.set_SP(angle_SP)
+        if self.PID_angle_arctan.setpoint is None:
+            self.PID_angle_arctan.set_setpoint(angle_setpoint)
 
         ANGLE_STABILIZED_TO_ARCTAN = self.PID_angle_arctan.is_stabilized(
             stabilization_tollerance=self.stabilization_tollerance
@@ -819,7 +821,7 @@ class Controller3WRobotPID:
             F = self.PID_x_y_origin.compute_action(
                 [x, y], error_derivative=error_derivative
             )
-            self.PID_angle_arctan.set_SP(angle_SP)
+            self.PID_angle_arctan.set_setpoint(angle_setpoint)
             M = self.PID_angle_arctan.compute_action(angle, error_derivative=omega)[0]
 
         elif XY_STABILIZED_TO_ORIGIN and not ROBOT_STABILIZED_TO_ORIGIN:
@@ -920,12 +922,123 @@ class ControllerCartPolePID:
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
         self.PID_swingup = ControllerMemoryPID(
-            *PID_swing_up_parameters, initial_point=rc.array([1.5]), SP=rc.array([0])
+            *PID_swing_up_parameters,
+            initial_point=rc.array([state_init[0]]),
+            setpoint=rc.array([0])
         )
         self.PID_cart_stabilize = ControllerMemoryPID(
-            *PID_cart_parameters, initial_point=rc.array([0]), SP=rc.array([0])
+            *PID_cart_parameters,
+            initial_point=rc.array([state_init[1]]),
+            setpoint=rc.array([0])
         )
         self.swing_up_tol = swing_up_tol
+
+    def compute_action_sampled(self, time, observation):
+        """
+        Compute sampled action.
+
+        """
+
+        is_time_for_new_sample = self.clock.check_time(time)
+
+        if is_time_for_new_sample:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+
+            if self.action_bounds != []:
+                for k in range(len(self.action_bounds)):
+                    action[k] = np.clip(
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+                    )
+
+            self.action_old = action
+            print(action)
+            return action
+
+        else:
+            return self.action
+
+    def compute_action(self, observation, time=0):
+
+        # if rc.abs(observation[0]) > np.pi / 2:
+        #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
+        # else:
+        #     action = self.compute_stabilizing_action(observation)
+        # if abs(observation[0]) < 1.4:
+        #     error_derivative = observation[2]
+        #     self.action = self.PID_cart_stabilize.compute_action(
+        #         [rc.array(observation[0])], error_derivative=error_derivative
+        #     ) + self.PID_cart_stabilize.compute_action(
+        #         [0 * -rc.array(observation[1])], error_derivative=0 * observation[3]
+        #     )
+        # else:
+
+        self.action = self.PID_swingup.compute_action(
+            [rc.array(observation[0])], error_derivative=observation[2]
+        ) + self.PID_cart_stabilize.compute_action(
+            [rc.array(observation[1])], error_derivative=observation[3]
+        )
+
+        # error_derivative_cart = -observation[3]
+        # error_derivative_pendulum = -observation[2]
+
+        # self.action = (
+        #     #     self.PID_cart_stabilize.compute_action(
+        #     #     [rc.array(observation[1])], error_derivative=error_derivative_cart
+        #     # )
+        #     # ) +
+        #     self.PID_swingup.compute_action(
+        #         [rc.array(observation[0])],
+        #         error_derivative=error_derivative_pendulum
+        #         # )
+        #     )
+        # )
+        return self.action
+
+
+class Controller2TankPID:
+    def __init__(
+        self,
+        action_bounds,
+        params=None,
+        time_start: float = 0,
+        state_init=rc.array([np.pi, 0, 0, 0]),
+        sampling_time: float = 0.01,
+        PID_2tank_parameters_x1=[1, 0, 0],
+        PID_2tank_parameters_x2=[1, 0, 0],
+        swing_up_tol=0.1,
+        observation_target=[0.4, 0.4],
+    ):
+        self.tau1 = 18.4
+        self.tau2 = 24.4
+        self.K1 = 1.3
+        self.K2 = 1
+        self.K3 = 0.2
+
+        if params is None:
+            params = [self.tau1, self.tau2, self.K1, self.K2, self.K3]
+        else:
+            self.tau1, self.tau2, self.K1, self.K2, self.K3 = params
+
+        self.action_bounds = action_bounds
+        self.state_init = state_init
+        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.sampling_time = sampling_time
+        self.action = np.array([np.mean(action_bounds)])
+        self.PID_2tank_x1 = ControllerMemoryPID(
+            *PID_2tank_parameters_x1,
+            initial_point=rc.array([state_init[0]]),
+            setpoint=rc.array([observation_target[0]])
+        )
+        self.PID_2tank_x2 = ControllerMemoryPID(
+            *PID_2tank_parameters_x2,
+            initial_point=rc.array([state_init[1]]),
+            setpoint=rc.array([observation_target[1]])
+        )
+        self.swing_up_tol = swing_up_tol
+        self.observation_target = observation_target
 
     def compute_action_sampled(self, time, observation):
         """
@@ -959,16 +1072,24 @@ class ControllerCartPolePID:
         #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
         # else:
         #     action = self.compute_stabilizing_action(observation)
-        if abs(observation[0]) < 1.4:
-            error_derivative = observation[2]
-            self.action = self.PID_cart_stabilize.compute_action(
-                [rc.array(observation[0])], error_derivative=error_derivative
+        error_derivative_x1 = -(
+            1 / (self.tau1) * (-observation[0] + self.K1 * self.action[0])
+        )
+        error_derivative_x2 = (
+            -1
+            / (self.tau2)
+            * (
+                -observation[1]
+                + self.K2 * observation[0]
+                + self.K3 * observation[1] ** 2
             )
-        else:
-            error_derivative = -observation[2]
-            self.action = self.PID_swingup.compute_action(
-                [rc.array(observation[0])], error_derivative=error_derivative
-            )
+        )
+
+        self.action = self.PID_2tank_x1.compute_action(
+            [rc.array(observation[0])], error_derivative=error_derivative_x1
+        ) + self.PID_2tank_x2.compute_action(
+            [rc.array(observation[1])], error_derivative=error_derivative_x2
+        )
         return self.action
 
 

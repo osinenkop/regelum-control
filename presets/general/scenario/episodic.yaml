@@ -14,4 +14,5 @@ N_iterations: 1
 speedup: 75
 repeat_num: 0
 controller: ~ controller
+observation_target: $ system_specific.observation_target
 
