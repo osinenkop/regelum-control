@@ -459,6 +459,25 @@ class Actor:
         return self.weights_acceptance_status
 
 
+class ActorPID(Actor):
+    def __init__(self, *args, gain=5.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.gain = gain
+
+    def optimize_weights(self, *args, **kwargs):
+        pass
+
+    def objective(self, *args, **kwargs):
+        pass
+
+    def update_and_cache_weights(self, weights=None):
+        pass
+
+    def update_action(self, observation=None):
+        self.action = self.gain * observation**2
+        return self.action
+
+
 class ActorMPC(Actor):
     """
     Model-predictive control (MPC) actor.
@@ -688,7 +707,9 @@ class ActorRQL(Actor):
             )
 
         actor_objective += self.critic(
-            action_sequence_reshaped[:, -1], observation_sequence[:, -1]
+            action_sequence_reshaped[:, -1],
+            observation_sequence[:, -1],
+            use_stored_weights=True,
         )
 
         return actor_objective

@@ -267,6 +267,33 @@ class System(ABC):
         pass
 
 
+class SysKinematicPoint(System):
+    """
+    System class: mathematical pendulum
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.name = "kinematic-point"
+
+    def compute_dynamics(self, time, state, action, disturb=None):
+
+        Dstate = utilities.rc.zeros(
+            self.dim_state,
+            prototype=utilities.rc.concatenate((state, action)),
+        )
+
+        for i in range(utilities.rc.shape(action)[0]):
+            Dstate[i] = action[i]
+
+        return Dstate
+
+    def out(self, state, time=None, action=None):
+        return state
+
+
 class SysInvertedPendulum(System):
     """
     System class: mathematical pendulum

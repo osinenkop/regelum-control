@@ -510,7 +510,6 @@ class CriticOffPolicy(Critic):
     def objective(self, data_buffer=None, weights=None):
         """
         Compute the objective function of the critic, which is typically a squared temporal difference.
-
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
         :type data_buffer: dict, optional
         :param weights: the weights of the critic model, if different from the stored weights.
@@ -524,32 +523,30 @@ class CriticOffPolicy(Critic):
         else:
             observation_buffer = data_buffer["observation_buffer"]
             action_buffer = data_buffer["action_buffer"]
-
         critic_objective = 0
-
-        observation_old = observation_buffer[:, 0]
-        observation_next = observation_buffer[:, 1]
-
-        action_next = action_buffer[:, 1]
-
-        critic_old = self.model(observation_old, action_next, weights=weights)
-        critic_next = sp.optimize.minimize(
-            lambda action: self.model(
-                observation_next, torch.tensor(action).double(), use_stored_weights=True
-            ),
-            x0=action_next,
-            method="SLSQP",
-            tol=1e-4,
-            bounds=self.action_bounds,
-        ).fun
-
-        temporal_difference = (
-            critic_old
-            - self.discount_factor * torch.tensor(critic_next).double()
-            - self.running_objective(observation_old, action_next)
-        )
-
-        critic_objective += 1 / 2 * temporal_difference**2
+        for k in range(self.data_buffer_size - 1, 0, -1):
+            observation_old = observation_buffer[:, k - 1]
+            observation_next = observation_buffer[:, k]
+            action_next = action_buffer[:, k]
+            # Temporal difference
+            critic_old = self.model(observation_old, action_next, weights=weights)
+            critic_next = sp.optimize.minimize(
+                lambda action: self.model(
+                    observation_next,
+                    torch.tensor(action).double(),
+                    use_stored_weights=True,
+                ),
+                x0=action_next,
+                method="SLSQP",
+                tol=1e-4,
+                bounds=self.action_bounds,
+            ).fun
+            temporal_difference = (
+                critic_old
+                - self.discount_factor * critic_next
+                - self.running_objective(observation_old, action_next)
+            )
+            critic_objective += 1 / 2 * temporal_difference**2
         return critic_objective
 
 
