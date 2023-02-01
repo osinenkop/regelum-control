@@ -29,6 +29,7 @@ import re
 
 import pkg_resources
 
+
 def apply_callbacks(method):
     """
     Decorator that applies a list of callbacks to a given method of an object.
@@ -158,11 +159,11 @@ class ConfigDiagramCallback(Callback):
                 )
         cfg_hash = hex(hash(cfg))
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
-        overrides_table=""
+        overrides_table = ""
         with open(".hydra/hydra.yaml", "r") as f:
             content = f.read()
-            content = content[content.find("task:"):]
-            content = content[:content.find("job:")]
+            content = content[content.find("task:") :]
+            content = content[: content.find("job:")]
             content = content.replace("-", "").split()[1:]
             if content[0] != "[]":
                 for line in content:
@@ -183,11 +184,12 @@ class ConfigDiagramCallback(Callback):
                             </tbody>
                             </table>
                             </div>
-            """ + "<br>" * (max(len(content), 5) + 1),
+            """
+            + "<br>" * (max(len(content), 5) + 1),
         )
         html = html.replace(
             "<body>",
-            f'''
+            f"""
                             <body>
                             <div style="float: right; width: 50%">
                             <table>
@@ -196,29 +198,36 @@ class ConfigDiagramCallback(Callback):
                             </tbody>
                             </table>
                             </div>
-            ''',
+            """,
         )
         installed_packages = pkg_resources.working_set
-        installed_packages_list = sorted([(i.key, i.version)
-                                          for i in installed_packages])
+        installed_packages_list = sorted(
+            [(i.key, i.version) for i in installed_packages]
+        )
         packages_table = []
         for package, version in installed_packages_list:
-            if package in ["matplotlib",
-                            "numpy",
-                            "scipy",
-                            "omegaconf",
-                            "hydra-core",
-                            "hydra-joblib-launcher",
-                            "pandas",
-                            "gpytorch",
-                            "torch",
-                            "casadi",
-                            "dill",
-                            "plotly",
-                            "rcognita"]:
-                packages_table = [f'<tr><td><font face="Courier New" color="red">{package}</font></td> <td><font face="Courier New" color="red"> == </font></td>  <td><font face="Courier New" color="red">{version}</font></td> </tr>\n'] + packages_table
+            if package in [
+                "matplotlib",
+                "numpy",
+                "scipy",
+                "omegaconf",
+                "hydra-core",
+                "hydra-joblib-launcher",
+                "pandas",
+                "gpytorch",
+                "torch",
+                "casadi",
+                "dill",
+                "plotly",
+                "rcognita",
+            ]:
+                packages_table = [
+                    f'<tr><td><font face="Courier New" color="red">{package}</font></td> <td><font face="Courier New" color="red"> == </font></td>  <td><font face="Courier New" color="red">{version}</font></td> </tr>\n'
+                ] + packages_table
             else:
-                packages_table.append(f'<tr><td><font face="Courier New">{package}</font></td> <td><font face="Courier New"> == </font></td>  <td><font face="Courier New">{version}</font></td> </tr>\n')
+                packages_table.append(
+                    f'<tr><td><font face="Courier New">{package}</font></td> <td><font face="Courier New"> == </font></td>  <td><font face="Courier New">{version}</font></td> </tr>\n'
+                )
 
         html = html.replace(
             "</body>",
@@ -293,7 +302,7 @@ class HistoricalCallback(Callback, ABC):
         plt.ylabel(self.ylabel)
         plt.title(name)
         plt.grid()
-        plt.xticks(range(1, len(self.data) + 1))
+        # plt.xticks(range(1, len(self.data) + 1))
 
     def save_plot(self, name=None):
         if not name:
@@ -414,48 +423,50 @@ class HistoricalObservationCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.episodic_cache = {}
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
         self.cooldown = 0.0
+        self.current_episode = None
+        self.columns = None
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
-            key = (self.num_launch, obj.time)
-            if key in self.cache.keys():
-                self.num_launch += 1
-                key = (self.num_launch, obj.time)
+            if self.columns is None:
+                self.columns = obj.observation_components_naming
+            key = obj.time
 
-            self.cache[key] = output[1]
-            if self.timeline != []:
-                if self.timeline[-1] < key[1]:
-                    self.timeline.append(key[1])
-
-            else:
-                self.timeline.append(key[1])
+            self.episodic_cache[key] = output[1]
+            self.current_episode = obj.episode_counter
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        ):
+            self.cache[self.current_episode] = self.episodic_cache
+            self.save_plot(
+                f"observations_in_episode_{str(obj.episode_counter).zfill(5)}"
+            )
+            self.episodic_cache = {}
 
     @property
     def data(self):
-        import numpy as np
+        return self.cache
 
-        keys = list(self.cache.keys())
-        run_numbers = sorted(list(set([k[0] for k in keys])))
-        cache_transformed = {key: list() for key in run_numbers}
-        for k, v in self.cache.items():
-            cache_transformed[k[0]].append(v)
-
-        dfs = [pd.DataFrame(np.array(cache_transformed[n])) for n in run_numbers]
-        for df in dfs:
-            if hasattr(self, "columns"):
-                df.columns = self.columns
-            else:
-                df.columns = pd.RangeIndex(1, len(df.columns) + 1)
-
-        return dfs
+    @property
+    def episodic_data(self):
+        return pd.DataFrame.from_dict(
+            self.episodic_cache, orient="index", columns=self.columns
+        )
 
     @classmethod
     def name_observation_components(cls, columns):
         cls.columns = columns
+
+    def plot(self, name=None):
+        if not name:
+            name = self.__class__.__name__
+        self.episodic_data.plot(subplots=True, grid=True, xlabel="time", title=name)
+        # plt.xticks(range(1, len(self.data) + 1))
 
 
 class TotalObjectiveCallback(HistoricalCallback):

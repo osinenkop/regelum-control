@@ -79,6 +79,7 @@ class OnlineScenario(Scenario):
         action_init: np.ndarray = None,
         time_start: float = 0.0,
         observation_target=[],
+        observation_components_naming=[],
     ):
 
         self.simulator = simulator
@@ -129,6 +130,7 @@ class OnlineScenario(Scenario):
         self.time = 0
         self.time_old = 0
         self.delta_time = 0
+        self.observation_components_naming = observation_components_naming
 
     @apply_callbacks
     def post_step(self):

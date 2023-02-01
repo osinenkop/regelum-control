@@ -80,14 +80,14 @@ if __name__ == "__main__":
     with open(job_results["directory"][0] + "/../output.pickle", "rb") as f:
         df = pickle.load(f)
 
-    observation_naming = (
-        ~r.ComplementedConfig(df.cfg[0]).observation_naming
-    ).observation
-    observation_history_callback = df.HistoricalObservationCallback[0]
-    observation_history_callback.name_observation_components(observation_naming)
-    observation_history = observation_history_callback.data[0]
-    observation_history.plot(subplots=True, layout=(1, len(observation_naming)))
-    plt.show()
+    # observation_naming = (
+    #     ~r.ComplementedConfig(df.cfg[0]).observation_naming
+    # ).observation
+    # observation_history_callback = df.HistoricalObservationCallback[0]
+    # observation_history_callback.name_observation_components(observation_naming)
+    # observation_history = observation_history_callback.data[0]
+    # observation_history.plot(subplots=True, layout=(1, len(observation_naming)))
+    # plt.show()
     # total_objective_path = os.path.join(
     #     job_results["directory"][0], "total_objectives.png"
     # )
