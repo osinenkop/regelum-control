@@ -470,7 +470,7 @@ class ActorPID(Actor):
         pass
 
     def update_action(self, observation=None):
-        self.action = -(observation**2)
+        self.action = observation**2
         return self.action
 
 
