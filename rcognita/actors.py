@@ -460,6 +460,10 @@ class Actor:
 
 
 class ActorPID(Actor):
+    def __init__(self, *args, gain=5.0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.gain = gain
+
     def optimize_weights(self, *args, **kwargs):
         pass
 
@@ -470,7 +474,7 @@ class ActorPID(Actor):
         pass
 
     def update_action(self, observation=None):
-        self.action = observation**2
+        self.action = self.gain * observation**2
         return self.action
 
 
