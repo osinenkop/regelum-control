@@ -459,6 +459,21 @@ class Actor:
         return self.weights_acceptance_status
 
 
+class ActorPID(Actor):
+    def optimize_weights(self, *args, **kwargs):
+        pass
+
+    def objective(self, *args, **kwargs):
+        pass
+
+    def update_and_cache_weights(self, weights=None):
+        pass
+
+    def update_action(self, observation=None):
+        self.action = -(observation**2)
+        return self.action
+
+
 class ActorMPC(Actor):
     """
     Model-predictive control (MPC) actor.
