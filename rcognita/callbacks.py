@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 import rcognita
 import pandas as pd
 import time, datetime
-import dill, os
+import dill, os, git
 
 import omegaconf, json
 
@@ -140,10 +140,9 @@ class ConfigDiagramCallback(Callback):
         with open("SUMMARY.html", "r") as f:
             html = f.read()
         try:
-            stream = os.popen("git log --name-status HEAD^..HEAD")
-            commit_hash = stream.read().split()[1]
-            stream = os.popen("git status").read()
-            if not "is up to date" in stream or "not staged" in stream:
+            repo = git.Repo(search_parent_directories=True)
+            commit_hash = repo.head.object.hexsha
+            if repo.is_dirty(untracked_files=True):
                 commit_hash += (
                     ' <font color="red">(uncommitted/unstaged changes)</font>'
                 )

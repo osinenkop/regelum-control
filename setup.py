@@ -41,6 +41,7 @@ setup(
         "casadi>=3.5.5",
         "dill==0.3.6",
         "plotly==5.13.0",
+        "gitpython==3.1.30"
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],
