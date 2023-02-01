@@ -1,8 +1,9 @@
 defaults:
-  - system: kin_point 
+  - system: 3wrobot
   - scenario: episodic
   - simulator: casadi
-  - controller: dqn
+  - optional nominal_controller: nominal_${system}
+  - controller: mpc
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
   - observation_naming: naming_${system}
