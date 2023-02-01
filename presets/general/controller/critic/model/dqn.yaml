@@ -2,5 +2,5 @@ _target_: rcognita.models.ModelDQN
 
 dim_observation: $ system.dim_output
 dim_action: $ system.dim_input
-dim_hidden: 500
+dim_hidden: 100
 force_positive_def: True

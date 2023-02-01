@@ -688,7 +688,9 @@ class ActorRQL(Actor):
             )
 
         actor_objective += self.critic(
-            action_sequence_reshaped[:, -1], observation_sequence[:, -1]
+            action_sequence_reshaped[:, -1],
+            observation_sequence[:, -1],
+            use_stored_weights=True,
         )
 
         return actor_objective
