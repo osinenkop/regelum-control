@@ -16,4 +16,4 @@ action_init: $ scenario.action_init
 critic: ~ controller.critic
 running_objective: $ running_objective
 
-gain: 7.5
+gain: 0.5

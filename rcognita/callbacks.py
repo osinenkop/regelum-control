@@ -523,6 +523,7 @@ class QFunctionCallback(HistoricalCallback):
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
             self.cache[self.current_episode] = self.episodic_cache
+            self.episodic_cache = {}
 
     @property
     def data(self):

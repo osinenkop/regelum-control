@@ -20,6 +20,7 @@ from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC, abstractmethod
 import scipy as sp
 from functools import partial
+import random
 
 try:
     import torch
@@ -498,13 +499,21 @@ class CriticOfActionObservation(Critic):
 
 
 class CriticOffPolicy(Critic):
-    def __init__(self, *args, action_bounds, **kwargs):
+    def __init__(self, *args, action_bounds, n_samples_from_buffer, **kwargs):
         super().__init__(*args, **kwargs)
+        self.n_samples_from_buffer = n_samples_from_buffer
         self.action_bounds = action_bounds
 
     """
     This is the class of critics that are represented as functions of observation only.
     """
+
+    def reset(self):
+        """
+        Reset the outcome and current critic loss variables, and re-initialize the buffers.
+        """
+        self.outcome = 0
+        self.current_critic_loss = 0
 
     @apply_callbacks
     def objective(self, data_buffer=None, weights=None):
@@ -523,24 +532,36 @@ class CriticOffPolicy(Critic):
         else:
             observation_buffer = data_buffer["observation_buffer"]
             action_buffer = data_buffer["action_buffer"]
+
         critic_objective = 0
-        for k in range(self.data_buffer_size - 1, 0, -1):
+
+        buffer_size = observation_buffer.shape[1]
+        latest_observation_id = buffer_size - 1
+        random_samples = random.sample(
+            range(1, latest_observation_id), self.n_samples_from_buffer - 1
+        )
+        sampled_ids = np.hstack([random_samples, latest_observation_id])
+
+        for k in sampled_ids:
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
             action_next = action_buffer[:, k]
             # Temporal difference
             critic_old = self.model(observation_old, action_next, weights=weights)
-            critic_next = sp.optimize.minimize(
-                lambda action: self.model(
-                    observation_next,
-                    torch.tensor(action).double(),
-                    use_stored_weights=True,
-                ),
-                x0=action_next,
-                method="SLSQP",
-                tol=1e-4,
-                bounds=self.action_bounds,
-            ).fun
+            # critic_next = sp.optimize.minimize(
+            #     lambda action: self.model(
+            #         observation_next,
+            #         torch.tensor(action).double(),
+            #         use_stored_weights=True,
+            #     ),
+            #     x0=action_next,
+            #     method="SLSQP",
+            #     tol=1e-4,
+            #     bounds=self.action_bounds,
+            # ).fun
+            critic_next = self.model(
+                observation_next, -0.5 * observation_next, use_stored_weights=True
+            )
             temporal_difference = (
                 critic_old
                 - self.discount_factor * critic_next
