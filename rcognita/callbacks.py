@@ -262,11 +262,11 @@ class ConfigDiagramCallback(Callback):
 
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
-            images.append(f"gfx/{filename}")
+            images.append(f'<img src="gfx/{filename}">')
         if len(images) % 2:
-            images.append(images[-1])
+            images.append("")
         for i in range(0, len(images), 2):
-            table_lines += f'<tr><td><img src="{images[i]}"></td> <td><img src="{images[i + 1]}"></td></tr>\n'
+            table_lines += f'<tr><td>{images[i]}</td> <td>{images[i + 1]}</td></tr>\n'
         html = html.replace(
             "</body>",
             f"""
