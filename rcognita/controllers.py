@@ -370,7 +370,6 @@ class Controller3WRobotDisassembledCLF:
         Resets controller for use in multi-episode simulation.
 
         """
-        self.controller_clock = time_start
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI, theta):
@@ -996,6 +995,90 @@ class ControllerCartPolePID:
         #     )
         # )
         return self.action
+
+
+class ControllerLunarLanderPID:
+    def __init__(
+        self,
+        action_bounds,
+        time_start: float = 0,
+        state_init=rc.array([np.pi, 0, 0, 0]),
+        sampling_time: float = 0.01,
+        PID_angle_parameters=[1, 0, 0],
+        PID_height_parameters=[10, 0, 0],
+        PID_x_parameters=[10, 0, 0],
+    ):
+        self.action_bounds = action_bounds
+        self.state_init = state_init
+        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.sampling_time = sampling_time
+        self.action = np.array([np.mean(action_bounds)])
+        self.PID_angle = ControllerMemoryPID(
+            *PID_angle_parameters,
+            initial_point=rc.array([state_init[2]]),
+            setpoint=rc.array([0])
+        )
+        self.PID_height = ControllerMemoryPID(
+            *PID_height_parameters,
+            initial_point=rc.array([state_init[1]]),
+            setpoint=rc.array([0])
+        )
+        self.PID_x = ControllerMemoryPID(
+            *PID_x_parameters,
+            initial_point=rc.array([state_init[2]]),
+            setpoint=rc.array([0])
+        )
+        self.threshold_1 = 0.05
+        self.threshold_2 = 1.2
+        self.threshold = self.threshold_1
+
+    def compute_action_sampled(self, time, observation):
+        """
+        Compute sampled action.
+
+        """
+
+        is_time_for_new_sample = self.clock.check_time(time)
+
+        if is_time_for_new_sample:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+
+            if self.action_bounds != []:
+                for k in range(len(self.action_bounds)):
+                    action[k] = np.clip(
+                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
+                    )
+
+            self.action_old = action
+            print(action)
+            return action
+
+        else:
+            return self.action
+
+    def compute_action(self, observation, time=0):
+        self.action = [0, 0]
+
+        if abs(observation[2]) > self.threshold:
+            self.threshold = self.threshold_1
+            self.action[0] = self.PID_angle.compute_action(
+                [rc.array(observation[2])], error_derivative=observation[5]
+            )[0]
+
+        else:
+            self.threshold = self.threshold_2
+            self.action[0] = self.PID_x.compute_action(
+                [rc.array(observation[0])], error_derivative=observation[3]
+            )[0]
+            self.action[1] = self.PID_height.compute_action(
+                [rc.array(observation[1])], error_derivative=observation[4]
+            )[0]
+
+        self.action = rc.array(self.action)
+        return rc.array(self.action)
 
 
 class Controller2TankPID:
