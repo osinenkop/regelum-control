@@ -525,6 +525,10 @@ class QFunctionCallback(HistoricalCallback):
         ):
             self.cache[self.current_episode] = self.episodic_cache
 
+    @property
+    def data(self):
+        return self.cache
+
 
 class SaveProgressCallback(Callback):
     once_in = 1
