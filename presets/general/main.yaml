@@ -17,4 +17,6 @@ callbacks:
   - rcognita.callbacks.CalfCallback
   - rcognita.callbacks.HistoricalObservationCallback
 
+disallow_uncommitted%%: True
+
 
