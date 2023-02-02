@@ -488,6 +488,7 @@ class main:
         self.__class__.logger = logger
 
     def __call__(self, old_app):
+        initial_working_directory = os.getcwd()
         script_path = inspect.getfile(old_app)
         path_main = os.path.abspath(script_path)
         path_parent = "/".join(path_main.split("/")[:-1])
@@ -513,7 +514,9 @@ class main:
                         callback.cooldown *= self.cooldown_factor
                     callback.on_launch(
                         ccfg,
-                        {"script_path": script_path, "config_path": path + f"/{self.kwargs['config_name']}.yaml"},
+                        {"script_path": script_path,
+                         "config_path": path + f"/{self.kwargs['config_name']}.yaml",
+                         "initial_working_directory" : initial_working_directory},
                     )
                 res = old_app(ccfg)
                 for callback in self.__class__.callbacks:

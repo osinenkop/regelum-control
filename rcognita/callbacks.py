@@ -160,10 +160,11 @@ class ConfigDiagramCallback(Callback):
                 untracked = repo.untracked_files
                 repo.git.add(all=True)
                 diff = repo.git.diff(repo.head.commit.tree)
-                repo.index.remove(*untracked)
+                if untracked:
+                    repo.index.remove(*untracked)
                 with open(".summary/changes.diff", "w") as f:
                     f.write(diff)
-        except:
+        except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
                 raise Exception(
@@ -326,11 +327,13 @@ class ConfigDiagramCallback(Callback):
               <summary>Snippets</summary>
               <main>
               <p>Extract callbacks:</p>
-              <pre><code class="language-python">import dill
+              <pre><code class="language-python">import dill, os
+os.chdir("{metadata["initial_working_directory"]}")
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
     callbacks = dill.load(f)</code></pre>
               <p>Reproduce experiment:</p>
-              <pre><code class="language-bash">{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>', chr(10) + f'git apply {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
+              <pre><code class="language-bash">{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>', chr(10) + f'cd {repo.working_tree_dir}'  + chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
+python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
             """ +
             """
