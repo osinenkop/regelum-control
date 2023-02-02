@@ -11,7 +11,7 @@ _target_: rcognita.controllers.RLController
 ###---Constructor arguments---###
 
 time_start: $ simulator.time_start
-sampling_time: 1.0E-2
+sampling_time: $ system_specific.sampling_time
 is_fixed_critic_weights: false
 
 critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}

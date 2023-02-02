@@ -1,1 +1,9 @@
 observation_target: = [0.4, 0.4]
+sampling_time: 0.1
+time_final: 80
+
+grid_dim%%: 3
+action_min%%: $ system.action_min%%
+action_max%%: $ system.action_max%%
+
+actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.action_min%%}, ${.action_max%%}, ${.grid_dim%%}))))

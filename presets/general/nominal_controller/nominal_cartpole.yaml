@@ -8,7 +8,3 @@ state_init: $ initial_conditions.state_init
 sampling_time: 1.0E-2
 PID_swing_up_parameters: = [-90, 0, -9]
 PID_cart_parameters: = [-2.0, 0, -3.0]
-
-
-# PID_swing_up_parameters: = [-50, 0, -2]
-# PID_cart_parameters: = [20, 0, 3]
