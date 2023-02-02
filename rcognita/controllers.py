@@ -973,7 +973,6 @@ class ControllerCartPolePID:
         #         [0 * -rc.array(observation[1])], error_derivative=0 * observation[3]
         #     )
         # else:
-
         self.action = self.PID_swingup.compute_action(
             [rc.array(observation[0])], error_derivative=observation[2]
         ) + self.PID_cart_stabilize.compute_action(
