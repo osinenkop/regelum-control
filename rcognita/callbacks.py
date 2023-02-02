@@ -141,6 +141,7 @@ class ConfigDiagramCallback(Callback):
 
     def on_launch(self, cfg, metadata):
         start = time.time()
+        os.mkdir(".summary")
         name = metadata["config_path"].split("/")[-1].split(".")[0]
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
@@ -156,6 +157,12 @@ class ConfigDiagramCallback(Callback):
                     raise Exception(
                         "Running experiments without committing is disallowed. Please, commit your changes."
                     )
+                untracked = repo.untracked_files
+                repo.git.add(all=True)
+                diff = repo.git.diff(repo.head.commit.tree)
+                repo.index.remove(*untracked)
+                with open(".summary/changes.diff", "w") as f:
+                    f.write(diff)
         except:
             commit_hash = None
             if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
@@ -323,7 +330,7 @@ class ConfigDiagramCallback(Callback):
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
     callbacks = dill.load(f)</code></pre>
               <p>Reproduce experiment:</p>
-              <pre><code class="language-bash">{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>', chr(10) + 'echo WARNING! THERE WERE UNCOMMITTED CHANGES. THE RESULTS MAY NOT REPRODUCE CORRECTLY.')}''' + chr(10) if commit_hash else ""}python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
+              <pre><code class="language-bash">{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>', chr(10) + f'git apply {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
             """ +
             """
