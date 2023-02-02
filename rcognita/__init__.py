@@ -66,13 +66,13 @@ def __memorize_instance(resolver):
         *,
         _parent_: Container,
     ):
-        obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
         if default == _DEFAULT_MARKER_:
             default = key.strip()
         instance_name = str(default)
         if instance_name in main.objects_created:
             return main.objects_created[instance_name]
         else:
+            obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
             main.objects_created[instance_name] = obj
             return obj
 

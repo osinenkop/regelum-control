@@ -29,6 +29,12 @@ import re
 
 import pkg_resources
 
+import sys
+
+
+def is_in_debug_mode():
+    return not getattr(sys, 'gettrace', None) is None
+
 
 def apply_callbacks(method):
     """
@@ -146,13 +152,13 @@ class ConfigDiagramCallback(Callback):
                 commit_hash += (
                     ' <font color="red">(uncommitted/unstaged changes)</font>'
                 )
-                if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
+                if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
                     raise Exception(
                         "Running experiments without committing is disallowed. Please, commit your changes."
                     )
         except:
             commit_hash = None
-            if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted:
+            if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
                 raise Exception(
                     "Running experiments without committing is disallowed. Please, commit your changes."
                 )
