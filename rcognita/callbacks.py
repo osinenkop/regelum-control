@@ -163,7 +163,7 @@ class ConfigDiagramCallback(Callback):
                 if untracked:
                     repo.index.remove(*untracked)
                 with open(".summary/changes.diff", "w") as f:
-                    f.write(diff)
+                    f.write(diff + "\n")
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
