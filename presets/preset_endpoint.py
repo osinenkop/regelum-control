@@ -1,12 +1,16 @@
 import os, sys
 
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
-sys.path.insert(0, PARENT_DIR)
+#sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
-sys.path.insert(0, CUR_DIR)
+#sys.path.insert(0, CUR_DIR)
+
 import logging
 import numpy as np
+os.chdir(PARENT_DIR)
 import rcognita as r
+os.chdir(CUR_DIR)
+
 import omegaconf
 from omegaconf import DictConfig, OmegaConf, flag_override
 from rcognita.visualization.vis_3wrobot import (
