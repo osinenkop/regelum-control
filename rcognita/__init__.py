@@ -513,7 +513,7 @@ class main:
                         callback.cooldown *= self.cooldown_factor
                     callback.on_launch(
                         ccfg,
-                        {"script_path": script_path, "config_path": path + ".yaml"},
+                        {"script_path": script_path, "config_path": path + f"/{self.kwargs['config_name']}.yaml"},
                     )
                 res = old_app(ccfg)
                 for callback in self.__class__.callbacks:
