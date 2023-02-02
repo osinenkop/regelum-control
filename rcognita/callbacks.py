@@ -174,6 +174,66 @@ class ConfigDiagramCallback(Callback):
                 for line in content:
                     field, value = line.split("=")
                     overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
+        html = html.replace("<head>",
+                            """
+                            <head>
+                              <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />  
+                              <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism-tomorrow.min.css'>
+                              
+                            <style>
+                            *,
+                            *:before,
+                            *:after {
+                              box-sizing: border-box;
+                            }
+                            
+                            pre[class*="language-"] {
+                              position: relative;
+                              overflow: auto;
+                            
+                              /* make space  */
+                              margin: 5px 0;
+                              padding: 1.75rem 0 1.75rem 1rem;
+                              border-radius: 10px;
+                            }
+                            
+                            pre[class*="language-"] button {
+                              position: absolute;
+                              top: 5px;
+                              right: 5px;
+                            
+                              font-size: 0.9rem;
+                              padding: 0.15rem;
+                              background-color: #828282;
+                            
+                              border: ridge 1px #7b7b7c;
+                              border-radius: 5px;
+                              text-shadow: #c4c4c4 0 0 2px;
+                            }
+                            
+                            pre[class*="language-"] button:hover {
+                              cursor: pointer;
+                              background-color: #bcbabb;
+                            }
+                            
+                            main {
+                              display: grid;
+                              max-width: 600px;
+                              margin: 20px auto;
+                            }
+                            
+                            </style>
+                            
+                              <script>
+                              window.console = window.console || function(t) {};
+                            </script>
+                              
+                              <script>
+                              if (document.location.search.match(/type=embed/gi)) {
+                                window.parent.postMessage("resize", "*");
+                              }
+                            </script>
+                            """)
         html = html.replace(
             "<body>",
             f"""
@@ -250,6 +310,65 @@ class ConfigDiagramCallback(Callback):
                             </table>
                             </details>
                              </body>
+            """,
+        )
+        html = html.replace(
+            "</body>",
+            f"""
+              <details>
+              <summary>Snippets</summary>
+              <main>
+              <p>Extract callbacks:</p>
+              <pre><code class="language-python">import dill
+with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
+    callbacks = dill.load(f)</code></pre>
+              <p>Reproduce experiment:</p>
+              <pre><code class="language-bash">{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>', chr(10) + 'echo WARNING! THERE WERE UNCOMMITTED CHANGES. THE RESULTS MAY NOT REPRODUCE CORRECTLY.')}''' + chr(10) if commit_hash else ""}python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
+            </main>
+            """ +
+            """
+                <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
+            
+              <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js'></script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/components/prism-python.min.js"></script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/components/prism-bash.min.js"></script>
+                  <script>
+            const copyButtonLabel = "Copy Code";
+            
+            // use a class selector if available
+            let blocks = document.querySelectorAll("pre");
+            
+            blocks.forEach(block => {
+              // only add button if browser supports Clipboard API
+              if (navigator.clipboard) {
+                let button = document.createElement("button");
+            
+                button.innerText = copyButtonLabel;
+                block.appendChild(button);
+            
+                button.addEventListener("click", async () => {
+                  await copyCode(block, button);
+                });
+              }
+            });
+            
+            async function copyCode(block, button) {
+              let code = block.querySelector("code");
+              let text = code.innerText;
+            
+              await navigator.clipboard.writeText(text);
+            
+              // visual feedback that task is completed
+              button.innerText = "Code Copied";
+            
+              setTimeout(() => {
+                button.innerText = copyButtonLabel;
+              }, 700);
+            }
+            //# sourceURL=pen.js
+                </script>
+            </details>
+            </body>
             """,
         )
         with open("SUMMARY.html", "w") as f:
@@ -545,12 +664,9 @@ class SaveProgressCallback(Callback):
             episode = obj.episode_counter
             if episode % self.once_in:
                 return
-            filename = f"callbacks_at_episode_{episode + 1}.dill"
-            prev_filename = f"callbacks_at_episode_{episode + 1 - self.once_in}.dill"
+            filename = f"callbacks.dill"
             with open(filename, "wb") as f:
                 dill.dump(rcognita.main.callbacks, f)
-            if episode > self.once_in:
-                os.remove(os.path.abspath(prev_filename))
             self.log(
                 f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
             )
