@@ -33,7 +33,7 @@ import sys
 
 
 def is_in_debug_mode():
-    return not getattr(sys, 'gettrace', None) is None
+    return not sys.gettrace() is None
 
 
 def apply_callbacks(method):
@@ -332,7 +332,10 @@ os.chdir("{metadata["initial_working_directory"]}")
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
     callbacks = dill.load(f)</code></pre>
               <p>Reproduce experiment:</p>
-              <pre><code class="language-bash">{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>', chr(10) + f'cd {repo.working_tree_dir}'  + chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
+              <pre><code class="language-bash">cd {repo.working_tree_dir}
+git restore .
+git clean -f
+{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
 python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
             """ +
