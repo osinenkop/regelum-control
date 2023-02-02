@@ -689,7 +689,7 @@ class LunarLander(System):
         y_dot = state[4]
         theta_dot = state[5]
 
-        left_support, right_support = self.compute_supports_geometry(state[:2], theta)
+        # left_support, right_support = self.compute_supports_geometry(state[:2], theta)
         # l_reaction = self.compute_reaction(state[:2], left_support)
         # r_reaction = self.compute_reaction(state[:2], right_support)
 
