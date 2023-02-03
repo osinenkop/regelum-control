@@ -281,7 +281,9 @@ class TorchOptimizer(Optimizer):
 
     engine = "Torch"
 
-    def __init__(self, opt_options, iterations=1, opt_method=None, verbose=False):
+    def __init__(
+        self, opt_options, model, iterations=1, opt_method=None, verbose=False
+    ):
         """
         Initialize an instance of TorchOptimizer.
 
@@ -296,14 +298,17 @@ class TorchOptimizer(Optimizer):
         """
         if opt_method is None:
             opt_method = torch.optim.Adam
+
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.iterations = iterations
         self.verbose = verbose
         self.loss_history = []
+        self.model = model
+        self.optimizer = self.opt_method(model.parameters(), **self.opt_options)
 
     def optimize(
-        self, objective, model, model_input
+        self, objective, model_input
     ):  # remove model and add parameters instead
         """
         Optimize the model with the given objective.
@@ -315,21 +320,15 @@ class TorchOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-        optimizer = self.opt_method(model.parameters(), **self.opt_options)
-        # optimizer.zero_grad()
 
         for _ in range(self.iterations):
-            optimizer.zero_grad()
+            self.optimizer.zero_grad()
             loss = objective(model_input)
-            # loss_before = loss.detach().numpy()
             loss.backward()
-            optimizer.step()
-            # optimizer.zero_grad()
-            # loss_after = objective(model_input).detach().numpy()
-            # print(loss_before - loss_after)
-            # if self.verbose:
-            #     print(objective(model_input))
-        # self.loss_history.append([loss_before, loss_after])
+            self.optimizer.step()
+
+    def instantiate_optimizer(self):
+        self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
 
 
 class TorchProjectiveOptimizer(Optimizer):

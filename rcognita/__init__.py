@@ -72,7 +72,9 @@ def __memorize_instance(resolver):
         if instance_name in main.objects_created:
             return main.objects_created[instance_name]
         else:
-            obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
+            obj = inst.instantiate(
+                resolver(key, default=default, _parent_=_parent_), path=default
+            )
             main.objects_created[instance_name] = obj
             return obj
 
@@ -489,7 +491,7 @@ class main:
 
     def __call__(self, old_app):
         initial_working_directory = os.getcwd()
-        initial_pythonpath = os.environ['PYTHONPATH']
+        initial_pythonpath = os.environ["PYTHONPATH"]
         script_path = inspect.getfile(old_app)
         path_main = os.path.abspath(script_path)
         path_parent = "/".join(path_main.split("/")[:-1])
@@ -515,11 +517,12 @@ class main:
                         callback.cooldown *= self.cooldown_factor
                     callback.on_launch(
                         ccfg,
-                        {"script_path": script_path,
-                         "config_path": path + f"/{self.kwargs['config_name']}.yaml",
-                         "initial_working_directory" : initial_working_directory,
-                         "initial_pythonpath": initial_pythonpath
-                         },
+                        {
+                            "script_path": script_path,
+                            "config_path": path + f"/{self.kwargs['config_name']}.yaml",
+                            "initial_working_directory": initial_working_directory,
+                            "initial_pythonpath": initial_pythonpath,
+                        },
                     )
                 res = old_app(ccfg)
                 for callback in self.__class__.callbacks:

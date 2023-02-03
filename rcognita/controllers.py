@@ -158,7 +158,7 @@ class CALFControllerExPost(RLController):
 
     def invoke_safe_action(self, observation):
         # self.actor.restore_weights()
-        # self.critic.restore_weights()
+        self.critic.restore_weights()
         action = self.actor.safe_controller.compute_action(observation)
 
         self.actor.set_action(action)
@@ -961,38 +961,16 @@ class ControllerCartPolePID:
 
     def compute_action(self, observation, time=0):
 
-        # if rc.abs(observation[0]) > np.pi / 2:
-        #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
-        # else:
-        #     action = self.compute_stabilizing_action(observation)
-        # if abs(observation[0]) < 1.4:
-        #     error_derivative = observation[2]
-        #     self.action = self.PID_cart_stabilize.compute_action(
-        #         [rc.array(observation[0])], error_derivative=error_derivative
-        #     ) + self.PID_cart_stabilize.compute_action(
-        #         [0 * -rc.array(observation[1])], error_derivative=0 * observation[3]
-        #     )
-        # else:
-        self.action = self.PID_swingup.compute_action(
-            [rc.array(observation[0])], error_derivative=observation[2]
-        ) + self.PID_cart_stabilize.compute_action(
-            [rc.array(observation[1])], error_derivative=observation[3]
-        )
-
-        # error_derivative_cart = -observation[3]
-        # error_derivative_pendulum = -observation[2]
-
-        # self.action = (
-        #     #     self.PID_cart_stabilize.compute_action(
-        #     #     [rc.array(observation[1])], error_derivative=error_derivative_cart
-        #     # )
-        #     # ) +
-        #     self.PID_swingup.compute_action(
-        #         [rc.array(observation[0])],
-        #         error_derivative=error_derivative_pendulum
-        #         # )
-        #     )
-        # )
+        if rc.abs(observation[0]) > np.pi / 4:
+            self.action = self.PID_swingup.compute_action(
+                -rc.array([observation[0]]), error_derivative=observation[2]
+            )
+        else:
+            self.action = self.PID_swingup.compute_action(
+                [rc.array(observation[0])], error_derivative=observation[2]
+            ) + self.PID_cart_stabilize.compute_action(
+                [rc.array(observation[1])], error_derivative=observation[3]
+            )
         return self.action
 
 

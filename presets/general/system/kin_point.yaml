@@ -12,5 +12,6 @@ dim_kin_point_system%%: 2
 
 pars: = []
 
-bound%%: 50
-action_bounds%%: = numpy.hstack([numpy.full((${.dim_kin_point_system%%}, 1), -${.bound%%}), numpy.full((${.dim_kin_point_system%%}, 1), ${.bound%%})])
+action_max%%: 50
+action_min%%: -50
+action_bounds%%: = numpy.hstack([numpy.full((${.dim_kin_point_system%%}, 1), ${.action_min%%}), numpy.full((${.dim_kin_point_system%%}, 1), ${.action_max%%})])

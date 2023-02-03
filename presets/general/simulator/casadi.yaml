@@ -8,7 +8,7 @@ state_init: $ initial_conditions.state_init
 action_init: $ initial_conditions.action_init
 disturb_init: = None
 time_start: 0
-time_final: 10
+time_final: $ system_specific.time_final
 sampling_time: $ controller.sampling_time
 max_step: = ${controller.sampling_time} / 10.
 first_step: 1.0E-6

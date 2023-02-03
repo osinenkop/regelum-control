@@ -442,8 +442,12 @@ class ModelNN(nn.Module):
                 deepcopy(self),
             )  ## this is needed to prevent cached_model's parameters to be parsed by model init hooks
 
-        self.cache.load_state_dict(self.state_dict())
+        self.cache.load_state_dict(self.weights)
         self.cache.detach_weights()
+
+    @property
+    def weights(self):
+        return self.state_dict()
 
     def update_weights(self, whatever=None):
         pass
@@ -473,8 +477,10 @@ class ModelNN(nn.Module):
 
     def update_and_cache_weights(self, weights=None):
         if weights is not None:
-            weights = self.weights2dict(weights)
-            self.load_state_dict(weights)
+            for item in weights:
+                weights[item].requires_grad_()
+            weights = self.load_state_dict(weights)
+        # self.load_state_dict(self.weights2dict(weights))
         self.cache_weights()
 
     def restore_weights(self):
@@ -549,7 +555,6 @@ class ModelQuadNoMixTorch(ModelNN):
 
         self.double()
         self.cache_weights()
-        self.weights = self.parameters()
         self.force_positive_def = force_positive_def
 
     def forward(self, input_tensor, weights=None):
@@ -607,15 +612,16 @@ class ModelDeepObjective(ModelNN):
         super().__init__()
 
         self.fc1 = nn.Linear(dim_observation, dim_hidden)
-        self.a1 = nn.ReLU()
+        self.a1 = nn.LeakyReLU()
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
-        self.a2 = nn.ReLU()
+        self.a2 = nn.LeakyReLU()
         self.fc3 = nn.Linear(dim_hidden, dim_hidden)
-        self.a3 = nn.ReLU()
+        self.a3 = nn.LeakyReLU()
         self.fc4 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
         self.double()
+        self.cache_weights()
 
     @force_positive_def
     def forward(self, input_tensor):
@@ -759,12 +765,11 @@ class ModelWeightContainerTorch(ModelNN):
     def __init__(self, action_init):
         super().__init__()
 
-        self.weights = torch.nn.Parameter(torch.tensor(action_init, requires_grad=True))
+        self.p = torch.nn.Parameter(torch.tensor(action_init, requires_grad=True))
 
         self.double()
+        self.force_positive_def = False
         self.cache_weights()
-
-        self.force_positive_def = force_positive_def
 
     def forward(self, observation):
 

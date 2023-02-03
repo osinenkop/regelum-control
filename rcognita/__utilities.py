@@ -196,8 +196,16 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.exp(x)
 
-    def penalty_function(self, x, penalty_param=1, rc_type: RCType = NUMPY):
-        return self.exp(x * penalty_param) - 1
+    def log(self, x, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            return np.log(x)
+        elif rc_type == TORCH:
+            return torch.log(x)
+        elif rc_type == CASADI:
+            return casadi.log(x)
+
+    def penalty_function(self, x, penalty_coeff=3, delta=1, rc_type: RCType = NUMPY):
+        return self.exp(penalty_coeff * (x - delta))
 
     def push_vec(self, matrix, vec, rc_type: RCType = NUMPY):
         return self.column_stack([matrix[:, 1:], vec], rc_type=rc_type)

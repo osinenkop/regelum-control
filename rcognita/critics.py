@@ -193,6 +193,12 @@ class Critic(ABC):
     ):
         """
         Determine whether to accept or reject the given weights based on whether they violate the given constraints.
+        Normally, this method takes weights and checks CALF constraints by plugging them into the critic model.
+        This works in a straightforward way with scipy and CASADi optimizers.
+        In case of Torch, the weights are stored in the model after the learning.
+        So, we can simply call CALF constraints directly on the trained Torch model.
+        But to keep the method signature the same, we formally take weights as an input argument.
+        See the optimizer checking condition in the code of this method.
 
         :param weights: weights to evaluate
         :type weights: numpy array
@@ -208,8 +214,12 @@ class Critic(ABC):
         if constraint_functions is None:
             constraints_not_violated = True
         else:
-            not_violated = [cond(weights) <= atol for cond in constraint_functions]
-            constraints_not_violated = all(not_violated)
+            if self.optimizer_engine != rc.TORCH:
+                not_violated = [cond(weights) <= atol for cond in constraint_functions]
+                constraints_not_violated = all(not_violated)
+            else:
+                not_violated = [cond() <= atol for cond in constraint_functions]
+                constraints_not_violated = all(not_violated)
             # print(not_violated)
 
         if constraints_not_violated:
@@ -239,9 +249,9 @@ class Critic(ABC):
 
         elif self.optimizer.engine == "Torch":
             self._Torch_update()
-            self.optimized_weights = self.model.weights
+            self.optimized_weights = self.model.parameters()
 
-        if self.intrinsic_constraints:
+        if self.intrinsic_constraints != []:
             # print("with constraint functions")
             self.weights_acceptance_status = self.accept_or_reject_weights(
                 self.optimized_weights,
@@ -384,7 +394,6 @@ class Critic(ABC):
 
         self.optimizer.optimize(
             objective=self.objective,
-            model=self.model,
             model_input=data_buffer,
         )
 
@@ -445,6 +454,10 @@ class CriticOfObservation(Critic):
 
             critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
 
+        if self.intrinsic_constraints != [] and self.penalty_param > 0:
+            for constraint in self.intrinsic_constraints:
+                critic_objective += self.penalty_param * rc.penalty_function(constraint)
+
         return critic_objective
 
 
@@ -494,6 +507,10 @@ class CriticOfActionObservation(Critic):
             )
 
             critic_objective += 1 / 2 * temporal_difference**2
+
+        if self.intrinsic_constraints != [] and self.penalty_param > 0:
+            for constraint in self.intrinsic_constraints:
+                critic_objective += self.penalty_param * rc.penalty_function(constraint)
 
         return critic_objective
 
@@ -547,6 +564,7 @@ class CriticOffPolicy(Critic):
             observation_next = observation_buffer[:, k]
             action_next = action_buffer[:, k]
             # Temporal difference
+<<<<<<< HEAD
             critic_old = self.model(
                 torch.tensor(observation_old),
                 torch.tensor(action_next),
@@ -563,6 +581,9 @@ class CriticOffPolicy(Critic):
             #     tol=1e-4,
             #     bounds=self.action_bounds,
             # ).fun
+=======
+            critic_old = self.model(observation_old, action_next, weights=weights)
+>>>>>>> b8bdf941f626438cbf14f675dd430c3ab47bc52f
             critic_next = self.model(
                 observation_next, -0.5 * observation_next, use_stored_weights=True
             )
@@ -639,6 +660,7 @@ class CriticCALF(CriticOfObservation):
 
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
+            self.CALF_critic_lower_bound_constraint,
         ]
 
     def reset(self):
@@ -683,7 +705,7 @@ class CriticCALF(CriticOfObservation):
             self.safe_decay_rate = self.safe_decay_param * rc.norm_2(observation)
             # self.safe_decay_param = self.safe_deay_rate_param * rc norm ...
 
-    def CALF_decay_constraint_no_prediction(self, weights):
+    def CALF_decay_constraint_no_prediction(self, weights=None):
         """
         Constraint that ensures that the CALF value is decreasing by a certain rate. The rate is determined by the
         `safe_decay_param` parameter. This constraint is used when there is no prediction of the next state.
@@ -706,7 +728,7 @@ class CriticCALF(CriticOfObservation):
 
     def CALF_critic_lower_bound_constraint(
         self,
-        weights,
+        weights=None,
     ):
         """
         Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
@@ -722,7 +744,7 @@ class CriticCALF(CriticOfObservation):
         ) - self.model(self.current_observation, weights=weights)
         return self.lb_constraint_violation
 
-    def CALF_critic_upper_bound_constraint(self, weights):
+    def CALF_critic_upper_bound_constraint(self, weights=None):
         """
         Calculate the constraint violation for the CALF decay constraint when no prediction is made.
 
@@ -736,7 +758,7 @@ class CriticCALF(CriticOfObservation):
         ) - 1e3 * rc.norm_2(self.current_observation)
         return self.ub_constraint_violation
 
-    def CALF_decay_constraint_predicted_safe_policy(self, weights):
+    def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
         """
         Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.
 
@@ -764,7 +786,7 @@ class CriticCALF(CriticOfObservation):
         )
         return self.stabilizing_constraint_violation
 
-    def CALF_decay_constraint_predicted_on_policy(self, weights):
+    def CALF_decay_constraint_predicted_on_policy(self, weights=None):
         """
         Constraint for ensuring that the CALF function decreases at each iteration.
         This constraint is used when prediction is done using the last action taken.
@@ -827,9 +849,9 @@ class CriticCALF(CriticOfObservation):
             critic_old = self.model(observation_old, weights=weights)
             critic_next = self.model(observation_next, use_stored_weights=True)
 
-            weights_current = weights
-            weights_last_good = self.model.cache.weights
             if self.critic_regularization_param > 0:
+                weights_current = weights
+                weights_last_good = self.model.cache.weights
                 regularization_term = (
                     rc.sum_2(weights_current - weights_last_good)
                     * self.critic_regularization_param**-2
@@ -838,10 +860,18 @@ class CriticCALF(CriticOfObservation):
                 regularization_term = 0
 
             temporal_difference = (
-                critic_old - self.discount_factor * critic_next - self.r_prev
+                critic_old
+                - self.discount_factor * critic_next
+                - self.running_objective(observation_next, action_next)
             )
 
             critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
+
+        if self.intrinsic_constraints != [] and self.penalty_param > 0:
+            for constraint in self.intrinsic_constraints:
+                critic_objective += self.penalty_param * rc.penalty_function(
+                    constraint(), penalty_coeff=1.0e-1
+                )
 
         return critic_objective
 
