@@ -707,11 +707,11 @@ class ModelDQN(ModelNN):
         super().__init__()
 
         self.fc1 = nn.Linear(dim_observation + dim_action, dim_hidden)
-        self.a1 = nn.ReLU()
+        self.a1 = nn.LeakyReLU(0.2)
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
-        self.a2 = nn.ReLU()
+        self.a2 = nn.LeakyReLU(0.2)
         self.fc3 = nn.Linear(dim_hidden, dim_hidden)
-        self.a3 = nn.ReLU()
+        self.a3 = nn.LeakyReLU(0.2)
         self.fc4 = nn.Linear(dim_hidden, 1)
         self.force_positive_def = force_positive_def
 
