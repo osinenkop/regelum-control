@@ -758,6 +758,12 @@ class ActorRPO(Actor):
 
         actor_objective = running_objective_value + critic_of_observation
 
+        if self.intrinsic_constraints != [] and self.penalty_param > 0:
+            for constraint in self.intrinsic_constraints:
+                critic_objective += self.penalty_param * rc.penalty_function(
+                    constraint(), penalty_coeff=1.0e-1
+                )
+
         return actor_objective
 
 
@@ -792,7 +798,7 @@ class ActorCALF(ActorRPO):
         self.predictive_constraint_violations = []
         self.intrinsic_constraints = (
             [
-                # self.CALF_decay_constraint_for_actor,
+                self.CALF_decay_constraint_for_actor,
                 # self.CALF_decay_constraint_for_actor_same_critic
             ]
             if actor_constraints_on
