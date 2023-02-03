@@ -347,7 +347,7 @@ with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
 git restore .
 git clean -f
 {f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
-export PYTHONPATH={metadata["initial_pythonpath"]}
+export PYTHONPATH="{metadata["initial_pythonpath"]}"
 python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
             """
