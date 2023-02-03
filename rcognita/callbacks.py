@@ -165,7 +165,7 @@ class ConfigDiagramCallback(Callback):
                 repo.git.add(all=True)
                 diff = repo.git.diff(repo.head.commit.tree)
                 if untracked:
-                    repo.index.remove(*untracked, cached=True)
+                    repo.index.remove(untracked, cached=True)
                 with open(".summary/changes.diff", "w") as f:
                     f.write(diff + "\n")
         except git.exc.InvalidGitRepositoryError:
