@@ -686,60 +686,40 @@ class QFunctionCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cache = {"pre_step": {}, "post_step": {}}
-        self.pre_step_episodic_cache = {}
-        self.post_step_episodic_cache = {}
+        self.cache = []
         self.timeline = []
         self.num_launch = 1
         self.cooldown = 0.0
         self.current_episode = None
 
     def perform(self, obj, method, output):
+        is_step = method == "pre_step" or method == "post_step"
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "pre_step"
+            and is_step
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
-            key = obj.time
-            self.current_episode = obj.episode_counter + 1
-            self.pre_step_episodic_cache[key] = {
-                "observation": obj.observation,
-                "action": obj.action,
-                "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
-                .detach()
-                .cpu()
-                .numpy(),
-            }
-        elif (
-            isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "post_step"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
-        ):
-            key = obj.time
-            self.current_episode = obj.episode_counter + 1
-            self.post_step_episodic_cache[key] = {
-                "observation": obj.observation,
-                "action": obj.action,
-                "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
-                .detach()
-                .cpu()
-                .numpy(),
-            }
-        elif (
-            isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "reload_pipeline"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
-        ):
-            self.cache["post_step"][
-                self.current_episode
-            ] = self.post_step_episodic_cache
-            self.cache["pre_step"][self.current_episode] = self.pre_step_episodic_cache
-            self.post_step_episodic_cache = {}
-            self.pre_step_episodic_cache = {}
+            self.cache.append(
+                {
+                    **{
+                        "type": method,
+                        "episode": obj.episode_counter + 1,
+                        "time": obj.time,
+                        "Q-Function-Value": obj.critic.model(
+                            obj.observation, obj.action
+                        )
+                        .detach()
+                        .cpu()
+                        .numpy(),
+                        "action": obj.action,
+                    },
+                    **dict(zip(obj.observation_components_naming, obj.observation)),
+                }
+            )
 
     @property
     def data(self):
-        return self.cache
+        return pd.DataFrame.from_records(self.cache)
 
 
 class SaveProgressCallback(Callback):
