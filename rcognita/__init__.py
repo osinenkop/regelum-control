@@ -54,6 +54,8 @@ mock = Mock()
 import plotly.graph_objects as go
 import json
 
+import tempfile
+
 
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
@@ -490,55 +492,62 @@ class main:
         self.__class__.logger = logger
 
     def __call__(self, old_app):
-        initial_working_directory = os.getcwd()
-        initial_pythonpath = os.environ["PYTHONPATH"]
-        script_path = inspect.getfile(old_app)
-        path_main = os.path.abspath(script_path)
-        path_parent = "/".join(path_main.split("/")[:-1])
-        os.chdir(path_parent)
-        path = os.path.abspath(self.kwargs["config_path"])
-        self.kwargs["config_path"] = path
+        def rcognita_main(*args, **kwargs):
+            common_dir = tempfile.TemporaryDirectory()
+            initial_working_directory = os.getcwd()
+            initial_pythonpath = os.environ["PYTHONPATH"]
+            script_path = inspect.getfile(old_app)
+            path_main = os.path.abspath(script_path)
+            path_parent = "/".join(path_main.split("/")[:-1])
+            os.chdir(path_parent)
+            path = os.path.abspath(self.kwargs["config_path"])
+            self.kwargs["config_path"] = path
 
-        def app(cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger):
-            os.mkdir("gfx")
-            with omegaconf.flag_override(cfg, "allow_objects", True):
-                ccfg = ComplementedConfig(cfg)
-                self.apply_assignments(ccfg)
-                if "callbacks" in cfg:
-                    for callback in cfg.callbacks:
-                        callback = (
-                            obtain(callback) if isinstance(callback, str) else callback
+            def app(cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger):
+                os.mkdir("gfx")
+                with omegaconf.flag_override(cfg, "allow_objects", True):
+                    ccfg = ComplementedConfig(cfg)
+                    self.apply_assignments(ccfg)
+                    if "callbacks" in cfg:
+                        for callback in cfg.callbacks:
+                            callback = (
+                                obtain(callback) if isinstance(callback, str) else callback
+                            )
+                            callbacks.append(callback(logger))
+                        delattr(cfg, "callbacks")
+                    self.__class__.callbacks = callbacks
+                    for callback in self.__class__.callbacks:
+                        if callback.cooldown:
+                            callback.cooldown *= self.cooldown_factor
+                        callback.on_launch(
+                            ccfg,
+                            {
+                                "script_path": script_path,
+                                "config_path": path + f"/{self.kwargs['config_name']}.yaml",
+                                "initial_working_directory": initial_working_directory,
+                                "initial_pythonpath": initial_pythonpath,
+                                "common_dir": common_dir.name,
+                            },
                         )
-                        callbacks.append(callback(logger))
-                    delattr(cfg, "callbacks")
-                self.__class__.callbacks = callbacks
-                for callback in self.__class__.callbacks:
-                    if callback.cooldown:
-                        callback.cooldown *= self.cooldown_factor
-                    callback.on_launch(
-                        ccfg,
-                        {
-                            "script_path": script_path,
-                            "config_path": path + f"/{self.kwargs['config_name']}.yaml",
-                            "initial_working_directory": initial_working_directory,
-                            "initial_pythonpath": initial_pythonpath,
-                        },
-                    )
-                res = old_app(ccfg)
-                for callback in self.__class__.callbacks:
-                    callback.on_termination()
-                ccfg.refresh()
-                if self.is_sweep:
-                    return res
-                else:
-                    return {
-                        "result": res,
-                        "callbacks": self.__class__.callbacks,
-                        "directory": os.getcwd(),
-                    }
+                    res = old_app(ccfg)
+                    for callback in self.__class__.callbacks:
+                        callback.on_termination()
+                    ccfg.refresh()
+                    if self.is_sweep:
+                        return res
+                    else:
+                        return {
+                            "result": res,
+                            "callbacks": self.__class__.callbacks,
+                            "directory": os.getcwd(),
+                        }
 
-        app.__module__ = old_app.__module__
-        return hydramain(*self.args, **self.kwargs)(app)
+            app.__module__ = old_app.__module__
+            res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
+            common_dir.cleanup()
+            return res
+        return rcognita_main
+
 
 
 warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)
