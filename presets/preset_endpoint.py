@@ -1,38 +1,23 @@
 import os, sys
 
-PARENT_DIR = os.path.abspath(__file__ + "/../../")
-sys.path.insert(0, PARENT_DIR)
-CUR_DIR = os.path.abspath(__file__ + "/..")
-sys.path.insert(0, CUR_DIR)
-import logging
+#PARENT_DIR = os.path.abspath(__file__ + "/../../")
+#sys.path.insert(0, PARENT_DIR)
+#CUR_DIR = os.path.abspath(__file__ + "/..")
+#sys.path.insert(0, CUR_DIR)
+
+
 import numpy as np
+#os.chdir(PARENT_DIR)
 import rcognita as r
-import omegaconf
-from omegaconf import DictConfig, OmegaConf, flag_override
-from rcognita.visualization.vis_3wrobot import (
-    Animator3WRobotNI,
-    Animator3WRobot,
-)
-from rcognita.visualization.vis_lunar_lander import (
-    AnimatorLunarLander,
-)
-from rcognita.visualization.vis_inverted_pendulum import AnimatorInvertedPendulum
-from rcognita.visualization import plot_multirun
-import matplotlib.pyplot as plt
-from rcognita.callbacks import (
-    HistoricalObjectiveCallback,
-    TotalObjectiveCallback,
-    CriticObjectiveCallback,
-    CalfCallback,
-    HistoricalObservationCallback,
-)
-from rcognita.scenarios import Scenario
+
+
+#os.chdir(CUR_DIR)
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
 import dill
-from omegaconf import OmegaConf
-from dataclasses import dataclass
+
 
 
 np.random.seed(42)
@@ -51,7 +36,7 @@ def launch(cfg):
     total_objective = scenario.run()
 
     if scenario.is_playback:
-        animator = AnimatorInvertedPendulum(scenario)
+        animator = r.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum(scenario)
         animator.playback()
         plt.show()
 
