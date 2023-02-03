@@ -33,11 +33,7 @@ import sys
 
 
 def is_in_debug_mode():
-<<<<<<< HEAD
-    return not getattr(sys, "gettrace", None) is None
-=======
     return not sys.gettrace() is None
->>>>>>> 086c847a82de2fe103228ffdd9de4e4f839826b1
 
 
 def apply_callbacks(method):
