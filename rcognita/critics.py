@@ -564,26 +564,7 @@ class CriticOffPolicy(Critic):
             observation_next = observation_buffer[:, k]
             action_next = action_buffer[:, k]
             # Temporal difference
-<<<<<<< HEAD
-            critic_old = self.model(
-                torch.tensor(observation_old),
-                torch.tensor(action_next),
-                weights=weights,
-            )
-            # critic_next = sp.optimize.minimize(
-            #     lambda action: self.model(
-            #         observation_next,
-            #         torch.tensor(action).double(),
-            #         use_stored_weights=True,
-            #     ),
-            #     x0=action_next,
-            #     method="SLSQP",
-            #     tol=1e-4,
-            #     bounds=self.action_bounds,
-            # ).fun
-=======
             critic_old = self.model(observation_old, action_next, weights=weights)
->>>>>>> b8bdf941f626438cbf14f675dd430c3ab47bc52f
             critic_next = self.model(
                 observation_next, -0.5 * observation_next, use_stored_weights=True
             )
