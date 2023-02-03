@@ -72,7 +72,8 @@ def __memorize_instance(resolver):
         if instance_name in main.objects_created:
             return main.objects_created[instance_name]
         else:
-            obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
+            obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_),
+                                   path=default)
             main.objects_created[instance_name] = obj
             return obj
 
