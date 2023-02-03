@@ -4,11 +4,8 @@ PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
-import logging
 import numpy as np
 import rcognita as r
-import omegaconf
-from omegaconf import DictConfig, OmegaConf, flag_override
 from rcognita.visualization.vis_3wrobot import (
     Animator3WRobotNI,
     Animator3WRobot,
@@ -17,22 +14,9 @@ from rcognita.visualization.vis_lunar_lander import (
     AnimatorLunarLander,
 )
 from rcognita.visualization.vis_inverted_pendulum import AnimatorInvertedPendulum
-from rcognita.visualization import plot_multirun
 import matplotlib.pyplot as plt
-from rcognita.callbacks import (
-    HistoricalObjectiveCallback,
-    TotalObjectiveCallback,
-    CriticObjectiveCallback,
-    CalfCallback,
-    HistoricalObservationCallback,
-)
-from rcognita.scenarios import Scenario
 import matplotlib.pyplot as plt
 import pandas as pd
-import pickle
-import dill
-from omegaconf import OmegaConf
-from dataclasses import dataclass
 
 
 np.random.seed(42)
@@ -75,3 +59,4 @@ def plot_multirun_total_objective(callbacks, preset_name):
 
 if __name__ == "__main__":
     job_results = launch()
+    print("whatever")

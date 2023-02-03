@@ -20,6 +20,7 @@ critic_period_multiplier%%: 1
 
 critic:
   is_predictive: true
+  safe_decay_param: $ system_specific.safe_decay_param_predictive
 
 
 

@@ -6,4 +6,4 @@ defaults:
 _target_: rcognita.objectives.RunningObjective
 
 model:
-  R1_diag%%: = [10., 3., 0.]
+  R1_diag%%: = [10, 10, 1, 0, 0]

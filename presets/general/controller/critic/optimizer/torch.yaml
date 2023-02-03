@@ -5,3 +5,4 @@ opt_options:
 
 iterations: 3
 opt_method: = torch.optim.Adam
+model: ~ controller.critic.model

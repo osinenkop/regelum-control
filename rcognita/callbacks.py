@@ -33,7 +33,7 @@ import sys
 
 
 def is_in_debug_mode():
-    return not getattr(sys, 'gettrace', None) is None
+    return not getattr(sys, "gettrace", None) is None
 
 
 def apply_callbacks(method):
@@ -152,13 +152,21 @@ class ConfigDiagramCallback(Callback):
                 commit_hash += (
                     ' <font color="red">(uncommitted/unstaged changes)</font>'
                 )
-                if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
+                if (
+                    "disallow_uncommitted" in cfg
+                    and cfg.disallow_uncommitted
+                    and not is_in_debug_mode()
+                ):
                     raise Exception(
                         "Running experiments without committing is disallowed. Please, commit your changes."
                     )
         except:
             commit_hash = None
-            if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
+            if (
+                "disallow_uncommitted" in cfg
+                and cfg.disallow_uncommitted
+                and not is_in_debug_mode()
+            ):
                 raise Exception(
                     "Running experiments without committing is disallowed. Please, commit your changes."
                 )
@@ -652,10 +660,18 @@ class CalfCallback(HistoricalCallback):
 
         fig = plt.figure(figsize=(10, 10))
 
-        ax_calf, ax_switch, ax_delta = fig.subplots(1, 3)
+        ax_calf, ax_switch, ax_delta = ax_array = fig.subplots(1, 3)
         ax_calf.plot(self.data.iloc[:, 1], label="CALF")
-        ax_switch.plot(self.data.iloc[:, 2], label="CALF persistency")
+        ax_switch.plot(self.data.iloc[:, 2], label="CALF on")
         ax_delta.plot(self.data.iloc[:, 3], label="delta decay")
 
-        plt.grid()
+        for ax in ax_array:
+            ax.set_xlabel("Time [s]")
+            ax.grid()
+            ax.legend()
+
+        ax_calf.set_ylabel("J_hat")
+        ax_switch.set_ylabel("Is CALF on")
+        ax_delta.set_ylabel("Decay size")
+
         plt.legend()

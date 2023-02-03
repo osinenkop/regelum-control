@@ -7,3 +7,6 @@ F_min%%: $ system.F_min%%
 F_max%%: $ system.F_max%%
 
 actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.F_min%%}, ${.F_max%%}, ${.grid_dim%%}))))
+
+safe_decay_param_ex_post: 1.0E-3
+safe_decay_param_predictive: 1.0E-3

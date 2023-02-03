@@ -72,7 +72,9 @@ def __memorize_instance(resolver):
         if instance_name in main.objects_created:
             return main.objects_created[instance_name]
         else:
-            obj = inst.instantiate(resolver(key, default=default, _parent_=_parent_))
+            obj = inst.instantiate(
+                resolver(key, default=default, _parent_=_parent_), path=default
+            )
             main.objects_created[instance_name] = obj
             return obj
 
@@ -513,7 +515,10 @@ class main:
                         callback.cooldown *= self.cooldown_factor
                     callback.on_launch(
                         ccfg,
-                        {"script_path": script_path, "config_path": path + f"/{self.kwargs['config_name']}.yaml"},
+                        {
+                            "script_path": script_path,
+                            "config_path": path + f"/{self.kwargs['config_name']}.yaml",
+                        },
                     )
                 res = old_app(ccfg)
                 for callback in self.__class__.callbacks:

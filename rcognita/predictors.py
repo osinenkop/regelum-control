@@ -125,7 +125,9 @@ class RKPredictor(EulerPredictor):
         )
 
     def predict(self, current_state_or_observation, action):
-        state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
+        state_new = self.integrator(x0=current_state_or_observation, p=action)[
+            "xf"
+        ].full()
         return state_new
 
 

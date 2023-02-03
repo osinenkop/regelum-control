@@ -1,5 +1,5 @@
 defaults:
-  - model: quad_form_ddqn
+  - model: quad_form
 
 ###---Constructor arguments---###
 

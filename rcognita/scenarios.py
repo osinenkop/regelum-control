@@ -212,7 +212,10 @@ class EpisodicScenario(OnlineScenario):
         self.episode_REINFORCE_objective_gradients = []
         self.weights_historical = []
         super().__init__(*args, **kwargs)
-        self.weights_historical.append(self.actor.model.weights[0])
+        # if self.actor.optimizer.engine == "Torch":
+        #     self.weights_historical.append(self.actor.model.weights["p"].numpy())
+        # else:
+        #     self.weights_historical.append(self.actor.model.weights[0])
         self.outcomes_of_episodes = []
         self.outcome_episodic_means = []
         self.sim_status = 1

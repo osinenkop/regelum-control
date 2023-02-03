@@ -158,7 +158,7 @@ class CALFControllerExPost(RLController):
 
     def invoke_safe_action(self, observation):
         # self.actor.restore_weights()
-        # self.critic.restore_weights()
+        self.critic.restore_weights()
         action = self.actor.safe_controller.compute_action(observation)
 
         self.actor.set_action(action)
