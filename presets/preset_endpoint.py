@@ -36,9 +36,7 @@ def launch(cfg):
     total_objective = scenario.run()
 
     if scenario.is_playback:
-        animator = r.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum(
-            scenario
-        )
+        animator = r.vis_3wrobot.Animator3WRobotNI(scenario)
         animator.playback()
         plt.show()
 

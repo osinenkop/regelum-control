@@ -429,7 +429,7 @@ class CriticOfObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k - 1]
+            action_old = action_buffer[:, k - 1]
 
             # Temporal difference
 
@@ -449,7 +449,7 @@ class CriticOfObservation(Critic):
             temporal_difference = (
                 critic_old
                 - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_next)
+                - self.running_objective(observation_old, action_old)
             )
 
             critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
@@ -490,7 +490,7 @@ class CriticOfActionObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k - 1]
+            action_next_next = action_buffer[:, k + 1]
             action_next = action_buffer[:, k]
 
             # Temporal difference
