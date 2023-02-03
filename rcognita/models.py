@@ -707,7 +707,6 @@ class ModelDQN(ModelNN):
         dim_observation,
         dim_action,
         dim_hidden=40,
-        n_hidden_layers=6,
         weights=None,
         force_positive_def=False,
     ):
@@ -728,7 +727,6 @@ class ModelDQN(ModelNN):
         if weights is not None:
             self.load_state_dict(weights)
 
-        self.weights = list(self.parameters())
         self.cache_weights()
 
     @force_positive_def
