@@ -33,11 +33,7 @@ import sys
 
 
 def is_in_debug_mode():
-<<<<<<< HEAD
-    return not getattr(sys, "gettrace", None) is None
-=======
     return not sys.gettrace() is None
->>>>>>> e3c5e1011976f417ff733ecb7430a67b7d8577ce
 
 
 def apply_callbacks(method):
@@ -194,8 +190,9 @@ class ConfigDiagramCallback(Callback):
                 for line in content:
                     field, value = line.split("=")
                     overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
-        html = html.replace("<head>",
-                            """
+        html = html.replace(
+            "<head>",
+            """
                             <head>
                               <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />  
                               <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism-tomorrow.min.css'>
@@ -253,7 +250,8 @@ class ConfigDiagramCallback(Callback):
                                 window.parent.postMessage("resize", "*");
                               }
                             </script>
-                            """)
+                            """,
+        )
         html = html.replace(
             "<body>",
             f"""
@@ -352,8 +350,8 @@ git clean -f
 export PYTHONPATH={metadata["initial_pythonpath"]}
 python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
-            """ +
             """
+            + """
                 <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
             
               <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js'></script>
