@@ -1,11 +1,22 @@
 import os, sys
 
+<<<<<<< HEAD
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
+=======
+#PARENT_DIR = os.path.abspath(__file__ + "/../../")
+#sys.path.insert(0, PARENT_DIR)
+#CUR_DIR = os.path.abspath(__file__ + "/..")
+#sys.path.insert(0, CUR_DIR)
+
+
+>>>>>>> 086c847a82de2fe103228ffdd9de4e4f839826b1
 import numpy as np
+#os.chdir(PARENT_DIR)
 import rcognita as r
+<<<<<<< HEAD
 from rcognita.visualization.vis_3wrobot import (
     Animator3WRobotNI,
     Animator3WRobot,
@@ -17,6 +28,17 @@ from rcognita.visualization.vis_inverted_pendulum import AnimatorInvertedPendulu
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 import pandas as pd
+=======
+
+
+#os.chdir(CUR_DIR)
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import pickle
+import dill
+
+>>>>>>> 086c847a82de2fe103228ffdd9de4e4f839826b1
 
 
 np.random.seed(42)
@@ -35,7 +57,7 @@ def launch(cfg):
     total_objective = scenario.run()
 
     if scenario.is_playback:
-        animator = AnimatorInvertedPendulum(scenario)
+        animator = r.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum(scenario)
         animator.playback()
         plt.show()
 

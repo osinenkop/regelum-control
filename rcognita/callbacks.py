@@ -16,7 +16,7 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 """
 
 from abc import ABC, abstractmethod
-
+import torch
 import rcognita
 import pandas as pd
 import time, datetime
@@ -33,7 +33,11 @@ import sys
 
 
 def is_in_debug_mode():
+<<<<<<< HEAD
     return not getattr(sys, "gettrace", None) is None
+=======
+    return not sys.gettrace() is None
+>>>>>>> 086c847a82de2fe103228ffdd9de4e4f839826b1
 
 
 def apply_callbacks(method):
@@ -141,6 +145,7 @@ class ConfigDiagramCallback(Callback):
 
     def on_launch(self, cfg, metadata):
         start = time.time()
+        os.mkdir(".summary")
         name = metadata["config_path"].split("/")[-1].split(".")[0]
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
@@ -160,7 +165,14 @@ class ConfigDiagramCallback(Callback):
                     raise Exception(
                         "Running experiments without committing is disallowed. Please, commit your changes."
                     )
-        except:
+                untracked = repo.untracked_files
+                repo.git.add(all=True)
+                diff = repo.git.diff(repo.head.commit.tree)
+                if untracked:
+                    repo.index.remove(untracked, cached=True)
+                with open(".summary/changes.diff", "w") as f:
+                    f.write(diff + "\n")
+        except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if (
                 "disallow_uncommitted" in cfg
@@ -182,6 +194,68 @@ class ConfigDiagramCallback(Callback):
                 for line in content:
                     field, value = line.split("=")
                     overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
+        html = html.replace(
+            "<head>",
+            """
+                            <head>
+                              <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />  
+                              <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism-tomorrow.min.css'>
+                              
+                            <style>
+                            *,
+                            *:before,
+                            *:after {
+                              box-sizing: border-box;
+                            }
+                            
+                            pre[class*="language-"] {
+                              position: relative;
+                              overflow: auto;
+                            
+                              /* make space  */
+                              margin: 5px 0;
+                              padding: 1.75rem 0 1.75rem 1rem;
+                              border-radius: 10px;
+                            }
+                            
+                            pre[class*="language-"] button {
+                              position: absolute;
+                              top: 5px;
+                              right: 5px;
+                            
+                              font-size: 0.9rem;
+                              padding: 0.15rem;
+                              background-color: #828282;
+                            
+                              border: ridge 1px #7b7b7c;
+                              border-radius: 5px;
+                              text-shadow: #c4c4c4 0 0 2px;
+                            }
+                            
+                            pre[class*="language-"] button:hover {
+                              cursor: pointer;
+                              background-color: #bcbabb;
+                            }
+                            
+                            main {
+                              display: grid;
+                              max-width: 600px;
+                              margin: 20px auto;
+                            }
+                            
+                            </style>
+                            
+                              <script>
+                              window.console = window.console || function(t) {};
+                            </script>
+                              
+                              <script>
+                              if (document.location.search.match(/type=embed/gi)) {
+                                window.parent.postMessage("resize", "*");
+                              }
+                            </script>
+                            """,
+        )
         html = html.replace(
             "<body>",
             f"""
@@ -258,6 +332,72 @@ class ConfigDiagramCallback(Callback):
                             </table>
                             </details>
                              </body>
+            """,
+        )
+        html = html.replace(
+            "</body>",
+            f"""
+              <details>
+              <summary>Snippets</summary>
+              <main>
+              <p>Extract callbacks:</p>
+              <pre><code class="language-python">import dill, os, sys
+os.chdir("{metadata["initial_working_directory"]}")
+sys.path[:0] = {metadata["initial_pythonpath"].split(":")}
+with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
+    callbacks = dill.load(f)</code></pre>
+              <p>Reproduce experiment:</p>
+              <pre><code class="language-bash">cd {repo.working_tree_dir}
+git restore .
+git clean -f
+{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
+export PYTHONPATH="{metadata["initial_pythonpath"]}"
+python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
+            </main>
+            """
+            + """
+                <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
+            
+              <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js'></script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/components/prism-python.min.js"></script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/components/prism-bash.min.js"></script>
+                  <script>
+            const copyButtonLabel = "Copy Code";
+            
+            // use a class selector if available
+            let blocks = document.querySelectorAll("pre");
+            
+            blocks.forEach(block => {
+              // only add button if browser supports Clipboard API
+              if (navigator.clipboard) {
+                let button = document.createElement("button");
+            
+                button.innerText = copyButtonLabel;
+                block.appendChild(button);
+            
+                button.addEventListener("click", async () => {
+                  await copyCode(block, button);
+                });
+              }
+            });
+            
+            async function copyCode(block, button) {
+              let code = block.querySelector("code");
+              let text = code.innerText;
+            
+              await navigator.clipboard.writeText(text);
+            
+              // visual feedback that task is completed
+              button.innerText = "Code Copied";
+            
+              setTimeout(() => {
+                button.innerText = copyButtonLabel;
+              }, 700);
+            }
+            //# sourceURL=pen.js
+                </script>
+            </details>
+            </body>
             """,
         )
         with open("SUMMARY.html", "w") as f:
@@ -436,40 +576,44 @@ class HistoricalObservationCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.episodic_cache = {}
-        self.cache = {}
+        self.episodic_cache = []
+        self.cache = []
         self.timeline = []
         self.num_launch = 1
         self.cooldown = 0.0
         self.current_episode = None
-        self.columns = None
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
-            if self.columns is None:
-                self.columns = obj.observation_components_naming
-            key = obj.time
-
-            self.episodic_cache[key] = output[1]
-            self.current_episode = obj.episode_counter
+            self.current_episode = obj.episode_counter + 1
+            self.episodic_cache.append(
+                {
+                    **{"episode": self.current_episode, "time": obj.time},
+                    **dict(zip(obj.observation_components_naming, output[1])),
+                }
+            )
         elif (
             isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
         ):
-            self.cache[self.current_episode] = self.episodic_cache
+            self.cache += self.episodic_cache
             self.save_plot(
-                f"observations_in_episode_{str(obj.episode_counter).zfill(5)}"
+                f"observations_in_episode_{str(self.current_episode).zfill(5)}"
             )
-            self.episodic_cache = {}
+            self.episodic_cache = []
 
     @property
     def data(self):
-        return self.cache
+        df = pd.DataFrame.from_records(self.cache)
+        df.set_index(["episode", "time"], inplace=True)
+        return df
 
     @property
     def episodic_data(self):
-        return pd.DataFrame.from_dict(
-            self.episodic_cache, orient="index", columns=self.columns
-        )
+        df = pd.DataFrame.from_records(self.episodic_cache)
+        df.drop(["episode"], axis=1, inplace=True)
+        df.set_index("time", inplace=True)
+
+        return df
 
     @classmethod
     def name_observation_components(cls, columns):
@@ -479,7 +623,6 @@ class HistoricalObservationCallback(HistoricalCallback):
         if not name:
             name = self.__class__.__name__
         self.episodic_data.plot(subplots=True, grid=True, xlabel="time", title=name)
-        # plt.xticks(range(1, len(self.data) + 1))
 
 
 class TotalObjectiveCallback(HistoricalCallback):
@@ -504,12 +647,52 @@ class TotalObjectiveCallback(HistoricalCallback):
         return self.cache
 
 
+class QFunctionModelSaverCallback(Callback):
+    """
+    A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.timeline = []
+        self.num_launch = 1
+        self.cooldown = 0.0
+        self.current_episode = None
+
+        os.mkdir("checkpoints")
+
+    def perform(self, obj, method, output):
+        if (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "post_step"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            self.current_episode = obj.episode_counter + 1
+            torch.save(
+                obj.critic.model.state_dict(),
+                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
+            )
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "reload_pipeline"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            pass
+            # torch.save(
+            #     obj.critic.model.state_dict(),
+            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
+            # )
+
+
 class QFunctionCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cache = {}
-        self.episodic_cache = {}
+        self.cache = {"pre_step": {}, "post_step": {}}
+        self.pre_step_episodic_cache = {}
+        self.post_step_episodic_cache = {}
         self.timeline = []
         self.num_launch = 1
         self.cooldown = 0.0
@@ -518,11 +701,12 @@ class QFunctionCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "post_step"
+            and method == "pre_step"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
             key = obj.time
-            self.episodic_cache[key] = {
+            self.current_episode = obj.episode_counter + 1
+            self.pre_step_episodic_cache[key] = {
                 "observation": obj.observation,
                 "action": obj.action,
                 "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
@@ -530,14 +714,32 @@ class QFunctionCallback(HistoricalCallback):
                 .cpu()
                 .numpy(),
             }
-            self.current_episode = obj.episode_counter
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "post_step"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            key = obj.time
+            self.current_episode = obj.episode_counter + 1
+            self.post_step_episodic_cache[key] = {
+                "observation": obj.observation,
+                "action": obj.action,
+                "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
+                .detach()
+                .cpu()
+                .numpy(),
+            }
         elif (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
-            self.cache[self.current_episode] = self.episodic_cache
-            self.episodic_cache = {}
+            self.cache["post_step"][
+                self.current_episode
+            ] = self.post_step_episodic_cache
+            self.cache["pre_step"][self.current_episode] = self.pre_step_episodic_cache
+            self.post_step_episodic_cache = {}
+            self.pre_step_episodic_cache = {}
 
     @property
     def data(self):
@@ -553,12 +755,9 @@ class SaveProgressCallback(Callback):
             episode = obj.episode_counter
             if episode % self.once_in:
                 return
-            filename = f"callbacks_at_episode_{episode + 1}.dill"
-            prev_filename = f"callbacks_at_episode_{episode + 1 - self.once_in}.dill"
+            filename = f"callbacks.dill"
             with open(filename, "wb") as f:
                 dill.dump(rcognita.main.callbacks, f)
-            if episode > self.once_in:
-                os.remove(os.path.abspath(prev_filename))
             self.log(
                 f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
             )
