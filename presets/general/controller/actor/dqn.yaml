@@ -10,7 +10,7 @@ _target_: rcognita.actors.ActorRQL
 prediction_horizon: $ controller.actor.predictor.prediction_horizon
 dim_output: $ system.dim_input
 dim_input: $ system.dim_output
-discount_factor: 0.9996
+discount_factor: 1.0 
 action_bounds: $ system.action_bounds%%
 action_init: $ scenario.action_init
 critic: ~ controller.critic
