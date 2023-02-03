@@ -16,7 +16,7 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 """
 
 from abc import ABC, abstractmethod
-
+import torch
 import rcognita
 import pandas as pd
 import time, datetime
@@ -153,7 +153,11 @@ class ConfigDiagramCallback(Callback):
                 commit_hash += (
                     ' <font color="red">(uncommitted/unstaged changes)</font>'
                 )
-                if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
+                if (
+                    "disallow_uncommitted" in cfg
+                    and cfg.disallow_uncommitted
+                    and not is_in_debug_mode()
+                ):
                     raise Exception(
                         "Running experiments without committing is disallowed. Please, commit your changes."
                     )
@@ -166,7 +170,11 @@ class ConfigDiagramCallback(Callback):
                     f.write(diff + "\n")
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
-            if "disallow_uncommitted" in cfg and cfg.disallow_uncommitted and not is_in_debug_mode():
+            if (
+                "disallow_uncommitted" in cfg
+                and cfg.disallow_uncommitted
+                and not is_in_debug_mode()
+            ):
                 raise Exception(
                     "Running experiments without committing is disallowed. Please, commit your changes."
                 )
@@ -182,8 +190,9 @@ class ConfigDiagramCallback(Callback):
                 for line in content:
                     field, value = line.split("=")
                     overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
-        html = html.replace("<head>",
-                            """
+        html = html.replace(
+            "<head>",
+            """
                             <head>
                               <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />  
                               <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/prism/1.22.0/themes/prism-tomorrow.min.css'>
@@ -241,7 +250,8 @@ class ConfigDiagramCallback(Callback):
                                 window.parent.postMessage("resize", "*");
                               }
                             </script>
-                            """)
+                            """,
+        )
         html = html.replace(
             "<body>",
             f"""
@@ -340,8 +350,8 @@ git clean -f
 export PYTHONPATH={metadata["initial_pythonpath"]}
 python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
-            """ +
             """
+            + """
                 <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
             
               <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js'></script>
@@ -577,19 +587,30 @@ class HistoricalObservationCallback(HistoricalCallback):
             key = obj.time
 
             self.episodic_cache[key] = output[1]
-            self.current_episode = obj.episode_counter
+            self.current_episode = obj.episode_counter + 1
         elif (
             isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
         ):
             self.cache[self.current_episode] = self.episodic_cache
             self.save_plot(
-                f"observations_in_episode_{str(obj.episode_counter).zfill(5)}"
+                f"observations_in_episode_{str(self.current_episode).zfill(5)}"
             )
             self.episodic_cache = {}
 
     @property
     def data(self):
-        return self.cache
+        df = pd.concat(
+            {
+                episode: pd.DataFrame.from_dict(
+                    episode_history, orient="index", columns=self.columns
+                )
+                for episode, episode_history in self.cache.items()
+            },
+            axis=0,
+        )
+        df.index.set_names(["episode", "time"], inplace=True)
+
+        return df
 
     @property
     def episodic_data(self):
@@ -630,12 +651,52 @@ class TotalObjectiveCallback(HistoricalCallback):
         return self.cache
 
 
+class QFunctionModelSaverCallback(Callback):
+    """
+    A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.timeline = []
+        self.num_launch = 1
+        self.cooldown = 0.0
+        self.current_episode = None
+
+        os.mkdir("checkpoints")
+
+    def perform(self, obj, method, output):
+        if (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "post_step"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            self.current_episode = obj.episode_counter + 1
+            torch.save(
+                obj.critic.model.state_dict(),
+                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{obj.time}.pt",
+            )
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "reload_pipeline"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            pass
+            # torch.save(
+            #     obj.critic.model.state_dict(),
+            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
+            # )
+
+
 class QFunctionCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.cache = {}
-        self.episodic_cache = {}
+        self.pre_step_episodic_cache = {}
+        self.post_step_episodic_cache = {}
         self.timeline = []
         self.num_launch = 1
         self.cooldown = 0.0
@@ -644,11 +705,12 @@ class QFunctionCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "post_step"
+            and method == "pre_step"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
             key = obj.time
-            self.episodic_cache[key] = {
+            self.current_episode = obj.episode_counter + 1
+            self.pre_step_episodic_cache[key] = {
                 "observation": obj.observation,
                 "action": obj.action,
                 "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
@@ -656,14 +718,33 @@ class QFunctionCallback(HistoricalCallback):
                 .cpu()
                 .numpy(),
             }
-            self.current_episode = obj.episode_counter
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "post_step"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            key = obj.time
+            self.current_episode = obj.episode_counter + 1
+            self.post_step_episodic_cache[key] = {
+                "observation": obj.observation,
+                "action": obj.action,
+                "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
+                .detach()
+                .cpu()
+                .numpy(),
+            }
         elif (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
-            self.cache[self.current_episode] = self.episodic_cache
-            self.episodic_cache = {}
+            self.cache[self.current_episode] = {}
+            self.cache[self.current_episode][
+                "post_step"
+            ] = self.post_step_episodic_cache
+            self.cache[self.current_episode]["pre_step"] = self.pre_step_episodic_cache
+            self.post_step_episodic_cache = {}
+            self.pre_step_episodic_cache = {}
 
     @property
     def data(self):

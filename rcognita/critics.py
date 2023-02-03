@@ -538,11 +538,11 @@ class CriticOffPolicy(Critic):
         buffer_size = observation_buffer.shape[1]
         latest_observation_id = buffer_size - 1
         random_samples = random.sample(
-            range(1, latest_observation_id), self.n_samples_from_buffer - 1
+            range(1, latest_observation_id + 1), self.n_samples_from_buffer - 1
         )
         sampled_ids = np.hstack([random_samples, latest_observation_id])
 
-        for k in sampled_ids:
+        for k in sampled_ids[::-1]:
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
             action_next = action_buffer[:, k]

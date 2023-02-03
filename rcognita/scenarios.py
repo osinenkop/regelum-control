@@ -133,6 +133,20 @@ class OnlineScenario(Scenario):
         self.observation_components_naming = observation_components_naming
 
     @apply_callbacks
+    def pre_step(self):
+        self.running_objective_value = self.running_objective(
+            self.observation, self.action
+        )
+        self.update_outcome(self.observation, self.action, self.delta_time)
+
+        return (
+            np.around(self.running_objective_value, decimals=2),
+            self.observation.round(decimals=2),
+            self.action.round(2),
+            self.outcome,
+        )
+
+    @apply_callbacks
     def post_step(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
@@ -153,6 +167,7 @@ class OnlineScenario(Scenario):
         print("Episode ended successfully.")
 
     def step(self):
+        self.pre_step()
         sim_status = self.simulator.do_sim_step()
         is_episode_ended = sim_status == -1
 
