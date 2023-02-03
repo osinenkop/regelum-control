@@ -327,8 +327,9 @@ class ConfigDiagramCallback(Callback):
               <summary>Snippets</summary>
               <main>
               <p>Extract callbacks:</p>
-              <pre><code class="language-python">import dill, os
+              <pre><code class="language-python">import dill, os, sys
 os.chdir("{metadata["initial_working_directory"]}")
+sys.path[:0] = {metadata["initial_pythonpath"].split(":")}
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
     callbacks = dill.load(f)</code></pre>
               <p>Reproduce experiment:</p>

@@ -489,6 +489,7 @@ class main:
 
     def __call__(self, old_app):
         initial_working_directory = os.getcwd()
+        initial_pythonpath = os.environ['PYTHONPATH']
         script_path = inspect.getfile(old_app)
         path_main = os.path.abspath(script_path)
         path_parent = "/".join(path_main.split("/")[:-1])
@@ -516,7 +517,9 @@ class main:
                         ccfg,
                         {"script_path": script_path,
                          "config_path": path + f"/{self.kwargs['config_name']}.yaml",
-                         "initial_working_directory" : initial_working_directory},
+                         "initial_working_directory" : initial_working_directory,
+                         "initial_pythonpath": initial_pythonpath
+                         },
                     )
                 res = old_app(ccfg)
                 for callback in self.__class__.callbacks:
