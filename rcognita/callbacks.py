@@ -572,51 +572,44 @@ class HistoricalObservationCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.episodic_cache = {}
-        self.cache = {}
+        self.episodic_cache = []
+        self.cache = []
         self.timeline = []
         self.num_launch = 1
         self.cooldown = 0.0
         self.current_episode = None
-        self.columns = None
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
-            if self.columns is None:
-                self.columns = obj.observation_components_naming
-            key = obj.time
-
-            self.episodic_cache[key] = output[1]
             self.current_episode = obj.episode_counter + 1
+            self.episodic_cache.append(
+                {
+                    **{"episode": self.current_episode, "time": obj.time},
+                    **dict(zip(obj.observation_components_naming, output[1])),
+                }
+            )
         elif (
             isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
         ):
-            self.cache[self.current_episode] = self.episodic_cache
+            self.cache += self.episodic_cache
             self.save_plot(
                 f"observations_in_episode_{str(self.current_episode).zfill(5)}"
             )
-            self.episodic_cache = {}
+            self.episodic_cache = []
 
     @property
     def data(self):
-        df = pd.concat(
-            {
-                episode: pd.DataFrame.from_dict(
-                    episode_history, orient="index", columns=self.columns
-                )
-                for episode, episode_history in self.cache.items()
-            },
-            axis=0,
-        )
-        df.index.set_names(["episode", "time"], inplace=True)
-
+        df = pd.DataFrame.from_records(self.cache)
+        df.set_index(["episode", "time"], inplace=True)
         return df
 
     @property
     def episodic_data(self):
-        return pd.DataFrame.from_dict(
-            self.episodic_cache, orient="index", columns=self.columns
-        )
+        df = pd.DataFrame.from_records(self.episodic_cache)
+        df.drop(["episode"], axis=1, inplace=True)
+        df.set_index("time", inplace=True)
+
+        return df
 
     @classmethod
     def name_observation_components(cls, columns):
@@ -626,7 +619,6 @@ class HistoricalObservationCallback(HistoricalCallback):
         if not name:
             name = self.__class__.__name__
         self.episodic_data.plot(subplots=True, grid=True, xlabel="time", title=name)
-        # plt.xticks(range(1, len(self.data) + 1))
 
 
 class TotalObjectiveCallback(HistoricalCallback):
@@ -676,7 +668,7 @@ class QFunctionModelSaverCallback(Callback):
             self.current_episode = obj.episode_counter + 1
             torch.save(
                 obj.critic.model.state_dict(),
-                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{obj.time}.pt",
+                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
             )
         elif (
             isinstance(obj, rcognita.scenarios.Scenario)
@@ -694,7 +686,7 @@ class QFunctionCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cache = {}
+        self.cache = {"pre_step": {}, "post_step": {}}
         self.pre_step_episodic_cache = {}
         self.post_step_episodic_cache = {}
         self.timeline = []
@@ -738,11 +730,10 @@ class QFunctionCallback(HistoricalCallback):
             and method == "reload_pipeline"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
-            self.cache[self.current_episode] = {}
-            self.cache[self.current_episode][
-                "post_step"
+            self.cache["post_step"][
+                self.current_episode
             ] = self.post_step_episodic_cache
-            self.cache[self.current_episode]["pre_step"] = self.pre_step_episodic_cache
+            self.cache["pre_step"][self.current_episode] = self.pre_step_episodic_cache
             self.post_step_episodic_cache = {}
             self.pre_step_episodic_cache = {}
 
