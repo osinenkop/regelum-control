@@ -181,6 +181,8 @@ class CALFControllerExPost(RLController):
 
         critic_weights_accepted = self.critic.weights_acceptance_status == "accepted"
 
+        critic_weights_accepted = True
+
         if critic_weights_accepted:
             self.critic.update_weights()
 

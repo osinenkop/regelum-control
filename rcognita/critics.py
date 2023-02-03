@@ -635,13 +635,16 @@ class CriticCALF(CriticOfObservation):
             self.CALF_decay_constraint = (
                 self.CALF_decay_constraint_predicted_safe_policy
             )
+            self.CALF_critic_lower_bound_constraint = (
+                self.CALF_critic_lower_bound_constraint_predictive
+            )
             # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
         else:
             self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
 
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
-            self.CALF_critic_lower_bound_constraint,
+            # self.CALF_critic_lower_bound_constraint,
         ]
 
     def reset(self):
@@ -707,9 +710,23 @@ class CriticCALF(CriticOfObservation):
         )
         return self.stabilizing_constraint_violation
 
-    def CALF_critic_lower_bound_constraint(
-        self,
-        weights=None,
+    def CALF_critic_lower_bound_constraint(self, weights=None, lb_parameter=1e-6):
+        """
+        Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
+        the `current_observation` and a certain constant.
+
+        :param weights: critic weights to be evaluated
+        :type weights: ndarray
+        :return: constraint violation
+        :rtype: float
+        """
+        self.lb_constraint_violation = lb_parameter * rc.norm_2(
+            self.current_observation
+        ) - self.model(self.current_observation, weights=weights)
+        return self.lb_constraint_violation
+
+    def CALF_critic_lower_bound_constraint_predictive(
+        self, weights=None, lb_parameter=1e-6
     ):
         """
         Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
@@ -720,12 +737,14 @@ class CriticCALF(CriticOfObservation):
         :return: constraint violation
         :rtype: float
         """
-        self.lb_constraint_violation = 1e-4 * rc.norm_2(
-            self.current_observation
-        ) - self.model(self.current_observation, weights=weights)
+        action = self.safe_controller.compute_action(self.current_observation)
+        predicted_observation = self.predictor.predict(self.current_observation, action)
+        self.lb_constraint_violation = lb_parameter * rc.norm_2(
+            predicted_observation
+        ) - self.model(predicted_observation, weights=weights)
         return self.lb_constraint_violation
 
-    def CALF_critic_upper_bound_constraint(self, weights=None):
+    def CALF_critic_upper_bound_constraint(self, weights=None, ub_parameter=1e3):
         """
         Calculate the constraint violation for the CALF decay constraint when no prediction is made.
 
@@ -736,7 +755,7 @@ class CriticCALF(CriticOfObservation):
         """
         self.ub_constraint_violation = self.model(
             self.current_observation, weights=weights
-        ) - 1e3 * rc.norm_2(self.current_observation)
+        ) - ub_parameter * rc.norm_2(self.current_observation)
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):

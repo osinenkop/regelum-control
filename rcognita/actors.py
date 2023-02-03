@@ -26,6 +26,17 @@ from .critics import Critic
 from .models import Model
 
 
+def force_type_safety(method):
+    def wrapper(self, *args, **kwargs):
+        result = method(self, *args, **kwargs)
+        if self.optimizer.engine != "Torch" and self.critic.optimizer.engine == "Torch":
+            return result.detach().numpy()
+        else:
+            return result
+
+    return wrapper
+
+
 class Actor:
     """
     Class of actors.
@@ -733,6 +744,7 @@ class ActorRPO(Actor):
     * :math:`J^*`: optimal objective function (or its estimate)
     """
 
+    @force_type_safety
     def objective(
         self,
         action_sequence,
@@ -760,7 +772,7 @@ class ActorRPO(Actor):
 
         if self.intrinsic_constraints != [] and self.penalty_param > 0:
             for constraint in self.intrinsic_constraints:
-                critic_objective += self.penalty_param * rc.penalty_function(
+                actor_objective += self.penalty_param * rc.penalty_function(
                     constraint(), penalty_coeff=1.0e-1
                 )
 
@@ -811,7 +823,8 @@ class ActorCALF(ActorRPO):
         self.action_init = self.action = safe_action
         self.model.update_and_cache_weights(safe_action)
 
-    def CALF_decay_constraint_for_actor(self, weights):
+    @force_type_safety
+    def CALF_decay_constraint_for_actor(self, weights=None):
         """
         Constraint for the actor optimization, ensuring that the critic value will not decrease by less than the required decay rate.
 
@@ -837,9 +850,11 @@ class ActorCALF(ActorRPO):
             - self.critic_current
             + self.critic.sampling_time * self.critic.safe_decay_param
         )
+
         return self.predictive_constraint_violation
 
-    def CALF_decay_constraint_for_actor_same_critic(self, weights):
+    @force_type_safety
+    def CALF_decay_constraint_for_actor_same_critic(self, weights=None):
         """
         Calculate the predictive constraint violation for the CALF.
 
@@ -878,6 +893,7 @@ class ActorCLF(ActorCALF):
         super().__init__(*args, **kwargs)
         self.intrinsic_constraints = []
 
+    @force_type_safety
     def objective(
         self,
         action,
