@@ -42,7 +42,8 @@ setup(
         "dill==0.3.6",
         "plotly==5.13.0",
         "gitpython==3.1.30",
-        "filelock==3.0.12"
+        "filelock==3.0.12",
+        "streamlit==1.17.0"
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],
