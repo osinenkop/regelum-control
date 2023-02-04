@@ -102,16 +102,21 @@ class Callback(ABC):
         self.exception = logger.exception
         self.last_trigger = 0.0
 
+    @abstractmethod
+    def is_target_event(self, obj, method, output):
+        pass
+
     def ready(self):
         if not self.cooldown:
             return True
-        if time.time() - self.last_trigger > self.cooldown:
-            self.last_trigger = time.time()
+        t = time.time()
+        if t - self.last_trigger > self.cooldown:
+            self.last_trigger = t
             return True
         else:
             return False
 
-    def on_launch(self, cfg, metadata):
+    def on_launch(self):
         pass
 
     @abstractmethod
@@ -119,18 +124,14 @@ class Callback(ABC):
         pass
 
     def __call__(self, obj, method, output):
-        if not self.ready():
-            return
-        self.performed_bases = []
-        for base in self.__class__.__bases__:
-            if ABC not in base.__bases__ and base not in self.peformed_bases:
-                base(self, obj, method, output)
-                self.performed_bases.append(base)
-        try:
-            self.perform(obj, method, output)
-        except Exception as e:
-            self.log(f"Callback {self.__class__.__name__} failed.")
-            self.exception(e)
+        if self.is_target_event(obj, method, output) and self.ready():
+            try:
+                self.perform(obj, method, output)
+            except rcognita.RcognitaExitException as e:
+                raise e
+            except Exception as e:
+                self.log(f"Callback {self.__class__.__name__} failed.")
+                self.exception(e)
 
     def on_termination(self):
         pass
@@ -140,7 +141,13 @@ class ConfigDiagramCallback(Callback):
     def perform(self, *args, **kwargs):
         pass
 
-    def on_launch(self, cfg, metadata):
+    def is_target_event(self, obj, method, output):
+        return False
+
+    def on_launch(self):
+        cfg = rcognita.main.config
+        metadata = rcognita.main.metadata
+        report = metadata["report"]
         start = time.time()
         os.mkdir(".summary")
         name = metadata["config_path"].split("/")[-1].split(".")[0]
@@ -197,9 +204,17 @@ class ConfigDiagramCallback(Callback):
             content = content[: content.find("job:")]
             content = content.replace("-", "").split()[1:]
             if content[0] != "[]":
-                for line in content:
-                    field, value = line.split("=")
-                    overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
+                with report() as r:
+                    r["overrides"] = {}
+                    for line in content:
+                        field, value = line.split("=")
+                        overrides_table += f'<tr><td><font face="Courier New">{field}</font></td> <td><font face="Courier New"> = </font></td>  <td><font face="Courier New">{value}</font></td> </tr>\n'
+                        r["overrides"][field] = value
+                    r["overrides_html"] = f"<table>{overrides_table}</table>"
+            else:
+                with report() as r:
+                    r["overrides"] = {}
+                    r["overrides_html"] = ""
         html = html.replace(
             "<head>",
             """
@@ -358,7 +373,7 @@ git restore .
 git clean -f
 {f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
 export PYTHONPATH="{metadata["initial_pythonpath"]}"
-python3 {metadata["script_path"]} {" ".join(content)} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
+python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
             </main>
             """
             + """
@@ -491,11 +506,16 @@ def method_callback(method_name, class_name=None, log_level="debug"):
         def __init__(self, log, log_level=log_level):
             super().__init__(log, log_level=log_level)
 
+        def is_target_event(self, obj, method, output):
+            return method == method_name and class_name in [
+                None,
+                obj.__class__.__name__,
+            ]
+
         def perform(self, obj, method, output):
-            if method == method_name and class_name in [None, obj.__class__.__name__]:
-                self.log(
-                    f"Method '{method}' of class '{obj.__class__.__name__}' returned {output}"
-                )
+            self.log(
+                f"Method '{method}' of class '{obj.__class__.__name__}' returned {output}"
+            )
 
     return MethodCallback
 
@@ -508,15 +528,18 @@ class StateCallback(Callback):
     log (function): A function that logs a message at a specified log level.
     """
 
-    def perform(self, obj, method, output):
-        if (
+    def is_target_event(self, obj, method, output):
+        return (
             isinstance(obj, rcognita.systems.System)
             and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
-        ):
-            self.log(f"System's state: {obj._state}")
+        )
+
+    def perform(self, obj, method, output):
+        self.log(f"System's state: {obj._state}")
 
 
 class ObjectiveCallback(Callback):
+    cooldown = 1.0
     """
     A Callback class that logs the current objective value of an Actor instance.
 
@@ -526,9 +549,11 @@ class ObjectiveCallback(Callback):
     log (function): A logger function with the specified log level.
     """
 
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.actors.Actor) and method == "objective"
+
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.actors.Actor) and method == "objective":
-            self.log(f"Current objective: {output}")
+        self.log(f"Current objective: {output}")
 
 
 class HistoricalObjectiveCallback(HistoricalCallback):
@@ -543,25 +568,43 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.cache = {}
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = 0.0
+        self.counter = 0
+        self.cooldown = 1.0
+
+    def on_launch(self):
+        with rcognita.main.metadata["report"]() as r:
+            r["elapsed_relative"] = 0
+
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
 
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
-            self.log(
-                f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%)"
-            )
+        self.counter += 1
+        self.log(
+            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%)"
+        )
+        if not self.counter % 3:
+            do_exit = False
+            with rcognita.main.metadata["report"]() as r:
+                r["elapsed_relative"] = obj.time / obj.simulator.time_final
+                if "terminate" in r:
+                    do_exit = True
+            if do_exit:
+                self.log("Termination request issued from GUI.")
+                raise rcognita.RcognitaExitException(
+                    "Termination request issued from gui."
+                )
+        key = (self.num_launch, obj.time)
+        if key in self.cache.keys():
+            self.num_launch += 1
             key = (self.num_launch, obj.time)
-            if key in self.cache.keys():
-                self.num_launch += 1
-                key = (self.num_launch, obj.time)
 
-            self.cache[key] = output[0]
-            if self.timeline != []:
-                if self.timeline[-1] < key[1]:
-                    self.timeline.append(key[1])
-
-            else:
+        self.cache[key] = output[0]
+        if self.timeline != []:
+            if self.timeline[-1] < key[1]:
                 self.timeline.append(key[1])
+        else:
+            self.timeline.append(key[1])
 
     @property
     def data(self):
@@ -589,8 +632,13 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.cooldown = 0.0
         self.current_episode = None
 
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.scenarios.Scenario) and (
+            method == "post_step" or method == "reload_pipeline"
+        )
+
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step":
+        if method == "post_step":
             self.current_episode = obj.episode_counter + 1
             self.episodic_cache.append(
                 {
@@ -602,9 +650,7 @@ class HistoricalObservationCallback(HistoricalCallback):
                     **dict(zip(obj.observation_components_naming, obj.observation)),
                 }
             )
-        elif (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
-        ):
+        elif method == "reload_pipeline":
             self.cache += self.episodic_cache
             self.save_plot(
                 f"observations_in_episode_{str(self.current_episode).zfill(5)}"
@@ -641,17 +687,21 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.xlabel = "Episode"
         self.ylabel = "Total objective"
 
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
+
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
-            self.log(f"Current total objective: {output}")
-            episode = (
-                obj.episode_counter
-                if obj.episode_counter != 0
-                else self.cache.index.max() + 1
-            )
-            row = pd.DataFrame({"objective": output}, index=[episode])
-            self.cache = pd.concat([self.cache, row])
-            self.save_plot("Total objective")
+        self.log(f"Current total objective: {output}")
+        episode = (
+            obj.episode_counter
+            if obj.episode_counter != 0
+            else self.cache.index.max() + 1
+        )
+        row = pd.DataFrame({"objective": output}, index=[episode])
+        self.cache = pd.concat([self.cache, row])
+        self.save_plot("Total objective")
 
     @property
     def data(self):
@@ -684,18 +734,17 @@ class QFunctionModelSaverCallback(Callback):
 
         os.mkdir("checkpoints")
 
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario)
+            and (method == "post_step" or method == "reload_pipeline")
+            and "CriticOffPolicy" in obj.critic.__class__.__name__
+        )
+
     def perform(self, obj, method, output):
-        if (
-            isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "post_step"
-            and obj.critic.__class__.__name__.__contains__("CriticOffPolicy")
-        ):
+        if method == "post_step":
             self.current_episode = obj.episode_counter + 1
-        elif (
-            isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "reload_pipeline"
-            and obj.critic.__class__.__name__.__contains__("CriticOffPolicy")
-        ):
+        elif method == "reload_pipeline":
             torch.save(
                 obj.critic.model.state_dict(),
                 f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
@@ -712,30 +761,29 @@ class QFunctionCallback(HistoricalCallback):
         self.cooldown = 0.0
         self.current_episode = None
 
-    def perform(self, obj, method, output):
-        is_step = method == "pre_step" or method == "post_step"
-        if (
+    def is_target_event(self, obj, method, output):
+        return (
             isinstance(obj, rcognita.scenarios.Scenario)
-            and is_step
+            and (method == "pre_step" or method == "post_step")
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
-        ):
-            self.cache.append(
-                {
-                    **{
-                        "type": method,
-                        "episode": obj.episode_counter + 1,
-                        "time": obj.time,
-                        "Q-Function-Value": obj.critic.model(
-                            obj.observation, obj.action
-                        )
-                        .detach()
-                        .cpu()
-                        .numpy(),
-                        "action": obj.action,
-                    },
-                    **dict(zip(obj.observation_components_naming, obj.observation)),
-                }
-            )
+        )
+
+    def perform(self, obj, method, output):
+        self.cache.append(
+            {
+                **{
+                    "type": method,
+                    "episode": obj.episode_counter + 1,
+                    "time": obj.time,
+                    "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
+                    .detach()
+                    .cpu()
+                    .numpy(),
+                    "action": obj.action,
+                },
+                **dict(zip(obj.observation_components_naming, obj.observation)),
+            }
+        )
 
     @property
     def data(self):
@@ -745,18 +793,22 @@ class QFunctionCallback(HistoricalCallback):
 class SaveProgressCallback(Callback):
     once_in = 1
 
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
+
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
-            start = time.time()
-            episode = obj.episode_counter
-            if episode % self.once_in:
-                return
-            filename = f"callbacks.dill"
-            with open(filename, "wb") as f:
-                dill.dump(rcognita.main.callbacks, f)
-            self.log(
-                f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
-            )
+        start = time.time()
+        episode = obj.episode_counter
+        if episode % self.once_in:
+            return
+        filename = f"callbacks.dill"
+        with open(filename, "wb") as f:
+            dill.dump(rcognita.main.callbacks, f)
+        self.log(
+            f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
+        )
 
 
 class TimeRemainingCallback(Callback):
@@ -764,30 +816,44 @@ class TimeRemainingCallback(Callback):
         super().__init__(*args, **kwargs)
         self.time_episode = []
 
+    def on_launch(self):
+        with rcognita.main.metadata["report"]() as r:
+            pass
+            r["episode_current"] = 0
+            r["episode_total"] = 1
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
+
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
-            self.time_episode.append(time.time())
-            total_episodes = obj.N_episodes
-            current_episode = (
-                obj.episode_counter if obj.episode_counter != 0 else obj.N_episodes
+        self.time_episode.append(time.time())
+        total_episodes = obj.N_episodes
+        current_episode = (
+            obj.episode_counter if obj.episode_counter != 0 else obj.N_episodes
+        )
+        with rcognita.main.metadata["report"]() as r:
+            r["episode_current"] = current_episode
+            r["episode_total"] = total_episodes
+            r["elapsed_relative"] = 1.0
+        if len(self.time_episode) > 3:
+            average_interval = 0
+            previous = self.time_episode[-1]
+            for current in self.time_episode[-2:-12:-1]:
+                average_interval -= current - previous
+                previous = current
+            average_interval /= len(self.time_episode[-2:-12:-1])
+            td = datetime.timedelta(
+                seconds=int(average_interval * (total_episodes - current_episode))
             )
-            if len(self.time_episode) > 3:
-                average_interval = 0
-                previous = self.time_episode[-1]
-                for current in self.time_episode[-2:-12:-1]:
-                    average_interval -= current - previous
-                    previous = current
-                average_interval /= len(self.time_episode[-2:-12:-1])
-                td = datetime.timedelta(
-                    seconds=int(average_interval * (total_episodes - current_episode))
-                )
-                remaining = f" Estimated remaining time: {str(td)}."
-            else:
-                remaining = ""
-            self.log(
-                f"Completed episode {current_episode}/{total_episodes} ({100*current_episode/total_episodes:.1f}%)."
-                + remaining
-            )
+            remaining = f" Estimated remaining time: {str(td)}."
+        else:
+            remaining = ""
+        self.log(
+            f"Completed episode {current_episode}/{total_episodes} ({100*current_episode/total_episodes:.1f}%)."
+            + remaining
+        )
 
 
 class CriticObjectiveCallback(HistoricalCallback):
@@ -797,13 +863,15 @@ class CriticObjectiveCallback(HistoricalCallback):
         self.cache = []
         self.timeline = []
         self.num_launch = 1
-        self.cooldown = 0.0
+        self.cooldown = 1.0
         self.current_episode = None
 
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.critics.Critic) and method == "objective"
+
     def perform(self, obj, method, output):
-        if isinstance(obj, rcognita.critics.Critic) and method == "objective":
-            self.log(f"Current TD value: {output}")
-            self.cache.append(output)
+        self.log(f"Current TD value: {output}")
+        self.cache.append(output)
 
     @property
     def data(self):
@@ -811,15 +879,22 @@ class CriticObjectiveCallback(HistoricalCallback):
 
 
 class CalfCallback(HistoricalCallback):
+    cooldown = 1.0
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
 
-    def perform(self, obj, method, output):
-        if (
+    def is_target_event(self, obj, method, output):
+        return (
             isinstance(obj, rcognita.controllers.Controller)
             and method == "compute_action"
-        ):
+        ) or (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
+
+    def perform(self, obj, method, output):
+        if method == "compute_action":
             current_CALF = obj.critic(
                 obj.critic.observation_last_good, use_stored_weights=True
             )
@@ -835,18 +910,16 @@ class CalfCallback(HistoricalCallback):
             else:
                 CALF_prev = current_CALF
 
-            delta_CALF = CALF_prev - current_CALF
-            row = pd.DataFrame(
-                {
-                    "J_hat": [current_CALF],
-                    "is_CALF": [is_calf],
-                    "delta": [delta_CALF],
-                }
-            )
-            self.cache = pd.concat([self.cache, row], axis=0)
-        elif (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
-        ):
+                delta_CALF = CALF_prev - current_CALF
+                row = pd.DataFrame(
+                    {
+                        "J_hat": [current_CALF],
+                        "is_CALF": [is_calf],
+                        "delta": [delta_CALF],
+                    }
+                )
+                self.cache = pd.concat([self.cache, row], axis=0)
+        elif method == "reload_pipeline":
             self.save_plot(
                 f"CALF_diagnostics_on_episode_{str(obj.episode_counter if obj.episode_counter!= 0 else obj.N_episodes).zfill(5)}"
             )
