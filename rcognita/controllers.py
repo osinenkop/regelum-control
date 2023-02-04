@@ -22,6 +22,19 @@ from .__w_plotting import plot_optimization_results
 from .callbacks import introduce_callbacks, apply_callbacks
 
 
+def apply_action_bounds(method):
+    def wrapper(self, *args, **kwargs):
+        self.action = method(self, *args, **kwargs)
+        if hasattr(self, "action_bounds") and self.action_bounds != []:
+            action = np.clip(
+                self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
+            )
+            self.action = action
+        return self.action
+
+    return wrapper
+
+
 @introduce_callbacks()
 class Controller(ABC):
     """
@@ -117,6 +130,7 @@ class RLController(Controller):
         self.critic.clock.reset()
         self.actor.action_old = self.actor.action_init
 
+    @apply_action_bounds
     def compute_action(self, observation, is_critic_update=True, time=0):
         ### store current action and observation in critic's data buffer
         self.critic.update_buffers(observation, self.actor.action)
@@ -240,6 +254,7 @@ class CALFControllerExPost(RLController):
 
 
 class CALFControllerPredictive(CALFControllerExPost):
+    @apply_callbacks
     def compute_action(self, observation, is_critic_update=False, time=0):
 
         # Update data buffers
@@ -582,6 +597,7 @@ class Controller3WRobotDisassembledCLF:
         else:
             return self.action_old
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         """
         Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
@@ -759,6 +775,7 @@ class Controller3WRobotPID:
     def compute_square_of_norm(self, x, y):
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         x = observation[0]
         y = observation[1]
@@ -875,12 +892,6 @@ class Controller3WRobotPID:
             action = self.compute_action(observation)
             self.times.append(time)
 
-            if self.action_bounds != []:
-                for k in range(2):
-                    action[k] = np.clip(
-                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
-                    )
-
             self.action_old = action
 
             return action
@@ -959,6 +970,7 @@ class ControllerCartPolePID:
         else:
             return self.action
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
 
         if rc.abs(observation[0]) > np.pi / 4:
@@ -1036,6 +1048,7 @@ class ControllerLunarLanderPID:
         else:
             return self.action
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         self.action = [0, 0]
 
@@ -1055,7 +1068,7 @@ class ControllerLunarLanderPID:
             )[0]
 
         self.action = rc.array(self.action)
-        return rc.array(self.action)
+        return self.action
 
 
 class Controller2TankPID:
@@ -1127,6 +1140,7 @@ class Controller2TankPID:
         else:
             return self.action
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         # if rc.abs(observation[0]) > np.pi / 2:
         #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
@@ -1168,6 +1182,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.time_start = time_start
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         x = observation[0]
         y = observation[1]
@@ -1200,7 +1215,7 @@ class Controller3WRobotNIMotionPrimitive:
             omega = 0
             v = 0
 
-        return rc.array([np.clip(v, -25.0, 25.0), np.clip(omega, -5.0, 5.0)])
+        return rc.array([v, omega])
 
     def compute_action_sampled(self, time, observation):
         """
@@ -1417,13 +1432,6 @@ class Controller3WRobotNIDisassembledCLF:
 
             action = self.compute_action(observation)
             self.times.append(time)
-
-            if self.action_bounds.any():
-                for k in range(2):
-                    action[k] = np.clip(
-                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
-                    )
-
             self.action_old = action
 
             # DEBUG ===================================================================
@@ -1442,6 +1450,7 @@ class Controller3WRobotNIDisassembledCLF:
         else:
             return self.action_old
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         """
         Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
@@ -1451,12 +1460,12 @@ class Controller3WRobotNIDisassembledCLF:
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
         uNI = self.controller_gain * kappa_val
-        action = self._NH2ctrl_Cart(xNI, uNI)
+        self.action = self._NH2ctrl_Cart(xNI, uNI)
 
-        self.action_old = action
+        self.action_old = self.action
         self.compute_LF(observation)
 
-        return action
+        return self.action
 
     def compute_LF(self, observation):
 
@@ -1510,15 +1519,13 @@ class NominalControllerInvertedPendulum:
         if is_time_for_new_sample:
 
             self.action = self.compute_action(observation, time=time)
-            self.action = np.clip(
-                self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
-            )
 
         return self.action
 
     def __call__(self, observation):
         return self.compute_action(observation)
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         self.observation = observation
         return np.array(
@@ -1544,6 +1551,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.time_start = time_start
 
+    @apply_action_bounds
     def compute_action(self, observation, time=0):
         x = observation[0]
         y = observation[1]
@@ -1576,7 +1584,7 @@ class Controller3WRobotNIMotionPrimitive:
             omega = 0
             v = 0
 
-        return rc.array([np.clip(v, -25.0, 25.0), np.clip(omega, -5.0, 5.0)])
+        return rc.array([v, omega])
 
     def compute_action_sampled(self, time, observation):
         """
@@ -1592,15 +1600,7 @@ class Controller3WRobotNIMotionPrimitive:
 
             action = self.compute_action(observation)
             self.times.append(time)
-
-            if self.action_bounds != []:
-                for k in range(2):
-                    action[k] = np.clip(
-                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
-                    )
-
             self.action_old = action
-            print(action)
             return action
 
         else:

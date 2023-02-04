@@ -32,6 +32,7 @@ import pkg_resources
 import sys
 import filelock
 
+
 def is_in_debug_mode():
     return not sys.gettrace() is None
 
@@ -173,7 +174,10 @@ class ConfigDiagramCallback(Callback):
                         with open(".summary/changes.diff", "w") as f:
                             f.write(diff + "\n")
                     else:
-                        shutil.copy(metadata["common_dir"] + "/changes.diff", ".summary/changes.diff")
+                        shutil.copy(
+                            metadata["common_dir"] + "/changes.diff",
+                            ".summary/changes.diff",
+                        )
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if (
@@ -463,7 +467,7 @@ class HistoricalCallback(Callback, ABC):
         if not name:
             name = self.__class__.__name__
         self.plot(name=name)
-        plt.savefig(f"gfx/{name}.png")
+        plt.savefig(f"gfx/{name}.svg")
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
@@ -826,17 +830,20 @@ class CalfCallback(HistoricalCallback):
                 {
                     "J_hat": [current_CALF],
                     "is_CALF": [is_calf],
-                    # "weights": [current_weights],
                     "delta": [delta_CALF],
                 }
             )
             self.cache = pd.concat([self.cache, row], axis=0)
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        ):
+            self.save_plot()
 
     @property
     def data(self):
         return self.cache
 
-    def plot(self):
+    def plot(self, name=None):
         self.data.reset_index(inplace=True)
 
         fig = plt.figure(figsize=(10, 10))
