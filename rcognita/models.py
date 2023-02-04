@@ -709,19 +709,21 @@ class ModelDQN(ModelNN):
         dim_hidden=40,
         weights=None,
         force_positive_def=False,
+        bias=False,
+        leaky_relu_coef=0.2,
     ):
         super().__init__()
 
-        self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=False)
-        self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=False)
-        self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=False)
-        self.hidden3 = nn.Linear(dim_hidden, dim_hidden, bias=False)
-        self.hidden4 = nn.Linear(dim_hidden, dim_hidden, bias=False)
-        self.hidden5 = nn.Linear(dim_hidden, dim_hidden, bias=False)
-        # self.hidden6 = nn.Linear(dim_hidden, dim_hidden)
-        self.out_layer = nn.Linear(dim_hidden, 1, bias=False)
+        self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=bias)
+        self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.hidden3 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.hidden4 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.hidden5 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.out_layer = nn.Linear(dim_hidden, 1, bias=bias)
+        self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
-
+        
         self.double()
 
         if weights is not None:
@@ -736,19 +738,17 @@ class ModelDQN(ModelNN):
 
         x = input_tensor
         x = self.in_layer(x)
-        x = nn.LeakyReLU(0.2)(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden1(x)
-        x = nn.LeakyReLU(0.2)(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden2(x)
-        x = nn.LeakyReLU(0.2)(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden3(x)
-        x = nn.LeakyReLU(0.2)(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden4(x)
-        x = nn.LeakyReLU(0.2)(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden5(x)
-        # x = nn.LeakyReLU(0.2)(x)
-        # x = self.hidden6(x)
-        x = nn.LeakyReLU(0.2)(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.out_layer(x)
 
         return torch.squeeze(x)

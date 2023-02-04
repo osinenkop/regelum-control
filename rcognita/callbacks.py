@@ -32,6 +32,7 @@ import pkg_resources
 import sys
 import filelock
 
+
 def is_in_debug_mode():
     return not sys.gettrace() is None
 
@@ -173,7 +174,10 @@ class ConfigDiagramCallback(Callback):
                         with open(".summary/changes.diff", "w") as f:
                             f.write(diff + "\n")
                     else:
-                        shutil.copy(metadata["common_dir"] + "/changes.diff", ".summary/changes.diff")
+                        shutil.copy(
+                            metadata["common_dir"] + "/changes.diff",
+                            ".summary/changes.diff",
+                        )
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if (
@@ -590,8 +594,12 @@ class HistoricalObservationCallback(HistoricalCallback):
             self.current_episode = obj.episode_counter + 1
             self.episodic_cache.append(
                 {
-                    **{"episode": self.current_episode, "time": obj.time},
-                    **dict(zip(obj.observation_components_naming, output[1])),
+                    **{
+                        "episode": self.current_episode,
+                        "time": obj.time,
+                        "action": obj.action,
+                    },
+                    **dict(zip(obj.observation_components_naming, obj.observation)),
                 }
             )
         elif (
@@ -667,20 +675,9 @@ class QFunctionModelSaverCallback(Callback):
     def perform(self, obj, method, output):
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
-            and method == "post_step"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
-        ):
-            self.current_episode = obj.episode_counter + 1
-            # torch.save(
-            #     obj.critic.model.state_dict(),
-            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
-            # )
-        elif (
-            isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
-            pass
             torch.save(
                 obj.critic.model.state_dict(),
                 f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",

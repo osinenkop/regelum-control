@@ -534,16 +534,17 @@ class CriticOffPolicy(Critic):
         super().reset()
         self.n_buffer_updates = 0
 
-    # def reset(self):
-    #     """
-    #     Reset the outcome and current critic loss variables, and re-initialize the buffers.
-    #     """
-    #     self.outcome = 0
-    #     self.current_critic_loss = 0
-
     def update_buffers(self, observation, action):
         super().update_buffers(observation, action)
         self.n_buffer_updates += 1
+
+    def update_and_cache_weights(self, weights=None):
+        if self.is_enough_valid_elements_in_buffer():
+            super().update_and_cache_weights(weights)
+
+    def optimize_weights(self, time=None):
+        if self.is_enough_valid_elements_in_buffer():
+            super().optimize_weights(time)
 
     def get_first_valid_idx_in_buffer(self):
         return max(self.data_buffer_size - self.n_buffer_updates, 0)
@@ -554,13 +555,30 @@ class CriticOffPolicy(Critic):
             >= self.td_n + self.batch_size + 1
         )
 
-    def update_and_cache_weights(self, weights=None):
-        if self.is_enough_valid_elements_in_buffer():
-            super().update_and_cache_weights(weights)
+    def get_batch_ids(self):
+        if not self.is_enough_valid_elements_in_buffer():
+            raise ("Not enough valid elements in buffer for critic objective call")
 
-    def optimize_weights(self, time=None):
-        if self.is_enough_valid_elements_in_buffer():
-            super().optimize_weights(time)
+        buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 2
+        if self.batch_size == 1:
+            batch_ids = np.array([buffer_idx_for_latest_td_term])
+        elif (
+            buffer_idx_for_latest_td_term - self.get_first_valid_idx_in_buffer()
+            == self.batch_size - 1
+        ):
+            batch_ids = np.arange(
+                self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term + 1
+            )
+        else:
+            sampled_ids = random.sample(
+                range(
+                    self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term
+                ),
+                self.batch_size - 1,
+            )
+            batch_ids = np.hstack([sampled_ids, buffer_idx_for_latest_td_term])
+
+        return batch_ids
 
     @apply_callbacks
     def objective(self, data_buffer=None, weights=None):
@@ -580,20 +598,7 @@ class CriticOffPolicy(Critic):
             observation_buffer = data_buffer["observation_buffer"]
             action_buffer = data_buffer["action_buffer"]
 
-        if not self.is_enough_valid_elements_in_buffer():
-            raise ("Not enough valid elements in buffer for critic objective call")
-
-        buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 2
-        if self.batch_size == 1:
-            batch_ids = np.array([buffer_idx_for_latest_td_term])
-        else:
-            sampled_ids = random.sample(
-                range(
-                    self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term
-                ),
-                self.batch_size - 1,
-            )
-            batch_ids = np.hstack([sampled_ids, buffer_idx_for_latest_td_term])
+        batch_ids = self.get_batch_ids()
 
         # Calculation of critic objective
         critic_objective = 0
@@ -611,7 +616,8 @@ class CriticOffPolicy(Critic):
                     * self.running_objective(
                         observation_buffer[:, buffer_idx + td_n_idx],
                         action_buffer[:, buffer_idx + td_n_idx + 1],
-                    ) 
+                    )
+                    * self.sampling_time
                 )
 
             temporal_difference -= self.discount_factor**self.td_n * self.model(
@@ -619,14 +625,6 @@ class CriticOffPolicy(Critic):
                 action_buffer[:, buffer_idx + self.td_n + 1],
                 use_stored_weights=True,
             )
-
-            # temporal_difference -= (
-            #     self.discount_factor**self.td_n
-            #     * self.running_objective(
-            #         observation_buffer[:, buffer_idx + self.td_n],
-            #         action_buffer[:, buffer_idx + self.td_n + 1],
-            #     )
-            # )
 
             critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
         return critic_objective
