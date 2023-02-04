@@ -3,3 +3,5 @@ sampling_time: 0.01
 time_final: 4
 safe_decay_param_ex_post: 1.0E-3
 safe_decay_param_predictive: 1.0E-3
+critic_penalty_param: 0
+critic_regularization_param: 0
