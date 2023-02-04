@@ -728,7 +728,6 @@ class CriticOffPolicyGreedy(Critic):
                         observation_buffer[:, buffer_idx + td_n_idx],
                         action_buffer[:, buffer_idx + td_n_idx + 1],
                     )
-                    * self.sampling_time
                 )
 
             temporal_difference -= (
