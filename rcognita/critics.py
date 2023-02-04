@@ -553,13 +553,21 @@ class CriticOffPolicy(Critic):
         critic_objective = 0
 
         buffer_size = observation_buffer.shape[1]
-        latest_observation_id = buffer_size - 1
-        random_samples = random.sample(
-            range(1, latest_observation_id + 1), self.n_samples_from_buffer - 1
-        )
-        sampled_ids = np.hstack([random_samples, latest_observation_id])
+        if buffer_size > self.n_samples_from_buffer:
+            latest_observation_id = buffer_size - 1
+            random_samples = random.sample(
+                range(1, latest_observation_id), self.n_samples_from_buffer - 1
+            )
+            ids = np.hstack([random_samples, latest_observation_id])
+        elif buffer_size == self.n_samples_from_buffer:
+            ids = np.arange(1, buffer_size)
 
-        for k in sampled_ids[::-1]:
+        else:
+            raise ValueError(
+                "n_samples_from_buffer should be less or equal data buffer size"
+            )
+
+        for k in ids[::-1]:
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
             action_next = action_buffer[:, k]
@@ -573,7 +581,7 @@ class CriticOffPolicy(Critic):
                 - self.discount_factor * critic_next
                 - self.running_objective(observation_old, action_next)
             )
-            critic_objective += 1 / 2 * temporal_difference**2
+            critic_objective += 1 / 2 * temporal_difference**2 / len(ids)
         return critic_objective
 
 
@@ -589,7 +597,7 @@ class CriticCALF(CriticOfObservation):
         penalty_param=0,
         is_predictive=True,
         action_init=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize a CriticCALF object.

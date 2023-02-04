@@ -20,7 +20,7 @@ import torch
 import rcognita
 import pandas as pd
 import time, datetime
-import dill, os, git
+import dill, os, git, shutil
 
 import omegaconf, json
 
@@ -30,7 +30,7 @@ import re
 import pkg_resources
 
 import sys
-
+import filelock
 
 def is_in_debug_mode():
     return not sys.gettrace() is None
@@ -147,27 +147,33 @@ class ConfigDiagramCallback(Callback):
         with open("SUMMARY.html", "r") as f:
             html = f.read()
         try:
-            repo = git.Repo(search_parent_directories=True)
-            commit_hash = repo.head.object.hexsha
-            if repo.is_dirty(untracked_files=True):
-                commit_hash += (
-                    ' <font color="red">(uncommitted/unstaged changes)</font>'
-                )
-                if (
-                    "disallow_uncommitted" in cfg
-                    and cfg.disallow_uncommitted
-                    and not is_in_debug_mode()
-                ):
-                    raise Exception(
-                        "Running experiments without committing is disallowed. Please, commit your changes."
+            with filelock.FileLock(metadata["common_dir"] + "/diff.lock"):
+                repo = git.Repo(search_parent_directories=True)
+                commit_hash = repo.head.object.hexsha
+                if repo.is_dirty(untracked_files=True):
+                    commit_hash += (
+                        ' <font color="red">(uncommitted/unstaged changes)</font>'
                     )
-                untracked = repo.untracked_files
-                repo.git.add(all=True)
-                diff = repo.git.diff(repo.head.commit.tree)
-                if untracked:
-                    repo.index.remove(untracked, cached=True)
-                with open(".summary/changes.diff", "w") as f:
-                    f.write(diff + "\n")
+                    if (
+                        "disallow_uncommitted" in cfg
+                        and cfg.disallow_uncommitted
+                        and not is_in_debug_mode()
+                    ):
+                        raise Exception(
+                            "Running experiments without committing is disallowed. Please, commit your changes."
+                        )
+                    untracked = repo.untracked_files
+                    if not os.path.exists(metadata["common_dir"] + "/changes.diff"):
+                        repo.git.add(all=True)
+                        with open(metadata["common_dir"] + "/changes.diff", "w") as f:
+                            diff = repo.git.diff(repo.head.commit.tree)
+                            if untracked:
+                                repo.index.remove(untracked, cached=True)
+                            f.write(diff + "\n")
+                        with open(".summary/changes.diff", "w") as f:
+                            f.write(diff + "\n")
+                    else:
+                        shutil.copy(metadata["common_dir"] + "/changes.diff", ".summary/changes.diff")
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if (
