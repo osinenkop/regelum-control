@@ -467,7 +467,7 @@ class HistoricalCallback(Callback, ABC):
         if not name:
             name = self.__class__.__name__
         self.plot(name=name)
-        plt.savefig(f"gfx/{name}.png")
+        plt.savefig(f"gfx/{name}.svg")
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
@@ -638,6 +638,8 @@ class TotalObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
+        self.xlabel = "Episode"
+        self.ylabel = "Total objective"
 
     def perform(self, obj, method, output):
         if isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline":
@@ -654,6 +656,16 @@ class TotalObjectiveCallback(HistoricalCallback):
     @property
     def data(self):
         return self.cache
+
+    def plot(self, name=None):
+        if not name:
+            name = self.__class__.__name__
+        self.data.plot()
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
+        plt.title(name)
+        plt.grid()
+        plt.xticks(range(1, len(self.data) + 1))
 
 
 class QFunctionModelSaverCallback(Callback):
@@ -828,17 +840,23 @@ class CalfCallback(HistoricalCallback):
                 {
                     "J_hat": [current_CALF],
                     "is_CALF": [is_calf],
-                    # "weights": [current_weights],
                     "delta": [delta_CALF],
                 }
             )
             self.cache = pd.concat([self.cache, row], axis=0)
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        ):
+            self.save_plot(
+                f"CALF_diagnostics_on_episode_{str(obj.episode_counter if obj.episode_counter!= 0 else obj.N_episodes).zfill(5)}"
+            )
+            self.cache = pd.DataFrame()
 
     @property
     def data(self):
         return self.cache
 
-    def plot(self):
+    def plot(self, name=None):
         self.data.reset_index(inplace=True)
 
         fig = plt.figure(figsize=(10, 10))

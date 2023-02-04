@@ -18,3 +18,4 @@ td_n: 5
 dim_critic_model_input%%: = ${.system_dim_input} + ${.system_dim_output}
 
 action_bounds: $ system.action_bounds%%
+observation_target: $ system_specific.observation_target

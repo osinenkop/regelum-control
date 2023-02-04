@@ -20,3 +20,4 @@ action_bounds: $ system.action_bounds%%
 action_init: $ scenario.action_init
 critic: ~ controller.critic
 safe_controller: $ nominal_controller
+observation_target: $ system_specific.observation_target
