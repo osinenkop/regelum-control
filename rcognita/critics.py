@@ -518,9 +518,8 @@ class CriticOfActionObservation(Critic):
 
 
 class CriticOffPolicyBehaviour(Critic):
-    def __init__(self, *args, action_bounds, batch_size, td_n, **kwargs):
+    def __init__(self, *args, batch_size, td_n, **kwargs):
         super().__init__(*args, **kwargs)
-        self.action_bounds = action_bounds
         self.batch_size = batch_size
         self.td_n = td_n
 
@@ -660,7 +659,7 @@ class CriticOffPolicyGreedy(Critic):
             super().optimize_weights(time)
 
     def get_first_valid_idx_in_buffer(self):
-        return max(self.data_buffer_size + 1 - self.n_buffer_updates, 0)
+        return max(self.data_buffer_size - self.n_buffer_updates, 0)
 
     def is_enough_valid_elements_in_buffer(self):
         return (
@@ -712,7 +711,6 @@ class CriticOffPolicyGreedy(Critic):
             action_buffer = data_buffer["action_buffer"]
 
         batch_ids = self.get_batch_ids()
-
         # Calculation of critic objective
         critic_objective = 0
         for buffer_idx in batch_ids:
@@ -733,10 +731,19 @@ class CriticOffPolicyGreedy(Critic):
                     * self.sampling_time
                 )
 
-            temporal_difference -= self.discount_factor**self.td_n * self.model(
-                observation_buffer[:, buffer_idx + self.td_n],
-                action_buffer[:, buffer_idx + self.td_n + 1],
-                use_stored_weights=True,
+            temporal_difference -= (
+                self.discount_factor**self.td_n
+                * sp.optimize.minimize(
+                    lambda action: self.model(
+                        observation_buffer[:, buffer_idx + self.td_n],
+                        torch.tensor(action).double(),
+                        use_stored_weights=True,
+                    ),
+                    x0=action_buffer[:, buffer_idx + self.td_n],
+                    method="SLSQP",
+                    tol=1e-2,
+                    bounds=self.action_bounds,
+                ).fun
             )
 
             critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size

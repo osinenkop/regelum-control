@@ -676,13 +676,13 @@ class QFunctionModelSaverCallback(Callback):
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "post_step"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+            and obj.critic.__class__.__name__.__contains__("CriticOffPolicy")
         ):
             self.current_episode = obj.episode_counter + 1
         elif (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+            and obj.critic.__class__.__name__.__contains__("CriticOffPolicy")
         ):
             torch.save(
                 obj.critic.model.state_dict(),
