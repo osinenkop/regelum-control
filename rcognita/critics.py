@@ -490,8 +490,8 @@ class CriticOfActionObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_next_next = action_buffer[:, k + 1]
-            action_next = action_buffer[:, k]
+            # action_next_next = action_buffer[:, k + 1]
+            # action_next = action_buffer[:, k] ##
 
             # Temporal difference
 
