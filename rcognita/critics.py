@@ -102,8 +102,8 @@ class Critic(ABC):
 
         self.initialize_buffers()
 
-        if observation_target is None:
-            observation_target = np.array([])
+        if observation_target is None or observation_target == []:
+            observation_target = np.zeros(system_dim_output)
 
         self.observation_target = observation_target
 
@@ -117,6 +117,9 @@ class Critic(ABC):
         self.intrinsic_constraints = []
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
+
+    def update_target(self, observation_target):
+        self.observation_target = observation_target
 
     @property
     def optimizer_engine(self):
@@ -433,8 +436,12 @@ class CriticOfObservation(Critic):
 
             # Temporal difference
 
-            critic_old = self.model(observation_old, weights=weights)
-            critic_next = self.model(observation_next, use_stored_weights=True)
+            critic_old = self.model(
+                observation_old - self.observation_traget, weights=weights
+            )
+            critic_next = self.model(
+                observation_next - self.observation_traget, use_stored_weights=True
+            )
 
             weights_current = weights
             weights_last_good = self.model.cache.weights
@@ -491,13 +498,17 @@ class CriticOfActionObservation(Critic):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
             # action_next_next = action_buffer[:, k + 1]
-            # action_next = action_buffer[:, k] ##
+            action_next = action_buffer[:, k]  ##
 
             # Temporal difference
 
-            critic_old = self.model(observation_old, action_next, weights=weights)
+            critic_old = self.model(
+                observation_old - self.observation_traget, action_next, weights=weights
+            )
             critic_next = self.model(
-                observation_next, action_next, use_stored_weights=True
+                observation_next - self.observation_traget,
+                action_next,
+                use_stored_weights=True,
             )
 
             temporal_difference = (

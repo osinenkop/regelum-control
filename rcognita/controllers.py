@@ -55,7 +55,9 @@ class Controller(ABC):
         self.is_fixed_critic_weights = is_fixed_critic_weights
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
-    def compute_action_sampled(self, time, observation, constraints=()):
+    def compute_action_sampled(
+        self, time, observation, constraints=(), observation_target=[]
+    ):
 
         is_time_for_new_sample = self.clock.check_time(time)
         is_time_for_critic_update = self.critic.clock.check_time(time)
@@ -68,7 +70,10 @@ class Controller(ABC):
             # Update controller's internal clock
 
             self.compute_action(
-                observation, time=time, is_critic_update=is_critic_update
+                observation,
+                time=time,
+                is_critic_update=is_critic_update,
+                observation_target=observation_target,
             )
 
         return self.actor.action
@@ -131,12 +136,17 @@ class RLController(Controller):
         self.actor.action_old = self.actor.action_init
 
     @apply_action_bounds
-    def compute_action(self, observation, is_critic_update=True, time=0):
+    def compute_action(
+        self, observation, is_critic_update=True, time=0, observation_target=[]
+    ):
         ### store current action and observation in critic's data buffer
         self.critic.update_buffers(observation, self.actor.action)
 
         ### store current observation in actor
         self.actor.receive_observation(observation)
+
+        self.actor.update_target(observation_target)
+        self.critic.update_target(observation_target)
 
         if is_critic_update:
             ### optimize critic's model weights
@@ -180,7 +190,9 @@ class CALFControllerExPost(RLController):
         self.critic.r_prev += self.actor.running_objective(observation, action)
 
     @apply_callbacks
-    def compute_action(self, observation, is_critic_update=False, time=0):
+    def compute_action(
+        self, observation, is_critic_update=False, time=0, observation_target=[]
+    ):
         # Update data buffers
         self.critic.update_buffers(
             observation, self.actor.action
@@ -190,6 +202,9 @@ class CALFControllerExPost(RLController):
         self.actor.receive_observation(
             observation
         )  ### store current observation in actor
+
+        self.actor.update_target(observation_target)
+        self.critic.update_target(observation_target)
 
         self.critic.optimize_weights(time=time)
 
@@ -553,7 +568,7 @@ class Controller3WRobotDisassembledCLF:
 
         return uCart
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         See algorithm description in [[1]_], [[2]_].
 
@@ -877,7 +892,7 @@ class Controller3WRobotPID:
 
         return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)])
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 
@@ -943,7 +958,7 @@ class ControllerCartPolePID:
         )
         self.swing_up_tol = swing_up_tol
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 
@@ -1021,7 +1036,7 @@ class ControllerLunarLanderPID:
         self.threshold_2 = 1.2
         self.threshold = self.threshold_1
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 
@@ -1113,7 +1128,7 @@ class Controller2TankPID:
         self.swing_up_tol = swing_up_tol
         self.observation_target = observation_target
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 
@@ -1127,14 +1142,7 @@ class Controller2TankPID:
 
             action = self.compute_action(observation)
 
-            if self.action_bounds != []:
-                for k in range(len(self.action_bounds)):
-                    action[k] = np.clip(
-                        action[k], self.action_bounds[k, 0], self.action_bounds[k, 1]
-                    )
-
             self.action_old = action
-            print(action)
             return action
 
         else:
@@ -1217,7 +1225,7 @@ class Controller3WRobotNIMotionPrimitive:
 
         return rc.array([v, omega])
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 
@@ -1420,7 +1428,7 @@ class Controller3WRobotNIDisassembledCLF:
 
         return uCart
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 
@@ -1480,24 +1488,6 @@ class Controller3WRobotNIDisassembledCLF:
 
 
 class NominalControllerInvertedPendulum:
-    def compute_action_sampled(self, time, observation, constraints=()):
-
-        is_time_for_new_sample = self.clock.check_time(time)
-        is_time_for_critic_update = self.critic.clock.check_time(time)
-
-        is_critic_update = (
-            is_time_for_critic_update and not self.is_fixed_critic_weights
-        )
-
-        if is_time_for_new_sample:  # New sample
-            # Update controller's internal clock
-
-            self.compute_action(
-                observation, time=time, is_critic_update=is_critic_update
-            )
-
-        return self.actor.action
-
     def __init__(
         self,
         action_bounds,
@@ -1512,7 +1502,7 @@ class NominalControllerInvertedPendulum:
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
 
-    def compute_action_sampled(self, time, observation, constraints=()):
+    def compute_action_sampled(self, time, observation, constraints=(), observation_target=[]):
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1586,7 +1576,7 @@ class Controller3WRobotNIMotionPrimitive:
 
         return rc.array([v, omega])
 
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, observation, observation_target=[]):
         """
         Compute sampled action.
 

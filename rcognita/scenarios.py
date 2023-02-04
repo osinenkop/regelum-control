@@ -121,6 +121,11 @@ class OnlineScenario(Scenario):
         self.action_init = action_init
         self.action = self.action_init
         self.observation = self.system.out(self.state_full)
+        self.observation_target = (
+            np.zeros_like(self.observation)
+            if observation_target is None or observation_target == []
+            else observation_target
+        )
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
@@ -190,7 +195,7 @@ class OnlineScenario(Scenario):
             self.time_old = self.time
 
             self.action = self.controller.compute_action_sampled(
-                self.time, self.observation
+                self.time, self.observation, observation_target=self.observation_target
             )
             self.system.receive_action(self.action)
 
