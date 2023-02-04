@@ -675,6 +675,12 @@ class QFunctionModelSaverCallback(Callback):
     def perform(self, obj, method, output):
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
+            and method == "post_step"
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        ):
+            self.current_episode = obj.episode_counter + 1
+        elif (
+            isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):

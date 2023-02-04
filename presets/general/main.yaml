@@ -11,11 +11,11 @@ defaults:
 
 
 callbacks:
-  - rcognita.callbacks.HistoricalObjectiveCallback
-  - rcognita.callbacks.TotalObjectiveCallback
+  # - rcognita.callbacks.HistoricalObjectiveCallback
+  # - rcognita.callbacks.TotalObjectiveCallback
   - rcognita.callbacks.CriticObjectiveCallback
-  - rcognita.callbacks.CalfCallback
-  - rcognita.callbacks.HistoricalObservationCallback
+  # - rcognita.callbacks.CalfCallback
+  # - rcognita.callbacks.HistoricalObservationCallback
   - rcognita.callbacks.QFunctionCallback
   - rcognita.callbacks.QFunctionModelSaverCallback
 
