@@ -14,6 +14,6 @@ m%%: 1
 g%%: 9.8
 l%%: 1
 
-M_min%%: -15.
-M_max%%: 15.
+M_min%%: -30.
+M_max%%: 30.
 action_bounds%%: = numpy.array([[${.M_min%%}, ${.M_max%%}]])
