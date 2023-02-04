@@ -1,6 +1,6 @@
 defaults:
   - actor: dqn
-  - critic: dqn
+  - critic: dqn_greedy
 
 _target_: rcognita.controllers.RLController
 

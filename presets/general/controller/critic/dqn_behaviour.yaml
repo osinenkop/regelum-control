@@ -2,7 +2,7 @@ defaults:
   - model: dqn
   - optimizer: torch
 
-_target_: rcognita.critics.CriticOffPolicy
+_target_: rcognita.critics.CriticOffPolicyBehaviour
 
 
 
@@ -16,5 +16,3 @@ critic_regularization_param: 0
 batch_size: 10
 td_n: 5
 dim_critic_model_input%%: = ${.system_dim_input} + ${.system_dim_output}
-
-action_bounds: $ system.action_bounds%%
