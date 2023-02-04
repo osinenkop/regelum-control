@@ -162,3 +162,5 @@ diff.txt
 outputs
 multirun
 /docsrc/modules/
+
+*.ipynb

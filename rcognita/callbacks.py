@@ -594,8 +594,12 @@ class HistoricalObservationCallback(HistoricalCallback):
             self.current_episode = obj.episode_counter + 1
             self.episodic_cache.append(
                 {
-                    **{"episode": self.current_episode, "time": obj.time},
-                    **dict(zip(obj.observation_components_naming, output[1])),
+                    **{
+                        "episode": self.current_episode,
+                        "time": obj.time,
+                        "action": obj.action,
+                    },
+                    **dict(zip(obj.observation_components_naming, obj.observation)),
                 }
             )
         elif (
@@ -610,7 +614,6 @@ class HistoricalObservationCallback(HistoricalCallback):
     @property
     def data(self):
         df = pd.DataFrame.from_records(self.cache)
-        df.set_index(["episode", "time"], inplace=True)
         return df
 
     @property
@@ -685,23 +688,18 @@ class QFunctionModelSaverCallback(Callback):
         if (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "post_step"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+            and obj.critic.__class__.__name__.__contains__("CriticOffPolicy")
         ):
             self.current_episode = obj.episode_counter + 1
-            torch.save(
-                obj.critic.model.state_dict(),
-                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
-            )
         elif (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+            and obj.critic.__class__.__name__.__contains__("CriticOffPolicy")
         ):
-            pass
-            # torch.save(
-            #     obj.critic.model.state_dict(),
-            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
-            # )
+            torch.save(
+                obj.critic.model.state_dict(),
+                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
+            )
 
 
 class QFunctionCallback(HistoricalCallback):
