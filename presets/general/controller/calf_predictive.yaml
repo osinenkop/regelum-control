@@ -23,6 +23,7 @@ critic:
   safe_decay_param: $ system_specific.safe_decay_param_predictive
   penalty_param: $ system_specific.critic_penalty_param
   critic_regularization_param: $ system_specific.critic_regularization_param
+  is_dynamic_decay_rate: $ system_specific.is_dynamic_decay_rate
 
 
 

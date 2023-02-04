@@ -862,8 +862,8 @@ class CriticCALF(CriticOfObservation):
                 weights_last_good = self.model.cache.weights
                 regularization_term = (
                     rc.sum_2(weights_current - weights_last_good)
-                    * self.critic_regularization_param**-2
-                ) ** 10
+                    * self.critic_regularization_param
+                )
             else:
                 regularization_term = 0
 
