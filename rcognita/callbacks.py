@@ -600,7 +600,6 @@ class HistoricalObservationCallback(HistoricalCallback):
     @property
     def data(self):
         df = pd.DataFrame.from_records(self.cache)
-        df.set_index(["episode", "time"], inplace=True)
         return df
 
     @property
@@ -666,20 +665,20 @@ class QFunctionModelSaverCallback(Callback):
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
             self.current_episode = obj.episode_counter + 1
-            torch.save(
-                obj.critic.model.state_dict(),
-                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
-            )
+            # torch.save(
+            #     obj.critic.model.state_dict(),
+            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
+            # )
         elif (
             isinstance(obj, rcognita.scenarios.Scenario)
             and method == "reload_pipeline"
             and obj.critic.__class__.__name__ == "CriticOffPolicy"
         ):
             pass
-            # torch.save(
-            #     obj.critic.model.state_dict(),
-            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
-            # )
+            torch.save(
+                obj.critic.model.state_dict(),
+                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
+            )
 
 
 class QFunctionCallback(HistoricalCallback):

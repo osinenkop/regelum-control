@@ -712,14 +712,14 @@ class ModelDQN(ModelNN):
     ):
         super().__init__()
 
-        self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden)
-        self.hidden1 = nn.Linear(dim_hidden, dim_hidden)
-        self.hidden2 = nn.Linear(dim_hidden, dim_hidden)
-        self.hidden3 = nn.Linear(dim_hidden, dim_hidden)
-        self.hidden4 = nn.Linear(dim_hidden, dim_hidden)
-        # self.hidden5 = nn.Linear(dim_hidden, dim_hidden)
+        self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=False)
+        self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=False)
+        self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=False)
+        self.hidden3 = nn.Linear(dim_hidden, dim_hidden, bias=False)
+        self.hidden4 = nn.Linear(dim_hidden, dim_hidden, bias=False)
+        self.hidden5 = nn.Linear(dim_hidden, dim_hidden, bias=False)
         # self.hidden6 = nn.Linear(dim_hidden, dim_hidden)
-        self.out_layer = nn.Linear(dim_hidden, 1)
+        self.out_layer = nn.Linear(dim_hidden, 1, bias=False)
         self.force_positive_def = force_positive_def
 
         self.double()
@@ -744,11 +744,11 @@ class ModelDQN(ModelNN):
         x = self.hidden3(x)
         x = nn.LeakyReLU(0.2)(x)
         x = self.hidden4(x)
-        # x = nn.LeakyReLU(0.2)(x)
-        # x = self.hidden5(x)
+        x = nn.LeakyReLU(0.2)(x)
+        x = self.hidden5(x)
         # x = nn.LeakyReLU(0.2)(x)
         # x = self.hidden6(x)
-        x = nn.Tanh()(x)
+        x = nn.LeakyReLU(0.2)(x)
         x = self.out_layer(x)
 
         return torch.squeeze(x)
