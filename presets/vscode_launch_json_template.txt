@@ -1,0 +1,26 @@
+{
+    "name": "CALF torch",
+    "type": "python",
+    "request": "launch",
+    "program": "preset_endpoint.py",
+    "console": "integratedTerminal",
+    "justMyCode": true,
+    "args": [
+        "--single-thread",
+        "controller=calf_ex_post",
+        "scenario.is_playback=false",
+        "system=3wrobot_ni",
+        "controller/actor/optimizer=scipy",
+        "controller/critic/optimizer=torch",
+        "controller/critic/model=deep_objective",
+        "controller.critic.penalty_param=2",
+        "controller.critic.optimizer.opt_options.lr=1E-2",
+        "controller.critic.optimizer.iterations=30",
+        "+controller.safe_only=False"
+    ],
+    "cwd": "${fileDirname}/../presets",
+    "env": {
+        "HYDRA_FULL_ERROR": "1",
+        "PYTHONPATH": "${fileDirname}/..",
+    }
+}

@@ -26,6 +26,17 @@ from .critics import Critic
 from .models import Model
 
 
+def force_type_safety(method):
+    def wrapper(self, *args, **kwargs):
+        result = method(self, *args, **kwargs)
+        if self.optimizer.engine != "Torch" and self.critic.optimizer.engine == "Torch":
+            return result.detach().numpy()
+        else:
+            return result
+
+    return wrapper
+
+
 class Actor:
     """
     Class of actors.
@@ -53,8 +64,8 @@ class Actor:
 
     def __init__(
         self,
-        dim_output: int = 5,
-        dim_input: int = 2,
+        dim_output: int = 2,
+        dim_input: int = 5,
         prediction_horizon: int = 1,
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
@@ -66,6 +77,7 @@ class Actor:
         discount_factor=1,
         epsilon_greedy=False,
         epsilon_greedy_parameter=0.0,
+        observation_target=None,
     ):
         """
         Initialize an actor.
@@ -142,6 +154,11 @@ class Actor:
         )
         self.action = self.action_old
         self.intrinsic_constraints = []
+        if observation_target is None or observation_target == []:
+            self.observation_target = rc.zeros(self.dim_output)
+
+    def update_target(self, observation_target):
+        self.observation_target = observation_target
 
     def create_observation_constraints(
         self, constraint_functions, action_sequence_reshaped, observation
@@ -248,9 +265,13 @@ class Actor:
             )
             if not is_exploration:
                 try:
-                    self.action = self.model(observation).detach().numpy()
+                    self.action = (
+                        self.model(observation - self.observation_target)
+                        .detach()
+                        .numpy()
+                    )
                 except AttributeError:
-                    self.action = self.model(observation)
+                    self.action = self.model(observation - self.observation_target)
             else:
                 self.action = np.array(
                     [
@@ -260,9 +281,11 @@ class Actor:
                 )
         else:
             try:
-                self.action = self.model(observation).detach().numpy()
+                self.action = (
+                    self.model(observation - self.observation_target).detach().numpy()
+                )
             except AttributeError:
-                self.action = self.model(observation)
+                self.action = self.model(observation - self.observation_target)
 
     def update_weights(self, weights=None):
         """
@@ -639,7 +662,7 @@ class ActorSQL(Actor):
 
         for k in range(self.prediction_horizon + 1):
             action_objective = self.critic(
-                observation_sequence[:, k],
+                observation_sequence[:, k] - self.observation_target,
                 action_sequence_reshaped[:, k],
                 use_stored_weights=True,
             )
@@ -707,8 +730,8 @@ class ActorRQL(Actor):
             )
 
         actor_objective += self.critic(
+            observation_sequence[:, -1] - self.observation_target,
             action_sequence_reshaped[:, -1],
-            observation_sequence[:, -1],
             use_stored_weights=True,
         )
 
@@ -733,6 +756,7 @@ class ActorRPO(Actor):
     * :math:`J^*`: optimal objective function (or its estimate)
     """
 
+    @force_type_safety
     def objective(
         self,
         action_sequence,
@@ -754,9 +778,17 @@ class ActorRPO(Actor):
 
         running_objective_value = self.running_objective(observation, current_action)
 
-        critic_of_observation = self.critic(observation_predicted)
+        critic_of_observation = self.critic(
+            observation_predicted - self.observation_target
+        )
 
         actor_objective = running_objective_value + critic_of_observation
+
+        if self.intrinsic_constraints != [] and self.penalty_param > 0:
+            for constraint in self.intrinsic_constraints:
+                actor_objective += self.penalty_param * rc.penalty_function(
+                    constraint(), penalty_coeff=1.0e-1
+                )
 
         return actor_objective
 
@@ -792,7 +824,7 @@ class ActorCALF(ActorRPO):
         self.predictive_constraint_violations = []
         self.intrinsic_constraints = (
             [
-                # self.CALF_decay_constraint_for_actor,
+                self.CALF_decay_constraint_for_actor,
                 # self.CALF_decay_constraint_for_actor_same_critic
             ]
             if actor_constraints_on
@@ -805,7 +837,8 @@ class ActorCALF(ActorRPO):
         self.action_init = self.action = safe_action
         self.model.update_and_cache_weights(safe_action)
 
-    def CALF_decay_constraint_for_actor(self, weights):
+    @force_type_safety
+    def CALF_decay_constraint_for_actor(self, weights=None):
         """
         Constraint for the actor optimization, ensuring that the critic value will not decrease by less than the required decay rate.
 
@@ -814,16 +847,16 @@ class ActorCALF(ActorRPO):
         :return: difference between the predicted critic value and the current critic value, plus the sampling time times the required decay rate
         :rtype: float
         """
-        action = self.model(self.observation, weights=weights)
+        action = self.model(self.observation - self.observation_target, weights=weights)
 
         self.predicted_observation = predicted_observation = self.predictor.predict(
             self.observation, action
         )
         observation_last_good = self.critic.observation_last_good
 
-        self.critic_next = self.critic(predicted_observation)
+        self.critic_next = self.critic(predicted_observation - self.observation_target)
         self.critic_current = self.critic(
-            observation_last_good, use_stored_weights=True
+            observation_last_good - self.observation_target, use_stored_weights=True
         )
 
         self.predictive_constraint_violation = (
@@ -831,9 +864,11 @@ class ActorCALF(ActorRPO):
             - self.critic_current
             + self.critic.sampling_time * self.critic.safe_decay_param
         )
+
         return self.predictive_constraint_violation
 
-    def CALF_decay_constraint_for_actor_same_critic(self, weights):
+    @force_type_safety
+    def CALF_decay_constraint_for_actor_same_critic(self, weights=None):
         """
         Calculate the predictive constraint violation for the CALF.
 
@@ -845,14 +880,14 @@ class ActorCALF(ActorRPO):
         :return: (float) Predictive constraint violation.
         :rtype: float
         """
-        action = self.model(self.observation, weights=weights)
+        action = self.model(self.observation - self.observation_target, weights=weights)
 
         predicted_observation = self.predictor.predict(self.observation, action)
         observation_last_good = self.critic.observation_last_good
 
         self.predictive_constraint_violation = (
-            self.critic(predicted_observation)
-            - self.critic(observation_last_good)
+            self.critic(predicted_observation - self.observation_target)
+            - self.critic(observation_last_good - self.observation_target)
             + self.critic.sampling_time * self.critic.safe_decay_param
         )
 
@@ -872,6 +907,7 @@ class ActorCLF(ActorCALF):
         super().__init__(*args, **kwargs)
         self.intrinsic_constraints = []
 
+    @force_type_safety
     def objective(
         self,
         action,
@@ -994,7 +1030,9 @@ class ActorTabular(ActorRPO):
 
         actor_objective = self.running_objective(
             observation, action
-        ) + self.discount_factor * self.critic(observation_predicted)
+        ) + self.discount_factor * self.critic(
+            observation_predicted - self.observation_target
+        )
 
         return actor_objective
 
@@ -1104,7 +1142,11 @@ class ActorProbabilisticEpisodicAC(ActorProbabilisticEpisodic):
         )
         self.action_old = self.action
 
-        Q_value = self.critic(observation, action_sample).detach().numpy()
+        Q_value = (
+            self.critic(observation - self.observation_target, action_sample)
+            .detach()
+            .numpy()
+        )
         current_gradient = self.model.compute_gradient(action_sample) * Q_value
 
         self.store_gradient(current_gradient)

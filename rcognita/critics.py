@@ -102,8 +102,8 @@ class Critic(ABC):
 
         self.initialize_buffers()
 
-        if observation_target is None:
-            observation_target = np.array([])
+        if observation_target is None or observation_target == []:
+            observation_target = np.zeros(system_dim_output)
 
         self.observation_target = observation_target
 
@@ -117,6 +117,9 @@ class Critic(ABC):
         self.intrinsic_constraints = []
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
+
+    def update_target(self, observation_target):
+        self.observation_target = observation_target
 
     @property
     def optimizer_engine(self):
@@ -241,6 +244,7 @@ class Critic(ABC):
         :return: acceptance status of the optimized weights, either `accepted` or `rejected`.
         :rtype: str
         """
+
         if self.optimizer.engine == "CasADi":
             self.optimized_weights = self._CasADi_update(self.intrinsic_constraints)
 
@@ -273,6 +277,7 @@ class Critic(ABC):
         :param action: the current action taken by the actor.
         :type action: np.ndarray
         """
+
         self.action_buffer = rc.push_vec(
             self.action_buffer, rc.array(action, prototype=self.action_buffer)
         )
@@ -429,12 +434,16 @@ class CriticOfObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k - 1]
+            action_old = action_buffer[:, k - 1]
 
             # Temporal difference
 
-            critic_old = self.model(observation_old, weights=weights)
-            critic_next = self.model(observation_next, use_stored_weights=True)
+            critic_old = self.model(
+                observation_old - self.observation_traget, weights=weights
+            )
+            critic_next = self.model(
+                observation_next - self.observation_traget, use_stored_weights=True
+            )
 
             weights_current = weights
             weights_last_good = self.model.cache.weights
@@ -449,7 +458,7 @@ class CriticOfObservation(Critic):
             temporal_difference = (
                 critic_old
                 - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_next)
+                - self.running_objective(observation_old, action_old)
             )
 
             critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
@@ -490,14 +499,18 @@ class CriticOfActionObservation(Critic):
         for k in range(self.data_buffer_size - 1, 0, -1):
             observation_old = observation_buffer[:, k - 1]
             observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k - 1]
-            action_next = action_buffer[:, k]
+            # action_next_next = action_buffer[:, k + 1]
+            action_next = action_buffer[:, k]  ##
 
             # Temporal difference
 
-            critic_old = self.model(observation_old, action_next, weights=weights)
+            critic_old = self.model(
+                observation_old - self.observation_traget, action_next, weights=weights
+            )
             critic_next = self.model(
-                observation_next, action_next, use_stored_weights=True
+                observation_next - self.observation_traget,
+                action_next,
+                use_stored_weights=True,
             )
 
             temporal_difference = (
@@ -515,22 +528,67 @@ class CriticOfActionObservation(Critic):
         return critic_objective
 
 
-class CriticOffPolicy(Critic):
-    def __init__(self, *args, action_bounds, n_samples_from_buffer, **kwargs):
+class CriticOffPolicyBehaviour(Critic):
+    def __init__(self, *args, batch_size, td_n, **kwargs):
         super().__init__(*args, **kwargs)
-        self.n_samples_from_buffer = n_samples_from_buffer
-        self.action_bounds = action_bounds
+        self.batch_size = batch_size
+        self.td_n = td_n
+
+        self.n_buffer_updates = 0
 
     """
     This is the class of critics that are represented as functions of observation only.
     """
 
     def reset(self):
-        """
-        Reset the outcome and current critic loss variables, and re-initialize the buffers.
-        """
-        self.outcome = 0
-        self.current_critic_loss = 0
+        super().reset()
+        self.n_buffer_updates = 0
+
+    def update_buffers(self, observation, action):
+        super().update_buffers(observation, action)
+        self.n_buffer_updates += 1
+
+    def update_and_cache_weights(self, weights=None):
+        if self.is_enough_valid_elements_in_buffer():
+            super().update_and_cache_weights(weights)
+
+    def optimize_weights(self, time=None):
+        if self.is_enough_valid_elements_in_buffer():
+            super().optimize_weights(time)
+
+    def get_first_valid_idx_in_buffer(self):
+        return max(self.data_buffer_size - self.n_buffer_updates, 0)
+
+    def is_enough_valid_elements_in_buffer(self):
+        return (
+            self.data_buffer_size - self.get_first_valid_idx_in_buffer()
+            >= self.td_n + self.batch_size + 1
+        )
+
+    def get_batch_ids(self):
+        if not self.is_enough_valid_elements_in_buffer():
+            raise ("Not enough valid elements in buffer for critic objective call")
+
+        buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 2
+        if self.batch_size == 1:
+            batch_ids = np.array([buffer_idx_for_latest_td_term])
+        elif (
+            buffer_idx_for_latest_td_term - self.get_first_valid_idx_in_buffer()
+            == self.batch_size - 1
+        ):
+            batch_ids = np.arange(
+                self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term + 1
+            )
+        else:
+            sampled_ids = random.sample(
+                range(
+                    self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term
+                ),
+                self.batch_size - 1,
+            )
+            batch_ids = np.hstack([sampled_ids, buffer_idx_for_latest_td_term])
+
+        return batch_ids
 
     @apply_callbacks
     def objective(self, data_buffer=None, weights=None):
@@ -550,38 +608,155 @@ class CriticOffPolicy(Critic):
             observation_buffer = data_buffer["observation_buffer"]
             action_buffer = data_buffer["action_buffer"]
 
+        batch_ids = self.get_batch_ids()
+
+        # Calculation of critic objective
         critic_objective = 0
-
-        buffer_size = observation_buffer.shape[1]
-        if buffer_size > self.n_samples_from_buffer:
-            latest_observation_id = buffer_size - 1
-            random_samples = random.sample(
-                range(1, latest_observation_id), self.n_samples_from_buffer - 1
+        for buffer_idx in batch_ids:
+            temporal_difference = 0
+            temporal_difference += self.model(
+                observation_buffer[:, buffer_idx],
+                action_buffer[:, buffer_idx + 1],
+                weights=weights,
             )
-            ids = np.hstack([random_samples, latest_observation_id])
-        elif buffer_size == self.n_samples_from_buffer:
-            ids = np.arange(1, buffer_size)
 
+            for td_n_idx in range(self.td_n):
+                temporal_difference -= (
+                    self.discount_factor**td_n_idx
+                    * self.running_objective(
+                        observation_buffer[:, buffer_idx + td_n_idx],
+                        action_buffer[:, buffer_idx + td_n_idx + 1],
+                    )
+                    * self.sampling_time
+                )
+
+            temporal_difference -= self.discount_factor**self.td_n * self.model(
+                observation_buffer[:, buffer_idx + self.td_n],
+                action_buffer[:, buffer_idx + self.td_n + 1],
+                use_stored_weights=True,
+            )
+
+            critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
+        return critic_objective
+
+
+class CriticOffPolicyGreedy(Critic):
+    def __init__(self, *args, action_bounds, batch_size, td_n, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.action_bounds = action_bounds
+        self.batch_size = batch_size
+        self.td_n = td_n
+
+        self.n_buffer_updates = 0
+
+    """
+    This is the class of critics that are represented as functions of observation only.
+    """
+
+    def reset(self):
+        super().reset()
+        self.n_buffer_updates = 0
+
+    def update_buffers(self, observation, action):
+        super().update_buffers(observation, action)
+        self.n_buffer_updates += 1
+
+    def update_and_cache_weights(self, weights=None):
+        if self.is_enough_valid_elements_in_buffer():
+            super().update_and_cache_weights(weights)
+
+    def optimize_weights(self, time=None):
+        if self.is_enough_valid_elements_in_buffer():
+            super().optimize_weights(time)
+
+    def get_first_valid_idx_in_buffer(self):
+        return max(self.data_buffer_size - self.n_buffer_updates, 0)
+
+    def is_enough_valid_elements_in_buffer(self):
+        return (
+            self.data_buffer_size - self.get_first_valid_idx_in_buffer()
+            >= self.td_n + self.batch_size
+        )
+
+    def get_batch_ids(self):
+        if not self.is_enough_valid_elements_in_buffer():
+            raise ("Not enough valid elements in buffer for critic objective call")
+
+        buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 1
+        if self.batch_size == 1:
+            batch_ids = np.array([buffer_idx_for_latest_td_term])
+        elif (
+            buffer_idx_for_latest_td_term - self.get_first_valid_idx_in_buffer()
+            == self.batch_size - 1
+        ):
+            batch_ids = np.arange(
+                self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term + 1
+            )
         else:
-            raise ValueError(
-                "n_samples_from_buffer should be less or equal data buffer size"
+            sampled_ids = random.sample(
+                range(
+                    self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term
+                ),
+                self.batch_size - 1,
+            )
+            batch_ids = np.hstack([sampled_ids, buffer_idx_for_latest_td_term])
+
+        return batch_ids
+
+    @apply_callbacks
+    def objective(self, data_buffer=None, weights=None):
+        """
+        Compute the objective function of the critic, which is typically a squared temporal difference.
+        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
+        :type data_buffer: dict, optional
+        :param weights: the weights of the critic model, if different from the stored weights.
+        :type weights: numpy.ndarray, optional
+        :return: the value of the objective function
+        :rtype: float
+        """
+        if data_buffer is None:
+            observation_buffer = self.observation_buffer
+            action_buffer = self.action_buffer
+        else:
+            observation_buffer = data_buffer["observation_buffer"]
+            action_buffer = data_buffer["action_buffer"]
+
+        batch_ids = self.get_batch_ids()
+        # Calculation of critic objective
+        critic_objective = 0
+        for buffer_idx in batch_ids:
+            temporal_difference = 0
+            temporal_difference += self.model(
+                observation_buffer[:, buffer_idx],
+                action_buffer[:, buffer_idx + 1],
+                weights=weights,
             )
 
-        for k in ids[::-1]:
-            observation_old = observation_buffer[:, k - 1]
-            observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k]
-            # Temporal difference
-            critic_old = self.model(observation_old, action_next, weights=weights)
-            critic_next = self.model(
-                observation_next, -0.5 * observation_next, use_stored_weights=True
+            for td_n_idx in range(self.td_n):
+                temporal_difference -= (
+                    self.discount_factor**td_n_idx
+                    * self.running_objective(
+                        observation_buffer[:, buffer_idx + td_n_idx],
+                        action_buffer[:, buffer_idx + td_n_idx + 1],
+                    )
+                )
+
+            temporal_difference -= (
+                self.discount_factor**self.td_n
+                * sp.optimize.minimize(
+                    lambda action: self.model(
+                        observation_buffer[:, buffer_idx + self.td_n],
+                        torch.tensor(action).double(),
+                        use_stored_weights=True,
+                    ),
+                    x0=action_buffer[:, buffer_idx + self.td_n],
+                    method="SLSQP",
+                    tol=1e-2,
+                    bounds=self.action_bounds,
+                ).fun
             )
-            temporal_difference = (
-                critic_old
-                - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_next)
-            )
-            critic_objective += 1 / 2 * temporal_difference**2 / len(ids)
+
+            critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
         return critic_objective
 
 
@@ -643,13 +818,16 @@ class CriticCALF(CriticOfObservation):
             self.CALF_decay_constraint = (
                 self.CALF_decay_constraint_predicted_safe_policy
             )
+            self.CALF_critic_lower_bound_constraint = (
+                self.CALF_critic_lower_bound_constraint_predictive
+            )
             # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
         else:
             self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
 
         self.intrinsic_constraints = [
             self.CALF_decay_constraint,
-            self.CALF_critic_lower_bound_constraint,
+            # self.CALF_critic_lower_bound_constraint,
         ]
 
     def reset(self):
@@ -715,9 +893,23 @@ class CriticCALF(CriticOfObservation):
         )
         return self.stabilizing_constraint_violation
 
-    def CALF_critic_lower_bound_constraint(
-        self,
-        weights=None,
+    def CALF_critic_lower_bound_constraint(self, weights=None, lb_parameter=1e-6):
+        """
+        Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
+        the `current_observation` and a certain constant.
+
+        :param weights: critic weights to be evaluated
+        :type weights: ndarray
+        :return: constraint violation
+        :rtype: float
+        """
+        self.lb_constraint_violation = lb_parameter * rc.norm_2(
+            self.current_observation
+        ) - self.model(self.current_observation, weights=weights)
+        return self.lb_constraint_violation
+
+    def CALF_critic_lower_bound_constraint_predictive(
+        self, weights=None, lb_parameter=1e-6
     ):
         """
         Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
@@ -728,12 +920,14 @@ class CriticCALF(CriticOfObservation):
         :return: constraint violation
         :rtype: float
         """
-        self.lb_constraint_violation = 1e-4 * rc.norm_2(
-            self.current_observation
-        ) - self.model(self.current_observation, weights=weights)
+        action = self.safe_controller.compute_action(self.current_observation)
+        predicted_observation = self.predictor.predict(self.current_observation, action)
+        self.lb_constraint_violation = lb_parameter * rc.norm_2(
+            predicted_observation
+        ) - self.model(predicted_observation, weights=weights)
         return self.lb_constraint_violation
 
-    def CALF_critic_upper_bound_constraint(self, weights=None):
+    def CALF_critic_upper_bound_constraint(self, weights=None, ub_parameter=1e3):
         """
         Calculate the constraint violation for the CALF decay constraint when no prediction is made.
 
@@ -744,7 +938,7 @@ class CriticCALF(CriticOfObservation):
         """
         self.ub_constraint_violation = self.model(
             self.current_observation, weights=weights
-        ) - 1e3 * rc.norm_2(self.current_observation)
+        ) - ub_parameter * rc.norm_2(self.current_observation)
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
@@ -843,8 +1037,8 @@ class CriticCALF(CriticOfObservation):
                 weights_last_good = self.model.cache.weights
                 regularization_term = (
                     rc.sum_2(weights_current - weights_last_good)
-                    * self.critic_regularization_param**-2
-                ) ** 10
+                    * self.critic_regularization_param
+                )
             else:
                 regularization_term = 0
 

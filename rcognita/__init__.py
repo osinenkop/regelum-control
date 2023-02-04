@@ -46,6 +46,7 @@ from . import models
 from . import predictors
 from . import actors
 from . import visualization
+from .visualization import *
 
 from unittest.mock import Mock, MagicMock
 from hydra._internal.utils import _locate

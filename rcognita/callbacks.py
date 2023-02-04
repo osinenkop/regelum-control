@@ -180,7 +180,10 @@ class ConfigDiagramCallback(Callback):
                         with open(".summary/changes.diff", "w") as f:
                             f.write(diff + "\n")
                     else:
-                        shutil.copy(metadata["common_dir"] + "/changes.diff", ".summary/changes.diff")
+                        shutil.copy(
+                            metadata["common_dir"] + "/changes.diff",
+                            ".summary/changes.diff",
+                        )
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if (
@@ -478,7 +481,7 @@ class HistoricalCallback(Callback, ABC):
         if not name:
             name = self.__class__.__name__
         self.plot(name=name)
-        plt.savefig(f"gfx/{name}.png")
+        plt.savefig(f"gfx/{name}.svg")
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
@@ -628,8 +631,12 @@ class HistoricalObservationCallback(HistoricalCallback):
             self.current_episode = obj.episode_counter + 1
             self.episodic_cache.append(
                 {
-                    **{"episode": self.current_episode, "time": obj.time},
-                    **dict(zip(obj.observation_components_naming, output[1])),
+                    **{
+                        "episode": self.current_episode,
+                        "time": obj.time,
+                        "action": obj.action,
+                    },
+                    **dict(zip(obj.observation_components_naming, obj.observation)),
                 }
             )
         elif method == "reload_pipeline":
@@ -642,7 +649,6 @@ class HistoricalObservationCallback(HistoricalCallback):
     @property
     def data(self):
         df = pd.DataFrame.from_records(self.cache)
-        df.set_index(["episode", "time"], inplace=True)
         return df
 
     @property
@@ -667,6 +673,8 @@ class TotalObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
+        self.xlabel = "Episode"
+        self.ylabel = "Total objective"
 
 
     def is_target_event(self, obj, method, output):
@@ -686,6 +694,16 @@ class TotalObjectiveCallback(HistoricalCallback):
     @property
     def data(self):
         return self.cache
+
+    def plot(self, name=None):
+        if not name:
+            name = self.__class__.__name__
+        self.data.plot()
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
+        plt.title(name)
+        plt.grid()
+        plt.xticks(range(1, len(self.data) + 1))
 
 
 class QFunctionModelSaverCallback(Callback):
@@ -707,21 +725,16 @@ class QFunctionModelSaverCallback(Callback):
     def is_target_event(self, obj, method, output):
         return (isinstance(obj, rcognita.scenarios.Scenario)
             and (method == "post_step" or method == "reload_pipeline")
-            and obj.critic.__class__.__name__ == "CriticOffPolicy")
+            and "CriticOffPolicy" in obj.critic.__class__.__name__)
 
     def perform(self, obj, method, output):
         if method == "post_step":
             self.current_episode = obj.episode_counter + 1
+        elif method == "reload_pipeline":
             torch.save(
                 obj.critic.model.state_dict(),
-                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}_{round(obj.time, 2)}.pt",
+                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
             )
-        elif method == "reload_pipeline":
-            pass
-            # torch.save(
-            #     obj.critic.model.state_dict(),
-            #     f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
-            # )
 
 
 class QFunctionCallback(HistoricalCallback):
@@ -854,40 +867,46 @@ class CalfCallback(HistoricalCallback):
         self.cache = pd.DataFrame()
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.controllers.Controller) and method == "compute_action"
+        return (isinstance(obj, rcognita.controllers.Controller) and method == "compute_action") or (
+                isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline")
 
     def perform(self, obj, method, output):
-        current_CALF = obj.critic(
-            obj.critic.observation_last_good, use_stored_weights=True
-        )
-        self.log(
-            f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.critic.observation_buffer[:,-1]}"
-        )
-        is_calf = (
-            obj.critic.weights_acceptance_status == "accepted"
-            and obj.actor.weights_acceptance_status == "accepted"
-        )
-        if not self.cache.empty:
-            CALF_prev = self.cache["J_hat"].iloc[-1]
-        else:
-            CALF_prev = current_CALF
+        if method == "compute_action":
+            current_CALF = obj.critic(
+                obj.critic.observation_last_good, use_stored_weights=True
+            )
+            self.log(
+                f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.critic.observation_buffer[:,-1]}"
+            )
+            is_calf = (
+                obj.critic.weights_acceptance_status == "accepted"
+                and obj.actor.weights_acceptance_status == "accepted"
+            )
+            if not self.cache.empty:
+                CALF_prev = self.cache["J_hat"].iloc[-1]
+            else:
+                CALF_prev = current_CALF
 
-        delta_CALF = CALF_prev - current_CALF
-        row = pd.DataFrame(
-            {
-                "J_hat": [current_CALF],
-                "is_CALF": [is_calf],
-                # "weights": [current_weights],
-                "delta": [delta_CALF],
-            }
-        )
-        self.cache = pd.concat([self.cache, row], axis=0)
+                delta_CALF = CALF_prev - current_CALF
+                row = pd.DataFrame(
+                    {
+                        "J_hat": [current_CALF],
+                        "is_CALF": [is_calf],
+                        "delta": [delta_CALF],
+                    }
+                )
+                self.cache = pd.concat([self.cache, row], axis=0)
+        elif method == "reload_pipeline":
+            self.save_plot(
+                f"CALF_diagnostics_on_episode_{str(obj.episode_counter if obj.episode_counter!= 0 else obj.N_episodes).zfill(5)}"
+            )
+            self.cache = pd.DataFrame()
 
     @property
     def data(self):
         return self.cache
 
-    def plot(self):
+    def plot(self, name=None):
         self.data.reset_index(inplace=True)
 
         fig = plt.figure(figsize=(10, 10))
