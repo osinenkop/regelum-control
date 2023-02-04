@@ -32,6 +32,7 @@ import pkg_resources
 import sys
 import filelock
 
+
 def is_in_debug_mode():
     return not sys.gettrace() is None
 
@@ -506,10 +507,15 @@ def method_callback(method_name, class_name=None, log_level="debug"):
             super().__init__(log, log_level=log_level)
 
         def is_target_event(self, obj, method, output):
-            return method == method_name and class_name in [None, obj.__class__.__name__]
+            return method == method_name and class_name in [
+                None,
+                obj.__class__.__name__,
+            ]
 
         def perform(self, obj, method, output):
-            self.log(f"Method '{method}' of class '{obj.__class__.__name__}' returned {output}")
+            self.log(
+                f"Method '{method}' of class '{obj.__class__.__name__}' returned {output}"
+            )
 
     return MethodCallback
 
@@ -521,10 +527,11 @@ class StateCallback(Callback):
     Attributes:
     log (function): A function that logs a message at a specified log level.
     """
+
     def is_target_event(self, obj, method, output):
         return (
-                isinstance(obj, rcognita.systems.System)
-                and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
+            isinstance(obj, rcognita.systems.System)
+            and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
         )
 
     def perform(self, obj, method, output):
@@ -579,12 +586,14 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         if not self.counter % 3:
             do_exit = False
             with rcognita.main.metadata["report"]() as r:
-                r["elapsed_relative"] = obj.time/obj.simulator.time_final
+                r["elapsed_relative"] = obj.time / obj.simulator.time_final
                 if "terminate" in r:
                     do_exit = True
             if do_exit:
                 self.log("Termination request issued from GUI.")
-                raise rcognita.RcognitaExitException("Termination request issued from gui.")
+                raise rcognita.RcognitaExitException(
+                    "Termination request issued from gui."
+                )
         key = (self.num_launch, obj.time)
         if key in self.cache.keys():
             self.num_launch += 1
@@ -624,7 +633,9 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.current_episode = None
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and (method == "post_step" or method == "reload_pipeline")
+        return isinstance(obj, rcognita.scenarios.Scenario) and (
+            method == "post_step" or method == "reload_pipeline"
+        )
 
     def perform(self, obj, method, output):
         if method == "post_step":
@@ -676,9 +687,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.xlabel = "Episode"
         self.ylabel = "Total objective"
 
-
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
 
     def perform(self, obj, method, output):
         self.log(f"Current total objective: {output}")
@@ -723,9 +735,11 @@ class QFunctionModelSaverCallback(Callback):
         os.mkdir("checkpoints")
 
     def is_target_event(self, obj, method, output):
-        return (isinstance(obj, rcognita.scenarios.Scenario)
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario)
             and (method == "post_step" or method == "reload_pipeline")
-            and "CriticOffPolicy" in obj.critic.__class__.__name__)
+            and "CriticOffPolicy" in obj.critic.__class__.__name__
+        )
 
     def perform(self, obj, method, output):
         if method == "post_step":
@@ -748,9 +762,11 @@ class QFunctionCallback(HistoricalCallback):
         self.current_episode = None
 
     def is_target_event(self, obj, method, output):
-        return (isinstance(obj, rcognita.scenarios.Scenario)
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario)
             and (method == "pre_step" or method == "post_step")
-            and obj.critic.__class__.__name__ == "CriticOffPolicy")
+            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+        )
 
     def perform(self, obj, method, output):
         self.cache.append(
@@ -759,9 +775,7 @@ class QFunctionCallback(HistoricalCallback):
                     "type": method,
                     "episode": obj.episode_counter + 1,
                     "time": obj.time,
-                    "Q-Function-Value": obj.critic.model(
-                        obj.observation, obj.action
-                    )
+                    "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
                     .detach()
                     .cpu()
                     .numpy(),
@@ -780,7 +794,9 @@ class SaveProgressCallback(Callback):
     once_in = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
 
     def perform(self, obj, method, output):
         start = time.time()
@@ -807,7 +823,9 @@ class TimeRemainingCallback(Callback):
             r["episode_total"] = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
 
     def perform(self, obj, method, output):
         self.time_episode.append(time.time())
@@ -862,13 +880,18 @@ class CriticObjectiveCallback(HistoricalCallback):
 
 class CalfCallback(HistoricalCallback):
     cooldown = 1.0
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
 
     def is_target_event(self, obj, method, output):
-        return (isinstance(obj, rcognita.controllers.Controller) and method == "compute_action") or (
-                isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline")
+        return (
+            isinstance(obj, rcognita.controllers.Controller)
+            and method == "compute_action"
+        ) or (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
 
     def perform(self, obj, method, output):
         if method == "compute_action":
