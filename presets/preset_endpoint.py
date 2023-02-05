@@ -61,4 +61,4 @@ def plot_multirun_total_objective(callbacks, preset_name):
 
 if __name__ == "__main__":
     job_results = launch()
-    print("whatever")
+    pass

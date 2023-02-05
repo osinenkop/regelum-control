@@ -27,6 +27,8 @@ import hashlib
 
 import hydra.core.plugins
 import hydra._internal.config_loader_impl
+from tables import PerformanceWarning
+from scipy.optimize import OptimizeWarning
 from . import _Plugins__fake_file_config_source
 from . import __fake_plugins
 from . import __fake_config_loader_impl
@@ -61,6 +63,7 @@ import json
 import tempfile
 
 from multiprocessing import Process
+
 
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
@@ -395,6 +398,7 @@ from .callbacks import *
 class RcognitaExitException(Exception):
     pass
 
+
 class main:
     """
     The decorator used to invoke ``rcognita``'s config pipeline.
@@ -417,6 +421,8 @@ class main:
     assignments = []
     weak_assignments = []
     builtin_callbacks = [
+        EventCallback,
+        TimeCallback,
         ConfigDiagramCallback,
         TimeRemainingCallback,
         SaveProgressCallback,
@@ -513,38 +519,47 @@ class main:
             path = os.path.abspath(self.kwargs["config_path"])
             self.kwargs["config_path"] = path
 
-            def app(cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger):
+            def app(
+                cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger
+            ):
                 os.mkdir("gfx")
+                os.mkdir(".callbacks")
                 with omegaconf.flag_override(cfg, "allow_objects", True):
                     self.__class__.metadata = {
-                                                "script_path": script_path,
-                                                "config_path": path + f"/{self.kwargs['config_name']}.yaml",
-                                                "initial_working_directory": initial_working_directory,
-                                                "initial_pythonpath": initial_pythonpath,
-                                                "common_dir": common_dir.name,
-                                                "id": int(os.getcwd().split('/')[-1]),
-                                                "report": lambda : shelve.open(common_dir.name + "/report_" + os.getcwd().split('/')[-1].zfill(5)),
-                                                "pid" : os.getpid()
-                                            }
+                        "script_path": script_path,
+                        "config_path": path + f"/{self.kwargs['config_name']}.yaml",
+                        "initial_working_directory": initial_working_directory,
+                        "initial_pythonpath": initial_pythonpath,
+                        "common_dir": common_dir.name,
+                        "id": int(os.getcwd().split("/")[-1]),
+                        "report": lambda: shelve.open(
+                            common_dir.name
+                            + "/report_"
+                            + os.getcwd().split("/")[-1].zfill(5)
+                        ),
+                        "pid": os.getpid(),
+                    }
                     ccfg = ComplementedConfig(cfg)
                     self.apply_assignments(ccfg)
                     if "callbacks" in cfg:
                         for callback in cfg.callbacks:
                             callback = (
-                                obtain(callback) if isinstance(callback, str) else callback
+                                obtain(callback)
+                                if isinstance(callback, str)
+                                else callback
                             )
                             callbacks.append(callback(logger))
                         delattr(cfg, "callbacks")
                     self.__class__.callbacks = callbacks
                     self.__class__.config = ccfg
-                    for callback in self.__class__.callbacks:
-                        if callback.cooldown:
-                            callback.cooldown *= self.cooldown_factor
-                        callback.on_launch()
-                    with self.__class__.metadata["report"]() as r:
-                        r["path"] = os.getcwd()
-                        r["pid"] = os.getpid()
                     try:
+                        for callback in self.__class__.callbacks:
+                            if callback.cooldown:
+                                callback.cooldown *= self.cooldown_factor
+                            callback.on_launch()
+                        with self.__class__.metadata["report"]() as r:
+                            r["path"] = os.getcwd()
+                            r["pid"] = os.getpid()
                         res = old_app(ccfg)
                     except RcognitaExitException as e:
                         res = e
@@ -552,8 +567,16 @@ class main:
                         with self.__class__.metadata["report"]() as r:
                             r["traceback"] = traceback.format_exc()
                         res = e
+                        self.__class__.callbacks[0].log("Script terminated with error.")
+                        self.__class__.callbacks[0].exception(e)
                     for callback in self.__class__.callbacks:
-                        callback.on_termination()
+                        try:
+                            callback.on_termination(res)
+                        except Exception as e:
+                            callback.log(
+                                f"Termination procedure for {callback.__class__.__name__} failed."
+                            )
+                            callback.exception(e)
                     ccfg.refresh()
                     if self.is_sweep:
                         return res
@@ -572,7 +595,7 @@ class main:
                 args = [common_dir.name]
 
                 # streamlit.cli.main_run(filename, args)
-                streamlit.web.bootstrap.run(gui_script_file, '', args, flag_options={})
+                streamlit.web.bootstrap.run(gui_script_file, "", args, flag_options={})
 
             gui = Process(target=gui_server)
             gui.start()
@@ -582,11 +605,13 @@ class main:
             time.sleep(1.0)
             gui.terminate()
             return res
+
         return rcognita_main
 
 
-
 warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)
-
+warnings.filterwarnings("ignore", category=pd.io.pytables.PerformanceWarning)
+warnings.filterwarnings("ignore", category=OptimizeWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 array = __utilities.rc.array
