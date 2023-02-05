@@ -552,6 +552,7 @@ class main:
                         with self.__class__.metadata["report"]() as r:
                             r["traceback"] = traceback.format_exc()
                         res = e
+                        self.__class__.callbacks[0].exception(e)
                     for callback in self.__class__.callbacks:
                         callback.on_termination()
                     ccfg.refresh()
