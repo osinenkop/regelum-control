@@ -1,0 +1,4 @@
+state_init%%: = numpy.array([2, -2]) 
+action_init: = numpy.ones(${system.dim_input})
+
+state_init: = ${.state_init%%} + numpy.random.normal(0., covariance, size=${state_init%%}.shape)
