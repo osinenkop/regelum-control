@@ -111,7 +111,7 @@ class Callback(ABC):
     def on_episode_done(self, scenario, episode_number, episodes_total):
         pass
 
-    def ready(self):
+    def ready(self, t):
         if not self.cooldown:
             return True
         if t - self.last_trigger > self.cooldown:
@@ -777,6 +777,9 @@ class TotalObjectiveCallback(HistoricalCallback):
 
     def perform(self, obj, method, output):
         pass
+
+    def load_data(self, idx=None):
+        return super().load_data(idx=1)
 
     def on_episode_done(self, scenario, episode_number, episodes_total):
         self.add_datum({"episode": episode_number, "objective": scenario.outcome})
