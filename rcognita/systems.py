@@ -672,6 +672,7 @@ class LunarLander(System):
         self.r = 1
         self.sigma = 1
         self.state_cache = []
+        self.is_landed = False
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
@@ -689,7 +690,7 @@ class LunarLander(System):
         y_dot = state[4]
         theta_dot = state[5]
 
-        # left_support, right_support = self.compute_supports_geometry(state[:2], theta)
+        left_support, right_support = self.compute_supports_geometry(state[:2], theta)
         # l_reaction = self.compute_reaction(state[:2], left_support)
         # r_reaction = self.compute_reaction(state[:2], right_support)
 
@@ -726,7 +727,12 @@ class LunarLander(System):
         # Dstate[5] = (4 * F_l + M_l + M_r) / J
         Dstate[5] = (4 * F_l) / J
 
-        # Dstate = Dstate * utilities.rc.if_else(state[1] >= 1, 1, 0)
+        # Check if any of the two lander's supports touched the ground. If yes, freeze the state.
+        self.is_landed = utilities.rc.if_else(
+            left_support[1] <= 0, 1, 0
+        ) * utilities.rc.if_else(right_support[1] <= 0, 1, 0)
+
+        Dstate = Dstate * (1 - self.is_landed)
 
         return Dstate
 
@@ -774,7 +780,29 @@ class LunarLander(System):
         )
         return -reaction
 
-    def out(self, observation, time=None, action=None):
-        state = observation
+    def out(self, state, time=None, action=None):
+        # If landed, we artificially output the target as an indicator of episode end
+        # state = utilities
 
-        return state
+        # (
+        #     observation
+        #     if not self.is_landed
+        #     else utilities.rc.array([0, self.a, 0, 0, 0, 0])
+        # )
+
+        # return state * (1 - self.is_landed) + self.is_landed * utilities.rc.array(
+        #     [0, self.a, 0, 0, 0, 0]
+        # )
+        # return utilities.rc.if_else(
+        #     self.is_landed > 0, utilities.rc.array([0, self.a, 0, 0, 0, 0]), state
+        # )
+        # return state
+        left_support, right_support = self.compute_supports_geometry(
+            state[:2], state[2]
+        )
+        self.is_landed = utilities.rc.if_else(
+            left_support[1] <= 0, 1, 0
+        ) * utilities.rc.if_else(right_support[1] <= 0, 1, 0)
+        return state * (1 - self.is_landed) + self.is_landed * utilities.rc.array(
+            [0, self.a, 0, 0, 0, 0]
+        )

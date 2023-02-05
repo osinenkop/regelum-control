@@ -883,8 +883,13 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
 
-        critic_curr = self.model(self.current_observation, weights=weights)
-        critic_prev = self.model(self.observation_last_good, use_stored_weights=True)
+        critic_curr = self.model(
+            self.current_observation - self.observation_target, weights=weights
+        )
+        critic_prev = self.model(
+            self.observation_last_good - self.observation_target,
+            use_stored_weights=True,
+        )
 
         self.stabilizing_constraint_violation = (
             critic_curr
@@ -904,8 +909,10 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         self.lb_constraint_violation = lb_parameter * rc.norm_2(
-            self.current_observation
-        ) - self.model(self.current_observation, weights=weights)
+            self.current_observation - self.observation_target
+        ) - self.model(
+            self.current_observation - self.observation_target, weights=weights
+        )
         return self.lb_constraint_violation
 
     def CALF_critic_lower_bound_constraint_predictive(
@@ -923,8 +930,8 @@ class CriticCALF(CriticOfObservation):
         action = self.safe_controller.compute_action(self.current_observation)
         predicted_observation = self.predictor.predict(self.current_observation, action)
         self.lb_constraint_violation = lb_parameter * rc.norm_2(
-            predicted_observation
-        ) - self.model(predicted_observation, weights=weights)
+            predicted_observation - self.observation_target
+        ) - self.model(predicted_observation - self.observation_target, weights=weights)
         return self.lb_constraint_violation
 
     def CALF_critic_upper_bound_constraint(self, weights=None, ub_parameter=1e3):
@@ -937,8 +944,8 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         self.ub_constraint_violation = self.model(
-            self.current_observation, weights=weights
-        ) - ub_parameter * rc.norm_2(self.current_observation)
+            self.current_observation - self.observation_target, weights=weights
+        ) - ub_parameter * rc.norm_2(self.current_observation - self.observation_target)
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
@@ -959,8 +966,12 @@ class CriticCALF(CriticOfObservation):
             self.current_observation, action
         )
 
-        self.critic_next = self.model(predicted_observation, weights=weights)
-        self.critic_current = self.model(observation_last_good, use_stored_weights=True)
+        self.critic_next = self.model(
+            predicted_observation - self.observation_target, weights=weights
+        )
+        self.critic_current = self.model(
+            observation_last_good - self.observation_target, use_stored_weights=True
+        )
 
         self.stabilizing_constraint_violation = (
             self.critic_next
@@ -982,31 +993,14 @@ class CriticCALF(CriticOfObservation):
         action = self.action_buffer[:, -1]
         predicted_observation = self.predictor.predict(self.current_observation, action)
         self.stabilizing_constraint_violation = (
-            self.model(predicted_observation, weights=weights)
-            - self.model(self.observation_last_good, use_stored_weights=True)
+            self.model(predicted_observation - self.observation_target, weights=weights)
+            - self.model(
+                self.observation_last_good - self.observation_target,
+                use_stored_weights=True,
+            )
             + self.predictor.pred_step_size * self.safe_decay_param
         )
         return self.stabilizing_constraint_violation
-
-    # def objective(self, *args, **kwargs):
-    #     """
-    #     Objective of the critic, which is the sum of the squared temporal difference and the penalty
-    #     for violating the CALF decay constraint, if the penalty parameter is non-zero.
-
-    #     :param args: Positional arguments to be passed to the parent class's `objective` method.
-    #     :param kwargs: Keyword arguments to be passed to the parent class's `objective` method.
-    #     :return: Value of the objective.
-    #     :rtype: float
-    #     """
-    #     objective = super().objective(*args, **kwargs)
-
-    #     weights = kwargs.get("weights")
-    #     if self.penalty_param != 0:
-    #         objective += rc.penalty_function(
-    #             self.CALF_decay_constraint(weights), self.penalty_param
-    #         )
-
-    #     return objective
 
     def objective(self, data_buffer=None, weights=None):
         """
@@ -1029,8 +1023,12 @@ class CriticCALF(CriticOfObservation):
 
             # Temporal difference
 
-            critic_old = self.model(observation_old, weights=weights)
-            critic_next = self.model(observation_next, use_stored_weights=True)
+            critic_old = self.model(
+                observation_old - self.observation_target, weights=weights
+            )
+            critic_next = self.model(
+                observation_next - self.observation_target, use_stored_weights=True
+            )
 
             if self.critic_regularization_param > 0:
                 weights_current = weights

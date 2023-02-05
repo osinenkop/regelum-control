@@ -58,7 +58,7 @@ class Controller(ABC):
     def compute_action_sampled(
         self, time, observation, constraints=(), observation_target=[]
     ):
-
+        self.observation_target = observation_target
         is_time_for_new_sample = self.clock.check_time(time)
         is_time_for_critic_update = self.critic.clock.check_time(time)
 
@@ -183,7 +183,9 @@ class CALFControllerExPost(RLController):
     def invoke_safe_action(self, observation):
         # self.actor.restore_weights()
         self.critic.restore_weights()
-        action = self.actor.safe_controller.compute_action(observation)
+        action = self.actor.safe_controller.compute_action(
+            observation - self.observation_target
+        )
 
         self.actor.set_action(action)
         self.actor.model.update_and_cache_weights(action)
@@ -270,12 +272,18 @@ class CALFControllerExPost(RLController):
 
 class CALFControllerPredictive(CALFControllerExPost):
     @apply_callbacks
-    def compute_action(self, observation, is_critic_update=False, time=0):
+    def compute_action(
+        self, observation, is_critic_update=False, time=0, observation_target=[]
+    ):
 
         # Update data buffers
         self.critic.update_buffers(
             observation, self.actor.action
         )  ### store current action and observation in critic's data buffer
+
+        self.actor.update_target(observation_target)
+        self.critic.update_target(observation_target)
+
         # if on prev step weifhtts were acccepted, then upd last good
         if self.actor.weights_acceptance_status == "accepted":
             self.critic.observation_last_good = observation
@@ -283,7 +291,8 @@ class CALFControllerPredictive(CALFControllerExPost):
             self.actor.weights_acceptance_status = "rejected"
             if self.critic.CALFs != []:
                 self.critic.CALFs[-1] = self.critic(
-                    self.critic.observation_last_good, use_stored_weights=True
+                    self.critic.observation_last_good - observation_target,
+                    use_stored_weights=True,
                 )
 
         # Store current observation in actor
@@ -613,7 +622,7 @@ class Controller3WRobotDisassembledCLF:
             return self.action_old
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         """
         Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
 
@@ -693,7 +702,9 @@ class ControllerMemoryPID:
         self.error_old = error
         return error_derivative
 
-    def compute_action(self, process_variable, error_derivative=None, ime=0):
+    def compute_action(
+        self, process_variable, error_derivative=None, time=0, observation_target=[]
+    ):
 
         error = self.compute_error(process_variable)
         integral = self.compute_integral(error)
@@ -791,7 +802,7 @@ class Controller3WRobotPID:
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         x = observation[0]
         y = observation[1]
         angle = rc.array([observation[2]])
@@ -986,7 +997,7 @@ class ControllerCartPolePID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
 
         if rc.abs(observation[0]) > np.pi / 4:
             self.action = self.PID_swingup.compute_action(
@@ -1064,7 +1075,7 @@ class ControllerLunarLanderPID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         self.action = [0, 0]
 
         if abs(observation[2]) > self.threshold:
@@ -1125,7 +1136,6 @@ class Controller2TankPID:
             initial_point=rc.array([state_init[1]]),
             setpoint=rc.array([observation_target[1]])
         )
-        self.swing_up_tol = swing_up_tol
         self.observation_target = observation_target
 
     def compute_action_sampled(self, time, observation, observation_target=[]):
@@ -1140,7 +1150,9 @@ class Controller2TankPID:
             # Update internal clock
             self.controller_clock = time
 
-            action = self.compute_action(observation)
+            action = self.compute_action(
+                observation, observation_target=observation_target
+            )
 
             self.action_old = action
             return action
@@ -1149,7 +1161,7 @@ class Controller2TankPID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         # if rc.abs(observation[0]) > np.pi / 2:
         #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
         # else:
@@ -1191,7 +1203,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         x = observation[0]
         y = observation[1]
         angle = observation[2]
@@ -1459,7 +1471,7 @@ class Controller3WRobotNIDisassembledCLF:
             return self.action_old
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         """
         Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
 
@@ -1502,7 +1514,9 @@ class NominalControllerInvertedPendulum:
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
 
-    def compute_action_sampled(self, time, observation, constraints=(), observation_target=[]):
+    def compute_action_sampled(
+        self, time, observation, constraints=(), observation_target=[]
+    ):
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1516,7 +1530,7 @@ class NominalControllerInvertedPendulum:
         return self.compute_action(observation)
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         self.observation = observation
         return np.array(
             [-((observation[0]) + 0.1 * (observation[1])) * self.controller_gain]
@@ -1542,7 +1556,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, observation, time=0, observation_target=[]):
         x = observation[0]
         y = observation[1]
         angle = observation[2]
