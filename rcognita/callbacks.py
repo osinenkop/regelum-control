@@ -106,15 +106,16 @@ class Callback(ABC):
     def is_target_event(self, obj, method, output):
         pass
 
-    def ready(self):
+    def ready(self, t):
         if not self.cooldown:
             return True
-        t = time.time()
         if t - self.last_trigger > self.cooldown:
-            self.last_trigger = t
             return True
         else:
             return False
+
+    def trigger_cooldown(self, t):
+        self.last_trigger = t
 
     def on_launch(self):
         pass
@@ -124,9 +125,12 @@ class Callback(ABC):
         pass
 
     def __call__(self, obj, method, output):
-        if self.is_target_event(obj, method, output) and self.ready():
+        t = time.time()
+        if self.ready(t):
             try:
-                self.perform(obj, method, output)
+                if self.is_target_event(obj, method, output):
+                    self.perform(obj, method, output)
+                    self.trigger_cooldown(t)
             except rcognita.RcognitaExitException as e:
                 raise e
             except Exception as e:
