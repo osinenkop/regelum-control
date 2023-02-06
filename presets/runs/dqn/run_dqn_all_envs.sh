@@ -16,7 +16,7 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     system=$system \
     controller=dqn \
     initial_conditions=ic_${system}_stochastic \
-    scenario.N_episodes=40 \
+    scenario.N_episodes=100 \
     controller.actor.discount_factor=.99 \
     controller.critic.model.dim_hidden=40 \
     controller.critic.optimizer.opt_options.lr=0.001 \
