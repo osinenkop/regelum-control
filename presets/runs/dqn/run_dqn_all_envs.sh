@@ -17,10 +17,8 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     controller=dqn \
     initial_conditions=ic_${system}_stochastic \
     scenario.N_episodes=40 \
-    simulator.time_final=10 \
     controller.actor.discount_factor=.99 \
     controller.critic.model.dim_hidden=40 \
-    controller.sampling_time=0.01 \
     controller.critic.optimizer.opt_options.lr=0.001 \
     controller.critic.optimizer.iterations=1 \
     controller.critic.model.force_positive_def=false \
