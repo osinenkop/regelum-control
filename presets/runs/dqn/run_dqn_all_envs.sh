@@ -16,7 +16,7 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     system=$system \
     controller=dqn \
     initial_conditions=ic_${system}_stochastic \
-    scenario.N_episodes=30 \
+    scenario.N_episodes=40 \
     simulator.time_final=10 \
     controller.actor.discount_factor=.99 \
     controller.critic.model.dim_hidden=40 \
@@ -26,7 +26,7 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     controller.critic.model.force_positive_def=false \
     controller.critic.data_buffer_size=500 \
     controller.critic.batch_size=30 \
-    controller.critic.td_n=20 \
+    controller.critic.td_n=30 \
     controller.critic.model.bias=true \
     controller/critic=dqn_greedy \
     controller.actor.epsilon_greedy=true \
