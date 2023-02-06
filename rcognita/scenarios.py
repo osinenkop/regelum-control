@@ -531,12 +531,14 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         self.mean_q_values = np.zeros(self.N_episodes)
 
     def step(self):
+        episode_status = super().step()
         self.replay_buffer.add(
             self.observation,
             self.action,
             self.running_objective_value,
-            super().step() != "episode_continues",
+            episode_status != "episode_continues",
         )
+        return episode_status
 
     def iteration_update(self):
         super().iteration_update()
