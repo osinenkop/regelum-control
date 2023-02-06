@@ -2,7 +2,7 @@
 
 disallow_uncommitted=$1
 
-if [[ $disallow_uncommitted = false ]]
+if [ "$disallow_uncommitted" == "false" ];
 then
     disallow_uncommitted="false"
 else
