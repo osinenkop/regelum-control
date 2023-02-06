@@ -760,7 +760,7 @@ class HistoricalObservationCallback(HistoricalCallback):
     def plot(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.data.drop(["action"], axis=1).plot(
+        self.data.drop(["action"], axis=1).set_index("time").plot(
             subplots=True, grid=True, xlabel="time", title=name
         )
 
