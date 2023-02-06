@@ -129,7 +129,7 @@ class OnlineScenario(Scenario):
         self.observation_target = (
             np.zeros_like(self.observation)
             if observation_target is None or observation_target == []
-            else observation_target
+            else rc.array(observation_target)
         )
         self.running_objective_value = self.running_objective(
             self.observation, self.action

@@ -163,6 +163,8 @@ class Actor:
         self.intrinsic_constraints = []
         if observation_target is None or observation_target == []:
             self.observation_target = rc.zeros(self.dim_output)
+        elif isinstance(observation_target, list):
+            self.observation_target = rc.array(observation_target)
 
     def update_target(self, observation_target):
         self.observation_target = observation_target
@@ -508,13 +510,31 @@ class ActorEpisodic(Actor):
         for k in range(len(observations)):
             observation = observations[k]
             if self.use_derivative:
-                derivative = self.derivative()
-                observation = torch.cat([observations[k], derivative])
+                derivative = self.derivative([], observation, self.action)
+                input(type(derivative), type(observations[k]))
+                observation = torch.cat([observations[k], derivative], 1)
             q_sum += self.critic(observation, self.model(observations[k]))
 
         mean_q_value = q_sum / len_buffer
 
         return mean_q_value
+
+    def update_target(self, observation_target):
+
+        self.observation_target = (
+            rc.concatenate((observation_target, rc.zeros(len(observation_target))))
+            if self.use_derivative
+            else observation_target
+        )
+
+    def update_action(self, observation=None):
+
+        if self.use_derivative:
+            derivative = self.derivative([], observation, self.action)
+            observation = torch.cat(
+                [torch.tensor(observation), torch.tensor(derivative)]
+            )
+        super().update_action(observation)
 
 
 class ActorPID(Actor):

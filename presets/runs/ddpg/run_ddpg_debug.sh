@@ -15,6 +15,7 @@ parentdir=$(dirname $PWD)
 PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_uncommitted scenario.is_playback=false \
     system=$system \
     controller=ddpg \
+    scenario=episodic_reinforce \
     initial_conditions=ic_${system}_stochastic \
     controller.actor.discount_factor=.99 \
     controller.critic.model.force_positive_def=false \

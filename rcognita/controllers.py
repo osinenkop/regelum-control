@@ -83,20 +83,6 @@ class Controller(ABC):
         pass
 
 
-class ControllerStabilizing(ABC):
-    """
-    A blueprint of optimal controllers.
-    """
-
-    def __init__(self, *args, observation_target: list = None, **kwargs):
-
-        super().__init__(*args, **kwargs)
-        if observation_target is None:
-            observation_target = []
-
-        self.observation_target = observation_target
-
-
 class RLController(Controller):
     """
     Reinforcement learning controller class.
