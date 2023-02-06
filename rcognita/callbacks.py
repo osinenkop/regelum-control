@@ -667,7 +667,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.timeline = []
         self.num_launch = 1
         self.counter = 0
-        self.cooldown = 1.0
+        self.cooldown = 8.0
 
     def on_launch(self):
         super().on_launch()
@@ -680,7 +680,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         self.counter += 1
         self.log(
-            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%)"
+            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}"
         )
         if not self.counter % 3:
             do_exit = False
@@ -789,8 +789,10 @@ class HistoricalObservationCallback(HistoricalCallback):
         plt.close()
         if not name:
             name = self.__class__.__name__
-        res = self.data.drop(["action"], axis=1).set_index("time").plot(
-            subplots=True, grid=True, xlabel="time", title=name
+        res = (
+            self.data.drop(["action"], axis=1)
+            .set_index("time")
+            .plot(subplots=True, grid=True, xlabel="time", title=name)
         )
         return res[0].figure
 
@@ -940,7 +942,7 @@ class CriticObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cooldown = 1.0
+        self.cooldown = 8.0
         self.time = 0.0
 
     def is_target_event(self, obj, method, output):
