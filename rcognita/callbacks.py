@@ -760,7 +760,7 @@ class HistoricalObservationCallback(HistoricalCallback):
     def plot(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.data.drop(["action"], axis=1).plot(
+        self.data.drop(["action"], axis=1).set_index("time").plot(
             subplots=True, grid=True, xlabel="time", title=name
         )
 
@@ -773,18 +773,17 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.ylabel = "Total objective"
 
     def is_target_event(self, obj, method, output):
-        return False
+        return isinstance(obj, rcognita.scenarios.Scenario) and (
+            method == "reload_pipeline"
+        )
 
     def perform(self, obj, method, output):
-        pass
+        self.add_datum({"episode": len(self.data) + 1, "objective": output})
+        self.dump_data("Total_Objective")
+        self.save_plot("Total_Objective")
 
     def load_data(self, idx=None):
         return super().load_data(idx=1)
-
-    def on_episode_done(self, scenario, episode_number, episodes_total):
-        self.add_datum({"episode": episode_number, "objective": scenario.outcome})
-        self.dump_data("Total_Objective")
-        self.save_plot("Total_Objective")
 
     def plot(self, name=None):
         if not name:
