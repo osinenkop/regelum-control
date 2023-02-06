@@ -407,6 +407,7 @@ with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
     callbacks = dill.load(f)</code></pre>
               <p>Reproduce experiment:</p>
               <pre><code class="language-bash">cd {repo.working_tree_dir}
+git reset
 git restore .
 git clean -f
 {f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
@@ -535,9 +536,13 @@ class HistoricalCallback(Callback, ABC):
                     axis=0,
                 )
             else:
+                if idx == "last":
+                    idx = len(dirs)
                 assert idx >= 1, f"Indices should be no smaller than 1."
                 assert idx <= len(dirs), f"Only {len(dirs)} files were stored."
                 return pd.read_hdf(dirs[idx - 1])
+        else:
+            return pd.DataFrame()
 
     def insert_column_left(self, column_name, values):
         if not self.__data.empty:
@@ -554,18 +559,26 @@ class HistoricalCallback(Callback, ABC):
     def plot(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.data.plot()
+        res = self.data.plot()
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
         plt.title(name)
         plt.grid()
         # plt.xticks(range(1, len(self.data) + 1))
+        return res.figure
 
     def save_plot(self, name=None):
         if not name:
             name = self.__class__.__name__
         self.plot(name=name)
         plt.savefig(f"gfx/{name}.svg")
+
+    def plot_gui(self):
+        self.__data = self.load_data(idx="last")
+        if not self.data.empty:
+            return self.plot(name=self.__class__.__name__)
+        else:
+            return None
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
@@ -698,15 +711,19 @@ class HistoricalObjectiveCallback(HistoricalCallback):
 class SaveProgressCallback(Callback):
     once_in = 1
 
+    def on_launch(self):
+        with rcognita.main.metadata["report"]() as r:
+            r["episode_current"] = 0
+
     def is_target_event(self, obj, method, output):
         return False
 
     def perform(self, obj, method, output):
         pass
 
-    def on_episode_done(self, scenario, episode, episodes_total):
+    def on_episode_done(self, scenario, episode_number, episodes_total):
         start = time.time()
-        if episode % self.once_in:
+        if episode_number % self.once_in:
             return
         filename = f"callbacks.dill"
         with open(filename, "wb") as f:
@@ -714,10 +731,16 @@ class SaveProgressCallback(Callback):
         self.log(
             f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
         )
+        if scenario is not None:
+            with rcognita.main.metadata["report"]() as r:
+                r["episode_current"] = episode_number
+                if "episodes_total" not in r:
+                    r["episode_total"] = episodes_total
+                r["elapsed_relative"] = 1.0
 
     def on_termination(self, res):
         if isinstance(res, Exception):
-            self.on_episode_done(None, 0, 0)
+            self.on_episode_done(None, 0, None)
 
 
 class HistoricalObservationCallback(HistoricalCallback):
@@ -760,9 +783,10 @@ class HistoricalObservationCallback(HistoricalCallback):
     def plot(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.data.drop(["action"], axis=1).set_index("time").plot(
+        res = self.data.drop(["action"], axis=1).set_index("time").plot(
             subplots=True, grid=True, xlabel="time", title=name
         )
+        return res[0].figure
 
 
 class TotalObjectiveCallback(HistoricalCallback):
@@ -792,12 +816,13 @@ class TotalObjectiveCallback(HistoricalCallback):
         if not name:
             name = self.__class__.__name__
 
-        self.data.set_index("episode").plot()
+        res = self.data.set_index("episode").plot()
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
         plt.title(name)
         plt.grid()
         plt.xticks(range(1, len(self.data) + 1))
+        return res.figure
 
 
 class QFunctionModelSaverCallback(HistoricalCallback):
@@ -810,6 +835,9 @@ class QFunctionModelSaverCallback(HistoricalCallback):
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
+
+    def plot_gui(self):
+        return None
 
     def load_data(self, idx=None):
         assert idx is not None, "Provide idx=..."
@@ -872,12 +900,6 @@ class TimeRemainingCallback(Callback):
         super().__init__(*args, **kwargs)
         self.time_episode = []
 
-    def on_launch(self):
-        with rcognita.main.metadata["report"]() as r:
-            pass
-            r["episode_current"] = 0
-            r["episode_total"] = 1
-
     def is_target_event(self, obj, method, output):
         return False
 
@@ -886,11 +908,6 @@ class TimeRemainingCallback(Callback):
 
     def on_episode_done(self, scenario, episode_number, episodes_total):
         self.time_episode.append(time.time())
-
-        with rcognita.main.metadata["report"]() as r:
-            r["episode_current"] = episode_number
-            r["episode_total"] = episodes_total
-            r["elapsed_relative"] = 1.0
         if len(self.time_episode) > 3:
             average_interval = 0
             previous = self.time_episode[-1]
@@ -999,3 +1016,4 @@ class CalfCallback(HistoricalCallback):
             ax_delta.set_ylabel("Decay size")
 
             plt.legend()
+            return fig

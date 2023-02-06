@@ -558,7 +558,7 @@ class main:
                                 if isinstance(callback, str)
                                 else callback
                             )
-                            callbacks.append(callback(logger))
+                            callbacks.insert(-1, callback(logger))
                         delattr(cfg, "callbacks")
                     self.__class__.callbacks = callbacks
                     self.__class__.config = ccfg
