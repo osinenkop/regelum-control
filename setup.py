@@ -43,7 +43,8 @@ setup(
         "plotly==5.13.0",
         "gitpython==3.1.30",
         "filelock==3.0.12",
-        "streamlit==1.17.0"
+        "streamlit==1.17.0",
+        "tables==3.8.0",
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],

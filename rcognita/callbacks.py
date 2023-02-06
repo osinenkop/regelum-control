@@ -29,6 +29,8 @@ import re
 
 import pkg_resources
 
+from pathlib import Path
+
 import sys
 import filelock
 
@@ -106,6 +108,9 @@ class Callback(ABC):
     def is_target_event(self, obj, method, output):
         pass
 
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        pass
+
     def ready(self, t):
         if not self.cooldown:
             return True
@@ -137,8 +142,35 @@ class Callback(ABC):
                 self.log(f"Callback {self.__class__.__name__} failed.")
                 self.exception(e)
 
-    def on_termination(self):
+    def on_termination(self, res):
         pass
+
+
+class TimeCallback(Callback):
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
+
+    def on_launch(self):
+        rcognita.main.metadata["time"] = 0.0
+
+    def perform(self, obj, method, output):
+        rcognita.main.metadata["time"] = obj.time
+
+
+class EventCallback(Callback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.episode_counter = 0
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        )
+
+    def perform(self, obj, method, output):
+        self.episode_counter += 1
+        for callback in rcognita.main.callbacks:
+            callback.on_episode_done(obj, self.episode_counter, obj.N_episodes)
 
 
 class ConfigDiagramCallback(Callback):
@@ -159,6 +191,7 @@ class ConfigDiagramCallback(Callback):
         with open("SUMMARY.html", "r") as f:
             html = f.read()
         try:
+            forbidden = False
             with filelock.FileLock(metadata["common_dir"] + "/diff.lock"):
                 repo = git.Repo(search_parent_directories=True)
                 commit_hash = repo.head.object.hexsha
@@ -166,14 +199,11 @@ class ConfigDiagramCallback(Callback):
                     commit_hash += (
                         ' <font color="red">(uncommitted/unstaged changes)</font>'
                     )
-                    if (
+                    forbidden = (
                         "disallow_uncommitted" in cfg
                         and cfg.disallow_uncommitted
                         and not is_in_debug_mode()
-                    ):
-                        raise Exception(
-                            "Running experiments without committing is disallowed. Please, commit your changes."
-                        )
+                    )
                     untracked = repo.untracked_files
                     if not os.path.exists(metadata["common_dir"] + "/changes.diff"):
                         repo.git.add(all=True)
@@ -189,6 +219,10 @@ class ConfigDiagramCallback(Callback):
                             metadata["common_dir"] + "/changes.diff",
                             ".summary/changes.diff",
                         )
+            if forbidden:
+                raise Exception(
+                    "Running experiments without committing is disallowed. Please, commit your changes."
+                )
         except git.exc.InvalidGitRepositoryError:
             commit_hash = None
             if (
@@ -431,7 +465,7 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
             f"Saved summary to {os.path.abspath('SUMMARY.html')}. ({int(1000 * (time.time() - start))}ms)"
         )
 
-    def on_termination(self):
+    def on_termination(self, res):
         with open("SUMMARY.html", "r") as f:
             html = f.read()
         table_lines = ""
@@ -466,11 +500,56 @@ class HistoricalCallback(Callback, ABC):
         super().__init__(*args, **kwargs)
         self.xlabel = "Time"
         self.ylabel = "Value"
+        self.__data = pd.DataFrame()
+
+        self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
+
+    def get_save_directory(self):
+        return self.save_directory
+
+    def on_launch(self):
+        os.mkdir(self.get_save_directory())
+
+    def add_datum(self, datum: dict):
+        if self.__data.empty:
+            self.__data = pd.DataFrame({key: [value] for key, value in datum.items()})
+        else:
+            self.__data.loc[len(self.__data)] = datum
+
+    def clear_recent_data(self):
+        self.__data = pd.DataFrame()
+
+    def dump_data(self, identifier):
+        if not self.__data.empty:
+            self.__data.to_hdf(
+                f".callbacks/{self.__class__.__name__}/{identifier}.h5", "data"
+            )
+
+    def load_data(self, idx=None):
+        dirs = sorted(Path(self.get_save_directory()).iterdir())
+
+        if len(dirs) > 0:
+            if idx is None:
+                return pd.concat(
+                    [pd.read_hdf(path) for path in dirs],
+                    axis=0,
+                )
+            else:
+                assert idx >= 1, f"Indices should be no smaller than 1."
+                assert idx <= len(dirs), f"Only {len(dirs)} files were stored."
+                return pd.read_hdf(dirs[idx - 1])
+
+    def insert_column_left(self, column_name, values):
+        if not self.__data.empty:
+            self.__data.insert(0, column_name, values)
+
+    def dump_and_clear_data(self, identifier):
+        self.dump_data(identifier)
+        self.clear_recent_data()
 
     @property
-    @abstractmethod
     def data(self):
-        pass
+        return self.__data
 
     def plot(self, name=None):
         if not name:
@@ -569,18 +648,18 @@ class HistoricalObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cache = {}
         self.timeline = []
         self.num_launch = 1
         self.counter = 0
         self.cooldown = 1.0
 
     def on_launch(self):
+        super().on_launch()
         with rcognita.main.metadata["report"]() as r:
             r["elapsed_relative"] = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
+        return isinstance(obj, rcognita.scenarios.Scenario) and (method == "post_step")
 
     def perform(self, obj, method, output):
         self.counter += 1
@@ -598,26 +677,47 @@ class HistoricalObjectiveCallback(HistoricalCallback):
                 raise rcognita.RcognitaExitException(
                     "Termination request issued from gui."
                 )
-        key = (self.num_launch, obj.time)
-        if key in self.cache.keys():
-            self.num_launch += 1
-            key = (self.num_launch, obj.time)
 
-        self.cache[key] = output[0]
-        if self.timeline != []:
-            if self.timeline[-1] < key[1]:
-                self.timeline.append(key[1])
-        else:
-            self.timeline.append(key[1])
+        self.add_datum(
+            {
+                "time": round(output[3], 4),
+                "current objective": output[0],
+                "observation": output[1],
+                "action": output[2],
+                "total_objective": round(output[3], 4),
+                "completed_percent": 100
+                * round(obj.time / obj.simulator.time_final, 1),
+            }
+        )
 
-    @property
-    def data(self):
-        keys = list(self.cache.keys())
-        run_numbers = sorted(list(set([k[0] for k in keys])))
-        cache_transformed = {key: list() for key in run_numbers}
-        for k, v in self.cache.items():
-            cache_transformed[k[0]].append(v)
-        return cache_transformed
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        self.insert_column_left("episode", episode_number)
+        self.dump_and_clear_data(f"episode_{str(episode_number).zfill(5)}")
+
+
+class SaveProgressCallback(Callback):
+    once_in = 1
+
+    def is_target_event(self, obj, method, output):
+        return False
+
+    def perform(self, obj, method, output):
+        pass
+
+    def on_episode_done(self, scenario, episode, episodes_total):
+        start = time.time()
+        if episode % self.once_in:
+            return
+        filename = f"callbacks.dill"
+        with open(filename, "wb") as f:
+            dill.dump(rcognita.main.callbacks, f)
+        self.log(
+            f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
+        )
+
+    def on_termination(self, res):
+        if isinstance(res, Exception):
+            self.on_episode_done(None, 0, 0)
 
 
 class HistoricalObservationCallback(HistoricalCallback):
@@ -629,59 +729,40 @@ class HistoricalObservationCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.episodic_cache = []
-        self.cache = []
-        self.timeline = []
-        self.num_launch = 1
         self.cooldown = 0.0
+
         self.current_episode = None
+        self.dt_simulator_counter = 0
+        self.time_threshold = 10
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and (
-            method == "post_step" or method == "reload_pipeline"
-        )
+        if isinstance(obj, rcognita.scenarios.Scenario) and (method == "post_step"):
+            self.dt_simulator_counter += 1
+            return not self.dt_simulator_counter % self.time_threshold
 
     def perform(self, obj, method, output):
-        if method == "post_step":
-            self.current_episode = obj.episode_counter + 1
-            self.episodic_cache.append(
-                {
-                    **{
-                        "episode": self.current_episode,
-                        "time": obj.time,
-                        "action": obj.action,
-                    },
-                    **dict(zip(obj.observation_components_naming, obj.observation)),
-                }
-            )
-        elif method == "reload_pipeline":
-            self.cache += self.episodic_cache
-            self.save_plot(
-                f"observations_in_episode_{str(self.current_episode).zfill(5)}"
-            )
-            self.episodic_cache = []
+        self.add_datum(
+            {
+                **{
+                    "time": obj.time,
+                    "action": obj.action,
+                },
+                **dict(zip(obj.observation_components_naming, obj.observation)),
+            }
+        )
 
-    @property
-    def data(self):
-        df = pd.DataFrame.from_records(self.cache)
-        return df
-
-    @property
-    def episodic_data(self):
-        df = pd.DataFrame.from_records(self.episodic_cache)
-        df.drop(["episode"], axis=1, inplace=True)
-        df.set_index("time", inplace=True)
-
-        return df
-
-    @classmethod
-    def name_observation_components(cls, columns):
-        cls.columns = columns
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        identifier = f"observations_in_episode_{str(episode_number).zfill(5)}"
+        self.save_plot(identifier)
+        self.insert_column_left("episode", episode_number)
+        self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.episodic_data.plot(subplots=True, grid=True, xlabel="time", title=name)
+        self.data.drop(["action"], axis=1).plot(
+            subplots=True, grid=True, xlabel="time", title=name
+        )
 
 
 class TotalObjectiveCallback(HistoricalCallback):
@@ -692,29 +773,24 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.ylabel = "Total objective"
 
     def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
-        )
+        return False
 
     def perform(self, obj, method, output):
-        self.log(f"Current total objective: {output}")
-        episode = (
-            obj.episode_counter
-            if obj.episode_counter != 0
-            else self.cache.index.max() + 1
-        )
-        row = pd.DataFrame({"objective": output}, index=[episode])
-        self.cache = pd.concat([self.cache, row])
-        self.save_plot("Total objective")
+        pass
 
-    @property
-    def data(self):
-        return self.cache
+    def load_data(self, idx=None):
+        return super().load_data(idx=1)
+
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        self.add_datum({"episode": episode_number, "objective": scenario.outcome})
+        self.dump_data("Total_Objective")
+        self.save_plot("Total_Objective")
 
     def plot(self, name=None):
         if not name:
             name = self.__class__.__name__
-        self.data.plot()
+
+        self.data.set_index("episode").plot()
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
         plt.title(name)
@@ -722,7 +798,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         plt.xticks(range(1, len(self.data) + 1))
 
 
-class QFunctionModelSaverCallback(Callback):
+class QFunctionModelSaverCallback(HistoricalCallback):
     """
     A callback which allows to store desired data
     collected among different runs inside multirun execution runtime
@@ -731,27 +807,28 @@ class QFunctionModelSaverCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.timeline = []
-        self.num_launch = 1
         self.cooldown = 0.0
-        self.current_episode = None
 
-        os.mkdir("checkpoints")
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.scenarios.Scenario)
-            and (method == "post_step" or method == "reload_pipeline")
-            and "CriticOffPolicy" in obj.critic.__class__.__name__
+    def load_data(self, idx=None):
+        assert idx is not None, "Provide idx=..."
+        return torch.load(
+            os.path.join(
+                self.get_save_directory(),
+                f"critic_model_{str(idx).zfill(5)}.pt",
+            )
         )
 
+    def is_target_event(self, obj, method, output):
+        return False
+
     def perform(self, obj, method, output):
-        if method == "post_step":
-            self.current_episode = obj.episode_counter + 1
-        elif method == "reload_pipeline":
+        pass
+
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        if "CriticOffPolicy" in scenario.critic.__class__.__name__:
             torch.save(
-                obj.critic.model.state_dict(),
-                f"checkpoints/critic_model_{str(self.current_episode).zfill(5)}.pt",
+                scenario.critic.model.state_dict(),
+                f"{self.get_save_directory()}/critic_model_{str(episode_number).zfill(5)}.pt",
             )
 
 
@@ -759,25 +836,19 @@ class QFunctionCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cache = []
-        self.timeline = []
-        self.num_launch = 1
         self.cooldown = 0.0
-        self.current_episode = None
 
     def is_target_event(self, obj, method, output):
         return (
             isinstance(obj, rcognita.scenarios.Scenario)
-            and (method == "pre_step" or method == "post_step")
-            and obj.critic.__class__.__name__ == "CriticOffPolicy"
+            and method == "post_step"
+            and "CriticOffPolicy" in obj.critic.__class__.__name__
         )
 
     def perform(self, obj, method, output):
-        self.cache.append(
+        self.add_datum(
             {
                 **{
-                    "type": method,
-                    "episode": obj.episode_counter + 1,
                     "time": obj.time,
                     "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
                     .detach()
@@ -789,30 +860,9 @@ class QFunctionCallback(HistoricalCallback):
             }
         )
 
-    @property
-    def data(self):
-        return pd.DataFrame.from_records(self.cache)
-
-
-class SaveProgressCallback(Callback):
-    once_in = 1
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
-        )
-
-    def perform(self, obj, method, output):
-        start = time.time()
-        episode = obj.episode_counter
-        if episode % self.once_in:
-            return
-        filename = f"callbacks.dill"
-        with open(filename, "wb") as f:
-            dill.dump(rcognita.main.callbacks, f)
-        self.log(
-            f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
-        )
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        self.insert_column_left("episode", episode_number)
+        self.dump_and_clear_data(f"q_function_values_{str(episode_number).zfill(5)}")
 
 
 class TimeRemainingCallback(Callback):
@@ -827,19 +877,17 @@ class TimeRemainingCallback(Callback):
             r["episode_total"] = 1
 
     def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
-        )
+        return False
 
     def perform(self, obj, method, output):
+        pass
+
+    def on_episode_done(self, scenario, episode_number, episodes_total):
         self.time_episode.append(time.time())
-        total_episodes = obj.N_episodes
-        current_episode = (
-            obj.episode_counter if obj.episode_counter != 0 else obj.N_episodes
-        )
+
         with rcognita.main.metadata["report"]() as r:
-            r["episode_current"] = current_episode
-            r["episode_total"] = total_episodes
+            r["episode_current"] = episode_number
+            r["episode_total"] = episodes_total
             r["elapsed_relative"] = 1.0
         if len(self.time_episode) > 3:
             average_interval = 0
@@ -849,13 +897,13 @@ class TimeRemainingCallback(Callback):
                 previous = current
             average_interval /= len(self.time_episode[-2:-12:-1])
             td = datetime.timedelta(
-                seconds=int(average_interval * (total_episodes - current_episode))
+                seconds=int(average_interval * (episodes_total - episode_number))
             )
             remaining = f" Estimated remaining time: {str(td)}."
         else:
             remaining = ""
         self.log(
-            f"Completed episode {current_episode}/{total_episodes} ({100*current_episode/total_episodes:.1f}%)."
+            f"Completed episode {episode_number}/{episodes_total} ({100*episode_number/episodes_total:.1f}%)."
             + remaining
         )
 
@@ -864,92 +912,88 @@ class CriticObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cache = []
-        self.timeline = []
-        self.num_launch = 1
         self.cooldown = 1.0
-        self.current_episode = None
+        self.time = 0.0
 
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.critics.Critic) and method == "objective"
 
     def perform(self, obj, method, output):
         self.log(f"Current TD value: {output}")
-        self.cache.append(output)
+        self.add_datum(
+            {
+                "time": rcognita.main.metadata["time"],
+                "TD value": output.detach().cpu().numpy(),
+            }
+        )
 
-    @property
-    def data(self):
-        return self.cache
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        self.insert_column_left("episode", episode_number)
+        self.dump_and_clear_data(f"TD_values_{str(episode_number).zfill(5)}")
 
 
 class CalfCallback(HistoricalCallback):
-    cooldown = 1.0
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.cache = pd.DataFrame()
+        self.cooldown = 1.0
+        self.time = 0.0
 
     def is_target_event(self, obj, method, output):
         return (
             isinstance(obj, rcognita.controllers.Controller)
             and method == "compute_action"
-        ) or (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+            and "calf" in obj.critic.__class__.__name__.lower()
         )
 
     def perform(self, obj, method, output):
-        if method == "compute_action":
-            current_CALF = obj.critic(
-                obj.critic.observation_last_good, use_stored_weights=True
-            )
-            self.log(
-                f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.critic.observation_buffer[:,-1]}"
-            )
-            is_calf = (
-                obj.critic.weights_acceptance_status == "accepted"
-                and obj.actor.weights_acceptance_status == "accepted"
-            )
-            if not self.cache.empty:
-                CALF_prev = self.cache["J_hat"].iloc[-1]
-            else:
-                CALF_prev = current_CALF
+        current_CALF = obj.critic(
+            obj.critic.observation_last_good, use_stored_weights=True
+        )
+        self.log(
+            f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.critic.observation_buffer[:,-1]}"
+        )
+        is_calf = (
+            obj.critic.weights_acceptance_status == "accepted"
+            and obj.actor.weights_acceptance_status == "accepted"
+        )
+        if not self.data.empty:
+            prev_CALF = self.data["J_hat"].iloc[-1]
+        else:
+            prev_CALF = current_CALF
 
-                delta_CALF = CALF_prev - current_CALF
-                row = pd.DataFrame(
-                    {
-                        "J_hat": [current_CALF],
-                        "is_CALF": [is_calf],
-                        "delta": [delta_CALF],
-                    }
-                )
-                self.cache = pd.concat([self.cache, row], axis=0)
-        elif method == "reload_pipeline":
-            self.save_plot(
-                f"CALF_diagnostics_on_episode_{str(obj.episode_counter if obj.episode_counter!= 0 else obj.N_episodes).zfill(5)}"
-            )
-            self.cache = pd.DataFrame()
+        delta_CALF = prev_CALF - current_CALF
+        self.add_datum(
+            {
+                "time": rcognita.main.metadata["time"],
+                "J_hat": current_CALF,
+                "is_CALF": is_calf,
+                "delta": delta_CALF,
+            }
+        )
 
-    @property
-    def data(self):
-        return self.cache
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        identifier = f"CALF_diagnostics_on_episode_{str(episode_number).zfill(5)}"
+        if not self.data.empty:
+            self.save_plot(identifier)
+            self.insert_column_left("episode", episode_number)
+            self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
-        self.data.reset_index(inplace=True)
+        if not self.data.empty:
+            fig = plt.figure(figsize=(10, 10))
 
-        fig = plt.figure(figsize=(10, 10))
+            ax_calf, ax_switch, ax_delta = ax_array = fig.subplots(1, 3)
+            ax_calf.plot(self.data["time"], self.data["J_hat"], label="CALF")
+            ax_switch.plot(self.data["time"], self.data["is_CALF"], label="CALF on")
+            ax_delta.plot(self.data["time"], self.data["delta"], label="delta decay")
 
-        ax_calf, ax_switch, ax_delta = ax_array = fig.subplots(1, 3)
-        ax_calf.plot(self.data.iloc[:, 1], label="CALF")
-        ax_switch.plot(self.data.iloc[:, 2], label="CALF on")
-        ax_delta.plot(self.data.iloc[:, 3], label="delta decay")
+            for ax in ax_array:
+                ax.set_xlabel("Time [s]")
+                ax.grid()
+                ax.legend()
 
-        for ax in ax_array:
-            ax.set_xlabel("Time [s]")
-            ax.grid()
-            ax.legend()
+            ax_calf.set_ylabel("J_hat")
+            ax_switch.set_ylabel("Is CALF on")
+            ax_delta.set_ylabel("Decay size")
 
-        ax_calf.set_ylabel("J_hat")
-        ax_switch.set_ylabel("Is CALF on")
-        ax_delta.set_ylabel("Decay size")
-
-        plt.legend()
+            plt.legend()
