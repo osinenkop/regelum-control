@@ -490,6 +490,11 @@ class Actor:
 
 
 class ActorEpisodic(Actor):
+    def __init__(self, *args, use_derivative=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.use_derivative = use_derivative
+        self.derivative = self.predictor.system.compute_dynamics
+
     def optimize_weights(self):
         pass
 
@@ -501,7 +506,11 @@ class ActorEpisodic(Actor):
         len_buffer = len(observations)
         q_sum = 0
         for k in range(len(observations)):
-            q_sum += self.critic(observations[k], self.model(observations[k]))
+            observation = observations[k]
+            if self.use_derivative:
+                derivative = self.derivative()
+                observation = torch.cat([observations[k], derivative])
+            q_sum += self.critic(observation, self.model(observations[k]))
 
         mean_q_value = q_sum / len_buffer
 
