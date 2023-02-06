@@ -481,6 +481,18 @@ class main:
         if "--disable-logging" in sys.argv:
             sys.argv.pop(sys.argv.index("--disable-logging"))
             sys.argv.insert(-1, "hydra/job_logging=disabled")
+        if "--disable-callbacks" in sys.argv:
+            sys.argv.pop(sys.argv.index("--disable-callbacks"))
+            self.__class__.builtin_callbacks = []
+            callbacks = []
+            self.callbacks_enabled = False
+        else:
+            self.callbacks_enabled = True
+        if "--disable-gui" in sys.argv:
+            sys.argv.pop(sys.argv.index("--disable-gui"))
+            self.gui_enabled = False
+        else:
+            self.gui_enabled = True
         self.cooldown_factor = 1.0
         for i, arg in enumerate(sys.argv):
             if "--cooldown-factor" in arg:
@@ -551,7 +563,7 @@ class main:
                     }
                     ccfg = ComplementedConfig(cfg)
                     self.apply_assignments(ccfg)
-                    if "callbacks" in cfg:
+                    if "callbacks" in cfg and self.callbacks_enabled:
                         for callback in cfg.callbacks:
                             callback = (
                                 obtain(callback)
@@ -559,6 +571,8 @@ class main:
                                 else callback
                             )
                             callbacks.insert(-1, callback(logger))
+                        delattr(cfg, "callbacks")
+                    elif "callbacks" in cfg:
                         delattr(cfg, "callbacks")
                     self.__class__.callbacks = callbacks
                     self.__class__.config = ccfg
@@ -607,12 +621,12 @@ class main:
                 # streamlit.cli.main_run(filename, args)
                 streamlit.web.bootstrap.run(gui_script_file, "", args, flag_options={})
 
-            gui = Process(target=gui_server)
+            gui = Process(target=gui_server) if self.gui_enabled else Mock()
             gui.start()
             app.__module__ = old_app.__module__
             res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
             common_dir.cleanup()
-            time.sleep(1.0)
+            time.sleep(2.0)
             gui.terminate()
             return res
 

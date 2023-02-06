@@ -557,6 +557,9 @@ class HistoricalCallback(Callback, ABC):
         return self.__data
 
     def plot(self, name=None):
+        plt.clf()
+        plt.cla()
+        plt.close()
         if not name:
             name = self.__class__.__name__
         res = self.data.plot()
@@ -781,6 +784,9 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
+        plt.clf()
+        plt.cla()
+        plt.close()
         if not name:
             name = self.__class__.__name__
         res = self.data.drop(["action"], axis=1).set_index("time").plot(
@@ -813,6 +819,9 @@ class TotalObjectiveCallback(HistoricalCallback):
         return super().load_data(idx=1)
 
     def plot(self, name=None):
+        plt.clf()
+        plt.cla()
+        plt.close()
         if not name:
             name = self.__class__.__name__
 
@@ -998,6 +1007,9 @@ class CalfCallback(HistoricalCallback):
             self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
+        plt.clf()
+        plt.cla()
+        plt.close()
         if not self.data.empty:
             fig = plt.figure(figsize=(10, 10))
 
