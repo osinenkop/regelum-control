@@ -680,7 +680,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         self.counter += 1
         self.log(
-            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%, episode: {obj.episode_counter}/{obj.N_episodes})"
+            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}"
         )
         if not self.counter % 3:
             do_exit = False
