@@ -15,3 +15,5 @@ critic_penalty_param: 0
 critic_regularization_param: 0
 is_dynamic_decay_rate: True
 grid_dim%%: 5
+lb_parameter: 1.0E-6
+ub_parameter: 1.0E+3

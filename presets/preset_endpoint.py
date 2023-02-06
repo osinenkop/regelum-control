@@ -27,7 +27,6 @@ for i, arg in enumerate(sys.argv):
     if "--experiment" in arg:
         EXPERIMENT = arg.split("=")[-1]
         sys.argv.pop(i)
-        break
 
 
 @r.main(config_path="general", config_name="main")

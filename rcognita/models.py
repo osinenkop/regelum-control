@@ -723,7 +723,7 @@ class ModelDQN(ModelNN):
         self.out_layer = nn.Linear(dim_hidden, 1, bias=bias)
         self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
-        
+
         self.double()
 
         if weights is not None:
@@ -801,6 +801,26 @@ class LookupTable(Model):
         return self.weights[indices]
 
 
+class ModelFc(ModelNN):
+    def __init__(self, dim_observation, dim_action):
+        super().__init__()
+
+        self.in_layer = nn.Linear(dim_observation, dim_action, bias=False)
+
+        self.double()
+        self.force_positive_def = False
+        self.cache_weights()
+
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        x = input_tensor
+        x = self.in_layer(x)
+
+        return x
+
+
 class ModelGaussianConditional(Model):
     """
     Gaussian probability distribution model with `weights[0]` being an expectation vector
@@ -815,7 +835,6 @@ class ModelGaussianConditional(Model):
         expectation_function=None,
         arg_condition=None,
         weights=None,
-        jitter=1e-6,
     ):
 
         self.weights = rc.array(weights)
@@ -826,7 +845,6 @@ class ModelGaussianConditional(Model):
 
         self.arg_condition = arg_condition
         self.arg_condition_init = arg_condition
-        self.jitter = jitter
 
         self.update_expectation(self.arg_condition)
         self.update_covariance()

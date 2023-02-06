@@ -405,7 +405,7 @@ class Critic(ABC):
         self.current_critic_loss = self.objective(data_buffer).detach().numpy()
 
     def update_target(self, new_target):
-        self.target = new_target
+        self.observation_target = new_target
 
     @abstractmethod
     def objective(self):
@@ -439,10 +439,10 @@ class CriticOfObservation(Critic):
             # Temporal difference
 
             critic_old = self.model(
-                observation_old - self.observation_traget, weights=weights
+                observation_old - self.observation_target, weights=weights
             )
             critic_next = self.model(
-                observation_next - self.observation_traget, use_stored_weights=True
+                observation_next - self.observation_target, use_stored_weights=True
             )
 
             weights_current = weights
@@ -470,11 +470,7 @@ class CriticOfObservation(Critic):
         return critic_objective
 
 
-class CriticOfActionObservation(Critic):
-    """
-    This is the class of critics that are represented as functions of observation only.
-    """
-
+class CriticOfActionObservationOnPolicy(Critic):
     @apply_callbacks
     def objective(self, data_buffer=None, weights=None):
         """
@@ -505,10 +501,10 @@ class CriticOfActionObservation(Critic):
             # Temporal difference
 
             critic_old = self.model(
-                observation_old - self.observation_traget, action_next, weights=weights
+                observation_old - self.observation_target, action_next, weights=weights
             )
             critic_next = self.model(
-                observation_next - self.observation_traget,
+                observation_next - self.observation_target,
                 action_next,
                 use_stored_weights=True,
             )
@@ -772,6 +768,8 @@ class CriticCALF(CriticOfObservation):
         penalty_param=0,
         is_predictive=True,
         action_init=None,
+        lb_parameter=1e-6,
+        ub_parameter=1e3,
         **kwargs,
     ):
         """
@@ -792,6 +790,9 @@ class CriticCALF(CriticOfObservation):
         self.is_dynamic_decay_rate = is_dynamic_decay_rate
         if not self.is_dynamic_decay_rate:
             self.safe_decay_rate = self.safe_decay_param
+
+        self.lb_parameter = lb_parameter
+        self.ub_parameter = ub_parameter
         self.safe_controller = safe_controller
         self.predictor = predictor
         self.observation_init = observation_init
@@ -898,7 +899,7 @@ class CriticCALF(CriticOfObservation):
         )
         return self.stabilizing_constraint_violation
 
-    def CALF_critic_lower_bound_constraint(self, weights=None, lb_parameter=1e-6):
+    def CALF_critic_lower_bound_constraint(self, weights=None):
         """
         Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
         the `current_observation` and a certain constant.
@@ -908,16 +909,14 @@ class CriticCALF(CriticOfObservation):
         :return: constraint violation
         :rtype: float
         """
-        self.lb_constraint_violation = lb_parameter * rc.norm_2(
+        self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
             self.current_observation - self.observation_target
         ) - self.model(
             self.current_observation - self.observation_target, weights=weights
         )
         return self.lb_constraint_violation
 
-    def CALF_critic_lower_bound_constraint_predictive(
-        self, weights=None, lb_parameter=1e-6
-    ):
+    def CALF_critic_lower_bound_constraint_predictive(self, weights=None):
         """
         Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
         the `current_observation` and a certain constant.
@@ -929,12 +928,12 @@ class CriticCALF(CriticOfObservation):
         """
         action = self.safe_controller.compute_action(self.current_observation)
         predicted_observation = self.predictor.predict(self.current_observation, action)
-        self.lb_constraint_violation = lb_parameter * rc.norm_2(
+        self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
             predicted_observation - self.observation_target
         ) - self.model(predicted_observation - self.observation_target, weights=weights)
         return self.lb_constraint_violation
 
-    def CALF_critic_upper_bound_constraint(self, weights=None, ub_parameter=1e3):
+    def CALF_critic_upper_bound_constraint(self, weights=None):
         """
         Calculate the constraint violation for the CALF decay constraint when no prediction is made.
 
@@ -945,7 +944,9 @@ class CriticCALF(CriticOfObservation):
         """
         self.ub_constraint_violation = self.model(
             self.current_observation - self.observation_target, weights=weights
-        ) - ub_parameter * rc.norm_2(self.current_observation - self.observation_target)
+        ) - self.ub_parameter * rc.norm_2(
+            self.current_observation - self.observation_target
+        )
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):

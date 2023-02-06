@@ -22,6 +22,11 @@ from .controllers import Controller
 from .objectives import RunningObjective
 from .callbacks import introduce_callbacks, apply_callbacks
 
+try:
+    import torch
+except ImportError:
+    torch = MagicMock()
+
 
 class Scenario(ABC):
     def __init__(self):
@@ -229,13 +234,8 @@ class EpisodicScenario(OnlineScenario):
         self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
-        self.episode_REINFORCE_objective_gradients = []
         self.weights_historical = []
         super().__init__(*args, **kwargs)
-        # if self.actor.optimizer.engine == "Torch":
-        #     self.weights_historical.append(self.actor.model.weights["p"].numpy())
-        # else:
-        #     self.weights_historical.append(self.actor.model.weights[0])
         self.outcomes_of_episodes = []
         self.outcome_episodic_means = []
         self.sim_status = 1
@@ -283,7 +283,6 @@ class EpisodicScenario(OnlineScenario):
         self.episode_counter = 0
         self.iteration_counter += 1
         self.outcomes_of_episodes = []
-        self.episode_REINFORCE_objective_gradients = []
 
     def reset_episode(self):
         self.outcomes_of_episodes.append(self.critic.outcome)
@@ -471,41 +470,82 @@ class EpisodicScenarioREINFORCE(EpisodicScenario):
         return sum(array) / len(array)
 
 
-class EpisodicScenarioAsyncAC(EpisodicScenarioREINFORCE):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.critic_optimizer = TorchOptimizer({"lr": 0.01})
-        self.squared_TD_sums_of_episodes = []
-        self.square_TD_means = []
+class ReplayBuffer:
+    def __init__(self, dim_observation, dim_action, max_size=int(1e6)):
+        self.max_size = max_size
+        self.n_columns_filled = 0
+        self.state = np.zeros((dim_observation, max_size))
+        self.action = np.zeros((dim_action, max_size))
+        self.reward = np.zeros((1, max_size))
+        self.not_done = np.zeros((1, max_size))
 
-    def store_REINFORCE_objective_gradient(self):
-        episode_REINFORCE_objective_gradient = sum(self.actor.gradients)
-        self.episode_REINFORCE_objective_gradients.append(
-            episode_REINFORCE_objective_gradient
+    def add(self, state, action, reward, done):
+        self.state = rc.push_vec(self.state, state)
+        self.action = rc.push_vec(self.action, action)
+        self.reward = rc.push_vec(self.reward, reward)
+        self.not_done = rc.push_vec(self.not_done, done)
+        self.n_columns_filled = min(self.n_columns_filled + 1, self.max_size)
+
+    def sample(self, batch_size=1, random_idxs=False):
+        if random_idxs:
+            ind = np.random.randint(0, self.n_columns_filled, size=batch_size)
+        else:
+            ind = np.arange(min(self.n_columns_filled, batch_size))
+        return (
+            torch.DoubleTensor(self.state[:, ind]).T,
+            torch.DoubleTensor(self.action[:, ind]).T,
+            torch.DoubleTensor(self.reward[:, ind]).T,
+            torch.DoubleTensor(self.not_done[:, ind]).T,
         )
 
-    def reset_episode(self):
-        self.squared_TD_sums_of_episodes.append(self.critic.objective())
-        super().reset_episode()
-
-    def iteration_update(self):
-        mean_sum_of_squared_TD = self.get_mean(self.squared_TD_sums_of_episodes)
-        self.square_TD_means.append(mean_sum_of_squared_TD.detach().numpy())
-
-        self.critic_optimizer.optimize(
-            objective=self.get_mean,
-            model=self.critic.model,
-            model_input=self.squared_TD_sums_of_episodes,
-        )
-
-        super().iteration_update()
-
-    def reset_iteration(self):
-        self.squared_TD_sums_of_episodes = []
-        super().reset_iteration()
+    def nullify_buffer(self):
+        self.n_columns_filled = 0
+        self.state *= 0
+        self.action *= 0
+        self.reward *= 0
+        self.not_done *= 0
 
 
 class EpisodicScenarioMultirun(EpisodicScenario):
     def __init__(self, repeat_num: float = 1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.repeat_num = repeat_num
+
+
+class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
+    def __init__(
+        self,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.dim_observation = len(self.state_init)
+        self.dim_action = len(self.action_init)
+        self.replay_buffer = ReplayBuffer(
+            dim_observation=self.dim_observation,
+            dim_action=self.dim_action,
+            max_size=int(
+                10 / self.controller.sampling_time * self.N_episodes * self.time_final
+            ),
+        )
+        self.mean_q_values = np.zeros(self.N_episodes)
+
+    def step(self):
+        self.replay_buffer.add(
+            self.observation,
+            self.action,
+            self.running_objective_value,
+            super().step() != "episode_continues",
+        )
+
+    def iteration_update(self):
+        super().iteration_update()
+        observations, _, _, _ = self.replay_buffer.sample(
+            int(
+                self.simulator.time_final
+                * self.N_episodes
+                / self.controller.sampling_time
+            )
+        )
+        self.actor.optimizer.optimize(self.actor.objective, observations)
+        self.replay_buffer.nullify_buffer()

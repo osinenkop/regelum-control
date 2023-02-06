@@ -15,3 +15,6 @@ safe_decay_param_predictive: 1.0E-3
 critic_penalty_param: 0
 critic_regularization_param: 0
 is_dynamic_decay_rate: True
+
+lb_parameter: 1.0E+1
+ub_parameter: 1.0E+3

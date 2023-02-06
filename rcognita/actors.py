@@ -25,6 +25,13 @@ from .optimizers import Optimizer
 from .critics import Critic
 from .models import Model
 
+try:
+    import torch
+except ImportError:
+    from unittest.mock import MagicMock
+
+    torch = MagicMock()
+
 
 def force_type_safety(method):
     def wrapper(self, *args, **kwargs):
@@ -480,6 +487,25 @@ class Actor:
             self.weights_acceptance_status = "accepted"
 
         return self.weights_acceptance_status
+
+
+class ActorEpisodic(Actor):
+    def optimize_weights(self):
+        pass
+
+    def update_and_cache_weights(self):
+        pass
+
+    @force_type_safety
+    def objective(self, observations):
+        len_buffer = len(observations)
+        q_sum = 0
+        for k in range(len(observations)):
+            q_sum += self.critic(observations[k], self.model(observations[k]))
+
+        mean_q_value = q_sum / len_buffer
+
+        return mean_q_value
 
 
 class ActorPID(Actor):

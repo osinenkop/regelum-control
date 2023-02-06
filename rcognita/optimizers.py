@@ -308,7 +308,7 @@ class TorchOptimizer(Optimizer):
         self.optimizer = self.opt_method(model.parameters(), **self.opt_options)
 
     def optimize(
-        self, objective, model_input
+        self, objective, model_input=None
     ):  # remove model and add parameters instead
         """
         Optimize the model with the given objective.
@@ -326,9 +326,6 @@ class TorchOptimizer(Optimizer):
             loss = objective(model_input)
             loss.backward()
             self.optimizer.step()
-
-    def instantiate_optimizer(self):
-        self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
 
 
 class TorchProjectiveOptimizer(Optimizer):

@@ -188,6 +188,7 @@ def fix_characters(content):
         .replace("]", "\\]")
         .replace(",", "\\,")
         .replace(";", ",")
+        .replace("=", "\\=")
     )
 
 
