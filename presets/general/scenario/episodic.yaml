@@ -16,9 +16,3 @@ repeat_num: 0
 controller: ~ controller
 observation_target: $ system_specific.observation_target
 observation_components_naming: $ observation_naming.observation
-
-seed%%: 42
-s1%%: np.random.seed(${.seed%%})
-s2%%: torch.manual_seed(${.seed%%})
-s3%%: random.seed(${.seed%%})
-
