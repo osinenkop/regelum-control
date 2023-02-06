@@ -63,6 +63,7 @@ import json
 import tempfile
 
 from multiprocessing import Process
+import numpy
 
 
 def hash_string(s):
@@ -522,6 +523,15 @@ class main:
             def app(
                 cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger
             ):
+                if "seed" in cfg:
+                    seed = cfg["seed"]
+                    delattr(cfg, "seed")
+                else:
+                    seed = 0
+                numpy.random.seed(seed)
+                torch.manual_seed(seed)
+                random.seed(seed)
+
                 os.mkdir("gfx")
                 os.mkdir(".callbacks")
                 with omegaconf.flag_override(cfg, "allow_objects", True):

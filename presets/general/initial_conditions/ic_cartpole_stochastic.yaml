@@ -1,2 +1,7 @@
-state_init: = numpy.array([numpy.pi, 0., 0., 0.])
+state_init%%: = numpy.array([numpy.pi, 0., 0., 0.])
 action_init: = numpy.ones(1)
+
+
+state_init: = ${.state_init%%} + numpy.array([${.x1}, 0., 0., 0., 0.])
+
+x1: = numpy.random.normal(0., 0.5)

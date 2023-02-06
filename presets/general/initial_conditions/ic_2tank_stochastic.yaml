@@ -1,8 +1,7 @@
 state_init%%: = numpy.array([2, -2]) 
 action_init: = numpy.ones(${system.dim_input})
 
-kwargs:
-  _target_: builtins.dict
-  size: 1
+state_init: = ${.state_init%%} + numpy.array([${.x1}, ${.x2}])
 
-state_init: = ${.state_init%%} + numpy.random.normal(0., 0.5, ${.kwargs})
+x1: = numpy.random.normal(0., 0.5)
+x2: = numpy.random.normal(0., 0.5)

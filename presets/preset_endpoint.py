@@ -18,9 +18,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
 import dill
+import torch
+import random
 
-
-np.random.seed(42)
+seed = 42
+np.random.seed(seed)
+torch.manual_seed(seed)
+random.seed(seed)
 
 EXPERIMENT = None
 for i, arg in enumerate(sys.argv):

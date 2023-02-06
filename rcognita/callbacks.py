@@ -779,6 +779,9 @@ class TotalObjectiveCallback(HistoricalCallback):
 
     def perform(self, obj, method, output):
         self.add_datum({"episode": len(self.data) + 1, "objective": output})
+        self.log(
+            f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
+        )
         self.dump_data("Total_Objective")
         self.save_plot("Total_Objective")
 
