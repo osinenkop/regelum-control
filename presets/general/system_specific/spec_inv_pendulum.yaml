@@ -15,4 +15,4 @@ critic_regularization_param: 0
 is_dynamic_decay_rate: True
 lb_parameter: 1.0E-6
 ub_parameter: 1.0E+3
-
+use_derivative: False

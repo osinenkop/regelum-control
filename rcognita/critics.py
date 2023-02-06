@@ -104,8 +104,8 @@ class Critic(ABC):
 
         if observation_target is None or observation_target == []:
             observation_target = np.zeros(system_dim_output)
-
-        self.observation_target = observation_target
+        elif isinstance(observation_target, list):
+            self.observation_target = rc.array(observation_target)
 
         self.discount_factor = discount_factor
         self.running_objective = running_objective
