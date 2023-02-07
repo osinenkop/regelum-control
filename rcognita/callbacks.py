@@ -638,7 +638,7 @@ class StateCallback(Callback):
 
 
 class ObjectiveCallback(Callback):
-    cooldown = 1.0
+    cooldown = 8.0
     """
     A Callback class that logs the current objective value of an Actor instance.
 
@@ -942,7 +942,7 @@ class CriticObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.cooldown = 8.0
+        self.cooldown = 1.0
         self.time = 0.0
 
     def is_target_event(self, obj, method, output):

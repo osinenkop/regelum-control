@@ -12,7 +12,7 @@ fi
 
 parentdir=$(dirname $PWD)
 
-PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_uncommitted scenario.is_playback=false \
+PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_uncommitted scenario.is_playback=false --cooldown-factor=8.0 \
     system=$system \
     controller=ddpg \
     scenario=episodic_reinforce \

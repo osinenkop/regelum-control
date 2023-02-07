@@ -1561,13 +1561,11 @@ class Controller3WRobotNIMotionPrimitive:
         elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
             angle, angle_cond, atol=1e-03
         ):
-            print("cond 2")
             omega = 0
             v = -self.K * rc.sqrt(rc.norm_2(rc.array([x, y])))
         elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
             angle, 0, atol=1e-03
         ):
-            print("cond 3")
             omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
             v = 0
         else:
@@ -1575,6 +1573,54 @@ class Controller3WRobotNIMotionPrimitive:
             v = 0
 
         return rc.array([v, omega])
+
+    def compute_action_sampled(self, time, observation, observation_target=[]):
+        """
+        Compute sampled action.
+
+        """
+
+        is_time_for_new_sample = self.clock.check_time(time)
+
+        if is_time_for_new_sample:  # New sample
+            # Update internal clock
+            self.controller_clock = time
+
+            action = self.compute_action(observation)
+            self.times.append(time)
+            self.action_old = action
+            return action
+
+        else:
+            return self.action_old
+
+    def reset(self):
+        self.controller_clock = self.time_start
+        self.Ls = []
+        self.times = []
+
+    def compute_LF(self, observation):
+        pass
+
+
+class ControllerKinPoint:
+    def __init__(self, gain, time_start=0, sampling_time=0.01, action_bounds=None):
+        if action_bounds is None:
+            action_bounds = []
+
+        self.action_bounds = action_bounds
+        self.gain = gain
+        self.controller_clock = time_start
+        self.sampling_time = sampling_time
+        self.Ls = []
+        self.times = []
+        self.action_old = rc.zeros(2)
+        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.time_start = time_start
+
+    @apply_action_bounds
+    def compute_action(self, observation, time=0, observation_target=[]):
+        return -self.gain * observation
 
     def compute_action_sampled(self, time, observation, observation_target=[]):
         """
