@@ -548,6 +548,6 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
                 / self.controller.sampling_time
             )
         )
-        self.actor.optimizer.optimize(self.actor.objective, observations)
+        self.actor.optimize_weights_episodic(observations)
         self.replay_buffer.nullify_buffer()
         super().reset_episode()

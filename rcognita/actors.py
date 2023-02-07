@@ -27,6 +27,7 @@ from .models import Model
 
 try:
     import torch
+    from torch.utils.data import Dataset, DataLoader
 except ImportError:
     from unittest.mock import MagicMock
 
@@ -492,31 +493,60 @@ class Actor:
 
 
 class ActorEpisodic(Actor):
-    def __init__(self, *args, use_derivative=False, **kwargs):
+    class ObservationDerivativeCattedDataset(Dataset):
+        def __init__(self, observations, use_derivative, derivative, action) -> None:
+            self.observations = observations
+            self.derivative = derivative
+            self.use_derivative = use_derivative
+            self.action = action
+
+        def __len__(self):
+            return len(self.observations)
+
+        def __getitem__(self, idx):
+            observation = self.observations[idx]
+            if self.use_derivative:
+                derivative = self.derivative([], observation, torch.tensor(self.action))
+                observation = torch.cat([self.observations[idx], derivative])
+
+            return observation
+
+    def __init__(
+        self,
+        *args,
+        use_derivative=False,
+        batch_size=50,
+        epochs=20,
+        device="cpu",
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.use_derivative = use_derivative
         self.derivative = self.predictor.system.compute_dynamics
+        self.batch_size = batch_size
+        self.epochs = epochs
+        self.device = torch.device(device)
 
-    def optimize_weights(self):
+    def optimize_weights(self, constraint_functions=None, time=None):
         pass
+
+    def optimize_weights_episodic(self, observations):
+        self.critic.model = self.critic.model.to(self.device)
+        self.model = self.model.to(self.device)
+
+        self.optimizer.optimize(self.objective, self.dataloader(observations))
+
+        self.critic.model.to("cpu")
+        self.model.to("cpu")
 
     def update_and_cache_weights(self):
         pass
 
     @force_type_safety
     def objective(self, observations):
-        len_buffer = len(observations)
-        q_sum = 0
-        for k in range(len(observations)):
-            observation = observations[k]
-            if self.use_derivative:
-                derivative = self.derivative([], observation, torch.tensor(self.action))
-                observation = torch.cat([observations[k], derivative])
-            q_sum += self.critic(observations[k], self.model(observation))
-
-        mean_q_value = q_sum / len_buffer
-
-        return mean_q_value
+        return self.critic(
+            torch.cat([observations, self.model(observations)], dim=1)
+        ).mean()
 
     def update_target(self, observation_target):
 
@@ -534,6 +564,18 @@ class ActorEpisodic(Actor):
                 [torch.tensor(observation), torch.tensor(derivative)]
             )
         super().update_action(observation)
+
+    def dataloader(self, observations):
+        return DataLoader(
+            dataset=self.ObservationDerivativeCattedDataset(
+                observations=observations,
+                derivative=self.derivative,
+                use_derivative=self.use_derivative,
+                action=self.action,
+            ),
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
 
 
 class ActorPID(Actor):
