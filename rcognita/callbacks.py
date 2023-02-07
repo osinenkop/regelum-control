@@ -319,7 +319,22 @@ class ConfigDiagramCallback(Callback):
             "<body>",
             f"""
                             <body>
-                            <div style="float: left; width: 50%">
+                            <div>
+                            <table style="margin-left: auto; margin-right: 0;">
+                            <tbody>
+                            {overrides_table}
+                            </tbody>
+                            </table>
+                            </div>
+                            </div>
+            """,
+        )
+        html = html.replace(
+            "<body>",
+            f"""
+                            <body>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr;">
+                            <div>
                             <table>
                             <tbody>
                             <tr><td>Config hash:  </td> <td>{cfg_hash}</td></tr>
@@ -327,20 +342,6 @@ class ConfigDiagramCallback(Callback):
                             <tr><td>Date and time: </td><td>{datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S")} </td></tr>
                             <tr><td>Script path: </td><td>{metadata["script_path"]} </td></tr>
                             <tr><td>Config path: </td><td>{metadata["config_path"]}</td></tr>
-                            </tbody>
-                            </table>
-                            </div>
-            """
-            + "<br>" * (max(len(content), 5) + 1),
-        )
-        html = html.replace(
-            "<body>",
-            f"""
-                            <body>
-                            <div style="float: right; width: 50%">
-                            <table>
-                            <tbody>
-                            {overrides_table}
                             </tbody>
                             </table>
                             </div>
