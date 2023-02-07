@@ -21,5 +21,6 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     controller.actor.discount_factor=.99 \
     controller.critic.model.force_positive_def=false \
     controller.critic.data_buffer_size=100 \
-    controller/critic=action_observation_on_policy
+    controller/critic=action_observation_on_policy \
+    simulator.time_final=1
    # +seed=1,2
