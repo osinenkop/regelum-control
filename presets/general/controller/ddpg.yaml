@@ -1,6 +1,6 @@
 defaults:
   - actor: episodic
-  - critic: action_observation_on_policy
+  - critic: dqn_behaviour
 
 _target_: rcognita.controllers.RLController
 
@@ -13,3 +13,6 @@ critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 action_bounds: $ system.action_bounds%%
 
 critic_period_multiplier%%: 1
+
+critic:
+  data_buffer_size: 100

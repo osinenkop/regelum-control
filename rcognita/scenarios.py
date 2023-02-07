@@ -540,8 +540,7 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         )
         return episode_status
 
-    def iteration_update(self):
-        super().iteration_update()
+    def reset_episode(self):
         observations, _, _, _ = self.replay_buffer.sample(
             int(
                 self.simulator.time_final
@@ -551,3 +550,4 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         )
         self.actor.optimizer.optimize(self.actor.objective, observations)
         self.replay_buffer.nullify_buffer()
+        super().reset_episode()

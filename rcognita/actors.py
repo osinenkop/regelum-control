@@ -510,10 +510,9 @@ class ActorEpisodic(Actor):
         for k in range(len(observations)):
             observation = observations[k]
             if self.use_derivative:
-                derivative = self.derivative([], observation, self.action)
-                input(type(derivative), type(observations[k]))
-                observation = torch.cat([observations[k], derivative], 1)
-            q_sum += self.critic(observation, self.model(observations[k]))
+                derivative = self.derivative([], observation, torch.tensor(self.action))
+                observation = torch.cat([observations[k], derivative])
+            q_sum += self.critic(observations[k], self.model(observation))
 
         mean_q_value = q_sum / len_buffer
 

@@ -19,6 +19,8 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     initial_conditions=ic_${system}_stochastic \
     controller.actor.discount_factor=.99 \
     controller.critic.model.force_positive_def=false \
-    controller.critic.data_buffer_size=100 \
-    controller/critic=action_observation_on_policy \
-    +seed=1,2
+    controller.critic.data_buffer_size=500 \
+    controller.critic.batch_size=30 \
+    controller.critic.td_n=30 \
+    simulator.time_final=3 \
+    scenario.N_episodes=100
