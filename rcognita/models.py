@@ -21,12 +21,14 @@ try:
     import torch
     import torch.nn.functional as F
     from torch import nn
+    from torch.distributions.multivariate_normal import MultivariateNormal
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
 
     torch = MagicMock()
     nn = MagicMock()
     F = MagicMock()
+    MultivariateNormal = MagicMock()
 
 import math
 from abc import ABC, abstractmethod
@@ -50,7 +52,6 @@ class Model(ABC):
     """
 
     def __call__(self, *args, weights=None, use_stored_weights=False):
-
         if use_stored_weights is False:
             if weights is not None:
                 return self.forward(*args, weights=weights)
@@ -325,7 +326,6 @@ class ModelQuadMix(Model):
     model_name = "quad-mix"
 
     def __init__(self, dim_input, weight_min=1.0, weight_max=1e3):
-
         self.dim_weights = int(
             self.dim_output + self.dim_output * self.dim_input + self.dim_input
         )
@@ -333,7 +333,6 @@ class ModelQuadMix(Model):
         self.weight_max = weight_max * np.ones(self.dim_weights)
 
     def _forward(self, vec, weights):
-
         v1 = rc.force_column(v1)
         v2 = rc.force_column(v2)
 
@@ -355,7 +354,6 @@ class ModelQuadForm(Model):
         self.weights = weights
 
     def forward(self, *argin, weights=None):
-
         if len(argin) != 2:
             raise ValueError("ModelQuadForm assumes two vector arguments!")
 
@@ -405,7 +403,6 @@ class ModelNN(nn.Module):
     model_name = "NN"
 
     def __call__(self, *args, weights=None, use_stored_weights=False):
-
         if use_stored_weights is False:
             if weights is not None:
                 return self.forward(*args, weights=weights)
@@ -589,7 +586,6 @@ class ModelDDQNAdvantage(ModelNN):
         self.double()
 
     def forward(self, input_tensor):
-
         x = input_tensor
         x = self.fc1(x)
         x = self.a1(x)
@@ -770,7 +766,6 @@ class ModelWeightContainerTorch(ModelNN):
         self.cache_weights()
 
     def forward(self, observation):
-
         return self.weights
 
 
@@ -785,7 +780,6 @@ class LookupTable(Model):
         self.update_and_cache_weights(self.weights)
 
     def __call__(self, *argin, use_stored_weights=False):
-
         if use_stored_weights is False:
             result = self.forward(*argin)
         else:
@@ -824,6 +818,70 @@ class ModelFc(ModelNN):
         return x
 
 
+class GaussianPDFModel(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        diag_scale_coef,
+        use_derivative=False,
+    ):
+        super().__init__()
+
+        if use_derivative:
+            dim_observation = dim_observation * 2
+
+        self.dim_observation = dim_observation
+        self.in_layer = nn.Linear(self.dim_observation, dim_action, bias=False)
+        self.register_parameter(
+            name="cov_matrix",
+            param=torch.nn.Parameter(
+                torch.diag(diag_scale_coef**2 * torch.ones(dim_action).float()),
+                requires_grad=False,
+            ),
+        )
+
+        self.cache_weights()
+
+    def get_mean_of_action_action(self, input_tensor):
+        if len(input_tensor.shape) == 1:
+            observation, action = (
+                input_tensor[: self.dim_observation],
+                input_tensor[self.dim_observation :],
+            )
+        elif len(input_tensor.shape) == 2:
+            observation, action = (
+                input_tensor[:, : self.dim_observation],
+                input_tensor[:, self.dim_observation :],
+            )
+        else:
+            raise ValueError("Input tensor has unexpected dims")
+
+        mean_of_action = self.in_layer(observation)
+        return mean_of_action, action
+
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        mean_of_action, action = self.get_mean_of_action_action(input_tensor)
+        cov_matrix = [
+            weight for name, weight in self.named_parameters() if name == "cov_matrix"
+        ][0]
+        return MultivariateNormal(
+            loc=mean_of_action, covariance_matrix=cov_matrix
+        ).log_prob(action)
+
+    def sample(self, observation):
+        mean_of_action = self.in_layer(observation)
+        cov_matrix = [
+            weight for name, weight in self.named_parameters() if name == "cov_matrix"
+        ][0]
+        return MultivariateNormal(
+            loc=mean_of_action, covariance_matrix=cov_matrix
+        ).sample()
+
+
 class ModelGaussianConditional(Model):
     """
     Gaussian probability distribution model with `weights[0]` being an expectation vector
@@ -839,7 +897,6 @@ class ModelGaussianConditional(Model):
         arg_condition=None,
         weights=None,
     ):
-
         self.weights = rc.array(weights)
         self.weights_init = self.weights
         self.expectation_function = expectation_function

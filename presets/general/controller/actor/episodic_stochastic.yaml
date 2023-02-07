@@ -1,9 +1,9 @@
 defaults:
-  - model: fc
+  - model: fc_gauss
   - optimizer: torch_dataloader
   - predictor: euler
 
-_target_: rcognita.actors.ActorEpisodic
+_target_: rcognita.actors.ActorEpisodicStochastic
 
 ###---Constructor arguments---###
 
