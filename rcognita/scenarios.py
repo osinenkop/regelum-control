@@ -490,7 +490,7 @@ class ReplayBuffer:
         if random_idxs:
             ind = np.random.randint(0, self.n_columns_filled, size=batch_size)
         else:
-            ind = np.arange(min(self.n_columns_filled, batch_size))
+            ind = np.arange(-min(self.n_columns_filled, batch_size), 0)
         return (
             torch.DoubleTensor(self.state[:, ind]).T,
             torch.DoubleTensor(self.action[:, ind]).T,
