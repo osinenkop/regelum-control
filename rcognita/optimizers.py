@@ -328,6 +328,69 @@ class TorchOptimizer(Optimizer):
             self.optimizer.step()
 
 
+class TorchDataloaderOptimizer(Optimizer):
+    """
+    Optimizer class that uses PyTorch as its optimization engine.
+    """
+
+    engine = "Torch"
+
+    def __init__(
+        self,
+        opt_options,
+        model,
+        device,
+        iterations=1,
+        opt_method=None,
+        verbose=False,
+    ):
+        """
+        Initialize an instance of TorchOptimizer.
+
+        :param opt_options: Options for the PyTorch optimizer.
+        :type opt_options: dict
+        :param iterations: Number of iterations to optimize the model.
+        :type iterations: int
+        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
+        :type opt_method: torch.optim.Optimizer
+        :param verbose: Whether to print optimization progress.
+        :type verbose: bool
+        """
+        if opt_method is None:
+            opt_method = torch.optim.Adam
+
+        self.device = torch.device(device)
+        self.opt_method = opt_method
+        self.opt_options = opt_options
+        self.iterations = iterations
+        self.verbose = verbose
+        self.loss_history = []
+        self.model = model
+
+    def optimize(
+        self,
+        objective,
+        dataloader,
+    ):  # remove model and add parameters instead
+        """
+        Optimize the model with the given objective.
+
+        :param objective: Objective function to optimize.
+        :type objective: callable
+        :param model: Model to optimize.
+        :type model: torch.nn.Module
+        :param model_input: Inputs to the model.
+        :type model_input: torch.Tensor
+        """
+        optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
+        for _ in range(self.iterations):
+            for batch in dataloader:
+                optimizer.zero_grad()
+                loss = objective(batch.to(self.device))
+                loss.backward()
+                optimizer.step()
+
+
 class TorchProjectiveOptimizer(Optimizer):
     """
     Optimizer class that uses PyTorch as its optimization engine.

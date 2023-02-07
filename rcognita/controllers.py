@@ -47,7 +47,6 @@ class Controller(ABC):
         sampling_time: float = 0.1,
         is_fixed_critic_weights: bool = False,
     ):
-
         self.controller_clock = time_start
         self.sampling_time = sampling_time
 
@@ -55,6 +54,7 @@ class Controller(ABC):
         self.is_fixed_critic_weights = is_fixed_critic_weights
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
+    @apply_action_bounds
     def compute_action_sampled(
         self, time, observation, constraints=(), observation_target=[]
     ):
@@ -261,7 +261,6 @@ class CALFControllerPredictive(CALFControllerExPost):
     def compute_action(
         self, observation, is_critic_update=False, time=0, observation_target=[]
     ):
-
         # Update data buffers
         self.critic.update_buffers(
             observation, self.actor.action
@@ -364,7 +363,6 @@ class Controller3WRobotDisassembledCLF:
         max_iters=200,
         optimizer_engine="SciPy",
     ):
-
         self.m = m
         self.I = I
         self.controller_gain = controller_gain
@@ -390,7 +388,6 @@ class Controller3WRobotDisassembledCLF:
             )
 
     def reset(self):
-
         """
         Resets controller for use in multi-episode simulation.
 
@@ -398,7 +395,6 @@ class Controller3WRobotDisassembledCLF:
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI, theta):
-
         """
         Generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators).
 
@@ -432,7 +428,6 @@ class Controller3WRobotDisassembledCLF:
         return nablaF
 
     def _kappa(self, xNI, theta):
-
         """
         Stabilizing controller for NI-part.
 
@@ -456,7 +451,6 @@ class Controller3WRobotDisassembledCLF:
         return kappa_val
 
     def _Fc(self, xNI, eta, theta):
-
         """
         Marginal function for ENDI constructed by nonsmooth backstepping. See details in the literature mentioned in the class documentation.
 
@@ -502,7 +496,6 @@ class Controller3WRobotDisassembledCLF:
         return theta_val
 
     def _Cart2NH(self, coords_Cart):
-
         """
         Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
         See Section VIII.A in [[1]_].
@@ -537,7 +530,6 @@ class Controller3WRobotDisassembledCLF:
         return [xNI, eta]
 
     def _NH2ctrl_Cart(self, xNI, eta, uNI):
-
         """
         Get control for Cartesian NI from NH coordinates.
         See Section VIII.A in [[1]_].
@@ -580,7 +572,6 @@ class Controller3WRobotDisassembledCLF:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-
             # This controller needs full-state measurement
             action = self.compute_action(observation)
 
@@ -632,7 +623,6 @@ class Controller3WRobotDisassembledCLF:
         return action
 
     def compute_LF(self, observation):
-
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
 
@@ -691,7 +681,6 @@ class ControllerMemoryPID:
     def compute_action(
         self, process_variable, error_derivative=None, time=0, observation_target=[]
     ):
-
         error = self.compute_error(process_variable)
         integral = self.compute_integral(error)
 
@@ -813,7 +802,6 @@ class Controller3WRobotPID:
         if not ANGLE_STABILIZED_TO_ARCTAN and not np.allclose(
             [x, y], [0, 0], atol=1e-02
         ):
-
             self.PID_angle_arctan.update_observation_buffer(angle)
             self.PID_angle_origin.reset()
             self.PID_x_y_origin.reset()
@@ -833,7 +821,6 @@ class Controller3WRobotPID:
                 )
 
         elif ANGLE_STABILIZED_TO_ARCTAN and not XY_STABILIZED_TO_ORIGIN:
-
             self.PID_x_y_origin.update_observation_buffer(rc.array([x, y]))
             self.PID_angle_arctan.update_observation_buffer(angle)
 
@@ -853,7 +840,6 @@ class Controller3WRobotPID:
             M = self.PID_angle_arctan.compute_action(angle, error_derivative=omega)[0]
 
         elif XY_STABILIZED_TO_ORIGIN and not ROBOT_STABILIZED_TO_ORIGIN:
-
             # print("Stabilize angle to 0")
 
             self.PID_angle_origin.update_observation_buffer(angle)
@@ -984,7 +970,6 @@ class ControllerCartPolePID:
 
     @apply_action_bounds
     def compute_action(self, observation, time=0, observation_target=[]):
-
         if rc.abs(observation[0]) > np.pi / 4:
             self.action = self.PID_swingup.compute_action(
                 -rc.array([observation[0]]), error_derivative=observation[2]
@@ -1268,7 +1253,6 @@ class Controller3WRobotNIDisassembledCLF:
     def __init__(
         self, controller_gain=10, action_bounds=None, time_start=0, sampling_time=0.1
     ):
-
         self.controller_gain = controller_gain
         self.action_bounds = action_bounds
         self.controller_clock = time_start
@@ -1280,7 +1264,6 @@ class Controller3WRobotNIDisassembledCLF:
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def reset(self):
-
         """
         Resets controller for use in multi-episode simulation.
 
@@ -1289,7 +1272,6 @@ class Controller3WRobotNIDisassembledCLF:
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI):
-
         """
         Analytic disassembled supper_bound_constraintradient, without finding minimizer theta.
 
@@ -1352,7 +1334,6 @@ class Controller3WRobotNIDisassembledCLF:
             return nablaL
 
     def _kappa(self, xNI):
-
         """
         Stabilizing controller for NI-part.
 
@@ -1375,7 +1356,6 @@ class Controller3WRobotNIDisassembledCLF:
         return kappa_val
 
     def _F(self, xNI, eta, theta):
-
         """
         Marginal function for NI.
 
@@ -1392,7 +1372,6 @@ class Controller3WRobotNIDisassembledCLF:
         return F + 1 / 2 * rc.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
-
         """
         Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
 
@@ -1413,7 +1392,6 @@ class Controller3WRobotNIDisassembledCLF:
         return xNI
 
     def _NH2ctrl_Cart(self, xNI, uNI):
-
         """
         Get control for Cartesian NI from NH coordinates.
 
@@ -1435,7 +1413,6 @@ class Controller3WRobotNIDisassembledCLF:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-
             action = self.compute_action(observation)
             self.times.append(time)
             self.action_old = action
@@ -1474,7 +1451,6 @@ class Controller3WRobotNIDisassembledCLF:
         return self.action
 
     def compute_LF(self, observation):
-
         xNI = self._Cart2NH(observation)
 
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
@@ -1503,11 +1479,9 @@ class NominalControllerInvertedPendulum:
     def compute_action_sampled(
         self, time, observation, constraints=(), observation_target=[]
     ):
-
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:
-
             self.action = self.compute_action(observation, time=time)
 
         return self.action

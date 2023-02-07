@@ -15,4 +15,4 @@ action_bounds: $ system.action_bounds%%
 critic_period_multiplier%%: 1
 
 critic:
-  data_buffer_size: 100
+  data_buffer_size: 500
