@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source ../env/bin/activate
-
 disallow_uncommitted=$1
 system=$2
 
@@ -17,4 +15,7 @@ parentdir=$(dirname $PWD)
 PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_uncommitted scenario.is_playback=false --cooldown-factor=8.0 \
 system=$system \
 controller=sarsa \
-initial_conditions=ic_${system}_stochastic
+scenario.N_episodes=100 \
+initial_conditions=ic_${system}_stochastic \
+controller.actor.discount_factor=.999 
++seed=1
