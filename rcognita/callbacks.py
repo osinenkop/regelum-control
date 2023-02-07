@@ -475,20 +475,16 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
 
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
-            images.append(f'<img src="gfx/{filename}">')
-        if len(images) % 2:
-            images.append("")
-        for i in range(0, len(images), 2):
-            table_lines += f"<tr><td>{images[i]}</td> <td>{images[i + 1]}</td></tr>\n"
+            images.append(f'<img src="gfx/{filename}" style="object-fit: cover; width: 100%; max-height: 100%;">')
+        for image in images:
+            table_lines += f"<div>{image}</div>\n"
         html = html.replace(
             "</body>",
             f"""
                             <br>
-                            <table>
-                            <tbody>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr;">
                             {table_lines}
-                            </tbody>
-                            </table>
+                            </div>
                              </body>
                              """,
         )
