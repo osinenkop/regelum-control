@@ -28,4 +28,4 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     controller.critic.model.bias=true \
     controller/critic=dqn_greedy \
     controller.actor.epsilon_greedy=true \
-    +seed=1,2,3,4,5,6,7,8,9,10,11,12,13,14
+    +seed=1
