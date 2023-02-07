@@ -339,7 +339,7 @@ class TorchDataloaderOptimizer(Optimizer):
         self,
         opt_options,
         model,
-        device="cpu",
+        device,
         iterations=1,
         opt_method=None,
         verbose=False,
@@ -365,8 +365,7 @@ class TorchDataloaderOptimizer(Optimizer):
         self.iterations = iterations
         self.verbose = verbose
         self.loss_history = []
-        self.model = model.to(self.device)
-        self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
+        self.model = model
 
     def optimize(
         self,
@@ -383,13 +382,13 @@ class TorchDataloaderOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-
+        optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
         for _ in range(self.iterations):
             for batch in dataloader:
-                self.optimizer.zero_grad()
+                optimizer.zero_grad()
                 loss = objective(batch.to(self.device))
                 loss.backward()
-                self.optimizer.step()
+                optimizer.step()
 
 
 class TorchProjectiveOptimizer(Optimizer):

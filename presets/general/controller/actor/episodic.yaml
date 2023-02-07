@@ -19,4 +19,4 @@ use_derivative: $ system_specific.use_derivative
 running_objective: $ running_objective
 batch_size: 50
 epochs: 20
-device: cpu
+device: cuda:0

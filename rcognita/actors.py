@@ -536,8 +536,8 @@ class ActorEpisodic(Actor):
 
         self.optimizer.optimize(self.objective, self.dataloader(observations))
 
-        self.critic.model.to("cpu")
-        self.model.to("cpu")
+        self.critic.model = self.critic.model.to(torch.device("cpu"))
+        self.model = self.model.to(torch.device("cpu"))
 
     def update_and_cache_weights(self):
         pass
