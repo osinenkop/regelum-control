@@ -129,7 +129,7 @@ class OnlineScenario(Scenario):
         self.observation_target = (
             np.zeros_like(self.observation)
             if observation_target is None or observation_target == []
-            else observation_target
+            else rc.array(observation_target)
         )
         self.running_objective_value = self.running_objective(
             self.observation, self.action
@@ -490,7 +490,7 @@ class ReplayBuffer:
         if random_idxs:
             ind = np.random.randint(0, self.n_columns_filled, size=batch_size)
         else:
-            ind = np.arange(min(self.n_columns_filled, batch_size))
+            ind = np.arange(-min(self.n_columns_filled, batch_size), 0)
         return (
             torch.DoubleTensor(self.state[:, ind]).T,
             torch.DoubleTensor(self.action[:, ind]).T,
@@ -540,8 +540,7 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         )
         return episode_status
 
-    def iteration_update(self):
-        super().iteration_update()
+    def reset_episode(self):
         observations, _, _, _ = self.replay_buffer.sample(
             int(
                 self.simulator.time_final
@@ -551,3 +550,4 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         )
         self.actor.optimizer.optimize(self.actor.objective, observations)
         self.replay_buffer.nullify_buffer()
+        super().reset_episode()

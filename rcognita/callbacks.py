@@ -634,7 +634,7 @@ class StateCallback(Callback):
 
 
 class ObjectiveCallback(Callback):
-    cooldown = 1.0
+    cooldown = 8.0
     """
     A Callback class that logs the current objective value of an Actor instance.
 
@@ -676,7 +676,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         self.counter += 1
         self.log(
-            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%)"
+            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}"
         )
         if not self.counter % 3:
             do_exit = False
@@ -785,8 +785,10 @@ class HistoricalObservationCallback(HistoricalCallback):
         plt.close()
         if not name:
             name = self.__class__.__name__
-        res = self.data.drop(["action"], axis=1).set_index("time").plot(
-            subplots=True, grid=True, xlabel="time", title=name
+        res = (
+            self.data.drop(["action"], axis=1)
+            .set_index("time")
+            .plot(subplots=True, grid=True, xlabel="time", title=name)
         )
         return res[0].figure
 

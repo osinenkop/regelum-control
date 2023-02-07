@@ -1,6 +1,6 @@
 defaults:
   - actor: rql
-  - critic: action_observation
+  - critic: dqn_behaviour
   - override actor/optimizer: torch_projective
   - override actor/model: weight_container
   - override critic/model: dqn

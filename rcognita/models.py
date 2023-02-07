@@ -802,8 +802,11 @@ class LookupTable(Model):
 
 
 class ModelFc(ModelNN):
-    def __init__(self, dim_observation, dim_action):
+    def __init__(self, dim_observation, dim_action, use_derivative=False):
         super().__init__()
+
+        if use_derivative:
+            dim_observation = dim_observation * 2
 
         self.in_layer = nn.Linear(dim_observation, dim_action, bias=False)
 

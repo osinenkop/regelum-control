@@ -15,3 +15,5 @@ action_bounds: $ system.action_bounds%%
 action_init: $ scenario.action_init
 critic: ~ controller.critic
 observation_target: $ system_specific.observation_target
+use_derivative: $ system_specific.use_derivative
+running_objective: $ running_objective
