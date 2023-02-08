@@ -2,6 +2,6 @@ _target_: rcognita.models.ModelDDQN
 
 dim_observation: $ system.dim_output
 dim_action: $ system.dim_input
-dim_hidden: 20
+dim_hidden: 40
 
 actions_grid: $ system_specific.actions_grid

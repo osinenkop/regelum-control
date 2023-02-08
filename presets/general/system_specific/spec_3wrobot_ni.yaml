@@ -9,3 +9,13 @@ is_dynamic_decay_rate: True
 lb_parameter: 1.0E-6
 ub_parameter: 1.0E+3
 use_derivative: True
+
+data_buffer_size: 400
+
+grid_dim%%: 4
+v_min%%: -25.
+v_max%%: 25.
+omega_min%%: -5.
+omega_max%%: 5.
+
+actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.v_min%%}, ${.v_max%%}, ${.grid_dim%%}), numpy.linspace(${.omega_min%%}, ${.omega_max%%}, ${.grid_dim%%}))))

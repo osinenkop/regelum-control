@@ -18,5 +18,4 @@ observation_target: $ system_specific.observation_target
 use_derivative: $ system_specific.use_derivative
 running_objective: $ running_objective
 batch_size: 50
-epochs: 20
 device: cuda:0

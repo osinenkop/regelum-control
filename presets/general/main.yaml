@@ -8,7 +8,7 @@ defaults:
   - initial_conditions: ic_${system}
   - observation_naming: naming_${system}
   - optional system_specific: spec_${system}
-
+  # - ${controller}_${system}
 
 callbacks:
   - rcognita.callbacks.HistoricalObjectiveCallback
@@ -19,5 +19,3 @@ callbacks:
   - rcognita.callbacks.QFunctionModelSaverCallback
 
 disallow_uncommitted%%: True
-
-

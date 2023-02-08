@@ -2,7 +2,7 @@ observation_target: = [0.4, 0.4]
 sampling_time: 0.1
 time_final: 80
 
-grid_dim%%: 3
+grid_dim%%: 4
 action_min%%: $ system.action_min%%
 action_max%%: $ system.action_max%%
 
@@ -16,3 +16,5 @@ is_dynamic_decay_rate: True
 lb_parameter: 1.0E-6
 ub_parameter: 1.0E+3
 use_derivative: True
+
+data_buffer_size: 500

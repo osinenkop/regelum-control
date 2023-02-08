@@ -210,7 +210,6 @@ class Actor:
         predicted_observation = current_observation
 
         for i in range(1, self.prediction_horizon):
-
             current_action = action_sequence[i - 1, :]
             current_state = predicted_observation
 
@@ -466,7 +465,6 @@ class Actor:
             )
 
         elif self.optimizer.engine == "Torch":
-
             self.optimized_weights = self.optimizer.optimize(
                 rc.torch_tensor(action_sequence_init_reshaped),
                 rc.torch_tensor(self.observation, requires_grad=False),
@@ -516,7 +514,6 @@ class ActorEpisodic(Actor):
         *args,
         use_derivative=False,
         batch_size=50,
-        epochs=20,
         device="cpu",
         **kwargs,
     ):
@@ -524,7 +521,6 @@ class ActorEpisodic(Actor):
         self.use_derivative = use_derivative
         self.derivative = self.predictor.system.compute_dynamics
         self.batch_size = batch_size
-        self.epochs = epochs
         self.device = torch.device(device)
 
     def optimize_weights(self, constraint_functions=None, time=None):
@@ -546,10 +542,9 @@ class ActorEpisodic(Actor):
     def objective(self, observations):
         return self.critic(
             torch.cat([observations, self.model(observations)], dim=1)
-        ).mean()
+        ).sum()
 
     def update_target(self, observation_target):
-
         self.observation_target = (
             rc.concatenate((observation_target, rc.zeros(len(observation_target))))
             if self.use_derivative
@@ -557,7 +552,6 @@ class ActorEpisodic(Actor):
         )
 
     def update_action(self, observation=None):
-
         if self.use_derivative:
             derivative = self.derivative([], observation, self.action)
             observation = torch.cat(
@@ -568,6 +562,64 @@ class ActorEpisodic(Actor):
     def dataloader(self, observations):
         return DataLoader(
             dataset=self.ObservationDerivativeCattedDataset(
+                observations=observations,
+                derivative=self.derivative,
+                use_derivative=self.use_derivative,
+                action=self.action,
+            ),
+            batch_size=self.batch_size,
+            shuffle=True,
+        )
+
+
+class ActorEpisodicStochastic(ActorEpisodic):
+    class ObservationDerivativeActionCattedDataset(Dataset):
+        def __init__(self, observations, use_derivative, derivative, action) -> None:
+            self.observations = observations
+            self.derivative = derivative
+            self.use_derivative = use_derivative
+            self.action = action
+
+        def __len__(self):
+            return len(self.observations)
+
+        def __getitem__(self, idx):
+            observation = self.observations[idx]
+            if self.use_derivative:
+                derivative = self.derivative([], observation, torch.tensor(self.action))
+                observation = torch.cat([self.observations[idx], derivative])
+
+            return torch.cat([observation, torch.tensor(self.action)])
+
+    def update_action(self, observation=None):
+        if self.use_derivative:
+            derivative = self.derivative([], observation, self.action)
+            observation = torch.cat(
+                [torch.tensor(observation), torch.tensor(derivative)]
+            ).float()
+        self.action_old = self.action
+        if observation is None:
+            observation = self.observation
+
+        self.action = (
+            self.model.sample(
+                torch.tensor(observation - self.observation_target).float()
+            )
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+    @force_type_safety
+    def objective(self, observations_actions):
+        return (
+            self.model(torch.tensor(observations_actions).float())
+            * self.critic(observations_actions).detach()
+        ).sum()
+
+    def dataloader(self, observations):
+        return DataLoader(
+            dataset=self.ObservationDerivativeActionCattedDataset(
                 observations=observations,
                 derivative=self.derivative,
                 use_derivative=self.use_derivative,

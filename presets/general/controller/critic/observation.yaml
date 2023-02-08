@@ -1,6 +1,6 @@
 defaults:
   - model: quad_no_mix
-  - optimizer: scipy
+  - optimizer: casadi 
 
 _target_: rcognita.critics.CriticOfObservation
 
@@ -8,7 +8,7 @@ _target_: rcognita.critics.CriticOfObservation
 
 system_dim_input: $ system.dim_input
 system_dim_output: $ system.dim_output
-data_buffer_size: 4
+data_buffer_size: 8
 running_objective: ~ running_objective
 discount_factor: $ controller.actor.discount_factor
 sampling_time: $ controller.sampling_time

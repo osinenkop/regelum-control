@@ -1,6 +1,6 @@
 defaults:
   - actor: rql
-  - critic: action_observation
+  - critic: dqn_behaviour 
 
 _target_: rcognita.controllers.RLController
 
@@ -10,5 +10,5 @@ time_start: $ simulator.time_start
 sampling_time: $ system_specific.sampling_time
 is_fixed_critic_weights: false
 critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
-action_bounds: system.action_bounds
+action_bounds: $ system.action_bounds%%
 critic_period_multiplier%%: 1
