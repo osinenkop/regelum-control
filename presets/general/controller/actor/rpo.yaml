@@ -1,6 +1,6 @@
 defaults:
   - model: weight_container
-  - optimizer: scipy
+  - optimizer: casadi 
   - predictor: euler
 
 _target_: rcognita.actors.ActorRPO
