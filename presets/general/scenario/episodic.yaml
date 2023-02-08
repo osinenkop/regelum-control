@@ -9,7 +9,7 @@ is_log: false
 is_playback: true
 state_init: $ initial_conditions.state_init
 action_init: $ initial_conditions.action_init
-N_episodes: 1
+N_episodes: 20
 N_iterations: 1
 speedup: 75
 repeat_num: 0
