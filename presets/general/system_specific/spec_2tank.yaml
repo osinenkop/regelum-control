@@ -16,3 +16,6 @@ is_dynamic_decay_rate: True
 lb_parameter: 1.0E-6
 ub_parameter: 1.0E+3
 use_derivative: True
+
+td_n_dqn: 30
+td_n_sarsa: 10

@@ -29,3 +29,4 @@ PYTHONPATH=$parentdir python preset_endpoint.py disallow_uncommitted=$disallow_u
     controller/critic=dqn_greedy \
     controller.actor.epsilon_greedy=true \
     +seed=1
+    cat
