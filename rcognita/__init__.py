@@ -1,5 +1,7 @@
 __version__ = "0.2.1"
 
+import datetime
+import platform
 import shelve
 import sys, os, inspect
 import logging
@@ -543,7 +545,17 @@ class main:
                 numpy.random.seed(seed)
                 torch.manual_seed(seed)
                 random.seed(seed)
-
+                with shelve.open('.report') as f:
+                    f["termination"] = "running"
+                    f["started"] = datetime.datetime.now()
+                    f["args"] = sys.argv
+                    f["config_path"] = path
+                    f["script_path"] = script_path
+                    f["PYTHONPATH"] = initial_pythonpath
+                    f["initial_cwd"] = initial_working_directory
+                    f["common_dir"] = common_dir.name
+                    f["hostname"] = platform.node()
+                    f["seed"] = seed
                 os.mkdir("gfx")
                 os.mkdir(".callbacks")
                 with omegaconf.flag_override(cfg, "allow_objects", True):
@@ -585,6 +597,7 @@ class main:
                             r["path"] = os.getcwd()
                             r["pid"] = os.getpid()
                         res = old_app(ccfg)
+                        self.__class__.callbacks[0].log("Script terminated successfully.")
                     except RcognitaExitException as e:
                         res = e
                     except Exception as e:
@@ -601,6 +614,10 @@ class main:
                                 f"Termination procedure for {callback.__class__.__name__} failed."
                             )
                             callback.exception(e)
+                    with shelve.open('.report') as f:
+                        f["termination"] = "successful" if not isinstance(res, Exception) else \
+                            ''.join(traceback.format_tb(res.__traceback__))
+                        f["finished"] = datetime.datetime.now()
                     ccfg.refresh()
                     if self.is_sweep:
                         return res
