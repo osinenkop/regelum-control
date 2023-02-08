@@ -570,7 +570,6 @@ class ModelDDQNAdvantage(ModelNN):
         dim_observation,
         dim_action,
         dim_hidden=40,
-        force_positive_def=True,
     ):
         super().__init__()
 
@@ -581,7 +580,6 @@ class ModelDDQNAdvantage(ModelNN):
         self.fc3 = nn.Linear(dim_hidden, dim_hidden)
         self.a3 = nn.ReLU()
         self.fc4 = nn.Linear(dim_hidden, 1)
-        self.force_positive_def = force_positive_def
 
         self.double()
 
@@ -603,23 +601,20 @@ class ModelDeepObjective(ModelNN):
         self,
         dim_observation,
         dim_hidden=40,
-        force_positive_def=False,
     ):
         super().__init__()
 
         self.fc1 = nn.Linear(dim_observation, dim_hidden)
-        self.a1 = nn.LeakyReLU()
+        self.a1 = nn.LeakyReLU(0.2)
         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
-        self.a2 = nn.LeakyReLU()
+        self.a2 = nn.LeakyReLU(0.2)
         self.fc3 = nn.Linear(dim_hidden, dim_hidden)
-        self.a3 = nn.LeakyReLU()
+        self.a3 = nn.LeakyReLU(0.2)
         self.fc4 = nn.Linear(dim_hidden, 1)
-        self.force_positive_def = force_positive_def
 
         self.double()
         self.cache_weights()
 
-    @force_positive_def
     def forward(self, input_tensor):
         x = input_tensor
         x = self.fc1(x)
@@ -640,8 +635,6 @@ class ModelDDQN(ModelNN):
         dim_action,
         actions_grid,
         dim_hidden=40,
-        weights=None,
-        critic_force_positive_def=True,
     ):
         super().__init__()
 
@@ -650,7 +643,6 @@ class ModelDDQN(ModelNN):
         self.critic = ModelDeepObjective(
             dim_observation=dim_observation,
             dim_hidden=dim_hidden,
-            force_positive_def=critic_force_positive_def,
         )
         self.advantage = ModelDDQNAdvantage(
             dim_observation=dim_observation,
@@ -660,16 +652,9 @@ class ModelDDQN(ModelNN):
 
         self.double()
 
-        if weights is not None:
-            self.load_state_dict(weights)
-
-        self.weights = list(self.parameters())
         self.cache_weights()
 
     def forward(self, input_tensor, weights=None):
-        if weights is not None:
-            self.update(weights)
-
         observation_action, observation = (
             input_tensor,
             input_tensor[: self.dim_observation],
