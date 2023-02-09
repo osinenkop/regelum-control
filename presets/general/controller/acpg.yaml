@@ -15,4 +15,9 @@ action_bounds: $ system.action_bounds%%
 critic_period_multiplier%%: 1
 
 critic:
-  data_buffer_size: 500
+  optimizer:
+    opt_options:
+      lr: 0.00001
+  td_n: 10
+  batch_size: 50
+  discount_factor: 0.94
