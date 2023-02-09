@@ -677,39 +677,6 @@ class ModelDDQN(ModelNN):
         return objective + (advantage - advantage_grid_mean)
 
 
-class ModelNNElementWiseProduct(ModelNN):
-    def __init__(
-        self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
-    ):
-
-        super().__init__()
-
-        if use_derivative:
-            dim_observation = dim_observation * 2
-
-        self.dim_observation = dim_observation
-
-        self.register_parameter(
-            name="dot_layer",
-            param=torch.nn.Parameter(
-                0.1 * torch.ones(self.dim_observation),
-                requires_grad=True,
-            ),
-        )
-        self.weight_min = weight_min
-        self.weight_max = weight_max
-        self.cache_weights()
-
-    def forward(self, input_tensor):
-        dot_layer = dict(self.named_parameters())["dot_layer"]
-        # dot_layer.requires_grad = False
-        dot_layer = dot_layer.clamp(min=self.weight_min, max=self.weight_max)
-        # dot_layer.requires_grad = True
-        if len(input_tensor.shape) == 2:
-            return input_tensor * dot_layer[None, :]
-        return input_tensor * dot_layer
-
-
 class ModelDQN(ModelNN):
     """
     pytorch neural network DQN
@@ -813,6 +780,18 @@ class LookupTable(Model):
         return self.weights[indices]
 
 
+class WeightClipper:
+    def __init__(self, weight_min=None, weight_max=None):
+        self.weight_min = weight_min
+        self.weight_max = weight_max
+
+    def __call__(self, module):
+        # filter the variables to get the ones you want
+        w = module.weight.data
+        w = w.clamp(self.weight_min, self.weight_max)
+        module.weight.data = w
+
+
 class ModelFc(ModelNN):
     def __init__(
         self,
@@ -839,24 +818,46 @@ class ModelFc(ModelNN):
         if weights is not None:
             self.update(weights)
 
+        self.in_layer.apply(WeightClipper(self.weight_min, self.weight_max))
+
         x = input_tensor
         x = self.in_layer(x)
 
         return x
 
 
+class ModelNNElementWiseProduct(ModelNN):
+    def __init__(
+        self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
+    ):
+
+        super().__init__()
+
+        if use_derivative:
+            dim_observation = dim_observation * 2
+
+        self.dim_observation = dim_observation
+
+        self.register_parameter(
+            name="dot_layer",
+            param=torch.nn.Parameter(
+                0.1 * torch.ones(self.dim_observation),
+                requires_grad=True,
+            ),
+        )
+        self.weight_min = weight_min
+        self.weight_max = weight_max
+        self.cache_weights()
+
+    def forward(self, input_tensor):
+        dot_layer = dict(self.named_parameters())["dot_layer"]
+        dot_layer = dot_layer.clamp(min=self.weight_min, max=self.weight_max)
+        if len(input_tensor.shape) == 2:
+            return input_tensor * dot_layer[None, :]
+        return input_tensor * dot_layer
+
+
 class GaussianPDFModel(ModelNN):
-    class WeightClipper:
-        def __init__(self, weight_min=None, weight_max=None):
-            self.weight_min = weight_min
-            self.weight_max = weight_max
-
-        def __call__(self, module):
-            # filter the variables to get the ones you want
-            w = module.weight.data
-            w = w.clamp(self.weight_min, self.weight_max)
-            module.weight.data = w
-
     def __init__(
         self,
         dim_observation,
@@ -906,10 +907,7 @@ class GaussianPDFModel(ModelNN):
         if weights is not None:
             self.update(weights)
 
-        self.in_layer.apply(self.WeightClipper(self.weight_min, self.weight_max))
-        # dict(self.named_parameters())["in_layer.weight"] = dict(
-        #     self.named_parameters()
-        # )["in_layer.weight"].clamp(min=self.weight_min, max=self.weight_max)
+        self.in_layer.apply(WeightClipper(self.weight_min, self.weight_max))
         mean_of_action, action = self.get_mean_of_action_action(input_tensor)
         cov_matrix = [
             weight for name, weight in self.named_parameters() if name == "cov_matrix"
@@ -919,13 +917,89 @@ class GaussianPDFModel(ModelNN):
         ).log_prob(action)
 
     def sample(self, observation):
-        self.in_layer.apply(self.WeightClipper(self.weight_min, self.weight_max))
-        # dict(self.named_parameters())["in_layer.weight"] = dict(
-        #     self.named_parameters()
-        # )["in_layer.weight"].clamp(min=self.weight_min, max=self.weight_max)
-
+        self.in_layer.apply(WeightClipper(self.weight_min, self.weight_max))
         mean_of_action = self.in_layer(observation)
 
+        cov_matrix = [
+            weight for name, weight in self.named_parameters() if name == "cov_matrix"
+        ][0]
+        return MultivariateNormal(
+            loc=mean_of_action, covariance_matrix=cov_matrix
+        ).sample()
+
+
+class GaussianElementWisePDFModel(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        diag_scale_coef,
+        use_derivative=False,
+        weight_min=None,
+        weight_max=None,
+    ):
+        super().__init__()
+
+        if use_derivative:
+            dim_observation = dim_observation * 2
+
+        self.dim_observation = dim_observation
+        self.register_parameter(
+            name="dot_layer",
+            param=torch.nn.Parameter(
+                0.1 * torch.ones(self.dim_observation),
+                requires_grad=True,
+            ),
+        )
+        self.register_parameter(
+            name="cov_matrix",
+            param=torch.nn.Parameter(
+                torch.diag(diag_scale_coef**2 * torch.ones(dim_observation).float()),
+                requires_grad=False,
+            ),
+        )
+        self.weight_min = weight_min
+        self.weight_max = weight_max
+
+        self.cache_weights()
+
+    def get_mean_of_action_action(self, input_tensor):
+        if len(input_tensor.shape) == 1:
+            observation, action = (
+                input_tensor[: self.dim_observation],
+                input_tensor[self.dim_observation :],
+            )
+        elif len(input_tensor.shape) == 2:
+            observation, action = (
+                input_tensor[:, : self.dim_observation],
+                input_tensor[:, self.dim_observation :],
+            )
+        else:
+            raise ValueError("Input tensor has unexpected dims")
+        return self.clamp_and_multiply(observation), action
+
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        mean_of_action, action = self.get_mean_of_action_action(input_tensor)
+        cov_matrix = [
+            weight for name, weight in self.named_parameters() if name == "cov_matrix"
+        ][0]
+        return MultivariateNormal(
+            loc=mean_of_action, covariance_matrix=cov_matrix
+        ).log_prob(action)
+
+    def clamp_and_multiply(self, observation):
+        dot_layer = dict(self.named_parameters())["dot_layer"]
+        dot_layer = dot_layer.clamp(min=self.weight_min, max=self.weight_max)
+        if len(observation.shape) == 2:
+            mean_of_action = observation * dot_layer[None, :]
+        mean_of_action = observation * dot_layer
+
+        return mean_of_action
+
+    def sample(self, observation):
+        mean_of_action = self.clamp_and_multiply(observation)
         cov_matrix = [
             weight for name, weight in self.named_parameters() if name == "cov_matrix"
         ][0]

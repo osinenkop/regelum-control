@@ -1,8 +1,6 @@
-x1: = numpy.random.normal(0., 0.5)
-x2: = numpy.random.normal(0., 0.5)
 
-init_state_x: = -5 + ${.x1}
-init_state_y: = 5 + ${.x2}
+init_state_x: = -5 
+init_state_y: = 5 
 
 angle: = numpy.arctan(${.init_state_y} / ${.init_state_x})
 

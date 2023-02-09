@@ -1,5 +1,5 @@
 defaults:
-  - model: fc
+  - model: fc 
   - optimizer: torch_dataloader
   - predictor: euler
 
