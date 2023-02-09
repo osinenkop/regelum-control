@@ -1,3 +1,5 @@
-pattern=$1
+#!/bin/bash
 
-tmux list-sessions | awk '/^${pattern}/ {system("tmux kill-session -t "$1)}'
+session_prefix=$1
+
+tmux list-sessions | awk "/^$session_prefix/ {system(\"tmux kill-session -t \"\$1)}"
