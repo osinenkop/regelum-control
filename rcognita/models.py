@@ -846,6 +846,17 @@ class ModelFc(ModelNN):
 
 
 class GaussianPDFModel(ModelNN):
+    class WeightClipper:
+        def __init__(self, weight_min=None, weight_max=None):
+            self.weight_min = weight_min
+            self.weight_max = weight_max
+
+        def __call__(self, module):
+            # filter the variables to get the ones you want
+            w = module.weight.data
+            w = w.clamp(self.weight_min, self.weight_max)
+            module.weight.data = w
+
     def __init__(
         self,
         dim_observation,
@@ -894,9 +905,11 @@ class GaussianPDFModel(ModelNN):
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
-        dict(self.named_parameters())["in_layer.weight"].clamp_(
-            min=self.min_weight, max=self.max_weight
-        )
+
+        self.in_layer.apply(self.WeightClipper(self.weight_min, self.weight_max))
+        # dict(self.named_parameters())["in_layer.weight"] = dict(
+        #     self.named_parameters()
+        # )["in_layer.weight"].clamp(min=self.weight_min, max=self.weight_max)
         mean_of_action, action = self.get_mean_of_action_action(input_tensor)
         cov_matrix = [
             weight for name, weight in self.named_parameters() if name == "cov_matrix"
@@ -906,7 +919,10 @@ class GaussianPDFModel(ModelNN):
         ).log_prob(action)
 
     def sample(self, observation):
-        in_layer_weights
+        self.in_layer.apply(self.WeightClipper(self.weight_min, self.weight_max))
+        # dict(self.named_parameters())["in_layer.weight"] = dict(
+        #     self.named_parameters()
+        # )["in_layer.weight"].clamp(min=self.weight_min, max=self.weight_max)
 
         mean_of_action = self.in_layer(observation)
 

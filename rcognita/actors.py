@@ -616,7 +616,9 @@ class ActorEpisodicStochastic(ActorEpisodic):
             observation = self.observation
 
         self.action = (
-            self.model.sample((observation - self.observation_target).float())
+            self.model.sample(
+                torch.tensor(observation - self.observation_target).float()
+            )
             .detach()
             .cpu()
             .numpy()
