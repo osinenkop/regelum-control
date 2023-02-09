@@ -6,7 +6,7 @@ import omegaconf
 from pathlib import Path
 from collections import ChainMap, defaultdict
 import socket
-
+import shelve
 
 def aggregate_multiruns(from_=None, till=None, recent=None, multirun_path="multirun"):
     assert recent or from_, "Please specify runs to aggregate"
@@ -52,7 +52,7 @@ def aggregate_multiruns(from_=None, till=None, recent=None, multirun_path="multi
             for run in appended_runs:
                 if (
                     from_
-                    <= datetime.datetime.strptime(run, "%Y-%m-%d/%H-%M-%S")
+                    <= datetime.datetime.strptime(run.split("_")[0], "%Y-%m-%d/%H-%M-%S")
                     <= till
                 ):
                     runs.append(run)
@@ -191,11 +191,23 @@ def group_runs(multirun_folder="multirun", from_=None, till=None, recent=None):
 
     return groups, run_infos
 
+def get_status(run_path):
+    if not os.path.isfile(Path(run_path) / ".report"):
+        return "undef"
+    
+    with shelve.open(str(Path(run_path) / '.report')) as f:
+        status = f["termination"] 
 
+    if status == "successful":
+        return "success"
+    
+    return "error"
+    
 def construnct_run_foldername(run_path, overrides, idx=None):
     return "_".join(
         [
             parse_datetime(run_path),
+            get_status(run_path),
             get_seed(overrides),
             socket.gethostname(),
         ]
@@ -209,7 +221,7 @@ def get_seed(overrides: dict):
 
 
 def parse_datetime(run_path):
-    return run_path.split("/")[-3] + "T" + run_path.split("/")[-2]
+    return run_path.split("/")[-3] + "T" + run_path.split("/")[-2].split("_")[0]
 
 
 def get_run_info(path_run):
