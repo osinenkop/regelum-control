@@ -2,6 +2,8 @@ defaults:
   - actor: episodic
   - critic: dqn_behaviour
 
+name%%: ddpg
+
 _target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###

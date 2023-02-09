@@ -1,3 +1,4 @@
+name: kin_point
 observation_target: = []
 sampling_time: 0.01
 time_final: 5

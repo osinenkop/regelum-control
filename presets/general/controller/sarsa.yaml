@@ -6,6 +6,8 @@ defaults:
   - override critic/model: dqn
   - override critic/optimizer: torch
 
+name%%: sarsa
+
 _target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###

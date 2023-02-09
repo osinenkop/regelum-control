@@ -4,6 +4,8 @@ defaults:
   - override actor/optimizer: casadi
   - override critic/optimizer: casadi
 
+name%%: calf_ex_post
+
 _target_: rcognita.controllers.CALFControllerExPost
 
 ###---Constructor arguments---###

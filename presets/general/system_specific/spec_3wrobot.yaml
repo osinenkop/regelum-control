@@ -1,3 +1,4 @@
+name: 3wrobot
 observation_target: = []
 sampling_time: 0.01
 time_final: 15

@@ -2,6 +2,8 @@ defaults:
   - actor: rql
   - critic: dqn_behaviour 
 
+name%%: rql
+
 _target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###

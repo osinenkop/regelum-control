@@ -2,6 +2,8 @@ defaults:
   - actor: episodic_stochastic
   - critic: dqn_behaviour
 
+name%%: acpg
+
 _target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###
@@ -21,3 +23,4 @@ critic:
   td_n: 10
   batch_size: 50
   discount_factor: 0.94
+

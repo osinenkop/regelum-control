@@ -2,6 +2,8 @@ defaults:
   - actor: sql
   - critic: action_observation
 
+name%%: sql
+
 _target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###

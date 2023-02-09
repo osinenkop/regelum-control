@@ -2,6 +2,8 @@ defaults:
   - actor: rpo
   - critic: observation
 
+name%%: rpo
+
 _target_: rcognita.controllers.RLController
 
 ###---Constructor arguments---###

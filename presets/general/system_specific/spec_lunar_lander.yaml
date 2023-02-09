@@ -1,3 +1,4 @@
+name: lunar_lander
 observation_target: = [0, 1, 0, 0, 0, 0]
 sampling_time: 0.01
 time_final: 1.5
