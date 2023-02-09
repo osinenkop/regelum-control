@@ -677,6 +677,39 @@ class ModelDDQN(ModelNN):
         return objective + (advantage - advantage_grid_mean)
 
 
+class ModelNNElementWiseProduct(ModelNN):
+    def __init__(
+        self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
+    ):
+
+        super().__init__()
+
+        if use_derivative:
+            dim_observation = dim_observation * 2
+
+        self.dim_observation = dim_observation
+
+        self.register_parameter(
+            name="dot_layer",
+            param=torch.nn.Parameter(
+                0.1 * torch.ones(self.dim_observation),
+                requires_grad=True,
+            ),
+        )
+        self.weight_min = weight_min
+        self.weight_max = weight_max
+        self.cache_weights()
+
+    def forward(self, input_tensor):
+        dot_layer = dict(self.named_parameters())["dot_layer"]
+        # dot_layer.requires_grad = False
+        dot_layer = dot_layer.clamp(min=self.weight_min, max=self.weight_max)
+        # dot_layer.requires_grad = True
+        if len(input_tensor.shape) == 2:
+            return input_tensor * dot_layer[None, :]
+        return input_tensor * dot_layer
+
+
 class ModelDQN(ModelNN):
     """
     pytorch neural network DQN
@@ -781,8 +814,17 @@ class LookupTable(Model):
 
 
 class ModelFc(ModelNN):
-    def __init__(self, dim_observation, dim_action, use_derivative=False):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        use_derivative=False,
+        weight_min=None,
+        weight_max=None,
+    ):
         super().__init__()
+        self.weight_min = weight_min
+        self.weight_max = weight_max
 
         if use_derivative:
             dim_observation = dim_observation * 2
@@ -810,6 +852,8 @@ class GaussianPDFModel(ModelNN):
         dim_action,
         diag_scale_coef,
         use_derivative=False,
+        weight_min=None,
+        weight_max=None,
     ):
         super().__init__()
 
@@ -825,6 +869,8 @@ class GaussianPDFModel(ModelNN):
                 requires_grad=False,
             ),
         )
+        self.weight_min = weight_min
+        self.weight_max = weight_max
 
         self.cache_weights()
 
@@ -848,7 +894,9 @@ class GaussianPDFModel(ModelNN):
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
-
+        dict(self.named_parameters())["in_layer.weight"].clamp_(
+            min=self.min_weight, max=self.max_weight
+        )
         mean_of_action, action = self.get_mean_of_action_action(input_tensor)
         cov_matrix = [
             weight for name, weight in self.named_parameters() if name == "cov_matrix"
@@ -858,7 +906,10 @@ class GaussianPDFModel(ModelNN):
         ).log_prob(action)
 
     def sample(self, observation):
+        in_layer_weights
+
         mean_of_action = self.in_layer(observation)
+
         cov_matrix = [
             weight for name, weight in self.named_parameters() if name == "cov_matrix"
         ][0]
