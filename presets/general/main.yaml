@@ -18,7 +18,7 @@ callbacks:
   - rcognita.callbacks.HistoricalObservationCallback
   - rcognita.callbacks.QFunctionModelSaverCallback
 
-disallow_uncommitted%%: True
+disallow_uncommitted%%: False
 
 hydra:
   sweep:

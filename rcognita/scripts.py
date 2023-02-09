@@ -187,6 +187,9 @@ def group_runs(multirun_folder="multirun", from_=None, till=None, recent=None):
     groups = defaultdict(lambda: defaultdict(list))
 
     for run_path, info in run_infos.items():
+        if info.get("controller") is None or info.get("system") is None:
+            continue
+            
         groups[info["controller"]][info["system"]].append(run_path)
 
     return groups, run_infos
@@ -200,6 +203,9 @@ def get_status(run_path):
 
     if status == "successful":
         return "success"
+    
+    if status == "running":
+        return "running"
     
     return "error"
     

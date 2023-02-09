@@ -384,9 +384,9 @@ class TorchDataloaderOptimizer(Optimizer):
         """
         optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
         for _ in range(self.iterations):
-            for batch in dataloader:
+            for observations_for_actor, observations_for_critic in dataloader:
                 optimizer.zero_grad()
-                loss = objective(batch.to(self.device))
+                loss = objective(observations_for_actor.to(self.device), observations_for_critic.to(self.device))
                 loss.backward()
                 optimizer.step()
 

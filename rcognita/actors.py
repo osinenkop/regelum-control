@@ -502,12 +502,17 @@ class ActorEpisodic(Actor):
             return len(self.observations)
 
         def __getitem__(self, idx):
-            observation = self.observations[idx]
+            observation_for_actor, observation_for_critic = (
+                self.observations[idx],
+                self.observations[idx],
+            )
             if self.use_derivative:
-                derivative = self.derivative([], observation, torch.tensor(self.action))
-                observation = torch.cat([self.observations[idx], derivative])
+                derivative = self.derivative(
+                    [], observation_for_actor, torch.tensor(self.action)
+                )
+                observation_for_actor = torch.cat([self.observations[idx], derivative])
 
-            return observation
+            return observation_for_actor, observation_for_critic
 
     def __init__(
         self,
@@ -539,9 +544,11 @@ class ActorEpisodic(Actor):
         pass
 
     @force_type_safety
-    def objective(self, observations):
+    def objective(self, observations_for_actor, observations_for_critic):
         return self.critic(
-            torch.cat([observations, self.model(observations)], dim=1)
+            torch.cat(
+                [observations_for_critic, self.model(observations_for_actor)], dim=1
+            )
         ).sum()
 
     def update_target(self, observation_target):
@@ -584,12 +591,19 @@ class ActorEpisodicStochastic(ActorEpisodic):
             return len(self.observations)
 
         def __getitem__(self, idx):
-            observation = self.observations[idx]
+            observation_for_actor, observations_for_critic = (
+                self.observations[idx],
+                self.observations[idx],
+            )
             if self.use_derivative:
-                derivative = self.derivative([], observation, torch.tensor(self.action))
-                observation = torch.cat([self.observations[idx], derivative])
+                derivative = self.derivative(
+                    [], observation_for_actor, torch.tensor(self.action)
+                )
+                observation_for_actor = torch.cat([self.observations[idx], derivative])
 
-            return torch.cat([observation, torch.tensor(self.action)])
+            return torch.cat(
+                [observation_for_actor, torch.tensor(self.action)]
+            ), torch.cat([observations_for_critic, torch.tensor(self.action)])
 
     def update_action(self, observation=None):
         if self.use_derivative:
@@ -611,10 +625,12 @@ class ActorEpisodicStochastic(ActorEpisodic):
         )
 
     @force_type_safety
-    def objective(self, observations_actions):
+    def objective(
+        self, observations_actions_for_actor, observations_actions_for_critic
+    ):
         return (
-            self.model(torch.tensor(observations_actions).float())
-            * self.critic(observations_actions).detach()
+            self.model(torch.tensor(observations_actions_for_actor).float())
+            * self.critic(observations_actions_for_critic).detach()
         ).sum()
 
     def dataloader(self, observations):
