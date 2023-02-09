@@ -19,3 +19,4 @@ ub_parameter: 1.0E+3
 use_derivative: False
 
 data_buffer_size: 500
+diag_scale_coef: 5.

@@ -2,7 +2,7 @@ _target_: rcognita.models.GaussianElementWisePDFModel
 
 dim_observation: $ controller.actor.dim_input
 use_derivative: $ controller.actor.use_derivative
-diag_scale_coef: 0.5
+diag_scale_coef: $ system_specific.scale_diag_coef 
 weight_max: 1
 weight_min: = None
 
