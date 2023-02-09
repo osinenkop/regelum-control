@@ -10,6 +10,6 @@ for system in 2tank 3wrobot_ni 3wrobot cartpole inv_pendulum kin_point lunar_lan
 do
     tmux new-session -d -s "${controller}-${system}"
     tmux send-keys -t "${controller}-${system}" "source ../env/bin/activate" ENTER
-    tmux send-keys -t "${controller}-${system}" "bash runs/seeds.sh false ${controller} ${system} ${seed_from} ${seed_to} ${override}" ENTER
+    tmux send-keys -t "${controller}-${system}" "bash runs/seeds.sh ${controller} ${system} ${seed_from} ${seed_to} ${override}" ENTER
     echo "Created tmux session ${controller}-${system}"
 done
