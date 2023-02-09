@@ -9,5 +9,4 @@ do
     tmux send-keys -t "${controller}-${system}" "source ../env/bin/activate" ENTER
     tmux send-keys -t "${controller}-${system}" "bash runs/seeds.sh false ${controller} ${system} ${override}" ENTER
     echo "Created tmux session ${controller}-${system}"
-    sleep 2
 done
