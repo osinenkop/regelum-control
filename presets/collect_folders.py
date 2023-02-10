@@ -6,7 +6,8 @@ CUR_DIR = os.path.abspath(os.getcwd() + "/..")
 sys.path.insert(0, CUR_DIR)
 
 import datetime
-import rcognita.scripts as scripts
+
+# import rcognita.scripts as scripts
 import omegaconf
 from pathlib import Path
 
@@ -15,8 +16,59 @@ import pandas as pd
 from collections import defaultdict
 import socket
 import numpy as np
+import os
+from dateutil.parser import parse
+from collections import ChainMap, defaultdict
 
-date_start = datetime.datetime(year=2023, month=2, day=6, hour=21, minute=00)
+
+def parse_datetime(run_path):
+    return (
+        str(run_path).split("/")[-3] + "T" + str(run_path).split("/")[-2].split("_")[0]
+    )
+
+
+def get_run_info(path_run):
+    try:
+        overrides_path = Path(path_run) / ".hydra" / "overrides.yaml"
+        if os.path.isfile(overrides_path):
+            return dict(
+                [
+                    override.split("=")
+                    for override in omegaconf.OmegaConf.load(overrides_path)
+                ]
+            )
+    except:
+        return dict()
+
+
+def group_runs(run_paths):
+    if len(run_paths) == 0:
+        return None, None
+    run_infos = {run_path: get_run_info(run_path) for run_path in sorted(run_paths)}
+    groups = defaultdict(lambda: defaultdict(list))
+
+    for run_path, info in run_infos.items():
+        try:
+            groups[info["controller"]][info["system"]].append(run_path)
+        except:
+            continue
+    return groups, run_infos
+
+
+def is_date(string, fuzzy=False):
+    """
+    Return whether the string can be interpreted as a date.
+
+    :param string: str, string to check for date
+    :param fuzzy: bool, ignore unknown tokens in string if True
+    """
+    try:
+        parse(str(string), fuzzy=fuzzy)
+        return True
+
+    except ValueError:
+        return False
+
 
 systems = [
     "2tank",
@@ -44,7 +96,14 @@ time_finals = {
     for system in systems
 }
 
-groupped_runs, run_infos = scripts.group_runs(from_=date_start)
+runs = []
+for folder_day in list(Path("multirun").iterdir()):
+    if is_date(folder_day, fuzzy=True):
+        for multirun_path in folder_day.iterdir():
+            for run_path in multirun_path.iterdir():
+                if os.path.isdir(run_path):
+                    runs.append(run_path.resolve())
+groupped_runs, run_infos = group_runs(runs)
 data = list()
 
 for controller in groupped_runs:
@@ -99,7 +158,7 @@ for controller in groupped_runs:
                 "system": system,
                 "seed": run_infos[run_path].get("+seed"),
                 "timestamp": datetime.datetime.strptime(
-                    scripts.parse_datetime(run_path), "%Y-%m-%dT%H-%M-%S"
+                    parse_datetime(run_path), "%Y-%m-%dT%H-%M-%S"
                 ),
                 "run_path": run_path,
                 "finished_episodes": finished_episodes,
@@ -108,6 +167,7 @@ for controller in groupped_runs:
                 "best_total_objective": best_total_objective,
                 "valid_columns": valid_columns,
                 "valid_time_final": valid_time_final,
+                "overrides": json.dumps(run_infos[run_path]),
                 "total_objectives": total_objectives,
                 "best_observations": best_observations,
             }
