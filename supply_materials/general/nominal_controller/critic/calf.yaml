@@ -1,0 +1,18 @@
+defaults:
+  - observation
+
+_target_: rcognita.critics.CriticCALF
+
+safe_controller: ~ controller.actor.safe_controller
+
+safe_decay_param: 1.0E+4
+is_dynamic_decay_rate: false
+observation_init: $ state_init
+action_init: $ scenario.action_init
+
+penalty_param: 0
+is_predictive: true
+
+predictor: ~ controller.actor.predictor
+
+critic_regularization_param: 0.

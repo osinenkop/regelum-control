@@ -12,6 +12,7 @@ data_buffer_size: 8
 running_objective: ~ running_objective
 discount_factor: $ controller.actor.discount_factor
 sampling_time: $ controller.sampling_time
+state_init: $ scenario.state_init
 critic_regularization_param: 0
 
 dim_critic_model_input%%: = ${.system_dim_output}

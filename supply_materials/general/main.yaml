@@ -1,0 +1,25 @@
+defaults:
+  - system: 3wrobot
+  - scenario: episodic
+  - simulator: casadi
+  - optional nominal_controller: nominal_${system}
+  - controller: mpc
+  - running_objective: quadratic_${system}
+  - initial_conditions: ic_${system}
+  - observation_naming: naming_${system}
+  - optional system_specific: spec_${system}
+  - ${controller}_${system}
+
+callbacks:
+  - rcognita.callbacks.HistoricalObjectiveCallback
+  - rcognita.callbacks.TotalObjectiveCallback
+  - rcognita.callbacks.CriticObjectiveCallback
+  - rcognita.callbacks.CalfCallback
+  - rcognita.callbacks.HistoricalObservationCallback
+  - rcognita.callbacks.QFunctionModelSaverCallback
+
+disallow_uncommitted%%: False
+
+hydra:
+  sweep:
+    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}

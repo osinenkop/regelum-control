@@ -1,0 +1,19 @@
+defaults:
+  - model: dqn
+  - optimizer: torch
+
+_target_: rcognita.critics.CriticOffPolicyGreedy
+
+system_dim_input: $ system.dim_input
+system_dim_output: $ system.dim_output
+data_buffer_size: $ system_specific.data_buffer_size
+running_objective: $ running_objective
+discount_factor: $ controller.actor.discount_factor
+sampling_time: $ controller.sampling_time
+critic_regularization_param: 0
+batch_size: 10
+td_n: 5
+dim_critic_model_input%%: = ${.system_dim_input} + ${.system_dim_output}
+
+action_bounds: $ system.action_bounds%%
+observation_target: $ system_specific.observation_target

@@ -77,6 +77,7 @@ class Actor:
         prediction_horizon: int = 1,
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
+        state_init: list = None,
         predictor: Predictor = None,
         optimizer: Optimizer = None,
         critic: Critic = None,
@@ -167,6 +168,16 @@ class Actor:
         elif isinstance(observation_target, list):
             self.observation_target = rc.array(observation_target)
 
+        self.state_init = state_init
+        self.observation_init = self.predictor.system.out(state_init)
+
+    @property
+    def weights(self):
+        """
+        Get the weights of the actor model.
+        """
+        return self.model.weights
+
     def update_target(self, observation_target):
         self.observation_target = observation_target
 
@@ -213,10 +224,10 @@ class Actor:
             current_action = action_sequence[i - 1, :]
             current_state = predicted_observation
 
-            predicted_observation = self.predictor.predict_state(
+            predicted_state = self.predictor.predict_state(
                 current_state, current_action
             )
-
+            predicted_observation = self.predictor.system.out(predicted_state)
             constraint_violation_buffer = []
             for constraint in constraint_functions:
                 constraint_violation_buffer.append(constraint(predicted_observation))
@@ -240,6 +251,14 @@ class Actor:
         :type observation: numpy array
         """
         self.observation = observation
+
+    def receive_state(self, state):
+        """
+        Update the current observation of the actor.
+        :param observation: The current observation.
+        :type observation: numpy array
+        """
+        self.state = state
 
     def set_action(self, action):
         """
@@ -996,7 +1015,7 @@ class ActorCALF(ActorRPO):
         )
         self.weights_acceptance_status = False
         safe_action = self.safe_controller.compute_action(
-            self.critic.observation_last_good
+            self.state_init, self.critic.observation_last_good
         )
         self.action_init = self.action = safe_action
         self.model.update_and_cache_weights(safe_action)

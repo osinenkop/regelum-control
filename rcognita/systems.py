@@ -131,7 +131,7 @@ class System(ABC):
         self.pars_disturb = pars_disturb
 
         # Track system's state
-        self._state = np.zeros(dim_state)
+        self.state = np.zeros(dim_state)
 
         # Current input (a.k.a. action)
         self.action = np.zeros(dim_input)
@@ -231,7 +231,7 @@ class System(ABC):
 
         rhs_full_state = utilities.rc.zeros(
             self._dim_full_state,
-            prototype=utilities.rc.concatenate((state_full, self.action)),
+            prototype=(state, action),
         )
 
         state = state_full[0 : self.dim_state]
@@ -259,9 +259,12 @@ class System(ABC):
             )
 
         # Track system's state
-        self._state = state
+        self.state = state
 
         return rhs_full_state
+
+    def get_state(self):
+        return self.state
 
     def reset(self):
         pass
@@ -282,7 +285,7 @@ class SysKinematicPoint(System):
 
         Dstate = utilities.rc.zeros(
             self.dim_state,
-            prototype=utilities.rc.concatenate((state, action)),
+            prototype=(state, action),
         )
 
         for i in range(utilities.rc.shape(action)[0]):
@@ -324,7 +327,7 @@ class SysInvertedPendulum(System):
 
         Dstate = utilities.rc.zeros(
             self.dim_state,
-            prototype=utilities.rc.concatenate((state, action)),
+            prototype=(state, action),
         )
 
         m, g, l = self.pars[0], self.pars[1], self.pars[2]
@@ -426,7 +429,7 @@ class Sys3WRobot(System):
 
         Dstate = utilities.rc.zeros(
             self.dim_state,
-            prototype=utilities.rc.concatenate((state, action)),
+            prototype=(state, action),
         )
 
         m, I = self.pars[0], self.pars[1]
@@ -497,9 +500,7 @@ class Sys3WRobotNI(System):
 
     def compute_dynamics(self, time, state, action, disturb=None):
 
-        Dstate = utilities.rc.zeros(
-            self.dim_state, prototype=utilities.rc.concatenate((state, action))
-        )
+        Dstate = utilities.rc.zeros(self.dim_state, prototype=(state, action))
 
         if self.is_disturb and (disturb != []):
             Dstate[0] = action[0] * utilities.rc.cos(state[2]) + disturb[0]
@@ -546,7 +547,7 @@ class System2Tank(System):
 
         Dstate = utilities.rc.zeros(
             self.dim_state,
-            prototype=utilities.rc.concatenate((state, action)),
+            prototype=(state, action),
         )
         Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action[0])
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
@@ -610,7 +611,7 @@ class CartPole(System):
 
         Dstate = utilities.rc.zeros(
             self.dim_state,
-            prototype=utilities.rc.concatenate((state, action)),
+            prototype=(state, action),
         )
 
         m_c, m_p, g, l = self.pars
@@ -651,10 +652,14 @@ class CartPole(System):
 
         return utilities.rc.array(Ddisturb)
 
-    def out(self, observation, time=None, action=None):
-        state = observation
-
-        return state
+    def out(self, state, time=None, action=None):
+        theta = state[0]
+        x = state[1]
+        theta_dot = state[2]
+        x_dot = state[3]
+        # theta = utilities.rc.sign(theta) * (utilities.rc.abs(theta) % (2 * np.pi))
+        theta_observed = 1 - utilities.rc.cos(theta)
+        return utilities.rc.array([theta_observed, x, theta_dot, x_dot])
 
 
 class LunarLander(System):
@@ -678,7 +683,7 @@ class LunarLander(System):
 
         Dstate = utilities.rc.zeros(
             self.dim_state,
-            prototype=utilities.rc.concatenate((state, action)),
+            prototype=(state, action),
         )
 
         m, J, g = self.pars

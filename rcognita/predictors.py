@@ -47,26 +47,24 @@ class EulerPredictor(Predictor):
         self.dim_input = dim_input
         self.prediction_horizon = prediction_horizon
 
-    def predict(self, current_state_or_observation, action):
-        next_state_or_observation = (
-            current_state_or_observation
-            + self.pred_step_size
-            * self.compute_state_dynamics([], current_state_or_observation, action)
+    def predict(self, current_state, action):
+        next_state = current_state + self.pred_step_size * self.compute_state_dynamics(
+            [], current_state, action
         )
-        return next_state_or_observation
+        return next_state
 
-    def predict_sequence(self, observation, action_sequence):
+    def predict_sequence(self, state, action_sequence):
 
         observation_sequence = rc.zeros(
             [self.dim_input, self.prediction_horizon], prototype=action_sequence
         )
-        current_observation = observation
+        current_state = state
 
         for k in range(self.prediction_horizon):
             current_action = action_sequence[:, k]
-            next_observation = self.predict(current_observation, current_action)
-            observation_sequence[:, k] = rc.transpose(self.sys_out(next_observation))
-            current_observation = next_observation
+            next_state = self.predict(current_state, current_action)
+            observation_sequence[:, k] = rc.transpose(self.sys_out(next_state))
+            current_state = next_state
         return observation_sequence
 
 

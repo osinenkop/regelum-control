@@ -125,7 +125,7 @@ class OnlineScenario(Scenario):
         self.state_full = state_init
         self.action_init = action_init
         self.action = self.action_init
-        self.observation = self.system.out(self.state_full)
+        self.observation = self.system.out(self.state_init)
         self.observation_target = (
             np.zeros_like(self.observation)
             if observation_target is None or observation_target == []
@@ -187,7 +187,7 @@ class OnlineScenario(Scenario):
 
             (
                 self.time,
-                _,
+                self.state,
                 self.observation,
                 self.state_full,
             ) = self.simulator.get_sim_step_data()
@@ -199,8 +199,12 @@ class OnlineScenario(Scenario):
             self.delta_time = self.time - self.time_old
             self.time_old = self.time
 
+            # In future versions state vector being passed into controller should be obtained from an observer.
             self.action = self.controller.compute_action_sampled(
-                self.time, self.observation, observation_target=self.observation_target
+                self.time,
+                self.state,
+                self.observation,
+                observation_target=self.observation_target,
             )
             self.system.receive_action(self.action)
 

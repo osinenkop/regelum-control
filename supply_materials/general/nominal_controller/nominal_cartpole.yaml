@@ -1,0 +1,10 @@
+_target_: rcognita.controllers.ControllerCartPolePID
+
+###---Constructor arguments---###
+
+action_bounds: $ system.action_bounds%%
+time_start: $ simulator.time_start
+state_init: $ initial_conditions.state_init
+sampling_time: 1.0E-2
+PID_swing_up_parameters: = [-90, 0, -9]
+PID_cart_parameters: = [-2.0, 0, -3.0]

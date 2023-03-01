@@ -10,6 +10,7 @@ data_buffer_size: $ system_specific.data_buffer_size
 running_objective: $ running_objective
 discount_factor: $ controller.actor.discount_factor
 sampling_time: $ controller.sampling_time
+state_init: $ scenario.state_init
 critic_regularization_param: 0
 batch_size: 10
 td_n: 5

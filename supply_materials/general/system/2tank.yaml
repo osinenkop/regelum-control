@@ -1,0 +1,21 @@
+_target_: rcognita.systems.System2Tank
+
+###---Constructor arguments---###
+
+dim_input: 1
+dim_output: 2
+sys_type: diff_eqn
+dim_state: 2
+dim_disturb: 1
+pars: = [${.tau1%%}, ${.tau2%%}, ${.K1%%}, ${.K2%%}, ${.K3%%}]
+
+
+tau1%%: 18.4
+tau2%%: 24.4
+K1%%: 1.3
+K2%%: 1
+K3%%: 0.2
+
+action_min%%: 0.
+action_max%%: 1.
+action_bounds%%: = numpy.array([[${.action_min%%}, ${.action_max%%}]])

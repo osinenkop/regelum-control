@@ -1,0 +1,9 @@
+
+init_state_x: = -5 
+init_state_y: = 5 
+
+angle: = numpy.arctan(${.init_state_y} / ${.init_state_x})
+
+@initial_conditions.state_init: = numpy.array([${.init_state_x}, ${.init_state_y}, ${.angle}]) 
+@initial_conditions.action_init: = numpy.ones(${system.dim_input})
+

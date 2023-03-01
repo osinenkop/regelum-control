@@ -1,0 +1,16 @@
+_target_: rcognita.systems.Sys3WRobotNI
+
+###---Constructor arguments---###
+
+dim_input: 2
+dim_output: 3
+sys_type: diff_eqn
+dim_state: 3
+dim_disturb: 3
+pars: = []
+
+v_min%%: -25.
+v_max%%: 25.
+omega_min%%: -5.
+omega_max%%: 5.
+action_bounds%%: = numpy.array([[${.v_min%%}, ${.v_max%%}], [${.omega_min%%}, ${.omega_max%%}]])

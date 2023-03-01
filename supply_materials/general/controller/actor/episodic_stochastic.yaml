@@ -1,0 +1,21 @@
+defaults:
+  - model: fc_gauss
+  - optimizer: torch_dataloader
+  - predictor: euler
+
+_target_: rcognita.actors.ActorEpisodicStochastic
+
+###---Constructor arguments---###
+
+prediction_horizon: $ controller.actor.predictor.prediction_horizon
+dim_output: $ system.dim_input
+dim_input: $ system.dim_output
+discount_factor: 1.
+action_bounds: $ system.action_bounds%%
+action_init: $ scenario.action_init
+critic: ~ controller.critic
+observation_target: $ system_specific.observation_target
+use_derivative: $ system_specific.use_derivative
+running_objective: $ running_objective
+batch_size: 50
+device: cuda:0 

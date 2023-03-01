@@ -1,0 +1,12 @@
+_target_: rcognita.controllers.Controller2TankPID
+
+###---Constructor arguments---###
+
+action_bounds: $ system.action_bounds%%
+time_start: $ simulator.time_start
+state_init: $ initial_conditions.state_init
+sampling_time: 1.0E-2
+PID_2tank_parameters_x1: = [50, 0, 0]
+PID_2tank_parameters_x2: = [50, 0, 0]
+params: $ system.pars
+observation_target: $ system_specific.observation_target

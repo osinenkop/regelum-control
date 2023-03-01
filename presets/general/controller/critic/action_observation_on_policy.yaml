@@ -14,4 +14,5 @@ discount_factor: $ controller.actor.discount_factor
 sampling_time: $ controller.sampling_time
 dim_critic_model_input%%: = ${.system_dim_input} + ${.system_dim_output}
 observation_target: $ system_specific.observation_target
+state_init: $ scenario.state_init
 

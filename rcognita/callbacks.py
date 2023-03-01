@@ -33,6 +33,7 @@ from pathlib import Path
 
 import sys
 import filelock
+import gc
 
 
 def is_in_debug_mode():
@@ -476,7 +477,9 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
 
         for file in os.listdir(directory):
             filename = os.fsdecode(file)
-            images.append(f'<img src="gfx/{filename}" style="object-fit: cover; width: 100%; max-height: 100%;">')
+            images.append(
+                f'<img src="gfx/{filename}" style="object-fit: cover; width: 100%; max-height: 100%;">'
+            )
         for image in images:
             table_lines += f"<div>{image}</div>\n"
         html = html.replace(
@@ -664,7 +667,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.timeline = []
         self.num_launch = 1
         self.counter = 0
-        self.cooldown = 1.0
+        self.cooldown = 0.0
 
     def on_launch(self):
         super().on_launch()
@@ -741,6 +744,19 @@ class SaveProgressCallback(Callback):
     def on_termination(self, res):
         if isinstance(res, Exception):
             self.on_episode_done(None, 0, None)
+
+
+class InspectReferrersCallback(Callback):
+    object_to_trace = "observation"
+
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.scenarios.OnlineScenario) and method == "step"
+
+    def perform(self, obj, method, output):
+        if hasattr(obj, self.object_to_trace):
+            refs = gc.get_referrers(getattr(obj, self.object_to_trace))
+            refs = [x for x in refs[1] if "__" not in x]
+            self.log(f"{self.object_to_trace} referrers: {refs}")
 
 
 class HistoricalObservationCallback(HistoricalCallback):

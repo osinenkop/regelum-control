@@ -54,6 +54,7 @@ class Critic(ABC):
         system_dim_input: int,
         system_dim_output: int,
         data_buffer_size: int,
+        state_init: np.ndarray = None,
         optimizer: Optional[Optimizer] = None,
         model: Optional[Model] = None,
         running_objective: Optional[Objective] = None,
@@ -117,9 +118,13 @@ class Critic(ABC):
         self.intrinsic_constraints = []
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
+        self.state_init = state_init
 
     def update_target(self, observation_target):
         self.observation_target = observation_target
+
+    def receive_state(self, state):
+        self.state = state
 
     @property
     def optimizer_engine(self):
@@ -151,6 +156,13 @@ class Critic(ABC):
         else:
             chi = args[0]
         return self.model(chi, use_stored_weights=use_stored_weights)
+
+    @property
+    def weights(self):
+        """
+        Get the weights of the critic model.
+        """
+        return self.model.weights
 
     def update_weights(self, weights=None):
         """
@@ -763,7 +775,7 @@ class CriticCALF(CriticOfObservation):
         safe_decay_param=1e-3,
         is_dynamic_decay_rate=True,
         predictor=None,
-        observation_init=None,
+        state_init=None,
         safe_controller=None,
         penalty_param=0,
         is_predictive=True,
@@ -795,9 +807,9 @@ class CriticCALF(CriticOfObservation):
         self.ub_parameter = ub_parameter
         self.safe_controller = safe_controller
         self.predictor = predictor
-        self.observation_init = observation_init
+        self.observation_init = self.predictor.system.out(state_init)
         self.action_init = action_init
-        self.observation_last_good = observation_init
+        self.observation_last_good = self.observation_init
         self.r_prev_init = self.r_prev = self.running_objective(
             self.observation_init, self.action_init
         )
@@ -927,7 +939,9 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         action = self.safe_controller.compute_action(self.current_observation)
-        predicted_observation = self.predictor.predict(self.current_observation, action)
+        predicted_observation = self.predictor.system.out(
+            self.predictor.predict(self.state, action)
+        )
         self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
             predicted_observation - self.observation_target
         ) - self.model(predicted_observation - self.observation_target, weights=weights)
@@ -963,8 +977,8 @@ class CriticCALF(CriticOfObservation):
         self.safe_action = action = self.safe_controller.compute_action(
             self.current_observation
         )
-        self.predicted_observation = predicted_observation = self.predictor.predict(
-            self.current_observation, action
+        self.predicted_observation = predicted_observation = self.predictor.system.out(
+            self.predictor.predict(self.state, action)
         )
 
         self.critic_next = self.model(
@@ -992,7 +1006,9 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         action = self.action_buffer[:, -1]
-        predicted_observation = self.predictor.predict(self.current_observation, action)
+        predicted_observation = self.predictor.system.out(
+            self.predictor.predict(self.state, action)
+        )
         self.stabilizing_constraint_violation = (
             self.model(predicted_observation - self.observation_target, weights=weights)
             - self.model(

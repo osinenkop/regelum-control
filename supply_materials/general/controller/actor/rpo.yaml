@@ -1,0 +1,18 @@
+defaults:
+  - model: weight_container
+  - optimizer: casadi 
+  - predictor: euler
+
+_target_: rcognita.actors.ActorRPO
+
+###---Constructor arguments---###
+
+prediction_horizon: $ controller.actor.predictor.prediction_horizon
+dim_output: $ system.dim_input
+dim_input: $ system.dim_output
+discount_factor: 1.
+action_bounds: $ controller.action_bounds
+action_init: $ scenario.action_init
+critic: ~ controller.critic
+running_objective: $ running_objective
+observation_target: $ system_specific.observation_target

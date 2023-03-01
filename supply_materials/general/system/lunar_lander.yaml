@@ -1,0 +1,20 @@
+_target_: rcognita.systems.LunarLander
+
+###---Constructor arguments---###
+
+dim_input: 2
+dim_output: 6
+sys_type: diff_eqn
+dim_state: 6
+dim_disturb: 6
+pars: = [${.m%%}, ${.J%%}, ${.g%%}]
+
+m%%: 10
+J%%: 3.
+g%%: 1.625
+
+F_l_min%%: -300.
+F_l_max%%: 300.
+F_t_min%%: -300.
+F_t_max%%: 300.
+action_bounds%%: = numpy.array([[${.F_l_min%%}, ${.F_l_max%%}], [${.F_t_min%%}, ${.F_t_max%%}]])

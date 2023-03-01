@@ -1,0 +1,6 @@
+state_init: = numpy.array([5., 5., 3. * numpy.pi / 4.]) + numpy.array([${.x1}, ${.x2}, ${.x3}])
+action_init: = numpy.ones(${system.dim_input})
+
+x1: = numpy.random.normal(0., 0.5)
+x2: = numpy.random.normal(0., 0.5)
+x3: = numpy.random.normal(0., 0.5)

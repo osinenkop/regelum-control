@@ -1,0 +1,19 @@
+defaults:
+  - system: 3wrobot
+
+_target_: rcognita.simulator.Simulator
+
+###---Constructor arguments---###
+
+sys_type: $ system.sys_type
+state_init: $ initial_conditions.state_init
+action_init: $ initial_conditions.action_init
+disturb_init: = None
+time_start: 0
+time_final: $ system_specific.time_final
+sampling_time: $ controller.sampling_time
+max_step: = ${controller.sampling_time} / 10.
+first_step: 1.0E-6
+atol: 1.0E-5
+rtol: 1.0E-3
+ode_backend: SCIPY

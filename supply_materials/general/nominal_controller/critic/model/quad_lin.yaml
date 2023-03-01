@@ -1,0 +1,5 @@
+_target_: rcognita.models.ModelQuadLin
+dim_input: $ controller.actor.dim_input
+single_weight_min: 1.0E-6
+single_weight_max: 1.0E+3
+force_positive_def: true

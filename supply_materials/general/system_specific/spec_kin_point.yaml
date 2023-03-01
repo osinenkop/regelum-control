@@ -1,0 +1,22 @@
+name: kin_point
+observation_target: = []
+sampling_time: 0.01
+time_final: 5
+
+grid_dim%%: $ system.dim_kin_point_system%%
+action_min%%: $ system.action_min%%
+action_max%%: $ system.action_max%%
+
+actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.action_min%%}, ${.action_max%%}, ${.grid_dim%%}), numpy.linspace(${.action_min%%}, ${.action_max%%}, ${.grid_dim%%}))))
+
+safe_decay_param_ex_post: 1.0E-3
+safe_decay_param_predictive: 1.0E-3
+critic_penalty_param: 0
+critic_regularization_param: 0
+is_dynamic_decay_rate: True
+lb_parameter: 1.0E-6
+ub_parameter: 1.0E+3
+use_derivative: False
+
+data_buffer_size: 500
+diag_scale_coef: 0.5

@@ -1,0 +1,19 @@
+_target_: rcognita.systems.SysInvertedPendulum
+
+###---Constructor arguments---###
+
+dim_input: 1
+dim_output: 2
+sys_type: diff_eqn
+dim_state: 2
+dim_disturb: 2
+pars: = [${.m%%}, ${.g%%}, ${.l%%}]
+
+
+m%%: 1
+g%%: 9.8
+l%%: 1
+
+M_min%%: -20.
+M_max%%: 20.
+action_bounds%%: = numpy.array([[${.M_min%%}, ${.M_max%%}]])

@@ -13,6 +13,7 @@ dim_input: $ system.dim_output
 discount_factor: 1.
 action_bounds: $ system.action_bounds%%
 action_init: $ scenario.action_init
+state_init: $ scenario.state_init
 critic: ~ controller.critic
 observation_target: $ system_specific.observation_target
 use_derivative: $ system_specific.use_derivative

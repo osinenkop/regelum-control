@@ -253,6 +253,8 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         prototype=None,
         rc_type: RCType = NUMPY,
     ):
+        if isinstance(prototype, (list, tuple)):
+            rc_type = type_inference(*prototype)
 
         if rc_type == NUMPY:
             self._array = np.array(array)
@@ -273,13 +275,26 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         rc_type: RCType = NUMPY,
     ):
 
+        if isinstance(prototype, (list, tuple)):
+            rc_type = type_inference(*prototype)
+
         if rc_type == NUMPY:
             self._array = np.ones(argin)
         elif rc_type == TORCH:
             self._array = torch.ones(argin)
         elif rc_type == CASADI:
 
-            casadi_constructor = type(prototype) if prototype is not None else casadi.DM
+            if isinstance(prototype, (list, tuple)):
+                casadi_constructor = casadi.DM
+
+                for constructor_type in map(lambda x: type(x), prototype):
+                    if constructor_type == casadi.MX:
+                        casadi_constructor = casadi.MX
+                        break
+            else:
+                casadi_constructor = (
+                    type(prototype) if prototype is not None else casadi.DM
+                )
 
             self._array = casadi_constructor.ones(*safe_unpack(argin))
 
@@ -291,6 +306,8 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         prototype=None,
         rc_type: RCType = NUMPY,
     ):
+        if isinstance(prototype, (list, tuple)):
+            rc_type = type_inference(*prototype)
 
         if rc_type == NUMPY:
             return np.zeros(argin)
@@ -298,7 +315,17 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.zeros(argin)
         elif rc_type == CASADI:
 
-            casadi_constructor = type(prototype) if prototype is not None else casadi.DM
+            if isinstance(prototype, (list, tuple)):
+                casadi_constructor = casadi.DM
+
+                for constructor_type in map(lambda x: type(x), prototype):
+                    if constructor_type == casadi.MX:
+                        casadi_constructor = casadi.MX
+                        break
+            else:
+                casadi_constructor = (
+                    type(prototype) if prototype is not None else casadi.DM
+                )
 
             self._array = casadi_constructor.zeros(*safe_unpack(argin))
 

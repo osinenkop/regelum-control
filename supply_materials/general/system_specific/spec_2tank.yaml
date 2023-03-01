@@ -1,0 +1,24 @@
+name: 2tank
+
+observation_target: = [0.4, 0.4]
+sampling_time: 0.1
+time_final: 80
+
+grid_dim%%: 4
+action_min%%: $ system.action_min%%
+action_max%%: $ system.action_max%%
+
+actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.action_min%%}, ${.action_max%%}, ${.grid_dim%%}))))
+
+safe_decay_param_ex_post: 1.0E-3
+safe_decay_param_predictive: 1.0E-3
+critic_penalty_param: 0
+critic_regularization_param: 0
+is_dynamic_decay_rate: True
+lb_parameter: 1.0E-6
+ub_parameter: 1.0E+3
+use_derivative: True
+
+data_buffer_size: 500
+
+diag_scale_coef: 0.05
