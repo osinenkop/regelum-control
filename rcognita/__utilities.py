@@ -150,6 +150,16 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.cos(x)
 
+    def clip(self, x, l, u, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            return np.clip(x, l, u)
+        elif rc_type == TORCH:
+            return torch.clip(x, l, u)
+        elif rc_type == CASADI:
+            return casadi.min(
+                self.concatenate([casadi.max(self.concatenate([x, l])), u])
+            )
+
     def sin(self, x, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.sin(x)
@@ -157,6 +167,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.sin(x)
         elif rc_type == CASADI:
             return casadi.sin(x)
+
+    def floor(self, x, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            return np.floor(x)
+        elif rc_type == TORCH:
+            return torch.floor(x)
+        elif rc_type == CASADI:
+            return casadi.floor(x)
 
     def column_stack(self, tup, rc_type: RCType = NUMPY):
         rc_type = type_inference(*tup)

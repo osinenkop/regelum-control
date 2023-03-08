@@ -1068,33 +1068,25 @@ class ControllerCartPolePID:
         time_start: float = 0,
         state_init=rc.array([np.pi, 0, 0, 0]),
         sampling_time: float = 0.01,
-        PID_swing_up_parameters=[1, 0, 0],
-        PID_cart_parameters=[10, 0, 0],
-        swing_up_tol=0.5,
-        swingup_gain=10,
         system=None,
         upright_gain=rc.array([1, 1, 1, 1]),
+        swingup_gain=10,
+        pid_loc_thr=0.35,
+        pid_scale_thr=10.0,
+        clip_bounds=[-1, 1],
     ):
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
-        self.PID_swingup = ControllerMemoryPID(
-            *PID_swing_up_parameters,
-            initial_point=rc.array([state_init[0]]),
-            setpoint=rc.array([0]),
-        )
-        self.PID_cart_stabilize = ControllerMemoryPID(
-            *PID_cart_parameters,
-            initial_point=rc.array([state_init[1]]),
-            setpoint=rc.array([0]),
-        )
-        self.swing_up_tol = swing_up_tol
-        self.swingup_gain = swingup_gain
         self.m_c, self.m_p, self.g, self.l = system.pars
         self.system = system
         self.upright_gain = upright_gain
+        self.swingup_gain = swingup_gain
+        self.pid_loc_thr = pid_loc_thr
+        self.pid_scale_thr = pid_scale_thr
+        self.clip_bounds = clip_bounds
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
         """
@@ -1117,7 +1109,6 @@ class ControllerCartPolePID:
                     )
 
             self.action_old = action
-            print(action)
             return action
 
         else:
@@ -1125,19 +1116,25 @@ class ControllerCartPolePID:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0, observation_target=[]):
-        theta, theta_dot = (
-            state[0],
-            state[2],
-        )
+        theta_observed, x, theta_dot, x_dot = observation
 
         E_total = (
             self.m_p * self.l**2 * theta_dot**2 / 2
-            + self.m_p * self.g * self.l * (rc.cos(theta) - 1)
+            + self.m_p * self.g * self.l * (rc.cos(theta_observed) - 1)
         )
-        lbd = (1 + rc.cos(theta)) / 2
+
+        lbd = (
+            1 - rc.tanh((theta_observed - self.pid_loc_thr) * self.pid_scale_thr)
+        ) / 2
+
+        low, high = self.clip_bounds
+        x_clipped = rc.clip(x, low, high)
+        x_dot_clipped = rc.clip(x_dot, low, high)
         self.action = (1 - lbd) * (
-            self.swingup_gain * E_total * rc.sign(rc.cos(theta) * theta_dot)
-        ) - lbd * self.upright_gain.T @ observation
+            self.swingup_gain * E_total * rc.sign(rc.cos(theta_observed) * theta_dot)
+        ) + lbd * self.upright_gain.T @ rc.array(
+            [theta_observed, x_clipped, theta_dot, x_dot_clipped]
+        )
         return self.action
 
 

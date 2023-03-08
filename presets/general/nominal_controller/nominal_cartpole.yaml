@@ -6,21 +6,9 @@ action_bounds: $ system.action_bounds%%
 time_start: $ simulator.time_start
 state_init: $ initial_conditions.state_init
 sampling_time: 1.0E-2
-PID_swing_up_parameters: = [-90, 0, -9]
-PID_cart_parameters: = [-2.0, 0, -3.0]
-swingup_gain: 1000
+swingup_gain: 100
 system: ~ system
-upright_gain: = numpy.array([-90, -2., -9, -3.])
-swing_up_tol: 1.2
-
-# _target_: rcognita.controllers.ControllerCartPoleEnergyBased
-
-# ###---Constructor arguments---###
-
-# action_bounds: $ system.action_bounds%%
-# time_start: $ simulator.time_start
-# state_init: $ initial_conditions.state_init
-# sampling_time: 1.0E-2
-# swing_up_tol: 0.1
-# controller_gain: 1000
-# system: ~ system
+upright_gain: = numpy.array([50, 2., 20., 3.])
+pid_loc_thr: 0.35
+pid_scale_thr: 10.0
+clip_bounds: = numpy.array([-1., 1.])

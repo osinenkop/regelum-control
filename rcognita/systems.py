@@ -657,8 +657,11 @@ class CartPole(System):
         x = state[1]
         theta_dot = state[2]
         x_dot = state[3]
-        # theta = utilities.rc.sign(theta) * (utilities.rc.abs(theta) % (2 * np.pi))
-        theta_observed = 1 - utilities.rc.cos(theta)
+
+        theta_observed = theta - utilities.rc.floor(theta / (2 * np.pi)) * 2 * np.pi
+        if theta_observed > np.pi:
+            theta_observed = theta_observed - 2 * np.pi
+
         return utilities.rc.array([theta_observed, x, theta_dot, x_dot])
 
 
