@@ -219,7 +219,7 @@ class RobotMarker:
     """
 
     def __init__(self, angle=None, path_string=None):
-        self.angle = angle or []
+        self.angle = angle or 0.0
         self.path_string = (
             path_string
             or """m 66.893258,227.10128 h 5.37899 v 0.91881 h 1.65571 l 1e-5,-3.8513 3.68556,-1e-5 v -1.43933

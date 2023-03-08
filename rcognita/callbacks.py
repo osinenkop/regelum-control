@@ -667,7 +667,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         self.timeline = []
         self.num_launch = 1
         self.counter = 0
-        self.cooldown = 0.0
+        self.cooldown = 1.0
 
     def on_launch(self):
         super().on_launch()
