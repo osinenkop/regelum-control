@@ -959,10 +959,16 @@ class Controller3WRobotPID:
     def compute_square_of_norm(self, x, y):
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
-    def sigmoid(self, *args):
+    def sigmoid(self, x):
         # Just a sigmoid function so that f(0) = 0 and sup(f) = 1
-        lbd = (1 / (1 + np.exp(-rc.sum_2(rc.array(args)) ** 2) + 1e-7) - 0.5) * 2
+        lbd = 1 / (1 + rc.exp(-x))
         return lbd
+
+    @staticmethod
+    def cdf_uniform(x, a, b):
+        loc = a
+        scale = 1 / (b - a)
+        return np.clip(scale * (x - loc), 0, 1)
 
     def F_error_derivative(self, x, y, angle, v, eps=1e-8):
         if abs(x) < eps and abs(y) < eps:
@@ -984,29 +990,32 @@ class Controller3WRobotPID:
 
         # if self.PID_angle_arctan.setpoint is None:
         self.PID_angle_arctan.set_setpoint(angle_setpoint)
+        self.PID_x_y_origin.set_initial_point(rc.array([x, y]))
         F_error_derivative = self.F_error_derivative(x, y, angle[0], v[0])
         M_arctan_error_derivative = omega
         F_v_to_zero_error_derivative = self.current_F / self.m
 
-        lbd_arctan = self.sigmoid(angle[0] - self.PID_angle_arctan.setpoint[0])
-        lbd_v_to_zero = self.sigmoid(v)
-        lbd_origin = self.sigmoid(x, y, angle[0] - self.PID_angle_arctan.setpoint[0])
-        lbd_xy_origin = self.sigmoid(x, y)
+        # lbd_arctan = self.sigmoid(angle[0] - self.PID_angle_arctan.setpoint[0])
 
-        F = (
-            lbd_xy_origin
-            * (1 - lbd_arctan)
-            * self.PID_x_y_origin.compute_action(
-                [x, y], error_derivative=F_error_derivative
-            )
+        lbd_v_to_zero = self.cdf_uniform(rc.norm_2(rc.array([x, y, v[0]])), 0, 0.05)
+
+        a, b = 0.01, 0.2
+        lbd_origin = 1
+        lbd_arctan = self.cdf_uniform(
+            rc.abs(angle[0] - self.PID_angle_arctan.setpoint[0]), a, b
         )
-        M_arctan = (
-            lbd_xy_origin
-            * lbd_origin
-            * lbd_arctan
-            * self.PID_angle_arctan.compute_action(
-                angle, error_derivative=M_arctan_error_derivative
-            )
+        # self.cdf_uniform(
+        #     rc.abs(x) + rc.abs(y), a, b
+        # )  # , angle[0] - self.PID_angle_arctan.setpoint[0])
+        lbd_xy_origin = self.cdf_uniform(
+            rc.abs(x) + rc.abs(y), a, b
+        )  # self.sigmoid(x, y)
+
+        F = (1 - lbd_arctan) * self.PID_x_y_origin.compute_action(
+            [x, y], error_derivative=F_error_derivative
+        )
+        M_arctan = lbd_arctan * self.PID_angle_arctan.compute_action(
+            angle, error_derivative=M_arctan_error_derivative
         )
         M_zero = self.PID_angle_origin.compute_action(angle, error_derivative=omega[0])
         control_to_origin = rc.array(
@@ -1021,11 +1030,21 @@ class Controller3WRobotPID:
 
         control_angle_to_zero = rc.array([0, np.clip(M_zero[0], -100.0, 100.0)])
 
+        # action = (
+        #     lbd_origin * control_to_origin
+        #     + (1 - lbd_origin) ** 2 * lbd_v_to_zero * control_v_to_zero
+        #     + control_angle_to_zero * (1 - lbd_v_to_zero) ** 2 * (1 - lbd_origin) ** 2
+        # )
+
+        lbd = self.cdf_uniform(rc.norm_2(rc.array([x, y])), 0.0, 0.1)
+        alpha = 1  # self.cdf_uniform(rc.norm_2(rc.array([x, y])), 0, 0.7)
+        # action = control_to_origin
         action = (
-            lbd_origin * control_to_origin
-            + (1 - lbd_origin) ** 2 * lbd_v_to_zero * control_v_to_zero
-            + control_angle_to_zero * (1 - lbd_v_to_zero) ** 2 * (1 - lbd_origin) ** 2
+            alpha * lbd * control_to_origin
+            + (1 - lbd) * control_v_to_zero
+            + control_angle_to_zero * (1 - lbd_v_to_zero)
         )
+
         self.current_F = action[0]
         self.current_M = action[1]
 
