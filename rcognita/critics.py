@@ -1047,7 +1047,7 @@ class CriticCALF(CriticOfObservation):
                 observation_next - self.observation_target, use_stored_weights=True
             )
 
-            if self.critic_regularization_param > 0:
+            if self.critic_regularization_param > 1e-9:
                 weights_current = weights
                 weights_last_good = self.model.cache.weights
                 regularization_term = (

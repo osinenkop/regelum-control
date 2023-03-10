@@ -233,12 +233,8 @@ class CALFControllerExPost(RLController):
         self.critic.stabilizing_constraint_violations.append(
             np.squeeze(self.critic.stabilizing_constraint_violation)
         )
-        self.critic.lb_constraint_violations.append(
-            0
-        )  # (self.critic.lb_constraint_violation)
-        self.critic.ub_constraint_violations.append(
-            0
-        )  # (self.critic.ub_constraint_violation)
+        self.critic.lb_constraint_violations.append(0)
+        self.critic.ub_constraint_violations.append(0)
         self.critic.Ls.append(
             np.squeeze(
                 self.critic.safe_controller.compute_LF(self.critic.current_observation)
