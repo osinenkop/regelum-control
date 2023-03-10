@@ -11,3 +11,9 @@ PID_arctg_params: = [50, 0.0, 10]
 PID_v_zero_params: = [35, 0.0, 1.2]
 PID_x_y_origin_params: = [55, 0.0, 55]
 PID_angle_origin_params: = [100000, 0.0, 1000]
+v_to_zero_left_bound: 0.0
+v_to_zero_right_bound: 0.05
+to_origin_left_bound: 0.0
+to_origin_right_bound: 0.1
+to_arctan_left_bound: 0.01
+to_arctan_right_bound: 0.2

@@ -70,7 +70,6 @@ class Controller(ABC):
             # Update controller's internal clock
 
             self.compute_action(
-                None,
                 state,
                 observation,
                 time=time,
@@ -913,6 +912,12 @@ class Controller3WRobotPID:
         PID_v_zero_params=[35, 0.0, 1.2],
         PID_x_y_origin_params=[35, 0.0, 35],
         PID_angle_origin_params=[30, 0.0, 10],
+        v_to_zero_left_bound=0.0,
+        v_to_zero_right_bound=0.05,
+        to_origin_left_bound=0.0,
+        to_origin_right_bound=0.1,
+        to_arctan_left_bound=0.01,
+        to_arctan_right_bound=0.2,
     ):
         if params is None:
             params = [10, 1]
@@ -920,6 +925,13 @@ class Controller3WRobotPID:
         self.m, self.I = params
         if action_bounds is None:
             action_bounds = []
+
+        self.v_to_zero_left_bound = v_to_zero_left_bound
+        self.v_to_zero_right_bound = v_to_zero_right_bound
+        self.to_origin_left_bound = to_origin_left_bound
+        self.to_origin_right_bound = to_origin_right_bound
+        self.to_arctan_left_bound = to_arctan_left_bound
+        self.to_arctan_right_bound = to_arctan_right_bound
 
         self.action_bounds = action_bounds
         self.state_init = state_init
@@ -942,7 +954,6 @@ class Controller3WRobotPID:
             *PID_x_y_origin_params,
             setpoint=rc.array([0.0, 0.0]),
             initial_point=self.state_init[:2],
-            # buffer_length=100,
         )
         self.PID_angle_origin = ControllerMemoryPID(
             *PID_angle_origin_params, setpoint=0.0, initial_point=self.state_init[2]
@@ -960,7 +971,6 @@ class Controller3WRobotPID:
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
     def sigmoid(self, x):
-        # Just a sigmoid function so that f(0) = 0 and sup(f) = 1
         lbd = 1 / (1 + rc.exp(-x))
         return lbd
 
@@ -1005,10 +1015,20 @@ class Controller3WRobotPID:
             v, error_derivative=F_v_to_zero_error_derivative
         )
 
-        lbd_v_to_zero = self.cdf_uniform(rc.norm_2(rc.array([x, y, v[0]])), 0, 0.05)
-        lbd = self.cdf_uniform(rc.norm_2(rc.array([x, y])), 0.0, 0.1)
+        lbd_v_to_zero = self.cdf_uniform(
+            rc.norm_2(rc.array([x, y, v[0]])),
+            self.v_to_zero_left_bound,
+            self.v_to_zero_right_bound,
+        )
+        lbd = self.cdf_uniform(
+            rc.norm_2(rc.array([x, y])),
+            self.to_origin_left_bound,
+            self.to_origin_right_bound,
+        )
         lbd_arctan = self.cdf_uniform(
-            rc.abs(angle[0] - self.PID_angle_arctan.setpoint[0]), 0.01, 0.2
+            rc.abs(angle[0] - self.PID_angle_arctan.setpoint[0]),
+            self.to_arctan_left_bound,
+            self.to_arctan_right_bound,
         )
         control_to_origin = rc.array(
             [
