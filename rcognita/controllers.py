@@ -161,6 +161,7 @@ class CALFControllerExPost(RLController):
             self.compute_action_sampled = (
                 self.actor.safe_controller.compute_action_sampled
             )
+            self.reset = self.actor.safe_controller.reset
         self.safe_only = safe_only
 
     def compute_weights_disetpointlacement(self, agent):
@@ -1020,7 +1021,8 @@ class Controller3WRobotPID:
         )
         control_to_origin = rc.array(
             [
-                (1 - lbd_arctan) * np.clip(F[0], F_min, F_max),
+                (1 - lbd_arctan) * np.clip(F[0], F_min, F_max)
+                + lbd_arctan * np.clip(F_v_to_zero[0], F_min, F_max),
                 lbd_arctan * np.clip(M_arctan[0], M_min, M_max),
             ]
         )

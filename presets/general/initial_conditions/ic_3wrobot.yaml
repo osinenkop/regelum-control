@@ -1,2 +1,2 @@
-state_init: = numpy.array([-5., 5., 0., 0., 0.])
+state_init: = numpy.array([5, 5, 5, -19.52, 6.25])
 action_init: = numpy.ones(${system.dim_input})
