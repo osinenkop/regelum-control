@@ -240,7 +240,7 @@ class ModelQuadNoMix(Model):
         self,
         dim_input,
         single_weight_min=1e-6,
-        single_weight_max=1e2,
+        single_weight_max=1e3,
     ):
         self.dim_weights = dim_input
         self.weight_min = single_weight_min * rc.ones(self.dim_weights)
