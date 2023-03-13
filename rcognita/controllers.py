@@ -1093,6 +1093,9 @@ class ControllerCartPolePID:
         self.pid_scale_thr = pid_scale_thr
         self.clip_bounds = clip_bounds
 
+    def reset(self):
+        pass
+
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
         """
         Compute sampled action.
