@@ -11,8 +11,8 @@ M_max%%: $ system.M_max%%
 
 actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.F_min%%}, ${.F_max%%}, ${.grid_dim%%}), numpy.linspace(${.M_min%%}, ${.M_max%%}, ${.grid_dim%%}))))
 
-safe_decay_param_ex_post: 1.0E+1
-safe_decay_param_predictive: 1.0E-3
+safe_decay_param_ex_post: 1.0E+2
+safe_decay_param_predictive: 1.0E+2
 critic_penalty_param: 0
 critic_regularization_param: 0.
 is_dynamic_decay_rate: True

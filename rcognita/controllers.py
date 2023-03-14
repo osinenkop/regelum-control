@@ -154,8 +154,9 @@ class RLController(Controller):
 
 
 class CALFControllerExPost(RLController):
-    def __init__(self, *args, safe_only=False, **kwargs):
+    def __init__(self, *args, safe_only=False, fallback_radius=0.2, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fallback_radius = fallback_radius
         if safe_only:
             self.compute_action = self.actor.safe_controller.compute_action
             self.compute_action_sampled = (
@@ -195,13 +196,15 @@ class CALFControllerExPost(RLController):
             observation
         )  ### store current observation in actor
         self.actor.receive_state(state)
-
         self.actor.update_target(observation_target)
         self.critic.update_target(observation_target)
-
-        self.critic.optimize_weights(time=time)
-
-        critic_weights_accepted = self.critic.weights_acceptance_status == "accepted"
+        if rc.norm_2(observation - self.observation_target) >= self.fallback_radius:
+            self.critic.optimize_weights(time=time)
+            critic_weights_accepted = (
+                self.critic.weights_acceptance_status == "accepted"
+            )
+        else:
+            critic_weights_accepted = False
 
         if critic_weights_accepted:
             self.critic.update_weights()
@@ -226,7 +229,7 @@ class CALFControllerExPost(RLController):
             self.invoke_safe_action(observation)
 
         # self.collect_critic_stats(time)
-
+        print(self.critic.model.weights)
         return self.actor.action
 
     def collect_critic_stats(self, time):
