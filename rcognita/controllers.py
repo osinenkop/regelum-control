@@ -153,14 +153,6 @@ class RLController(Controller):
         return self.actor.action
 
 
-class DefaultFallbackCriterion:
-    def __init__(self, radius):
-        self.radius = radius
-
-    def __call__(self, x):
-        return rc.norm_2(x) >= self.radius
-
-
 class CoordinateFallBackCriterion:
     def __init__(self, radius, ids):
         self.radius = radius
