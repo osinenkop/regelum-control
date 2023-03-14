@@ -17,6 +17,7 @@ callbacks:
   - rcognita.callbacks.CalfCallback
   - rcognita.callbacks.HistoricalObservationCallback
   - rcognita.callbacks.QFunctionModelSaverCallback
+  - rcognita.callbacks.CalfWeightsCallback
 #  - rcognita.callbacks.InspectReferrersCallback
 
 disallow_uncommitted%%: False

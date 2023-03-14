@@ -975,6 +975,50 @@ class CriticObjectiveCallback(HistoricalCallback):
         self.dump_and_clear_data(f"TD_values_{str(episode_number).zfill(5)}")
 
 
+class CalfWeightsCallback(HistoricalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cooldown = 0.0
+        self.time = 0.0
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.controllers.Controller)
+            and method == "compute_action"
+            and "calf" in obj.critic.__class__.__name__.lower()
+        )
+
+    def perform(self, obj, method, output):
+        self.add_datum(
+            {
+                **{"time": rcognita.main.metadata["time"]},
+                **{
+                    f"weight_{i + 1}": weight
+                    for i, weight in enumerate(obj.critic.model.weights)
+                },
+            }
+        )
+
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        identifier = f"CALF_weights_during_episode_{str(episode_number).zfill(5)}"
+        if not self.data.empty:
+            self.save_plot(identifier)
+            self.insert_column_left("episode", episode_number)
+            self.dump_and_clear_data(identifier)
+
+    def plot(self, name=None):
+        if not self.data.empty:
+            plt.clf()
+            plt.cla()
+            plt.close()
+            if not name:
+                name = self.__class__.__name__
+            res = self.data.set_index("time").plot(
+                subplots=True, grid=True, xlabel="time", title=name
+            )
+            return res[0].figure
+
+
 class CalfCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
