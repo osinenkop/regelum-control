@@ -1,0 +1,4 @@
+_target_: rcognita.controllers.CoordinateFallBackCriterion
+
+radius: $ system_specific.fallback_radius
+ids: $ system_specific.coordinate_ids

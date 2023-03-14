@@ -21,5 +21,9 @@ lb_parameter: 1.0E+1
 ub_parameter: 1.0E+3
 use_derivative: False
 
-data_buffer_size: 35
+data_buffer_size: 500
 diag_scale_coef: 5.
+
+calf_data_buffer_size: 35
+fallback_radius: 1.
+coordinate_ids: = [0, 1]

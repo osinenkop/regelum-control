@@ -20,3 +20,7 @@ use_derivative: False
 
 data_buffer_size: 500
 diag_scale_coef: 5.
+
+calf_data_buffer_size: 8
+fallback_radius: 0.0
+coordinate_ids: = numpy.arange(${system.dim_output})

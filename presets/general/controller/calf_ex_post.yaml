@@ -1,8 +1,10 @@
 defaults:
+  - fallback_criterion: coordinate
   - actor: calf
   - critic: calf
   - override actor/optimizer: casadi
   - override critic/optimizer: casadi
+  
 
 name%%: calf_ex_post
 
@@ -15,7 +17,6 @@ sampling_time: $ system_specific.sampling_time
 is_fixed_critic_weights: false
 critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 action_bounds: $ system.action_bounds%%
-
 critic_period_multiplier%%: 1
 
 ###---Overrides---###

@@ -164,7 +164,7 @@ class DefaultFallbackCriterion:
 class CoordinateFallBackCriterion:
     def __init__(self, radius, ids):
         self.radius = radius
-        self.ids = ids
+        self.ids = np.array(ids, dtype=int)
 
     def __call__(self, x):
         return rc.norm_2(x[self.ids]) >= self.radius
@@ -175,7 +175,7 @@ class CALFControllerExPost(RLController):
         self,
         *args,
         safe_only=False,
-        fallback_criterion=DefaultFallbackCriterion(0.0),
+        fallback_criterion=CoordinateFallBackCriterion(0.6, [0, 1]),
         **kwargs
     ):
         super().__init__(*args, **kwargs)
