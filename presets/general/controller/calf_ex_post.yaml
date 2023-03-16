@@ -1,5 +1,4 @@
 defaults:
-  - fallback_criterion: coordinate
   - actor: calf
   - critic: calf
   - override actor/optimizer: casadi

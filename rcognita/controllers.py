@@ -153,25 +153,9 @@ class RLController(Controller):
         return self.actor.action
 
 
-class CoordinateFallBackCriterion:
-    def __init__(self, radius, ids):
-        self.radius = radius
-        self.ids = np.array(ids, dtype=int)
-
-    def __call__(self, x):
-        return rc.norm_2(x[self.ids]) >= self.radius
-
-
 class CALFControllerExPost(RLController):
-    def __init__(
-        self,
-        *args,
-        safe_only=False,
-        fallback_criterion=CoordinateFallBackCriterion(0.6, [0, 1]),
-        **kwargs
-    ):
+    def __init__(self, *args, safe_only=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fallback_criterion = fallback_criterion
         if safe_only:
             self.compute_action = self.actor.safe_controller.compute_action
             self.compute_action_sampled = (
@@ -213,13 +197,8 @@ class CALFControllerExPost(RLController):
         self.actor.receive_state(state)
         self.actor.update_target(observation_target)
         self.critic.update_target(observation_target)
-        if self.fallback_criterion(observation - observation_target):
-            self.critic.optimize_weights(time=time)
-            critic_weights_accepted = (
-                self.critic.weights_acceptance_status == "accepted"
-            )
-        else:
-            critic_weights_accepted = False
+        self.critic.optimize_weights(time=time)
+        critic_weights_accepted = self.critic.weights_acceptance_status == "accepted"
 
         if critic_weights_accepted:
             self.critic.update_weights()

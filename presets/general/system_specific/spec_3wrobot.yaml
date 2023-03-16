@@ -1,7 +1,7 @@
 name: 3wrobot
 observation_target: = []
 sampling_time: 0.01
-time_final: 15
+time_final: 10
 
 grid_dim%%: 3
 F_min%%: $ system.F_min%%
@@ -11,10 +11,10 @@ M_max%%: $ system.M_max%%
 
 actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.F_min%%}, ${.F_max%%}, ${.grid_dim%%}), numpy.linspace(${.M_min%%}, ${.M_max%%}, ${.grid_dim%%}))))
 
-safe_decay_param_ex_post: 1.0E+2
-safe_decay_param_predictive: 1.0E+2
+safe_decay_param_ex_post: 1.0E+1
+safe_decay_param_predictive: 1.0E+1
 critic_penalty_param: 0
-critic_regularization_param: 0.
+critic_regularization_param: 10.
 is_dynamic_decay_rate: True
 
 lb_parameter: 1.0E+1
@@ -24,6 +24,6 @@ use_derivative: False
 data_buffer_size: 500
 diag_scale_coef: 5.
 
-calf_data_buffer_size: 35
-fallback_radius: 1.
-coordinate_ids: = [0, 1]
+calf_data_buffer_size: 200
+single_weight_min: 1.0E-7
+single_weight_max: 1.0E+4

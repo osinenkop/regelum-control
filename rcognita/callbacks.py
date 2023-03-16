@@ -989,15 +989,16 @@ class CalfWeightsCallback(HistoricalCallback):
         )
 
     def perform(self, obj, method, output):
-        self.add_datum(
-            {
-                **{"time": rcognita.main.metadata["time"]},
-                **{
-                    f"weight_{i + 1}": weight
-                    for i, weight in enumerate(obj.critic.model.weights)
-                },
-            }
-        )
+        datum = {
+            **{"time": rcognita.main.metadata["time"]},
+            **{
+                f"weight_{i + 1}": weight
+                for i, weight in enumerate(obj.critic.model.weights)
+            },
+        }
+
+        # print(datum["time"], obj.critic.model.weights)
+        self.add_datum(datum)
 
     def on_episode_done(self, scenario, episode_number, episodes_total):
         identifier = f"CALF_weights_during_episode_{str(episode_number).zfill(5)}"

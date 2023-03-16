@@ -22,5 +22,5 @@ data_buffer_size: 500
 diag_scale_coef: 0.2
 
 calf_data_buffer_size: 8
-fallback_radius: 0.0
-coordinate_ids: = numpy.arange(${system.dim_output})
+single_weight_min: 1.0E-6
+single_weight_max: 1.0E+2
