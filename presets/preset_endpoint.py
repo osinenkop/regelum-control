@@ -26,12 +26,6 @@ np.random.seed(seed)
 torch.manual_seed(seed)
 random.seed(seed)
 
-EXPERIMENT = None
-for i, arg in enumerate(sys.argv):
-    if "--experiment" in arg:
-        EXPERIMENT = arg.split("=")[-1]
-        sys.argv.pop(i)
-
 
 @r.main(config_path="general", config_name="main")
 def launch(cfg):

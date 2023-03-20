@@ -16,6 +16,8 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 """
 
 from abc import ABC, abstractmethod
+
+import mlflow
 import torch
 import rcognita
 import pandas as pd
@@ -828,6 +830,7 @@ class TotalObjectiveCallback(HistoricalCallback):
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
         self.dump_data("Total_Objective")
+        mlflow.log_metric("Total objective", output, step=len(self.data))
         self.save_plot("Total_Objective")
 
     def load_data(self, idx=None):

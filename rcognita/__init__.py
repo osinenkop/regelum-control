@@ -51,7 +51,7 @@ from . import predictors
 from . import actors
 from . import visualization
 from .visualization import *
-
+import mlflow
 from unittest.mock import Mock, MagicMock
 from hydra._internal.utils import _locate
 
@@ -480,6 +480,20 @@ class main:
         callbacks = callbacks + self.builtin_callbacks
         sys.argv.insert(1, "--multirun")
         sys.argv.insert(-1, "hydra.job.chdir=True")
+        self.mlflow_uri = f"file://{os.getcwd()}/mlruns"
+        self.tags = {}
+        self.experiment_name = "Default"
+        to_remove = []
+        for i, arg in enumerate(sys.argv):
+            if "--experiment" in arg:
+                self.experiment_name = arg.split('=')[1]
+                to_remove.append(i)
+            if "--tags" in arg:
+                tags_str = arg.split('=')[1].split(',')
+                self.tags = {tag.split(':')[0]: tag.split(':')[1] for tag in tags_str}
+                to_remove.append(i)
+        for i in to_remove[::-1]:
+            sys.argv.pop(i)
         if "--disable-logging" in sys.argv:
             sys.argv.pop(sys.argv.index("--disable-logging"))
             sys.argv.insert(-1, "hydra/job_logging=disabled")
@@ -537,6 +551,7 @@ class main:
             def app(
                 cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger
             ):
+                mlflow.set_tracking_uri(self.mlflow_uri)
                 if "seed" in cfg:
                     seed = cfg["seed"]
                     delattr(cfg, "seed")
@@ -556,6 +571,7 @@ class main:
                     f["common_dir"] = common_dir.name
                     f["hostname"] = platform.node()
                     f["seed"] = seed
+                    started = f["started"]
                 os.mkdir("gfx")
                 os.mkdir(".callbacks")
                 with omegaconf.flag_override(cfg, "allow_objects", True):
@@ -596,7 +612,13 @@ class main:
                         with self.__class__.metadata["report"]() as r:
                             r["path"] = os.getcwd()
                             r["pid"] = os.getpid()
-                        res = old_app(ccfg)
+                        self.tags.update({"run_path": os.getcwd()})
+                        experiment_id = mlflow.set_experiment(self.experiment_name).experiment_id
+                        with mlflow.start_run(experiment_id=experiment_id, tags=self.tags, run_name=" ".join(os.getcwd().split("/")[-3:])):
+                            overrides = {line.split("=")[0]: line.split("=")[1] for line in
+                                         OmegaConf.load(".hydra/overrides.yaml")}
+                            mlflow.log_params(overrides)
+                            res = old_app(ccfg)
                         self.__class__.callbacks[0].log("Script terminated successfully.")
                     except RcognitaExitException as e:
                         res = e
