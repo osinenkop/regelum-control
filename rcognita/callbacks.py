@@ -577,6 +577,7 @@ class HistoricalCallback(Callback, ABC):
             name = self.__class__.__name__
         self.plot(name=name)
         plt.savefig(f"gfx/{name}.svg")
+        mlflow.log_artifact(f"gfx/{name}.svg", "gfx")
 
     def plot_gui(self):
         self.__data = self.load_data(idx="last")

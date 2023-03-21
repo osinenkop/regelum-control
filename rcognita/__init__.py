@@ -608,7 +608,7 @@ class main:
                         for callback in self.__class__.callbacks:
                             if callback.cooldown:
                                 callback.cooldown *= self.cooldown_factor
-                            callback.on_launch()
+                            callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
                         with self.__class__.metadata["report"]() as r:
                             r["path"] = os.getcwd()
                             r["pid"] = os.getpid()
@@ -628,8 +628,14 @@ class main:
                                 for line in OmegaConf.load(".hydra/overrides.yaml")
                             }
                             mlflow.log_params(overrides)
+                            mlflow.log_artifact("SUMMARY.html")
+                            mlflow.log_artifact(".summary")
+                            mlflow.log_artifact(".hydra")
                             res = old_app(ccfg)
-                            mlflow.log_artifacts("gfx/", "gfx")
+                            mlflow.log_artifact(".callbacks")
+                            mlflow.log_artifact("__init__.log")
+                            mlflow.log_artifact("callbacks.dill")
+
                         self.__class__.callbacks[0].log(
                             "Script terminated successfully."
                         )
