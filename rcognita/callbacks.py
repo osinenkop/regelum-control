@@ -14,9 +14,10 @@ Callbacks can be registered by simply supplying them in the respective keyword a
         ...
 
 """
-
+import typing
 from abc import ABC, abstractmethod
 
+import matplotlib.animation
 import mlflow
 import torch
 import rcognita
@@ -498,6 +499,61 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
             f.write(html)
 
 
+plt.rcParams['animation.frame_format'] = "svg" # VERY important
+class AnimationCallback(Callback, ABC):
+    def __init__(self):
+        self.frame_data = []
+        self.fig = plt.figure()
+        self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
+        self.saved_counter = 0
+
+    def get_save_directory(self):
+        return self.save_directory
+
+    def on_launch(self):
+        os.mkdir(self.get_save_directory())
+
+    def add_frame_datum(self, frame_datum):
+        self.frame_data.append(frame_datum)
+
+    def clear_frames(self):
+        self.frame_data = []
+
+    @abstractmethod
+    def update_frame(self, **frame_datum):
+        pass
+
+    def animate(self, frames="all"):
+        if frames == "all":
+            frames = len(self.frame_data)
+        elif isinstance(frames, int):
+            frames = max(min(frames, len(self.frame_data)), 0)
+        elif isinstance(frames, float) and 0 <= frames <= 1:
+            frames = int(frames * len(self.frame_data))
+        else:
+            raise ValueError('animate accepts an int, a float or "all", but instead a different value was provided.')
+
+        def animation_update(i):
+            j = int((i / frames) * len(self.frame_data) + 0.5)
+            return self.update_frame(**self.frame_data[j])
+
+        anim = matplotlib.animation.FuncAnimation(self.fig, animation_update,
+                                                  frames=frames, interval=1,
+                                                  blit=True)
+        return anim.to_jshtml()
+
+    def animate_and_save(self, frames="all", name=None):
+        if name is None:
+            name = str(self.saved_counter)
+            self.saved_counter += 1
+        animation = self.animate(frames=frames)
+        dir = self.get_save_directory()
+        with open(dir + "/" + name + ".html", "w") as f:
+            f.write(f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>")
+
+
+
+
 class HistoricalCallback(Callback, ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -759,7 +815,6 @@ class InspectReferrersCallback(Callback):
             refs = gc.get_referrers(getattr(obj, self.object_to_trace))
             refs = [x for x in refs[1] if "__" not in x]
             self.log(f"{self.object_to_trace} referrers: {refs}")
-
 
 class HistoricalObservationCallback(HistoricalCallback):
     """
