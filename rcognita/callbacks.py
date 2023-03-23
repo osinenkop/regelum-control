@@ -43,7 +43,7 @@ def is_in_debug_mode():
     return not sys.gettrace() is None
 
 
-def apply_callbacks(method):
+class apply_callbacks:
     """
     Decorator that applies a list of callbacks to a given method of an object.
     If the object has no list of callbacks specified, the default callbacks are used.
@@ -51,42 +51,19 @@ def apply_callbacks(method):
     :param method: The method to which the callbacks should be applied.
     """
 
-    def new_method(self, *args, **kwargs):
-        res = method(self, *args, **kwargs)
-        if self.callbacks is None:
-            self.callbacks = rcognita.main.callbacks
-        for callback in self.callbacks:
-            callback(obj=self, method=method.__name__, output=res)
-        return res
+    def __init__(self, callbacks=None):
+        self.callbacks = callbacks
 
-    return new_method
+    def __call__(self, method):
+        def new_method(self2, *args, **kwargs):
+            res = method(self2, *args, **kwargs)
+            if self.callbacks is None:
+                callbacks = rcognita.main.callbacks
+            for callback in callbacks:
+                callback(obj=self2, method=method.__name__, output=res)
+            return res
 
-
-class introduce_callbacks:
-    """
-    A class decorator that introduces a `callbacks` attribute to the decorated class.
-    The `callbacks` attribute is a list of callbacks that can be applied to methods
-    of instances of the decorated class (for instance via `@apply_callbacks`).
-    """
-
-    def __init__(self, default_callbacks=None):
-        """
-        Initializes the decorator.
-
-        :param default_callbacks: A list of callbacks that will be used as the default
-            value for the `callbacks` attribute of instances of the decorated class.
-            If no value is specified, the `callbacks` attribute will be initialized to `None`, which will
-            in turn make `@apply_callbacks` use default callbacks instead.
-        """
-        self.default_callbacks = default_callbacks
-
-    def __call__(self, cls):
-        class whatever(cls):
-            def __init__(self2, *args, callbacks=self.default_callbacks, **kwargs):
-                super().__init__(*args, **kwargs)
-                self2.callbacks = callbacks
-
-        return whatever
+        return new_method
 
 
 class Callback(ABC):
@@ -95,7 +72,7 @@ class Callback(ABC):
     This is the base class for a callback object. Callback objects are used to perform some action or computation after a method has been called.
     """
 
-    def __init__(self, logger, log_level="info"):
+    def __init__(self, log_level="info"):
         """
         Initialize a callback object.
 
@@ -104,8 +81,8 @@ class Callback(ABC):
         :param log_level: The level at which messages should be logged.
         :type log_level: str
         """
-        self.log = logger.__getattribute__(log_level)
-        self.exception = logger.exception
+        self.log = rcognita.main.logger.__getattribute__(log_level)
+        self.exception = rcognita.main.logger.exception
         self.last_trigger = 0.0
 
     @abstractmethod

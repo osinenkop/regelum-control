@@ -1,7 +1,9 @@
 import numpy as np
 
+import rcognita.base
 
-class KalmanFilter:
+
+class KalmanFilter(rcognita.base.RcognitaBase):
     def __init__(
         self, t0, my_sys, sys_noise_cov, observ_noise_cov, prior_est_cov, state_init,
     ):
