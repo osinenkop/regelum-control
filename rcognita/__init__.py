@@ -486,11 +486,11 @@ class main:
         to_remove = []
         for i, arg in enumerate(sys.argv):
             if "--experiment" in arg:
-                self.experiment_name = arg.split('=')[1]
+                self.experiment_name = arg.split("=")[1]
                 to_remove.append(i)
             if "--tags" in arg:
-                tags_str = arg.split('=')[1].split(',')
-                self.tags = {tag.split(':')[0]: tag.split(':')[1] for tag in tags_str}
+                tags_str = arg.split("=")[1].split(",")
+                self.tags = {tag.split(":")[0]: tag.split(":")[1] for tag in tags_str}
                 to_remove.append(i)
         for i in to_remove[::-1]:
             sys.argv.pop(i)
@@ -560,7 +560,7 @@ class main:
                 numpy.random.seed(seed)
                 torch.manual_seed(seed)
                 random.seed(seed)
-                with shelve.open('.report') as f:
+                with shelve.open(".report") as f:
                     f["termination"] = "running"
                     f["started"] = datetime.datetime.now()
                     f["args"] = sys.argv
@@ -608,18 +608,37 @@ class main:
                         for callback in self.__class__.callbacks:
                             if callback.cooldown:
                                 callback.cooldown *= self.cooldown_factor
-                            callback.on_launch()
+                            callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
                         with self.__class__.metadata["report"]() as r:
                             r["path"] = os.getcwd()
                             r["pid"] = os.getpid()
                         self.tags.update({"run_path": os.getcwd()})
-                        experiment_id = mlflow.set_experiment(self.experiment_name).experiment_id
-                        with mlflow.start_run(experiment_id=experiment_id, tags=self.tags, run_name=" ".join(os.getcwd().split("/")[-3:])):
-                            overrides = {line.split("=")[0]: line.split("=")[1] for line in
-                                         OmegaConf.load(".hydra/overrides.yaml")}
+                        experiment_id = mlflow.set_experiment(
+                            self.experiment_name
+                        ).experiment_id
+                        with mlflow.start_run(
+                            experiment_id=experiment_id,
+                            tags=self.tags,
+                            run_name=" ".join(os.getcwd().split("/")[-3:]),
+                        ):
+                            overrides = {
+                                line.split("=")[0]
+                                .replace("+", "")
+                                .replace("/", "-"): line.split("=")[1]
+                                for line in OmegaConf.load(".hydra/overrides.yaml")
+                            }
                             mlflow.log_params(overrides)
+                            mlflow.log_artifact("SUMMARY.html")
+                            mlflow.log_artifact(".summary")
+                            mlflow.log_artifact(".hydra")
                             res = old_app(ccfg)
-                        self.__class__.callbacks[0].log("Script terminated successfully.")
+                            mlflow.log_artifact(".callbacks")
+                            mlflow.log_artifact("__init__.log")
+                            mlflow.log_artifact("callbacks.dill")
+
+                        self.__class__.callbacks[0].log(
+                            "Script terminated successfully."
+                        )
                     except RcognitaExitException as e:
                         res = e
                     except Exception as e:
@@ -636,9 +655,12 @@ class main:
                                 f"Termination procedure for {callback.__class__.__name__} failed."
                             )
                             callback.exception(e)
-                    with shelve.open('.report') as f:
-                        f["termination"] = "successful" if not isinstance(res, Exception) else \
-                            ''.join(traceback.format_tb(res.__traceback__))
+                    with shelve.open(".report") as f:
+                        f["termination"] = (
+                            "successful"
+                            if not isinstance(res, Exception)
+                            else "".join(traceback.format_tb(res.__traceback__))
+                        )
                         f["finished"] = datetime.datetime.now()
                     ccfg.refresh()
                     if self.is_sweep:
