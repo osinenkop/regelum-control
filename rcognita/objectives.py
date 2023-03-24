@@ -6,6 +6,8 @@ For instance, a running objective can be used commonly by a generic optimal cont
 
 from abc import ABC, abstractmethod
 
+import rcognita.base
+
 
 def inject_observation_target(observation_target):
     def decorator(objective):
@@ -18,7 +20,7 @@ def inject_observation_target(observation_target):
     return decorator
 
 
-class Objective(ABC):
+class Objective(rcognita.base.RcognitaBase, ABC):
     def __init__(self):
         pass
 

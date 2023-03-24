@@ -533,8 +533,9 @@ class main:
         self.kwargs["config_path"] = (
             "." if "config_path" not in kwargs else kwargs["config_path"]
         )
-        self.__class__.callbacks = [callback(logger) for callback in callbacks]
         self.__class__.logger = logger
+        self.__class__.callbacks = [callback() for callback in callbacks]
+
 
     def __call__(self, old_app):
         def rcognita_main(*args, **kwargs):
@@ -551,6 +552,7 @@ class main:
             def app(
                 cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger
             ):
+                self.__class__.logger = logger
                 mlflow.set_tracking_uri(self.mlflow_uri)
                 if "seed" in cfg:
                     seed = cfg["seed"]
@@ -598,7 +600,7 @@ class main:
                                 if isinstance(callback, str)
                                 else callback
                             )
-                            callbacks.insert(-1, callback(logger))
+                            callbacks.insert(-1, callback())
                         delattr(cfg, "callbacks")
                     elif "callbacks" in cfg:
                         delattr(cfg, "callbacks")

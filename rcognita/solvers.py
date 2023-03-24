@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import warnings
 
+import rcognita.base
+
 try:
     import casadi
 except ModuleNotFoundError:
@@ -11,7 +13,7 @@ from .systems import System
 from .__utilities import rc
 
 
-class Solver(ABC):
+class Solver(rcognita.base.RcognitaBase, ABC):
     """
     Solver is an abstract class representing a solver for optimization problems.
 

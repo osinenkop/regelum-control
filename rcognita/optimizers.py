@@ -2,7 +2,7 @@
 This module contains optimization routines to be used in optimal controllers, actors, critics etc.
 
 """
-
+import rcognita.base
 from rcognita.__utilities import rc
 import scipy as sp
 from scipy.optimize import minimize
@@ -25,11 +25,10 @@ try:
 except ModuleNotFoundError:
     pass
 
-from rcognita.callbacks import introduce_callbacks, apply_callbacks
+from rcognita.callbacks import apply_callbacks
 
 
-@introduce_callbacks()
-class Optimizer(ABC):
+class Optimizer(rcognita.base.RcognitaBase, ABC):
     """
     Abstract base class for optimizers.
     """

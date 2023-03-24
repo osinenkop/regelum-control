@@ -11,6 +11,8 @@ Remarks:
 
 import os, sys
 
+import rcognita.base
+
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
@@ -36,11 +38,11 @@ from .optimizers import Optimizer
 from .models import Model
 from .objectives import Objective
 from typing import Optional, Union
-from .callbacks import apply_callbacks, introduce_callbacks
+from .callbacks import apply_callbacks
 
 
-@introduce_callbacks()
-class Critic(ABC):
+
+class Critic(rcognita.base.RcognitaBase, ABC):
     """
     Critic base class.
 
@@ -48,6 +50,7 @@ class Critic(ABC):
 
     The critic estimates the value of an action by learning from past experience, typically through the optimization of a loss function.
     """
+
 
     def __init__(
         self,
@@ -483,7 +486,7 @@ class CriticOfObservation(Critic):
 
 
 class CriticOfActionObservationOnPolicy(Critic):
-    @apply_callbacks
+    @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
         """
         Compute the objective function of the critic, which is typically a squared temporal difference.
@@ -598,7 +601,7 @@ class CriticOffPolicyBehaviour(Critic):
 
         return batch_ids
 
-    @apply_callbacks
+    @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
         """
         Compute the objective function of the critic, which is typically a squared temporal difference.
@@ -711,7 +714,7 @@ class CriticOffPolicyGreedy(Critic):
 
         return batch_ids
 
-    @apply_callbacks
+    @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
         """
         Compute the objective function of the critic, which is typically a squared temporal difference.

@@ -12,7 +12,7 @@ import numpy as np
 from typing import Optional
 from unittest.mock import Mock, MagicMock
 
-
+import rcognita.base
 from .__utilities import rc
 from .optimizers import TorchOptimizer
 from .actors import Actor
@@ -20,7 +20,7 @@ from .critics import Critic, CriticTrivial
 from .simulator import Simulator
 from .controllers import Controller
 from .objectives import RunningObjective
-from .callbacks import introduce_callbacks, apply_callbacks
+from .callbacks import apply_callbacks
 
 try:
     import torch
@@ -28,7 +28,7 @@ except ImportError:
     torch = MagicMock()
 
 
-class Scenario(ABC):
+class Scenario(rcognita.base.RcognitaBase, ABC):
     def __init__(self):
         pass
 
@@ -65,7 +65,6 @@ class TabularScenarioVI(Scenario):
         self.critic.update()
 
 
-@introduce_callbacks()
 class OnlineScenario(Scenario):
     """
     Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
@@ -142,7 +141,7 @@ class OnlineScenario(Scenario):
         self.delta_time = 0
         self.observation_components_naming = observation_components_naming
 
-    @apply_callbacks
+    @apply_callbacks()
     def pre_step(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
@@ -156,7 +155,7 @@ class OnlineScenario(Scenario):
             self.outcome,
         )
 
-    @apply_callbacks
+    @apply_callbacks()
     def post_step(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
@@ -258,7 +257,7 @@ class EpisodicScenario(OnlineScenario):
     def get_cache_len(self):
         return len(self.cache)
 
-    @apply_callbacks
+    @apply_callbacks()
     def reload_pipeline(self):
         self.sim_status = 1
         self.time = 0

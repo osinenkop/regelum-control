@@ -11,12 +11,14 @@ Remarks:
 
 import numpy as np
 from numpy.random import randn
+
+import rcognita.base
 from rcognita import __utilities as utilities
 from abc import ABC, abstractmethod
 import rcognita.__utilities as utilities
 
 
-class System(ABC):
+class System(rcognita.base.RcognitaBase, ABC):
     """
      Interface class of dynamical systems a.k.a. environments.
      Concrete systems should be built upon this class.

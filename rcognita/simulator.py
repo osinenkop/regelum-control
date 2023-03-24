@@ -19,12 +19,13 @@ Remarks:
 import numpy as np
 import scipy as sp
 
+import rcognita.base
 from .__utilities import rej_sampling_rvs, rc, simulation_progress
 from .solvers import create_ODE_solver
 from abc import ABC, abstractmethod
 
 
-class Simulator:
+class Simulator(rcognita.base.RcognitaBase):
     """
     Class for simulating closed loops (system-controllers).
 

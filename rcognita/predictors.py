@@ -6,12 +6,13 @@ Module that contains state or observation (depending on the context) predictors.
 import numpy as np
 from abc import ABC, abstractmethod
 
+import rcognita.base
 from .__utilities import rc
 from .systems import System
 from .solvers import create_CasADi_integrator
 
 
-class Predictor(ABC):
+class Predictor(rcognita.base.RcognitaBase, ABC):
     """
     Blueprint of a predictor.
 

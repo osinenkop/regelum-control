@@ -19,8 +19,8 @@ from scipy.optimize import minimize
 from .__utilities import rc, Clock
 from .optimizers import CasADiOptimizer, SciPyOptimizer
 from .__w_plotting import plot_optimization_results
-from .callbacks import introduce_callbacks, apply_callbacks
-
+from .callbacks import apply_callbacks, Callback
+from .base import RcognitaBase
 
 def apply_action_bounds(method):
     def wrapper(self, *args, **kwargs):
@@ -35,8 +35,8 @@ def apply_action_bounds(method):
     return wrapper
 
 
-@introduce_callbacks()
-class Controller(ABC):
+
+class Controller(RcognitaBase, ABC):
     """
     A blueprint of optimal controllers.
     """
@@ -47,6 +47,7 @@ class Controller(ABC):
         sampling_time: float = 0.1,
         is_fixed_critic_weights: bool = False,
     ):
+        super().__init__()
         self.controller_clock = time_start
         self.sampling_time = sampling_time
 
@@ -181,7 +182,7 @@ class CALFControllerExPost(RLController):
         self.actor.model.update_and_cache_weights(action)
         self.critic.r_prev += self.actor.running_objective(observation, action)
 
-    @apply_callbacks
+    @apply_callbacks()
     def compute_action(
         self, state, observation, is_critic_update=False, time=0, observation_target=[]
     ):
@@ -254,7 +255,7 @@ class CALFControllerExPost(RLController):
 
 
 class CALFControllerPredictive(CALFControllerExPost):
-    @apply_callbacks
+    @apply_callbacks()
     def compute_action(
         self, state, observation, is_critic_update=False, time=0, observation_target=[]
     ):

@@ -8,6 +8,8 @@ Updates to come.
 import numpy as np
 import os, sys
 
+import rcognita.base
+
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
@@ -46,7 +48,7 @@ def force_positive_def(func):
     return positive_def_wrapper
 
 
-class Model(ABC):
+class Model(rcognita.base.RcognitaBase, ABC):
     """
     Blueprint of a model.
     """

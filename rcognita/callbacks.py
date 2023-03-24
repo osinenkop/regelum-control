@@ -14,9 +14,10 @@ Callbacks can be registered by simply supplying them in the respective keyword a
         ...
 
 """
-
+import typing
 from abc import ABC, abstractmethod
 
+import matplotlib.animation
 import mlflow
 import torch
 import rcognita
@@ -42,7 +43,7 @@ def is_in_debug_mode():
     return not sys.gettrace() is None
 
 
-def apply_callbacks(method):
+class apply_callbacks:
     """
     Decorator that applies a list of callbacks to a given method of an object.
     If the object has no list of callbacks specified, the default callbacks are used.
@@ -50,42 +51,19 @@ def apply_callbacks(method):
     :param method: The method to which the callbacks should be applied.
     """
 
-    def new_method(self, *args, **kwargs):
-        res = method(self, *args, **kwargs)
-        if self.callbacks is None:
-            self.callbacks = rcognita.main.callbacks
-        for callback in self.callbacks:
-            callback(obj=self, method=method.__name__, output=res)
-        return res
+    def __init__(self, callbacks=None):
+        self.callbacks = callbacks
 
-    return new_method
+    def __call__(self, method):
+        def new_method(self2, *args, **kwargs):
+            res = method(self2, *args, **kwargs)
+            if self.callbacks is None:
+                callbacks = rcognita.main.callbacks
+            for callback in callbacks:
+                callback(obj=self2, method=method.__name__, output=res)
+            return res
 
-
-class introduce_callbacks:
-    """
-    A class decorator that introduces a `callbacks` attribute to the decorated class.
-    The `callbacks` attribute is a list of callbacks that can be applied to methods
-    of instances of the decorated class (for instance via `@apply_callbacks`).
-    """
-
-    def __init__(self, default_callbacks=None):
-        """
-        Initializes the decorator.
-
-        :param default_callbacks: A list of callbacks that will be used as the default
-            value for the `callbacks` attribute of instances of the decorated class.
-            If no value is specified, the `callbacks` attribute will be initialized to `None`, which will
-            in turn make `@apply_callbacks` use default callbacks instead.
-        """
-        self.default_callbacks = default_callbacks
-
-    def __call__(self, cls):
-        class whatever(cls):
-            def __init__(self2, *args, callbacks=self.default_callbacks, **kwargs):
-                super().__init__(*args, **kwargs)
-                self2.callbacks = callbacks
-
-        return whatever
+        return new_method
 
 
 class Callback(ABC):
@@ -94,7 +72,7 @@ class Callback(ABC):
     This is the base class for a callback object. Callback objects are used to perform some action or computation after a method has been called.
     """
 
-    def __init__(self, logger, log_level="info"):
+    def __init__(self, log_level="info"):
         """
         Initialize a callback object.
 
@@ -103,8 +81,8 @@ class Callback(ABC):
         :param log_level: The level at which messages should be logged.
         :type log_level: str
         """
-        self.log = logger.__getattribute__(log_level)
-        self.exception = logger.exception
+        self.log = rcognita.main.logger.__getattribute__(log_level)
+        self.exception = rcognita.main.logger.exception
         self.last_trigger = 0.0
 
     @abstractmethod
@@ -498,6 +476,61 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
             f.write(html)
 
 
+plt.rcParams['animation.frame_format'] = "svg" # VERY important
+class AnimationCallback(Callback, ABC):
+    def __init__(self):
+        self.frame_data = []
+        self.fig = plt.figure()
+        self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
+        self.saved_counter = 0
+
+    def get_save_directory(self):
+        return self.save_directory
+
+    def on_launch(self):
+        os.mkdir(self.get_save_directory())
+
+    def add_frame_datum(self, frame_datum):
+        self.frame_data.append(frame_datum)
+
+    def clear_frames(self):
+        self.frame_data = []
+
+    @abstractmethod
+    def update_frame(self, **frame_datum):
+        pass
+
+    def animate(self, frames="all"):
+        if frames == "all":
+            frames = len(self.frame_data)
+        elif isinstance(frames, int):
+            frames = max(min(frames, len(self.frame_data)), 0)
+        elif isinstance(frames, float) and 0 <= frames <= 1:
+            frames = int(frames * len(self.frame_data))
+        else:
+            raise ValueError('animate accepts an int, a float or "all", but instead a different value was provided.')
+
+        def animation_update(i):
+            j = int((i / frames) * len(self.frame_data) + 0.5)
+            return self.update_frame(**self.frame_data[j])
+
+        anim = matplotlib.animation.FuncAnimation(self.fig, animation_update,
+                                                  frames=frames, interval=1,
+                                                  blit=True)
+        return anim.to_jshtml()
+
+    def animate_and_save(self, frames="all", name=None):
+        if name is None:
+            name = str(self.saved_counter)
+            self.saved_counter += 1
+        animation = self.animate(frames=frames)
+        dir = self.get_save_directory()
+        with open(dir + "/" + name + ".html", "w") as f:
+            f.write(f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>")
+
+
+
+
 class HistoricalCallback(Callback, ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -760,7 +793,6 @@ class InspectReferrersCallback(Callback):
             refs = gc.get_referrers(getattr(obj, self.object_to_trace))
             refs = [x for x in refs[1] if "__" not in x]
             self.log(f"{self.object_to_trace} referrers: {refs}")
-
 
 class HistoricalObservationCallback(HistoricalCallback):
     """
