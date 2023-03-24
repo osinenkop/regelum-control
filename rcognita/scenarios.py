@@ -7,7 +7,7 @@ For instance, an online scenario is when the controller and system interact with
 
 from abc import ABC, abstractmethod
 import matplotlib.pyplot as plt
-from itertools import islice
+from itertools import islice, cycle
 import numpy as np
 from typing import Optional
 from unittest.mock import Mock, MagicMock
@@ -248,6 +248,16 @@ class EpisodicScenario(OnlineScenario):
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
 
+    def set_speedup(self, speedup):
+        self.speedup = speedup
+        self.cached_timeline = islice(cycle(iter(self.cache)), 0, None, self.speedup)
+
+    def get_speeduped_cache_len(self):
+        return len(range(0, len(self.cache), self.speedup))
+
+    def get_cache_len(self):
+        return len(self.cache)
+
     @apply_callbacks
     def reload_pipeline(self):
         self.sim_status = 1
@@ -375,7 +385,7 @@ class EpisodicScenario(OnlineScenario):
                                     self.cache[key_k][10] = self.cache[key_i][10]
 
                     self.cached_timeline = islice(
-                        iter(self.cache), 0, None, self.speedup
+                        cycle(iter(self.cache)), 0, None, self.speedup
                     )
 
             return self.current_scenario_status

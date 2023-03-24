@@ -121,7 +121,8 @@ class SolutionDashboard(Dashboard):
         self.axes_solution.autoscale(False)
         self.axes_solution.set_xlim(self.time_start, self.time_final)
         self.axes_solution.set_ylim(
-            2 * np.min([self.xMin, self.yMin]), 2 * np.max([self.xMax, self.yMax]),
+            2 * np.min([self.xMin, self.yMin]),
+            2 * np.max([self.xMax, self.yMax]),
         )
         self.axes_solution.set_xlabel("Time [s]")
 
@@ -175,8 +176,10 @@ class CostDashboard(Dashboard):
         self.axes_cost.set_xlabel("Time [s]")
         self.axes_cost.autoscale(False)
 
-        text_outcome = r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
-            outcome=0
+        text_outcome = (
+            r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.3f}".format(
+                outcome=0
+            )
         )
         self.text_outcome_handle = self.axes_cost.text(
             0.05,
@@ -210,8 +213,10 @@ class CostDashboard(Dashboard):
 
         update_line(self.line_running_obj, time, running_objective_value)
         update_line(self.line_outcome, time, outcome)
-        text_outcome = r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
-            outcome=np.squeeze(np.array(outcome))
+        text_outcome = (
+            r"$\int \mathrm{{running\,obj.}} \,\mathrm{{d}}t$ = {outcome:2.1f}".format(
+                outcome=np.squeeze(np.array(outcome))
+            )
         )
         update_text(self.text_outcome_handle, text_outcome)
 
@@ -317,10 +322,22 @@ class Animator3WRobot(Animator):
 
     """
 
-    def __init__(self, scenario=None, subplot_grid_size=None):
+    def __init__(
+        self,
+        scenario=None,
+        subplot_grid_size=None,
+        fps=10,
+        max_video_length=60,
+        save_format=None,
+    ):
         if subplot_grid_size is None:
             subplot_grid_size = [2, 2]
-        super().__init__(subplot_grid_size=subplot_grid_size)
+        super().__init__(
+            subplot_grid_size=subplot_grid_size,
+            fps=fps,
+            max_video_lenth=max_video_length,
+            save_format=save_format,
+        )
         self.scenario = scenario
         self.__dict__.update(scenario.__dict__)
 

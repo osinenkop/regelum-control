@@ -1,4 +1,5 @@
 import os, sys
+import mlflow
 
 # PARENT_DIR = os.path.abspath(__file__ + "/../../")
 # sys.path.insert(0, PARENT_DIR)
@@ -9,12 +10,13 @@ import os, sys
 import numpy as np
 
 # os.chdir(PARENT_DIR)
-import rcognita as r
-
+import rcognita as rc
+import time
 
 # os.chdir(CUR_DIR)
 
 import matplotlib.pyplot as plt
+from matplotlib.animation import FFMpegWriter
 import pandas as pd
 import pickle
 import dill
@@ -27,16 +29,39 @@ torch.manual_seed(seed)
 random.seed(seed)
 
 
-@r.main(config_path="general", config_name="main")
+@rc.main(config_path="general", config_name="main")
 def launch(cfg):
     scenario = ~cfg.scenario
     total_objective = scenario.run()
 
     if scenario.is_playback:
-        animator = r.vis_3wrobot.Animator3WRobot(scenario)
-        # animator = r.vis_inverted_pendulum.AnimatorInvertedPendulum(scenario)
+        animator = rc.vis_3wrobot.Animator3WRobot(scenario, save_format="mp4", fps=10)
         animator.playback()
-        plt.show()
+        # plt.rcParams["animation.frame_format"] = "svg"
+        # with open(
+        #     "/mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/anim.html",
+        #     "w",
+        # ) as f:
+        #     f.write(
+        #         f"<html><head><title>{r.vis_3wrobot.Animator3WRobot.__class__.__name__}</title></head><body>{animator.anm.to_jshtml()}</body></html>"
+        #     )
+
+        # mlflow.log_artifact(
+        #     "/mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/anim.html"
+        # )
+        # writer = FFMpegWriter(
+        #     fps=10, codec="libx264", extra_args=["-crf", "27", "-preset", "ultrafast"]
+        # )
+        # start = time.time()
+        # animator.anm.save(
+        #     "/mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/anim.mp4",
+        #     writer=writer,
+        #     dpi=100,
+        # )
+        # print(time.time() - start)
+        # mlflow.log_artifact(
+        #     "/mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/anim.mp4"
+        # )
 
     return total_objective
 

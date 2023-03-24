@@ -10,12 +10,13 @@ Remarks:
 - Buffers are updated from bottom to top
 
 """
-
+from itertools import islice, cycle
 from ..__utilities import rc
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage
 import numpy as np
+from matplotlib.animation import FFMpegWriter
 
 # !pip install mpldatacursor <-- to install this
 from mpldatacursor import datacursor
@@ -25,6 +26,7 @@ from svgpath2mpl import parse_path
 import numbers
 from abc import ABC, abstractmethod
 from itertools import product
+import mlflow
 
 
 def update_line(matplotlib_handle, newX, newY):
@@ -112,11 +114,26 @@ class Animator:
 
     """
 
-    def __init__(self, subplot_grid_size=[2, 2]):
+    def __init__(
+        self,
+        fps=50,
+        max_video_lenth=20,
+        save_format=None,
+        subplot_grid_size=[2, 2],
+        animation_max_size_mb=200,
+    ):
         self.subplot_grid_size = subplot_grid_size
         self.artists = []
+        self.fps = fps
+        self.max_video_length = max_video_lenth
+        self.save_format = save_format
+        self.animation_max_size_mb = animation_max_size_mb
 
     def init_anim(self):
+        # clear matplotlib cache
+        plt.clf()
+        plt.cla()
+        plt.close()
         self.main_figure = plt.figure(figsize=(10, 10))
         self.axes_array = self.main_figure.subplots(*self.subplot_grid_size)
         if self.subplot_grid_size == [1, 1]:
@@ -133,12 +150,15 @@ class Animator:
         for r, c in product(
             range(self.subplot_grid_size[0]), range(self.subplot_grid_size[1])
         ):
-            plt.sca(self.axes_array[r, c])
             self.dashboards[self.get_index(r, c)].update(update_variant)
 
         return self.artists
 
-    def animate(self, k):
+    def animate(self, frame_index):
+        # for initital frame no simulation steps needed
+        if frame_index == 0:
+            return self.artists
+
         sim_status = self.scenario.step()
         SIMULATION_ENDED = sim_status == "simulation_ended"
         EPISODE_ENDED = sim_status == "episode_ended"
@@ -156,14 +176,6 @@ class Animator:
             self.update_dashboards("step")
 
         return self.artists
-
-    def get_anm(self, anm):
-        """
-        ``anm`` should be a ``FuncAnimation`` object.
-        This method is needed to hand the animator access to the currently running animation, say, via ``anm.event_source.stop()``.
-
-        """
-        self.anm = anm
 
     def stop_anm(self):
         """
@@ -195,21 +207,58 @@ class Animator:
 
         self.init_anim()
 
-        anm = animation.FuncAnimation(
+        estimated_n_frames_in_video = int(
+            min(self.max_video_length, self.scenario.time_final) * self.fps
+        )
+        scenario_speedup = max(
+            self.scenario.get_cache_len() // estimated_n_frames_in_video, 1
+        )
+        self.scenario.set_speedup(scenario_speedup)
+
+        self.anm = animation.FuncAnimation(
             self.main_figure,
             self.animate,
             blit=True,
-            interval=self.sampling_time / 1e6,
+            interval=round(
+                1000 / self.fps
+            ),  # Interval in FuncAnimation is miliseconds between frames
             repeat=False,
+            frames=self.scenario.get_speeduped_cache_len(),
         )
-
-        self.get_anm(anm)
 
         cId = self.main_figure.canvas.mpl_connect(
-            "key_press_event", lambda event: on_key_press(event, anm)
+            "key_press_event", lambda event: on_key_press(event, self.anm)
         )
 
-        anm.running = True
+        self.anm.running = True
+        if self.save_format is None:
+            plt.show()
+        else:
+            self.save_animation()
+
+    def save_animation(self):
+        if self.save_format == "html":
+            plt.rcParams["animation.frame_format"] = "svg"
+            plt.rcParams["animation.embed_limit"] = self.animation_max_size_mb
+            with open(
+                "animation.html",
+                "w",
+            ) as f:
+                f.write(
+                    f"<html><head><title>{self.__class__.__name__}</title></head><body>{self.anm.to_jshtml()}</body></html>"
+                )
+            mlflow.log_artifact("animation.html")
+        elif self.save_format == "mp4":
+            writer = FFMpegWriter(
+                fps=self.fps,
+                codec="libx264",
+                extra_args=["-crf", "27", "-preset", "ultrafast"],
+            )
+            self.anm.save(
+                "animation.mp4",
+                writer=writer,
+            )
+            mlflow.log_artifact("animation.mp4")
 
 
 class RobotMarker:
