@@ -383,6 +383,8 @@ class EpisodicScenario(OnlineScenario):
                                     key_k = keys[k]
                                     self.cache[key_k][10] = self.cache[key_i][10]
 
+                    # generator self.cached_timeline is needed for playback.
+                    # self.cached_timeline skips frames depending on self.speedup using islice.
                     self.cached_timeline = islice(
                         cycle(iter(self.cache)), 0, None, self.speedup
                     )
