@@ -259,6 +259,9 @@ class EpisodicScenario(OnlineScenario):
 
     @apply_callbacks()
     def reload_pipeline(self):
+        return self.reload_pipeline_no_callbacks()
+
+    def reload_pipeline_no_callbacks(self):
         self.sim_status = 1
         self.time = 0
         self.time_old = 0

@@ -44,7 +44,11 @@ class InvPendulumTrackingDashboard(Dashboard):
             transform=self.axes_rotating_pendulum.transAxes,
         )
         self.axes_rotating_pendulum.format_coord = (
-            lambda state, observation: "%2.2f, %2.2f" % (state, observation,)
+            lambda state, observation: "%2.2f, %2.2f"
+            % (
+                state,
+                observation,
+            )
         )
 
         xCoord0 = self.rod_length * rc.sin(self.state_init[0])
@@ -54,7 +58,10 @@ class InvPendulumTrackingDashboard(Dashboard):
             xCoord0, yCoord0, marker="o", s=400, c="b"
         )
         (self.line_rod,) = self.axes_rotating_pendulum.plot(
-            [0, xCoord0], [0, yCoord0], "b", lw=1.5,
+            [0, xCoord0],
+            [0, yCoord0],
+            "b",
+            lw=1.5,
         )
 
         self.artists.append(self.text_time_handle)
@@ -194,7 +201,9 @@ class WeightsEpisodicDashboard(Dashboard):
 
         self.policy_line_handles_pack = [
             self.axs_action_params.plot(
-                [0], [self.scenario.actor.model.weights_init[i]], label=f"w_{i+1}",
+                [0],
+                [self.scenario.actor.model.weights_init[i]],
+                label=f"w_{i+1}",
             )[0]
             for i in range(len(self.weights_init))
         ]
@@ -211,8 +220,20 @@ class WeightsEpisodicDashboard(Dashboard):
 
 
 class AnimatorInvertedPendulum(Animator):
-    def __init__(self, scenario, subplot_grid_size=[2, 2]):
-        super().__init__(subplot_grid_size=subplot_grid_size)
+    def __init__(
+        self,
+        scenario,
+        subplot_grid_size=[2, 2],
+        fps=10,
+        save_format=None,
+        max_video_length=60,
+    ):
+        super().__init__(
+            subplot_grid_size=subplot_grid_size,
+            max_video_length=max_video_length,
+            fps=fps,
+            save_format=save_format,
+        )
 
         self.__dict__.update(scenario.__dict__)
 

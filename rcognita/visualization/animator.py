@@ -27,6 +27,8 @@ import numbers
 from abc import ABC, abstractmethod
 from itertools import product
 import mlflow
+from matplotlib import animation
+from rcognita.__utilities import on_key_press
 
 
 def update_line(matplotlib_handle, newX, newY):
@@ -117,7 +119,7 @@ class Animator:
     def __init__(
         self,
         fps=50,
-        max_video_lenth=20,
+        max_video_length=20,
         save_format=None,
         subplot_grid_size=[2, 2],
         animation_max_size_mb=200,
@@ -125,7 +127,7 @@ class Animator:
         self.subplot_grid_size = subplot_grid_size
         self.artists = []
         self.fps = fps
-        self.max_video_length = max_video_lenth
+        self.max_video_length = max_video_length
         self.save_format = save_format
         self.animation_max_size_mb = animation_max_size_mb
 
@@ -177,14 +179,48 @@ class Animator:
 
         return self.artists
 
-    def stop_anm(self):
-        """
-        Stops animation, provided that ``self.anm`` was defined via ``get_anm``.
+    def play_live(self):
+        self.init_anim()
+        self.anm = animation.FuncAnimation(
+            self.main_figure,
+            self.animate_live,
+            blit=True,
+            interval=0,  # Interval in FuncAnimation is miliseconds between frames
+            repeat=False,
+        )
 
-        """
-        self.anm.event_source.stop()
-        # plt.close('all')
-        # raise Exception("exit")
+        cId = self.main_figure.canvas.mpl_connect(
+            "key_press_event", lambda event: on_key_press(event, self.anm)
+        )
+
+        self.anm.running = True
+
+        plt.show()
+
+    def animate_live(self, frame_index):
+        if frame_index == 0:
+            return self.artists
+
+        start_time = self.scenario.time
+        while self.scenario.time - start_time < 1 / self.fps:
+            sim_status = self.scenario.step()
+            SIMULATION_ENDED = sim_status == "simulation_ended"
+            EPISODE_ENDED = sim_status == "episode_ended"
+            ITERATION_ENDED = sim_status == "iteration_ended"
+            if SIMULATION_ENDED:
+                print("Simulation ended")
+                self.anm.event_source.stop()
+            elif EPISODE_ENDED:
+                self.update_dashboards("episode")
+            elif ITERATION_ENDED:
+                self.update_dashboards("iteration")
+
+            if SIMULATION_ENDED or EPISODE_ENDED or ITERATION_ENDED:
+                self.scenario.reload_pipeline_no_callbacks()
+                return self.artists
+
+        self.update_dashboards("step")
+        return self.artists
 
     def set_sim_data(self, **kwargs):
         """
@@ -202,8 +238,6 @@ class Animator:
         return r * self.subplot_grid_size[1] + c
 
     def playback(self):
-        from matplotlib import animation
-        from rcognita.__utilities import on_key_press
 
         self.init_anim()
 

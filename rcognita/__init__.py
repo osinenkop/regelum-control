@@ -536,7 +536,6 @@ class main:
         self.__class__.logger = logger
         self.__class__.callbacks = [callback() for callback in callbacks]
 
-
     def __call__(self, old_app):
         def rcognita_main(*args, **kwargs):
             common_dir = tempfile.TemporaryDirectory()
@@ -636,7 +635,8 @@ class main:
                             res = old_app(ccfg)
                             mlflow.log_artifact(".callbacks")
                             mlflow.log_artifact("__init__.log")
-                            mlflow.log_artifact("callbacks.dill")
+                            if os.path.exists("callbacks.dill"):
+                                mlflow.log_artifact("callbacks.dill")
 
                         self.__class__.callbacks[0].log(
                             "Script terminated successfully."

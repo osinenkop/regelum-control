@@ -23,19 +23,19 @@ import dill
 import torch
 import random
 
-seed = 42
-np.random.seed(seed)
-torch.manual_seed(seed)
-random.seed(seed)
-
 
 @rc.main(config_path="general", config_name="main")
 def launch(cfg):
     scenario = ~cfg.scenario
-    total_objective = scenario.run()
+    # total_objective = scenario.run()
+
+    animator = rc.vis_inverted_pendulum.AnimatorInvertedPendulum(scenario)
+    animator.play_live()
 
     if scenario.is_playback:
-        animator = rc.vis_3wrobot.Animator3WRobot(scenario, save_format="mp4", fps=10)
+        animator = rc.vis_inverted_pendulum.AnimatorInvertedPendulum(
+            scenario, save_format="mp4", fps=30
+        )
         animator.playback()
         # plt.rcParams["animation.frame_format"] = "svg"
         # with open(
@@ -63,7 +63,7 @@ def launch(cfg):
         #     "/mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/anim.mp4"
         # )
 
-    return total_objective
+    return
 
 
 def plot_multirun_total_objective(callbacks, preset_name):

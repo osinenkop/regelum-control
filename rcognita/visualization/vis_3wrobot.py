@@ -335,7 +335,7 @@ class Animator3WRobot(Animator):
         super().__init__(
             subplot_grid_size=subplot_grid_size,
             fps=fps,
-            max_video_lenth=max_video_length,
+            max_video_length=max_video_length,
             save_format=save_format,
         )
         self.scenario = scenario
