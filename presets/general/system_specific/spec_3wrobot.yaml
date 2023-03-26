@@ -27,3 +27,5 @@ diag_scale_coef: 5.
 calf_data_buffer_size: 200
 single_weight_min: 1.0E-7
 single_weight_max: 1.0E+4
+
+fps: 10

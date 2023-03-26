@@ -1344,6 +1344,9 @@ class Controller2TankPID:
         )
         self.observation_target = observation_target
 
+    def reset(self):
+        pass
+
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
         """
         Compute sampled action.
