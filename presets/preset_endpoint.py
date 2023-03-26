@@ -5,7 +5,10 @@ import rcognita as rc
 def launch(cfg):
     scenario = ~cfg.scenario
     if scenario.howanim in rc.ANIMATION_TYPES_REQUIRING_ANIMATOR:
-        animator = ~cfg.animator
+        try:
+            animator = ~cfg.animator
+        except:
+            raise NotImplementedError("Can't instantiate animator for your system")
         if scenario.howanim == "live":
             animator.play_live()
         elif scenario.howanim in rc.ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK:
