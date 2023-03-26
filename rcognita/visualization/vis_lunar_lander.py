@@ -330,10 +330,23 @@ class AnimatorLunarLander(Animator):
 
     """
 
-    def __init__(self, scenario=None, subplot_grid_size=None):
+    def __init__(
+        self,
+        scenario=None,
+        subplot_grid_size=None,
+        fps=10,
+        max_video_length=60,
+        animation_max_size_mb=200,
+    ):
         if subplot_grid_size is None:
             subplot_grid_size = [1, 1]
-        super().__init__(subplot_grid_size=subplot_grid_size)
+        super().__init__(
+            subplot_grid_size=subplot_grid_size,
+            max_video_length=max_video_length,
+            fps=fps,
+            animation_type=scenario.howanim,
+            animation_max_size_mb=animation_max_size_mb,
+        )
         self.scenario = scenario
         self.__dict__.update(scenario.__dict__)
 
