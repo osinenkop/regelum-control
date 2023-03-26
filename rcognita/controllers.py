@@ -22,6 +22,7 @@ from .__w_plotting import plot_optimization_results
 from .callbacks import apply_callbacks, Callback
 from .base import RcognitaBase
 
+
 def apply_action_bounds(method):
     def wrapper(self, *args, **kwargs):
         self.action = method(self, *args, **kwargs)
@@ -33,7 +34,6 @@ def apply_action_bounds(method):
         return self.action
 
     return wrapper
-
 
 
 class Controller(RcognitaBase, ABC):
@@ -246,10 +246,6 @@ class CALFControllerExPost(RLController):
         )
         if self.critic.CALFs != []:
             CALF_increased = current_CALF > self.critic.CALFs[-1]
-            if CALF_increased:
-                print("CALF increased!!")
-
-        print(self.critic.model.weights, time)
 
         self.critic.CALFs.append(current_CALF)
 
@@ -1255,6 +1251,9 @@ class ControllerLunarLanderPID:
         self.threshold_2 = 1.2
         self.threshold = self.threshold_1
 
+    def reset(self):
+        pass
+
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
         """
         Compute sampled action.
@@ -1276,7 +1275,6 @@ class ControllerLunarLanderPID:
                     )
 
             self.action_old = action
-            print(action)
             return action
 
         else:
@@ -1430,13 +1428,11 @@ class Controller3WRobotNIMotionPrimitive:
         elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
             angle, angle_cond, atol=1e-03
         ):
-            print("cond 2")
             omega = 0
             v = -self.K * rc.sqrt(rc.norm_2(rc.array([x, y])))
         elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
             angle, 0, atol=1e-03
         ):
-            print("cond 3")
             omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
             v = 0
         else:
@@ -1467,7 +1463,6 @@ class Controller3WRobotNIMotionPrimitive:
                     )
 
             self.action_old = action
-            print(action)
             return action
 
         else:
