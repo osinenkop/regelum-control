@@ -961,10 +961,11 @@ def on_key_press(event, anm):
         plt.clf()
         plt.cla()
         plt.close()
-        # Legaccy code. Was a bit nasty due to an exception raise
-        # plt.close("all")
-        # raise Exception("exit")
+               
+        raise Exception("Script terminated after q key press")
 
+def on_close(event):
+    raise Exception("Script terminated after animation was closed")
 
 log = None
 
