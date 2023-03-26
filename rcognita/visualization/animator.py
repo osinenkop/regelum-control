@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage
 import numpy as np
 from matplotlib.animation import FFMpegWriter
+from rcognita import ANIMATION_TYPES_SAVE_FORMATS
 
 # !pip install mpldatacursor <-- to install this
 from mpldatacursor import datacursor
@@ -118,9 +119,9 @@ class Animator:
 
     def __init__(
         self,
+        animation_type,
         fps=50,
         max_video_length=20,
-        save_format=None,
         subplot_grid_size=[2, 2],
         animation_max_size_mb=200,
     ):
@@ -128,7 +129,7 @@ class Animator:
         self.artists = []
         self.fps = fps
         self.max_video_length = max_video_length
-        self.save_format = save_format
+        self.animation_type = animation_type
         self.animation_max_size_mb = animation_max_size_mb
 
     def init_anim(self):
@@ -188,11 +189,9 @@ class Animator:
             interval=0,  # Interval in FuncAnimation is miliseconds between frames
             repeat=False,
         )
-
-        cId = self.main_figure.canvas.mpl_connect(
+        self.main_figure.canvas.mpl_connect(
             "key_press_event", lambda event: on_key_press(event, self.anm)
         )
-
         self.anm.running = True
 
         plt.show()
@@ -216,7 +215,7 @@ class Animator:
                 self.update_dashboards("iteration")
 
             if SIMULATION_ENDED or EPISODE_ENDED or ITERATION_ENDED:
-                self.scenario.reload_pipeline_no_callbacks()
+                self.scenario.reload_pipeline()
                 return self.artists
 
         self.update_dashboards("step")
@@ -238,9 +237,6 @@ class Animator:
         return r * self.subplot_grid_size[1] + c
 
     def playback(self):
-
-        self.init_anim()
-
         estimated_n_frames_in_video = int(
             min(self.max_video_length, self.scenario.time_final) * self.fps
         )
@@ -249,6 +245,7 @@ class Animator:
         )
         self.scenario.set_speedup(scenario_speedup)
 
+        self.init_anim()
         self.anm = animation.FuncAnimation(
             self.main_figure,
             self.animate,
@@ -260,18 +257,19 @@ class Animator:
             frames=self.scenario.get_speeduped_cache_len(),
         )
 
-        cId = self.main_figure.canvas.mpl_connect(
-            "key_press_event", lambda event: on_key_press(event, self.anm)
-        )
-
+        if self.animation_type not in ANIMATION_TYPES_SAVE_FORMATS:
+            self.main_figure.canvas.mpl_connect(
+                "key_press_event", lambda event: on_key_press(event, self.anm)
+            )
         self.anm.running = True
-        if self.save_format is None:
-            plt.show()
-        else:
+
+        if self.animation_type in ANIMATION_TYPES_SAVE_FORMATS:
             self.save_animation()
+        else:
+            plt.show()
 
     def save_animation(self):
-        if self.save_format == "html":
+        if self.animation_type == "html":
             plt.rcParams["animation.frame_format"] = "svg"
             plt.rcParams["animation.embed_limit"] = self.animation_max_size_mb
             with open(
@@ -282,7 +280,7 @@ class Animator:
                     f"<html><head><title>{self.__class__.__name__}</title></head><body>{self.anm.to_jshtml()}</body></html>"
                 )
             mlflow.log_artifact("animation.html")
-        elif self.save_format == "mp4":
+        elif self.animation_type == "mp4":
             writer = FFMpegWriter(
                 fps=self.fps,
                 codec="libx264",

@@ -955,9 +955,15 @@ def on_key_press(event, anm):
         else:
             anm.event_source.start()
         anm.running ^= True
-    elif event.key == "q":
-        plt.close("all")
-        raise Exception("exit")
+    elif event.key == "q" or event.key:
+        if anm is not None:
+            anm.event_source.stop()
+        plt.clf()
+        plt.cla()
+        plt.close()
+        # Legaccy code. Was a bit nasty due to an exception raise
+        # plt.close("all")
+        # raise Exception("exit")
 
 
 log = None

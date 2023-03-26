@@ -21,6 +21,7 @@ from .simulator import Simulator
 from .controllers import Controller
 from .objectives import RunningObjective
 from .callbacks import apply_callbacks
+from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 
 try:
     import torch
@@ -78,14 +79,13 @@ class OnlineScenario(Scenario):
         running_objective: Optional[RunningObjective] = None,
         no_print: bool = False,
         is_log: bool = False,
-        is_playback: bool = False,
+        howanim: str = None,
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
         time_start: float = 0.0,
         observation_target=[],
         observation_components_naming=[],
     ):
-
         self.simulator = simulator
 
         self.system = Mock() if not hasattr(simulator, "system") else simulator.system
@@ -119,7 +119,10 @@ class OnlineScenario(Scenario):
         self.time_final = self.simulator.time_final
         self.no_print = no_print
         self.is_log = is_log
-        self.is_playback = is_playback
+        self.howanim = howanim
+        self.is_playback = (
+            self.howanim in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
+        )
         self.state_init = state_init
         self.state_full = state_init
         self.action_init = action_init
@@ -356,7 +359,7 @@ class EpisodicScenario(OnlineScenario):
 
                 self.update_time_from_cache()
             else:
-                if self.is_playback:
+                if self.howanim in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK:
                     self.current_scenario_snapshot = [
                         self.time,
                         self.episode_counter,

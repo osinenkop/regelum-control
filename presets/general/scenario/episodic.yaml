@@ -6,7 +6,7 @@ running_objective: ~ running_objective
 simulator: ~ simulator
 no_print: false
 is_log: false
-is_playback: true
+howanim: None
 state_init: $ initial_conditions.state_init
 action_init: $ initial_conditions.action_init
 N_episodes: 20

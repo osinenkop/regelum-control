@@ -8,6 +8,7 @@ defaults:
   - initial_conditions: ic_${system}
   - observation_naming: naming_${system}
   - optional system_specific: spec_${system}
+  - optional animator: animator_${system}
 #  - ${controller}_${system}
 
 callbacks:

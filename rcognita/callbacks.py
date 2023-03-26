@@ -476,7 +476,9 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
             f.write(html)
 
 
-plt.rcParams['animation.frame_format'] = "svg" # VERY important
+plt.rcParams["animation.frame_format"] = "svg"  # VERY important
+
+
 class AnimationCallback(Callback, ABC):
     def __init__(self):
         self.frame_data = []
@@ -508,15 +510,17 @@ class AnimationCallback(Callback, ABC):
         elif isinstance(frames, float) and 0 <= frames <= 1:
             frames = int(frames * len(self.frame_data))
         else:
-            raise ValueError('animate accepts an int, a float or "all", but instead a different value was provided.')
+            raise ValueError(
+                'animate accepts an int, a float or "all", but instead a different value was provided.'
+            )
 
         def animation_update(i):
             j = int((i / frames) * len(self.frame_data) + 0.5)
             return self.update_frame(**self.frame_data[j])
 
-        anim = matplotlib.animation.FuncAnimation(self.fig, animation_update,
-                                                  frames=frames, interval=1,
-                                                  blit=True)
+        anim = matplotlib.animation.FuncAnimation(
+            self.fig, animation_update, frames=frames, interval=1, blit=True
+        )
         return anim.to_jshtml()
 
     def animate_and_save(self, frames="all", name=None):
@@ -526,9 +530,9 @@ class AnimationCallback(Callback, ABC):
         animation = self.animate(frames=frames)
         dir = self.get_save_directory()
         with open(dir + "/" + name + ".html", "w") as f:
-            f.write(f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>")
-
-
+            f.write(
+                f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
+            )
 
 
 class HistoricalCallback(Callback, ABC):
@@ -592,9 +596,10 @@ class HistoricalCallback(Callback, ABC):
         return self.__data
 
     def plot(self, name=None):
-        plt.clf()
-        plt.cla()
-        plt.close()
+        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+            plt.clf()
+            plt.cla()
+            plt.close()
         if not name:
             name = self.__class__.__name__
         res = self.data.plot()
@@ -794,6 +799,7 @@ class InspectReferrersCallback(Callback):
             refs = [x for x in refs[1] if "__" not in x]
             self.log(f"{self.object_to_trace} referrers: {refs}")
 
+
 class HistoricalObservationCallback(HistoricalCallback):
     """
     A callback which allows to store desired data
@@ -832,9 +838,11 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
-        plt.clf()
-        plt.cla()
-        plt.close()
+        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+            plt.clf()
+            plt.cla()
+            plt.close()
+
         if not name:
             name = self.__class__.__name__
         res = (
@@ -870,9 +878,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         return super().load_data(idx=1)
 
     def plot(self, name=None):
-        plt.clf()
-        plt.cla()
-        plt.close()
+        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+            plt.clf()
+            plt.cla()
+            plt.close()
         if not name:
             name = self.__class__.__name__
 
@@ -1045,9 +1054,10 @@ class CalfWeightsCallback(HistoricalCallback):
 
     def plot(self, name=None):
         if not self.data.empty:
-            plt.clf()
-            plt.cla()
-            plt.close()
+            if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+                plt.clf()
+                plt.cla()
+                plt.close()
             if not name:
                 name = self.__class__.__name__
             res = self.data.set_index("time").plot(
@@ -1103,9 +1113,10 @@ class CalfCallback(HistoricalCallback):
             self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
-        plt.clf()
-        plt.cla()
-        plt.close()
+        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+            plt.clf()
+            plt.cla()
+            plt.close()
         if not self.data.empty:
             fig = plt.figure(figsize=(10, 10))
 

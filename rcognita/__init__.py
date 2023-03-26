@@ -39,6 +39,16 @@ from .__gui_server import __file__ as gui_script_file
 monkey_patch(__fake_plugins, hydra.core.plugins)
 monkey_patch(__fake_config_loader_impl, hydra._internal.config_loader_impl)
 
+ANIMATION_TYPES_SAVE_FORMATS = ["html", "mp4"]
+ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK = [
+    "playback"
+] + ANIMATION_TYPES_SAVE_FORMATS
+ANIMATION_TYPES_NONE = [None, "None"]
+ANIMATION_TYPES_REQUIRING_ANIMATOR = [
+    "live",
+] + ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
+ANIMATION_TYPES = ANIMATION_TYPES_NONE + ANIMATION_TYPES_REQUIRING_ANIMATOR
+
 from . import controllers
 from . import systems
 from . import simulator
@@ -504,11 +514,11 @@ class main:
             self.callbacks_enabled = False
         else:
             self.callbacks_enabled = True
-        if "--disable-gui" in sys.argv:
-            sys.argv.pop(sys.argv.index("--disable-gui"))
-            self.gui_enabled = False
+        if "--enable-streamlit" in sys.argv:
+            sys.argv.pop(sys.argv.index("--enable-streamlit"))
+            self.streamlit_enabled = True
         else:
-            self.gui_enabled = True
+            self.streamlit_enabled = False
         self.cooldown_factor = 1.0
         for i, arg in enumerate(sys.argv):
             if "--cooldown-factor" in arg:
@@ -525,6 +535,12 @@ class main:
             self.is_sweep = True
         else:
             self.is_sweep = False
+
+        self.__class__.is_clear_matplotlib_cache_in_callbacks = True
+        for arg in sys.argv:
+            if "live" in arg:
+                self.__class__.is_clear_matplotlib_cache_in_callbacks = False
+
         self.args = args
         self.kwargs = kwargs
         self.kwargs["version_base"] = (
@@ -549,8 +565,14 @@ class main:
             self.kwargs["config_path"] = path
 
             def app(
-                cfg, callbacks=self.__class__.callbacks, logger=self.__class__.logger
+                cfg,
+                callbacks=self.__class__.callbacks,
+                logger=self.__class__.logger,
+                is_clear_matplotlib_cache_in_callbacks=self.__class__.is_clear_matplotlib_cache_in_callbacks,
             ):
+                self.__class__.is_clear_matplotlib_cache_in_callbacks = (
+                    is_clear_matplotlib_cache_in_callbacks
+                )
                 self.__class__.logger = logger
                 mlflow.set_tracking_uri(self.mlflow_uri)
                 if "seed" in cfg:
@@ -684,7 +706,7 @@ class main:
                 # streamlit.cli.main_run(filename, args)
                 streamlit.web.bootstrap.run(gui_script_file, "", args, flag_options={})
 
-            gui = Process(target=gui_server) if self.gui_enabled else Mock()
+            gui = Process(target=gui_server) if self.streamlit_enabled else Mock()
             gui.start()
             app.__module__ = old_app.__module__
             res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)

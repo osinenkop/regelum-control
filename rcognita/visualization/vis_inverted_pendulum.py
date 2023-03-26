@@ -225,14 +225,15 @@ class AnimatorInvertedPendulum(Animator):
         scenario,
         subplot_grid_size=[2, 2],
         fps=10,
-        save_format=None,
         max_video_length=60,
+        animation_max_size_mb=200,
     ):
         super().__init__(
             subplot_grid_size=subplot_grid_size,
             max_video_length=max_video_length,
             fps=fps,
-            save_format=save_format,
+            animation_type=scenario.howanim,
+            animation_max_size_mb=animation_max_size_mb,
         )
 
         self.__dict__.update(scenario.__dict__)
