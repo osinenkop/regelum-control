@@ -123,6 +123,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+*pyenv*
 .env
 .venv
 env/
@@ -165,3 +166,5 @@ multirun
 
 *.ipynb
 *mlruns/
+
+*.json
