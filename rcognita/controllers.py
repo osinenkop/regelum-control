@@ -1858,3 +1858,67 @@ class ControllerKinPoint:
 
     def compute_LF(self, observation):
         pass
+
+
+class Controller3WRobotClfSemiconcave:
+    def __init__(self, action_bounds, optimizer, predictor):
+        self.action_bounds = action_bounds
+        self.optimizer = optimizer
+        self.predictor = predictor
+        self.action = rc.zeros(3)
+
+    def _Cart2NH(self, coords_Cart):
+        """
+        Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
+
+        """
+
+        xNI = rc.zeros(3)
+
+        xc = coords_Cart[0]
+        yc = coords_Cart[1]
+        angle = coords_Cart[2]
+
+        xNI[0] = angle
+        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
+        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
+            xc * rc.cos(angle) + yc * rc.sin(angle)
+        )
+
+        return xNI
+
+    def _NH2ctrl_Cart(self, xNI, uNI):
+        """
+        Get control for Cartesian NI from NH coordinates.
+
+        """
+
+        uCart = rc.zeros(2)
+
+        uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
+        uCart[1] = uNI[0]
+
+        return uCart
+
+    def compute_LF(self, observation_NH):
+        return rc.sum_2(observation_NH) + rc.abs(observation_NH[2]) * (
+            10 - 2 * (rc.abs(observation_NH[0]) + rc.abs(observation_NH[1]))
+        )
+
+    def objective(self, observation_NH, action_NH):
+        next_state = self.predictor.predict(observation_NH, action_NH)
+        next_LF = self.compute_LF(next_state)
+
+        return next_LF
+
+    def get_CLF_minimizer(self, observation_NH):
+        objective = lambda x: self.objective(observation_NH, x)
+        action_NH = self.optimizer.optimize(objective, self.action, self.action_bounds)
+        return action_NH
+
+    def compute_action(self, observation):
+        self.observation = observation
+        observation_NH = self._Cart2NH(observation)
+        action_NH = self.get_CLF_minimizer(observation_NH)
+        self.action = self._NH2ctrl_Cart(observation_NH, action_NH)
+        return self.action
