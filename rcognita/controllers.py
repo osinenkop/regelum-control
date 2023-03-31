@@ -1828,7 +1828,7 @@ class ControllerKinPoint:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=[]):
         return -self.gain * observation
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
