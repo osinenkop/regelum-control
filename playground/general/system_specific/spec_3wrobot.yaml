@@ -29,3 +29,4 @@ single_weight_min: 1.0E-7
 single_weight_max: 1.0E+4
 
 fps: 10
+mpc_prediction_horizon: 8

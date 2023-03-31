@@ -3,6 +3,7 @@ import rcognita as rc
 
 @rc.main(config_path="general", config_name="main")
 def launch(cfg):
+
     scenario = ~cfg.scenario
     if scenario.howanim in rc.ANIMATION_TYPES_REQUIRING_ANIMATOR:
         try:
