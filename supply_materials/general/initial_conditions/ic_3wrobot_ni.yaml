@@ -1,2 +1,0 @@
-state_init: = numpy.array([5., 5., 3. * numpy.pi / 4.])
-action_init: = numpy.ones(${system.dim_input})
