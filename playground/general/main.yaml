@@ -5,7 +5,7 @@ defaults:
   - optional nominal_controller: nominal_${system}
   - controller: mpc
   - running_objective: quadratic_${system}
-  - initial_conditions: ic_${system}
+  - initial_conditions: ic_${system}_stochastic
   - observation_naming: naming_${system}
   - optional system_specific: spec_${system}
   - optional animator: animator_${system}
