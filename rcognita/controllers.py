@@ -81,6 +81,7 @@ class Controller(RcognitaBase, ABC):
         return self.actor.action
 
     @abstractmethod
+    @apply_callbacks()
     def compute_action(self):
         pass
 
@@ -123,15 +124,23 @@ class RLController(Controller):
         self.critic.clock.reset()
         self.actor.action_old = self.actor.action_init
 
+    @apply_callbacks()
+    def pre_compute_action(self):
+        return None
+
     @apply_action_bounds
     def compute_action(
         self, state, observation, is_critic_update=True, time=0, observation_target=[]
     ):
-        ### store current action and observation in critic's data buffer
+        ### This method is called to generate an event in order for callbacks to fire.
+        ### Namely, we want to save the critic weights, for instance, and other stuff.
+        self.pre_compute_action()
+
+        ### Store current action and observation in critic's data buffer
         self.critic.update_buffers(observation, self.actor.action)
         self.critic.receive_state(state)
 
-        ### store current observation in actor
+        ### Store current observation in actor
         self.actor.receive_observation(observation)
         self.actor.receive_state(state)
 
@@ -139,15 +148,15 @@ class RLController(Controller):
         self.critic.update_target(observation_target)
 
         if is_critic_update:
-            ### optimize critic's model weights
+            ### Optimize critic's model weights
             self.critic.optimize_weights(time=time)
-            ### substitute and cache critic's model optimized weights
+            ### Substitute and cache critic's model optimized weights
             self.critic.update_and_cache_weights()
 
-        ### optimize actor's model weights based on current observation
+        ### Optimize actor's model weights based on current observation
         self.actor.optimize_weights()
 
-        ### substitute and cache weights in the actor's model
+        ### Substitute and cache weights in the actor's model
         self.actor.update_and_cache_weights()
         self.actor.update_action(observation)
 

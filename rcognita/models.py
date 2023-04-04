@@ -679,6 +679,50 @@ class ModelDDQN(ModelNN):
         return objective + (advantage - advantage_grid_mean)
 
 
+class ModelDQNSimple(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden=40,
+        weights=None,
+        force_positive_def=False,
+        bias=False,
+        leaky_relu_coef=0.2,
+    ):
+        super().__init__()
+
+        self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=bias)
+        self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.out_layer = nn.Linear(dim_hidden, 1, bias=bias)
+        self.leaky_relu_coef = leaky_relu_coef
+        self.force_positive_def = force_positive_def
+
+        self.double()
+
+        if weights is not None:
+            self.load_state_dict(weights)
+
+        self.cache_weights()
+
+    @force_positive_def
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        x = input_tensor
+        x = self.in_layer(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        x = self.hidden1(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        x = self.hidden2(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        x = self.out_layer(x)
+
+        return torch.squeeze(x)
+
+
 class ModelDQN(ModelNN):
     """
     pytorch neural network DQN

@@ -1020,6 +1020,51 @@ class CriticObjectiveCallback(HistoricalCallback):
         self.dump_and_clear_data(f"TD_values_{str(episode_number).zfill(5)}")
 
 
+class CriticWeightsCallback(HistoricalCallback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cooldown = 0.0
+        self.time = 0.0
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.controllers.Controller)
+            and method == "pre_compute_action"
+        )
+
+    def perform(self, obj, method, output):
+        datum = {
+            **{"time": rcognita.main.metadata["time"]},
+            **{
+                f"weight_{i + 1}": weight
+                for i, weight in enumerate(obj.critic.model.weights)
+            },
+        }
+
+        # print(datum["time"], obj.critic.model.weights)
+        # self.add_datum(datum)
+
+    def on_episode_done(self, scenario, episode_number, episodes_total):
+        identifier = f"weights_during_episode_{str(episode_number).zfill(5)}"
+        if not self.data.empty:
+            self.save_plot(identifier)
+            self.insert_column_left("episode", episode_number)
+            self.dump_and_clear_data(identifier)
+
+    def plot(self, name=None):
+        if not self.data.empty:
+            if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+                plt.clf()
+                plt.cla()
+                plt.close()
+            if not name:
+                name = self.__class__.__name__
+            res = self.data.set_index("time").plot(
+                subplots=True, grid=True, xlabel="time", title=name
+            )
+            return res[0].figure
+
+
 class CalfWeightsCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

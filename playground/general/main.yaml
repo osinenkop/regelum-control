@@ -9,7 +9,7 @@ defaults:
   - observation_naming: naming_${system}
   - optional system_specific: spec_${system}
   - optional animator: animator_${system}
-#  - ${controller}_${system}
+  # - ${controller}_${system}
 
 callbacks:
   - rcognita.callbacks.HistoricalObjectiveCallback
@@ -19,6 +19,7 @@ callbacks:
   - rcognita.callbacks.HistoricalObservationCallback
   - rcognita.callbacks.QFunctionModelSaverCallback
   - rcognita.callbacks.CalfWeightsCallback
+  - rcognita.callbacks.CriticWeightsCallback
 #  - rcognita.callbacks.InspectReferrersCallback
 
 disallow_uncommitted%%: False

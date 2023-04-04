@@ -1,5 +1,5 @@
 defaults:
-  - model: dqn
+  - model: dqn_simple
   - optimizer: torch
 
 _target_: rcognita.critics.CriticOfActionObservationOnPolicy

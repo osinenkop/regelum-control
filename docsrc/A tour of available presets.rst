@@ -32,12 +32,15 @@ In the root of the repo run the following commands
 Playground
 -----------
 
+CALF and MPC
+~~~~~~~~~~~~
+
 For quick start go to playground via ``cd playground`` and run
 ::
 
     python preset_endpoint.py system=3wrobot_ni controller=mpc cenario.howanim=live animator.fps=100 scenario.N_episodes=1
 
-and see how the Model Predictive Control is stabilizing 3wrobot_mi system in live animation. If you want to turn off the animation just delete the flags 
+and see how the Model Predictive Control is stabilizing 3wrobot_ni system in live animation. If you want to turn off the animation just delete the flags 
 ``scenario.howanim=live animator.fps=100``: 
 :: 
 
@@ -63,6 +66,43 @@ the CALF stabilizing policy one should use flag ``+controller.safe_only=True`` w
 
     python preset_endpoint.py controller=calf_ex_post system=3wrobot scenario.N_episodes=1 +controller.safe_only=True
 
+RL algorithms
+~~~~~~~~~~~~
+
+DQN on 3wrobot_ni:
+:: 
+
+    python preset_endpoint.py  \                                                                                                                                                                                         ─╯
+        system=3wrobot_ni \
+        controller=dqn \
+        initial_conditions=ic_3wrobot_ni_stochastic \
+        scenario.N_episodes=50 \
+        controller.actor.discount_factor=0.99 \
+        controller.critic.optimizer.opt_options.lr=0.001 \
+        controller.critic.optimizer.iterations=1 \
+        controller.critic.batch_size=30 \
+        controller.critic.td_n=30 \
+        +seed=1
+
+SDPG on inverted pendulum
+:: 
+
+    python preset_endpoint.py \
+        system=inv_pendulum \
+        controller=acpg \
+        +seed=8 \
+        scenario=episodic_reinforce \
+        scenario.N_episodes=5
+
+SDPG on inverted pendulum
+:: 
+
+    python preset_endpoint.py \
+        system=inv_pendulum \
+        controller=acpg \
+        +seed=8 \
+        scenario=episodic_reinforce \
+        scenario.N_episodes=5
 
 
 Useful Flags
