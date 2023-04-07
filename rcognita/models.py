@@ -83,9 +83,9 @@ class Model(rcognita.base.RcognitaBase, ABC):
             self.cache = deepcopy(self)
 
         if weights is None:
-            self.cache.weights = self.weights
+            self.cache.update_weights(self.weights)
         else:
-            self.cache.weights = weights
+            self.cache.update_weights(weights)
 
     def update_and_cache_weights(self, weights):
         self.cache_weights(weights)
@@ -721,6 +721,158 @@ class ModelDQNSimple(ModelNN):
         x = self.out_layer(x)
 
         return torch.squeeze(x)
+
+
+class ModelPerceptronCalf(Model):
+    model_name = "DQN_simple_casadi"
+    weights_dict = {}
+
+    @property
+    def weights(self):
+        return rc.concatenate(
+            [
+                rc.reshape_CasADi_as_np(w["weights"], (w["dim_in"] * w["dim_out"], 1))
+                for w in self.weights_dict.values()
+            ]
+        )
+
+    @weights.setter
+    def weights(self, weights):
+        self.weights_dict = self.wrap_weights_to_dict(weights)
+
+    def get_weights_markup(self):
+        weights_markup = {}
+        idx = 0
+        for key, weights_meta in self.weights_dict.items():
+            weights_markup[key] = {
+                "from_idx": idx,
+                "to_idx": idx + weights_meta["dim_in"] * weights_meta["dim_out"],
+            }
+            idx += weights_meta["dim_in"] * weights_meta["dim_out"]
+        return weights_markup
+
+    def wrap_weights_to_dict(self, weights):
+        if isinstance(weights, np.ndarray):
+            weights = rc.array(weights, rc_type=rc.CASADI)
+
+        weights_markup = self.get_weights_markup()
+        weights_dict = {}
+        for key, weights_meta in weights_markup.items():
+            weights_dict[key] = {
+                "weights": rc.reshape_CasADi_as_np(
+                    weights[weights_meta["from_idx"] : weights_meta["to_idx"]],
+                    (
+                        self.weights_dict[key]["dim_in"],
+                        self.weights_dict[key]["dim_out"],
+                    ),
+                ),
+                "dim_in": self.weights_dict[key]["dim_in"],
+                "dim_out": self.weights_dict[key]["dim_out"],
+            }
+        return weights_dict
+
+    class CasadiLayerLinear:
+        def __init__(self, weights, name, bias=None):
+            self.weights = weights
+            self.bias = bias
+            self.name = name
+
+        def forward(self, argin, weights):
+            argin = (
+                rc.array(argin, prototype=weights["weights"])
+                if isinstance(argin, np.ndarray)
+                else argin
+            )
+
+            if self.bias is not None:
+                argin = rc.vstack(
+                    (argin, rc.ones((1, rc.shape(argin)[1]), prototype=argin))
+                )
+
+            return (argin.T @ weights["weights"]).T
+
+        def __call__(self, argin, weights=None):
+            if weights is None:
+                weights = self.weights
+
+            return self.forward(argin, weights=weights)
+
+    class LeakyReLU:
+        def __init__(self, leaky_relu_coef=0.01):
+            self.leaky_relu_coef = leaky_relu_coef
+
+        def __call__(self, x):
+            return rc.LeakyReLU(x, negative_slope=self.leaky_relu_coef)
+
+    def register_linear_weights(self, weights, name, dim_in, dim_out):
+        self.weights_dict[name] = {
+            "weights": weights,
+            "dim_in": dim_in,
+            "dim_out": dim_out,
+        }
+
+    def Linear(self, dim_in, dim_out, name, bias=None):
+        """
+        Here we take bias into account by introducing an additional row in the weights matrix.
+        It is equivalent to $xW + b$
+        """
+        if bias is not None:
+            dim_in = dim_in + 1
+        weights = np.random.uniform(
+            self.weight_min, self.weight_max, size=(dim_in, dim_out)
+        )
+        weights = rc.array(weights, rc_type=rc.CASADI)
+
+        self.register_linear_weights(weights, name, dim_in, dim_out)
+        return self.CasadiLayerLinear(weights=weights, name=name, bias=bias)
+
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        single_weight_min=-1.0,
+        single_weight_max=1.0,
+        dim_hidden=40,
+        force_positive_def=False,
+        bias=False,
+        leaky_relu_coef=0.2,
+    ):
+
+        self.weight_min = single_weight_min
+        self.weight_max = single_weight_max
+        self.in_layer = self.Linear(
+            dim_observation + dim_action, dim_hidden, name="in_layer", bias=bias
+        )
+        self.hidden1 = self.Linear(dim_hidden, dim_hidden, bias=bias, name="hidden1")
+        self.hidden2 = self.Linear(dim_hidden, dim_hidden, bias=bias, name="hidden2")
+        self.out_layer = self.Linear(dim_hidden, 1, bias=bias, name="out_layer")
+        self.leaky_relu = self.LeakyReLU(leaky_relu_coef)
+        self.leaky_relu_coef = leaky_relu_coef
+        self.force_positive_def = force_positive_def
+
+        self.update_and_cache_weights(self.weights)
+
+    @force_positive_def
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
+            vec = rc.concatenate(tuple(argin))
+        else:
+            vec = argin[0]
+
+        weights_dict = self.weights_dict
+        if weights is not None:
+            weights_dict = self.wrap_weights_to_dict(weights)
+
+        x = vec
+        x = self.in_layer(x, weights_dict[self.in_layer.name])
+        x = self.leaky_relu(x)
+        x = self.hidden1(x, weights_dict[self.hidden1.name])
+        x = self.leaky_relu(x)
+        x = self.hidden2(x, weights_dict[self.hidden2.name])
+        x = self.leaky_relu(x)
+        x = self.out_layer(x, weights_dict[self.out_layer.name])
+
+        return x
 
 
 class ModelDQN(ModelNN):

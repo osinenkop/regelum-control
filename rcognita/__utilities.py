@@ -132,7 +132,15 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     CASADI = RCType.CASADI
     NUMPY = RCType.NUMPY
 
-    is_force_row = True
+    def LeakyReLU(self, x, negative_slope=0.01, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            return np.maximum(0, x) + negative_slope * np.minimum(0, x)
+        elif rc_type == TORCH:
+            return torch.nn.LeakyReLU(negative_slope=negative_slope)(x)
+        elif rc_type == CASADI:
+            return self.max(
+                [self.zeros(self.shape(x), prototype=x), x]
+            ) + negative_slope * self.min([self.zeros(self.shape(x), prototype=x), x])
 
     def CasADi_primitive(self, type: str = "MX", rc_type: RCType = NUMPY):
         if type == "MX":
@@ -156,7 +164,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.clip(x, l, u)
         elif rc_type == CASADI:
-            return casadi.min(
+            return casadi.fmin(
                 self.concatenate([casadi.max(self.concatenate([x, l])), u])
             )
 
@@ -229,11 +237,15 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return self.column_stack([matrix[:, 1:], vec], rc_type=rc_type)
 
     def reshape_CasADi_as_np(self, array, dim_params, rc_type: RCType = NUMPY):
-        result = casadi.MX(*dim_params)
-        n_rows = dim_params[0]
-        n_cols = dim_params[1]
+        result = self.zeros(dim_params, prototype=array)
+        n_rows, n_cols = dim_params
+        array_n_rows, array_n_cols = self.shape(array)
+
         for i in range(n_rows):
-            result[i, :] = array[i * n_cols : (i + 1) * n_cols]
+            for j in range(n_cols):
+                result[i, j] = array[
+                    (i * n_cols + j) // array_n_cols, (i * n_cols + j) % array_n_cols
+                ]
 
         return result
 
@@ -351,7 +363,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     def concatenate(self, argin, rc_type: RCType = NUMPY, **kwargs):
         rc_type = type_inference(*safe_unpack(argin))
-
         if rc_type == NUMPY:
             return np.concatenate(argin, **kwargs)
         elif rc_type == TORCH:
@@ -432,25 +443,25 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     def min(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
-            rc_type = type_inference(array)
+            rc_type = type_inference(*array)
 
         if rc_type == NUMPY:
             return np.min(array)
         elif rc_type == TORCH:
             return torch.min(array)
         elif rc_type == CASADI:
-            return casadi.min(*safe_unpack(array))
+            return casadi.fmin(*safe_unpack(array))
 
     def max(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
-            rc_type = type_inference(array)
+            rc_type = type_inference(*array)
 
         if rc_type == NUMPY:
             return np.max(array)
         elif rc_type == TORCH:
             return torch.max(array)
         elif rc_type == CASADI:
-            return casadi.max(*safe_unpack(array))
+            return casadi.fmax(*safe_unpack(array))
 
     def sum_2(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):
@@ -961,11 +972,13 @@ def on_key_press(event, anm):
         plt.clf()
         plt.cla()
         plt.close()
-               
+
         raise Exception("Script terminated after q key press")
+
 
 def on_close(event):
     raise Exception("Script terminated after animation was closed")
+
 
 log = None
 

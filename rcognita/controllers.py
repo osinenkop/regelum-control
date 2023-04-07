@@ -213,7 +213,7 @@ class CALFControllerExPost(RLController):
         if critic_weights_accepted:
             self.critic.update_weights()
 
-            self.invoke_safe_action(observation)
+            # self.invoke_safe_action(observation)
 
             self.actor.optimize_weights(time=time)
             actor_weights_accepted = self.actor.weights_acceptance_status == "accepted"

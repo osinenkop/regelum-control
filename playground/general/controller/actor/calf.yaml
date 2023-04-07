@@ -22,3 +22,5 @@ state_init: $ scenario.state_init
 critic: ~ controller.critic
 safe_controller: $ nominal_controller
 observation_target: $ system_specific.observation_target
+predictor:
+  prediction_horizon: 0

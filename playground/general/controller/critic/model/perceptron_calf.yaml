@@ -1,0 +1,10 @@
+_target_: rcognita.models.ModelPerceptronCalf
+
+dim_observation: $ system.dim_output
+dim_action: 0
+dim_hidden: 5
+single_weight_min: -10.
+single_weight_max: 10.
+force_positive_def: True
+leaky_relu_coef: 0.2
+bias: True 
