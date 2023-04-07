@@ -1126,7 +1126,8 @@ class CalfCallback(HistoricalCallback):
 
     def perform(self, obj, method, output):
         current_CALF = obj.critic(
-            obj.critic.observation_last_good, use_stored_weights=True
+            obj.critic.observation_last_good - obj.critic.observation_target,
+            use_stored_weights=True,
         )
         self.log(
             f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.critic.observation_buffer[:,-1]}"
