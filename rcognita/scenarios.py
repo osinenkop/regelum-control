@@ -534,6 +534,13 @@ class EpisodicScenarioMultirun(EpisodicScenario):
 
 
 class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
+    """
+    Note.
+
+    Deleted self.N_episodes from replay buffer because we optimize
+    actor after every episode not iteration
+    """
+
     def __init__(
         self,
         *args,
@@ -545,9 +552,7 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         self.replay_buffer = ReplayBuffer(
             dim_observation=self.dim_observation,
             dim_action=self.dim_action,
-            max_size=int(
-                10 / self.controller.sampling_time * self.N_episodes * self.time_final
-            ),
+            max_size=int(10 / self.controller.sampling_time * self.time_final),
         )
         self.mean_q_values = np.zeros(self.N_episodes)
 
@@ -563,11 +568,7 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
 
     def reset_episode(self):
         observations, _, _, _ = self.replay_buffer.sample(
-            int(
-                self.simulator.time_final
-                * self.N_episodes
-                / self.controller.sampling_time
-            )
+            int(self.simulator.time_final / self.controller.sampling_time)
         )
         self.actor.optimize_weights_episodic(observations)
         self.replay_buffer.nullify_buffer()
