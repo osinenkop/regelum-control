@@ -434,7 +434,8 @@ class main:
     assignments = []
     weak_assignments = []
     builtin_callbacks = [
-        EventCallback,
+        OnEpisodeDoneCallerCallback,
+        OnIterationDoneCallerCallback,
         TimeCallback,
         ConfigDiagramCallback,
         TimeRemainingCallback,

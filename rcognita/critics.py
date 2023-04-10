@@ -41,7 +41,6 @@ from typing import Optional, Union
 from .callbacks import apply_callbacks
 
 
-
 class Critic(rcognita.base.RcognitaBase, ABC):
     """
     Critic base class.
@@ -50,7 +49,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
     The critic estimates the value of an action by learning from past experience, typically through the optimization of a loss function.
     """
-
 
     def __init__(
         self,
@@ -1096,7 +1094,7 @@ class CriticTrivial(Critic):
         """
         self.running_objective = running_objective
         self.sampling_time = sampling_time
-        self.outcome = 0
+        self.total_objective = 0
         self.model = ModelWeightContainer(1)
         self.model.weights = None
         self.clock = Clock(sampling_time)
@@ -1109,14 +1107,14 @@ class CriticTrivial(Critic):
         self.intrinsic_constraints = []
         self.optimized_weights = []
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         """
         Returns the current outcome.
 
         :return: Current outcome.
         :rtype: float
         """
-        return self.outcome
+        return self.total_objective
 
     def objective(self, weights):
         """
@@ -1175,13 +1173,15 @@ class CriticTrivial(Critic):
         :type action: Any
         """
 
-        self.outcome += self.running_objective(observation, action) * self.sampling_time
+        self.total_objective += (
+            self.running_objective(observation, action) * self.sampling_time
+        )
 
     def reset(self):
         """
         Reset the outcome variable to zero.
         """
-        self.outcome = 0
+        self.total_objective = 0
 
 
 class CriticTabularVI(Critic):

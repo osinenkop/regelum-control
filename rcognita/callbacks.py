@@ -89,7 +89,24 @@ class Callback(ABC):
     def is_target_event(self, obj, method, output):
         pass
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        pass
+
+    def on_iteration_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         pass
 
     def ready(self, t):
@@ -138,20 +155,53 @@ class TimeCallback(Callback):
         rcognita.main.metadata["time"] = obj.time
 
 
-class EventCallback(Callback):
+class OnEpisodeDoneCallerCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.episode_counter = 0
+        self.iteration_counter = 1
 
     def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.scenarios.Scenario) and method == "reload_pipeline"
+        return isinstance(obj, rcognita.scenarios.Scenario) and (
+            method == "reload_pipeline"
         )
 
     def perform(self, obj, method, output):
         self.episode_counter += 1
         for callback in rcognita.main.callbacks:
-            callback.on_episode_done(obj, self.episode_counter, obj.N_episodes)
+            callback.on_episode_done(
+                obj,
+                self.episode_counter,
+                obj.N_episodes,
+                self.iteration_counter,
+                obj.N_iterations,
+            )
+
+        if self.episode_counter == obj.N_episodes:
+            self.episode_counter = 0
+            self.iteration_counter += 1
+
+
+class OnIterationDoneCallerCallback(Callback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.iteration_counter = 0
+
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.scenarios.Scenario) and (
+            method == "reset_iteration"
+        )
+
+    def perform(self, obj, method, output):
+        self.iteration_counter += 1
+        for callback in rcognita.main.callbacks:
+            callback.on_iteration_done(
+                obj,
+                obj.N_episodes,
+                obj.N_episodes,
+                self.iteration_counter,
+                obj.N_iterations,
+            )
 
 
 class ConfigDiagramCallback(Callback):
@@ -721,7 +771,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         self.counter += 1
         self.log(
-            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}"
+            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}, iteration: {obj.iteration_counter + 1}/{obj.N_iterations}"
         )
         if not self.counter % 3:
             do_exit = False
@@ -747,7 +797,14 @@ class HistoricalObjectiveCallback(HistoricalCallback):
             }
         )
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(f"episode_{str(episode_number).zfill(5)}")
 
@@ -765,7 +822,14 @@ class SaveProgressCallback(Callback):
     def perform(self, obj, method, output):
         pass
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         start = time.time()
         if episode_number % self.once_in:
             return
@@ -831,8 +895,18 @@ class HistoricalObservationCallback(HistoricalCallback):
             }
         )
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
-        identifier = f"observations_in_episode_{str(episode_number).zfill(5)}"
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        if iterations_total == 1:
+            identifier = f"observations_in_episode_{str(episode_number).zfill(5)}"
+        else:
+            identifier = f"observations_in_iteration_{str(iteration_number).zfill(5)}_in_episode_{str(episode_number).zfill(5)}"
         self.save_plot(identifier)
         self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(identifier)
@@ -861,18 +935,42 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.ylabel = "Total objective"
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and (
-            method == "reload_pipeline"
-        )
+        return False
 
-    def perform(self, obj, method, output):
-        self.add_datum({"episode": len(self.data) + 1, "objective": output})
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        self.add_datum(
+            {
+                "episode": len(self.data) + 1,
+                "objective": scenario.recent_total_objective,
+            }
+        )
         self.log(
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
-        self.dump_data("Total_Objective")
-        mlflow.log_metric("Total objective", output, step=len(self.data))
-        self.save_plot("Total_Objective")
+        self.dump_data(
+            f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
+        )
+        mlflow.log_metric(
+            f"Total objectives in iteration {iteration_number}",
+            scenario.recent_total_objective,
+            step=len(self.data),
+        )
+        self.save_plot(
+            f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
+        )
+
+        if episode_number == episodes_total:
+            self.clear_recent_data()
+
+    def perform(self, obj, method, output):
+        pass
 
     def load_data(self, idx=None):
         return super().load_data(idx=1)
@@ -923,7 +1021,14 @@ class QFunctionModelSaverCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         pass
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         if "CriticOffPolicy" in scenario.critic.__class__.__name__:
             torch.save(
                 scenario.critic.model.state_dict(),
@@ -959,7 +1064,14 @@ class QFunctionCallback(HistoricalCallback):
             }
         )
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(f"q_function_values_{str(episode_number).zfill(5)}")
 
@@ -975,7 +1087,14 @@ class TimeRemainingCallback(Callback):
     def perform(self, obj, method, output):
         pass
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         self.time_episode.append(time.time())
         if len(self.time_episode) > 3:
             average_interval = 0
@@ -985,13 +1104,17 @@ class TimeRemainingCallback(Callback):
                 previous = current
             average_interval /= len(self.time_episode[-2:-12:-1])
             td = datetime.timedelta(
-                seconds=int(average_interval * (episodes_total - episode_number))
+                seconds=int(
+                    (iterations_total - iteration_number)
+                    * average_interval
+                    * (episodes_total - episode_number)
+                )
             )
             remaining = f" Estimated remaining time: {str(td)}."
         else:
             remaining = ""
         self.log(
-            f"Completed episode {episode_number}/{episodes_total} ({100*episode_number/episodes_total:.1f}%)."
+            f"Completed episode {episode_number}/{episodes_total} ({100*episode_number/episodes_total:.1f}%). Iteration: {iteration_number}/{iterations_total}."
             + remaining
         )
 
@@ -1015,7 +1138,14 @@ class CriticObjectiveCallback(HistoricalCallback):
             }
         )
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(f"TD_values_{str(episode_number).zfill(5)}")
 
@@ -1033,18 +1163,29 @@ class CriticWeightsCallback(HistoricalCallback):
         )
 
     def perform(self, obj, method, output):
-        datum = {
-            **{"time": rcognita.main.metadata["time"]},
-            **{
-                f"weight_{i + 1}": weight
-                for i, weight in enumerate(obj.critic.model.weights)
-            },
-        }
+        if (
+            hasattr(obj.critic.model, "weights")
+            and obj.critic.model.weights is not None
+        ):
+            datum = {
+                **{"time": rcognita.main.metadata["time"]},
+                **{
+                    f"weight_{i + 1}": weight
+                    for i, weight in enumerate(obj.critic.model.weights)
+                },
+            }
 
         # print(datum["time"], obj.critic.model.weights)
         # self.add_datum(datum)
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         identifier = f"weights_during_episode_{str(episode_number).zfill(5)}"
         if not self.data.empty:
             self.save_plot(identifier)
@@ -1090,7 +1231,14 @@ class CalfWeightsCallback(HistoricalCallback):
         # print(datum["time"], obj.critic.model.weights)
         self.add_datum(datum)
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         identifier = f"CALF_weights_during_episode_{str(episode_number).zfill(5)}"
         if not self.data.empty:
             self.save_plot(identifier)
@@ -1151,7 +1299,14 @@ class CalfCallback(HistoricalCallback):
             }
         )
 
-    def on_episode_done(self, scenario, episode_number, episodes_total):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
         identifier = f"CALF_diagnostics_on_episode_{str(episode_number).zfill(5)}"
         if not self.data.empty:
             self.save_plot(identifier)

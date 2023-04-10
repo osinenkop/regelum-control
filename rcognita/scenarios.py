@@ -138,7 +138,7 @@ class OnlineScenario(Scenario):
         )
 
         self.trajectory = []
-        self.outcome = 0
+        self.total_objective = 0
         self.time = 0
         self.time_old = 0
         self.delta_time = 0
@@ -155,7 +155,7 @@ class OnlineScenario(Scenario):
             np.around(self.running_objective_value, decimals=2),
             self.observation.round(decimals=2),
             self.action.round(2),
-            self.outcome,
+            self.total_objective,
         )
 
     @apply_callbacks()
@@ -169,7 +169,7 @@ class OnlineScenario(Scenario):
             np.around(self.running_objective_value, decimals=2),
             self.observation.round(decimals=2),
             self.action.round(2),
-            self.outcome,
+            self.total_objective,
         )
 
     def run(self):
@@ -223,7 +223,7 @@ class OnlineScenario(Scenario):
 
         """
 
-        self.outcome += self.running_objective(observation, action) * delta
+        self.total_objective += self.running_objective(observation, action) * delta
 
 
 class EpisodicScenario(OnlineScenario):
@@ -262,14 +262,11 @@ class EpisodicScenario(OnlineScenario):
 
     @apply_callbacks()
     def reload_pipeline(self):
-        return self.reload_pipeline_no_callbacks()
-
-    def reload_pipeline_no_callbacks(self):
         self.sim_status = 1
         self.time = 0
         self.time_old = 0
-        outcome = self.outcome
-        self.outcome = 0
+        self.recent_total_objective = self.total_objective
+        self.total_objective = 0
         self.action = self.action_init
         self.system.reset()
         self.actor.reset()
@@ -279,11 +276,12 @@ class EpisodicScenario(OnlineScenario):
         self.simulator.reset()
         self.observation = self.system.out(self.state_init, time=0)
         self.sim_status = 0
-        return outcome
+        return self.recent_total_objective
 
     def run(self):
-        for _ in range(self.N_iterations):
-            for _ in range(self.N_episodes):
+        ### We use values `iteration_counter` and `episode_counter` only for debug purposes
+        for iteration_counter in range(self.N_iterations):
+            for episode_counter in range(self.N_episodes):
                 while self.sim_status not in [
                     "episode_ended",
                     "simulation_ended",
@@ -292,21 +290,22 @@ class EpisodicScenario(OnlineScenario):
                     self.sim_status = self.step()
 
                 self.reload_pipeline()
-        outcome = self.outcome
+        self.recent_total_objective = self.total_objective
         self.reset_episode()
         self.reset_iteration()
         self.reset_simulation()
-        return outcome
+        return self.recent_total_objective
 
+    @apply_callbacks()
     def reset_iteration(self):
         self.episode_counter = 0
         self.iteration_counter += 1
         self.outcomes_of_episodes = []
 
     def reset_episode(self):
-        self.outcomes_of_episodes.append(self.critic.outcome)
+        self.outcomes_of_episodes.append(self.critic.total_objective)
         self.episode_counter += 1
-        return self.critic.outcome
+        return self.critic.total_objective
 
     def reset_simulation(self):
         self.current_scenario_status = "episode_continues"
@@ -445,7 +444,7 @@ class EpisodicScenarioREINFORCE(EpisodicScenario):
         self.store_REINFORCE_objective_gradient()
 
     def store_REINFORCE_objective_gradient(self):
-        episode_REINFORCE_objective_gradient = self.critic.outcome * sum(
+        episode_REINFORCE_objective_gradient = self.critic.total_objective * sum(
             self.actor.gradients
         )
         self.episode_REINFORCE_objective_gradients.append(
@@ -552,7 +551,11 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         self.replay_buffer = ReplayBuffer(
             dim_observation=self.dim_observation,
             dim_action=self.dim_action,
-            max_size=int(10 / self.controller.sampling_time * self.time_final),
+            max_size=int(
+                self.simulator.time_final
+                / self.controller.sampling_time
+                * self.time_final
+            ),
         )
         self.mean_q_values = np.zeros(self.N_episodes)
 
@@ -566,10 +569,16 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         )
         return episode_status
 
-    def reset_episode(self):
+    @apply_callbacks()
+    def reset_iteration(self):
         observations, _, _, _ = self.replay_buffer.sample(
-            int(self.simulator.time_final / self.controller.sampling_time)
+            int(
+                self.simulator.time_final
+                / self.controller.sampling_time
+                * self.N_episodes
+            )
         )
-        self.actor.optimize_weights_episodic(observations)
+        self.actor.optimize_weights_after_iteration(observations)
         self.replay_buffer.nullify_buffer()
         super().reset_episode()
+        super().reset_iteration()

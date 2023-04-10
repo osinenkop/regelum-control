@@ -550,13 +550,15 @@ class ActorEpisodic(Actor):
     def optimize_weights(self, constraint_functions=None, time=None):
         pass
 
-    def optimize_weights_episodic(self, observations):
-        self.critic.model = self.critic.model.to(self.device)
+    def optimize_weights_after_iteration(self, observations):
+        if hasattr(self.critic.model, "to"):
+            self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
 
         self.optimizer.optimize(self.objective, self.dataloader(observations))
 
-        self.critic.model = self.critic.model.to(torch.device("cpu"))
+        if hasattr(self.critic.model, "to"):
+            self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
 
     def update_and_cache_weights(self):
@@ -647,10 +649,10 @@ class ActorEpisodicStochastic(ActorEpisodic):
     def objective(
         self, observations_actions_for_actor, observations_actions_for_critic
     ):
-        return (
-            self.model(observations_actions_for_actor.float())
-            * self.critic(observations_actions_for_critic).detach()
-        ).sum()
+        critic_value = self.critic(observations_actions_for_critic)
+        if hasattr(critic_value, "detach"):
+            critic_value = critic_value.detach()
+        return (self.model(observations_actions_for_actor.float()) * critic_value).sum()
 
     def dataloader(self, observations):
         return DataLoader(
