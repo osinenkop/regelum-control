@@ -28,7 +28,7 @@ rcognita.critics.CriticCALF
       ~CriticCALF.restore_weights
       ~CriticCALF.update_and_cache_weights
       ~CriticCALF.update_buffers
-      ~CriticCALF.update_outcome
+      ~CriticCALF.update_total_objective
       ~CriticCALF.update_target
       ~CriticCALF.update_weights
    

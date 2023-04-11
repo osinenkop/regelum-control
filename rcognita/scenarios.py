@@ -67,25 +67,29 @@ class TabularScenarioVI(Scenario):
 
 
 class OnlineScenario(Scenario):
-    """
-    Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
-
-    """
+    cache = dict()
 
     def __init__(
         self,
         simulator: Simulator,
         controller: Controller,
         running_objective: Optional[RunningObjective] = None,
-        no_print: bool = False,
         is_log: bool = False,
         howanim: str = None,
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
         time_start: float = 0.0,
-        observation_target=[],
+        observation_target: list = [],
         observation_components_naming=[],
+        N_episodes=1,
+        N_iterations=1,
+        speedup=1,
     ):
+
+        self.cache.clear()
+        self.N_episodes = N_episodes
+        self.N_iterations = N_iterations
+        self.weights_historical = []
         self.simulator = simulator
 
         self.system = Mock() if not hasattr(simulator, "system") else simulator.system
@@ -117,7 +121,6 @@ class OnlineScenario(Scenario):
                 )
         self.time_start = time_start
         self.time_final = self.simulator.time_final
-        self.no_print = no_print
         self.is_log = is_log
         self.howanim = howanim
         self.is_playback = (
@@ -136,113 +139,13 @@ class OnlineScenario(Scenario):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
         )
-
-        self.trajectory = []
         self.total_objective = 0
         self.time = 0
         self.time_old = 0
         self.delta_time = 0
         self.observation_components_naming = observation_components_naming
 
-    @apply_callbacks()
-    def pre_step(self):
-        self.running_objective_value = self.running_objective(
-            self.observation, self.action
-        )
-        self.update_outcome(self.observation, self.action, self.delta_time)
-
-        return (
-            np.around(self.running_objective_value, decimals=2),
-            self.observation.round(decimals=2),
-            self.action.round(2),
-            self.total_objective,
-        )
-
-    @apply_callbacks()
-    def post_step(self):
-        self.running_objective_value = self.running_objective(
-            self.observation, self.action
-        )
-        self.update_outcome(self.observation, self.action, self.delta_time)
-
-        return (
-            np.around(self.running_objective_value, decimals=2),
-            self.observation.round(decimals=2),
-            self.action.round(2),
-            self.total_objective,
-        )
-
-    def run(self):
-
-        while self.step():
-            pass
-        print("Episode ended successfully.")
-
-    def step(self):
-        self.pre_step()
-        sim_status = self.simulator.do_sim_step()
-        is_episode_ended = sim_status == -1
-
-        if is_episode_ended:
-            return False
-        else:
-
-            (
-                self.time,
-                self.state,
-                self.observation,
-                self.state_full,
-            ) = self.simulator.get_sim_step_data()
-
-            self.trajectory.append(
-                rc.concatenate((self.state_full, self.time), axis=None)
-            )
-
-            self.delta_time = self.time - self.time_old
-            self.time_old = self.time
-
-            # In future versions state vector being passed into controller should be obtained from an observer.
-            self.action = self.controller.compute_action_sampled(
-                self.time,
-                self.state,
-                self.observation,
-                observation_target=self.observation_target,
-            )
-            self.system.receive_action(self.action)
-
-            self.post_step()
-
-            return True
-
-    def update_outcome(self, observation, action, delta):
-
-        """
-        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
-        If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
-        The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
-
-        """
-
-        self.total_objective += self.running_objective(observation, action) * delta
-
-
-class EpisodicScenario(OnlineScenario):
-    cache = dict()
-
-    def __init__(
-        self,
-        N_episodes,
-        N_iterations,
-        *args,
-        speedup=1,
-        **kwargs,
-    ):
-        self.cache.clear()
-        self.N_episodes = N_episodes
-        self.N_iterations = N_iterations
-        self.weights_historical = []
-        super().__init__(*args, **kwargs)
-        self.outcomes_of_episodes = []
+        self.total_objectives_of_episodes = []
         self.outcome_episodic_means = []
         self.sim_status = 1
         self.episode_counter = 0
@@ -259,6 +162,17 @@ class EpisodicScenario(OnlineScenario):
 
     def get_cache_len(self):
         return len(self.cache)
+
+    def update_total_objective(self, observation, action, delta):
+
+        """
+        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+        If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
+        The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
+
+        """
+
+        self.total_objective += self.running_objective(observation, action) * delta
 
     @apply_callbacks()
     def reload_pipeline(self):
@@ -300,10 +214,10 @@ class EpisodicScenario(OnlineScenario):
     def reset_iteration(self):
         self.episode_counter = 0
         self.iteration_counter += 1
-        self.outcomes_of_episodes = []
+        self.total_objectives_of_episodes = []
 
     def reset_episode(self):
-        self.outcomes_of_episodes.append(self.critic.total_objective)
+        self.total_objectives_of_episodes.append(self.critic.total_objective)
         self.episode_counter += 1
         return self.critic.total_objective
 
@@ -313,7 +227,7 @@ class EpisodicScenario(OnlineScenario):
         self.episode_counter = 0
 
     def iteration_update(self):
-        self.outcome_episodic_means.append(rc.mean(self.outcomes_of_episodes))
+        self.outcome_episodic_means.append(rc.mean(self.total_objectives_of_episodes))
 
     def update_time_from_cache(self):
         self.time, self.episode_counter, self.iteration_counter = next(
@@ -350,7 +264,7 @@ class EpisodicScenario(OnlineScenario):
                     self.action,
                     self.observation,
                     self.running_objective_value,
-                    self.outcome,
+                    self.total_objective,
                     self.actor.model.weights,
                     self.critic.model.weights,
                     self.current_scenario_status,
@@ -367,7 +281,7 @@ class EpisodicScenario(OnlineScenario):
                         self.action,
                         self.observation,
                         self.running_objective_value,
-                        self.outcome,
+                        self.total_objective,
                         self.actor.model.weights,
                         self.critic.model.weights,
                         self.current_scenario_status,
@@ -378,15 +292,27 @@ class EpisodicScenario(OnlineScenario):
 
                 self.current_scenario_status = step_method(self)
 
-                if self.current_scenario_status == "simulation_ended":
+                if (
+                    self.current_scenario_status == "simulation_ended"
+                    and self.howanim
+                    in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
+                ):
                     keys = list(self.cache.keys())
+                    current_scenario_status_idx = (
+                        len(self.current_scenario_snapshot) - 1
+                    )
                     for i, item in enumerate(self.cache.items()):
                         if i > self.speedup:
-                            if item[1][10] != "episode_continues":
+                            if (
+                                item[1][current_scenario_status_idx]
+                                != "episode_continues"
+                            ):
                                 key_i = keys[i]
                                 for k in range(i - self.speedup + 1, i):
                                     key_k = keys[k]
-                                    self.cache[key_k][10] = self.cache[key_i][10]
+                                    self.cache[key_k][
+                                        current_scenario_status_idx
+                                    ] = self.cache[key_i][current_scenario_status_idx]
 
                     # generator self.cached_timeline is needed for playback.
                     # self.cached_timeline skips frames depending on self.speedup using islice.
@@ -398,11 +324,63 @@ class EpisodicScenario(OnlineScenario):
 
         return step_with_memory
 
+    @apply_callbacks()
+    def pre_step(self):
+        self.running_objective_value = self.running_objective(
+            self.observation, self.action
+        )
+        self.update_total_objective(self.observation, self.action, self.delta_time)
+
+        return (
+            np.around(self.running_objective_value, decimals=2),
+            self.observation.round(decimals=2),
+            self.action.round(2),
+            self.total_objective,
+        )
+
+    @apply_callbacks()
+    def post_step(self):
+        self.running_objective_value = self.running_objective(
+            self.observation, self.action
+        )
+        self.update_total_objective(self.observation, self.action, self.delta_time)
+
+        return (
+            np.around(self.running_objective_value, decimals=2),
+            self.observation.round(decimals=2),
+            self.action.round(2),
+            self.total_objective,
+        )
+
     @memorize
     def step(self):
-        episode_not_ended = super().step()
+        self.pre_step()
+        sim_status = self.simulator.do_sim_step()
+        is_episode_ended = sim_status == -1
 
-        if not episode_not_ended:
+        if not is_episode_ended:
+            (
+                self.time,
+                self.state,
+                self.observation,
+                self.state_full,
+            ) = self.simulator.get_sim_step_data()
+
+            self.delta_time = self.time - self.time_old
+            self.time_old = self.time
+
+            # In future versions state vector being passed into controller should be obtained from an observer.
+            self.action = self.controller.compute_action_sampled(
+                self.time,
+                self.state,
+                self.observation,
+                observation_target=self.observation_target,
+            )
+            self.system.receive_action(self.action)
+            self.post_step()
+
+            return "episode_continues"
+        else:
             self.reset_episode()
 
             is_iteration_ended = self.episode_counter >= self.N_episodes
@@ -420,125 +398,53 @@ class EpisodicScenario(OnlineScenario):
                     return "iteration_ended"
             else:
                 return "episode_ended"
-        else:
-            return "episode_continues"
 
 
-class EpisodicScenarioREINFORCE(EpisodicScenario):
-    def __init__(
-        self,
-        *args,
-        learning_rate=0.001,
-        is_fixed_actor_weights=False,
-        is_plot_critic=False,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
+class MonteCarloScenario(OnlineScenario):
+    class ReplayBuffer:
+        def __init__(self):
+            self.episode_ids = []
+            self.observations = []
+            self.actions = []
+            self.running_objectives = []
+            self.total_objectives = []
+            self.is_step_dones = []
 
-        self.learning_rate = learning_rate
-        self.is_fixed_actor_weights = is_fixed_actor_weights
-        self.is_plot_critic = is_plot_critic
+        def add_step_data(
+            self,
+            observation,
+            action,
+            running_objective,
+            episode_id,
+            is_step_done,
+        ):
+            self.observations.append(observation)
+            self.actions.append(action)
+            self.running_objectives.append(running_objective)
+            self.episode_ids.append(int(episode_id))
+            self.is_step_dones.append(is_step_done)
 
-    def reset_episode(self):
-        super().reset_episode()
-        self.store_REINFORCE_objective_gradient()
+        def add_total_objective(self, total_objective):
+            self.total_objectives.append(total_objective)
 
-    def store_REINFORCE_objective_gradient(self):
-        episode_REINFORCE_objective_gradient = self.critic.total_objective * sum(
-            self.actor.gradients
-        )
-        self.episode_REINFORCE_objective_gradients.append(
-            episode_REINFORCE_objective_gradient
-        )
+        def get_episodes_data(self):
+            if len(self.total_objectives) > 0:
+                return (
+                    self.observations,
+                    self.actions,
+                    self.running_objectives,
+                    np.array(self.total_objectives)[np.array(self.episode_ids) - 1],
+                    self.is_step_dones,
+                )
+            else:
+                return [], [], [], [], []
 
-    def get_mean_REINFORCE_gradient(self):
-        return sum(self.episode_REINFORCE_objective_gradients) / len(
-            self.episode_REINFORCE_objective_gradients
-        )
-
-    def iteration_update(self):
-        super().iteration_update()
-        mean_REINFORCE_gradient = self.get_mean_REINFORCE_gradient()
-
-        if self.is_fixed_actor_weights == False:
-            self.actor.update_weights_by_gradient(
-                mean_REINFORCE_gradient, self.learning_rate
-            )
-
-    def run(self):
-        super().run()
-
-        if self.is_plot_critic:
-            self.plot_critic()
-
-    def plot_critic(self):
-        self.fig_critic = plt.figure(figsize=(10, 10))
-        ax_TD_means = self.fig_critic.add_subplot(111)
-        ax_TD_means.plot(
-            self.square_TD_means,
-            label="square TD means\nby episode",
-            c="r",
-            scaley="symlog",
-        )
-        plt.legend()
-        plt.savefig(
-            f"./critic_plots/{self.N_iterations}-iters_{self.N_episodes}-episodes_{self.time_final}-fintime",
-            format="png",
-        )
-
-    def get_mean(self, array):
-        return sum(array) / len(array)
-
-
-class ReplayBuffer:
-    def __init__(self, dim_observation, dim_action, max_size=int(1e6)):
-        self.max_size = max_size
-        self.n_columns_filled = 0
-        self.state = np.zeros((dim_observation, max_size))
-        self.action = np.zeros((dim_action, max_size))
-        self.reward = np.zeros((1, max_size))
-        self.not_done = np.zeros((1, max_size))
-
-    def add(self, state, action, reward, done):
-        self.state = rc.push_vec(self.state, state)
-        self.action = rc.push_vec(self.action, action)
-        self.reward = rc.push_vec(self.reward, reward)
-        self.not_done = rc.push_vec(self.not_done, done)
-        self.n_columns_filled = min(self.n_columns_filled + 1, self.max_size)
-
-    def sample(self, batch_size=1, random_idxs=False):
-        if random_idxs:
-            ind = np.random.randint(0, self.n_columns_filled, size=batch_size)
-        else:
-            ind = np.arange(-min(self.n_columns_filled, batch_size), 0)
-        return (
-            torch.DoubleTensor(self.state[:, ind]).T,
-            torch.DoubleTensor(self.action[:, ind]).T,
-            torch.DoubleTensor(self.reward[:, ind]).T,
-            torch.DoubleTensor(self.not_done[:, ind]).T,
-        )
-
-    def nullify_buffer(self):
-        self.n_columns_filled = 0
-        self.state *= 0
-        self.action *= 0
-        self.reward *= 0
-        self.not_done *= 0
-
-
-class EpisodicScenarioMultirun(EpisodicScenario):
-    def __init__(self, repeat_num: float = 1, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.repeat_num = repeat_num
-
-
-class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
-    """
-    Note.
-
-    Deleted self.N_episodes from replay buffer because we optimize
-    actor after every episode not iteration
-    """
+        def nullify_buffer(self):
+            self.observations = []
+            self.actions = []
+            self.total_objectives = []
+            self.running_objectives = []
+            self.is_step_dones = []
 
     def __init__(
         self,
@@ -548,37 +454,36 @@ class EpisodicScenarioTorchREINFORCE(EpisodicScenarioMultirun):
         super().__init__(*args, **kwargs)
         self.dim_observation = len(self.state_init)
         self.dim_action = len(self.action_init)
-        self.replay_buffer = ReplayBuffer(
-            dim_observation=self.dim_observation,
-            dim_action=self.dim_action,
-            max_size=int(
-                self.simulator.time_final
-                / self.controller.sampling_time
-                * self.time_final
-            ),
-        )
-        self.mean_q_values = np.zeros(self.N_episodes)
+        self.replay_buffer = self.ReplayBuffer()
 
     def step(self):
         episode_status = super().step()
-        self.replay_buffer.add(
-            self.observation,
-            self.action,
-            self.running_objective_value,
-            episode_status != "episode_continues",
+        self.replay_buffer.add_step_data(
+            observation=self.observation,
+            action=self.action,
+            running_objective=self.running_objective_value,
+            episode_id=self.episode_counter,
+            is_step_done=episode_status != "episode_continues",
         )
+        if episode_status == "episode_ended":
+            self.replay_buffer.add_total_objective(self.total_objective)
+
         return episode_status
 
     @apply_callbacks()
     def reset_iteration(self):
-        observations, _, _, _ = self.replay_buffer.sample(
-            int(
-                self.simulator.time_final
-                / self.controller.sampling_time
-                * self.N_episodes
+        if self.current_scenario_status != "simulation_ended":
+            (
+                observations,
+                actions,
+                running_objectives,
+                tail_total_objectives,
+                is_step_dones,
+            ) = self.replay_buffer.get_episodes_data()
+
+            self.actor.optimize_weights_after_iteration(
+                observations, actions, tail_total_objectives
             )
-        )
-        self.actor.optimize_weights_after_iteration(observations)
-        self.replay_buffer.nullify_buffer()
+            self.replay_buffer.nullify_buffer()
         super().reset_episode()
         super().reset_iteration()

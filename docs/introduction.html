@@ -196,7 +196,7 @@ issuing its actions at a given rate.</p>
 <span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
 <span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
 <span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
-<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="o">...</span>  <span class="c1">## Define the robot</span>
@@ -210,7 +210,7 @@ issuing its actions at a given rate.</p>
 <span class="n">robot</span> <span class="o">=</span> <span class="n">MyRobotSystem</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 <span class="n">controller</span> <span class="o">=</span> <span class="n">MyAgent</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 <span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">sampling_time</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
-<span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+<span class="n">scenario</span> <span class="o">=</span> <span class="n">OnlineScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
 <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -223,7 +223,7 @@ manage your training pipeline for RL (if needed):</p>
 <span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">RLController</span>
 <span class="kn">from</span> <span class="nn">rcognita.actors</span> <span class="kn">import</span> <span class="n">Actor</span>
 <span class="kn">from</span> <span class="nn">rcognita.critics</span> <span class="kn">import</span> <span class="n">Critic</span>
-<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="o">...</span>  <span class="c1">## Define the robot</span>
@@ -245,7 +245,7 @@ manage your training pipeline for RL (if needed):</p>
 <span class="n">critic</span> <span class="o">=</span> <span class="n">MyCritic</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 <span class="n">controller</span> <span class="o">=</span> <span class="n">RLController</span><span class="p">(</span><span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span> <span class="n">critic</span><span class="o">=</span><span class="n">critic</span><span class="p">)</span>
 <span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">sampling_time</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
-<span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">my_reward</span><span class="p">)</span>
+<span class="n">scenario</span> <span class="o">=</span> <span class="n">OnlineScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">my_reward</span><span class="p">)</span>
 <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -328,7 +328,7 @@ with <code class="docutils literal notranslate"><span class="pre">hydra</span></
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
 <span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
-<span class="kn">from</span> <span class="nn">rcognita.scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+<span class="kn">from</span> <span class="nn">rcognita.scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -344,7 +344,7 @@ with <code class="docutils literal notranslate"><span class="pre">hydra</span></
     <span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span>
                           <span class="n">config</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span>
                           <span class="n">sampling_time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
-    <span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+    <span class="n">scenario</span> <span class="o">=</span> <span class="n">OnlineScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
     <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 
 

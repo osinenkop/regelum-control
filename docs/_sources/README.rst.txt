@@ -106,7 +106,7 @@ issuing its actions at a given rate.
     from rcognita.simulator import Simulator
     from rcognita.systems import System
     from rcognita.controllers import Controller
-    from scenarios import EpisodicScenario
+    from scenarios import OnlineScenario
 
     class MyRobotSystem(System):
         ...  ## Define the robot
@@ -120,7 +120,7 @@ issuing its actions at a given rate.
     robot = MyRobotSystem(...)
     controller = MyAgent(...)
     simulator = Simulator(robot, initial_state, sampling_time=rate)
-    scenario = EpisodicScenario(simulator, controller)
+    scenario = OnlineScenario(simulator, controller)
     scenario.run()
 
 Not only can you use ``rcognita`` to simulate things, but you can also
@@ -135,7 +135,7 @@ manage your training pipeline for RL (if needed):
     from rcognita.controllers import RLController
     from rcognita.actors import Actor
     from rcognita.critics import Critic
-    from scenarios import EpisodicScenario
+    from scenarios import OnlineScenario
 
     class MyRobotSystem(System):
         ...  ## Define the robot
@@ -157,7 +157,7 @@ manage your training pipeline for RL (if needed):
     critic = MyCritic(...)
     controller = RLController(actor=actor, critic=critic)
     simulator = Simulator(robot, initial_state, sampling_time=rate)
-    scenario = EpisodicScenario(simulator, controller, objective=my_reward)
+    scenario = OnlineScenario(simulator, controller, objective=my_reward)
     scenario.run()
 
 The main intended advantages of ``rcognita`` are customizability and modularity.
@@ -250,7 +250,7 @@ Consider the following files in your hypothetical project.
 
     import rcognita as r
     from rcognita.simulator import Simulator
-    from rcognita.scenarios import EpisodicScenario
+    from rcognita.scenarios import OnlineScenario
     import my_utilities
     import numpy
 
@@ -266,7 +266,7 @@ Consider the following files in your hypothetical project.
         simulator = Simulator(robot,
                               config.initial_state,
                               sampling_time=config.rate)
-        scenario = EpisodicScenario(simulator, controller)
+        scenario = OnlineScenario(simulator, controller)
         scenario.run()
 
 

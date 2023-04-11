@@ -24,7 +24,7 @@ rcognita.critics.CriticTabularVI
       ~CriticTabularVI.update
       ~CriticTabularVI.update_and_cache_weights
       ~CriticTabularVI.update_buffers
-      ~CriticTabularVI.update_outcome
+      ~CriticTabularVI.update_total_objective
       ~CriticTabularVI.update_single_cell
       ~CriticTabularVI.update_target
       ~CriticTabularVI.update_weights

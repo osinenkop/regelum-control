@@ -25,7 +25,7 @@ rcognita.critics.CriticTrivial
       ~CriticTrivial.update
       ~CriticTrivial.update_and_cache_weights
       ~CriticTrivial.update_buffers
-      ~CriticTrivial.update_outcome
+      ~CriticTrivial.update_total_objective
       ~CriticTrivial.update_target
       ~CriticTrivial.update_weights
    

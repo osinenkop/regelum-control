@@ -17,7 +17,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="rcognita.scenarios.EpisodicScenario" href="sub/rcognita.scenarios.EpisodicScenario.html" />
+    <link rel="next" title="rcognita.scenarios.OnlineScenario" href="sub/rcognita.scenarios.OnlineScenario.html" />
     <link rel="prev" title="rcognita.predictors.TrivialPredictor" href="sub/rcognita.predictors.TrivialPredictor.html" /> 
 </head>
 
@@ -66,9 +66,9 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.EpisodicScenario.html">rcognita.scenarios.EpisodicScenario</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.EpisodicScenarioAsyncAC.html">rcognita.scenarios.EpisodicScenarioAsyncAC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.EpisodicScenarioREINFORCE.html">rcognita.scenarios.EpisodicScenarioREINFORCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html">rcognita.scenarios.OnlineScenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioAsyncAC.html">rcognita.scenarios.OnlineScenarioAsyncAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioREINFORCE.html">rcognita.scenarios.OnlineScenarioREINFORCE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html">rcognita.scenarios.OnlineScenario</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.Scenario.html">rcognita.scenarios.Scenario</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.TabularScenarioVI.html">rcognita.scenarios.TabularScenarioVI</a></li>
@@ -119,13 +119,13 @@ For instance, an online scenario is when the controller and system interact with
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.EpisodicScenario.html#rcognita.scenarios.EpisodicScenario" title="rcognita.scenarios.EpisodicScenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EpisodicScenario</span></code></a>(N_episodes, N_iterations, *args)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html#rcognita.scenarios.OnlineScenario" title="rcognita.scenarios.OnlineScenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenario</span></code></a>(N_episodes, N_iterations, *args)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.scenarios.EpisodicScenarioAsyncAC.html#rcognita.scenarios.EpisodicScenarioAsyncAC" title="rcognita.scenarios.EpisodicScenarioAsyncAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EpisodicScenarioAsyncAC</span></code></a>(*args, **kwargs)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioAsyncAC.html#rcognita.scenarios.OnlineScenarioAsyncAC" title="rcognita.scenarios.OnlineScenarioAsyncAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenarioAsyncAC</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.EpisodicScenarioREINFORCE.html#rcognita.scenarios.EpisodicScenarioREINFORCE" title="rcognita.scenarios.EpisodicScenarioREINFORCE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EpisodicScenarioREINFORCE</span></code></a>(*args[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioREINFORCE.html#rcognita.scenarios.OnlineScenarioREINFORCE" title="rcognita.scenarios.OnlineScenarioREINFORCE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenarioREINFORCE</span></code></a>(*args[, …])</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html#rcognita.scenarios.OnlineScenario" title="rcognita.scenarios.OnlineScenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenario</span></code></a>(simulator, controller, …[, …])</p></td>
@@ -146,7 +146,7 @@ For instance, an online scenario is when the controller and system interact with
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="sub/rcognita.predictors.TrivialPredictor.html" class="btn btn-neutral float-left" title="rcognita.predictors.TrivialPredictor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="sub/rcognita.scenarios.EpisodicScenario.html" class="btn btn-neutral float-right" title="rcognita.scenarios.EpisodicScenario" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sub/rcognita.scenarios.OnlineScenario.html" class="btn btn-neutral float-right" title="rcognita.scenarios.OnlineScenario" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -848,7 +848,7 @@ class SaveProgressCallback(Callback):
 
     def on_termination(self, res):
         if isinstance(res, Exception):
-            self.on_episode_done(None, 0, None)
+            self.on_episode_done(None, 0, None, None, None)
 
 
 class InspectReferrersCallback(Callback):

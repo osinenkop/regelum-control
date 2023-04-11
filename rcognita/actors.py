@@ -508,30 +508,48 @@ class Actor:
 
         return self.weights_acceptance_status
 
+    def iteration_update(self):
+        pass
+
 
 class ActorEpisodic(Actor):
     class ObservationDerivativeCattedDataset(Dataset):
-        def __init__(self, observations, use_derivative, derivative, action) -> None:
+        def __init__(
+            self,
+            observations,
+            actions,
+            tail_total_objectives,
+            use_derivative,
+            derivative,
+            *args,
+            **kwargs,
+        ) -> None:
             self.observations = observations
             self.derivative = derivative
             self.use_derivative = use_derivative
-            self.action = action
+            self.actions = actions
+            self.tail_total_objectives = tail_total_objectives
 
         def __len__(self):
             return len(self.observations)
 
         def __getitem__(self, idx):
             observation_for_actor, observation_for_critic = (
-                self.observations[idx],
-                self.observations[idx],
+                torch.tensor(self.observations[idx]),
+                torch.tensor(self.observations[idx]),
             )
+            action = torch.tensor(self.actions[idx])
             if self.use_derivative:
                 derivative = self.derivative(
-                    [], observation_for_actor, torch.tensor(self.action)
+                    [], observation_for_actor, torch.tensor(action)
                 )
                 observation_for_actor = torch.cat([self.observations[idx], derivative])
 
-            return observation_for_actor, observation_for_critic
+            return (
+                observation_for_actor,
+                observation_for_critic,
+                torch.tensor(self.tail_total_objectives[idx]),
+            )
 
     def __init__(
         self,
@@ -550,12 +568,17 @@ class ActorEpisodic(Actor):
     def optimize_weights(self, constraint_functions=None, time=None):
         pass
 
-    def optimize_weights_after_iteration(self, observations):
+    def optimize_weights_after_iteration(
+        self, observations, actions, tail_total_objectives
+    ):
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
 
-        self.optimizer.optimize(self.objective, self.dataloader(observations))
+        self.optimizer.optimize(
+            self.objective,
+            self.dataloader(observations, actions, tail_total_objectives),
+        )
 
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(torch.device("cpu"))
@@ -565,7 +588,9 @@ class ActorEpisodic(Actor):
         pass
 
     @force_type_safety
-    def objective(self, observations_for_actor, observations_for_critic):
+    def objective(
+        self, observations_for_actor, observations_for_critic, tail_total_objectives
+    ):
         return self.critic(
             torch.cat(
                 [observations_for_critic, self.model(observations_for_actor)], dim=1
@@ -587,44 +612,66 @@ class ActorEpisodic(Actor):
             )
         super().update_action(observation)
 
-    def dataloader(self, observations):
+    def dataloader(self, observations, actions, tail_total_objectives):
         return DataLoader(
             dataset=self.ObservationDerivativeCattedDataset(
                 observations=observations,
+                actions=actions,
+                tail_total_objectives=tail_total_objectives,
                 derivative=self.derivative,
                 use_derivative=self.use_derivative,
-                action=self.action,
             ),
             batch_size=self.batch_size,
             shuffle=True,
         )
 
+    def iteration_update(
+        self, replay_buffer, N_episodes, time_final=10, sampling_time=0.01
+    ):
+        observations, _, _, _ = replay_buffer.sample(
+            int(time_final / sampling_time * N_episodes)
+        )
+        self.optimize_weights_after_iteration(observations)
+        replay_buffer.nullify_buffer()
+
 
 class ActorEpisodicStochastic(ActorEpisodic):
     class ObservationDerivativeActionCattedDataset(Dataset):
-        def __init__(self, observations, use_derivative, derivative, action) -> None:
+        def __init__(
+            self,
+            observations,
+            actions,
+            tail_total_objectives,
+            use_derivative,
+            derivative,
+            *args,
+            **kwargs,
+        ) -> None:
             self.observations = observations
+            self.actions = actions
+            self.tail_total_objectives = tail_total_objectives
             self.derivative = derivative
             self.use_derivative = use_derivative
-            self.action = action
 
         def __len__(self):
             return len(self.observations)
 
         def __getitem__(self, idx):
             observation_for_actor, observations_for_critic = (
-                self.observations[idx],
-                self.observations[idx],
+                torch.tensor(self.observations[idx]),
+                torch.tensor(self.observations[idx]),
             )
+            action = torch.tensor(self.actions[idx])
+
             if self.use_derivative:
-                derivative = self.derivative(
-                    [], observation_for_actor, torch.tensor(self.action)
-                )
+                derivative = self.derivative([], observation_for_actor, action)
                 observation_for_actor = torch.cat([self.observations[idx], derivative])
 
-            return torch.cat(
-                [observation_for_actor, torch.tensor(self.action)]
-            ), torch.cat([observations_for_critic, torch.tensor(self.action)])
+            return (
+                torch.cat([observation_for_actor, action]),
+                torch.cat([observations_for_critic, action]),
+                torch.tensor(self.tail_total_objectives[idx]),
+            )
 
     def update_action(self, observation=None):
         if self.use_derivative:
@@ -647,20 +694,24 @@ class ActorEpisodicStochastic(ActorEpisodic):
 
     @force_type_safety
     def objective(
-        self, observations_actions_for_actor, observations_actions_for_critic
+        self,
+        observations_actions_for_actor,
+        observations_actions_for_critic,
+        tail_total_objectives,
     ):
         critic_value = self.critic(observations_actions_for_critic)
         if hasattr(critic_value, "detach"):
             critic_value = critic_value.detach()
         return (self.model(observations_actions_for_actor.float()) * critic_value).sum()
 
-    def dataloader(self, observations):
+    def dataloader(self, observations, actions, tail_total_objectives):
         return DataLoader(
             dataset=self.ObservationDerivativeActionCattedDataset(
                 observations=observations,
+                actions=actions,
+                tail_total_objectives=tail_total_objectives,
                 derivative=self.derivative,
                 use_derivative=self.use_derivative,
-                action=self.action,
             ),
             batch_size=self.batch_size,
             shuffle=True,

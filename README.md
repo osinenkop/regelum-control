@@ -93,7 +93,7 @@ import numpy as np
 from rcognita.simulator import Simulator
 from rcognita.systems import System
 from rcognita.controllers import Controller
-from scenarios import EpisodicScenario
+from scenarios import OnlineScenario
 
 class MyRobotSystem(System):
     ...  ## Define the robot
@@ -107,7 +107,7 @@ initial_state = np.zeros(...) ## In which state the robot will start
 robot = MyRobotSystem(...)
 controller = MyAgent(...)
 simulator = Simulator(robot, initial_state, sampling_time=rate)
-scenario = EpisodicScenario(simulator, controller)
+scenario = OnlineScenario(simulator, controller)
 scenario.run()
 ```
 
@@ -122,7 +122,7 @@ from rcognita.systems import System
 from rcognita.controllers import RLController
 from rcognita.actors import Actor
 from rcognita.critics import Critic
-from scenarios import EpisodicScenario
+from scenarios import OnlineScenario
 
 class MyRobotSystem(System):
     ...  ## Define the robot
@@ -144,7 +144,7 @@ actor = MyActor(...)
 critic = MyCritic(...)
 controller = RLController(actor=actor, critic=critic)
 simulator = Simulator(robot, initial_state, sampling_time=rate)
-scenario = EpisodicScenario(simulator, controller, objective=my_reward)
+scenario = OnlineScenario(simulator, controller, objective=my_reward)
 scenario.run()
 ```
 
@@ -240,7 +240,7 @@ agent:
 ```
 import rcognita as r
 from rcognita.simulator import Simulator
-from rcognita.scenarios import EpisodicScenario
+from rcognita.scenarios import OnlineScenario
 import my_utilities
 import numpy
 
@@ -256,7 +256,7 @@ def my_app(config):
     simulator = Simulator(robot,
                           config.initial_state,
                           sampling_time=config.rate)
-    scenario = EpisodicScenario(simulator, controller)
+    scenario = OnlineScenario(simulator, controller)
     scenario.run()
 
 

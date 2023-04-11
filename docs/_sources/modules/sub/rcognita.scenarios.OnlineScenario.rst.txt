@@ -17,7 +17,7 @@ rcognita.scenarios.OnlineScenario
       ~OnlineScenario.post_step
       ~OnlineScenario.run
       ~OnlineScenario.step
-      ~OnlineScenario.update_outcome
+      ~OnlineScenario.update_total_objective
    
    
 

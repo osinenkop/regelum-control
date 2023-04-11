@@ -19,9 +19,9 @@
    .. autosummary::
       :toctree: sub
    
-      EpisodicScenario
-      EpisodicScenarioAsyncAC
-      EpisodicScenarioREINFORCE
+      OnlineScenario
+      OnlineScenarioAsyncAC
+      OnlineScenarioREINFORCE
       OnlineScenario
       Scenario
       TabularScenarioVI

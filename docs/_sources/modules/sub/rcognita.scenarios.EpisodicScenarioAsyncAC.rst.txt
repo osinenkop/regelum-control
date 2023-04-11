@@ -1,9 +1,9 @@
-rcognita.scenarios.EpisodicScenarioAsyncAC
+rcognita.scenarios.OnlineScenarioAsyncAC
 ==========================================
 
 .. currentmodule:: rcognita.scenarios
 
-.. autoclass:: EpisodicScenarioAsyncAC
+.. autoclass:: OnlineScenarioAsyncAC
 
    
    .. automethod:: __init__
@@ -13,22 +13,22 @@ rcognita.scenarios.EpisodicScenarioAsyncAC
 
    .. autosummary::
    
-      ~EpisodicScenarioAsyncAC.__init__
-      ~EpisodicScenarioAsyncAC.get_mean
-      ~EpisodicScenarioAsyncAC.get_mean_REINFORCE_gradient
-      ~EpisodicScenarioAsyncAC.iteration_update
-      ~EpisodicScenarioAsyncAC.memorize
-      ~EpisodicScenarioAsyncAC.post_step
-      ~EpisodicScenarioAsyncAC.plot_critic
-      ~EpisodicScenarioAsyncAC.reload_pipeline
-      ~EpisodicScenarioAsyncAC.reset_episode
-      ~EpisodicScenarioAsyncAC.reset_iteration
-      ~EpisodicScenarioAsyncAC.reset_simulation
-      ~EpisodicScenarioAsyncAC.run
-      ~EpisodicScenarioAsyncAC.step
-      ~EpisodicScenarioAsyncAC.store_REINFORCE_objective_gradient
-      ~EpisodicScenarioAsyncAC.update_outcome
-      ~EpisodicScenarioAsyncAC.update_time_from_cache
+      ~OnlineScenarioAsyncAC.__init__
+      ~OnlineScenarioAsyncAC.get_mean
+      ~OnlineScenarioAsyncAC.get_mean_REINFORCE_gradient
+      ~OnlineScenarioAsyncAC.iteration_update
+      ~OnlineScenarioAsyncAC.memorize
+      ~OnlineScenarioAsyncAC.post_step
+      ~OnlineScenarioAsyncAC.plot_critic
+      ~OnlineScenarioAsyncAC.reload_pipeline
+      ~OnlineScenarioAsyncAC.reset_episode
+      ~OnlineScenarioAsyncAC.reset_iteration
+      ~OnlineScenarioAsyncAC.reset_simulation
+      ~OnlineScenarioAsyncAC.run
+      ~OnlineScenarioAsyncAC.step
+      ~OnlineScenarioAsyncAC.store_REINFORCE_objective_gradient
+      ~OnlineScenarioAsyncAC.update_total_objective
+      ~OnlineScenarioAsyncAC.update_time_from_cache
    
    
 
@@ -38,6 +38,6 @@ rcognita.scenarios.EpisodicScenarioAsyncAC
 
    .. autosummary::
    
-      ~EpisodicScenarioAsyncAC.cache
+      ~OnlineScenarioAsyncAC.cache
    
    

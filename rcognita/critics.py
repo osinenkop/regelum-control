@@ -113,7 +113,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.running_objective = running_objective
 
         self.current_critic_loss = 0
-        self.outcome = 0
+        self.total_objective = 0
         self.sampling_time = sampling_time
         self.clock = Clock(sampling_time)
         self.intrinsic_constraints = []
@@ -298,7 +298,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             self.observation_buffer,
             rc.array(observation, prototype=self.observation_buffer),
         )
-        self.update_outcome(observation, action)
+        self.update_total_objective(observation, action)
 
         self.current_observation = observation
         self.current_action = action
@@ -316,7 +316,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             rc_type=self.optimizer_engine,
         )
 
-    def update_outcome(self, observation, action):
+    def update_total_objective(self, observation, action):
         """
         Update the outcome variable based on the running objective and the current observation and action.
         :param observation: current observation
@@ -325,13 +325,15 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         :type action: np.ndarray
         """
 
-        self.outcome += self.running_objective(observation, action) * self.sampling_time
+        self.total_objective += (
+            self.running_objective(observation, action) * self.sampling_time
+        )
 
     def reset(self):
         """
         Reset the outcome and current critic loss variables, and re-initialize the buffers.
         """
-        self.outcome = 0
+        self.total_objective = 0
         self.current_critic_loss = 0
         self.initialize_buffers()
 
@@ -876,7 +878,7 @@ class CriticCALF(CriticOfObservation):
             self.observation_buffer,
             rc.array(observation, prototype=self.observation_buffer),
         )
-        self.update_outcome(observation, action)
+        self.update_total_objective(observation, action)
 
         self.current_observation = observation
         self.current_action = action
@@ -1147,7 +1149,7 @@ class CriticTrivial(Critic):
         :param action: Current action.
         :type action: ndarray or list
         """
-        self.update_outcome(observation, action)
+        self.update_total_objective(observation, action)
 
     def update(self, intrinsic_constraints=None, observation=None, time=None):
         """
@@ -1162,7 +1164,7 @@ class CriticTrivial(Critic):
         """
         pass
 
-    def update_outcome(self, observation, action):
+    def update_total_objective(self, observation, action):
         """
         Update the value of the outcome variable by adding the value of the running_objective function
         evaluated at the current observation and action, multiplied by the sampling time.

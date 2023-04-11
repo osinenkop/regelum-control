@@ -23,7 +23,7 @@ rcognita.critics.Critic
       ~Critic.restore_weights
       ~Critic.update_and_cache_weights
       ~Critic.update_buffers
-      ~Critic.update_outcome
+      ~Critic.update_total_objective
       ~Critic.update_target
       ~Critic.update_weights
    

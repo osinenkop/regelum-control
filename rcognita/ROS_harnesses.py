@@ -106,7 +106,7 @@ class ROSHarness:
 
         self.obstacles_parser = Obstacles_parser(safe_margin_mult=1.5)
 
-    def update_outcome(self, observation, action, delta):
+    def update_total_objective(self, observation, action, delta):
 
         """
         Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
@@ -266,7 +266,7 @@ class ROSHarness:
             angle = self.new_state[2]
 
             running_objective = self.running_objective(self.new_state, action)
-            self.update_outcome(self.new_state, action, delta_t)
+            self.update_total_objective(self.new_state, action, delta_t)
             outcome = self.outcome_value
 
             if is_print_sim_step:

@@ -1,6 +1,6 @@
 defaults:
   - system: 3wrobot
-  - scenario: episodic
+  - scenario: online
   - simulator: casadi
   - optional nominal_controller: nominal_${system}
   - controller: mpc

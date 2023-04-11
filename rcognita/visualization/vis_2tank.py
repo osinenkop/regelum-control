@@ -220,7 +220,7 @@ class Animator2Tank(Animator):
             action = self.controller.compute_action(observation, time=time)
 
             self.system.receive_action(action)
-            self.controller.update_outcome(observation, action)
+            self.controller.update_total_objective(observation, action)
 
             running_objective = self.controller.running_objective(observation, action)
             outcome = self.controller.outcome

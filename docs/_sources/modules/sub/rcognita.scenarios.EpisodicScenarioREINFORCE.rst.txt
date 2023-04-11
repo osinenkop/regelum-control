@@ -1,9 +1,9 @@
-rcognita.scenarios.EpisodicScenarioREINFORCE
+rcognita.scenarios.OnlineScenarioREINFORCE
 ============================================
 
 .. currentmodule:: rcognita.scenarios
 
-.. autoclass:: EpisodicScenarioREINFORCE
+.. autoclass:: OnlineScenarioREINFORCE
 
    
    .. automethod:: __init__
@@ -13,22 +13,22 @@ rcognita.scenarios.EpisodicScenarioREINFORCE
 
    .. autosummary::
    
-      ~EpisodicScenarioREINFORCE.__init__
-      ~EpisodicScenarioREINFORCE.get_mean
-      ~EpisodicScenarioREINFORCE.get_mean_REINFORCE_gradient
-      ~EpisodicScenarioREINFORCE.iteration_update
-      ~EpisodicScenarioREINFORCE.memorize
-      ~EpisodicScenarioREINFORCE.post_step
-      ~EpisodicScenarioREINFORCE.plot_critic
-      ~EpisodicScenarioREINFORCE.reload_pipeline
-      ~EpisodicScenarioREINFORCE.reset_episode
-      ~EpisodicScenarioREINFORCE.reset_iteration
-      ~EpisodicScenarioREINFORCE.reset_simulation
-      ~EpisodicScenarioREINFORCE.run
-      ~EpisodicScenarioREINFORCE.step
-      ~EpisodicScenarioREINFORCE.store_REINFORCE_objective_gradient
-      ~EpisodicScenarioREINFORCE.update_outcome
-      ~EpisodicScenarioREINFORCE.update_time_from_cache
+      ~OnlineScenarioREINFORCE.__init__
+      ~OnlineScenarioREINFORCE.get_mean
+      ~OnlineScenarioREINFORCE.get_mean_REINFORCE_gradient
+      ~OnlineScenarioREINFORCE.iteration_update
+      ~OnlineScenarioREINFORCE.memorize
+      ~OnlineScenarioREINFORCE.post_step
+      ~OnlineScenarioREINFORCE.plot_critic
+      ~OnlineScenarioREINFORCE.reload_pipeline
+      ~OnlineScenarioREINFORCE.reset_episode
+      ~OnlineScenarioREINFORCE.reset_iteration
+      ~OnlineScenarioREINFORCE.reset_simulation
+      ~OnlineScenarioREINFORCE.run
+      ~OnlineScenarioREINFORCE.step
+      ~OnlineScenarioREINFORCE.store_REINFORCE_objective_gradient
+      ~OnlineScenarioREINFORCE.update_total_objective
+      ~OnlineScenarioREINFORCE.update_time_from_cache
    
    
 
@@ -38,6 +38,6 @@ rcognita.scenarios.EpisodicScenarioREINFORCE
 
    .. autosummary::
    
-      ~EpisodicScenarioREINFORCE.cache
+      ~OnlineScenarioREINFORCE.cache
    
    

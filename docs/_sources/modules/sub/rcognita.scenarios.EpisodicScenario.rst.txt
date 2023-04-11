@@ -1,9 +1,9 @@
-rcognita.scenarios.EpisodicScenario
+rcognita.scenarios.OnlineScenario
 ===================================
 
 .. currentmodule:: rcognita.scenarios
 
-.. autoclass:: EpisodicScenario
+.. autoclass:: OnlineScenario
 
    
    .. automethod:: __init__
@@ -13,18 +13,18 @@ rcognita.scenarios.EpisodicScenario
 
    .. autosummary::
    
-      ~EpisodicScenario.__init__
-      ~EpisodicScenario.iteration_update
-      ~EpisodicScenario.memorize
-      ~EpisodicScenario.post_step
-      ~EpisodicScenario.reload_pipeline
-      ~EpisodicScenario.reset_episode
-      ~EpisodicScenario.reset_iteration
-      ~EpisodicScenario.reset_simulation
-      ~EpisodicScenario.run
-      ~EpisodicScenario.step
-      ~EpisodicScenario.update_outcome
-      ~EpisodicScenario.update_time_from_cache
+      ~OnlineScenario.__init__
+      ~OnlineScenario.iteration_update
+      ~OnlineScenario.memorize
+      ~OnlineScenario.post_step
+      ~OnlineScenario.reload_pipeline
+      ~OnlineScenario.reset_episode
+      ~OnlineScenario.reset_iteration
+      ~OnlineScenario.reset_simulation
+      ~OnlineScenario.run
+      ~OnlineScenario.step
+      ~OnlineScenario.update_total_objective
+      ~OnlineScenario.update_time_from_cache
    
    
 
@@ -34,6 +34,6 @@ rcognita.scenarios.EpisodicScenario
 
    .. autosummary::
    
-      ~EpisodicScenario.cache
+      ~OnlineScenario.cache
    
    

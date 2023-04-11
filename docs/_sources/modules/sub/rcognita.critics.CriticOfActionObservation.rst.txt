@@ -23,7 +23,7 @@ rcognita.critics.CriticOfActionObservation
       ~CriticOfActionObservation.restore_weights
       ~CriticOfActionObservation.update_and_cache_weights
       ~CriticOfActionObservation.update_buffers
-      ~CriticOfActionObservation.update_outcome
+      ~CriticOfActionObservation.update_total_objective
       ~CriticOfActionObservation.update_target
       ~CriticOfActionObservation.update_weights
    
