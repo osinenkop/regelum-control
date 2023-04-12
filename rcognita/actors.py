@@ -699,6 +699,7 @@ class ActorEpisodicStochastic(ActorEpisodic):
         observations_actions_for_critic,
         tail_total_objectives,
     ):
+        ### The original objective is
         critic_value = self.critic(observations_actions_for_critic)
         if hasattr(critic_value, "detach"):
             critic_value = critic_value.detach()

@@ -22,6 +22,7 @@ import mlflow
 import torch
 import rcognita
 import pandas as pd
+import numpy as np
 import time, datetime
 import dill, os, git, shutil
 
@@ -194,14 +195,15 @@ class OnIterationDoneCallerCallback(Callback):
 
     def perform(self, obj, method, output):
         self.iteration_counter += 1
-        for callback in rcognita.main.callbacks:
-            callback.on_iteration_done(
-                obj,
-                obj.N_episodes,
-                obj.N_episodes,
-                self.iteration_counter,
-                obj.N_iterations,
-            )
+        if obj.N_iterations > 1 and self.iteration_counter <= obj.N_iterations:
+            for callback in rcognita.main.callbacks:
+                callback.on_iteration_done(
+                    obj,
+                    obj.N_episodes,
+                    obj.N_episodes,
+                    self.iteration_counter,
+                    obj.N_iterations,
+                )
 
 
 class ConfigDiagramCallback(Callback):
@@ -904,9 +906,9 @@ class HistoricalObservationCallback(HistoricalCallback):
         iterations_total,
     ):
         if iterations_total == 1:
-            identifier = f"observations_in_episode_{str(episode_number).zfill(5)}"
+            identifier = f"observations_ep_{str(episode_number).zfill(5)}"
         else:
-            identifier = f"observations_in_iteration_{str(iteration_number).zfill(5)}_in_episode_{str(episode_number).zfill(5)}"
+            identifier = f"observations_it_{str(iteration_number).zfill(5)}_ep_{str(episode_number).zfill(5)}"
         self.save_plot(identifier)
         self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(identifier)
@@ -937,6 +939,30 @@ class TotalObjectiveCallback(HistoricalCallback):
     def is_target_event(self, obj, method, output):
         return False
 
+    def on_iteration_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        mlflow.log_metric(
+            "Iteration stats avg total objectives",
+            np.mean(scenario.recent_total_objectives_of_episodes),
+            step=iteration_number,
+        )
+        mlflow.log_metric(
+            "Iteration stats med total objectives",
+            np.median(scenario.recent_total_objectives_of_episodes),
+            step=iteration_number,
+        )
+        mlflow.log_metric(
+            "Iteration stats std total objectives",
+            np.std(scenario.recent_total_objectives_of_episodes),
+            step=iteration_number,
+        )
+
     def on_episode_done(
         self,
         scenario,
@@ -958,10 +984,11 @@ class TotalObjectiveCallback(HistoricalCallback):
             f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
         )
         mlflow.log_metric(
-            f"Total objectives in iteration {iteration_number}",
+            f"Total objectives in iteration {str(iteration_number).zfill(5)}",
             scenario.recent_total_objective,
             step=len(self.data),
         )
+
         self.save_plot(
             f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
         )

@@ -145,6 +145,7 @@ class OnlineScenario(Scenario):
         self.delta_time = 0
         self.observation_components_naming = observation_components_naming
 
+        self.recent_total_objectives_of_episodes = []
         self.total_objectives_of_episodes = []
         self.outcome_episodic_means = []
         self.sim_status = 1
@@ -214,12 +215,13 @@ class OnlineScenario(Scenario):
     def reset_iteration(self):
         self.episode_counter = 0
         self.iteration_counter += 1
+        self.recent_total_objectives_of_episodes = self.total_objectives_of_episodes
         self.total_objectives_of_episodes = []
 
     def reset_episode(self):
-        self.total_objectives_of_episodes.append(self.critic.total_objective)
+        self.total_objectives_of_episodes.append(self.total_objective)
         self.episode_counter += 1
-        return self.critic.total_objective
+        return self.total_objective
 
     def reset_simulation(self):
         self.current_scenario_status = "episode_continues"
@@ -470,7 +472,6 @@ class MonteCarloScenario(OnlineScenario):
 
         return episode_status
 
-    @apply_callbacks()
     def reset_iteration(self):
         if self.current_scenario_status != "simulation_ended":
             (
