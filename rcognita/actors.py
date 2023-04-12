@@ -699,7 +699,26 @@ class ActorEpisodicStochastic(ActorEpisodic):
         observations_actions_for_critic,
         tail_total_objectives,
     ):
-        ### The original objective is
+        """
+        The problem for PG is stated as follows
+
+        :math:`L = \\mathbb{E}\\left[\\sum_{k=1}^T r_k \\right] \\rightarrow \\min`
+
+        The Monte-Carlo approximation of the gradient of :math `L` is following
+
+        :math `\\frac{1}{N_episodes}\\sum_{j=1}^{N_episodes} \\sum_{k=0} ^ T \\nabla_{\\theta} \\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
+
+        where :math `\\mathcal{C}^j` can be one of
+            1. :math `Qfunction(s_k^j, a_k^j)`
+            2. :math `ValueFunction(s_k^j, a_k^j)`
+            3. :math `AdvantageFunction(s_k^j, a_k^j)`
+            4. :math `\\sum_{k=0}\\gamma ^ {k}r^j_k`
+            5. :math `\\sum_{k'=k}\\gamma ^ {k'}r^j_{k'}`
+
+        We use batches from the set :math \\{(a_k^j, y_k^{j}, \\mathcal{C}_k^j)\\}_{k,j} with further calculation of
+        :math `\\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
+        and making the gradient steps
+        """
         critic_value = self.critic(observations_actions_for_critic)
         if hasattr(critic_value, "detach"):
             critic_value = critic_value.detach()
