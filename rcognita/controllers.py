@@ -60,14 +60,14 @@ class Controller(RcognitaBase, ABC):
         self, time, state, observation, constraints=(), observation_target=[]
     ):
         self.observation_target = observation_target
-        is_time_for_new_sample = self.clock.check_time(time)
+        self.is_time_for_new_sample = self.clock.check_time(time)
         is_time_for_critic_update = self.critic.clock.check_time(time)
 
         is_critic_update = (
             is_time_for_critic_update and not self.is_fixed_critic_weights
         )
 
-        if is_time_for_new_sample:  # New sample
+        if self.is_time_for_new_sample:  # New sample
             # Update controller's internal clock
 
             self.compute_action(

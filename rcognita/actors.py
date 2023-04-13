@@ -519,6 +519,8 @@ class ActorPGBase(Actor, ABC):
     def __init__(
         self,
         is_use_derivative,
+        N_episodes,
+        N_iterations,
         device="cpu",
         *args,
         **kwargs,
@@ -527,12 +529,16 @@ class ActorPGBase(Actor, ABC):
         self.is_use_derivative = is_use_derivative
         self.derivative = self.system.compute_dynamics
         self.device = torch.device(device)
+        self.dataset_size = 0
+        self.N_episodes = N_episodes
+        self.N_iterations = N_iterations
 
     def optimize_weights_after_iteration(self, dataset):
         # Send to device before optimization
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
+        self.dataset_size = len(dataset)
 
         self.optimizer.optimize(self.objective, dataset)
 
@@ -610,8 +616,13 @@ class ActorPG(ActorPGBase):
         )
         objectives_acc_stats = batch["objective_acc_stats"].to(self.device)
         return (
-            self.model(observations_actions_for_actor.float()) * objectives_acc_stats
-        ).sum()
+            self.dataset_size
+            * (
+                self.model(observations_actions_for_actor.float())
+                * objectives_acc_stats
+                / self.N_episodes
+            ).mean()
+        )
 
 
 class ActorSDPG(ActorPG):

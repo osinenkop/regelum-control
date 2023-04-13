@@ -7,4 +7,3 @@ batch_size: 50
 epochs: 50
 opt_method: = torch.optim.Adam
 model: ~ controller.actor.model
-device: $ controller.actor.device

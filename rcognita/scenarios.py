@@ -405,14 +405,15 @@ class OnlineScenario(Scenario):
 class MonteCarloScenario(OnlineScenario):
     def step(self):
         episode_status = super().step()
-        self.controller.episode_data_buffer.add_step_data(
-            observation=self.observation,
-            action=self.action,
-            running_objective=self.running_objective_value,
-            current_total_objective=self.total_objective,
-            episode_id=self.episode_counter,
-            is_step_done=episode_status != "episode_continues",
-        )
+        if self.controller.is_time_for_new_sample:
+            self.controller.episode_data_buffer.add_step_data(
+                observation=self.observation,
+                action=self.action,
+                running_objective=self.running_objective_value,
+                current_total_objective=self.total_objective,
+                episode_id=self.episode_counter,
+                is_step_done=episode_status != "episode_continues",
+            )
         if episode_status == "episode_ended":
             self.controller.episode_data_buffer.add_total_objective(
                 self.total_objective
