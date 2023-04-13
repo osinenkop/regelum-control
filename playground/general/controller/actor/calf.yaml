@@ -8,7 +8,7 @@ _target_: rcognita.actors.ActorCALF
 running_objective: $ running_objective
 
 ###---Constructor arguments---###
-
+system: ~ system
 actor_constraints_on: true
 penalty_param: 0
 actor_regularization_param: 0
@@ -22,5 +22,6 @@ state_init: $ scenario.state_init
 critic: ~ controller.critic
 safe_controller: $ nominal_controller
 observation_target: $ system_specific.observation_target
+
 predictor:
   prediction_horizon: 0

@@ -929,6 +929,51 @@ class HistoricalObservationCallback(HistoricalCallback):
         return res[0].figure
 
 
+class PolicyGradientObjectiveSaverCallback(HistoricalCallback):
+    """
+    A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.cooldown = 0.0
+        self.iteration_number = 1
+
+    def is_target_event(self, obj, method, output):
+        return isinstance(obj, rcognita.optimizers.TorchDataloaderOptimizer) and (
+            method == "post_epoch"
+        )
+
+    def perform(self, obj, method, output):
+        epoch_idx, objective = output
+        self.add_datum(
+            {
+                "epoch": epoch_idx,
+                "loss": objective,
+            }
+        )
+        mlflow.log_metric(
+            f"Actor learning objective on iteration {str(self.iteration_number).zfill(5)}",
+            objective,
+            step=epoch_idx,
+        )
+
+    def on_iteration_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        self.dump_and_clear_data(
+            f"actor_objective_on_iteration_{str(iteration_number).zfill(5)}"
+        )
+        self.iteration_number = iteration_number + 1
+
+
 class TotalObjectiveCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

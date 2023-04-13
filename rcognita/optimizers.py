@@ -21,6 +21,7 @@ import time
 try:
     import torch.optim as optim
     import torch
+    from torch.utils.data import Dataset, DataLoader
 
 except ModuleNotFoundError:
     pass
@@ -327,6 +328,29 @@ class TorchOptimizer(Optimizer):
             self.optimizer.step()
 
 
+class TorchBatchSamplerOptimizer(Optimizer):
+    engine = "Torch"
+
+    def __init__(
+        self,
+        opt_options,
+        model,
+        device,
+        epochs=1,
+        opt_method=None,
+        verbose=False,
+    ):
+        if opt_method is None:
+            opt_method = torch.optim.Adam
+
+        self.device = torch.device(device)
+        self.opt_method = opt_method
+        self.opt_options = opt_options
+        self.epochs = epochs
+        self.verbose = verbose
+        self.model = model
+
+
 class TorchDataloaderOptimizer(Optimizer):
     """
     Optimizer class that uses PyTorch as its optimization engine.
@@ -338,9 +362,11 @@ class TorchDataloaderOptimizer(Optimizer):
         self,
         opt_options,
         model,
-        device,
-        iterations=1,
+        batch_size,
+        epochs,
+        shuffle=True,
         opt_method=None,
+        device=None,
         verbose=False,
     ):
         """
@@ -358,19 +384,20 @@ class TorchDataloaderOptimizer(Optimizer):
         if opt_method is None:
             opt_method = torch.optim.Adam
 
-        self.device = torch.device(device)
         self.opt_method = opt_method
         self.opt_options = opt_options
-        self.iterations = iterations
+        self.batch_size = batch_size
+        self.epochs = epochs
+        self.shuffle = shuffle
         self.verbose = verbose
-        self.loss_history = []
         self.model = model
+        self.device = device
 
-    def optimize(
-        self,
-        objective,
-        dataloader,
-    ):  # remove model and add parameters instead
+    @apply_callbacks()
+    def post_epoch(self, idx_epoch, last_epoch_objective):
+        return idx_epoch, last_epoch_objective
+
+    def optimize(self, objective, dataset):  # remove model and add parameters instead
         """
         Optimize the model with the given objective.
 
@@ -381,21 +408,25 @@ class TorchDataloaderOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
+        dataloader = DataLoader(
+            dataset=dataset,
+            shuffle=self.shuffle,
+            batch_size=self.batch_size,
+        )
         optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
-        for _ in range(self.iterations):
-            for (
-                observations_actions_for_actor,
-                observations_actions_for_critic,
-                total_objectives,
-            ) in dataloader:
+        if self.device is None:
+            self.device = next(self.model.parameters()).device
+
+        last_epoch_objective = 0.0
+        for idx_epoch in range(self.epochs):
+            for batch_sample in dataloader:
                 optimizer.zero_grad()
-                loss = objective(
-                    observations_actions_for_actor.to(self.device),
-                    observations_actions_for_critic.to(self.device),
-                    total_objectives.to(self.device),
-                )
-                loss.backward()
+                objective_value = objective(batch_sample)
+                last_epoch_objective = objective_value.item()
+                objective_value.backward()
                 optimizer.step()
+
+            self.post_epoch(idx_epoch, last_epoch_objective)
 
 
 class TorchProjectiveOptimizer(Optimizer):

@@ -102,13 +102,14 @@ class RLController(Controller):
         critic=None,
         time_start=0,
         action_bounds=None,
+        episode_data_buffer=None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.actor = actor
         self.critic = critic
         self.action_bounds = action_bounds
-
+        self.episode_data_buffer = episode_data_buffer
         self.critic_clock = time_start
         self.critic_period = critic_period
         self.weights_difference_norms = []

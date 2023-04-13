@@ -6,7 +6,7 @@ defaults:
 _target_: rcognita.actors.ActorSQL
 
 ###---Constructor arguments---###
-
+system: ~ system
 prediction_horizon: $ controller.actor.predictor.prediction_horizon
 dim_output: $ system.dim_input
 dim_input: $ system.dim_output

@@ -1,19 +1,19 @@
 defaults:
-  - model: weight_container
-  - optimizer: scipy
-  - predictor: euler
+  - model: fc 
+  - optimizer: torch_dataloader
 
-_target_: rcognita.actors.ActorMPC
+_target_: rcognita.actors.ActorDDPG
 
 ###---Constructor arguments---###
 system: ~ system
-prediction_horizon: $ controller.actor.predictor.prediction_horizon
 dim_output: $ system.dim_input
 dim_input: $ system.dim_output
 discount_factor: 1.
-action_bounds: $ controller.action_bounds
+action_bounds: $ system.action_bounds%%
 action_init: $ scenario.action_init
 state_init: $ scenario.state_init
 critic: ~ controller.critic
-running_objective: $ running_objective
 observation_target: $ system_specific.observation_target
+running_objective: $ running_objective
+device: cuda:0
+is_use_derivative: $ system_specific.is_use_derivative

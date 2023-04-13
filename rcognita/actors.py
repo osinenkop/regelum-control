@@ -24,6 +24,7 @@ from .predictors import Predictor
 from .optimizers import Optimizer
 from .critics import Critic
 from .models import Model
+from .systems import System
 
 try:
     import torch
@@ -78,6 +79,7 @@ class Actor:
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
         state_init: list = None,
+        system: System = None,
         predictor: Predictor = None,
         optimizer: Optimizer = None,
         critic: Critic = None,
@@ -169,7 +171,8 @@ class Actor:
             self.observation_target = rc.array(observation_target)
 
         self.state_init = state_init
-        self.observation_init = self.predictor.system.out(state_init)
+        self.system = system
+        self.observation_init = self.system.out(state_init)
 
     @property
     def weights(self):
@@ -512,193 +515,41 @@ class Actor:
         pass
 
 
-class ActorEpisodic(Actor):
-    class ObservationDerivativeCattedDataset(Dataset):
-        def __init__(
-            self,
-            observations,
-            actions,
-            tail_total_objectives,
-            use_derivative,
-            derivative,
-            *args,
-            **kwargs,
-        ) -> None:
-            self.observations = observations
-            self.derivative = derivative
-            self.use_derivative = use_derivative
-            self.actions = actions
-            self.tail_total_objectives = tail_total_objectives
-
-        def __len__(self):
-            return len(self.observations)
-
-        def __getitem__(self, idx):
-            observation_for_actor, observation_for_critic = (
-                torch.tensor(self.observations[idx]),
-                torch.tensor(self.observations[idx]),
-            )
-            action = torch.tensor(self.actions[idx])
-            if self.use_derivative:
-                derivative = self.derivative(
-                    [], observation_for_actor, torch.tensor(action)
-                )
-                observation_for_actor = torch.cat([self.observations[idx], derivative])
-
-            return (
-                observation_for_actor,
-                observation_for_critic,
-                torch.tensor(self.tail_total_objectives[idx]),
-            )
-
+class ActorPGBase(Actor, ABC):
     def __init__(
         self,
-        *args,
-        use_derivative=False,
-        batch_size=50,
+        is_use_derivative,
         device="cpu",
+        *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.use_derivative = use_derivative
-        self.derivative = self.predictor.system.compute_dynamics
-        self.batch_size = batch_size
+        self.is_use_derivative = is_use_derivative
+        self.derivative = self.system.compute_dynamics
         self.device = torch.device(device)
 
-    def optimize_weights(self, constraint_functions=None, time=None):
-        pass
-
-    def optimize_weights_after_iteration(
-        self, observations, actions, tail_total_objectives
-    ):
+    def optimize_weights_after_iteration(self, dataset):
+        # Send to device before optimization
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
 
-        self.optimizer.optimize(
-            self.objective,
-            self.dataloader(observations, actions, tail_total_objectives),
-        )
+        self.optimizer.optimize(self.objective, dataset)
 
+        # Send back to cpu after optimization
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
 
-    def update_and_cache_weights(self):
-        pass
-
-    @force_type_safety
-    def objective(
-        self, observations_for_actor, observations_for_critic, tail_total_objectives
-    ):
-        return self.critic(
-            torch.cat(
-                [observations_for_critic, self.model(observations_for_actor)], dim=1
-            )
-        ).sum()
-
     def update_target(self, observation_target):
         self.observation_target = (
             rc.concatenate((observation_target, rc.zeros(len(observation_target))))
-            if self.use_derivative
+            if self.is_use_derivative
             else observation_target
         )
 
-    def update_action(self, observation=None):
-        if self.use_derivative:
-            derivative = self.derivative([], observation, self.action)
-            observation = torch.cat(
-                [torch.tensor(observation), torch.tensor(derivative)]
-            )
-        super().update_action(observation)
-
-    def dataloader(self, observations, actions, tail_total_objectives):
-        return DataLoader(
-            dataset=self.ObservationDerivativeCattedDataset(
-                observations=observations,
-                actions=actions,
-                tail_total_objectives=tail_total_objectives,
-                derivative=self.derivative,
-                use_derivative=self.use_derivative,
-            ),
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
-
-    def iteration_update(
-        self, replay_buffer, N_episodes, time_final=10, sampling_time=0.01
-    ):
-        observations, _, _, _ = replay_buffer.sample(
-            int(time_final / sampling_time * N_episodes)
-        )
-        self.optimize_weights_after_iteration(observations)
-        replay_buffer.nullify_buffer()
-
-
-class ActorEpisodicStochastic(ActorEpisodic):
-    class ObservationDerivativeActionCattedDataset(Dataset):
-        def __init__(
-            self,
-            observations,
-            actions,
-            tail_total_objectives,
-            use_derivative,
-            derivative,
-            *args,
-            **kwargs,
-        ) -> None:
-            self.observations = observations
-            self.actions = actions
-            self.tail_total_objectives = tail_total_objectives
-            self.derivative = derivative
-            self.use_derivative = use_derivative
-
-        def __len__(self):
-            return len(self.observations)
-
-        def __getitem__(self, idx):
-            observation_for_actor, observations_for_critic = (
-                torch.tensor(self.observations[idx]),
-                torch.tensor(self.observations[idx]),
-            )
-            action = torch.tensor(self.actions[idx])
-
-            if self.use_derivative:
-                derivative = self.derivative([], observation_for_actor, action)
-                observation_for_actor = torch.cat([self.observations[idx], derivative])
-
-            return (
-                torch.cat([observation_for_actor, action]),
-                torch.cat([observations_for_critic, action]),
-                torch.tensor(self.tail_total_objectives[idx]),
-            )
-
-    def update_action(self, observation=None):
-        if self.use_derivative:
-            derivative = self.derivative([], observation, self.action)
-            observation = torch.cat(
-                [torch.tensor(observation), torch.tensor(derivative)]
-            ).float()
-        self.action_old = self.action
-        if observation is None:
-            observation = self.observation
-
-        self.action = (
-            self.model.sample(
-                torch.tensor(observation - self.observation_target).float()
-            )
-            .detach()
-            .cpu()
-            .numpy()
-        )
-
-    @force_type_safety
-    def objective(
-        self,
-        observations_actions_for_actor,
-        observations_actions_for_critic,
-        tail_total_objectives,
-    ):
+    @abstractmethod
+    def objective(self, batch):
         """
         The problem for PG is stated as follows
 
@@ -719,23 +570,81 @@ class ActorEpisodicStochastic(ActorEpisodic):
         :math `\\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
         and making the gradient steps
         """
-        critic_value = self.critic(observations_actions_for_critic)
-        if hasattr(critic_value, "detach"):
-            critic_value = critic_value.detach()
+
+        pass
+
+    @abstractmethod
+    def update_action(self):
+        pass
+
+    def optimize_weights(self, constraint_functions=None, time=None):
+        pass
+
+    def update_and_cache_weights(self):
+        pass
+
+
+class ActorPG(ActorPGBase):
+    def update_action(self, observation=None):
+        if self.is_use_derivative:
+            derivative = self.derivative([], observation, self.action)
+            observation = torch.cat(
+                [torch.tensor(observation), torch.tensor(derivative)]
+            ).float()
+        self.action_old = self.action
+        if observation is None:
+            observation = self.observation
+
+        self.action = (
+            self.model.sample(
+                torch.tensor(observation - self.observation_target).float()
+            )
+            .detach()
+            .cpu()
+            .numpy()
+        )
+
+    def objective(self, batch):
+        observations_actions_for_actor = batch["observations_actions_for_actor"].to(
+            self.device
+        )
+        objectives_acc_stats = batch["objective_acc_stats"].to(self.device)
+        return (
+            self.model(observations_actions_for_actor.float()) * objectives_acc_stats
+        ).sum()
+
+
+class ActorSDPG(ActorPG):
+    @force_type_safety
+    def objective(self, batch):
+        observations_actions_for_actor = batch["observations_actions_for_actor"].to(
+            self.device
+        )
+        observations_actions_for_critic = batch["observations_actions_for_critic"].to(
+            self.device
+        )
+        critic_value = self.critic(observations_actions_for_critic).detach()
         return (self.model(observations_actions_for_actor.float()) * critic_value).sum()
 
-    def dataloader(self, observations, actions, tail_total_objectives):
-        return DataLoader(
-            dataset=self.ObservationDerivativeActionCattedDataset(
-                observations=observations,
-                actions=actions,
-                tail_total_objectives=tail_total_objectives,
-                derivative=self.derivative,
-                use_derivative=self.use_derivative,
-            ),
-            batch_size=self.batch_size,
-            shuffle=True,
-        )
+
+class ActorDDPG(ActorPGBase):
+    @force_type_safety
+    def objective(self, batch):
+        observations_for_actor = batch["observations_for_actor"].to(self.device)
+        observations_for_critic = batch["observations_for_critic"].to(self.device)
+        return self.critic(
+            torch.cat(
+                [observations_for_critic, self.model(observations_for_actor)], dim=1
+            )
+        ).sum()
+
+    def update_action(self, observation=None):
+        if self.is_use_derivative:
+            derivative = self.derivative([], observation, self.action)
+            observation = torch.cat(
+                [torch.tensor(observation), torch.tensor(derivative)]
+            )
+        super().update_action(observation)
 
 
 class ActorPID(Actor):

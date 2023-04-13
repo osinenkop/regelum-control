@@ -16,7 +16,7 @@ critic_regularization_param: 0
 is_dynamic_decay_rate: True
 lb_parameter: 1.0E-6
 ub_parameter: 1.0E+3
-use_derivative: False
+is_use_derivative: False
 
 data_buffer_size: 500
 diag_scale_coef: 5.

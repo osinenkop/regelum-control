@@ -403,88 +403,28 @@ class OnlineScenario(Scenario):
 
 
 class MonteCarloScenario(OnlineScenario):
-    class ReplayBuffer:
-        def __init__(self):
-            self.episode_ids = []
-            self.observations = []
-            self.actions = []
-            self.running_objectives = []
-            self.total_objectives = []
-            self.is_step_dones = []
-
-        def add_step_data(
-            self,
-            observation,
-            action,
-            running_objective,
-            episode_id,
-            is_step_done,
-        ):
-            self.observations.append(observation)
-            self.actions.append(action)
-            self.running_objectives.append(running_objective)
-            self.episode_ids.append(int(episode_id))
-            self.is_step_dones.append(is_step_done)
-
-        def add_total_objective(self, total_objective):
-            self.total_objectives.append(total_objective)
-
-        def get_episodes_data(self):
-            if len(self.total_objectives) > 0:
-                return (
-                    self.observations,
-                    self.actions,
-                    self.running_objectives,
-                    np.array(self.total_objectives)[np.array(self.episode_ids) - 1],
-                    self.is_step_dones,
-                )
-            else:
-                return [], [], [], [], []
-
-        def nullify_buffer(self):
-            self.observations = []
-            self.actions = []
-            self.total_objectives = []
-            self.running_objectives = []
-            self.is_step_dones = []
-
-    def __init__(
-        self,
-        *args,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
-        self.dim_observation = len(self.state_init)
-        self.dim_action = len(self.action_init)
-        self.replay_buffer = self.ReplayBuffer()
-
     def step(self):
         episode_status = super().step()
-        self.replay_buffer.add_step_data(
+        self.controller.episode_data_buffer.add_step_data(
             observation=self.observation,
             action=self.action,
             running_objective=self.running_objective_value,
+            current_total_objective=self.total_objective,
             episode_id=self.episode_counter,
             is_step_done=episode_status != "episode_continues",
         )
         if episode_status == "episode_ended":
-            self.replay_buffer.add_total_objective(self.total_objective)
+            self.controller.episode_data_buffer.add_total_objective(
+                self.total_objective
+            )
 
         return episode_status
 
     def reset_iteration(self):
         if self.current_scenario_status != "simulation_ended":
-            (
-                observations,
-                actions,
-                running_objectives,
-                tail_total_objectives,
-                is_step_dones,
-            ) = self.replay_buffer.get_episodes_data()
-
             self.actor.optimize_weights_after_iteration(
-                observations, actions, tail_total_objectives
+                self.controller.episode_data_buffer
             )
-            self.replay_buffer.nullify_buffer()
+            self.controller.episode_data_buffer.nullify_buffer()
         super().reset_episode()
         super().reset_iteration()

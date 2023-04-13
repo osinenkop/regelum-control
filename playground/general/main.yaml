@@ -21,6 +21,7 @@ callbacks:
   - rcognita.callbacks.CalfWeightsCallback
   - rcognita.callbacks.CriticWeightsCallback
   - rcognita.callbacks.InspectReferrersCallback
+  - rcognita.callbacks.PolicyGradientObjectiveSaverCallback
 
 disallow_uncommitted%%: False
 

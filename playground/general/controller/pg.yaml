@@ -1,8 +1,9 @@
 defaults:
-  - actor: episodic_stochastic
-  - critic: dqn_behaviour
+  - actor: pg
+  - critic: trivial
+  - episode_data_buffer: observation_action
 
-name%%: acpg
+name%%: pg
 
 _target_: rcognita.controllers.RLController
 
@@ -24,3 +25,7 @@ critic:
   batch_size: 50
   discount_factor: 0.94
 
+
+episode_data_buffer:
+  is_use_derivative: $ system_specific.is_use_derivative
+  is_cat_action: True
