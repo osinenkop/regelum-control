@@ -635,7 +635,14 @@ class ActorSDPG(ActorPG):
             self.device
         )
         critic_value = self.critic(observations_actions_for_critic).detach()
-        return (self.model(observations_actions_for_actor.float()) * critic_value).sum()
+        return (
+            self.dataset_size
+            * (
+                self.model(observations_actions_for_actor.float())
+                * critic_value
+                / self.N_episodes
+            ).mean()
+        )
 
 
 class ActorDDPG(ActorPGBase):
