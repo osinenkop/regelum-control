@@ -1,12 +1,15 @@
 try:
     import torch
-    from torch.utils.data import Dataset, DataLoader
+    from torch.utils.data import Dataset, DataLoader, Sampler
 except ImportError:
     from unittest.mock import MagicMock
 
     torch = MagicMock()
 
 import numpy as np
+import pandas as pd
+import random
+from abc import ABC, abstractmethod
 
 
 class EpisodeBuffer:
@@ -39,8 +42,20 @@ class EpisodeBuffer:
         self.episode_ids.append(int(episode_id))
         self.is_step_dones.append(is_step_done)
 
+        self.episodes_lengths = None
+
     def add_total_objective(self, total_objective):
         self.total_objectives = np.append(self.total_objectives, total_objective)
+
+    def get_episodes_lengths(self):
+        if self.episodes_lengths is None:
+            values, counts = np.unique(self.episode_ids, return_counts=True)
+            self.episodes_lengths = pd.Series(index=values, data=counts)
+
+        return self.episodes_lengths
+
+    def transform_to_raw_idx(self, step_idx, episode_id):
+        return int(self.get_episodes_lengths().loc[: episode_id - 1].sum() + step_idx)
 
 
 class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
@@ -57,6 +72,8 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
         self.is_use_derivative = is_use_derivative
         self.is_cat_action = is_cat_action
         self.is_tail_sum_running_objectives = is_tail_sum_running_objectives
+
+        self.objectives_acc_stats = None
 
     def __len__(self):
         return len(self.observations)
@@ -104,3 +121,51 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
                 "observations_for_critic": observation_for_critic,
                 "objective_acc_stats": torch.tensor(self.objectives_acc_stats[idx]),
             }
+
+
+class UpdatableSampler(Sampler, ABC):
+    @abstractmethod
+    def update_data(self, data_source, batch_size):
+        pass
+
+
+class EpisodicRandomSampler(UpdatableSampler):
+    def __init__(
+        self,
+        n_batches=None,
+    ) -> None:
+        self.init_n_batches = n_batches
+        self.episode_buffer_dataset = None
+
+    def update_data(self, episode_buffer_dataset, batch_size):
+        self.episode_buffer_dataset = episode_buffer_dataset
+        self.batch_size = batch_size
+
+        if self.init_n_batches is None:
+            self.n_batches = int(np.ceil(len(episode_buffer_dataset) / self.batch_size))
+        else:
+            self.n_batches = int(self.init_n_batches)
+
+    def __iter__(self):
+        for _ in range(self.n_batches):
+            episode_id = random.sample(
+                self.episode_buffer_dataset.get_episodes_lengths().index.tolist(), k=1
+            )[0]
+            episode_len = self.episode_buffer_dataset.get_episodes_lengths().loc[
+                episode_id
+            ]
+
+            yield iter(
+                [
+                    self.episode_buffer_dataset.transform_to_raw_idx(
+                        step_idx=s,
+                        episode_id=episode_id,
+                    )
+                    for s in np.random.randint(
+                        low=0, high=episode_len - 1, size=self.batch_size
+                    )
+                ]
+            )
+
+    def __len__(self) -> int:
+        return int(self.n_batches * self.batch_size)

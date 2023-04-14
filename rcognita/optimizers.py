@@ -27,6 +27,7 @@ except ModuleNotFoundError:
     pass
 
 from rcognita.callbacks import apply_callbacks
+from rcognita.data_buffers import UpdatableSampler
 
 
 class Optimizer(rcognita.base.RcognitaBase, ABC):
@@ -343,7 +344,7 @@ class TorchDataloaderOptimizer(Optimizer):
         epochs,
         shuffle=True,
         opt_method=None,
-        device=None,
+        batch_sampler=None,
         verbose=False,
     ):
         """
@@ -370,6 +371,11 @@ class TorchDataloaderOptimizer(Optimizer):
         self.model = model
         self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
 
+        if isinstance(batch_sampler, UpdatableSampler):
+            self.batch_sampler = batch_sampler
+        else:
+            self.batch_sampler = None
+
     @apply_callbacks()
     def post_epoch(self, idx_epoch, last_epoch_objective):
         return idx_epoch, last_epoch_objective
@@ -385,11 +391,19 @@ class TorchDataloaderOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-        dataloader = DataLoader(
-            dataset=dataset,
-            shuffle=self.shuffle,
-            batch_size=self.batch_size,
-        )
+
+        if self.batch_sampler is not None:
+            self.batch_sampler.update_data(dataset, self.batch_size)
+            dataloader = DataLoader(
+                dataset=dataset,
+                batch_sampler=self.batch_sampler,
+            )
+        else:
+            dataloader = DataLoader(
+                dataset=dataset,
+                shuffle=self.shuffle,
+                batch_size=self.batch_size,
+            )
 
         last_epoch_objective = 0.0
         for idx_epoch in range(self.epochs):
