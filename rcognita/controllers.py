@@ -1156,7 +1156,6 @@ class ControllerCartPoleEnergyBased:
         time_start: float = 0,
         state_init=rc.array([np.pi, 0, 0, 0]),
         sampling_time: float = 0.01,
-        swing_up_tol=0.1,
         controller_gain=10,
         system=None,
     ):
@@ -1165,7 +1164,6 @@ class ControllerCartPoleEnergyBased:
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
-        self.swing_up_tol = swing_up_tol
         self.controller_gain = controller_gain
         self.m_c, self.m_p, self.g, self.l = system.pars
         self.system = system
@@ -1204,25 +1202,37 @@ class ControllerCartPoleEnergyBased:
             observation[2],
             observation[3],
         )
-        E_total = (
-            self.m_p * self.l**2 * theta_dot**2 / 2
-            + self.m_p * self.g * self.l * (rc.cos(theta) - 1)
-        )
 
         self.action = (
-            self.controller_gain * E_total * rc.sign(rc.cos(theta) * theta_dot)
+            self.m_p * self.g * rc.cos(theta) * rc.sin(theta)
+            + self.m_p * self.l * theta_dot * rc.sin(theta)
+            - self.controller_gain * theta_dot * rc.cos(theta)
+        )
+        return self.action
+
+    def reset(self):
+        pass
+
+
+class ControllerCartPoleEnergyBasedAdaptive(ControllerCartPoleEnergyBased):
+    def __init__(self, *args, adaptation_block=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.adaptation_block = adaptation_block
+
+    @apply_action_bounds
+    def compute_action(self, state, observation, **kwargs):
+        theta, x, theta_dot, x_dot = (
+            observation[0],
+            observation[1],
+            observation[2],
+            observation[3],
         )
 
-        # if rc.abs(observation[0]) > np.pi / 4:
-        #     self.action = (
-        #         self.controller_gain * E_total * rc.sign(rc.cos(theta) * theta_dot)
-        #     )
-        # else:
-        #     self.action = self.controller_gain * E_total * rc.sign(
-        #         rc.cos(theta) * theta_dot
-        #     ) + self.PID_cart_stabilize.compute_action(
-        #         [rc.array(observation[1])], error_derivative=observation[3]
-        #     )
+        c = self.adaptation_block.get_parameter_estimation(state)
+
+        self.action = super().compute_action(
+            state, observation, **kwargs
+        ) - c * x_dot**2 * rc.sign(x_dot)
         return self.action
 
 
