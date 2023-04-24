@@ -44,8 +44,8 @@ class EpisodeBuffer:
 
         self.episodes_lengths = None
 
-    def add_total_objective(self, total_objective):
-        self.total_objectives = np.append(self.total_objectives, total_objective)
+    def set_total_objectives_of_episodes(self, total_objectives):
+        self.total_objectives = np.array(total_objectives)
 
     def get_episodes_lengths(self):
         if self.episodes_lengths is None:
@@ -55,7 +55,12 @@ class EpisodeBuffer:
         return self.episodes_lengths
 
     def transform_to_raw_idx(self, step_idx, episode_id):
-        return int(self.get_episodes_lengths().loc[: episode_id - 1].sum() + step_idx)
+        if len(self.get_episodes_lengths()) == 1:
+            return step_idx
+        else:
+            return int(
+                self.get_episodes_lengths().loc[: episode_id - 1].sum() + step_idx
+            )
 
 
 class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
@@ -84,12 +89,12 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
             running_objectives = np.array(self.running_objectives)
             current_total_objectives = np.array(self.current_total_objectives)
             return (
-                self.total_objectives[episode_ids - 1]
+                self.total_objectives[episode_ids]
                 - current_total_objectives
                 + running_objectives
             )
         else:
-            return self.total_objectives[episode_ids - 1]
+            return self.total_objectives[episode_ids]
 
     def __getitem__(self, idx):
         if self.objectives_acc_stats is None:
