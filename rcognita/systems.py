@@ -83,7 +83,6 @@ class System(rcognita.base.RcognitaBase, ABC):
         is_disturb: bool = 0,
         pars_disturb: list = None,
     ):
-
         """
         Parameters
         ----------
@@ -191,7 +190,6 @@ class System(rcognita.base.RcognitaBase, ABC):
         return Daction
 
     def out(self, state, time=None, action=None):
-
         """
         System output.
         This is commonly associated with signals that are measured in the system.
@@ -233,7 +231,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 
         rhs_full_state = utilities.rc.zeros(
             self._dim_full_state,
-            prototype=(state, action),
+            prototype=(state_full),
         )
 
         state = state_full[0 : self.dim_state]
@@ -284,7 +282,6 @@ class SysKinematicPoint(System):
         self.name = "kinematic-point"
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         Dstate = utilities.rc.zeros(
             self.dim_state,
             prototype=(state, action),
@@ -326,7 +323,6 @@ class SysInvertedPendulum(System):
         # /DEBUG ===================================
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         Dstate = utilities.rc.zeros(
             self.dim_state,
             prototype=(state, action),
@@ -340,7 +336,6 @@ class SysInvertedPendulum(System):
         return Dstate
 
     def out(self, state, time=None, action=None):
-
         # DEBUG ====================================
         # observation = utilities.rc.zeros(self.dim_output)
         # observation = state[:3] + measNoise  # <-- Measure only position and orientation
@@ -366,7 +361,6 @@ class SysInvertedPendulum(System):
 
 class SysInvertedPendulumPD(SysInvertedPendulum):
     def out(self, state, time=None, action=None):
-
         return utilities.rc.array([state[0], 0, state[1]])
 
     def reset(self):
@@ -428,7 +422,6 @@ class Sys3WRobot(System):
             self.tau_disturb = self.pars_disturb[2]
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         Dstate = utilities.rc.zeros(
             self.dim_state,
             prototype=(state, action),
@@ -450,7 +443,6 @@ class Sys3WRobot(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-
         """
         Description
         -----------
@@ -476,7 +468,6 @@ class Sys3WRobot(System):
         return Ddisturb
 
     def out(self, state, time=None, action=None):
-
         # observation = utilities.rc.zeros(self.dim_output)
         # observation = state[:3] + measNoise # <-- Measure only position and orientation
         # observation = state  # <-- Position, force and torque sensors on
@@ -501,7 +492,6 @@ class Sys3WRobotNI(System):
             self.tau_disturb = self.pars_disturb[2]
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         Dstate = utilities.rc.zeros(self.dim_state, prototype=(state, action))
 
         if self.is_disturb and (disturb != []):
@@ -516,7 +506,6 @@ class Sys3WRobotNI(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-
         """ """
         Ddisturb = utilities.rc.zeros(self.dim_disturb)
 
@@ -528,7 +517,6 @@ class Sys3WRobotNI(System):
         return Ddisturb
 
     def out(self, state, time=None, action=None):
-
         return state
 
 
@@ -544,7 +532,6 @@ class System2Tank(System):
         self.name = "2tank"
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         tau1, tau2, K1, K2, K3 = self.pars
 
         Dstate = utilities.rc.zeros(
@@ -557,7 +544,6 @@ class System2Tank(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-
         Ddisturb = utilities.rc.zeros(self.dim_disturb)
 
         return utilities.rc.array(Ddisturb)
@@ -610,7 +596,6 @@ class CartPole(System):
         self.name = "2wrobot"
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         Dstate = utilities.rc.zeros(
             self.dim_state,
             prototype=(state, action),
@@ -622,34 +607,51 @@ class CartPole(System):
         theta_dot = state[2]
         x_dot = state[3]
 
+        # Dstate[0] = theta_dot
+
+        # Dstate[1] = x_dot
+
+        # Dstate[2] = (
+        #     (
+        #         g * utilities.rc.sin(theta)
+        #         - utilities.rc.cos(theta)
+        #         * (action[0] + m_p * l * theta_dot**2 * utilities.rc.sin(theta))
+        #         / (m_c + m_p)
+        #     )
+        #     / l
+        #     / (4 / 3 - m_p * (utilities.rc.cos(theta) ** 2) / (m_c + m_p))
+        # )
+        # Dstate[3] = (
+        #     action[0]
+        #     + m_p
+        #     * l
+        #     * (
+        #         theta_dot**2 * utilities.rc.sin(theta)
+        #         - Dstate[0] * utilities.rc.cos(theta)
+        #     )
+        # ) / (m_c + m_p)
+
         Dstate[0] = theta_dot
 
         Dstate[1] = x_dot
 
-        Dstate[2] = (
-            (
-                g * utilities.rc.sin(theta)
-                - utilities.rc.cos(theta)
-                * (action[0] + m_p * l * theta_dot**2 * utilities.rc.sin(theta))
-                / (m_c + m_p)
-            )
-            / l
-            / (4 / 3 - m_p * (utilities.rc.cos(theta) ** 2) / (m_c + m_p))
-        )
         Dstate[3] = (
-            action[0]
-            + m_p
-            * l
-            * (
-                theta_dot**2 * utilities.rc.sin(theta)
-                - Dstate[0] * utilities.rc.cos(theta)
-            )
-        ) / (m_c + m_p)
+            -m_p * g * utilities.rc.cos(theta) * utilities.rc.sin(theta)
+            - m_p * l * theta_dot**2 * utilities.rc.sin(theta)
+            + action[0]
+        ) / (
+            m_c + m_p * utilities.rc.sin(theta) ** 2
+        ) - 100 * x_dot**2 * utilities.rc.sign(
+            x_dot
+        )
+
+        Dstate[2] = -g / l * utilities.rc.sin(theta) + Dstate[3] / l * utilities.rc.cos(
+            theta
+        )
 
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-
         Ddisturb = utilities.rc.zeros(self.dim_disturb)
 
         return utilities.rc.array(Ddisturb)
@@ -659,7 +661,7 @@ class CartPole(System):
         x = state[1]
         theta_dot = state[2]
         x_dot = state[3]
-
+        theta_observed = theta
         theta_observed = theta - utilities.rc.floor(theta / (2 * np.pi)) * 2 * np.pi
         if theta_observed > np.pi:
             theta_observed = theta_observed - 2 * np.pi
@@ -685,7 +687,6 @@ class LunarLander(System):
         self.is_landed = False
 
     def compute_dynamics(self, time, state, action, disturb=None):
-
         Dstate = utilities.rc.zeros(
             self.dim_state,
             prototype=(state, action),
@@ -747,7 +748,6 @@ class LunarLander(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-
         Ddisturb = utilities.rc.zeros(self.dim_disturb)
 
         return utilities.rc.array(Ddisturb)

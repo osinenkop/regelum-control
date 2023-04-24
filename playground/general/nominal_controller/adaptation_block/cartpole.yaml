@@ -1,0 +1,5 @@
+_target_: rcognita.adaptation_blocks.AdaptationBlockCartpole
+
+system: ~ system
+learning_rate: = ${controller.sampling_time} * 10
+c_hat_init: 1
