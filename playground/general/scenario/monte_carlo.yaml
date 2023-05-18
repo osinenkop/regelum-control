@@ -14,3 +14,4 @@ speedup: 75
 controller: ~ controller
 observation_target: $ system_specific.observation_target
 observation_components_naming: $ observation_naming.observation
+total_objective_threshold: $ system_specific.total_objective_threshold

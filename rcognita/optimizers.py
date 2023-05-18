@@ -340,10 +340,11 @@ class TorchDataloaderOptimizer(Optimizer):
         self,
         opt_options,
         model,
-        batch_size,
-        epochs,
         shuffle=True,
         opt_method=None,
+        batch_size=None,
+        sheduler_method=None,
+        sheduler_options=None,
         batch_sampler=None,
         verbose=False,
     ):
@@ -365,12 +366,14 @@ class TorchDataloaderOptimizer(Optimizer):
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.batch_size = batch_size
-        self.epochs = epochs
         self.shuffle = shuffle
         self.verbose = verbose
         self.model = model
         self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
-
+        self.sheduler_method = sheduler_method
+        self.sheduler_options = sheduler_options
+        self.sheduler = self.sheduler_method(self.optimizer, **self.sheduler_options)
+        
         if isinstance(batch_sampler, UpdatableSampler):
             self.batch_sampler = batch_sampler
         else:
@@ -392,29 +395,22 @@ class TorchDataloaderOptimizer(Optimizer):
         :type model_input: torch.Tensor
         """
 
-        if self.batch_sampler is not None:
-            self.batch_sampler.update_data(dataset, self.batch_size)
-            dataloader = DataLoader(
-                dataset=dataset,
-                batch_sampler=self.batch_sampler,
-            )
-        else:
-            dataloader = DataLoader(
-                dataset=dataset,
-                shuffle=self.shuffle,
-                batch_size=self.batch_size,
-            )
 
-        last_epoch_objective = 0.0
-        for idx_epoch in range(self.epochs):
-            for batch_sample in dataloader:
-                self.optimizer.zero_grad()
-                objective_value = objective(batch_sample)
-                last_epoch_objective = objective_value.item()
-                objective_value.backward()
-                self.optimizer.step()
+        dataloader = DataLoader(
+            dataset=dataset,
+            shuffle=self.shuffle,
+            batch_size=self.batch_size if self.batch_size is not None else len(dataset),
+        )
 
-            self.post_epoch(idx_epoch, last_epoch_objective)
+        batch_sample = next(iter(dataloader))
+        self.optimizer.zero_grad()
+        objective_value = objective(batch_sample)
+        last_epoch_objective = objective_value.item()
+        objective_value.backward()
+        self.optimizer.step()
+        self.sheduler.step()
+
+        self.post_epoch(1, last_epoch_objective)
 
 
 class TorchProjectiveOptimizer(Optimizer):

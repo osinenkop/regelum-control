@@ -6,7 +6,10 @@ defaults:
 opt_options:
   lr: 1.0E-3
 
-batch_size: 50
-epochs: 50
 opt_method: = torch.optim.Adam
 model: ~ controller.actor.model
+sheduler_method: = torch.optim.lr_scheduler.StepLR
+
+sheduler_options:
+  gamma: 0.25
+  step_size: 5

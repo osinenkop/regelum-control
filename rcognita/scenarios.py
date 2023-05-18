@@ -84,6 +84,7 @@ class OnlineScenario(Scenario):
         N_episodes=1,
         N_iterations=1,
         speedup=1,
+        total_objective_threshold=np.inf,
     ):
 
         self.cache.clear()
@@ -153,7 +154,9 @@ class OnlineScenario(Scenario):
         self.iteration_counter = 0
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
+        self.total_objective_threshold = total_objective_threshold
 
+        
     def set_speedup(self, speedup):
         self.speedup = speedup
         self.cached_timeline = islice(cycle(iter(self.cache)), 0, None, self.speedup)
@@ -361,7 +364,7 @@ class OnlineScenario(Scenario):
         self.pre_step()
         sim_status = self.simulator.do_sim_step()
         is_episode_ended = sim_status == -1
-
+        
         if not is_episode_ended:
             (
                 self.time,
@@ -383,7 +386,10 @@ class OnlineScenario(Scenario):
             self.system.receive_action(self.action)
             self.post_step()
 
-            return "episode_continues"
+            if self.total_objective > self.total_objective_threshold:
+                return "episode_ended"
+            else:
+                return "episode_continues"
         else:
             self.reset_episode()
 
