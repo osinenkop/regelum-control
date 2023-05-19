@@ -12,6 +12,7 @@ Remarks:
 import numpy as np
 from numpy.random import randn
 
+import rcognita
 import rcognita.base
 from rcognita import __utilities as utilities
 from abc import ABC, abstractmethod
@@ -275,6 +276,16 @@ class SysKinematicPoint(System):
     System class: mathematical pendulum
 
     """
+    class KinematicPointAnimation(rcognita.AnimationCallback):
+        def is_target_event(self, obj, method, output):
+            pass
+
+        def perform(self, obj, method, output):
+            pass
+
+        def update_frame(self, **frame_datum):
+            pass
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
