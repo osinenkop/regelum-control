@@ -1,5 +1,6 @@
 [MASTER]
 
+ignore=playground
 ignore-patterns=.*test.*
 
 [TYPECHECK]
