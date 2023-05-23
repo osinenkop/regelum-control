@@ -9,7 +9,7 @@ repos:
         additional_dependencies: [ 'black' ]
       - id: ruff
         name: Linter (Ruff)
-        entry: ruff
+        entry: bash -c "ruff check ./rcognita"
         language: system
         types: [ python ]
         require_serial: true
