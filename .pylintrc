@@ -1,8 +1,0 @@
-[MASTER]
-
-ignore=playground
-ignore-patterns=.*test.*
-
-[TYPECHECK]
-
-signature-mutators=rcognita.main
