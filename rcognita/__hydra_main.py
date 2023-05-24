@@ -17,21 +17,21 @@ from hydra.core.utils import _flush_loggers, configure_log
 from hydra.types import TaskFunction
 import pandas as pd
 
-import os, pickle
+import os
 
 _UNSPECIFIED_: Any = object()
 
 
 def _get_rerun_conf(file_path: str, overrides: List[str]) -> DictConfig:
     msg = "Experimental rerun CLI option, other command line args are ignored."
-    warnings.warn(msg, UserWarning)
+    warnings.warn(msg, UserWarning, stacklevel=1)
     file = Path(file_path)
     if not file.exists():
         raise ValueError(f"File {file} does not exist!")
 
     if len(overrides) > 0:
         msg = "Config overrides are not supported as of now."
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=1)
 
     with open(str(file), "rb") as input:
         config = pickle.load(input)  # nosec

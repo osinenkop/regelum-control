@@ -114,7 +114,7 @@ class Plugins(metaclass=Singleton):
         except ImportError as e:
             raise ImportError(
                 f"Could not instantiate plugin {classname} : {str(e)}\n\n\tIS THE PLUGIN INSTALLED?\n\n"
-            )
+            ) from e
 
         return plugin
 
@@ -170,7 +170,7 @@ class Plugins(metaclass=Singleton):
         scanned_plugins: List[Type[Plugin]] = []
 
         for mdl in modules:
-            for importer, modname, ispkg in pkgutil.walk_packages(
+            for importer, modname, _ in pkgutil.walk_packages(
                 path=mdl.__path__, prefix=mdl.__name__ + ".", onerror=lambda x: None
             ):
                 try:
@@ -223,7 +223,7 @@ class Plugins(metaclass=Singleton):
                     stats.modules_import_time[modname] = import_time
 
                     if loaded_mod is not None:
-                        for name, obj in inspect.getmembers(loaded_mod):
+                        for _, obj in inspect.getmembers(loaded_mod):
                             if _is_concrete_plugin_type(obj):
                                 scanned_plugins.append(obj)
                 except ImportError as e:
@@ -234,6 +234,7 @@ class Plugins(metaclass=Singleton):
                         f"\tRecommended to uninstall or upgrade plugin.\n"
                         f"\t\t{type(e).__name__} : {e}",
                         category=UserWarning,
+                        stacklevel=1
                     )
 
         stats.total_time = timer() - stats.total_time

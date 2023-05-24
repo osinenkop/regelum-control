@@ -8,7 +8,8 @@ Remarks:
 
 """
 
-import os, sys
+import os
+import sys
 
 import rcognita.base
 

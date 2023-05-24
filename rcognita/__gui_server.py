@@ -1,4 +1,7 @@
-import os, sys, shelve, time
+import os
+import sys
+import shelve
+import time
 
 import dill
 
@@ -28,7 +31,7 @@ if __name__ == "__main__":
             time.sleep(1)
             counter += 1
             reports = get_reports()
-            for num_report, report in enumerate(reports):
+            for _, report in enumerate(reports):
                 if report not in containers:
                     st.title(report.split("_")[1])
                     containers[report] = {"body" : st.container()}

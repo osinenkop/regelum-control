@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 PARENT_DIR = os.path.abspath(__file__ + "/../..")
 sys.path.insert(0, PARENT_DIR)
@@ -68,7 +69,7 @@ class Obstacles_parser:
         changed = False
         for block in blocks:
             segmented = False
-            for i, point in enumerate(block[:-1]):
+            for i, _ in enumerate(block[:-1]):
                 dd = self.d(block[i].R, block[i + 1].R)
                 kk = self.k(block[i].R, block[i + 1].R)
                 if dd > kk * self.W:

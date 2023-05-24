@@ -129,7 +129,7 @@ def _prepare_input_dict_or_list(d: Union[Dict[Any, Any], List[Any]]) -> Any:
                 v = _prepare_input_dict_or_list(v)
             res.append(v)
     else:
-        assert False
+        raise AssertionError()
     return res
 
 
@@ -399,4 +399,4 @@ def instantiate_node(
                 return cfg
 
     else:
-        assert False, f"Unexpected config type : {type(node).__name__}"
+        raise AssertionError(f"Unexpected config type : {type(node).__name__}")

@@ -3,7 +3,9 @@ __version__ = "0.2.1"
 import datetime
 import platform
 import shelve
-import sys, os, inspect
+import sys
+import os
+import inspect
 import logging
 import traceback
 import warnings
@@ -20,7 +22,7 @@ from typing import Any
 from omegaconf import Container
 from omegaconf._utils import _DEFAULT_MARKER_
 from omegaconf.errors import ConfigKeyError
-from omegaconf.grammar_parser import *
+#from omegaconf.grammar_parser import *
 
 from recursive_monkey_patch import monkey_patch
 
@@ -48,7 +50,7 @@ ANIMATION_TYPES_REQUIRING_ANIMATOR = [
 ANIMATION_TYPES = ANIMATION_TYPES_NONE + ANIMATION_TYPES_REQUIRING_ANIMATOR
 
 from . import __utilities
-from .visualization import *
+#from .visualization import *
 import mlflow
 from unittest.mock import Mock
 from hydra._internal.utils import _locate
@@ -59,6 +61,7 @@ mock = Mock()
 
 import plotly.graph_objects as go
 import json
+
 
 import tempfile
 
@@ -125,7 +128,7 @@ def obtain(obj_repr):
             s = s[1:]
         try:
             entity = _locate(s)
-        except:
+        except Exception:
             entity = eval(s)
         resolved.append(entity)
         return f"{prefix}resolved[{len(resolved) - 1}]"
@@ -395,7 +398,9 @@ class ComplementedConfig:
         #         return res
 
 
-from .callbacks import *
+from .callbacks import OnEpisodeDoneCallback, OnIterationDoneCallback, TimeCallback, ConfigDiagramCallback, TimeRemainingCallback, SaveProgressCallback
+import time
+import pandas as pd
 
 
 class RcognitaExitException(Exception):
@@ -423,8 +428,8 @@ class main:
     assignments = []
     weak_assignments = []
     builtin_callbacks = [
-        OnEpisodeDoneCallerCallback,
-        OnIterationDoneCallerCallback,
+        OnEpisodeDoneCallback,
+        OnIterationDoneCallback,
         TimeCallback,
         ConfigDiagramCallback,
         TimeRemainingCallback,

@@ -156,7 +156,7 @@ class TimeCallback(Callback):
         rcognita.main.metadata["time"] = obj.time
 
 
-class OnEpisodeDoneCallerCallback(Callback):
+class OnEpisodeDoneCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.episode_counter = 0
@@ -183,7 +183,7 @@ class OnEpisodeDoneCallerCallback(Callback):
             self.iteration_counter += 1
 
 
-class OnIterationDoneCallerCallback(Callback):
+class OnIterationDoneCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.iteration_counter = 0

@@ -79,7 +79,7 @@ def decorateAll(decorator):
         def __new__(cls, classname, supers, classdict):
             for name, elem in classdict.items():
                 if (
-                    type(elem) is types.FunctionType
+                    isinstance(elem, types.FunctionType)
                     and (name != "__init__")
                     and not isinstance(elem, staticmethod)
                 ):
