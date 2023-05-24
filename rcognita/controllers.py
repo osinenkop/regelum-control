@@ -314,7 +314,7 @@ class Controller3WRobotDisassembledCLF:
 
     Attributes
     ----------
-    m, I : : numbers
+    m, moment_of_inertia : : numbers
         Mass and moment of inertia around vertical axis of the robot.
     controller_gain : : number
         Controller gain.
@@ -338,7 +338,7 @@ class Controller3WRobotDisassembledCLF:
     def __init__(
         self,
         m,
-        I,
+        moment_of_inertia,
         controller_gain=10,
         action_bounds=None,
         time_start=0,
@@ -347,7 +347,7 @@ class Controller3WRobotDisassembledCLF:
         optimizer_engine="SciPy",
     ):
         self.m = m
-        self.I = I
+        self.moment_of_inertia = moment_of_inertia
         self.controller_gain = controller_gain
         self.action_bounds = action_bounds
         self.controller_clock = time_start
@@ -516,7 +516,7 @@ class Controller3WRobotDisassembledCLF:
             + xNI[1] * eta[0] ** 2
             + 1 / 2 * (xNI[0] * xNI[1] * uNI[0] + uNI[0] * xNI[2])
         )
-        uCart[1] = self.I * uNI[0]
+        uCart[1] = self.moment_of_inertia * uNI[0]
 
         return uCart
 
@@ -1198,10 +1198,16 @@ class ControllerLunarLanderPID:
         time_start: float = 0,
         state_init=rc.array([np.pi, 0, 0, 0]),
         sampling_time: float = 0.01,
-        PID_angle_parameters=[1, 0, 0],
-        PID_height_parameters=[10, 0, 0],
-        PID_x_parameters=[10, 0, 0],
+        PID_angle_parameters=None,
+        PID_height_parameters=None,
+        PID_x_parameters=None,
     ):
+        if PID_angle_parameters is None:
+            PID_angle_parameters = [1, 0, 0]
+        if PID_height_parameters is None:
+            PID_height_parameters = [10, 0, 0]
+        if PID_x_parameters is None:
+            PID_x_parameters = [10, 0, 0]
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)

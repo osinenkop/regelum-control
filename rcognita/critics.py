@@ -116,9 +116,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.critic_regularization_param = critic_regularization_param
         self.state_init = state_init
 
-    def update_target(self, observation_target):
-        self.observation_target = observation_target
-
     def receive_state(self, state):
         self.state = state
 
@@ -663,7 +660,7 @@ class CriticOffPolicyGreedy(Critic):
 
     def get_batch_ids(self):
         if not self.is_enough_valid_elements_in_buffer():
-            raise ("Not enough valid elements in buffer for critic objective call")
+            raise Exception("Not enough valid elements in buffer for critic objective call")
 
         buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 1
         if self.batch_size == 1:
@@ -726,8 +723,8 @@ class CriticOffPolicyGreedy(Critic):
             temporal_difference -= (
                 self.discount_factor**self.td_n
                 * sp.optimize.minimize(
-                    lambda action: self.model(
-                        observation_buffer[:, buffer_idx + self.td_n],
+                    lambda action, buffer_idx_=buffer_idx: self.model(
+                        observation_buffer[:, buffer_idx_ + self.td_n],
                         torch.tensor(action).double(),
                         use_stored_weights=True,
                     ),
