@@ -1,4 +1,4 @@
-"""This module contains optimization routines to be used in optimal controllers, actors, critics etc."""
+"""Optimization routines to be used in optimal controllers, actors, critics etc."""
 import rcognita.base
 from rcognita.__utilities import rc
 import scipy as sp
@@ -15,9 +15,9 @@ from abc import ABC, abstractmethod
 import time
 
 try:
-    import torch.optim as optim
+    import torch.optim
     import torch
-    from torch.utils.data import Dataset, DataLoader
+    from torch.utils.data import DataLoader
 
 except ModuleNotFoundError:
     pass
@@ -45,7 +45,7 @@ class Optimizer(rcognita.base.RcognitaBase, ABC):
 
     @staticmethod
     def verbose(opt_func):
-        """A static method decorator that makes the decorated function verbose.
+        """Make the decorated function verbose.
 
         This method will print the optimization time of the decorated function
         if the `verbose` attribute of the instance is set to True.

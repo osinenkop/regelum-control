@@ -26,7 +26,7 @@ def aggregate_multiruns(from_=None, till=None, recent=None, multirun_path="multi
         while not from_idx:
             try:
                 from_idx = by_date.index(str(from_.date()))
-            except:
+            except ValueError:
                 from_idx = None
                 from_ += datetime.timedelta(days=1)
             if from_ > till:
@@ -36,7 +36,7 @@ def aggregate_multiruns(from_=None, till=None, recent=None, multirun_path="multi
         while not till_idx:
             try:
                 till_idx = by_date.index(str(till.date()))
-            except:
+            except ValueError:
                 till_idx = None
                 till -= datetime.timedelta(days=1)
             if from_ > till:
@@ -112,13 +112,13 @@ def merge_runs(
                     copy_tree(
                         subrun_id, subrun_paths[subrun_id] + "/" + run.replace("/", "_")
                     )
-            except (distutils.errors.DistutilsError, RuntimeError):
+            except (distutils.errors.DistutilsError, RuntimeError) as err:
                 os.chdir("../../..")
                 remove_tree(path)
                 raise RuntimeError(
                     f"Failed to merge runs. Run {run} is not compatible with {runs[0]}. Perhaps select "
                     f"runs are not a part of the same experiment."
-                )
+                ) from err
         os.chdir("../..")
     os.chdir("..")
 
@@ -250,26 +250,3 @@ def get_multirun_info(path_multirun):
             if get_run_info(run_path) is not None
         }
 
-
-def get_folder_mapping():
-    """Valid only if called from 'presets' folder"."""
-    try:
-        config_append_to_path = "/.hydra/overrides.yaml"
-        folder_to_parse = [x for x in os.listdir() if "merged" in x]
-        path_to_parse = os.path.abspath(folder_to_parse[0] + "/0/")
-        os.chdir(path_to_parse)
-        experiment_folders = os.listdir(path_to_parse)
-        folder_mapping = dict()
-        for experiment in experiment_folders:
-            config_path = experiment + config_append_to_path
-            config = omegaconf.OmegaConf.load(config_path)
-            controller = config[0].split("=")[1]
-            system = config[1].split("=")[1]
-            folder_mapping[experiment] = f"{controller}-{system}"
-        os.chdir("../../")
-        return folder_mapping
-
-    except Exception as e:
-        print(e)
-        os.chdir("../../")
-        return 0

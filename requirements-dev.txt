@@ -1,3 +1,4 @@
 pytest-xdist==2.5.0
 black==23.1.0
 pre-commit==3.2.1
+pip install sphinx==4.0

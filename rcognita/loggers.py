@@ -16,6 +16,7 @@ import numpy as np
 
 class Logger:
     """Interface class for data loggers.
+
     Concrete loggers, associated with concrete system-controller setups, are should be built upon this class.
     To design a concrete logger: inherit this class, override:
         | :func:`~loggers.Logger.print_sim_step` :

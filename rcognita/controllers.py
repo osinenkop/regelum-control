@@ -52,8 +52,10 @@ class Controller(RcognitaBase, ABC):
 
     @apply_action_bounds
     def compute_action_sampled(
-        self, time, state, observation, constraints=(), observation_target=[]
+        self, time, state, observation, constraints=(), observation_target=None
     ):
+        if observation_target is None:
+            observation_target = []
         self.observation_target = observation_target
         self.is_time_for_new_sample = self.clock.check_time(time)
         is_time_for_critic_update = self.critic.clock.check_time(time)
@@ -1377,7 +1379,9 @@ class Controller3WRobotNIMotionPrimitive:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
+        if observation_target is None:
+            observation_target = []
         x = observation[0]
         y = observation[1]
         angle = observation[2]
@@ -1409,8 +1413,10 @@ class Controller3WRobotNIMotionPrimitive:
 
         return rc.array([v, omega])
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
+        if observation_target is None:
+            observation_target = []
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample

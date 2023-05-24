@@ -1,4 +1,5 @@
 """This module contains various simulation scenarios.
+
 For instance, an online scenario is when the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
 
 """
@@ -54,7 +55,7 @@ class TabularScenarioVI(Scenario):
         self.N_iterations = N_iterations
 
     def run(self):
-        for i in range(self.N_iterations):
+        for _ in range(self.N_iterations):
             self.step()
 
     def step(self):
@@ -75,13 +76,17 @@ class OnlineScenario(Scenario):
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
         time_start: float = 0.0,
-        observation_target: list = [],
-        observation_components_naming=[],
+        observation_target: list = None,
+        observation_components_naming=None,
         N_episodes=1,
         N_iterations=1,
         speedup=1,
         total_objective_threshold=np.inf,
     ):
+        if observation_target is None:
+            observation_target = []
+        if observation_components_naming is None:
+            observation_components_naming = []
 
         self.cache.clear()
         self.N_episodes = N_episodes
@@ -165,6 +170,7 @@ class OnlineScenario(Scenario):
 
     def update_total_objective(self, observation, action, delta):
         """Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
 
@@ -191,8 +197,8 @@ class OnlineScenario(Scenario):
 
     def run(self):
         ### We use values `iteration_counter` and `episode_counter` only for debug purposes
-        for iteration_counter in range(self.N_iterations):
-            for episode_counter in range(self.N_episodes):
+        for _ in range(self.N_iterations):
+            for _ in range(self.N_episodes):
                 while self.sim_status not in [
                     "episode_ended",
                     "simulation_ended",
@@ -235,8 +241,9 @@ class OnlineScenario(Scenario):
         )
 
     def memorize(step_method):
-        """This is a decorator for a simulator step method.
-        It containes a ``cache`` field that in turn comprises of ``keys`` and ``values``.
+        """Memorize the output of decorated method.
+
+        It containes a ``cache`` field that in turn comprises ``keys`` and ``values``.
         The ``cache`` dictionary method `keys` returns a triple:
 
         - ``time``: the current time in an episode

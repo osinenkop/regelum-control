@@ -24,7 +24,7 @@ import random
 
 try:
     import torch
-except:
+except (ModuleNotFoundError, ImportError):
     from unittest.mock import MagicMock
 
     torch = MagicMock()
@@ -550,7 +550,7 @@ class CriticOffPolicyBehaviour(Critic):
 
     def get_batch_ids(self):
         if not self.is_enough_valid_elements_in_buffer():
-            raise ("Not enough valid elements in buffer for critic objective call")
+            raise Exception("Not enough valid elements in buffer for critic objective call")
 
         buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 2
         if self.batch_size == 1:
@@ -576,6 +576,7 @@ class CriticOffPolicyBehaviour(Critic):
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
         """Compute the objective function of the critic, which is typically a squared temporal difference.
+
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
         :type data_buffer: dict, optional
         :param weights: the weights of the critic model, if different from the stored weights.
@@ -1034,7 +1035,7 @@ class CriticCALF(CriticOfObservation):
 
 
 class CriticTrivial(Critic):
-    """This is a dummy to calculate outcome (accumulated running objective)."""
+    """A critic that provides a constant estimate of the prospective total objective."""
 
     def __init__(self, running_objective, *args, sampling_time=0.01, **kwargs):
         """Initialize a trivial critic.
@@ -1062,15 +1063,15 @@ class CriticTrivial(Critic):
         self.optimized_weights = []
 
     def __call__(self, *args, **kwargs):
-        """Returns the current outcome.
+        """Returns the current estimate of the prospective total objective.
 
-        :return: Current outcome.
+        :return: estimated total objective.
         :rtype: float
         """
         return self.total_objective
 
     def objective(self, weights):
-        """Dummy method for the objective function.
+        """Pretends to compute an objective.
 
         :param weights: Weights.
         :type weights: ndarray or list
@@ -1078,7 +1079,7 @@ class CriticTrivial(Critic):
         pass
 
     def get_optimized_weights(self, intrinsic_constraints=None, time=None):
-        """Dummy method to return optimized weights.
+        """Pretends to compute optimized weights.
 
         :param intrinsic_constraints: Constraints to be applied during optimization.
         :type intrinsic_constraints: list of functions
@@ -1090,7 +1091,7 @@ class CriticTrivial(Critic):
         pass
 
     def update_buffers(self, observation, action):
-        """Updates the outcome.
+        """Updates the estimate of prospective total objective.
 
         :param observation: Current observation.
         :type observation: ndarray or list
@@ -1100,7 +1101,7 @@ class CriticTrivial(Critic):
         self.update_total_objective(observation, action)
 
     def update(self, intrinsic_constraints=None, observation=None, time=None):
-        """Dummy method for updating the critic.
+        """Pretends to update the critic.
 
         :param intrinsic_constraints: Constraints to be applied during optimization.
         :type intrinsic_constraints: list of functions
@@ -1112,8 +1113,8 @@ class CriticTrivial(Critic):
         pass
 
     def update_total_objective(self, observation, action):
-        """Update the value of the outcome variable by adding the value of the running_objective function
-        evaluated at the current observation and action, multiplied by the sampling time.
+        """Update the value of the outcome variable by adding the value of the running_objective function evaluated
+        at the current observation and action, multiplied by the sampling time.
 
         :param observation: The current observation.
         :type observation: Any

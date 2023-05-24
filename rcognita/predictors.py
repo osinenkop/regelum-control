@@ -22,6 +22,7 @@ class Predictor(rcognita.base.RcognitaBase, ABC):
 
 class EulerPredictor(Predictor):
     """Euler predictor uses a simple Euler discretization scheme.
+
     It does predictions by increments scaled by a sampling time times the velocity evaluated at each successive node.
 
     """
@@ -115,16 +116,13 @@ class RKPredictor(EulerPredictor):
 
     def predict(self, current_state_or_observation, action):
         state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
-        try:
-            state_new = rc.squeeze(state_new.full().T)
-        except:
-            pass
+        state_new = rc.squeeze(state_new.full().T)
 
         return state_new
 
 
 class TrivialPredictor(Predictor):
-    """This predictor propagates the observation or state directly through the system dynamics law."""
+    """A predictor that propagates the observation or state directly through the system dynamics law."""
 
     def __init__(self, system):
         self.compute_dynamics = system.compute_dynamics

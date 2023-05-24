@@ -3,14 +3,13 @@ import numpy.linalg as la
 from .animator import (
     update_line,
     update_text,
-    Animator,
     Dashboard,
 )
 from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 
-class LanderTrackingDasboard(Dashboard):
+class LanderTrackingDashboard(Dashboard):
     def __init__(
         self, time_start, xMax, xMin, yMax, yMin, xCoord0, yCoord0, angle_deg0, scenario
     ):
@@ -25,7 +24,7 @@ class LanderTrackingDasboard(Dashboard):
         self.yCoord0 = yCoord0
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_lander = plt.gca()
 
         self.axes_lander.set_xlim(self.xMin, self.xMax)
@@ -71,7 +70,7 @@ class LanderTrackingDasboard(Dashboard):
             [xi[0], xi_2[0], xi_3[0]], [xi[1], xi_2[1], xi_3[1]], s=40, c="b"
         )
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         state = self.scenario.state_full
         time = self.scenario.time
 
@@ -92,7 +91,7 @@ class LanderTrackingDasboard(Dashboard):
         )
 
 
-class SolutionDashboard(Dashboard):
+class _SolutionDashboard(Dashboard):
     def __init__(
         self,
         time_start,
@@ -118,7 +117,7 @@ class SolutionDashboard(Dashboard):
         self.angle0 = angle0
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_solution = plt.gca()
 
         self.axes_solution.autoscale(False)
@@ -150,7 +149,7 @@ class SolutionDashboard(Dashboard):
             observation,
         )
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         state = self.scenario.state_full
         time = self.scenario.time
 
@@ -162,7 +161,7 @@ class SolutionDashboard(Dashboard):
         update_line(self.line_angle, time, np.squeeze(angle))
 
 
-class CostDashboard(Dashboard):
+class _CostDashboard(Dashboard):
     def __init__(self, time_start, time_final, running_objective_init, scenario):
         super().__init__()
         self.time_start = time_start
@@ -170,7 +169,7 @@ class CostDashboard(Dashboard):
         self.running_objective_init = running_objective_init
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_cost = plt.gca()
 
         self.axes_cost.set_xlim(self.time_start, self.time_final)
@@ -209,7 +208,7 @@ class CostDashboard(Dashboard):
         self.artists.append(self.line_outcome)
         self.axes_cost.legend(fancybox=True, loc="upper right")
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         time = self.scenario.time
         running_objective_value = np.squeeze(self.scenario.running_objective_value)
         outcome = self.scenario.outcome
@@ -224,53 +223,7 @@ class CostDashboard(Dashboard):
         update_text(self.text_outcome_handle, text_outcome)
 
 
-class ControlDashboard(Dashboard):
-    def __init__(self, time_start, time_final, F_min, F_max, M_min, M_max, scenario):
-        super().__init__()
-        self.time_start = time_start
-        self.time_final = time_final
-        self.F_min = F_min
-        self.F_max = F_max
-        self.M_min = M_min
-        self.M_max = M_max
-        self.scenario = scenario
-
-    def init_dashboard(self):
-        self.axis_action = plt.gca()
-
-        self.axis_action.set_xlim(self.time_start, self.time_final)
-        self.axis_action.set_ylim(
-            1.1 * np.min([self.F_min, self.M_min]),
-            1.1 * np.max([self.F_max, self.M_max]),
-        )
-        self.axis_action.set_xlabel("Time [s]")
-        self.axis_action.set_ylabel("Control")
-        self.axis_action.autoscale(False)
-
-        self.axis_action.plot(
-            [self.time_start, self.time_final], [0, 0], "k--", lw=0.75
-        )  # Help line
-        self.lines_action = self.axis_action.plot(
-            self.time_start, rc.force_column(self.scenario.action_init).T, lw=0.5
-        )
-        self.axis_action.legend(
-            iter(self.lines_action),
-            ("F [N]", "M [Nm]"),
-            fancybox=True,
-            loc="upper right",
-        )
-        self.artists.extend(self.lines_action)
-
-    def perform_step_update(self):
-        # Control
-        action = np.squeeze(self.scenario.action)
-        time = self.scenario.time
-
-        for (line, action_single) in zip(self.lines_action, action):
-            update_line(line, time, action_single)
-
-
-class ControlDashboardNI(Dashboard):
+class _ControlDashboardNI(Dashboard):
     def __init__(
         self, time_start, time_final, v_min, v_max, omega_min, omega_max, scenario
     ):
@@ -284,7 +237,7 @@ class ControlDashboardNI(Dashboard):
         self.omega_max = omega_max
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axis_action = plt.gca()
 
         self.axis_action.set_xlim(self.time_start, self.time_final)
@@ -310,119 +263,10 @@ class ControlDashboardNI(Dashboard):
         )
         self.artists.extend(self.lines_action)
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         # Control
         action = self.scenario.action
         time = self.scenario.time
 
         for (line, action_single) in zip(self.lines_action, np.array(action)):
             update_line(line, time, action_single)
-
-
-class AnimatorLunarLander(Animator):
-    """Animator class for a 3-wheel robot with dynamic actuators."""
-
-    def __init__(
-        self,
-        scenario=None,
-        subplot_grid_size=None,
-        fps=10,
-        max_video_length=60,
-        animation_max_size_mb=200,
-    ):
-        if subplot_grid_size is None:
-            subplot_grid_size = [1, 1]
-        super().__init__(
-            subplot_grid_size=subplot_grid_size,
-            max_video_length=max_video_length,
-            fps=fps,
-            animation_type=scenario.howanim,
-            animation_max_size_mb=animation_max_size_mb,
-        )
-        self.scenario = scenario
-        self.__dict__.update(scenario.__dict__)
-
-        (
-            state_full_init,
-            xMin,
-            xMax,
-            yMin,
-            yMax,
-            F_min,
-            M_min,
-            F_max,
-            M_max,
-            running_obj_init,
-        ) = (
-            self.scenario.simulator.state_full_init,
-            -10,
-            10,
-            -10,
-            10,
-            self.scenario.controller.action_bounds[0][0],
-            self.scenario.controller.action_bounds[0][1],
-            self.scenario.controller.action_bounds[1][0],
-            self.scenario.controller.action_bounds[1][1],
-            0,
-        )
-        self.sampling_time = self.scenario.controller.sampling_time
-
-        # Store some parameters for later use
-        self.time_old = 0
-        self.outcome = 0
-        self.state_full_init = state_full_init
-
-        xCoord0 = self.state_init[0]
-        yCoord0 = self.state_init[1]
-        angle0 = self.state_init[2]
-        angle_deg0 = angle0 / 2 / np.pi
-
-        ########### SUBPLOT 1  --------- PENDULUM TRACKING ###########################
-        robot_tracking_dasboard = LanderTrackingDasboard(
-            self.time_start,
-            xMax,
-            xMin,
-            yMax,
-            yMin,
-            xCoord0,
-            yCoord0,
-            angle_deg0,
-            self.scenario,
-        )
-        # ########### SUBPLOT 2  --------- STEP-BY-STEP-SOLUTION #######################
-        # solution_dashboard = SolutionDashboard(
-        #     self.time_start,
-        #     self.time_final,
-        #     xMax,
-        #     xMin,
-        #     yMax,
-        #     yMin,
-        #     xCoord0,
-        #     yCoord0,
-        #     angle0,
-        #     self.scenario,
-        # )
-
-        # ########### SUBPLOT 3  --------- COST ########################################
-
-        # if self.is_playback:
-        #     running_objective = running_obj_init
-        # else:
-        #     observation_init = self.system.out(self.state_init)
-        #     running_objective = self.running_objective(
-        #         observation_init, self.action_init
-        #     )
-
-        # cost_dashboard = CostDashboard(
-        #     self.time_start, self.time_final, running_objective, self.scenario
-        # )
-        # ########### SUBPLOT 4  --------- CONTROL #####################################
-
-        # control_dashboard = ControlDashboard(
-        #     self.time_start, self.time_final, F_min, F_max, M_min, M_max, self.scenario
-        # )
-        # ##############################################################################
-
-        self.collect_dashboards(
-            robot_tracking_dasboard,
-        )

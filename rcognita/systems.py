@@ -11,15 +11,16 @@ Remarks:
 import numpy as np
 from numpy.random import randn
 
-import rcognita
+
 import rcognita.base
-from rcognita import __utilities as utilities
+
 from abc import ABC, abstractmethod
 import rcognita.__utilities as utilities
 
 
 class System(rcognita.base.RcognitaBase, ABC):
     """Interface class of dynamical systems a.k.a. environments.
+
      Concrete systems should be built upon this class.
      To design a concrete system: inherit this class, override:
          | :func:`~systems.system.compute_dynamics` :
@@ -150,6 +151,7 @@ class System(rcognita.base.RcognitaBase, ABC):
     @abstractmethod
     def compute_dynamics(self, time, state, action, disturb):
         """Description of the system internal dynamics.
+
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
         As a probability disitribution, ``compute_dynamics`` should return a number in :math:`[0,1]`.
 
@@ -157,7 +159,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         pass
 
     def _compute_disturbance_dynamics(self, time, disturb):
-        """Dynamical disturbance model depending on the system type:
+        """Dynamical disturbance model depending on the system type.
 
         | ``sys_type = "diff_eqn"`` : :math:`\mathcal D disturb = f_q(disturb)`
         | ``sys_type = "discr_fnc"`` : :math:`disturb^+ = f_q(disturb)`
@@ -185,6 +187,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     def out(self, state, time=None, action=None):
         """System output.
+
         This is commonly associated with signals that are measured in the system.
         Normally, output depends only on state ``state`` since no physical processes transmit input to output instantly.
 
@@ -199,6 +202,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     def receive_action(self, action):
         """Receive exogeneous control action to be fed into the system.
+
         This action is commonly computed by your controller (agent) using the system output :func:`~systems.system.out`.
 
         Parameters
@@ -211,6 +215,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     def compute_closed_loop_rhs(self, time, state_full):
         """Right-hand side of the closed-loop system description.
+
         Combines everything into a single vector that corresponds to the right-hand side of the closed-loop system description for further use by simulators.
 
         Attributes
@@ -263,7 +268,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 class SysKinematicPoint(System):
     """System class: mathematical pendulum."""
 
-    class KinematicPointAnimation(rcognita.callbacks.AnimationCallback):
+    class _KinematicPointAnimation(rcognita.callbacks.AnimationCallback):
         def is_target_event(self, obj, method, output):
             pass
 
@@ -323,10 +328,10 @@ class SysInvertedPendulum(System):
             prototype=(state, action),
         )
 
-        m, g, l = self.pars[0], self.pars[1], self.pars[2]
+        m, g, length = self.pars[0], self.pars[1], self.pars[2]
 
         Dstate[0] = state[1]
-        Dstate[1] = g / l * utilities.rc.sin(state[0]) + action[0] / (m * l**2)
+        Dstate[1] = g / length * utilities.rc.sin(state[0]) + action[0] / (m * length**2)
 
         return Dstate
 
@@ -421,18 +426,18 @@ class Sys3WRobot(System):
             prototype=(state, action),
         )
 
-        m, I = self.pars[0], self.pars[1]
+        mass, moment_of_inertia = self.pars[0], self.pars[1]
 
         Dstate[0] = state[3] * utilities.rc.cos(state[2])
         Dstate[1] = state[3] * utilities.rc.sin(state[2])
         Dstate[2] = state[4]
 
         if self.is_disturb and (disturb != []):
-            Dstate[3] = 1 / m * (action[0] + disturb[0])
-            Dstate[4] = 1 / I * (action[1] + disturb[1])
+            Dstate[3] = 1 / mass * (action[0] + disturb[0])
+            Dstate[4] = 1 / moment_of_inertia * (action[1] + disturb[1])
         else:
-            Dstate[3] = 1 / m * action[0]
-            Dstate[4] = 1 / I * action[1]
+            Dstate[3] = 1 / mass * action[0]
+            Dstate[4] = 1 / moment_of_inertia * action[1]
 
         return Dstate
 
@@ -541,6 +546,7 @@ class System2Tank(System):
 
 class GridWorld(System):
     """A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
+
     The action encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
 
     """
@@ -584,7 +590,7 @@ class CartPole(System):
             prototype=(state, action),
         )
 
-        m_c, m_p, g, l = self.pars
+        m_c, m_p, g, length = self.pars
         theta = state[0]
         state[1]
         theta_dot = state[2]
@@ -620,7 +626,7 @@ class CartPole(System):
 
         Dstate[3] = (
             -m_p * g * utilities.rc.cos(theta) * utilities.rc.sin(theta)
-            - m_p * l * theta_dot**2 * utilities.rc.sin(theta)
+            - m_p * length * theta_dot**2 * utilities.rc.sin(theta)
             + action[0]
         ) / (
             m_c + m_p * utilities.rc.sin(theta) ** 2
@@ -628,7 +634,7 @@ class CartPole(System):
             x_dot
         )
 
-        Dstate[2] = -g / l * utilities.rc.sin(theta) + Dstate[3] / l * utilities.rc.cos(
+        Dstate[2] = -g / length * utilities.rc.sin(theta) + Dstate[3] / length * utilities.rc.cos(
             theta
         )
 

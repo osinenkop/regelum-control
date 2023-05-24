@@ -63,10 +63,10 @@ class Dashboard(ABC):
         self.artists = []
 
     @abstractmethod
-    def init_dashboard(self):
+    def __init_dashboard(self):
         pass
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         pass
         # raise NotImplementedError(
         #     f"step update method is not implemented for dashboard {self.__class__.__name__}"
@@ -86,7 +86,7 @@ class Dashboard(ABC):
 
     def update(self, update_variant):
         if update_variant == "step":
-            self.perform_step_update()
+            self.__perform_step_update()
         elif update_variant == "episode":
             self.perform_episodic_update()
         elif update_variant == "iteration":
@@ -95,6 +95,7 @@ class Dashboard(ABC):
 
 class Animator:
     """Interface class of visualization machinery for simulation of system-controller loops.
+
     To design a concrete animator: inherit this class, override:
         | :func:`~animators.Animator.__init__` :
         | define necessary visual elements (required)
@@ -117,9 +118,11 @@ class Animator:
         animation_type,
         fps=50,
         max_video_length=20,
-        subplot_grid_size=[2, 2],
+        subplot_grid_size=None,
         animation_max_size_mb=200,
     ):
+        if subplot_grid_size is None:
+            subplot_grid_size = [2, 2]
         self.subplot_grid_size = subplot_grid_size
         self.artists = []
         self.fps = fps
@@ -140,7 +143,7 @@ class Animator:
             range(self.subplot_grid_size[0]), range(self.subplot_grid_size[1])
         ):
             plt.sca(self.axes_array[r, c])  ####---Set current axes
-            self.dashboards[self.get_index(r, c)].init_dashboard()
+            self.dashboards[self.get_index(r, c)].__init_dashboard()
 
         return self.artists
 
@@ -227,6 +230,7 @@ class Animator:
 
     def set_sim_data(self, **kwargs):
         """This function is needed for playback purposes when simulation data were generated elsewhere.
+
         It feeds data into the animator from outside.
         """
         self.__dict__.update(kwargs)

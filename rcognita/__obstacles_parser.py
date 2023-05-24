@@ -162,7 +162,7 @@ class Obstacles_parser:
         S = np.sqrt((block[0].x - block[-1].x) ** 2 + (block[0].y - block[-1].y) ** 2)
 
         ro = 0
-        for i, point in enumerate(block):
+        for _, point in enumerate(block):
             p_coords = np.array([point.x, point.y])
             ro_cur = np.linalg.norm(p_coords - center)
             if ro_cur > ro:
@@ -186,8 +186,6 @@ class Obstacles_parser:
             C.append(self.get_circle(block))
             return [block]
 
-        N = len(block)
-        a, b = np.array([block[0].x, block[0].y]), np.array([block[1].x, block[1].y])
         np.sqrt((block[0].x - block[-1].x) ** 2 + (block[0].y - block[-1].y) ** 2)
         k, D_m = self.get_D_m(block)
         d_p = 0.00614

@@ -65,6 +65,12 @@ import tempfile
 from multiprocessing import Process
 import numpy
 
+from unittest.mock import MagicMock
+
+try:
+    import torch
+except (ModuleNotFoundError, ImportError):
+    torch = MagicMock()
 
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)

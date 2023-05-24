@@ -4,8 +4,8 @@ These can be used in system dynamics fitting, critic and other tasks.
 Updates to come.
 
 """
-import numpy as np
-import os, sys
+import os
+import sys
 
 import rcognita.base
 
@@ -88,6 +88,7 @@ class Model(rcognita.base.RcognitaBase, ABC):
 
     def restore_weights(self):
         """Assign the weights of the cached model to the active model.
+
         This may be needed when pytorch optimizer resulted in unsatisfactory weights, for instance.
 
         """
@@ -299,25 +300,6 @@ class ModelWeightContainer(Model):
         return weights[: self.dim_output]
 
 
-class ModelQuadMix(Model):
-    model_name = "quad-mix"
-
-    def __init__(self, dim_input, weight_min=1.0, weight_max=1e3):
-        self.dim_weights = int(
-            self.dim_output + self.dim_output * self.dim_input + self.dim_input
-        )
-        self.weight_min = weight_min * np.ones(self.dim_weights)
-        self.weight_max = weight_max * np.ones(self.dim_weights)
-
-    def _forward(self, vec, weights):
-        v1 = rc.force_column(v1)
-        v2 = rc.force_column(v2)
-
-        polynom = rc.concatenate([v1**2, rc.kron(v1, v2), v2**2])
-        result = rc.dot(weights, polynom)
-
-        return result
-
 
 class ModelQuadForm(Model):
     """Quadratic form."""
@@ -366,20 +348,12 @@ class ModelBiquadForm(Model):
 
 class ModelNN(nn.Module):
     """Class of pytorch neural network models. This class is not to be used barebones.
+
     Instead, you should inherit from it and specify your concrete architecture.
 
     """
 
     model_name = "NN"
-
-    def __call__(self, *args, weights=None, use_stored_weights=False):
-        if use_stored_weights is False:
-            if weights is not None:
-                return self.forward(*args, weights=weights)
-            else:
-                return self.forward(*args)
-        else:
-            return self.cache.forward(*args)
 
     @property
     def cache(self):
@@ -388,6 +362,7 @@ class ModelNN(nn.Module):
 
     def detach_weights(self):
         """Excludes the model's weights from the pytorch computation graph.
+
         This is needed to exclude the weights from the decision variables in optimization problems.
         An example is temporal-difference optimization, where the old critic is to be treated as a frozen model.
 
@@ -444,6 +419,7 @@ class ModelNN(nn.Module):
 
     def restore_weights(self):
         """Assign the weights of the cached model to the active model.
+
         This may be needed when pytorch optimizer resulted in unsatisfactory weights, for instance.
 
         """
@@ -451,6 +427,7 @@ class ModelNN(nn.Module):
 
     def soft_update(self, tau):
         """Soft update model parameters.
+
         θ_target = τ*θ_local + (1 - τ)*θ_target.
 
         Params
@@ -767,7 +744,8 @@ class ModelPerceptronCalf(Model):
         }
 
     def Linear(self, dim_in, dim_out, name, bias=None):
-        """Here we take bias into account by introducing an additional row in the weights matrix.
+        """Here we take bias into account by introducing an additional row in the weight matrix.
+
         It is equivalent to $xW + b$.
         """
         if bias is not None:
@@ -1157,6 +1135,7 @@ class GaussianElementWisePDFModel(ModelNN):
 class ModelGaussianConditional(Model):
     """Gaussian probability distribution model with `weights[0]` being an expectation vector
     and `weights[1]` being a covariance matrix.
+
     The expectation vector can optionally be generated.
     """
 

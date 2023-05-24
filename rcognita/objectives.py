@@ -29,7 +29,8 @@ class Objective(rcognita.base.RcognitaBase, ABC):
 
 
 class RunningObjective(Objective):
-    """This is what is usually treated as reward or unitlity in maximization problems.
+    """This is what is usually treated as reward or utility in maximization problems.
+
     In minimzations problems, it is called cost or loss, say.
     """
 

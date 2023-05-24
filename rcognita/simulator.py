@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""This module contains one single class that simulates controller-system (agent-environment) loops.
+"""Contains one single class that simulates controller-system (agent-environment) loops.
+
 The system can be of three types:
     
 - discrete-time deterministic
