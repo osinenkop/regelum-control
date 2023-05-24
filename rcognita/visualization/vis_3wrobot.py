@@ -259,7 +259,7 @@ class ControlDashboard(Dashboard):
         action = np.squeeze(self.scenario.action)
         time = self.scenario.time
 
-        for (line, action_single) in zip(self.lines_action, action):
+        for line, action_single in zip(self.lines_action, action):
             update_line(line, time, action_single)
 
 
@@ -308,7 +308,7 @@ class ControlDashboardNI(Dashboard):
         action = self.scenario.action
         time = self.scenario.time
 
-        for (line, action_single) in zip(self.lines_action, np.array(action)):
+        for line, action_single in zip(self.lines_action, np.array(action)):
             update_line(line, time, action_single)
 
 

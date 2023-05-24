@@ -215,7 +215,7 @@ class ConfigLoaderImpl(ConfigLoader):
                         f"provider={source.provider}, path={source.path} is not"
                         " available."
                     ),
-                    stacklevel=1
+                    stacklevel=1,
                 )
 
     def _parse_overrides_and_create_caching_repo(
@@ -369,7 +369,9 @@ class ConfigLoaderImpl(ConfigLoader):
                         if OmegaConf.select(
                             cfg, key, throw_on_missing=False
                         ) is None or isinstance(value, (dict, list)):
-                            OmegaConf.update(cfg, key, value, merge=True, force_add=True)
+                            OmegaConf.update(
+                                cfg, key, value, merge=True, force_add=True
+                            )
                         else:
                             assert override.input_line is not None
                             raise ConfigCompositionException(
@@ -418,13 +420,15 @@ class ConfigLoaderImpl(ConfigLoader):
                                 del cfg[key]
                             else:
                                 node = OmegaConf.select(cfg, key[0:last_dot])
-                                del node[key[last_dot + 1:]]
+                                del node[key[last_dot + 1 :]]
 
                     elif override.is_add():
                         if OmegaConf.select(
-                                cfg, key, throw_on_missing=False
+                            cfg, key, throw_on_missing=False
                         ) is None or isinstance(value, (dict, list)):
-                            OmegaConf.update(cfg, key, value, merge=True, force_add=True)
+                            OmegaConf.update(
+                                cfg, key, value, merge=True, force_add=True
+                            )
                         else:
                             assert override.input_line is not None
                             raise ConfigCompositionException(

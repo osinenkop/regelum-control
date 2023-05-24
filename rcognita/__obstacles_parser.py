@@ -1,13 +1,13 @@
-#import os
-#import sys
+# import os
+# import sys
 
-#PARENT_DIR = os.path.abspath(__file__ + "/../..")
-#sys.path.insert(0, PARENT_DIR)
+# PARENT_DIR = os.path.abspath(__file__ + "/../..")
+# sys.path.insert(0, PARENT_DIR)
 
 import numpy as np
 
 
-#import os
+# import os
 from scipy.spatial import ConvexHull
 
 
@@ -42,7 +42,7 @@ class Obstacles_parser:
     def d(self, R_i, R_i1, delta_angle=None):
         if delta_angle is None:
             delta_angle = np.radians(1)
-        answ = np.sqrt(R_i ** 2 + R_i1 ** 2 - 2 * R_i * R_i1 * np.cos(delta_angle))
+        answ = np.sqrt(R_i**2 + R_i1**2 - 2 * R_i * R_i1 * np.cos(delta_angle))
         return answ
 
     def k(self, R_i, R_i1):
@@ -379,7 +379,7 @@ class Obstacles_parser:
             return (
                 np.max(
                     [
-                        (r ** 2 - (a - x[0]) ** 2 - (b - x[1]) ** 2)
+                        (r**2 - (a - x[0]) ** 2 - (b - x[1]) ** 2)
                         for [a, b], r in zip(centers, radiuses)
                     ]
                 )
@@ -394,6 +394,7 @@ class Obstacles_parser:
         def check_ineq_sign(line, control_point):
             def straight_line(x, y):
                 return line[0] * x + line[1] * y + line[2]
+
             if straight_line(control_point[0], control_point[1]) >= 0:
                 return line
             else:

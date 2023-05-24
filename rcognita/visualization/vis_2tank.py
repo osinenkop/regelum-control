@@ -195,7 +195,6 @@ class Animator2Tank(Animator):
         self.datafile_curr = self.datafiles[0]
 
     def animate(self, k):
-
         if self.is_playback:
             self.update_sim_data_row()
             time = self.time

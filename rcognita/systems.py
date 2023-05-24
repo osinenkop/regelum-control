@@ -278,7 +278,6 @@ class SysKinematicPoint(System):
         def update_frame(self, **frame_datum):
             pass
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -331,7 +330,9 @@ class SysInvertedPendulum(System):
         m, g, length = self.pars[0], self.pars[1], self.pars[2]
 
         Dstate[0] = state[1]
-        Dstate[1] = g / length * utilities.rc.sin(state[0]) + action[0] / (m * length**2)
+        Dstate[1] = g / length * utilities.rc.sin(state[0]) + action[0] / (
+            m * length**2
+        )
 
         return Dstate
 
@@ -634,9 +635,9 @@ class CartPole(System):
             x_dot
         )
 
-        Dstate[2] = -g / length * utilities.rc.sin(theta) + Dstate[3] / length * utilities.rc.cos(
-            theta
-        )
+        Dstate[2] = -g / length * utilities.rc.sin(theta) + Dstate[
+            3
+        ] / length * utilities.rc.cos(theta)
 
         return Dstate
 

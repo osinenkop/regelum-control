@@ -1,5 +1,4 @@
-"""
-This module contains callbacks.
+"""This module contains callbacks.
 Callbacks are lightweight event handlers, used mainly for logging.
 
 To make a method of a class trigger callbacks, one needs to
@@ -14,7 +13,6 @@ Callbacks can be registered by simply supplying them in the respective keyword a
         ...
 
 """
-import typing
 from abc import ABC, abstractmethod
 
 import matplotlib.animation
@@ -23,13 +21,15 @@ import torch
 import rcognita
 import pandas as pd
 import numpy as np
-import time, datetime
-import dill, os, git, shutil
+import time
+import datetime
+import dill
+import os
+import git
+import shutil
 
-import omegaconf, json
 
 import matplotlib.pyplot as plt
-import re
 
 import pkg_resources
 
@@ -41,12 +41,11 @@ import gc
 
 
 def is_in_debug_mode():
-    return not sys.gettrace() is None
+    return sys.gettrace() is not None
 
 
 class apply_callbacks:
-    """
-    Decorator that applies a list of callbacks to a given method of an object.
+    """Decorator that applies a list of callbacks to a given method of an object.
     If the object has no list of callbacks specified, the default callbacks are used.
 
     :param method: The method to which the callbacks should be applied.
@@ -74,8 +73,7 @@ class Callback(ABC):
     """
 
     def __init__(self, log_level="info"):
-        """
-        Initialize a callback object.
+        """Initialize a callback object.
 
         :param logger: A logging object that will be used to log messages.
         :type logger: logging.Logger
@@ -256,7 +254,7 @@ class ConfigDiagramCallback(Callback):
                 raise Exception(
                     "Running experiments without committing is disallowed. Please, commit your changes."
                 )
-        except git.exc.InvalidGitRepositoryError:
+        except git.exc.InvalidGitRepositoryError as err:
             commit_hash = None
             if (
                 "disallow_uncommitted" in cfg
@@ -265,7 +263,7 @@ class ConfigDiagramCallback(Callback):
             ):
                 raise Exception(
                     "Running experiments without committing is disallowed. Please, commit your changes."
-                )
+                ) from err
         cfg_hash = hex(hash(cfg))
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
         overrides_table = ""
@@ -427,6 +425,12 @@ class ConfigDiagramCallback(Callback):
                              </body>
             """,
         )
+        git_fragment = (
+            f"""git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}"""
+            + chr(10)
+            if commit_hash
+            else ""
+        )
         html = html.replace(
             "</body>",
             f"""
@@ -444,9 +448,9 @@ with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
 git reset
 git restore .
 git clean -f
-{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
+{git_fragment}cd {metadata["initial_working_directory"]}
 export PYTHONPATH="{metadata["initial_pythonpath"]}"
-python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
+python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and "multirun" not in x, sys.argv)))} </code></pre>
             </main>
             """
             + """
@@ -629,7 +633,7 @@ class HistoricalCallback(Callback, ABC):
             else:
                 if idx == "last":
                     idx = len(dirs)
-                assert idx >= 1, f"Indices should be no smaller than 1."
+                assert idx >= 1, "Indices should be no smaller than 1."
                 assert idx <= len(dirs), f"Only {len(dirs)} files were stored."
                 return pd.read_hdf(dirs[idx - 1])
         else:
@@ -678,8 +682,7 @@ class HistoricalCallback(Callback, ABC):
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
-    """
-    Creates a callback class that logs the output of a specific method of a class or any class.
+    """Creates a callback class that logs the output of a specific method of a class or any class.
 
     :param method_name: Name of the method to log output for.
     :type method_name: str
@@ -713,10 +716,10 @@ def method_callback(method_name, class_name=None, log_level="debug"):
 
 
 class StateCallback(Callback):
-    """
-    StateCallback is a subclass of the Callback class that logs the state of a system object when the compute_closed_loop_rhs method of the System class is called.
+    """StateCallback is a subclass of the Callback class that logs the state of a system object when the compute_closed_loop_rhs method of the System class is called.
 
-    Attributes:
+    Attributes
+    ----------
     log (function): A function that logs a message at a specified log level.
     """
 
@@ -749,9 +752,8 @@ class ObjectiveCallback(Callback):
 
 
 class HistoricalObjectiveCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
+    """A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime.
     """
 
     def __init__(self, *args, **kwargs):
@@ -835,7 +837,7 @@ class SaveProgressCallback(Callback):
         start = time.time()
         if episode_number % self.once_in:
             return
-        filename = f"callbacks.dill"
+        filename = "callbacks.dill"
         with open(filename, "wb") as f:
             dill.dump(rcognita.main.callbacks, f)
         self.log(
@@ -867,9 +869,8 @@ class InspectReferrersCallback(Callback):
 
 
 class HistoricalObservationCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
+    """A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime.
     """
 
     def __init__(self, *args, **kwargs):
@@ -930,9 +931,8 @@ class HistoricalObservationCallback(HistoricalCallback):
 
 
 class PolicyGradientObjectiveSaverCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
+    """A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1065,9 +1065,8 @@ class TotalObjectiveCallback(HistoricalCallback):
 
 
 class QFunctionModelSaverCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
+    """A callback which allows to store desired data
+    collected among different runs inside multirun execution runtime.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1239,7 +1238,7 @@ class CriticWeightsCallback(HistoricalCallback):
             hasattr(obj.critic.model, "weights")
             and obj.critic.model.weights is not None
         ):
-            datum = {
+            {
                 **{"time": rcognita.main.metadata["time"]},
                 **{
                     f"weight_{i + 1}": weight

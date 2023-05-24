@@ -20,7 +20,6 @@ def plot_optimization_results(
     grid_size=300,
     marker_size=30,
 ):
-
     f_obj_critic_csd = rc.to_casadi_function(critic_obj_expr, symbolic_var_critic)
     f_constr_critic_csd = rc.to_casadi_function(critic_constr_expr, symbolic_var_critic)
     f_obj_actor_csd = rc.to_casadi_function(actor_obj_expr, symbolic_var_actor)

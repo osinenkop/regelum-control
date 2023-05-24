@@ -157,7 +157,6 @@ class OnlineScenario(Scenario):
         self.speedup = speedup
         self.total_objective_threshold = total_objective_threshold
 
-        
     def set_speedup(self, speedup):
         self.speedup = speedup
         self.cached_timeline = islice(cycle(iter(self.cache)), 0, None, self.speedup)
@@ -363,7 +362,7 @@ class OnlineScenario(Scenario):
         self.pre_step()
         sim_status = self.simulator.do_sim_step()
         is_episode_ended = sim_status == -1
-        
+
         if not is_episode_ended:
             (
                 self.time,

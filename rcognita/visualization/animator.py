@@ -28,6 +28,7 @@ import mlflow
 from matplotlib import animation
 from rcognita.__utilities import on_key_press, on_close
 
+
 def update_line(matplotlib_handle, newX, newY):
     old_xdata = matplotlib_handle.get_xdata()
     old_ydata = matplotlib_handle.get_ydata()
@@ -182,10 +183,8 @@ class Animator:
         self.main_figure.canvas.mpl_connect(
             "key_press_event", lambda event: on_key_press(event, self.anm)
         )
-            
-        self.main_figure.canvas.mpl_connect(
-            'close_event', on_close
-        )                 
+
+        self.main_figure.canvas.mpl_connect("close_event", on_close)
 
     def play_live(self):
         self.init_anim()
@@ -265,9 +264,8 @@ class Animator:
         )
 
         if self.animation_type not in ANIMATION_TYPES_SAVE_FORMATS:
-            
             self.connect_events()
-            
+
         self.anm.running = True
 
         if self.animation_type in ANIMATION_TYPES_SAVE_FORMATS:

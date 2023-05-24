@@ -191,7 +191,12 @@ class CALFControllerExPost(RLController):
 
     @apply_callbacks()
     def compute_action(
-        self, state, observation, is_critic_update=False, time=0, observation_target=None
+        self,
+        state,
+        observation,
+        is_critic_update=False,
+        time=0,
+        observation_target=None,
     ):
         if observation_target is None:
             observation_target = []
@@ -260,7 +265,12 @@ class CALFControllerExPost(RLController):
 class CALFControllerPredictive(CALFControllerExPost):
     @apply_callbacks()
     def compute_action(
-        self, state, observation, is_critic_update=False, time=0, observation_target=None
+        self,
+        state,
+        observation,
+        is_critic_update=False,
+        time=0,
+        observation_target=None,
     ):
         if observation_target is None:
             observation_target = []
@@ -443,6 +453,7 @@ class Controller3WRobotDisassembledCLF:
 
         def objective_lambda(theta):
             return self._Fc(xNI, eta, theta)
+
         if self.optimizer_engine == "SciPy":
             bnds = setpoint.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
             options = {"maxiter": 50, "disetpoint": False}

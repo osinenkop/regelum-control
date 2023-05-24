@@ -4,15 +4,15 @@ These can be used in system dynamics fitting, critic and other tasks.
 Updates to come.
 
 """
-#import os
-#import sys
+# import os
+# import sys
 
 import rcognita.base
 
-#PARENT_DIR = os.path.abspath(__file__ + "/../../")
-#sys.path.insert(0, PARENT_DIR)
-#CUR_DIR = os.path.abspath(__file__ + "/..")
-#sys.path.insert(0, CUR_DIR)
+# PARENT_DIR = os.path.abspath(__file__ + "/../../")
+# sys.path.insert(0, PARENT_DIR)
+# CUR_DIR = os.path.abspath(__file__ + "/..")
+# sys.path.insert(0, CUR_DIR)
 
 from __utilities import rc
 import numpy as np
@@ -33,8 +33,6 @@ except ModuleNotFoundError:
     nn = MagicMock()
     F = MagicMock()
     MultivariateNormal = MagicMock()
-
-
 
 
 def force_positive_def(func):
@@ -300,7 +298,6 @@ class ModelWeightContainer(Model):
 
     def forward(self, *argin, weights=None):
         return weights[: self.dim_output]
-
 
 
 class ModelQuadForm(Model):
@@ -771,7 +768,6 @@ class ModelPerceptronCalf(Model):
         bias=False,
         leaky_relu_coef=0.2,
     ):
-
         self.weight_min = single_weight_min
         self.weight_max = single_weight_max
         self.in_layer = self.Linear(
@@ -956,7 +952,6 @@ class ModelNNElementWiseProduct(ModelNN):
     def __init__(
         self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
     ):
-
         super().__init__()
 
         if use_derivative:

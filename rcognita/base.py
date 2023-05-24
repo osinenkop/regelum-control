@@ -4,16 +4,22 @@ from .callbacks import Callback
 import rcognita
 import weakref
 
+
 class RcognitaBase(abc.ABC):
     def __init__(self):
-        callbacks = [getattr(self.__class__, d) for d in dir(self.__class__)
-                     if inspect.isclass(getattr(self.__class__, d)) and issubclass(getattr(self.__class__, d), Callback)]
+        callbacks = [
+            getattr(self.__class__, d)
+            for d in dir(self.__class__)
+            if inspect.isclass(getattr(self.__class__, d))
+            and issubclass(getattr(self.__class__, d), Callback)
+        ]
         existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
         for callback in callbacks:
             if callback not in existing_callbacks:
                 callback_instance = callback()
                 callback_instance.on_launch()
                 rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+
 
 class Node(abc.ABC):
     def __init__(self, input_type):
@@ -26,7 +32,9 @@ class Node(abc.ABC):
         self.hooks.append(hook_function)
 
     def __forget(self, other):
-        assert self.connected(other), "Attempt to disconnect a node that was not connected."
+        assert self.connected(
+            other
+        ), "Attempt to disconnect a node that was not connected."
         for i, subscriber_ref in enumerate(self.__subscribers):
             subscriber = subscriber_ref()
             if subscriber is other:
@@ -52,24 +60,40 @@ class Node(abc.ABC):
             self.disconnect(subscribee)
 
     def __subscribe(self, other):
-        assert isinstance(other, Node), "Attempt to subscribe to something that is neither a Port nor a Publisher."
-        assert issubclass(other.type, self.type), f"Type mismatch. Attempt to subscribe a node of type {self.type} to node of type {other.type}."
+        assert isinstance(
+            other, Node
+        ), "Attempt to subscribe to something that is neither a Port nor a Publisher."
+        assert issubclass(
+            other.type, self.type
+        ), f"Type mismatch. Attempt to subscribe a node of type {self.type} to node of type {other.type}."
         self.__subscribees.append(weakref.ref(other))
         other.__subscribers.append(weakref.ref(self))
 
     def __issue_subscription(self, other):
-        assert isinstance(other, Node), "Attempt to issue subscription to something that is neither a Port nor a Publisher."
-        assert issubclass(self.type, other.type), f"Type mismatch. Attempt to subscribe a node of type {other.type} to node of type {self.type}."
+        assert isinstance(
+            other, Node
+        ), "Attempt to issue subscription to something that is neither a Port nor a Publisher."
+        assert issubclass(
+            self.type, other.type
+        ), f"Type mismatch. Attempt to subscribe a node of type {other.type} to node of type {self.type}."
         self.__subscribers.append(weakref.ref(other))
         other.__subscribees.append(weakref.ref(self))
 
     @property
     def subscribers(self):
-        return [subscriber() for subscriber in self.__subscribers if subscriber() is not None]
+        return [
+            subscriber()
+            for subscriber in self.__subscribers
+            if subscriber() is not None
+        ]
 
     @property
     def subscribees(self):
-        return [subscribee() for subscribee in self.__subscribees if subscribee() is not None]
+        return [
+            subscribee()
+            for subscribee in self.__subscribees
+            if subscribee() is not None
+        ]
 
     @abc.abstractmethod
     def connect(self, other):
@@ -80,7 +104,9 @@ class Node(abc.ABC):
         pass
 
     def __call__(self, message):
-        assert isinstance(message, self.type), f"Type mismatch. Attempt to pass a message of type {type(message)} to node of type {self.type}."
+        assert isinstance(
+            message, self.type
+        ), f"Type mismatch. Attempt to pass a message of type {type(message)} to node of type {self.type}."
         for hook in self.hooks:
             message = hook(message)
         return self.__on_input(message)
@@ -104,6 +130,7 @@ class port:
             new_port.hook(hook)
         return new_port
 
+
 class publisher:
     def __init__(self, input_type=object, hooks=None):
         if hooks is None:
@@ -117,6 +144,7 @@ class publisher:
         for hook in self.hooks:
             new_port.hook(hook)
         return new_port
+
 
 class Port(Node):
     def __init__(self, input_type):
@@ -143,7 +171,10 @@ class Port(Node):
         if self.__inbox:
             return self.__inbox.pop(-1)
         else:
-            raise EmptyInboxException("The port's inbox was empty at the time of calling ``receive``.")
+            raise EmptyInboxException(
+                "The port's inbox was empty at the time of calling ``receive``."
+            )
+
 
 class Publisher(Node):
     def connect(self, other):
@@ -157,6 +188,7 @@ class Publisher(Node):
 class FreePort(Port):
     def __init__(self):
         super().__init__(object)
+
 
 class FreePublisher(Publisher):
     def __init__(self):
@@ -207,4 +239,3 @@ class LazyPort(Port):
         self.index += 1
         return message
 """
-

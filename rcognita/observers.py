@@ -5,9 +5,14 @@ import rcognita.base
 
 class KalmanFilter(rcognita.base.RcognitaBase):
     def __init__(
-        self, t0, my_sys, sys_noise_cov, observ_noise_cov, prior_est_cov, state_init,
+        self,
+        t0,
+        my_sys,
+        sys_noise_cov,
+        observ_noise_cov,
+        prior_est_cov,
+        state_init,
     ):
-
         self.my_sys = my_sys
 
         self.posterior_state_est = state_init

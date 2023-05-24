@@ -8,15 +8,15 @@ Remarks:
 
 """
 
-#import os
-#import sys
+# import os
+# import sys
 
 import rcognita.base
 
-#PARENT_DIR = os.path.abspath(__file__ + "/../../")
-#sys.path.insert(0, PARENT_DIR)
-#CUR_DIR = os.path.abspath(__file__ + "/..")
-#sys.path.insert(0, CUR_DIR)
+# PARENT_DIR = os.path.abspath(__file__ + "/../../")
+# sys.path.insert(0, PARENT_DIR)
+# CUR_DIR = os.path.abspath(__file__ + "/..")
+# sys.path.insert(0, CUR_DIR)
 
 import numpy as np
 from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
@@ -313,7 +313,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.initialize_buffers()
 
     def _SciPy_update(self, intrinsic_constraints=None):
-
         weights_init = self.model.cache.weights
 
         constraints = ()
@@ -325,6 +324,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         def cost_function(weights):
             return self.objective(data_buffer, weights=weights)
+
         is_penalty = int(self.penalty_param > 0)
         if intrinsic_constraints:
             constraints = tuple(
@@ -343,7 +343,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return optimized_weights
 
     def _CasADi_update(self, intrinsic_constraints=None):
-
         weights_init = rc.DM(self.model.cache.weights)
         symbolic_var = rc.array_symb(tup=rc.shape(weights_init), prototype=weights_init)
 
@@ -383,7 +382,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return optimized_weights
 
     def _Torch_update(self):
-
         data_buffer = {
             "observation_buffer": self.observation_buffer,
             "action_buffer": self.action_buffer,
@@ -549,7 +547,9 @@ class CriticOffPolicyBehaviour(Critic):
 
     def get_batch_ids(self):
         if not self.is_enough_valid_elements_in_buffer():
-            raise Exception("Not enough valid elements in buffer for critic objective call")
+            raise Exception(
+                "Not enough valid elements in buffer for critic objective call"
+            )
 
         buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 2
         if self.batch_size == 1:
@@ -662,7 +662,9 @@ class CriticOffPolicyGreedy(Critic):
 
     def get_batch_ids(self):
         if not self.is_enough_valid_elements_in_buffer():
-            raise Exception("Not enough valid elements in buffer for critic objective call")
+            raise Exception(
+                "Not enough valid elements in buffer for critic objective call"
+            )
 
         buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 1
         if self.batch_size == 1:

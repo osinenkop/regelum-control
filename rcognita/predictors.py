@@ -48,7 +48,6 @@ class EulerPredictor(Predictor):
         return next_state
 
     def predict_sequence(self, state, action_sequence):
-
         observation_sequence = rc.zeros(
             [self.dim_input, self.prediction_horizon], prototype=action_sequence
         )
@@ -87,7 +86,6 @@ class EulerPredictorPendulum(EulerPredictor):
         return next_state_or_observation
 
     def predict_sequence(self, observation, action_sequence):
-
         observation_sequence = rc.zeros(
             [self.prediction_horizon, self.dim_output], prototype=action_sequence
         )

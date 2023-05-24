@@ -8,6 +8,7 @@ from collections import ChainMap, defaultdict
 import socket
 import shelve
 
+
 def aggregate_multiruns(from_=None, till=None, recent=None, multirun_path="multirun"):
     assert recent or from_, "Please specify runs to aggregate"
     assert not recent or not from_
@@ -52,7 +53,9 @@ def aggregate_multiruns(from_=None, till=None, recent=None, multirun_path="multi
             for run in appended_runs:
                 if (
                     from_
-                    <= datetime.datetime.strptime(run.split("_")[0], "%Y-%m-%d/%H-%M-%S")
+                    <= datetime.datetime.strptime(
+                        run.split("_")[0], "%Y-%m-%d/%H-%M-%S"
+                    )
                     <= till
                 ):
                     runs.append(run)
@@ -189,26 +192,28 @@ def group_runs(multirun_folder="multirun", from_=None, till=None, recent=None):
     for run_path, info in run_infos.items():
         if info.get("controller") is None or info.get("system") is None:
             continue
-            
+
         groups[info["controller"]][info["system"]].append(run_path)
 
     return groups, run_infos
 
+
 def get_status(run_path):
     if not os.path.isfile(Path(run_path) / ".report"):
         return "undef"
-    
-    with shelve.open(str(Path(run_path) / '.report')) as f:
-        status = f["termination"] 
+
+    with shelve.open(str(Path(run_path) / ".report")) as f:
+        status = f["termination"]
 
     if status == "successful":
         return "success"
-    
+
     if status == "running":
         return "running"
-    
+
     return "error"
-    
+
+
 def construnct_run_foldername(run_path, overrides, idx=None):
     return "_".join(
         [
@@ -249,4 +254,3 @@ def get_multirun_info(path_multirun):
             for run_path in sorted(paths)
             if get_run_info(run_path) is not None
         }
-

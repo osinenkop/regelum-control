@@ -298,7 +298,7 @@ class TorchDataloaderOptimizer(Optimizer):
         self.sheduler_method = sheduler_method
         self.sheduler_options = sheduler_options
         self.sheduler = self.sheduler_method(self.optimizer, **self.sheduler_options)
-        
+
         if isinstance(batch_sampler, UpdatableSampler):
             self.batch_sampler = batch_sampler
         else:
@@ -432,8 +432,10 @@ class BruteForceOptimizer(Optimizer):
         :return: variant that maximizes the reward
         :rtype: int
         """
+
         def reward_function(variant):
             return self.objective(variant, x)
+
         reward_function = np.vectorize(reward_function)
         values = reward_function(self.possible_variants)
         return self.possible_variants[np.argmax(values)]

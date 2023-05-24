@@ -22,7 +22,8 @@ from typing import Any
 from omegaconf import Container
 from omegaconf._utils import _DEFAULT_MARKER_
 from omegaconf.errors import ConfigKeyError
-#from omegaconf.grammar_parser import *
+
+# from omegaconf.grammar_parser import *
 
 from recursive_monkey_patch import monkey_patch
 
@@ -57,7 +58,14 @@ from unittest.mock import MagicMock
 
 from .__hydra_main import main as hydramain
 
-from .callbacks import OnEpisodeDoneCallback, OnIterationDoneCallback, TimeCallback, ConfigDiagramCallback, TimeRemainingCallback, SaveProgressCallback
+from .callbacks import (
+    OnEpisodeDoneCallback,
+    OnIterationDoneCallback,
+    TimeCallback,
+    ConfigDiagramCallback,
+    TimeRemainingCallback,
+    SaveProgressCallback,
+)
 import time
 import pandas as pd
 
@@ -148,8 +156,6 @@ def obtain(obj_repr):
 OmegaConf.register_new_resolver("same", __memorize_instance(oc.select))
 OmegaConf.register_new_resolver(name="get", resolver=obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
-
-
 
 
 class ComplementedConfig:
@@ -558,7 +564,9 @@ class main:
         def rcognita_main(*args, **kwargs):
             common_dir = tempfile.TemporaryDirectory()
             initial_working_directory = os.getcwd()
-            initial_pythonpath = os.environ["PYTHONPATH"] if "PYTHONPATH" in os.environ else ""
+            initial_pythonpath = (
+                os.environ["PYTHONPATH"] if "PYTHONPATH" in os.environ else ""
+            )
             script_path = inspect.getfile(old_app)
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])
@@ -661,7 +669,9 @@ class main:
                             try:
                                 mlflow.log_artifact("__init__.log")
                             except FileNotFoundError:
-                                mlflow.log_artifact("conftest.log")  ## TO DO: Find a better way to handle this
+                                mlflow.log_artifact(
+                                    "conftest.log"
+                                )  ## TO DO: Find a better way to handle this
                             if os.path.exists("callbacks.dill"):
                                 mlflow.log_artifact("callbacks.dill")
 

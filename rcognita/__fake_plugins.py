@@ -120,7 +120,6 @@ class Plugins(metaclass=Singleton):
 
     @staticmethod
     def is_in_toplevel_plugins_module(clazz: str) -> bool:
-
         return clazz.startswith("hydra_plugins.") or clazz.startswith(
             "hydra._internal.core_plugins."
         )
@@ -163,7 +162,6 @@ class Plugins(metaclass=Singleton):
     def _scan_all_plugins(
         modules: List[Any],
     ) -> Tuple[List[Type[Plugin]], ScanStats]:
-
         stats = ScanStats()
         stats.total_time = timer()
 
@@ -186,9 +184,14 @@ class Plugins(metaclass=Singleton):
                         if sys.version_info < (3, 10):
                             m = importer.find_module(modname)  # type: ignore
                             assert m is not None
-                            if modname == 'hydra._internal.core_plugins.file_config_source': ## RCOGNITA CODE HERE
+                            if (
+                                modname
+                                == "hydra._internal.core_plugins.file_config_source"
+                            ):  ## RCOGNITA CODE HERE
                                 loaded_mod = m.load_module(modname)
-                                loaded_mod.FileConfigSource = rcognita.__fake_file_config_source.FileConfigSource
+                                loaded_mod.FileConfigSource = (
+                                    rcognita.__fake_file_config_source.FileConfigSource
+                                )
                             else:
                                 loaded_mod = m.load_module(modname)
                         else:
@@ -234,7 +237,7 @@ class Plugins(metaclass=Singleton):
                         f"\tRecommended to uninstall or upgrade plugin.\n"
                         f"\t\t{type(e).__name__} : {e}",
                         category=UserWarning,
-                        stacklevel=1
+                        stacklevel=1,
                     )
 
         stats.total_time = timer() - stats.total_time

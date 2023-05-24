@@ -4,7 +4,6 @@ import numpy as np
 
 
 def plot_objectives(total_obj_callbacks, environment, path=None):
-
     fig = plt.figure(figsize=(10, 10))
     ax = fig.subplots()
     ax.set_xlabel("episode")
@@ -21,7 +20,6 @@ def plot_objectives(total_obj_callbacks, environment, path=None):
 
 
 def plot_objectives_per_controller(df, callbacks, environment, axes):
-
     df["time"] = callbacks[0].data.index
     df.set_index("time", inplace=True)
     print(df)
