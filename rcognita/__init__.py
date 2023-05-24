@@ -36,6 +36,39 @@ from . import __fake_plugins
 from . import __fake_config_loader_impl
 from .__gui_server import __file__ as gui_script_file
 
+from . import __utilities
+
+import mlflow
+from unittest.mock import Mock
+from hydra._internal.utils import _locate
+
+from . import __instantiate as inst
+
+import plotly.graph_objects as go
+import json
+
+
+import tempfile
+
+from multiprocessing import Process
+import numpy
+
+from unittest.mock import MagicMock
+
+from .__hydra_main import main as hydramain
+
+from .callbacks import OnEpisodeDoneCallback, OnIterationDoneCallback, TimeCallback, ConfigDiagramCallback, TimeRemainingCallback, SaveProgressCallback
+import time
+import pandas as pd
+
+try:
+    import torch
+except (ModuleNotFoundError, ImportError):
+    torch = MagicMock()
+
+
+mock = Mock()
+
 monkey_patch(__fake_plugins, hydra.core.plugins)
 monkey_patch(__fake_config_loader_impl, hydra._internal.config_loader_impl)
 
@@ -49,31 +82,6 @@ ANIMATION_TYPES_REQUIRING_ANIMATOR = [
 ] + ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 ANIMATION_TYPES = ANIMATION_TYPES_NONE + ANIMATION_TYPES_REQUIRING_ANIMATOR
 
-from . import __utilities
-#from .visualization import *
-import mlflow
-from unittest.mock import Mock
-from hydra._internal.utils import _locate
-
-from . import __instantiate as inst
-
-mock = Mock()
-
-import plotly.graph_objects as go
-import json
-
-
-import tempfile
-
-from multiprocessing import Process
-import numpy
-
-from unittest.mock import MagicMock
-
-try:
-    import torch
-except (ModuleNotFoundError, ImportError):
-    torch = MagicMock()
 
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
@@ -142,7 +150,6 @@ OmegaConf.register_new_resolver(name="get", resolver=obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 
-from .__hydra_main import main as hydramain
 
 
 class ComplementedConfig:
@@ -155,8 +162,10 @@ class ComplementedConfig:
 
     def treemap(self, root="config"):
         def format(
-            parent_name, parent_node, parent_node_raw, occupied=set(), parent_color=50
+            parent_name, parent_node, parent_node_raw, occupied=None, parent_color=50
         ):
+            if occupied is None:
+                occupied = set()
             labels = []
             parents = []
             colors = []
@@ -398,11 +407,6 @@ class ComplementedConfig:
         #         return res
 
 
-from .callbacks import OnEpisodeDoneCallback, OnIterationDoneCallback, TimeCallback, ConfigDiagramCallback, TimeRemainingCallback, SaveProgressCallback
-import time
-import pandas as pd
-
-
 class RcognitaExitException(Exception):
     pass
 
@@ -464,8 +468,8 @@ class main:
     def __init__(
         self,
         *args,
-        logger=logging.getLogger("rcognita"),
-        callbacks=[],
+        logger=None,
+        callbacks=None,
         **kwargs,
     ):
         """Create an instance of ``rcognita.main``.
@@ -480,6 +484,10 @@ class main:
         :type logger: Logger, optional
 
         """
+        if logger is None:
+            logger = logging.getLogger("rcognita")
+        if callbacks is None:
+            callbacks = []
         # os.environ["PYTHONHASHSEED"] = "0"
         callbacks = callbacks + self.builtin_callbacks
         sys.argv.insert(1, "--multirun")

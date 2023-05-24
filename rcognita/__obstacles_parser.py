@@ -1,13 +1,13 @@
-import os
-import sys
+#import os
+#import sys
 
-PARENT_DIR = os.path.abspath(__file__ + "/../..")
-sys.path.insert(0, PARENT_DIR)
+#PARENT_DIR = os.path.abspath(__file__ + "/../..")
+#sys.path.insert(0, PARENT_DIR)
 
 import numpy as np
 
 
-import os
+#import os
 from scipy.spatial import ConvexHull
 
 
@@ -39,7 +39,9 @@ class Obstacles_parser:
         self.constraints = self.get_functions()
         return self.constraints
 
-    def d(self, R_i, R_i1, delta_angle=np.radians(1)):
+    def d(self, R_i, R_i1, delta_angle=None):
+        if delta_angle is None:
+            delta_angle = np.radians(1)
         answ = np.sqrt(R_i ** 2 + R_i1 ** 2 - 2 * R_i * R_i1 * np.cos(delta_angle))
         return answ
 
@@ -200,7 +202,9 @@ class Obstacles_parser:
             L.append((block[0], block[-1]))
             return [block]
 
-    def get_obstacles(self, l, rng=360, fillna="else", state=np.array([2, 2, np.pi])):
+    def get_obstacles(self, l, rng=360, fillna="else", state=None):
+        if state is None:
+            state = np.array([2, 2, np.pi])
         state_coord = state[:2].reshape(-1, 1)
         state_angle = state[2]
         np.array(

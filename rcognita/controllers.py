@@ -126,8 +126,10 @@ class RLController(Controller):
 
     @apply_action_bounds
     def compute_action(
-        self, state, observation, is_critic_update=True, time=0, observation_target=[]
+        self, state, observation, is_critic_update=True, time=0, observation_target=None
     ):
+        if observation_target is None:
+            observation_target = []
         ### This method is called to generate an event in order for callbacks to fire.
         ### Namely, we want to save the critic weights, for instance, and other stuff.
         self.pre_compute_action()
@@ -189,8 +191,10 @@ class CALFControllerExPost(RLController):
 
     @apply_callbacks()
     def compute_action(
-        self, state, observation, is_critic_update=False, time=0, observation_target=[]
+        self, state, observation, is_critic_update=False, time=0, observation_target=None
     ):
+        if observation_target is None:
+            observation_target = []
         # Update data buffers
         self.critic.update_buffers(
             observation, self.actor.action
@@ -256,8 +260,10 @@ class CALFControllerExPost(RLController):
 class CALFControllerPredictive(CALFControllerExPost):
     @apply_callbacks()
     def compute_action(
-        self, state, observation, is_critic_update=False, time=0, observation_target=[]
+        self, state, observation, is_critic_update=False, time=0, observation_target=None
     ):
+        if observation_target is None:
+            observation_target = []
         # Update data buffers
         self.critic.update_buffers(
             observation, self.actor.action
@@ -518,7 +524,7 @@ class Controller3WRobotDisassembledCLF:
 
         return uCart
 
-    def compute_action_sampled(self, state, time, observation, observation_target=[]):
+    def compute_action_sampled(self, state, time, observation, observation_target=None):
         """See algorithm description in [[1]_], [[2]_].
 
         **This algorithm needs full-state measurement of the robot**.
@@ -561,7 +567,7 @@ class Controller3WRobotDisassembledCLF:
             return self.action_old
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         """Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock."""
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
@@ -635,7 +641,7 @@ class ControllerMemoryPID:
         process_variable,
         error_derivative=None,
         time=0,
-        observation_target=[],
+        observation_target=None,
     ):
         error = self.compute_error(process_variable)
         integral = self.compute_integral(error)
@@ -733,7 +739,7 @@ class Controller3WRobotMemoryPID:
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         x = observation[0]
         y = observation[1]
         angle = rc.array([observation[2]])
@@ -831,7 +837,7 @@ class Controller3WRobotMemoryPID:
 
         return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)])
 
-    def compute_action_sampled(self, state, time, observation, observation_target=[]):
+    def compute_action_sampled(self, state, time, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -873,13 +879,13 @@ class Controller3WRobotPID:
         time_start=0,
         sampling_time=0.01,
         action_bounds=None,
-        PID_arctg_params=[10, 0.0, 3],
-        PID_v_zero_params=[35, 0.0, 1.2],
-        PID_x_y_origin_params=[35, 0.0, 35],
-        PID_angle_origin_params=[30, 0.0, 10],
-        v_to_zero_bounds=[0.0, 0.05],
-        to_origin_bounds=[0.0, 0.1],
-        to_arctan_bounds=[0.01, 0.2],
+        PID_arctg_params=(10, 0.0, 3),
+        PID_v_zero_params=(35, 0.0, 1.2),
+        PID_x_y_origin_params=(35, 0.0, 35),
+        PID_angle_origin_params=(30, 0.0, 10),
+        v_to_zero_bounds=(0.0, 0.05),
+        to_origin_bounds=(0.0, 0.1),
+        to_arctan_bounds=(0.01, 0.2),
         v_to_zero_left_bound=0.0,
     ):
         if params is None:
@@ -942,7 +948,7 @@ class Controller3WRobotPID:
         return rc.array([F_error_derivative])
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         x = observation[0]
         y = observation[1]
         angle = rc.array([observation[2]])
@@ -1004,7 +1010,7 @@ class Controller3WRobotPID:
 
         return action
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1035,15 +1041,19 @@ class ControllerCartPolePID:
         self,
         action_bounds,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
         system=None,
-        upright_gain=rc.array([1, 1, 1, 1]),
+        upright_gain=None,
         swingup_gain=10,
         pid_loc_thr=0.35,
         pid_scale_thr=10.0,
-        clip_bounds=[-1, 1],
+        clip_bounds=(-1, 1),
     ):
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
+        if upright_gain is None:
+            upright_gain = rc.array([1, 1, 1, 1])
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1060,7 +1070,7 @@ class ControllerCartPolePID:
     def reset(self):
         pass
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1083,7 +1093,7 @@ class ControllerCartPolePID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         theta_observed, x, theta_dot, x_dot = observation
 
         E_total = (
@@ -1111,11 +1121,13 @@ class ControllerCartPoleEnergyBased:
         self,
         action_bounds,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
         controller_gain=10,
         system=None,
     ):
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1125,7 +1137,7 @@ class ControllerCartPoleEnergyBased:
         self.m_c, self.m_p, self.g, self.l = system.pars
         self.system = system
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1148,7 +1160,7 @@ class ControllerCartPoleEnergyBased:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         theta, _, theta_dot, _ = (
             observation[0],
             observation[1],
@@ -1194,12 +1206,14 @@ class ControllerLunarLanderPID:
         self,
         action_bounds,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
         PID_angle_parameters=None,
         PID_height_parameters=None,
         PID_x_parameters=None,
     ):
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
         if PID_angle_parameters is None:
             PID_angle_parameters = [1, 0, 0]
         if PID_height_parameters is None:
@@ -1233,7 +1247,7 @@ class ControllerLunarLanderPID:
     def reset(self):
         pass
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1256,7 +1270,7 @@ class ControllerLunarLanderPID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         self.action = [0, 0]
 
         if abs(observation[2]) > self.threshold:
@@ -1284,13 +1298,17 @@ class Controller2TankPID:
         action_bounds,
         params=None,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
-        PID_2tank_parameters_x1=[1, 0, 0],
-        PID_2tank_parameters_x2=[1, 0, 0],
+        PID_2tank_parameters_x1=(1, 0, 0),
+        PID_2tank_parameters_x2=(1, 0, 0),
         swing_up_tol=0.1,
-        observation_target=[0.4, 0.4],
+        observation_target=None,
     ):
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
+        if observation_target is None:
+            observation_target = [0.4, 0.4]
         self.tau1 = 18.4
         self.tau2 = 24.4
         self.K1 = 1.3
@@ -1322,8 +1340,10 @@ class Controller2TankPID:
     def reset(self):
         pass
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
+        if observation_target is None:
+            observation_target = []
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1341,7 +1361,7 @@ class Controller2TankPID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         # if rc.abs(observation[0]) > np.pi / 2:
         #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
         # else:
@@ -1502,7 +1522,7 @@ class Controller3WRobotNIDisassembledCLF:
 
         return uCart
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1528,7 +1548,7 @@ class Controller3WRobotNIDisassembledCLF:
             return self.action_old
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         """Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock."""
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
@@ -1567,7 +1587,7 @@ class NominalControllerInvertedPendulum:
         self.action = np.array([np.mean(action_bounds)])
 
     def compute_action_sampled(
-        self, time, state, observation, constraints=(), observation_target=[]
+        self, time, state, observation, constraints=(), observation_target=None
     ):
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1580,7 +1600,7 @@ class NominalControllerInvertedPendulum:
         return self.compute_action(observation)
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         self.observation = observation
         return np.array(
             [-((observation[0]) + 0.1 * (observation[1])) * self.controller_gain]
@@ -1606,7 +1626,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         x = observation[0]
         y = observation[1]
         angle = observation[2]
@@ -1638,7 +1658,7 @@ class Controller3WRobotNIMotionPrimitive:
 
         return rc.array([v, omega])
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1679,11 +1699,13 @@ class ControllerKinPoint:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0, observation_target=None):
         return -self.gain * observation
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation, observation_target=None):
         """Compute sampled action."""
+        if observation_target is None:
+            observation_target = []
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample

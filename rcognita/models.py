@@ -4,18 +4,22 @@ These can be used in system dynamics fitting, critic and other tasks.
 Updates to come.
 
 """
-import os
-import sys
+#import os
+#import sys
 
 import rcognita.base
 
-PARENT_DIR = os.path.abspath(__file__ + "/../../")
-sys.path.insert(0, PARENT_DIR)
-CUR_DIR = os.path.abspath(__file__ + "/..")
-sys.path.insert(0, CUR_DIR)
+#PARENT_DIR = os.path.abspath(__file__ + "/../../")
+#sys.path.insert(0, PARENT_DIR)
+#CUR_DIR = os.path.abspath(__file__ + "/..")
+#sys.path.insert(0, CUR_DIR)
 
 from __utilities import rc
 import numpy as np
+
+import math
+from abc import ABC, abstractmethod
+from copy import deepcopy
 
 try:
     import torch
@@ -30,9 +34,7 @@ except ModuleNotFoundError:
     F = MagicMock()
     MultivariateNormal = MagicMock()
 
-import math
-from abc import ABC, abstractmethod
-from copy import deepcopy
+
 
 
 def force_positive_def(func):

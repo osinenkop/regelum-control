@@ -8,15 +8,16 @@ Remarks:
 
 """
 
-import os
-import sys
+#import os
+#import sys
 
 import rcognita.base
 
-PARENT_DIR = os.path.abspath(__file__ + "/../../")
-sys.path.insert(0, PARENT_DIR)
-CUR_DIR = os.path.abspath(__file__ + "/..")
-sys.path.insert(0, CUR_DIR)
+#PARENT_DIR = os.path.abspath(__file__ + "/../../")
+#sys.path.insert(0, PARENT_DIR)
+#CUR_DIR = os.path.abspath(__file__ + "/..")
+#sys.path.insert(0, CUR_DIR)
+
 import numpy as np
 from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC, abstractmethod

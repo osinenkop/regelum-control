@@ -91,7 +91,9 @@ class EmptyInboxException(Exception):
 
 
 class port:
-    def __init__(self, input_type=object, hooks=[]):
+    def __init__(self, input_type=object, hooks=None):
+        if hooks is None:
+            hooks = []
         self.input_type = input_type
         self.hooks = hooks
 
@@ -103,7 +105,9 @@ class port:
         return new_port
 
 class publisher:
-    def __init__(self, input_type=object, hooks=[]):
+    def __init__(self, input_type=object, hooks=None):
+        if hooks is None:
+            hooks = []
         self.input_type = input_type
         self.hooks = hooks
 
