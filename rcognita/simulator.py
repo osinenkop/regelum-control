@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-This module contains one single class that simulates controller-system (agent-environment) loops.
+"""This module contains one single class that simulates controller-system (agent-environment) loops.
 The system can be of three types:
     
 - discrete-time deterministic
@@ -17,17 +16,14 @@ Remarks:
 """
 
 import numpy as np
-import scipy as sp
 
 import rcognita.base
-from .__utilities import rej_sampling_rvs, rc, simulation_progress
+from .__utilities import rej_sampling_rvs
 from .solvers import create_ODE_solver
-from abc import ABC, abstractmethod
 
 
 class Simulator(rcognita.base.RcognitaBase):
-    """
-    Class for simulating closed loops (system-controllers).
+    """Class for simulating closed loops (system-controllers).
 
     Attributes
     ----------
@@ -65,9 +61,8 @@ class Simulator(rcognita.base.RcognitaBase):
     max_step, first_step, atol, rtol : : numbers
         Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
 
-    See also
+    See Also
     --------
-
     ``systems`` module
 
     """
@@ -90,9 +85,7 @@ class Simulator(rcognita.base.RcognitaBase):
         is_dynamic_controller=0,
         ode_backend="SciPy",
     ):
-
-        """
-        Parameters
+        """Parameters
         ----------
         sys_type : : string
             Type of system by description:
@@ -189,10 +182,7 @@ class Simulator(rcognita.base.RcognitaBase):
         )
 
     def do_sim_step(self):
-        """
-        Do one simulation step and update current simulation data (time, system state and output).
-
-        """
+        """Do one simulation step and update current simulation data (time, system state and output)."""
         if self.sys_type == "diff_eqn":
             try:
                 self.ODE_solver.step()
@@ -226,11 +216,7 @@ class Simulator(rcognita.base.RcognitaBase):
             raise ValueError("Invalid system description")
 
     def get_sim_step_data(self):
-        """
-        Collect current simulation data: time, system state and output, and, for completeness, full closed-loop state.
-
-        """
-
+        """Collect current simulation data: time, system state and output, and, for completeness, full closed-loop state."""
         time, state, observation, state_full = (
             self.time,
             self.state,

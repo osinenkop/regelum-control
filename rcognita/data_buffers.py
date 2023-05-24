@@ -1,6 +1,6 @@
 try:
     import torch
-    from torch.utils.data import Dataset, DataLoader, Sampler
+    from torch.utils.data import Dataset, Sampler
 except ImportError:
     from unittest.mock import MagicMock
 

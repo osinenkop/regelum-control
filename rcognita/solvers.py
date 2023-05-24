@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import warnings
 
 import rcognita.base
 
@@ -14,14 +13,15 @@ from .__utilities import rc
 
 
 class Solver(rcognita.base.RcognitaBase, ABC):
-    """
-    Solver is an abstract class representing a solver for optimization problems.
+    """Solver is an abstract class representing a solver for optimization problems.
 
-    Attributes:
+    Attributes
+    ----------
     y: A property representing the output of the solver.
     t: A property representing the current time of the solver.
 
-    Methods:
+    Methods
+    -------
     step: An abstract method representing a single step of the solver.
     """
 
@@ -37,16 +37,12 @@ class Solver(rcognita.base.RcognitaBase, ABC):
 
     @abstractmethod
     def step(self):
-        """
-        Advance the solver by one step.
-        """
+        """Advance the solver by one step."""
         pass
 
 
 class CasADiSolver(Solver):
-    """
-    The CasADiSolver class is a subclass of the abstract Solver class that allows for the integration of a system of differential equations using the CasADi library. It can be used to solve a system of equations with a given initial state and action, and a given step size and final time. The CasADiSolver class has several properties, including the integrator object, the starting and ending times for the integration, the step size for the integration, the initial and current states of the system, and the initial and current actions applied to the system. It also has a step() method which advances the integration by one time step and updates the current state of the system.
-    """
+    """The CasADiSolver class is a subclass of the abstract Solver class that allows for the integration of a system of differential equations using the CasADi library. It can be used to solve a system of equations with a given initial state and action, and a given step size and final time. The CasADiSolver class has several properties, including the integrator object, the starting and ending times for the integration, the step size for the integration, the initial and current states of the system, and the initial and current actions applied to the system. It also has a step() method which advances the integration by one time step and updates the current state of the system."""
 
     def __init__(
         self,
@@ -58,8 +54,7 @@ class CasADiSolver(Solver):
         action_init: np.array,
         system: System,
     ):
-        """
-        Initialize a CasADiSolver object.
+        """Initialize a CasADiSolver object.
 
         :param integrator: A CasADi integrator object.
         :type integrator: casadi.integrator
@@ -89,9 +84,7 @@ class CasADiSolver(Solver):
         self.system = system
 
     def step(self):
-        """
-        Advance the solver by one step.
-        """
+        """Advance the solver by one step."""
         if self.time >= self.time_final:
             raise RuntimeError("An attempt to step with a finished solver")
         self.state_new = np.squeeze(
@@ -122,8 +115,7 @@ def create_ODE_solver(
     rtol=1e-3,
     ode_backend="SCIPY",
 ):
-    """
-    Create an ODE solver for the given system with the given initial conditions and integration parameters.
+    """Create an ODE solver for the given system with the given initial conditions and integration parameters.
 
     :param system: a system object to be integrated
     :type system: System
@@ -181,8 +173,7 @@ def create_ODE_solver(
 
 
 def create_CasADi_integrator(system, state_init, action_init, max_step):
-    """
-    Create a CasADi integrator for a given system.
+    """Create a CasADi integrator for a given system.
 
     :param system: The system for which to create the integrator.
     :type system: System
@@ -195,7 +186,6 @@ def create_CasADi_integrator(system, state_init, action_init, max_step):
     :return: CasADi integrator for the system.
     :rtype: casadi.integrator
     """
-
     state_symbolic = rc.array_symb(rc.shape(state_init), literal="x")
     action_symbolic = rc.array_symb(rc.shape(action_init), literal="u")
     time = rc.array_symb((1, 1), literal="t")

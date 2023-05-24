@@ -3,14 +3,10 @@ import numpy.linalg as la
 from .animator import (
     update_line,
     update_text,
-    reset_line,
     Animator,
     RobotMarker,
     Dashboard,
-    init_data_cursor,
 )
-from mpldatacursor import datacursor
-from collections import namedtuple
 from ..__utilities import rc
 import matplotlib.pyplot as plt
 
@@ -317,10 +313,7 @@ class ControlDashboardNI(Dashboard):
 
 
 class Animator3WRobot(Animator):
-    """
-    Animator class for a 3-wheel robot with dynamic actuators.
-
-    """
+    """Animator class for a 3-wheel robot with dynamic actuators."""
 
     def __init__(
         self,
@@ -432,10 +425,7 @@ class Animator3WRobot(Animator):
 
 
 class Animator3WRobotNI(Animator):
-    """
-    Animator class for a 3-wheel robot with static actuators.
-
-    """
+    """Animator class for a 3-wheel robot with static actuators."""
 
     def __init__(
         self,

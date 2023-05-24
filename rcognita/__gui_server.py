@@ -1,8 +1,6 @@
 import os, sys, shelve, time
-import signal
 
 import dill
-import matplotlib.pyplot as plt
 
 import rcognita
 
@@ -21,7 +19,6 @@ class Stopper:
 if __name__ == "__main__":
     try:
         import streamlit as st
-        import pandas as pd
 
 
         containers = {}
@@ -47,7 +44,7 @@ if __name__ == "__main__":
                             st.write("Current episode:")
                             containers[report]["episode_progress"] = st.progress(0.0)
                             pid = r["pid"]
-                            containers[report]["plots_container"] = st.expander(f"Plots")
+                            containers[report]["plots_container"] = st.expander("Plots")
                             with containers[report]["plots_container"]:
                                 containers[report]["plots"] = st.empty()
                             containers[report]["button_block"] = st.empty()

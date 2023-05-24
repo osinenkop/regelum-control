@@ -1,9 +1,5 @@
-"""
-Module that contains state or observation (depending on the context) predictors.
+"""Module that contains state or observation (depending on the context) predictors."""
 
-"""
-
-import numpy as np
 from abc import ABC, abstractmethod
 
 import rcognita.base
@@ -13,10 +9,7 @@ from .solvers import create_CasADi_integrator
 
 
 class Predictor(rcognita.base.RcognitaBase, ABC):
-    """
-    Blueprint of a predictor.
-
-    """
+    """Blueprint of a predictor."""
 
     @abstractmethod
     def predict(self):
@@ -28,8 +21,7 @@ class Predictor(rcognita.base.RcognitaBase, ABC):
 
 
 class EulerPredictor(Predictor):
-    """
-    Euler predictor uses a simple Euler discretization scheme.
+    """Euler predictor uses a simple Euler discretization scheme.
     It does predictions by increments scaled by a sampling time times the velocity evaluated at each successive node.
 
     """
@@ -109,9 +101,7 @@ class EulerPredictorPendulum(EulerPredictor):
 
 
 class RKPredictor(EulerPredictor):
-    """
-    Predictor that makes use o Runge-Kutta finite difference methods.
-    """
+    """Predictor that makes use o Runge-Kutta finite difference methods."""
 
     def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -134,10 +124,7 @@ class RKPredictor(EulerPredictor):
 
 
 class TrivialPredictor(Predictor):
-    """
-    This predictor propagates the observation or state directly through the system dynamics law.
-
-    """
+    """This predictor propagates the observation or state directly through the system dynamics law."""
 
     def __init__(self, system):
         self.compute_dynamics = system.compute_dynamics

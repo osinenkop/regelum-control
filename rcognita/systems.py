@@ -1,5 +1,4 @@
-"""
-This module contains a generic interface for systems (environments) as well as concrete systems as realizations of the former
+"""This module contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
 Remarks: 
 
@@ -20,8 +19,7 @@ import rcognita.__utilities as utilities
 
 
 class System(rcognita.base.RcognitaBase, ABC):
-    """
-     Interface class of dynamical systems a.k.a. environments.
+    """Interface class of dynamical systems a.k.a. environments.
      Concrete systems should be built upon this class.
      To design a concrete system: inherit this class, override:
          | :func:`~systems.system.compute_dynamics` :
@@ -31,10 +29,10 @@ class System(rcognita.base.RcognitaBase, ABC):
          | :func:`~systems.system._dynamic_control` :
          | right-hand side of controller dynamical model (if necessary)
          | :func:`~systems.system.out` :
-         | system out (if not overridden, output is identical to state)
+         | system out (if not overridden, output is identical to state).
 
-     Attributes
-     ----------
+    Attributes
+    ----------
      sys_type : : string
          Type of system by description:
 
@@ -84,8 +82,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         is_disturb: bool = 0,
         pars_disturb: list = None,
     ):
-        """
-        Parameters
+        """Parameters
         ----------
         sys_type : : string
             Type of system by description:
@@ -120,7 +117,6 @@ class System(rcognita.base.RcognitaBase, ABC):
         pars_disturb : : list
             Parameters of the disturbance model
         """
-
         self.sys_type = sys_type
 
         self.dim_state = dim_state
@@ -153,17 +149,15 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     @abstractmethod
     def compute_dynamics(self, time, state, action, disturb):
-        """
-        Description of the system internal dynamics.
+        """Description of the system internal dynamics.
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
-        As a probability disitribution, ``compute_dynamics`` should return a number in :math:`[0,1]`
+        As a probability disitribution, ``compute_dynamics`` should return a number in :math:`[0,1]`.
 
         """
         pass
 
     def _compute_disturbance_dynamics(self, time, disturb):
-        """
-        Dynamical disturbance model depending on the system type:
+        """Dynamical disturbance model depending on the system type:
 
         | ``sys_type = "diff_eqn"`` : :math:`\mathcal D disturb = f_q(disturb)`
         | ``sys_type = "discr_fnc"`` : :math:`disturb^+ = f_q(disturb)`
@@ -173,8 +167,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         pass
 
     def _dynamic_control(self, time, action, observation):
-        """
-        Right-hand side of a dynamical controller. When ``is_dynamic_control=0``, the controller is considered static, which is to say that the control actions are
+        """Right-hand side of a dynamical controller. When ``is_dynamic_control=0``, the controller is considered static, which is to say that the control actions are
         computed immediately from the system's output.
         In case of a dynamical controller, the system's state vector effectively gets extended.
         Dynamical controllers have some advantages compared to the static ones.
@@ -191,12 +184,11 @@ class System(rcognita.base.RcognitaBase, ABC):
         return Daction
 
     def out(self, state, time=None, action=None):
-        """
-        System output.
+        """System output.
         This is commonly associated with signals that are measured in the system.
         Normally, output depends only on state ``state`` since no physical processes transmit input to output instantly.
 
-        See also
+        See Also
         --------
         :func:`~systems.system.compute_dynamics`
 
@@ -206,8 +198,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         return observation
 
     def receive_action(self, action):
-        """
-        Receive exogeneous control action to be fed into the system.
+        """Receive exogeneous control action to be fed into the system.
         This action is commonly computed by your controller (agent) using the system output :func:`~systems.system.out`.
 
         Parameters
@@ -219,8 +210,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         self.action = action
 
     def compute_closed_loop_rhs(self, time, state_full):
-        """
-        Right-hand side of the closed-loop system description.
+        """Right-hand side of the closed-loop system description.
         Combines everything into a single vector that corresponds to the right-hand side of the closed-loop system description for further use by simulators.
 
         Attributes
@@ -229,7 +219,6 @@ class System(rcognita.base.RcognitaBase, ABC):
             Current closed-loop system state
 
         """
-
         rhs_full_state = utilities.rc.zeros(
             self._dim_full_state,
             prototype=(state_full),
@@ -272,11 +261,9 @@ class System(rcognita.base.RcognitaBase, ABC):
 
 
 class SysKinematicPoint(System):
-    """
-    System class: mathematical pendulum
+    """System class: mathematical pendulum."""
 
-    """
-    class KinematicPointAnimation(rcognita.AnimationCallback):
+    class KinematicPointAnimation(rcognita.callbacks.AnimationCallback):
         def is_target_event(self, obj, method, output):
             pass
 
@@ -308,10 +295,7 @@ class SysKinematicPoint(System):
 
 
 class SysInvertedPendulum(System):
-    """
-    System class: mathematical pendulum
-
-    """
+    """System class: mathematical pendulum."""
 
     # DEBUG ====================================
     # def __init__(self, *args, is_angle_overflow=True, **kwargs):
@@ -380,8 +364,7 @@ class SysInvertedPendulumPD(SysInvertedPendulum):
 
 
 class Sys3WRobot(System):
-    """
-    System class: 3-wheel robot with dynamical actuators.
+    """System class: 3-wheel robot with dynamical actuators.
 
     Description
     -----------
@@ -454,9 +437,8 @@ class Sys3WRobot(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-        """
-        Description
-        -----------
+        """Description
+        -----------.
 
         We use here a 1st-order stochastic linear system of the type
 
@@ -468,7 +450,6 @@ class Sys3WRobot(System):
         ``pars_disturb = [sigma_disturb, mu_disturb, tau_disturb]``, with each being an array of shape ``[dim_disturb, ]``
 
         """
-
         Ddisturb = utilities.rc.zeros(self.dim_disturb, prototype=disturb)
 
         for k in range(0, self.dim_disturb):
@@ -486,11 +467,7 @@ class Sys3WRobot(System):
 
 
 class Sys3WRobotNI(System):
-    """
-    System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator).
-
-
-    """
+    """System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator)."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -532,10 +509,7 @@ class Sys3WRobotNI(System):
 
 
 class System2Tank(System):
-    """
-    Two-tank system with nonlinearity.
-
-    """
+    """Two-tank system with nonlinearity."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -566,8 +540,7 @@ class System2Tank(System):
 
 
 class GridWorld(System):
-    """
-    A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
+    """A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
     The action encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
 
     """
@@ -595,9 +568,8 @@ class GridWorld(System):
 
 
 class CartPole(System):
-    """
-    Cart pole system without friction. link:
-    https://coneural.org/florian/papers/05_cart_pole.pdf
+    """Cart pole system without friction. link:
+    https://coneural.org/florian/papers/05_cart_pole.pdf.
 
     """
 
@@ -614,7 +586,7 @@ class CartPole(System):
 
         m_c, m_p, g, l = self.pars
         theta = state[0]
-        x = state[1]
+        state[1]
         theta_dot = state[2]
         x_dot = state[3]
 
@@ -681,9 +653,8 @@ class CartPole(System):
 
 
 class LunarLander(System):
-    """
-    Lunar lander system. link:
-    https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf
+    """Lunar lander system. link:
+    https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf.
 
     """
 
@@ -705,7 +676,7 @@ class LunarLander(System):
 
         m, J, g = self.pars
 
-        F_g = m * g * utilities.rc.array([0, 1], prototype=Dstate)
+        m * g * utilities.rc.array([0, 1], prototype=Dstate)
 
         theta = state[2]
         x_dot = state[3]

@@ -1,5 +1,4 @@
-"""
-This module contains high-level structures of controllers (agents).
+"""This module contains high-level structures of controllers (agents).
 
 Remarks: 
 
@@ -13,13 +12,11 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import scipy as setpoint
-from numpy.random import rand
 from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
-from .optimizers import CasADiOptimizer, SciPyOptimizer
-from .__w_plotting import plot_optimization_results
-from .callbacks import apply_callbacks, Callback
+from .optimizers import CasADiOptimizer
+from .callbacks import apply_callbacks
 from .base import RcognitaBase
 
 
@@ -37,9 +34,7 @@ def apply_action_bounds(method):
 
 
 class Controller(RcognitaBase, ABC):
-    """
-    A blueprint of optimal controllers.
-    """
+    """A blueprint of optimal controllers."""
 
     def __init__(
         self,
@@ -87,8 +82,7 @@ class Controller(RcognitaBase, ABC):
 
 
 class RLController(Controller):
-    """
-    Reinforcement learning controller class.
+    """Reinforcement learning controller class.
     Takes instances of `actor` and `critic` to operate.
     Action computation is sampled, i.e., actions are computed at discrete, equi-distant moments in time.
     `critic` in turn is updated every `critic_period` units of time.
@@ -115,8 +109,7 @@ class RLController(Controller):
         self.weights_difference_norms = []
 
     def reset(self):
-        """
-        Resets agent for use in multi-episode simulation.
+        """Resets agent for use in multi-episode simulation.
         Only internal clock and current actions are reset.
         All the learned parameters are retained.
 
@@ -255,7 +248,7 @@ class CALFControllerExPost(RLController):
             np.squeeze(self.critic.model(self.critic.current_observation))
         )
         if self.critic.CALFs != []:
-            CALF_increased = current_CALF > self.critic.CALFs[-1]
+            current_CALF > self.critic.CALFs[-1]
 
         self.critic.CALFs.append(current_CALF)
 
@@ -310,8 +303,7 @@ class CALFControllerPredictive(CALFControllerExPost):
 
 
 class Controller3WRobotDisassembledCLF:
-    """
-    This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
+    """This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
 
     The controller is sampled.
 
@@ -377,18 +369,11 @@ class Controller3WRobotDisassembledCLF:
             )
 
     def reset(self):
-        """
-        Resets controller for use in multi-episode simulation.
-
-        """
+        """Resets controller for use in multi-episode simulation."""
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI, theta):
-        """
-        Generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators).
-
-        """
-
+        """Generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators)."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
@@ -417,11 +402,7 @@ class Controller3WRobotDisassembledCLF:
         return nablaF
 
     def _kappa(self, xNI, theta):
-        """
-        Stabilizing controller for NI-part.
-
-        """
-
+        """Stabilizing controller for NI-part."""
         G = rc.zeros([3, 2])
         G[:, 0] = [1, 0, xNI[1]]
         G[:, 1] = [0, 1, -xNI[0]]
@@ -440,11 +421,7 @@ class Controller3WRobotDisassembledCLF:
         return kappa_val
 
     def _Fc(self, xNI, eta, theta):
-        """
-        Marginal function for ENDI constructed by nonsmooth backstepping. See details in the literature mentioned in the class documentation.
-
-        """
-
+        """Marginal function for ENDI constructed by nonsmooth backstepping. See details in the literature mentioned in the class documentation."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + rc.sqrt(rc.abs(xNI[2]))
         )
@@ -458,7 +435,8 @@ class Controller3WRobotDisassembledCLF:
     def _minimizer_theta(self, xNI, eta):
         thetaInit = 0
 
-        objective_lambda = lambda theta: self._Fc(xNI, eta, theta)
+        def objective_lambda(theta):
+            return self._Fc(xNI, eta, theta)
         if self.optimizer_engine == "SciPy":
             bnds = setpoint.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
             options = {"maxiter": 50, "disetpoint": False}
@@ -485,8 +463,7 @@ class Controller3WRobotDisassembledCLF:
         return theta_val
 
     def _Cart2NH(self, coords_Cart):
-        """
-        Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
+        """Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
         See Section VIII.A in [[1]_].
 
         The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
@@ -497,7 +474,6 @@ class Controller3WRobotDisassembledCLF:
                integrator model and invariant manifold theory. In 2010 IEEE/RSJ International Conference on Intelligent Robots and Systems (pp. 2862-2867)
 
         """
-
         xNI = rc.zeros(3)
         eta = rc.zeros(2)
 
@@ -519,8 +495,7 @@ class Controller3WRobotDisassembledCLF:
         return [xNI, eta]
 
     def _NH2ctrl_Cart(self, xNI, eta, uNI):
-        """
-        Get control for Cartesian NI from NH coordinates.
+        """Get control for Cartesian NI from NH coordinates.
         See Section VIII.A in [[1]_].
 
         The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
@@ -532,7 +507,6 @@ class Controller3WRobotDisassembledCLF:
 
 
         """
-
         uCart = rc.zeros(2)
 
         uCart[0] = self.m * (
@@ -545,8 +519,7 @@ class Controller3WRobotDisassembledCLF:
         return uCart
 
     def compute_action_sampled(self, state, time, observation, observation_target=[]):
-        """
-        See algorithm description in [[1]_], [[2]_].
+        """See algorithm description in [[1]_], [[2]_].
 
         **This algorithm needs full-state measurement of the robot**.
 
@@ -589,11 +562,7 @@ class Controller3WRobotDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0, observation_target=[]):
-        """
-        Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
-
-        """
-
+        """Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock."""
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
         kappa_val = self._kappa(xNI, theta_star)
@@ -863,11 +832,7 @@ class Controller3WRobotMemoryPID:
         return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)])
 
     def compute_action_sampled(self, state, time, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1040,11 +1005,7 @@ class Controller3WRobotPID:
         return action
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1100,11 +1061,7 @@ class ControllerCartPolePID:
         pass
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1169,11 +1126,7 @@ class ControllerCartPoleEnergyBased:
         self.system = system
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1275,11 +1228,7 @@ class ControllerLunarLanderPID:
         pass
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1368,11 +1317,7 @@ class Controller2TankPID:
         pass
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1465,11 +1410,7 @@ class Controller3WRobotNIMotionPrimitive:
         return rc.array([v, omega])
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1500,10 +1441,7 @@ class Controller3WRobotNIMotionPrimitive:
 
 
 class Controller3WRobotNIDisassembledCLF:
-    """
-    Nominal parking controller for NI using disassembled supper_bound_constraintradients.
-
-    """
+    """Nominal parking controller for NI using disassembled supper_bound_constraintradients."""
 
     def __init__(
         self, controller_gain=10, action_bounds=None, time_start=0, sampling_time=0.1
@@ -1519,19 +1457,12 @@ class Controller3WRobotNIDisassembledCLF:
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def reset(self):
-        """
-        Resets controller for use in multi-episode simulation.
-
-        """
+        """Resets controller for use in multi-episode simulation."""
         self.controller_clock = self.time_start
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI):
-        """
-        Analytic disassembled supper_bound_constraintradient, without finding minimizer theta.
-
-        """
-
+        """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
 
         nablaL = rc.zeros(3)
@@ -1589,10 +1520,7 @@ class Controller3WRobotNIDisassembledCLF:
             return nablaL
 
     def _kappa(self, xNI):
-        """
-        Stabilizing controller for NI-part.
-
-        """
+        """Stabilizing controller for NI-part."""
         kappa_val = rc.zeros(2)
 
         G = rc.zeros([3, 2])
@@ -1611,11 +1539,7 @@ class Controller3WRobotNIDisassembledCLF:
         return kappa_val
 
     def _F(self, xNI, eta, theta):
-        """
-        Marginal function for NI.
-
-        """
-
+        """Marginal function for NI."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
@@ -1627,11 +1551,7 @@ class Controller3WRobotNIDisassembledCLF:
         return F + 1 / 2 * rc.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
-        """
-        Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
-
-        """
-
+        """Transformation from Cartesian coordinates to non-holonomic (NH) coordinates."""
         xNI = rc.zeros(3)
 
         xc = coords_Cart[0]
@@ -1647,11 +1567,7 @@ class Controller3WRobotNIDisassembledCLF:
         return xNI
 
     def _NH2ctrl_Cart(self, xNI, uNI):
-        """
-        Get control for Cartesian NI from NH coordinates.
-
-        """
-
+        """Get control for Cartesian NI from NH coordinates."""
         uCart = rc.zeros(2)
 
         uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
@@ -1660,11 +1576,7 @@ class Controller3WRobotNIDisassembledCLF:
         return uCart
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1690,11 +1602,7 @@ class Controller3WRobotNIDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0, observation_target=[]):
-        """
-        Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
-
-        """
-
+        """Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock."""
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
         uNI = self.controller_gain * kappa_val
@@ -1804,11 +1712,7 @@ class Controller3WRobotNIMotionPrimitive:
         return rc.array([v, omega])
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1852,11 +1756,7 @@ class ControllerKinPoint:
         return -self.gain * observation
 
     def compute_action_sampled(self, time, state, observation, observation_target=[]):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample

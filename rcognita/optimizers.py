@@ -1,13 +1,9 @@
-"""
-This module contains optimization routines to be used in optimal controllers, actors, critics etc.
-
-"""
+"""This module contains optimization routines to be used in optimal controllers, actors, critics etc."""
 import rcognita.base
 from rcognita.__utilities import rc
 import scipy as sp
 from scipy.optimize import minimize
 import numpy as np
-import warnings
 
 try:
     from casadi import vertcat, nlpsol, DM, MX, Function
@@ -31,14 +27,12 @@ from rcognita.data_buffers import UpdatableSampler
 
 
 class Optimizer(rcognita.base.RcognitaBase, ABC):
-    """
-    Abstract base class for optimizers.
-    """
+    """Abstract base class for optimizers."""
 
     @property
     @abstractmethod
     def engine(self):
-        """Name of the optimization engine being used"""
+        """Name of the optimization engine being used."""
         return "engine_name"
 
     @abstractmethod
@@ -51,16 +45,17 @@ class Optimizer(rcognita.base.RcognitaBase, ABC):
 
     @staticmethod
     def verbose(opt_func):
-        """
-        A static method decorator that makes the decorated function verbose.
+        """A static method decorator that makes the decorated function verbose.
 
         This method will print the optimization time of the decorated function
         if the `verbose` attribute of the instance is set to True.
 
-        Parameters:
+        Parameters
+        ----------
         opt_func (function): The function to be decorated.
 
-        Returns:
+        Returns
+        -------
         function: The decorated function.
         """
 
@@ -77,10 +72,10 @@ class Optimizer(rcognita.base.RcognitaBase, ABC):
 
 
 class SciPyOptimizer(Optimizer):
-    """
-    Optimizer class using the SciPy optimization library.
+    """Optimizer class using the SciPy optimization library.
 
-    Attributes:
+    Attributes
+    ----------
         engine (str): Name of the optimization engine.
         opt_method (str): Optimization method to use.
         opt_options (dict): Options for the optimization method.
@@ -90,8 +85,7 @@ class SciPyOptimizer(Optimizer):
     engine = "SciPy"
 
     def __init__(self, opt_method, opt_options, verbose=False):
-        """
-        Initialize a SciPyOptimizer instance.
+        """Initialize a SciPyOptimizer instance.
 
         :param opt_method: str, the name of the optimization method to use.
         :param opt_options: dict, options for the optimization method.
@@ -103,8 +97,7 @@ class SciPyOptimizer(Optimizer):
 
     @Optimizer.verbose
     def optimize(self, objective, initial_guess, bounds, constraints=(), verbose=False):
-        """
-        Optimize the objective function using the specified method and options.
+        """Optimize the objective function using the specified method and options.
 
         :param objective: function, the objective function to optimize.
         :param initial_guess: array-like, the initial guess for the optimization.
@@ -113,7 +106,6 @@ class SciPyOptimizer(Optimizer):
         :param verbose: bool, whether to print the objective function value before and after optimization.
         :return: array-like, the optimal solution.
         """
-
         weight_bounds = sp.optimize.Bounds(bounds[0], bounds[1], keep_feasible=True)
 
         before_opt = objective(initial_guess)
@@ -159,8 +151,7 @@ class CasADiOptimizer(Optimizer):
         constraints=(),
         decision_variable_symbolic=None,
     ):
-        """
-        Optimize the given objective function using the CasADi optimization engine.
+        """Optimize the given objective function using the CasADi optimization engine.
 
         :param objective: The objective function to optimize.
         :type objective: function
@@ -253,8 +244,7 @@ class GradientOptimizer(CasADiOptimizer):
 
     @Optimizer.verbose
     def optimize(self, initial_guess, *args):
-        """
-        Optimize the given objective function using the CasADi optimization engine.
+        """Optimize the given objective function using the CasADi optimization engine.
 
         :param objective: The objective function to optimize.
         :type objective: function
@@ -276,17 +266,14 @@ class GradientOptimizer(CasADiOptimizer):
 
 
 class TorchOptimizer(Optimizer):
-    """
-    Optimizer class that uses PyTorch as its optimization engine.
-    """
+    """Optimizer class that uses PyTorch as its optimization engine."""
 
     engine = "Torch"
 
     def __init__(
         self, opt_options, model, iterations=1, opt_method=None, verbose=False
     ):
-        """
-        Initialize an instance of TorchOptimizer.
+        """Initialize an instance of TorchOptimizer.
 
         :param opt_options: Options for the PyTorch optimizer.
         :type opt_options: dict
@@ -311,8 +298,7 @@ class TorchOptimizer(Optimizer):
     def optimize(
         self, objective, model_input=None
     ):  # remove model and add parameters instead
-        """
-        Optimize the model with the given objective.
+        """Optimize the model with the given objective.
 
         :param objective: Objective function to optimize.
         :type objective: callable
@@ -321,7 +307,6 @@ class TorchOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-
         for _ in range(self.iterations):
             self.optimizer.zero_grad()
             loss = objective(model_input)
@@ -330,9 +315,7 @@ class TorchOptimizer(Optimizer):
 
 
 class TorchDataloaderOptimizer(Optimizer):
-    """
-    Optimizer class that uses PyTorch as its optimization engine.
-    """
+    """Optimizer class that uses PyTorch as its optimization engine."""
 
     engine = "Torch"
 
@@ -348,8 +331,7 @@ class TorchDataloaderOptimizer(Optimizer):
         batch_sampler=None,
         verbose=False,
     ):
-        """
-        Initialize an instance of TorchOptimizer.
+        """Initialize an instance of TorchOptimizer.
 
         :param opt_options: Options for the PyTorch optimizer.
         :type opt_options: dict
@@ -384,8 +366,7 @@ class TorchDataloaderOptimizer(Optimizer):
         return idx_epoch, last_epoch_objective
 
     def optimize(self, objective, dataset):  # remove model and add parameters instead
-        """
-        Optimize the model with the given objective.
+        """Optimize the model with the given objective.
 
         :param objective: Objective function to optimize.
         :type objective: callable
@@ -394,8 +375,6 @@ class TorchDataloaderOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-
-
         dataloader = DataLoader(
             dataset=dataset,
             shuffle=self.shuffle,
@@ -414,9 +393,7 @@ class TorchDataloaderOptimizer(Optimizer):
 
 
 class TorchProjectiveOptimizer(Optimizer):
-    """
-    Optimizer class that uses PyTorch as its optimization engine.
-    """
+    """Optimizer class that uses PyTorch as its optimization engine."""
 
     engine = "Torch"
 
@@ -429,8 +406,7 @@ class TorchProjectiveOptimizer(Optimizer):
         opt_method=None,
         verbose=False,
     ):
-        """
-        Initialize an instance of TorchOptimizer.
+        """Initialize an instance of TorchOptimizer.
 
         :param opt_options: Options for the PyTorch optimizer.
         :type opt_options: dict
@@ -455,8 +431,7 @@ class TorchProjectiveOptimizer(Optimizer):
         )
 
     def optimize(self, *model_input, objective, model):
-        """
-        Optimize the model with the given objective.
+        """Optimize the model with the given objective.
 
         :param objective: Objective function to optimize.
         :type objective: callable
@@ -491,15 +466,12 @@ class TorchProjectiveOptimizer(Optimizer):
 
 
 class BruteForceOptimizer(Optimizer):
-    """
-    Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."
-    """
+    """Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."."""
 
     engine = "bruteforce"
 
     def __init__(self, possible_variants, N_parallel_processes=0):
-        """
-        Initialize an instance of BruteForceOptimizer.
+        """Initialize an instance of BruteForceOptimizer.
 
         :param N_parallel_processes: number of processes to use in parallel
         :type N_parallel_processes: int
@@ -510,22 +482,21 @@ class BruteForceOptimizer(Optimizer):
         self.possible_variants = possible_variants
 
     def element_wise_maximization(self, x):
-        """
-        Find the variant that maximizes the reward for a given element.
+        """Find the variant that maximizes the reward for a given element.
 
         :param x: element to optimize
         :type x: tuple
         :return: variant that maximizes the reward
         :rtype: int
         """
-        reward_function = lambda variant: self.objective(variant, x)
+        def reward_function(variant):
+            return self.objective(variant, x)
         reward_function = np.vectorize(reward_function)
         values = reward_function(self.possible_variants)
         return self.possible_variants[np.argmax(values)]
 
     def optimize(self, objective, weights):
-        """
-        Maximize the objective function over the possible variants.
+        """Maximize the objective function over the possible variants.
 
         :param objective: The objective function to maximize.
         :type objective: Callable

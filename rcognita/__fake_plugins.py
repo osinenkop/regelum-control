@@ -74,9 +74,7 @@ class Plugins(metaclass=Singleton):
             self._register(clazz)
 
     def register(self, clazz: Type[Plugin]) -> None:
-        """
-        Call Plugins.instance().register(MyPlugin) to manually register a plugin class.
-        """
+        """Call Plugins.instance().register(MyPlugin) to manually register a plugin class."""
         if not _is_concrete_plugin_type(clazz):
             raise ValueError("Not a valid Hydra Plugin")
         self._register(clazz)
@@ -247,8 +245,7 @@ class Plugins(metaclass=Singleton):
     def discover(
         self, plugin_type: Optional[Type[Plugin]] = None
     ) -> List[Type[Plugin]]:
-        """
-        :param plugin_type: class of plugin to discover, None for all
+        """:param plugin_type: class of plugin to discover, None for all
         :return: a list of plugins implementing the plugin type (or all if plugin type is None)
         """
         Plugins.check_usage(self)

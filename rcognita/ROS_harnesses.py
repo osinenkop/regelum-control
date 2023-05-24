@@ -2,7 +2,6 @@ import os, sys
 
 PARENT_DIR = os.path.abspath(__file__ + "/../..")
 sys.path.insert(0, PARENT_DIR)
-import rcognita
 
 import numpy as np
 
@@ -107,14 +106,11 @@ class ROSHarness:
         self.obstacles_parser = Obstacles_parser(safe_margin_mult=1.5)
 
     def update_total_objective(self, observation, action, delta):
-
-        """
-        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+        """Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
 
         """
-
         self.outcome_value += self.running_objective(observation, action) * delta
 
     def odometry_callback(self, msg):
@@ -240,7 +236,7 @@ class ROSHarness:
 
     def spin(self, is_print_sim_step=False, is_log_data=True):
         rospy.loginfo("ROS-pipeline has been activated!")
-        start_time = time_lib.time()
+        time_lib.time()
         rate = rospy.Rate(self.RATE)
         self.time_start = rospy.get_time()
         time = time_old = 0

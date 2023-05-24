@@ -1,12 +1,10 @@
-"""
-This module contains various simulation scenarios.
+"""This module contains various simulation scenarios.
 For instance, an online scenario is when the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
 
 """
 
 
 from abc import ABC, abstractmethod
-import matplotlib.pyplot as plt
 from itertools import islice, cycle
 import numpy as np
 from typing import Optional
@@ -14,7 +12,6 @@ from unittest.mock import Mock, MagicMock
 
 import rcognita.base
 from .__utilities import rc
-from .optimizers import TorchOptimizer
 from .actors import Actor
 from .critics import Critic, CriticTrivial
 from .simulator import Simulator
@@ -43,8 +40,7 @@ class Scenario(rcognita.base.RcognitaBase, ABC):
 
 
 class TabularScenarioVI(Scenario):
-    """
-    Tabular scenario for the use with tabular agents.
+    """Tabular scenario for the use with tabular agents.
     Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
     Implements a scenario for value iteration (VI) update.
 
@@ -168,14 +164,11 @@ class OnlineScenario(Scenario):
         return len(self.cache)
 
     def update_total_objective(self, observation, action, delta):
-
-        """
-        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+        """Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
 
         """
-
         self.total_objective += self.running_objective(observation, action) * delta
 
     @apply_callbacks()
@@ -242,8 +235,7 @@ class OnlineScenario(Scenario):
         )
 
     def memorize(step_method):
-        """
-        This is a decorator for a simulator step method.
+        """This is a decorator for a simulator step method.
         It containes a ``cache`` field that in turn comprises of ``keys`` and ``values``.
         The ``cache`` dictionary method `keys` returns a triple:
 

@@ -2,7 +2,6 @@ import os, sys
 
 PARENT_DIR = os.path.abspath(__file__ + "/../..")
 sys.path.insert(0, PARENT_DIR)
-import rcognita
 
 import numpy as np
 
@@ -99,8 +98,8 @@ class Obstacles_parser:
                     N = 0
                 else:
                     N = int(L // d_aver)
-                    R_diff = (q.R - p.R) / N
-                    angle_diff = (q.angle - p.angle) / N
+                    (q.R - p.R) / N
+                    (q.angle - p.angle) / N
 
                 new_block = block1.copy()
                 new_block += block2
@@ -163,13 +162,11 @@ class Obstacles_parser:
         S = np.sqrt((block[0].x - block[-1].x) ** 2 + (block[0].y - block[-1].y) ** 2)
 
         ro = 0
-        ind = 0
         for i, point in enumerate(block):
             p_coords = np.array([point.x, point.y])
             ro_cur = np.linalg.norm(p_coords - center)
             if ro_cur > ro:
                 ro = ro_cur
-                ind = i
 
         if D_m < 0.2 * S:
             return Circle(center, ro + self.safe_margin, None)
@@ -191,7 +188,7 @@ class Obstacles_parser:
 
         N = len(block)
         a, b = np.array([block[0].x, block[0].y]), np.array([block[1].x, block[1].y])
-        S = np.sqrt((block[0].x - block[-1].x) ** 2 + (block[0].y - block[-1].y) ** 2)
+        np.sqrt((block[0].x - block[-1].x) ** 2 + (block[0].y - block[-1].y) ** 2)
         k, D_m = self.get_D_m(block)
         d_p = 0.00614
         d_split = 0.10
@@ -207,7 +204,7 @@ class Obstacles_parser:
     def get_obstacles(self, l, rng=360, fillna="else", state=np.array([2, 2, np.pi])):
         state_coord = state[:2].reshape(-1, 1)
         state_angle = state[2]
-        rot_mat = np.array(
+        np.array(
             [
                 [np.cos(state_angle), -np.sin(state_angle)],
                 [np.sin(state_angle), np.cos(state_angle)],
@@ -388,13 +385,12 @@ class Obstacles_parser:
             )
 
         def get_straight_line(p1, p2):
-            """
-            return: array [a, b, c] for a* x + b * y + c
-            """
+            """return: array [a, b, c] for a* x + b * y + c."""
             return [-(p2[1] - p1[1]), (p2[0] - p1[0]), -p2[0] * p1[1] + p1[0] * p2[1]]
 
         def check_ineq_sign(line, control_point):
-            straight_line = lambda x, y: line[0] * x + line[1] * y + line[2]
+            def straight_line(x, y):
+                return line[0] * x + line[1] * y + line[2]
             if straight_line(control_point[0], control_point[1]) >= 0:
                 return line
             else:

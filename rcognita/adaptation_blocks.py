@@ -31,7 +31,7 @@ class AdaptationBlockCartpole(AdaptationBlock):
 
     def parameter_estimation_derivative(self, current_state):
         theta = current_state[0]
-        x = current_state[1]
+        current_state[1]
         theta_dot = current_state[2]
         x_dot = current_state[3]
 

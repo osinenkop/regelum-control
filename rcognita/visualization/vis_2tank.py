@@ -3,22 +3,15 @@ from .animator import (
     update_line,
     update_text,
     reset_line,
-    init_data_cursor,
-    Dashboard,
     Animator,
 )
 from mpldatacursor import datacursor
 from collections import namedtuple
-import matplotlib.patheffects as PathEffects
-from ..__utilities import rc
 import matplotlib.pyplot as plt
 
 
 class Animator2Tank(Animator):
-    """
-    Animator class for a 2-tank system.
-
-    """
+    """Animator class for a 2-tank system."""
 
     def __init__(self, objects=None, pars=None):
         self.objects = objects
@@ -177,8 +170,7 @@ class Animator2Tank(Animator):
                 datacursor(item)
 
     def set_sim_data(self, ts, h1s, h2s, ps, rs, outcomes):
-        """
-        This function is needed for playback purposes when simulation data were generated elsewhere.
+        """This function is needed for playback purposes when simulation data were generated elsewhere.
         It feeds data into the animator from outside.
         The simulation step counter ``curr_step`` is reset accordingly.
 

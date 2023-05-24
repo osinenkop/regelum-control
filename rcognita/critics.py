@@ -1,5 +1,4 @@
-"""
-This module containing critics, which are integrated in controllers (agents).
+"""This module containing critics, which are integrated in controllers (agents).
 
 Remarks: 
 
@@ -21,7 +20,6 @@ import numpy as np
 from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC, abstractmethod
 import scipy as sp
-from functools import partial
 import random
 
 try:
@@ -32,18 +30,16 @@ except:
     torch = MagicMock()
 
 from copy import deepcopy
-from multiprocessing import Pool
 from .models import ModelWeightContainer
 from .optimizers import Optimizer
 from .models import Model
 from .objectives import Objective
-from typing import Optional, Union
+from typing import Optional
 from .callbacks import apply_callbacks
 
 
 class Critic(rcognita.base.RcognitaBase, ABC):
-    """
-    Critic base class.
+    """Critic base class.
 
     A critic is an object that estimates or provides the value of a given action or state in a reinforcement learning problem.
 
@@ -64,8 +60,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         sampling_time: float = 0.01,
         critic_regularization_param: float = 0.0,
     ):
-        """
-        Initialize a critic object.
+        """Initialize a critic object.
 
         :param system_dim_input: Dimension of the input data
         :type system_dim_input: int
@@ -142,8 +137,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             return NUMPY
 
     def __call__(self, *args, use_stored_weights=False):
-        """
-        Compute the value of the critic function for a given observation and/or action.
+        """Compute the value of the critic function for a given observation and/or action.
 
         :param args: tuple of the form (observation, action) or (observation,)
         :type args: tuple
@@ -160,14 +154,11 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
     @property
     def weights(self):
-        """
-        Get the weights of the critic model.
-        """
+        """Get the weights of the critic model."""
         return self.model.weights
 
     def update_weights(self, weights=None):
-        """
-        Update the weights of the critic model.
+        """Update the weights of the critic model.
 
         :param weights: new weights to be used for the critic model, if not provided the optimized weights will be used
         :type weights: numpy array
@@ -178,8 +169,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
-        """
-        Stores a copy of the current model weights.
+        """Stores a copy of the current model weights.
 
         :param weights: An optional ndarray of weights to store. If not provided, the current
             model weights are stored. Default is None.
@@ -190,14 +180,11 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             self.model.cache_weights(self.optimized_weights)
 
     def restore_weights(self):
-        """
-        Restores the model weights to the cached weights.
-        """
+        """Restores the model weights to the cached weights."""
         self.model.restore_weights()
 
     def update_and_cache_weights(self, weights=None):
-        """
-        Update the model's weights and cache the new values.
+        """Update the model's weights and cache the new values.
 
         :param weights: new weights for the model (optional)
         """
@@ -207,8 +194,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
     def accept_or_reject_weights(
         self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
-        """
-        Determine whether to accept or reject the given weights based on whether they violate the given constraints.
+        """Determine whether to accept or reject the given weights based on whether they violate the given constraints.
         Normally, this method takes weights and checks CALF constraints by plugging them into the critic model.
         This works in a straightforward way with scipy and CASADi optimizers.
         In case of Torch, the weights are stored in the model after the learning.
@@ -247,8 +233,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self,
         time=None,
     ):
-        """
-        Compute optimized critic weights, possibly subject to constraints.
+        """Compute optimized critic weights, possibly subject to constraints.
         If weights satisfying constraints are found, the method returns the status `accepted`.
         Otherwise, it returns the status `rejected`.
 
@@ -257,7 +242,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         :return: acceptance status of the optimized weights, either `accepted` or `rejected`.
         :rtype: str
         """
-
         if self.optimizer.engine == "CasADi":
             self.optimized_weights = self._CasADi_update(self.intrinsic_constraints)
 
@@ -282,15 +266,13 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return self.weights_acceptance_status
 
     def update_buffers(self, observation, action):
-        """
-        Updates the buffers of the critic with the given observation and action.
+        """Updates the buffers of the critic with the given observation and action.
 
         :param observation: the current observation of the system.
         :type observation: np.ndarray
         :param action: the current action taken by the actor.
         :type action: np.ndarray
         """
-
         self.action_buffer = rc.push_vec(
             self.action_buffer, rc.array(action, prototype=self.action_buffer)
         )
@@ -304,9 +286,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.current_action = action
 
     def initialize_buffers(self):
-        """
-        Initialize the action and observation buffers with zeros.
-        """
+        """Initialize the action and observation buffers with zeros."""
         self.action_buffer = rc.zeros(
             (int(self.system_dim_input), int(self.data_buffer_size)),
             rc_type=self.optimizer_engine,
@@ -317,22 +297,18 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         )
 
     def update_total_objective(self, observation, action):
-        """
-        Update the outcome variable based on the running objective and the current observation and action.
+        """Update the outcome variable based on the running objective and the current observation and action.
         :param observation: current observation
         :type observation: np.ndarray
         :param action: current action
-        :type action: np.ndarray
+        :type action: np.ndarray.
         """
-
         self.total_objective += (
             self.running_objective(observation, action) * self.sampling_time
         )
 
     def reset(self):
-        """
-        Reset the outcome and current critic loss variables, and re-initialize the buffers.
-        """
+        """Reset the outcome and current critic loss variables, and re-initialize the buffers."""
         self.total_objective = 0
         self.current_critic_loss = 0
         self.initialize_buffers()
@@ -348,7 +324,8 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             "action_buffer": self.action_buffer,
         }
 
-        cost_function = lambda weights: self.objective(data_buffer, weights=weights)
+        def cost_function(weights):
+            return self.objective(data_buffer, weights=weights)
         is_penalty = int(self.penalty_param > 0)
         if intrinsic_constraints:
             constraints = tuple(
@@ -378,7 +355,8 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             "action_buffer": self.action_buffer,
         }
 
-        cost_function = lambda weights: self.objective(data_buffer, weights=weights)
+        def cost_function(weights):
+            return self.objective(data_buffer, weights=weights)
 
         cost_function = rc.lambda2symb(cost_function, symbolic_var)
 
@@ -428,15 +406,10 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
 
 class CriticOfObservation(Critic):
-    """
-    This is the class of critics that are represented as functions of observation only.
-    """
+    """This is the class of critics that are represented as functions of observation only."""
 
     def objective(self, data_buffer=None, weights=None):
-        """
-        Objective of the critic, say, a squared temporal difference.
-
-        """
+        """Objective of the critic, say, a squared temporal difference."""
         if data_buffer is None:
             observation_buffer = self.observation_buffer
             action_buffer = self.action_buffer
@@ -488,8 +461,7 @@ class CriticOfObservation(Critic):
 class CriticOfActionObservationOnPolicy(Critic):
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
-        """
-        Compute the objective function of the critic, which is typically a squared temporal difference.
+        """Compute the objective function of the critic, which is typically a squared temporal difference.
 
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
         :type data_buffer: dict, optional
@@ -603,14 +575,13 @@ class CriticOffPolicyBehaviour(Critic):
 
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
-        """
-        Compute the objective function of the critic, which is typically a squared temporal difference.
+        """Compute the objective function of the critic, which is typically a squared temporal difference.
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
         :type data_buffer: dict, optional
         :param weights: the weights of the critic model, if different from the stored weights.
         :type weights: numpy.ndarray, optional
         :return: the value of the objective function
-        :rtype: float
+        :rtype: float.
         """
         if data_buffer is None:
             observation_buffer = self.observation_buffer
@@ -716,14 +687,13 @@ class CriticOffPolicyGreedy(Critic):
 
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
-        """
-        Compute the objective function of the critic, which is typically a squared temporal difference.
+        """Compute the objective function of the critic, which is typically a squared temporal difference.
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
         :type data_buffer: dict, optional
         :param weights: the weights of the critic model, if different from the stored weights.
         :type weights: numpy.ndarray, optional
         :return: the value of the objective function
-        :rtype: float
+        :rtype: float.
         """
         if data_buffer is None:
             observation_buffer = self.observation_buffer
@@ -787,8 +757,7 @@ class CriticCALF(CriticOfObservation):
         ub_parameter=1e3,
         **kwargs,
     ):
-        """
-        Initialize a CriticCALF object.
+        """Initialize a CriticCALF object.
 
         :param args: Arguments to be passed to the base class `CriticOfObservation`.
         :param safe_decay_param: Rate at which the safe set shrinks over time.
@@ -847,9 +816,7 @@ class CriticCALF(CriticOfObservation):
         ]
 
     def reset(self):
-        """
-        Reset the critic to its initial state.
-        """
+        """Reset the critic to its initial state."""
         super().reset()
         self.observation_last_good = self.observation_init
         self.r_prev = self.r_prev_init
@@ -858,8 +825,7 @@ class CriticCALF(CriticOfObservation):
             self.safe_controller.reset_all_PID_controllers()
 
     def update_buffers(self, observation, action):
-        """
-        Update data buffers and dynamic safe decay rate.
+        """Update data buffers and dynamic safe decay rate.
 
         Updates the observation and action data buffers with the given observation and action.
         Updates the outcome using the given observation and action.
@@ -889,8 +855,7 @@ class CriticCALF(CriticOfObservation):
             # self.safe_decay_param = self.safe_deay_rate_param * rc norm ...
 
     def CALF_decay_constraint_no_prediction(self, weights=None):
-        """
-        Constraint that ensures that the CALF value is decreasing by a certain rate. The rate is determined by the
+        """Constraint that ensures that the CALF value is decreasing by a certain rate. The rate is determined by the
         `safe_decay_param` parameter. This constraint is used when there is no prediction of the next state.
 
         :param weights: critic weights to be evaluated
@@ -898,7 +863,6 @@ class CriticCALF(CriticOfObservation):
         :return: constraint violation
         :rtype: float
         """
-
         critic_curr = self.model(
             self.current_observation - self.observation_target, weights=weights
         )
@@ -915,8 +879,7 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(self, weights=None):
-        """
-        Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
+        """Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
         the `current_observation` and a certain constant.
 
         :param weights: critic weights to be evaluated
@@ -932,8 +895,7 @@ class CriticCALF(CriticOfObservation):
         return self.lb_constraint_violation
 
     def CALF_critic_lower_bound_constraint_predictive(self, weights=None):
-        """
-        Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
+        """Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
         the `current_observation` and a certain constant.
 
         :param weights: critic weights to be evaluated
@@ -951,8 +913,7 @@ class CriticCALF(CriticOfObservation):
         return self.lb_constraint_violation
 
     def CALF_critic_upper_bound_constraint(self, weights=None):
-        """
-        Calculate the constraint violation for the CALF decay constraint when no prediction is made.
+        """Calculate the constraint violation for the CALF decay constraint when no prediction is made.
 
         :param weights: critic weights
         :type weights: ndarray
@@ -967,8 +928,7 @@ class CriticCALF(CriticOfObservation):
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
-        """
-        Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.
+        """Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.
 
         :param weights: critic weights
         :type weights: ndarray
@@ -999,8 +959,7 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_decay_constraint_predicted_on_policy(self, weights=None):
-        """
-        Constraint for ensuring that the CALF function decreases at each iteration.
+        """Constraint for ensuring that the CALF function decreases at each iteration.
         This constraint is used when prediction is done using the last action taken.
 
         :param weights: Current weights of the critic network.
@@ -1023,10 +982,7 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def objective(self, data_buffer=None, weights=None):
-        """
-        Objective of the critic, say, a squared temporal difference.
-
-        """
+        """Objective of the critic, say, a squared temporal difference."""
         if data_buffer is None:
             observation_buffer = self.observation_buffer
             action_buffer = self.action_buffer
@@ -1078,14 +1034,10 @@ class CriticCALF(CriticOfObservation):
 
 
 class CriticTrivial(Critic):
-    """
-    This is a dummy to calculate outcome (accumulated running objective).
-
-    """
+    """This is a dummy to calculate outcome (accumulated running objective)."""
 
     def __init__(self, running_objective, *args, sampling_time=0.01, **kwargs):
-        """
-        Initialize a trivial critic.
+        """Initialize a trivial critic.
 
         :param running_objective: Function object representing the running objective.
         :type running_objective: function
@@ -1110,8 +1062,7 @@ class CriticTrivial(Critic):
         self.optimized_weights = []
 
     def __call__(self, *args, **kwargs):
-        """
-        Returns the current outcome.
+        """Returns the current outcome.
 
         :return: Current outcome.
         :rtype: float
@@ -1119,8 +1070,7 @@ class CriticTrivial(Critic):
         return self.total_objective
 
     def objective(self, weights):
-        """
-        Dummy method for the objective function.
+        """Dummy method for the objective function.
 
         :param weights: Weights.
         :type weights: ndarray or list
@@ -1128,8 +1078,7 @@ class CriticTrivial(Critic):
         pass
 
     def get_optimized_weights(self, intrinsic_constraints=None, time=None):
-        """
-        Dummy method to return optimized weights.
+        """Dummy method to return optimized weights.
 
         :param intrinsic_constraints: Constraints to be applied during optimization.
         :type intrinsic_constraints: list of functions
@@ -1141,8 +1090,7 @@ class CriticTrivial(Critic):
         pass
 
     def update_buffers(self, observation, action):
-        """
-        Updates the outcome.
+        """Updates the outcome.
 
         :param observation: Current observation.
         :type observation: ndarray or list
@@ -1152,8 +1100,7 @@ class CriticTrivial(Critic):
         self.update_total_objective(observation, action)
 
     def update(self, intrinsic_constraints=None, observation=None, time=None):
-        """
-        Dummy method for updating the critic.
+        """Dummy method for updating the critic.
 
         :param intrinsic_constraints: Constraints to be applied during optimization.
         :type intrinsic_constraints: list of functions
@@ -1165,8 +1112,7 @@ class CriticTrivial(Critic):
         pass
 
     def update_total_objective(self, observation, action):
-        """
-        Update the value of the outcome variable by adding the value of the running_objective function
+        """Update the value of the outcome variable by adding the value of the running_objective function
         evaluated at the current observation and action, multiplied by the sampling time.
 
         :param observation: The current observation.
@@ -1174,23 +1120,17 @@ class CriticTrivial(Critic):
         :param action: The current action.
         :type action: Any
         """
-
         self.total_objective += (
             self.running_objective(observation, action) * self.sampling_time
         )
 
     def reset(self):
-        """
-        Reset the outcome variable to zero.
-        """
+        """Reset the outcome variable to zero."""
         self.total_objective = 0
 
 
 class CriticTabularVI(Critic):
-    """
-    Critic for tabular agents.
-
-    """
+    """Critic for tabular agents."""
 
     def __init__(
         self,
@@ -1203,8 +1143,7 @@ class CriticTabularVI(Critic):
         N_parallel_processes=5,
         terminal_state=None,
     ):
-        """
-        Initialize a CriticTabularVI object.
+        """Initialize a CriticTabularVI object.
 
         :param dim_state_space: The dimensions of the state space.
         :type dim_state_space: tuple of int
@@ -1224,7 +1163,6 @@ class CriticTabularVI(Critic):
         :type terminal_state: optional, int or tuple of int
         :return: None
         """
-
         self.objective_table = rc.zeros(dim_state_space)
         self.action_table = rc.zeros(dim_state_space)
         self.running_objective = running_objective
@@ -1236,8 +1174,7 @@ class CriticTabularVI(Critic):
         self.terminal_state = terminal_state
 
     def update_single_cell(self, observation):
-        """
-        Update the value function for a single state.
+        """Update the value function for a single state.
 
         :param observation: current state
         :type observation: tuple of int
@@ -1251,9 +1188,7 @@ class CriticTabularVI(Critic):
         return self.objective(observation, action)
 
     def update(self):
-        """
-        Update the value function for all states.
-        """
+        """Update the value function for all states."""
         observation_table_indices = tuple(
             [
                 (i, j)
@@ -1267,8 +1202,7 @@ class CriticTabularVI(Critic):
         self.model.weights = new_table
 
     def objective(self, observation, action):
-        """
-        Calculate the value of a state given the action taken and the observation of the current state.
+        """Calculate the value of a state given the action taken and the observation of the current state.
 
         :param observation: current state
         :type observation: tuple of int
@@ -1286,8 +1220,7 @@ class CriticTabularVI(Critic):
 
 class CriticTabularPI(CriticTabularVI):
     def __init__(self, *args, tolerance=1e-3, N_update_iters_max=50, **kwargs):
-        """
-        Initialize a new instance of the `CriticTabularPI` class.
+        """Initialize a new instance of the `CriticTabularPI` class.
 
         :param args: Positional arguments to pass to the superclass's `__init__` method.
         :type args: tuple
@@ -1303,9 +1236,7 @@ class CriticTabularPI(CriticTabularVI):
         self.N_update_iters_max = N_update_iters_max
 
     def update(self):
-        """
-        Update the value table.
-        """
+        """Update the value table."""
         observation_table_indices = tuple(
             [
                 (i, j)

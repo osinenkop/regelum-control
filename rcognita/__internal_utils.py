@@ -165,9 +165,7 @@ def compute_search_path_dir(
 
 
 def is_under_debugger() -> bool:
-    """
-    Attempts to detect if running under a debugger
-    """
+    """Attempts to detect if running under a debugger."""
     frames = inspect.stack()
     if len(frames) >= 3:
         filename = frames[-3].filename
@@ -612,8 +610,7 @@ def get_column_widths(matrix: List[List[str]]) -> List[int]:
 
 
 def _locate(path: str) -> Any:
-    """
-    Locate an object by name or dotted path, importing as necessary.
+    """Locate an object by name or dotted path, importing as necessary.
     This is similar to the pydoc function `locate`, except that it checks for
     the module from the given path from back to front.
     """

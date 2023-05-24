@@ -67,12 +67,10 @@ def main(
     config_name: Optional[str] = None,
     version_base: Optional[str] = _UNSPECIFIED_,
 ) -> Callable[[TaskFunction], Any]:
-    """
-    :param config_path: The config path, a directory relative to the declaring python file.
+    """:param config_path: The config path, a directory relative to the declaring python file.
                         If config_path is None no directory is added to the Config search path.
     :param config_name: The name of the config (usually the file name without the .yaml extension)
     """
-
     version.setbase(version_base)
 
     if config_path is _UNSPECIFIED_:

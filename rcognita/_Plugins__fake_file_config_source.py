@@ -9,7 +9,6 @@ from hydra.plugins.config_source import ConfigLoadError, ConfigResult, ConfigSou
 from io import StringIO
 import re
 import rcognita
-from functools import partial
 
 
 def sub_map(pattern, f, s):

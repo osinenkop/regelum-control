@@ -1,5 +1,4 @@
-"""
-Module that contains general objectives functions that can be used by various entities of the framework.
+"""Module that contains general objectives functions that can be used by various entities of the framework.
 For instance, a running objective can be used commonly by a generic optimal controller, an actor, a critic, a logger, an animator, a pipeline etc.
 
 """
@@ -30,14 +29,12 @@ class Objective(rcognita.base.RcognitaBase, ABC):
 
 
 class RunningObjective(Objective):
-    """
-    This is what is usually treated as reward or unitlity in maximization problems.
+    """This is what is usually treated as reward or unitlity in maximization problems.
     In minimzations problems, it is called cost or loss, say.
     """
 
     def __init__(self, model):
-        """
-        Initialize a RunningObjective instance.
+        """Initialize a RunningObjective instance.
 
         :param model: function that calculates the running objective for a given observation and action.
         :type model: function
@@ -45,8 +42,7 @@ class RunningObjective(Objective):
         self.model = model
 
     def __call__(self, observation, action):
-        """
-        Calculate the running objective for a given observation and action.
+        """Calculate the running objective for a given observation and action.
 
         :param observation: current observation.
         :type observation: numpy array
@@ -55,7 +51,6 @@ class RunningObjective(Objective):
         :return: running objective value.
         :rtype: float
         """
-
         if hasattr(self, "observation_target"):
             observation_new = observation - self.observation_target
             running_objective = self.model(observation_new, action)

@@ -1,6 +1,5 @@
-"""
-This module contains model classes.
-These can be used in system dynamics fitting, critic and other tasks
+"""This module contains model classes.
+These can be used in system dynamics fitting, critic and other tasks.
 
 Updates to come.
 
@@ -15,9 +14,8 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
-from __utilities import rc, rej_sampling_rvs
+from __utilities import rc
 import numpy as np
-import warnings
 
 try:
     import torch
@@ -35,7 +33,6 @@ except ModuleNotFoundError:
 import math
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from collections import OrderedDict
 
 
 def force_positive_def(func):
@@ -49,9 +46,7 @@ def force_positive_def(func):
 
 
 class Model(rcognita.base.RcognitaBase, ABC):
-    """
-    Blueprint of a model.
-    """
+    """Blueprint of a model."""
 
     def __call__(self, *args, weights=None, use_stored_weights=False):
         if use_stored_weights is False:
@@ -92,12 +87,10 @@ class Model(rcognita.base.RcognitaBase, ABC):
         self.update_weights(weights)
 
     def restore_weights(self):
-        """
-        Assign the weights of the cached model to the active model.
+        """Assign the weights of the cached model to the active model.
         This may be needed when pytorch optimizer resulted in unsatisfactory weights, for instance.
 
         """
-
         self.update_and_cache_weights(self.cache.weights)
 
 
@@ -139,10 +132,7 @@ class ModelSS:
 
 
 class ModelQuadLin(Model):
-    """
-    Quadratic-linear model.
-
-    """
+    """Quadratic-linear model."""
 
     model_name = "quad-lin"
 
@@ -176,10 +166,7 @@ class ModelQuadLin(Model):
 
 
 class ModelQuadratic(Model):
-    """
-    Quadratic model. May contain mixed terms.
-
-    """
+    """Quadratic model. May contain mixed terms."""
 
     model_name = "quadratic"
 
@@ -215,10 +202,7 @@ class ModelQuadratic(Model):
 
 
 class ModelQuadraticSquared(ModelQuadratic):
-    """
-    Quadratic model. May contain mixed terms.
-
-    """
+    """Quadratic model. May contain mixed terms."""
 
     model_name = "quadratic-squared"
 
@@ -231,10 +215,7 @@ class ModelQuadraticSquared(ModelQuadratic):
 
 
 class ModelQuadNoMix(Model):
-    """
-    Quadratic model (no mixed terms).
-
-    """
+    """Quadratic model (no mixed terms)."""
 
     model_name = "quad-nomix"
 
@@ -269,10 +250,7 @@ class ModelQuadNoMix(Model):
 
 
 class ModelQuadNoMix2D(Model):
-    """
-    Quadratic model (no mixed terms).
-
-    """
+    """Quadratic model (no mixed terms)."""
 
     model_name = "quad-nomix"
 
@@ -307,10 +285,7 @@ class ModelQuadNoMix2D(Model):
 
 
 class ModelWeightContainer(Model):
-    """
-    Trivial model, which is typically used in actor in which actions are being optimized directly.
-
-    """
+    """Trivial model, which is typically used in actor in which actions are being optimized directly."""
 
     model_name = "action-sequence"
 
@@ -345,10 +320,7 @@ class ModelQuadMix(Model):
 
 
 class ModelQuadForm(Model):
-    """
-    Quadratic form.
-
-    """
+    """Quadratic form."""
 
     model_name = "quad_form"
 
@@ -372,10 +344,7 @@ class ModelQuadForm(Model):
 
 
 class ModelBiquadForm(Model):
-    """
-    Bi-quadratic form.
-
-    """
+    """Bi-quadratic form."""
 
     model_name = "biquad_form"
 
@@ -396,8 +365,7 @@ class ModelBiquadForm(Model):
 
 
 class ModelNN(nn.Module):
-    """
-    Class of pytorch neural network models. This class is not to be used barebones.
+    """Class of pytorch neural network models. This class is not to be used barebones.
     Instead, you should inherit from it and specify your concrete architecture.
 
     """
@@ -415,14 +383,11 @@ class ModelNN(nn.Module):
 
     @property
     def cache(self):
-        """
-        Isolate parameters of cached model from the current model
-        """
+        """Isolate parameters of cached model from the current model."""
         return self.cached_model[0]
 
     def detach_weights(self):
-        """
-        Excludes the model's weights from the pytorch computation graph.
+        """Excludes the model's weights from the pytorch computation graph.
         This is needed to exclude the weights from the decision variables in optimization problems.
         An example is temporal-difference optimization, where the old critic is to be treated as a frozen model.
 
@@ -431,8 +396,7 @@ class ModelNN(nn.Module):
             variable.detach_()
 
     def cache_weights(self, whatever=None):
-        """
-        Assign the active model weights to the cached model followed by a detach.
+        """Assign the active model weights to the cached model followed by a detach.
 
         This method also backs up itself and performs this operation only once upon the initialization procedure
         """
@@ -452,11 +416,7 @@ class ModelNN(nn.Module):
         pass
 
     def weights2dict(self, weights_to_parse):
-        """
-        Transform weights as a numpy array into a dictionary compatible with pytorch.
-
-        """
-
+        """Transform weights as a numpy array into a dictionary compatible with pytorch."""
         weights_to_parse = torch.tensor(weights_to_parse)
 
         new_state_dict = {}
@@ -483,17 +443,15 @@ class ModelNN(nn.Module):
         self.cache_weights()
 
     def restore_weights(self):
-        """
-        Assign the weights of the cached model to the active model.
+        """Assign the weights of the cached model to the active model.
         This may be needed when pytorch optimizer resulted in unsatisfactory weights, for instance.
 
         """
-
         self.update_and_cache_weights(self.cache.state_dict())
 
     def soft_update(self, tau):
         """Soft update model parameters.
-        θ_target = τ*θ_local + (1 - τ)*θ_target
+        θ_target = τ*θ_local + (1 - τ)*θ_target.
 
         Params
         ======
@@ -529,10 +487,7 @@ class ModelNN(nn.Module):
 
 
 class ModelQuadNoMixTorch(ModelNN):
-    """
-    pytorch neural network of one layer: fully connected.
-
-    """
+    """pytorch neural network of one layer: fully connected."""
 
     def __init__(
         self,
@@ -812,9 +767,8 @@ class ModelPerceptronCalf(Model):
         }
 
     def Linear(self, dim_in, dim_out, name, bias=None):
-        """
-        Here we take bias into account by introducing an additional row in the weights matrix.
-        It is equivalent to $xW + b$
+        """Here we take bias into account by introducing an additional row in the weights matrix.
+        It is equivalent to $xW + b$.
         """
         if bias is not None:
             dim_in = dim_in + 1
@@ -876,10 +830,7 @@ class ModelPerceptronCalf(Model):
 
 
 class ModelDQN(ModelNN):
-    """
-    pytorch neural network DQN
-
-    """
+    """pytorch neural network DQN."""
 
     def __init__(
         self,
@@ -934,10 +885,7 @@ class ModelDQN(ModelNN):
 
 
 class ModelWeightContainerTorch(ModelNN):
-    """
-    Pytorch weight container for actor
-
-    """
+    """Pytorch weight container for actor."""
 
     def __init__(self, action_init):
         super().__init__()
@@ -1207,10 +1155,9 @@ class GaussianElementWisePDFModel(ModelNN):
 
 
 class ModelGaussianConditional(Model):
-    """
-    Gaussian probability distribution model with `weights[0]` being an expectation vector
+    """Gaussian probability distribution model with `weights[0]` being an expectation vector
     and `weights[1]` being a covariance matrix.
-    The expectation vector can optionally be generated
+    The expectation vector can optionally be generated.
     """
 
     model_name = "model-gaussian"

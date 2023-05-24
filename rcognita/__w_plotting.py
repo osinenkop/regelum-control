@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-from pylab import cm
 
 from .__utilities import rc
 
@@ -208,16 +207,16 @@ def plot_optimization_results(
     )
     #############################
 
-    ax_critic_constr.set_title(f"CALF critic constraint")
+    ax_critic_constr.set_title("CALF critic constraint")
     ax_critic_constr.legend()
 
-    ax_actor_constr.set_title(f"CALF actor constraint")
+    ax_actor_constr.set_title("CALF actor constraint")
     ax_actor_constr.legend()
 
-    ax_critic_obj.set_title(f"Critic objective")
+    ax_critic_obj.set_title("Critic objective")
     ax_critic_obj.legend()
 
-    ax_actor_obj.set_title(f"Actor objective")
+    ax_actor_obj.set_title("Actor objective")
     ax_actor_obj.legend()
 
     ax_critic_obj.set_aspect("equal", adjustable="box")

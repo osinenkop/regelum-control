@@ -1,13 +1,8 @@
-"""
-This module contains auxiliary tools.
-
-"""
+"""This module contains auxiliary tools."""
 
 import inspect
-import warnings
 import numpy as np
 import scipy.stats as st
-import scipy as sp
 import matplotlib.pyplot as plt
 
 from enum import IntEnum
@@ -36,8 +31,7 @@ except ModuleNotFoundError:
 
 
 class RCType(IntEnum):
-    """
-    Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
+    """Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
     That is, if, for instance, a function of two arguments gets an argument of a `NumPy` type and an argument of a `CasAdi` type,
     then the function's output type is inferred as a `CasADi` type.
     Mixture of CasADi types will raise a `TypeError` exception.
@@ -808,8 +802,7 @@ def simulation_progress(bar_length=10, print_level=100):
 
 
 def rej_sampling_rvs(dim, pdf, M):
-    """
-    Random variable (pseudo)-realizations via rejection sampling.
+    """Random variable (pseudo)-realizations via rejection sampling.
 
     Parameters
     ----------
@@ -827,7 +820,6 @@ def rej_sampling_rvs(dim, pdf, M):
     A single realization (in general, as a vector) of the random variable with the desired probability density.
 
     """
-
     # Use normal pdf with zero mean and identity covariance matrix as a proposal distribution
     normal_RV = st.multivariate_normal(cov=np.eye(dim))
 
@@ -850,10 +842,7 @@ def push_vec(matrix, vec):
 
 
 class ZOH:
-    """
-    Zero-order hold.
-
-    """
+    """Zero-order hold."""
 
     def __init__(self, init_time=0, init_val=0, sample_time=1):
         self.time_step = init_time
@@ -870,10 +859,7 @@ class ZOH:
 
 
 class DFilter:
-    """
-    Real-time digital filter.
-
-    """
+    """Real-time digital filter."""
 
     def __init__(
         self,
@@ -914,9 +900,7 @@ class DFilter:
 
 
 def dss_sim(A, B, C, D, uSqn, initial_guess, y0):
-    """
-    Simulate output response of a discrete-time state-space model.
-    """
+    """Simulate output response of a discrete-time state-space model."""
     if uSqn.ndim == 1:
         return y0, initial_guess
     else:
@@ -955,10 +939,7 @@ def update_patch(patchHandle, new_color):
 
 
 def on_key_press(event, anm):
-    """
-    Key press event handler for a ``FuncAnimation`` animation object.
-
-    """
+    """Key press event handler for a ``FuncAnimation`` animation object."""
     if event.key == " ":
         if anm.running:
             anm.event_source.stop()

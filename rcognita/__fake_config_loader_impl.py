@@ -34,9 +34,7 @@ from hydra.types import RunMode
 
 
 class ConfigLoaderImpl(ConfigLoader):
-    """
-    Configuration loader
-    """
+    """Configuration loader."""
 
     def __init__(
         self,

@@ -3,14 +3,9 @@ import numpy.linalg as la
 from .animator import (
     update_line,
     update_text,
-    reset_line,
     Animator,
-    RobotMarker,
     Dashboard,
-    init_data_cursor,
 )
-from mpldatacursor import datacursor
-from collections import namedtuple
 from ..__utilities import rc
 import matplotlib.pyplot as plt
 
@@ -83,7 +78,7 @@ class LanderTrackingDasboard(Dashboard):
         xCoord = state[0]
         yCoord = state[1]
         angle = state[2]
-        angle_deg = angle / np.pi * 180
+        angle / np.pi * 180
         text_time = f"Time = {time:2.3f}"
 
         update_text(self.text_time_handle, text_time)
@@ -325,10 +320,7 @@ class ControlDashboardNI(Dashboard):
 
 
 class AnimatorLunarLander(Animator):
-    """
-    Animator class for a 3-wheel robot with dynamic actuators.
-
-    """
+    """Animator class for a 3-wheel robot with dynamic actuators."""
 
     def __init__(
         self,

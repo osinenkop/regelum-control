@@ -112,7 +112,7 @@ def merge_runs(
                     copy_tree(
                         subrun_id, subrun_paths[subrun_id] + "/" + run.replace("/", "_")
                     )
-            except (distutils.errors.DistutilsError, RuntimeError) as e:
+            except (distutils.errors.DistutilsError, RuntimeError):
                 os.chdir("../../..")
                 remove_tree(path)
                 raise RuntimeError(
@@ -252,9 +252,7 @@ def get_multirun_info(path_multirun):
 
 
 def get_folder_mapping():
-    """
-    Valid only if called from 'presets' folder"
-    """
+    """Valid only if called from 'presets' folder"."""
     try:
         config_append_to_path = "/.hydra/overrides.yaml"
         folder_to_parse = [x for x in os.listdir() if "merged" in x]

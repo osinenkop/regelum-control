@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-This module contains an interface class `animator` along with concrete realizations, each of which is associated with a corresponding system.
+"""This module contains an interface class `animator` along with concrete realizations, each of which is associated with a corresponding system.
 
 Remarks: 
 
@@ -10,11 +9,9 @@ Remarks:
 - Buffers are updated from bottom to top
 
 """
-from itertools import islice, cycle
 from ..__utilities import rc
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib.offsetbox import OffsetImage
 import numpy as np
 from matplotlib.animation import FFMpegWriter
 from rcognita import ANIMATION_TYPES_SAVE_FORMATS
@@ -97,15 +94,14 @@ class Dashboard(ABC):
 
 
 class Animator:
-    """
-    Interface class of visualization machinery for simulation of system-controller loops.
+    """Interface class of visualization machinery for simulation of system-controller loops.
     To design a concrete animator: inherit this class, override:
         | :func:`~animators.Animator.__init__` :
         | define necessary visual elements (required)
         | :func:`~animators.Animator.init_anim` :
         | initialize necessary visual elements (required)
         | :func:`~animators.Animator.animate` :
-        | animate visual elements (required)
+        | animate visual elements (required).
 
     Attributes
     ----------
@@ -230,8 +226,7 @@ class Animator:
         return self.artists
 
     def set_sim_data(self, **kwargs):
-        """
-        This function is needed for playback purposes when simulation data were generated elsewhere.
+        """This function is needed for playback purposes when simulation data were generated elsewhere.
         It feeds data into the animator from outside.
         """
         self.__dict__.update(kwargs)
@@ -302,10 +297,7 @@ class Animator:
 
 
 class RobotMarker:
-    """
-    Robot marker for visualization.
-
-    """
+    """Robot marker for visualization."""
 
     def __init__(self, angle=None, path_string=None):
         self.angle = angle or 0.0
