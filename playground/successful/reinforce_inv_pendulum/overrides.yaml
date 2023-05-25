@@ -1,0 +1,12 @@
+- system=inv_pendulum
+- controller=pg
+- +seed=1
+- scenario=monte_carlo
+- scenario.N_iterations=20
+- system_specific.time_final=10
+- controller.actor.model.weight_max=20.0
+- controller.actor.model.weight_min=-20.0
+- controller.actor.optimizer.opt_options.lr=5.0
+- system_specific.diag_scale_coef=3.5
+- scenario.N_episodes=10
+- system_specific.total_objective_threshold=5000

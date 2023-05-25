@@ -83,6 +83,7 @@ class OnlineScenario(Scenario):
         N_episodes=1,
         N_iterations=1,
         speedup=1,
+        total_objective_threshold=np.inf,
     ):
         self.cache.clear()
         self.N_episodes = N_episodes
@@ -146,13 +147,15 @@ class OnlineScenario(Scenario):
 
         self.recent_total_objectives_of_episodes = []
         self.total_objectives_of_episodes = []
-        self.outcome_episodic_means = []
+        self.total_objective_episodic_means = []
         self.sim_status = 1
         self.episode_counter = 0
         self.iteration_counter = 0
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
+        self.total_objective_threshold = total_objective_threshold
 
+        
     def set_speedup(self, speedup):
         self.speedup = speedup
         self.cached_timeline = islice(cycle(iter(self.cache)), 0, None, self.speedup)
@@ -229,7 +232,9 @@ class OnlineScenario(Scenario):
         self.episode_counter = 0
 
     def iteration_update(self):
-        self.outcome_episodic_means.append(rc.mean(self.total_objectives_of_episodes))
+        self.total_objective_episodic_means.append(
+            rc.mean(self.total_objectives_of_episodes)
+        )
 
     def update_time_from_cache(self):
         self.time, self.episode_counter, self.iteration_counter = next(
@@ -359,7 +364,7 @@ class OnlineScenario(Scenario):
         self.pre_step()
         sim_status = self.simulator.do_sim_step()
         is_episode_ended = sim_status == -1
-
+        
         if not is_episode_ended:
             (
                 self.time,
@@ -381,7 +386,10 @@ class OnlineScenario(Scenario):
             self.system.receive_action(self.action)
             self.post_step()
 
-            return "episode_continues"
+            if self.total_objective > self.total_objective_threshold:
+                return "episode_ended"
+            else:
+                return "episode_continues"
         else:
             self.reset_episode()
 
@@ -414,14 +422,14 @@ class MonteCarloScenario(OnlineScenario):
                 episode_id=self.episode_counter,
                 is_step_done=episode_status != "episode_continues",
             )
-        if episode_status == "episode_ended":
-            self.controller.episode_data_buffer.add_total_objective(
-                self.total_objective
-            )
 
         return episode_status
 
     def reset_iteration(self):
+        self.controller.episode_data_buffer.set_total_objectives_of_episodes(
+            self.total_objectives_of_episodes
+        )
+
         if self.current_scenario_status != "simulation_ended":
             self.actor.optimize_weights_after_iteration(
                 self.controller.episode_data_buffer
