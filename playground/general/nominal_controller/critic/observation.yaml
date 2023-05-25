@@ -1,4 +1,4 @@
 defaults:
   - action_observation
 
-dim_critic_model_input%%: $ system.dim_output
+dim_critic_model_input%%: $ system.dim_observation%%

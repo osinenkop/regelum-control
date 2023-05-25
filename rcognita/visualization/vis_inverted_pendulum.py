@@ -250,7 +250,7 @@ class AnimatorInvertedPendulum(Animator):
         self.outcome = 0
 
         self.angle_0 = self.state_init[0]
-        self.rod_length = self.system.pars[2]
+        self.rod_length = self.system.system_parameters["l"]
 
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ################
         pendulum_tracking_dashboard = InvPendulumTrackingDashboard(

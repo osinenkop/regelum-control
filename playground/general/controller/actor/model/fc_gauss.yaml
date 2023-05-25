@@ -1,7 +1,7 @@
 _target_: rcognita.models.GaussianPDFModel
 
-dim_observation: $ controller.actor.dim_input
-dim_action: $ controller.actor.dim_output
+dim_input: $ controller.actor.dim_observation
+dim_action: $ controller.actor.dim_action
 use_derivative: $ controller.actor.is_use_derivative
 diag_scale_coef: $ system_specific.diag_scale_coef 
 weight_max: 1

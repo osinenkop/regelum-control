@@ -165,7 +165,6 @@ def create_ODE_solver(
         )
 
     elif ode_backend == "CASADI":
-
         integrator = create_CasADi_integrator(system, state_init, action_init, max_step)
 
         solver = CasADiSolver(
@@ -200,7 +199,7 @@ def create_CasADi_integrator(system, state_init, action_init, max_step):
     action_symbolic = rc.array_symb(rc.shape(action_init), literal="u")
     time = rc.array_symb((1, 1), literal="t")
 
-    ODE = system.compute_dynamics(time, state_symbolic, action_symbolic)
+    ODE = system.compute_state_dynamics(time, state_symbolic, action_symbolic)
     DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
 
     options = {"tf": max_step}

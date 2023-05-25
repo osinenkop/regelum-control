@@ -73,8 +73,8 @@ class Actor:
 
     def __init__(
         self,
-        dim_output: int = 2,
-        dim_input: int = 5,
+        dim_action: int = 2,
+        dim_observation: int = 5,
         prediction_horizon: int = 1,
         action_bounds: Union[list, np.ndarray] = None,
         action_init: list = None,
@@ -95,10 +95,10 @@ class Actor:
 
         :param prediction_horizon: Number of time steps to look into the future.
         :type prediction_horizon: int
-        :param dim_input: Dimension of the observation.
-        :type dim_input: int
-        :param dim_output: Dimension of the action.
-        :type dim_output: int
+        :param dim_observation: Dimension of the observation.
+        :type dim_observation: int
+        :param dim_action: Dimension of the action.
+        :type dim_action: int
         :param action_bounds: Bounds on the action.
         :type action_bounds: list or ndarray, optional
         :param action_init: Initial action.
@@ -117,8 +117,8 @@ class Actor:
         :type discount_factor: float, optional
         """
         self.prediction_horizon = prediction_horizon
-        self.dim_output = dim_output
-        self.dim_input = dim_input
+        self.dim_action = dim_action
+        self.dim_observation = dim_observation
         self.action_bounds = action_bounds
         self.optimizer = optimizer
         self.critic = critic
@@ -138,8 +138,8 @@ class Actor:
                 self.action_min = np.array(self.action_bounds)[:, 0]
                 self.action_max = np.array(self.action_bounds)[:, 1]
         else:
-            self.action_min = np.array(self.action_bounds.lb[: self.dim_output])
-            self.action_max = np.array(self.action_bounds.ub[: self.dim_output])
+            self.action_min = np.array(self.action_bounds.lb[: self.dim_action])
+            self.action_max = np.array(self.action_bounds.ub[: self.dim_action])
 
         if len(action_init) == 0:
             self.action_old = (self.action_min + self.action_max) / 2
@@ -166,13 +166,15 @@ class Actor:
         self.action = self.action_old
         self.intrinsic_constraints = []
         if observation_target is None or observation_target == []:
-            self.observation_target = rc.zeros(self.dim_output)
+            self.observation_target = rc.zeros(self.dim_observation)
         elif isinstance(observation_target, list):
             self.observation_target = rc.array(observation_target)
 
         self.state_init = state_init
         self.system = system
-        self.observation_init = self.system.out(state_init)
+        self.observation_init = self.system.get_observation(
+            time=0, state=state_init, action=action_init
+        )
 
     @property
     def weights(self):
@@ -230,7 +232,9 @@ class Actor:
             predicted_state = self.predictor.predict_state(
                 current_state, current_action
             )
-            predicted_observation = self.predictor.system.out(predicted_state)
+            predicted_observation = self.predictor.system.get_observation(
+                time=0, state=predicted_state, action=current_action
+            )
             constraint_violation_buffer = []
             for constraint in constraint_functions:
                 constraint_violation_buffer.append(constraint(predicted_observation))
@@ -406,7 +410,7 @@ class Actor:
 
         action_sequence_init_reshaped = rc.reshape(
             action_sequence,
-            [final_count_of_actions * self.dim_output],
+            [final_count_of_actions * self.dim_action],
         )
 
         constraints = []
@@ -527,7 +531,7 @@ class ActorPGBase(Actor, ABC):
     ):
         super().__init__(*args, **kwargs)
         self.is_use_derivative = is_use_derivative
-        self.derivative = self.system.compute_dynamics
+        self.derivative = self.system.compute_state_dynamics
         self.device = torch.device(device)
         self.dataset_size = 0
         self.N_episodes = N_episodes
@@ -593,7 +597,7 @@ class ActorPGBase(Actor, ABC):
 class ActorPG(ActorPGBase):
     def update_action(self, observation=None):
         if self.is_use_derivative:
-            derivative = self.derivative([], observation, self.action)
+            derivative = self.derivative(None, observation, self.action)
             observation = torch.cat(
                 [torch.tensor(observation), torch.tensor(derivative)]
             ).float()
@@ -717,7 +721,7 @@ class ActorMPC(Actor):
         :rtype: float
         """
         action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_output]
+            action_sequence, [self.prediction_horizon + 1, self.dim_action]
         ).T
 
         observation_sequence = [observation]
@@ -955,7 +959,7 @@ class ActorRPO(Actor):
         :return: actor objective for the given action sequence and observation
         :rtype: float
         """
-        current_action = action_sequence[: self.dim_output]
+        current_action = action_sequence[: self.dim_action]
 
         observation_predicted = self.predictor.predict(observation, current_action)
 
@@ -974,6 +978,21 @@ class ActorRPO(Actor):
                 )
 
         return actor_objective
+
+
+class ActorRPOWithRobustigyingTerm(ActorRPO):
+    def __init__(self, *args, A=10, K=10, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.A = A
+        self.K = K
+
+    def update_action(self, observation=None):
+        super().update_action(observation)
+        self.action -= (
+            self.K
+            * rc.norm_2(observation) ** 2
+            / (self.A + rc.norm_2(observation) ** 2)
+        )
 
 
 class ActorCALF(ActorRPO):
@@ -1223,8 +1242,8 @@ class ActorTabular(ActorRPO):
 class ActorProbabilisticEpisodic(Actor):
     def __init__(
         self,
-        dim_output: int = 5,
-        dim_input: int = 2,
+        dim_action: int = 5,
+        dim_observation: int = 2,
         action_bounds=None,
         action_init=None,
         model=None,

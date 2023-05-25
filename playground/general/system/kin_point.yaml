@@ -1,17 +1,12 @@
-_target_: rcognita.systems.SysKinematicPoint
+_target_: rcognita.systems.KinematicPoint
 
 ###---Constructor arguments---###
 
-dim_input: ${.dim_kin_point_system%%}
-dim_output: ${.dim_kin_point_system%%}
-sys_type: diff_eqn
-dim_state: ${.dim_kin_point_system%%}
-dim_disturb: ${.dim_kin_point_system%%}
-
-dim_kin_point_system%%: 2
-
-pars: = []
+###---Off-constructor variables---###
 
 action_max%%: 10
 action_min%%: -10
-action_bounds%%: = numpy.hstack([numpy.full((${.dim_kin_point_system%%}, 1), ${.action_min%%}), numpy.full((${.dim_kin_point_system%%}, 1), ${.action_max%%})])
+action_bounds%%: = numpy.hstack([numpy.full((${.dim_observation%%}, 1), ${.action_min%%}), numpy.full((${.dim_observation%%}, 1), ${.action_max%%})])
+
+dim_action%%: 2
+dim_observation%%: 2 

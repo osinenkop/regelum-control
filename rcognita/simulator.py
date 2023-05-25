@@ -31,7 +31,7 @@ class Simulator(rcognita.base.RcognitaBase):
 
     Attributes
     ----------
-    sys_type : : string
+    system_type : : string
         Type of system by description:
 
         | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, u, q)`
@@ -49,9 +49,9 @@ class Simulator(rcognita.base.RcognitaBase):
         Say, if you instantiated a concrete system (i.e., as an instance of a subclass of ``system`` class with concrete ``compute_closed_loop_rhs`` method) as ``system``,
         this could be just ``system.compute_closed_loop_rhs``.
 
-    sys_out : : function
+    get_observation : : function
         System output function.
-        Same as above, this could be, say, ``system.out``.
+        Same as above, this could be, say, ``system.get_observation``.
 
     is_dynamic_controller : : 0 or 1
         If 1, the controller (a.k.a. agent) is considered as a part of the full state vector.
@@ -63,7 +63,7 @@ class Simulator(rcognita.base.RcognitaBase):
         Initial, final times and time step size
 
     max_step, first_step, atol, rtol : : numbers
-        Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
+        Parameters for an ODE solver (used if ``system_type`` is ``diff_eqn``).
 
     See also
     --------
@@ -76,7 +76,6 @@ class Simulator(rcognita.base.RcognitaBase):
         self,
         system,
         state_init,
-        sys_type="diff_eqn",
         disturb_init=None,
         action_init=None,
         time_start=0,
@@ -90,11 +89,10 @@ class Simulator(rcognita.base.RcognitaBase):
         is_dynamic_controller=0,
         ode_backend="SciPy",
     ):
-
         """
         Parameters
         ----------
-        sys_type : : string
+        system_type : : string
             Type of system by description:
 
             | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, u, q)`
@@ -112,9 +110,9 @@ class Simulator(rcognita.base.RcognitaBase):
             Say, if you instantiated a concrete system (i.e., as an instance of a subclass of ``System`` class with concrete ``compute_closed_loop_rhs`` method) as ``system``,
             this could be just ``system.compute_closed_loop_rhs``.
 
-        sys_out : : function
+        get_observation : : function
             System output function.
-            Same as above, this could be, say, ``system.out``.
+            Same as above, this could be, say, ``system.get_observation``.
 
         is_dynamic_controller : : 0 or 1
             If 1, the controller (a.k.a. agent) is considered as a part of the full state vector.
@@ -126,12 +124,11 @@ class Simulator(rcognita.base.RcognitaBase):
             Initial, final times and time step size
 
         max_step, first_step, atol, rtol : : numbers
-            Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
+            Parameters for an ODE solver (used if ``system_type`` is ``diff_eqn``).
         """
         self.system = system
-        self.sys_type = sys_type
         self.compute_closed_loop_rhs = system.compute_closed_loop_rhs
-        self.sys_out = system.out
+        self.get_observation = system.get_observation
         self.sampling_time = sampling_time
         if disturb_init is None:
             disturb_init = []
@@ -158,7 +155,9 @@ class Simulator(rcognita.base.RcognitaBase):
         self.action_init = action_init
         self.state = state_init
         self.dim_state = state_init.shape[0]
-        self.observation = self.sys_out(state_init, time=self.time)
+        self.observation = self.get_observation(
+            time=self.time, state=state_init, action=action_init
+        )
         self.max_step = max_step
         self.atol = atol
         self.rtol = rtol
@@ -166,7 +165,7 @@ class Simulator(rcognita.base.RcognitaBase):
         self.first_step = first_step
         self.ode_backend = ode_backend
 
-        if sys_type == "diff_eqn":
+        if system.system_type == "diff_eqn":
             self.initialize_ODE_solver()
 
         # Store these for reset purposes
@@ -193,7 +192,7 @@ class Simulator(rcognita.base.RcognitaBase):
         Do one simulation step and update current simulation data (time, system state and output).
 
         """
-        if self.sys_type == "diff_eqn":
+        if self.system.system_type == "diff_eqn":
             try:
                 self.ODE_solver.step()
             except RuntimeError:
@@ -204,16 +203,18 @@ class Simulator(rcognita.base.RcognitaBase):
             self.state_full = self.ODE_solver.y
 
             self.state = self.state_full[0 : self.dim_state]
-            self.observation = self.sys_out(self.state, self.time)
+            self.observation = self.get_observation(
+                time=self.time, state=self.state, action=None
+            )
 
-        elif self.sys_type == "discr_fnc":
+        elif self.system.system_type == "discr_fnc":
             self.time = self.time + self.sampling_time
             self.state_full = self.compute_closed_loop_rhs(self.time, self.state_full)
 
             self.state = self.state_full[0 : self.dim_state]
-            self.observation = self.sys_out(self.state)
+            self.observation = self.get_observation(self.state)
 
-        elif self.sys_type == "discr_prob":
+        elif self.system.system_type == "discr_prob":
             self.state_full = rej_sampling_rvs(
                 self.dim_state, self.compute_closed_loop_rhs, 10
             )
@@ -221,7 +222,7 @@ class Simulator(rcognita.base.RcognitaBase):
             self.time = self.time + self.sampling_time
 
             self.state = self.state_full[0 : self.dim_state]
-            self.observation = self.sys_out(self.state)
+            self.observation = self.get_observation(self.state)
         else:
             raise ValueError("Invalid system description")
 
@@ -234,18 +235,21 @@ class Simulator(rcognita.base.RcognitaBase):
         time, state, observation, state_full = (
             self.time,
             self.state,
-            self.sys_out(self.state, time=self.time),
+            self.get_observation(time=self.time, state=self.state, action=None),
             self.state_full,
         )
 
         return time, state, observation, state_full
 
     def reset(self):
-        if self.sys_type == "diff_eqn":
+        if self.system.system_type == "diff_eqn":
             self.initialize_ODE_solver()
             self.time = self.time_start
             self.state = self.state_full_init
-            self.observation = self.sys_out(self.state_full_init, time=self.time)
+            self.observation = self.get_observation(
+                time=self.time, state=self.state_full_init, action=None
+            )
+            self.system.reset()
         else:  #### to extend further functionality
             self.time = self.time_start
             self.observation = self.state_full_init

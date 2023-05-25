@@ -9,17 +9,6 @@ from abc import ABC, abstractmethod
 import rcognita.base
 
 
-def inject_observation_target(observation_target):
-    def decorator(objective):
-        def wrapper(self, observation, action):
-            observation -= observation_target
-            return objective(self, observation, action)
-
-        return wrapper
-
-    return decorator
-
-
 class Objective(rcognita.base.RcognitaBase, ABC):
     def __init__(self):
         pass

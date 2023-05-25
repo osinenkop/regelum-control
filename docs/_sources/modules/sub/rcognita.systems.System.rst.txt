@@ -15,7 +15,7 @@ rcognita.systems.System
    
       ~System.__init__
       ~System.compute_closed_loop_rhs
-      ~System.compute_dynamics
+      ~System.compute_state_dynamics
       ~System.out
       ~System.receive_action
       ~System.reset

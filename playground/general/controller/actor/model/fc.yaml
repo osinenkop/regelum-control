@@ -1,7 +1,7 @@
 _target_: rcognita.models.ModelFc
 
-dim_action: $ controller.actor.dim_output
-dim_observation: $ controller.actor.dim_input
+dim_output: $ controller.actor.dim_action
+dim_input: $ controller.actor.dim_observation
 use_derivative: $ controller.actor.is_use_derivative
 weight_min: = None
 weight_max: 1

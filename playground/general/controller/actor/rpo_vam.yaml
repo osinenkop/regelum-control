@@ -3,7 +3,7 @@ defaults:
   - optimizer: casadi 
   - predictor: euler
 
-_target_: rcognita.actors.ActorRPO
+_target_: rcognita.actors.ActorRPOWithRobustigyingTerm
 
 ###---Constructor arguments---###
 system: ~ system
@@ -17,3 +17,5 @@ state_init: $ scenario.state_init
 critic: ~ controller.critic
 running_objective: $ running_objective
 observation_target: $ system_specific.observation_target
+K: 10.
+A: 10.

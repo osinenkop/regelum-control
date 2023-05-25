@@ -175,6 +175,46 @@ class ModelQuadLin(Model):
         return result
 
 
+class ModelQuadLinQuad(Model):
+    """
+    Quadratic-linear model.
+
+    """
+
+    model_name = "quad-lin"
+
+    def __init__(
+        self,
+        dim_input,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
+        force_positive_def=True,
+    ):
+        self.dim_weights = int((dim_input + 1) * dim_input / 2 + dim_input) + dim_input
+        self.dim_input = dim_input
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
+        self.weights_init = (self.weight_min + self.weight_max) / 20.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
+
+    @force_positive_def
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
+            vec = rc.concatenate(tuple(argin))
+        else:
+            vec = argin[0]
+
+        polynom = rc.uptria2vec(rc.outer(vec, vec))
+        polynom = rc.concatenate([polynom, vec])
+        result = (rc.abs(rc.dot(weights[: -self.dim_input], polynom)) + 1) * rc.sqrt(
+            rc.dot(weights[-self.dim_input :], vec**2)
+        )
+
+        return result
+
+
 class ModelQuadratic(Model):
     """
     Quadratic model. May contain mixed terms.
@@ -837,7 +877,6 @@ class ModelPerceptronCalf(Model):
         bias=False,
         leaky_relu_coef=0.2,
     ):
-
         self.weight_min = single_weight_min
         self.weight_max = single_weight_max
         self.in_layer = self.Linear(
@@ -1028,7 +1067,6 @@ class ModelNNElementWiseProduct(ModelNN):
     def __init__(
         self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
     ):
-
         super().__init__()
 
         if use_derivative:

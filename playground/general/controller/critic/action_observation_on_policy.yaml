@@ -6,8 +6,8 @@ _target_: rcognita.critics.CriticOfActionObservationOnPolicy
 
 ###---Constructor arguments---###
 
-system_dim_input: $ system.dim_input
-system_dim_output: $ system.dim_output
+system_dim_input: $ system.dim_action%%
+system_dim_output: $ system.dim_observation%%
 data_buffer_size: 8
 running_objective: ~ running_objective
 discount_factor: $ controller.actor.discount_factor

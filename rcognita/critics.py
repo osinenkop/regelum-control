@@ -338,7 +338,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.initialize_buffers()
 
     def _SciPy_update(self, intrinsic_constraints=None):
-
         weights_init = self.model.cache.weights
 
         constraints = ()
@@ -367,7 +366,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return optimized_weights
 
     def _CasADi_update(self, intrinsic_constraints=None):
-
         weights_init = rc.DM(self.model.cache.weights)
         symbolic_var = rc.array_symb(tup=rc.shape(weights_init), prototype=weights_init)
 
@@ -406,7 +404,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return optimized_weights
 
     def _Torch_update(self):
-
         data_buffer = {
             "observation_buffer": self.observation_buffer,
             "action_buffer": self.action_buffer,
@@ -810,7 +807,9 @@ class CriticCALF(CriticOfObservation):
         self.ub_parameter = ub_parameter
         self.safe_controller = safe_controller
         self.predictor = predictor
-        self.observation_init = self.predictor.system.out(state_init)
+        self.observation_init = self.predictor.system.get_observation(
+            time=0, state=state_init, action=action_init
+        )
         self.action_init = action_init
         self.observation_last_good = self.observation_init
         self.r_prev_init = self.r_prev = self.running_objective(
@@ -942,8 +941,8 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         action = self.safe_controller.compute_action(self.current_observation)
-        predicted_observation = self.predictor.system.out(
-            self.predictor.predict(self.state, action)
+        predicted_observation = self.predictor.system.get_observation(
+            time=None, state=self.predictor.predict(self.state, action), action=action
         )
         self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
             predicted_observation - self.observation_target
@@ -980,8 +979,10 @@ class CriticCALF(CriticOfObservation):
         self.safe_action = action = self.safe_controller.compute_action(
             self.current_observation
         )
-        self.predicted_observation = predicted_observation = self.predictor.system.out(
-            self.predictor.predict(self.state, action)
+        self.predicted_observation = (
+            predicted_observation
+        ) = self.predictor.system.get_observation(
+            time=None, state=self.predictor.predict(self.state, action), action=action
         )
 
         self.critic_next = self.model(
@@ -1009,8 +1010,8 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         action = self.action_buffer[:, -1]
-        predicted_observation = self.predictor.system.out(
-            self.predictor.predict(self.state, action)
+        predicted_observation = self.predictor.system.get_observation(
+            time=None, state=self.predictor.predict(self.state, action), action=action
         )
         self.stabilizing_constraint_violation = (
             self.model(predicted_observation - self.observation_target, weights=weights)

@@ -5,7 +5,6 @@ _target_: rcognita.simulator.Simulator
 
 ###---Constructor arguments---###
 
-sys_type: $ system.sys_type
 state_init: $ initial_conditions.state_init
 action_init: $ initial_conditions.action_init
 disturb_init: = None

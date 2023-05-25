@@ -4,7 +4,7 @@ _target_: rcognita.predictors.RKPredictor
 
 pred_step_size: = ${controller.sampling_time} * ${.pred_step_size_multiplier%%}
 system: $ simulator.system
-dim_input: $ controller.actor.dim_input
+dim_observation: $ controller.actor.dim_observation
 prediction_horizon: 1
 state_or_observation_init: $ scenario.state_init
 action_init: $ scenario.action_init

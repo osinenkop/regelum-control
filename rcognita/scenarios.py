@@ -74,7 +74,6 @@ class OnlineScenario(Scenario):
         simulator: Simulator,
         controller: Controller,
         running_objective: Optional[RunningObjective] = None,
-        is_log: bool = False,
         howanim: str = None,
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
@@ -85,7 +84,6 @@ class OnlineScenario(Scenario):
         N_iterations=1,
         speedup=1,
     ):
-
         self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -121,7 +119,6 @@ class OnlineScenario(Scenario):
                 )
         self.time_start = time_start
         self.time_final = self.simulator.time_final
-        self.is_log = is_log
         self.howanim = howanim
         self.is_playback = (
             self.howanim in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
@@ -130,7 +127,9 @@ class OnlineScenario(Scenario):
         self.state_full = state_init
         self.action_init = action_init
         self.action = self.action_init
-        self.observation = self.system.out(self.state_init)
+        self.observation = self.system.get_observation(
+            time=0, state=self.state_init, action=self.action_init
+        )
         self.observation_target = (
             np.zeros_like(self.observation)
             if observation_target is None or observation_target == []
@@ -165,7 +164,6 @@ class OnlineScenario(Scenario):
         return len(self.cache)
 
     def update_total_objective(self, observation, action, delta):
-
         """
         Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
@@ -189,7 +187,9 @@ class OnlineScenario(Scenario):
         if hasattr(self.controller, "reset"):
             self.controller.reset()
         self.simulator.reset()
-        self.observation = self.system.out(self.state_init, time=0)
+        self.observation = self.system.get_observation(
+            time=0, state=self.state_init, action=self.action_init
+        )
         self.sim_status = 0
         return self.recent_total_objective
 

@@ -10,8 +10,8 @@ _target_: rcognita.actors.ActorPG
 system: ~ system
 N_episodes: $ scenario.N_episodes
 N_iterations: $ scenario.N_iterations
-dim_output: $ system.dim_input
-dim_input: $ system.dim_output
+dim_action: $ system.dim_action%%
+dim_observation: $ system.dim_observation%%
 discount_factor: 1.
 action_bounds: $ system.action_bounds%%
 action_init: $ scenario.action_init

@@ -68,7 +68,7 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
     ) -> None:
         super(ObservationActionObjectiveAccStatsDataset, self).__init__()
         self.system = system
-        self.derivative = system.compute_dynamics
+        self.derivative = system.compute_state_dynamics
         self.is_use_derivative = is_use_derivative
         self.is_cat_action = is_cat_action
         self.is_tail_sum_running_objectives = is_tail_sum_running_objectives
