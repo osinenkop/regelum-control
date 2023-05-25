@@ -15,13 +15,15 @@ rcognita.visualization.vis\_2tank.Animator2Tank
    
       ~Animator2Tank.__init__
       ~Animator2Tank.animate
+      ~Animator2Tank.animate_live
       ~Animator2Tank.collect_dashboards
-      ~Animator2Tank.get_anm
+      ~Animator2Tank.connect_events
       ~Animator2Tank.get_index
       ~Animator2Tank.init_anim
+      ~Animator2Tank.play_live
       ~Animator2Tank.playback
+      ~Animator2Tank.save_animation
       ~Animator2Tank.set_sim_data
-      ~Animator2Tank.stop_anm
       ~Animator2Tank.update_dashboards
       ~Animator2Tank.update_sim_data_row
    

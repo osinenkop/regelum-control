@@ -10,6 +10,14 @@
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      hash_string
+      obtain
+   
    
 
    
@@ -26,6 +34,12 @@
 
    
    
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      RcognitaExitException
+   
    
 
 
@@ -37,11 +51,13 @@
    :toctree:
    :recursive:
 
-   rcognita.ROS_harnesses
    rcognita.actors
+   rcognita.adaptation_blocks
+   rcognita.base
    rcognita.callbacks
    rcognita.controllers
    rcognita.critics
+   rcognita.data_buffers
    rcognita.loggers
    rcognita.models
    rcognita.objectives
@@ -49,6 +65,7 @@
    rcognita.optimizers
    rcognita.predictors
    rcognita.scenarios
+   rcognita.scripts
    rcognita.simulator
    rcognita.solvers
    rcognita.systems

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.systems.System &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.systems.System &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="rcognita.systems.System2Tank" href="rcognita.systems.System2Tank.html" />
-    <link rel="prev" title="rcognita.systems.SysInvertedPendulumPD" href="rcognita.systems.SysInvertedPendulumPD.html" /> 
+    <link rel="prev" title="rcognita.systems.SysKinematicPoint" href="rcognita.systems.SysKinematicPoint.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -57,9 +57,12 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
@@ -67,24 +70,30 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="rcognita.systems.CartPole.html">rcognita.systems.CartPole</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.GridWorld.html">rcognita.systems.GridWorld</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.systems.LunarLander.html">rcognita.systems.LunarLander</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.Sys3WRobot.html">rcognita.systems.Sys3WRobot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.Sys3WRobotNI.html">rcognita.systems.Sys3WRobotNI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysInvertedPendulum.html">rcognita.systems.SysInvertedPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysInvertedPendulumPD.html">rcognita.systems.SysInvertedPendulumPD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysKinematicPoint.html">rcognita.systems.SysKinematicPoint</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.systems.System</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.System2Tank.html">rcognita.systems.System2Tank</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -116,9 +125,9 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.systems.System">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.systems.</span></span><span class="sig-name descname"><span class="pre">System</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sys_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_state</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_input</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_output</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_disturb</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_dynamic_controller</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_disturb</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars_disturb</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.systems.System" title="Permalink to this definition"></a></dt>
-<dd><blockquote>
-<div><p>Interface class of dynamical systems a.k.a. environments.
-Concrete systems should be built upon this class.
+<dd><p>Interface class of dynamical systems a.k.a. environments.</p>
+<blockquote>
+<div><p>Concrete systems should be built upon this class.
 To design a concrete system: inherit this class, override:</p>
 <blockquote>
 <div><div class="line-block">
@@ -129,46 +138,119 @@ To design a concrete system: inherit this class, override:</p>
 <div class="line"><code class="xref py py-func docutils literal notranslate"><span class="pre">_dynamic_control()</span></code> :</div>
 <div class="line">right-hand side of controller dynamical model (if necessary)</div>
 <div class="line"><code class="xref py py-func docutils literal notranslate"><span class="pre">out()</span></code> :</div>
-<div class="line">system out (if not overridden, output is identical to state)</div>
+<div class="line">system out (if not overridden, output is identical to state).</div>
 </div>
 </div></blockquote>
-<dl>
-<dt>sys_type<span class="classifier">: string</span></dt><dd><p>Type of system by description:</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.sys_type">
+<span class="sig-name descname"><span class="pre">sys_type</span></span><a class="headerlink" href="#rcognita.systems.System.sys_type" title="Permalink to this definition"></a></dt>
+<dd><p>Type of system by description:</p>
 <div class="line-block">
 <div class="line"><code class="docutils literal notranslate"><span class="pre">diff_eqn</span></code> : differential equation <span class="math notranslate nohighlight">\(\mathcal D state = f(state, action, disturb)\)</span></div>
 <div class="line"><code class="docutils literal notranslate"><span class="pre">discr_fnc</span></code> : difference equation <span class="math notranslate nohighlight">\(state^+ = f(state, action, disturb)\)</span></div>
 <div class="line"><code class="docutils literal notranslate"><span class="pre">discr_prob</span></code> :  by probability distribution <span class="math notranslate nohighlight">\(X^+ \sim P_X(state^+| state, action, disturb)\)</span></div>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: string</p>
 </dd>
 </dl>
-<p>where:</p>
-<blockquote>
-<div><div class="line-block">
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.where">
+<span class="sig-name descname"><span class="pre">where</span></span><a class="headerlink" href="#rcognita.systems.System.where" title="Permalink to this definition"></a></dt>
+<dd><div class="line-block">
 <div class="line"><span class="math notranslate nohighlight">\(state\)</span> : state</div>
 <div class="line"><span class="math notranslate nohighlight">\(action\)</span> : input</div>
 <div class="line"><span class="math notranslate nohighlight">\(disturb\)</span> : disturbance</div>
 </div>
-</div></blockquote>
-<p>The time variable <code class="docutils literal notranslate"><span class="pre">time</span></code> is commonly used by ODE solvers, and you shouldn’t have it explicitly referenced in the definition, unless your system is non-autonomous.
-For the latter case, however, you already have the input and disturbance at your disposal.</p>
-<p>Parameters of the system are contained in <code class="docutils literal notranslate"><span class="pre">pars</span></code> attribute.</p>
-<dl>
-<dt>dim_state, dim_input, dim_output, dim_disturb<span class="classifier">: integer</span></dt><dd><p>System dimensions</p>
-</dd>
-<dt>pars<span class="classifier">: list</span></dt><dd><p>List of fixed parameters of the system</p>
-</dd>
-<dt>action_bounds<span class="classifier">: array of shape <code class="docutils literal notranslate"><span class="pre">[dim_input,</span> <span class="pre">2]</span></code></span></dt><dd><p>Box control constraints.
-First element in each row is the lower bound, the second - the upper bound.
-If empty, control is unconstrained (default)</p>
-</dd>
-<dt>is_dynamic_controller<span class="classifier">: 0 or 1</span></dt><dd><p>If 1, the controller (a.k.a. agent) is considered as a part of the full state vector</p>
-</dd>
-<dt>is_disturb<span class="classifier">: 0 or 1</span></dt><dd><p>If 0, no disturbance is fed into the system</p>
-</dd>
-<dt>pars_disturb<span class="classifier">: list</span></dt><dd><p>Parameters of the disturbance model</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">The</span> <span class="pre">time</span> <span class="pre">variable</span> <span class="pre">``time``</span> <span class="pre">is</span> <span class="pre">commonly</span> <span class="pre">used</span> <span class="pre">by</span> <span class="pre">ODE</span> <span class="pre">solvers,</span> <span class="pre">and</span> <span class="pre">you</span> <span class="pre">shouldn't</span> <span class="pre">have</span> <span class="pre">it</span> <span class="pre">explicitly</span> <span class="pre">referenced</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">definition,</span> <span class="pre">unless</span> <span class="pre">your</span> <span class="pre">system</span> <span class="pre">is</span> <span class="pre">non-autonomous.</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">For</span> <span class="pre">the</span> <span class="pre">latter</span> <span class="pre">case,</span> <span class="pre">however,</span> <span class="pre">you</span> <span class="pre">already</span> <span class="pre">have</span> <span class="pre">the</span> <span class="pre">input</span> <span class="pre">and</span> <span class="pre">disturbance</span> <span class="pre">at</span> <span class="pre">your</span> <span class="pre">disposal.</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Parameters</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">system</span> <span class="pre">are</span> <span class="pre">contained</span> <span class="pre">in</span> <span class="pre">``pars``</span> <span class="pre">attribute.</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">dim_state,</span> <span class="pre">dim_input,</span> <span class="pre">dim_output,</span> <span class="pre">dim_disturb</span></span></dt>
+<dd><p>System dimensions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: integer</p>
 </dd>
 </dl>
-</div></blockquote>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.pars">
+<span class="sig-name descname"><span class="pre">pars</span></span><a class="headerlink" href="#rcognita.systems.System.pars" title="Permalink to this definition"></a></dt>
+<dd><p>List of fixed parameters of the system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.action_bounds">
+<span class="sig-name descname"><span class="pre">action_bounds</span></span><a class="headerlink" href="#rcognita.systems.System.action_bounds" title="Permalink to this definition"></a></dt>
+<dd><p>Box control constraints.
+First element in each row is the lower bound, the second - the upper bound.
+If empty, control is unconstrained (default)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: array of shape <code class="docutils literal notranslate"><span class="pre">[dim_input,</span> <span class="pre">2]</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.is_dynamic_controller">
+<span class="sig-name descname"><span class="pre">is_dynamic_controller</span></span><a class="headerlink" href="#rcognita.systems.System.is_dynamic_controller" title="Permalink to this definition"></a></dt>
+<dd><p>If 1, the controller (a.k.a. agent) is considered as a part of the full state vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: 0 or 1</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.is_disturb">
+<span class="sig-name descname"><span class="pre">is_disturb</span></span><a class="headerlink" href="#rcognita.systems.System.is_disturb" title="Permalink to this definition"></a></dt>
+<dd><p>If 0, no disturbance is fed into the system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: 0 or 1</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rcognita.systems.System.pars_disturb">
+<span class="sig-name descname"><span class="pre">pars_disturb</span></span><a class="headerlink" href="#rcognita.systems.System.pars_disturb" title="Permalink to this definition"></a></dt>
+<dd><p>Parameters of the disturbance model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>: list</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p>Each concrete system must realize <code class="docutils literal notranslate"><span class="pre">System</span></code> and define <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.systems.System.__init__">
@@ -233,13 +315,16 @@ If empty, control is unconstrained (default)</p></li>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_dynamics</span></code>(time, state, action, disturb)</p></td>
 <td><p>Description of the system internal dynamics.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">out</span></code>(state[, time, action])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_state</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">out</span></code>(state[, time, action])</p></td>
 <td><p>System output.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_action</span></code>(action)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_action</span></code>(action)</p></td>
 <td><p>Receive exogeneous control action to be fed into the system.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -252,7 +337,7 @@ If empty, control is unconstrained (default)</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="rcognita.systems.SysInvertedPendulumPD.html" class="btn btn-neutral float-left" title="rcognita.systems.SysInvertedPendulumPD" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rcognita.systems.SysKinematicPoint.html" class="btn btn-neutral float-left" title="rcognita.systems.SysKinematicPoint" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="rcognita.systems.System2Tank.html" class="btn btn-neutral float-right" title="rcognita.systems.System2Tank" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

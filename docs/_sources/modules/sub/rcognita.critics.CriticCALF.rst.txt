@@ -14,6 +14,7 @@ rcognita.critics.CriticCALF
    .. autosummary::
    
       ~CriticCALF.CALF_critic_lower_bound_constraint
+      ~CriticCALF.CALF_critic_lower_bound_constraint_predictive
       ~CriticCALF.CALF_critic_upper_bound_constraint
       ~CriticCALF.CALF_decay_constraint_no_prediction
       ~CriticCALF.CALF_decay_constraint_predicted_on_policy
@@ -24,12 +25,13 @@ rcognita.critics.CriticCALF
       ~CriticCALF.initialize_buffers
       ~CriticCALF.objective
       ~CriticCALF.optimize_weights
+      ~CriticCALF.receive_state
       ~CriticCALF.reset
       ~CriticCALF.restore_weights
       ~CriticCALF.update_and_cache_weights
       ~CriticCALF.update_buffers
-      ~CriticCALF.update_total_objective
       ~CriticCALF.update_target
+      ~CriticCALF.update_total_objective
       ~CriticCALF.update_weights
    
    
@@ -41,5 +43,6 @@ rcognita.critics.CriticCALF
    .. autosummary::
    
       ~CriticCALF.optimizer_engine
+      ~CriticCALF.weights
    
    

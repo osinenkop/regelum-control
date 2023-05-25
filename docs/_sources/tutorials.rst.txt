@@ -74,7 +74,7 @@ Consider the following files in your hypothetical project.
 
     import rcognita as r
     from rcognita.simulator import Simulator
-    from rcognita.scenarios import OnlineScenario
+    from rcognita.scenarios import EpisodicScenario
     import my_utilities
     import numpy
 
@@ -90,7 +90,7 @@ Consider the following files in your hypothetical project.
         simulator = Simulator(robot,
                               config.initial_state,
                               sampling_time=config.rate)
-        scenario = OnlineScenario(simulator, controller)
+        scenario = EpisodicScenario(simulator, controller)
         scenario.run()
 
 

@@ -154,7 +154,9 @@ def _resolve_target(
 
 
 def instantiate(config: Any, *args: Any, path=None, **kwargs: Any) -> Any:
-    """:param config: An config object describing what to call and what params to use.
+    """Instantiate an object described by the config.
+
+    :param config: An config object describing what to call and what params to use.
                    In addition to the parameters, the config must contain:
                    _target_ : target class or callable name (str)
                    And may contain:

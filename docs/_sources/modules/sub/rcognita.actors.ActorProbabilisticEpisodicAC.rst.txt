@@ -18,8 +18,10 @@ rcognita.actors.ActorProbabilisticEpisodicAC
       ~ActorProbabilisticEpisodicAC.cache_weights
       ~ActorProbabilisticEpisodicAC.create_observation_constraints
       ~ActorProbabilisticEpisodicAC.get_action
+      ~ActorProbabilisticEpisodicAC.iteration_update
       ~ActorProbabilisticEpisodicAC.optimize_weights
       ~ActorProbabilisticEpisodicAC.receive_observation
+      ~ActorProbabilisticEpisodicAC.receive_state
       ~ActorProbabilisticEpisodicAC.reset
       ~ActorProbabilisticEpisodicAC.restore_weights
       ~ActorProbabilisticEpisodicAC.set_action
@@ -27,11 +29,18 @@ rcognita.actors.ActorProbabilisticEpisodicAC
       ~ActorProbabilisticEpisodicAC.update
       ~ActorProbabilisticEpisodicAC.update_action
       ~ActorProbabilisticEpisodicAC.update_and_cache_weights
+      ~ActorProbabilisticEpisodicAC.update_target
       ~ActorProbabilisticEpisodicAC.update_weights
       ~ActorProbabilisticEpisodicAC.update_weights_by_gradient
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorProbabilisticEpisodicAC.weights
    
    

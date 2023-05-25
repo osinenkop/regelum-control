@@ -14,10 +14,23 @@ rcognita.callbacks.StateCallback
    .. autosummary::
    
       ~StateCallback.__init__
+      ~StateCallback.is_target_event
+      ~StateCallback.on_episode_done
+      ~StateCallback.on_iteration_done
+      ~StateCallback.on_launch
+      ~StateCallback.on_termination
       ~StateCallback.perform
+      ~StateCallback.ready
+      ~StateCallback.trigger_cooldown
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~StateCallback.cooldown
    
    

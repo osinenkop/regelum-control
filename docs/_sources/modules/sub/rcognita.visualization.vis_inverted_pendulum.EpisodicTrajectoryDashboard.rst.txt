@@ -14,10 +14,8 @@ rcognita.visualization.vis\_inverted\_pendulum.EpisodicTrajectoryDashboard
    .. autosummary::
    
       ~EpisodicTrajectoryDashboard.__init__
-      ~EpisodicTrajectoryDashboard.init_dashboard
       ~EpisodicTrajectoryDashboard.perform_episodic_update
       ~EpisodicTrajectoryDashboard.perform_iterative_update
-      ~EpisodicTrajectoryDashboard.perform_step_update
       ~EpisodicTrajectoryDashboard.update
    
    

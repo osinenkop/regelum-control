@@ -531,7 +531,7 @@ class ActorPGBase(Actor, ABC):
 
     @abstractmethod
     def objective(self, batch):
-        """The problem for PG is stated as follows.
+        r"""The problem for PG is stated as follows.
 
         :math:`L = \\mathbb{E}\\left[\\sum_{k=1}^T r_k \\right] \\rightarrow \\min`
 
@@ -658,7 +658,7 @@ class ActorPID(Actor):
 
 
 class ActorMPC(Actor):
-    """Model-predictive control (MPC) actor.
+    r"""Model-predictive control (MPC) actor.
     Optimizes the following actor objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
 
@@ -709,7 +709,7 @@ class ActorMPC(Actor):
 
 
 class ActorMPCTerminal(Actor):
-    """Model-predictive control (MPC) actor.
+    r"""Model-predictive control (MPC) actor.
     Optimizes the following actor objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
 
@@ -760,7 +760,7 @@ class ActorMPCTerminal(Actor):
 
 
 class ActorSQL(Actor):
-    """Staked Q-learning (SQL) actor.
+    r"""Staked Q-learning (SQL) actor.
     Optimizes the following actor objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`.
 
@@ -821,7 +821,7 @@ class ActorSQL(Actor):
 
 
 class ActorRQL(Actor):
-    """Rollout Q-learning (RQL) actor.
+    r"""Rollout Q-learning (RQL) actor.
     Optimizes the following actor objective:
 
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
@@ -886,7 +886,7 @@ class ActorRQL(Actor):
 
 
 class ActorRPO(Actor):
-    """Running (objective) Plus Optimal (objective) actor.
+    r"""Running (objective) Plus Optimal (objective) actor.
     Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
@@ -1071,7 +1071,7 @@ class ActorCLF(ActorCALF):
 
 
 class ActorTabular(ActorRPO):
-    """Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+    r"""Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
 

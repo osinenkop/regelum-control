@@ -17,8 +17,9 @@ rcognita.controllers.CALFControllerExPost
       ~CALFControllerExPost.collect_critic_stats
       ~CALFControllerExPost.compute_action
       ~CALFControllerExPost.compute_action_sampled
-      ~CALFControllerExPost.compute_weights_displacement
+      ~CALFControllerExPost.compute_weights_disetpointlacement
       ~CALFControllerExPost.invoke_safe_action
+      ~CALFControllerExPost.pre_compute_action
       ~CALFControllerExPost.reset
    
    

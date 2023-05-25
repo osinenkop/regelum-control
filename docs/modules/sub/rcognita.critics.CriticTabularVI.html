@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.critics.CriticTabularVI &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.critics.CriticTabularVI &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -56,18 +56,23 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.Critic.html">rcognita.critics.Critic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticCALF.html">rcognita.critics.CriticCALF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfActionObservation.html">rcognita.critics.CriticOfActionObservation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfActionObservationOnPolicy.html">rcognita.critics.CriticOfActionObservationOnPolicy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfObservation.html">rcognita.critics.CriticOfObservation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyBehaviour.html">rcognita.critics.CriticOffPolicyBehaviour</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyGreedy.html">rcognita.critics.CriticOffPolicyGreedy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticTabularPI.html">rcognita.critics.CriticTabularPI</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.critics.CriticTabularVI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticTrivial.html">rcognita.critics.CriticTrivial</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
@@ -75,15 +80,18 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -164,23 +172,23 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_weights</span></code>([time])</p></td>
 <td><p>Compute optimized critic weights, possibly subject to constraints.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_state</span></code>(state)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
 <td><p>Reset the outcome and current critic loss variables, and re-initialize the buffers.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_weights</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_weights</span></code>()</p></td>
 <td><p>Restores the model weights to the cached weights.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code>()</p></td>
 <td><p>Update the value function for all states.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_cache_weights</span></code>([weights])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_cache_weights</span></code>([weights])</p></td>
 <td><p>Update the model’s weights and cache the new values.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_buffers</span></code>(observation, action)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_buffers</span></code>(observation, action)</p></td>
 <td><p>Updates the buffers of the critic with the given observation and action.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_total_objective</span></code>(observation, action)</p></td>
-<td><p>Update the outcome variable based on the running objective and the current observation and action.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_single_cell</span></code>(observation)</p></td>
 <td><p>Update the value function for a single state.</p></td>
@@ -188,7 +196,10 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_target</span></code>(new_target)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_weights</span></code>([weights])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_total_objective</span></code>(observation, action)</p></td>
+<td><p>Update the outcome variable based on the running objective and the current observation and action.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_weights</span></code>([weights])</p></td>
 <td><p>Update the weights of the critic model.</p></td>
 </tr>
 </tbody>
@@ -202,6 +213,9 @@
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimizer_engine</span></code></p></td>
 <td><p>Returns the engine used by the optimizer.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weights</span></code></p></td>
+<td><p>Get the weights of the critic model.</p></td>
 </tr>
 </tbody>
 </table>

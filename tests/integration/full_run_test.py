@@ -1,4 +1,5 @@
 
 
 def test_no_error(result):
-    assert not isinstance(result, Exception)
+    if isinstance(result, Exception):
+        raise result

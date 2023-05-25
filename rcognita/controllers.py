@@ -480,7 +480,7 @@ class Controller3WRobotDisassembledCLF:
         return theta_val
 
     def _Cart2NH(self, coords_Cart):
-        """Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
+        r"""Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
         See Section VIII.A in [[1]_].
 
         The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
@@ -512,7 +512,7 @@ class Controller3WRobotDisassembledCLF:
         return [xNI, eta]
 
     def _NH2ctrl_Cart(self, xNI, eta, uNI):
-        """Get control for Cartesian NI from NH coordinates.
+        r"""Get control for Cartesian NI from NH coordinates.
         See Section VIII.A in [[1]_].
 
         The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.

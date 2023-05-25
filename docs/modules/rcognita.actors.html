@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.actors &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.actors &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -17,7 +17,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="rcognita.actors.Actor" href="sub/rcognita.actors.Actor.html" />
+    <link rel="next" title="rcognita.actors.force_type_safety" href="sub/rcognita.actors.force_type_safety.html" />
     <link rel="prev" title="Configs and basic rcognita applications" href="../tutorials.html" /> 
 </head>
 
@@ -56,21 +56,31 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.force_type_safety.html">rcognita.actors.force_type_safety</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.Actor.html">rcognita.actors.Actor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorCALF.html">rcognita.actors.ActorCALF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorCLF.html">rcognita.actors.ActorCLF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorDDPG.html">rcognita.actors.ActorDDPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorMPC.html">rcognita.actors.ActorMPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorMPCTerminal.html">rcognita.actors.ActorMPCTerminal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorPG.html">rcognita.actors.ActorPG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorPGBase.html">rcognita.actors.ActorPGBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorPID.html">rcognita.actors.ActorPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodic.html">rcognita.actors.ActorProbabilisticEpisodic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodicAC.html">rcognita.actors.ActorProbabilisticEpisodicAC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorRPO.html">rcognita.actors.ActorRPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorRQL.html">rcognita.actors.ActorRQL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorSDPG.html">rcognita.actors.ActorSDPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorSQL.html">rcognita.actors.ActorSQL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorTabular.html">rcognita.actors.ActorTabular</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
@@ -78,15 +88,18 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -122,6 +135,18 @@ Actors are inegrated into controllers (agents).</p>
 <li><p>All buffers are treated as of type [L, n] where each row is a vector</p></li>
 <li><p>Buffers are updated from bottom to top</p></li>
 </ul>
+<p class="rubric">Functions</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.force_type_safety.html#rcognita.actors.force_type_safety" title="rcognita.actors.force_type_safety"><code class="xref py py-obj docutils literal notranslate"><span class="pre">force_type_safety</span></code></a>(method)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Classes</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -138,20 +163,38 @@ Actors are inegrated into controllers (agents).</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorCLF.html#rcognita.actors.ActorCLF" title="rcognita.actors.ActorCLF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorCLF</span></code></a>(*args, **kwargs)</p></td>
 <td><p>ActorCLF is an actor class that aims to optimize the decay of a Control-Lyapunov function (CLF).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorMPC.html#rcognita.actors.ActorMPC" title="rcognita.actors.ActorMPC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorMPC</span></code></a>(dim_output, dim_input, …[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorDDPG.html#rcognita.actors.ActorDDPG" title="rcognita.actors.ActorDDPG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorDDPG</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorMPC.html#rcognita.actors.ActorMPC" title="rcognita.actors.ActorMPC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorMPC</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Model-predictive control (MPC) actor.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodic.html#rcognita.actors.ActorProbabilisticEpisodic" title="rcognita.actors.ActorProbabilisticEpisodic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodic</span></code></a>(dim_output, dim_input)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorMPCTerminal.html#rcognita.actors.ActorMPCTerminal" title="rcognita.actors.ActorMPCTerminal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorMPCTerminal</span></code></a>(dim_output, dim_input, …)</p></td>
+<td><p>Model-predictive control (MPC) actor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPG.html#rcognita.actors.ActorPG" title="rcognita.actors.ActorPG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPG</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodicAC.html#rcognita.actors.ActorProbabilisticEpisodicAC" title="rcognita.actors.ActorProbabilisticEpisodicAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodicAC</span></code></a>(dim_output, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPGBase.html#rcognita.actors.ActorPGBase" title="rcognita.actors.ActorPGBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPGBase</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorRPO.html#rcognita.actors.ActorRPO" title="rcognita.actors.ActorRPO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorRPO</span></code></a>(dim_output, dim_input, …[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPID.html#rcognita.actors.ActorPID" title="rcognita.actors.ActorPID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPID</span></code></a>(*args[, gain])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodic.html#rcognita.actors.ActorProbabilisticEpisodic" title="rcognita.actors.ActorProbabilisticEpisodic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodic</span></code></a>(dim_output, dim_input)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodicAC.html#rcognita.actors.ActorProbabilisticEpisodicAC" title="rcognita.actors.ActorProbabilisticEpisodicAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodicAC</span></code></a>(dim_output, …)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorRPO.html#rcognita.actors.ActorRPO" title="rcognita.actors.ActorRPO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorRPO</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Running (objective) Plus Optimal (objective) actor.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorRQL.html#rcognita.actors.ActorRQL" title="rcognita.actors.ActorRQL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorRQL</span></code></a>(dim_output, dim_input, …[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorRQL.html#rcognita.actors.ActorRQL" title="rcognita.actors.ActorRQL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorRQL</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Rollout Q-learning (RQL) actor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorSDPG.html#rcognita.actors.ActorSDPG" title="rcognita.actors.ActorSDPG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorSDPG</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorSQL.html#rcognita.actors.ActorSQL" title="rcognita.actors.ActorSQL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorSQL</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Staked Q-learning (SQL) actor.</p></td>
@@ -168,7 +211,7 @@ Actors are inegrated into controllers (agents).</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../tutorials.html" class="btn btn-neutral float-left" title="Configs and basic rcognita applications" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="sub/rcognita.actors.Actor.html" class="btn btn-neutral float-right" title="rcognita.actors.Actor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sub/rcognita.actors.force_type_safety.html" class="btn btn-neutral float-right" title="rcognita.actors.force_type_safety" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

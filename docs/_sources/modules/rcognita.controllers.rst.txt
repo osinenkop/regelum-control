@@ -10,6 +10,13 @@
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      apply_action_bounds
+   
    
 
    
@@ -22,12 +29,18 @@
       CALFControllerExPost
       CALFControllerPredictive
       Controller
+      Controller2TankPID
       Controller3WRobotDisassembledCLF
+      Controller3WRobotMemoryPID
       Controller3WRobotNIDisassembledCLF
       Controller3WRobotNIMotionPrimitive
       Controller3WRobotPID
+      ControllerCartPoleEnergyBased
+      ControllerCartPoleEnergyBasedAdaptive
+      ControllerCartPolePID
+      ControllerKinPoint
+      ControllerLunarLanderPID
       ControllerMemoryPID
-      ControllerStabilizing
       NominalControllerInvertedPendulum
       RLController
    

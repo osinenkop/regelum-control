@@ -19,14 +19,15 @@ rcognita.critics.CriticTabularPI
       ~CriticTabularPI.initialize_buffers
       ~CriticTabularPI.objective
       ~CriticTabularPI.optimize_weights
+      ~CriticTabularPI.receive_state
       ~CriticTabularPI.reset
       ~CriticTabularPI.restore_weights
       ~CriticTabularPI.update
       ~CriticTabularPI.update_and_cache_weights
       ~CriticTabularPI.update_buffers
-      ~CriticTabularPI.update_total_objective
       ~CriticTabularPI.update_single_cell
       ~CriticTabularPI.update_target
+      ~CriticTabularPI.update_total_objective
       ~CriticTabularPI.update_weights
    
    
@@ -38,5 +39,6 @@ rcognita.critics.CriticTabularPI
    .. autosummary::
    
       ~CriticTabularPI.optimizer_engine
+      ~CriticTabularPI.weights
    
    

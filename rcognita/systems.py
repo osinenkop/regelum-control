@@ -19,7 +19,7 @@ import rcognita.__utilities as utilities
 
 
 class System(rcognita.base.RcognitaBase, ABC):
-    """Interface class of dynamical systems a.k.a. environments.
+    r"""Interface class of dynamical systems a.k.a. environments.
 
      Concrete systems should be built upon this class.
      To design a concrete system: inherit this class, override:
@@ -83,7 +83,9 @@ class System(rcognita.base.RcognitaBase, ABC):
         is_disturb: bool = 0,
         pars_disturb: list = None,
     ):
-        """Parameters
+        r"""Initialize a system.
+
+        Parameters
         ----------
         sys_type : : string
             Type of system by description:
@@ -150,7 +152,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     @abstractmethod
     def compute_dynamics(self, time, state, action, disturb):
-        """Description of the system internal dynamics.
+        r"""Description of the system internal dynamics.
 
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
         As a probability disitribution, ``compute_dynamics`` should return a number in :math:`[0,1]`.
@@ -159,7 +161,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         pass
 
     def _compute_disturbance_dynamics(self, time, disturb):
-        """Dynamical disturbance model depending on the system type.
+        r"""Dynamical disturbance model depending on the system type.
 
         | ``sys_type = "diff_eqn"`` : :math:`\mathcal D disturb = f_q(disturb)`
         | ``sys_type = "discr_fnc"`` : :math:`disturb^+ = f_q(disturb)`
@@ -169,8 +171,11 @@ class System(rcognita.base.RcognitaBase, ABC):
         pass
 
     def _dynamic_control(self, time, action, observation):
-        """Right-hand side of a dynamical controller. When ``is_dynamic_control=0``, the controller is considered static, which is to say that the control actions are
+        r"""Right-hand side of a dynamical controller.
+
+        When ``is_dynamic_control=0``, the controller is considered static, which is to say that the control actions are
         computed immediately from the system's output.
+
         In case of a dynamical controller, the system's state vector effectively gets extended.
         Dynamical controllers have some advantages compared to the static ones.
 
@@ -299,7 +304,7 @@ class SysKinematicPoint(System):
 
 
 class SysInvertedPendulum(System):
-    """System class: mathematical pendulum."""
+
 
     # DEBUG ====================================
     # def __init__(self, *args, is_angle_overflow=True, **kwargs):
@@ -370,7 +375,7 @@ class SysInvertedPendulumPD(SysInvertedPendulum):
 
 
 class Sys3WRobot(System):
-    """System class: 3-wheel robot with dynamical actuators.
+    r"""System class: 3-wheel robot with dynamical actuators.
 
     Description
     -----------
@@ -443,7 +448,9 @@ class Sys3WRobot(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-        """Description
+        r"""Initialize system.
+
+        Description
         -----------.
 
         We use here a 1st-order stochastic linear system of the type
@@ -575,10 +582,7 @@ class GridWorld(System):
 
 
 class CartPole(System):
-    """Cart pole system without friction. link:
-    https://coneural.org/florian/papers/05_cart_pole.pdf.
-
-    """
+    """Cart pole system without friction."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

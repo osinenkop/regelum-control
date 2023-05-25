@@ -19,18 +19,27 @@ rcognita.actors.ActorCALF
       ~ActorCALF.accept_or_reject_weights
       ~ActorCALF.cache_weights
       ~ActorCALF.create_observation_constraints
+      ~ActorCALF.iteration_update
       ~ActorCALF.objective
       ~ActorCALF.optimize_weights
       ~ActorCALF.receive_observation
+      ~ActorCALF.receive_state
       ~ActorCALF.reset
       ~ActorCALF.restore_weights
       ~ActorCALF.set_action
       ~ActorCALF.update_action
       ~ActorCALF.update_and_cache_weights
+      ~ActorCALF.update_target
       ~ActorCALF.update_weights
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorCALF.weights
    
    

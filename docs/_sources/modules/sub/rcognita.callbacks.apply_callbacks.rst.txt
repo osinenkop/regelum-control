@@ -3,4 +3,20 @@ rcognita.callbacks.apply\_callbacks
 
 .. currentmodule:: rcognita.callbacks
 
-.. autofunction:: apply_callbacks
+.. autoclass:: apply_callbacks
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~apply_callbacks.__init__
+   
+   
+
+   
+   
+   

@@ -24,7 +24,7 @@ from .solvers import create_ODE_solver
 
 
 class Simulator(rcognita.base.RcognitaBase):
-    """Class for simulating closed loops (system-controllers).
+    r"""Class for simulating closed loops (system-controllers).
 
     Attributes
     ----------
@@ -86,7 +86,7 @@ class Simulator(rcognita.base.RcognitaBase):
         is_dynamic_controller=0,
         ode_backend="SciPy",
     ):
-        """Parameters
+        r"""Parameters
         ----------
         sys_type : : string
             Type of system by description:

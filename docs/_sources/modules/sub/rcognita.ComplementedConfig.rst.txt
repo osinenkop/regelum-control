@@ -17,8 +17,10 @@ rcognita.ComplementedConfig
       ~ComplementedConfig.clear
       ~ComplementedConfig.copy
       ~ComplementedConfig.has_key
+      ~ComplementedConfig.items
       ~ComplementedConfig.keys
       ~ComplementedConfig.refresh
+      ~ComplementedConfig.treemap
       ~ComplementedConfig.update
       ~ComplementedConfig.values
    

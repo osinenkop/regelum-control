@@ -19,12 +19,13 @@ rcognita.critics.Critic
       ~Critic.initialize_buffers
       ~Critic.objective
       ~Critic.optimize_weights
+      ~Critic.receive_state
       ~Critic.reset
       ~Critic.restore_weights
       ~Critic.update_and_cache_weights
       ~Critic.update_buffers
-      ~Critic.update_total_objective
       ~Critic.update_target
+      ~Critic.update_total_objective
       ~Critic.update_weights
    
    
@@ -36,5 +37,6 @@ rcognita.critics.Critic
    .. autosummary::
    
       ~Critic.optimizer_engine
+      ~Critic.weights
    
    

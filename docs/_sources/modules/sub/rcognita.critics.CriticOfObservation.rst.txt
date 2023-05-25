@@ -19,12 +19,13 @@ rcognita.critics.CriticOfObservation
       ~CriticOfObservation.initialize_buffers
       ~CriticOfObservation.objective
       ~CriticOfObservation.optimize_weights
+      ~CriticOfObservation.receive_state
       ~CriticOfObservation.reset
       ~CriticOfObservation.restore_weights
       ~CriticOfObservation.update_and_cache_weights
       ~CriticOfObservation.update_buffers
-      ~CriticOfObservation.update_total_objective
       ~CriticOfObservation.update_target
+      ~CriticOfObservation.update_total_objective
       ~CriticOfObservation.update_weights
    
    
@@ -36,5 +37,6 @@ rcognita.critics.CriticOfObservation
    .. autosummary::
    
       ~CriticOfObservation.optimizer_engine
+      ~CriticOfObservation.weights
    
    

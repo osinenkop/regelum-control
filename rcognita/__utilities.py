@@ -780,7 +780,7 @@ def simulation_progress(bar_length=10, print_level=100):
 
 
 def rej_sampling_rvs(dim, pdf, M):
-    """Random variable (pseudo)-realizations via rejection sampling.
+    r"""Random variable (pseudo)-realizations via rejection sampling.
 
     Parameters
     ----------

@@ -55,19 +55,19 @@ def output(launch):
 
 @pytest.fixture
 def result(output):
-    return output["result"]
+    return output["result"][0]
 
 @pytest.fixture
 def config(output):
-    return output["cfg"]
+    return output["cfg"][0]
 
 @pytest.fixture
 def overrides(output):
-    return output["overrides"]
+    return output["overrides"][0]
 
 @pytest.fixture
 def directory(output):
-    return output["directory"]
+    return output["directory"][0]
 
 
 

@@ -14,10 +14,8 @@ rcognita.visualization.vis\_3wrobot.RobotTrackingDasboard
    .. autosummary::
    
       ~RobotTrackingDasboard.__init__
-      ~RobotTrackingDasboard.init_dashboard
       ~RobotTrackingDasboard.perform_episodic_update
       ~RobotTrackingDasboard.perform_iterative_update
-      ~RobotTrackingDasboard.perform_step_update
       ~RobotTrackingDasboard.update
    
    

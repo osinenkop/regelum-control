@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.models &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.models &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -56,20 +56,32 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.force_positive_def.html">rcognita.models.force_positive_def</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.GaussianElementWisePDFModel.html">rcognita.models.GaussianElementWisePDFModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.GaussianPDFModel.html">rcognita.models.GaussianPDFModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.LookupTable.html">rcognita.models.LookupTable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.Model.html">rcognita.models.Model</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelBiquadForm.html">rcognita.models.ModelBiquadForm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelDDQN.html">rcognita.models.ModelDDQN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelDDQNAdvantage.html">rcognita.models.ModelDDQNAdvantage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelDQN.html">rcognita.models.ModelDQN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelDQNSimple.html">rcognita.models.ModelDQNSimple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelDeepObjective.html">rcognita.models.ModelDeepObjective</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelFc.html">rcognita.models.ModelFc</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelGaussianConditional.html">rcognita.models.ModelGaussianConditional</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelNN.html">rcognita.models.ModelNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelNNElementWiseProduct.html">rcognita.models.ModelNNElementWiseProduct</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelPerceptronCalf.html">rcognita.models.ModelPerceptronCalf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadForm.html">rcognita.models.ModelQuadForm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadLin.html">rcognita.models.ModelQuadLin</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadMix.html">rcognita.models.ModelQuadMix</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMix.html">rcognita.models.ModelQuadNoMix</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMix2D.html">rcognita.models.ModelQuadNoMix2D</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMixTorch.html">rcognita.models.ModelQuadNoMixTorch</a></li>
@@ -77,6 +89,8 @@
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelQuadraticSquared.html">rcognita.models.ModelQuadraticSquared</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelSS.html">rcognita.models.ModelSS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelWeightContainer.html">rcognita.models.ModelWeightContainer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.ModelWeightContainerTorch.html">rcognita.models.ModelWeightContainerTorch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.models.WeightClipper.html">rcognita.models.WeightClipper</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
@@ -84,15 +98,18 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -121,7 +138,7 @@
   <div class="section" id="module-rcognita.models">
 <span id="rcognita-models"></span><h1><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code><a class="headerlink" href="#module-rcognita.models" title="Permalink to this headline"></a></h1>
 <p>This module contains model classes.
-These can be used in system dynamics fitting, critic and other tasks</p>
+These can be used in system dynamics fitting, critic and other tasks.</p>
 <p>Updates to come.</p>
 <p class="rubric">Functions</p>
 <table class="longtable docutils align-default">
@@ -142,6 +159,12 @@ These can be used in system dynamics fitting, critic and other tasks</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.GaussianElementWisePDFModel.html#rcognita.models.GaussianElementWisePDFModel" title="rcognita.models.GaussianElementWisePDFModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GaussianElementWisePDFModel</span></code></a>(dim_observation, …)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.GaussianPDFModel.html#rcognita.models.GaussianPDFModel" title="rcognita.models.GaussianPDFModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GaussianPDFModel</span></code></a>(dim_observation, …[, …])</p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.LookupTable.html#rcognita.models.LookupTable" title="rcognita.models.LookupTable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LookupTable</span></code></a>(*dims)</p></td>
 <td><p></p></td>
 </tr>
@@ -151,41 +174,68 @@ These can be used in system dynamics fitting, critic and other tasks</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelBiquadForm.html#rcognita.models.ModelBiquadForm" title="rcognita.models.ModelBiquadForm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelBiquadForm</span></code></a>(weights)</p></td>
 <td><p>Bi-quadratic form.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelDDQN.html#rcognita.models.ModelDDQN" title="rcognita.models.ModelDDQN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelDDQN</span></code></a>(dim_observation, dim_action, …)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelDDQNAdvantage.html#rcognita.models.ModelDDQNAdvantage" title="rcognita.models.ModelDDQNAdvantage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelDDQNAdvantage</span></code></a>(dim_observation, dim_action)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelDQN.html#rcognita.models.ModelDQN" title="rcognita.models.ModelDQN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelDQN</span></code></a>(dim_observation, dim_action[, …])</p></td>
+<td><p>pytorch neural network DQN.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelDQNSimple.html#rcognita.models.ModelDQNSimple" title="rcognita.models.ModelDQNSimple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelDQNSimple</span></code></a>(dim_observation, dim_action)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelDeepObjective.html#rcognita.models.ModelDeepObjective" title="rcognita.models.ModelDeepObjective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelDeepObjective</span></code></a>(dim_observation[, dim_hidden])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelFc.html#rcognita.models.ModelFc" title="rcognita.models.ModelFc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelFc</span></code></a>(dim_observation, dim_action[, …])</p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelGaussianConditional.html#rcognita.models.ModelGaussianConditional" title="rcognita.models.ModelGaussianConditional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelGaussianConditional</span></code></a>([…])</p></td>
 <td><p>Gaussian probability distribution model with <cite>weights[0]</cite> being an expectation vector and <cite>weights[1]</cite> being a covariance matrix.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelNN.html#rcognita.models.ModelNN" title="rcognita.models.ModelNN"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelNN</span></code></a>()</p></td>
 <td><p>Class of pytorch neural network models.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelNNElementWiseProduct.html#rcognita.models.ModelNNElementWiseProduct" title="rcognita.models.ModelNNElementWiseProduct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelNNElementWiseProduct</span></code></a>(dim_observation[, …])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelPerceptronCalf.html#rcognita.models.ModelPerceptronCalf" title="rcognita.models.ModelPerceptronCalf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelPerceptronCalf</span></code></a>(dim_observation, dim_action)</p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadForm.html#rcognita.models.ModelQuadForm" title="rcognita.models.ModelQuadForm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadForm</span></code></a>([weights])</p></td>
 <td><p>Quadratic form.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadLin.html#rcognita.models.ModelQuadLin" title="rcognita.models.ModelQuadLin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadLin</span></code></a>(dim_input[, weight_min, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadLin.html#rcognita.models.ModelQuadLin" title="rcognita.models.ModelQuadLin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadLin</span></code></a>(dim_input[, single_weight_min, …])</p></td>
 <td><p>Quadratic-linear model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadMix.html#rcognita.models.ModelQuadMix" title="rcognita.models.ModelQuadMix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadMix</span></code></a>(dim_input[, weight_min, weight_max])</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMix.html#rcognita.models.ModelQuadNoMix" title="rcognita.models.ModelQuadNoMix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadNoMix</span></code></a>(dim_input[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMix.html#rcognita.models.ModelQuadNoMix" title="rcognita.models.ModelQuadNoMix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadNoMix</span></code></a>(dim_input[, …])</p></td>
 <td><p>Quadratic model (no mixed terms).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMix2D.html#rcognita.models.ModelQuadNoMix2D" title="rcognita.models.ModelQuadNoMix2D"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadNoMix2D</span></code></a>(dim_input[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMix2D.html#rcognita.models.ModelQuadNoMix2D" title="rcognita.models.ModelQuadNoMix2D"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadNoMix2D</span></code></a>(dim_input[, …])</p></td>
 <td><p>Quadratic model (no mixed terms).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMixTorch.html#rcognita.models.ModelQuadNoMixTorch" title="rcognita.models.ModelQuadNoMixTorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadNoMixTorch</span></code></a>(dim_observation, dim_action)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadNoMixTorch.html#rcognita.models.ModelQuadNoMixTorch" title="rcognita.models.ModelQuadNoMixTorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadNoMixTorch</span></code></a>(dim_observation, dim_action)</p></td>
 <td><p>pytorch neural network of one layer: fully connected.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadratic.html#rcognita.models.ModelQuadratic" title="rcognita.models.ModelQuadratic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadratic</span></code></a>(dim_input[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadratic.html#rcognita.models.ModelQuadratic" title="rcognita.models.ModelQuadratic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadratic</span></code></a>(dim_input[, …])</p></td>
 <td><p>Quadratic model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadraticSquared.html#rcognita.models.ModelQuadraticSquared" title="rcognita.models.ModelQuadraticSquared"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadraticSquared</span></code></a>(dim_input[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelQuadraticSquared.html#rcognita.models.ModelQuadraticSquared" title="rcognita.models.ModelQuadraticSquared"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelQuadraticSquared</span></code></a>(dim_input[, …])</p></td>
 <td><p>Quadratic model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelSS.html#rcognita.models.ModelSS" title="rcognita.models.ModelSS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelSS</span></code></a>(A, B, C, D, initial_guessest)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelSS.html#rcognita.models.ModelSS" title="rcognita.models.ModelSS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelSS</span></code></a>(A, B, C, D, initial_guessest)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelWeightContainer.html#rcognita.models.ModelWeightContainer" title="rcognita.models.ModelWeightContainer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelWeightContainer</span></code></a>(dim_output[, weights_init])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelWeightContainer.html#rcognita.models.ModelWeightContainer" title="rcognita.models.ModelWeightContainer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelWeightContainer</span></code></a>(dim_output[, weights_init])</p></td>
 <td><p>Trivial model, which is typically used in actor in which actions are being optimized directly.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelWeightContainerTorch.html#rcognita.models.ModelWeightContainerTorch" title="rcognita.models.ModelWeightContainerTorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelWeightContainerTorch</span></code></a>(action_init)</p></td>
+<td><p>Pytorch weight container for actor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.WeightClipper.html#rcognita.models.WeightClipper" title="rcognita.models.WeightClipper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightClipper</span></code></a>([weight_min, weight_max])</p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>

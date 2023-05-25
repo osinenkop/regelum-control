@@ -17,18 +17,27 @@ rcognita.actors.ActorRQL
       ~ActorRQL.accept_or_reject_weights
       ~ActorRQL.cache_weights
       ~ActorRQL.create_observation_constraints
+      ~ActorRQL.iteration_update
       ~ActorRQL.objective
       ~ActorRQL.optimize_weights
       ~ActorRQL.receive_observation
+      ~ActorRQL.receive_state
       ~ActorRQL.reset
       ~ActorRQL.restore_weights
       ~ActorRQL.set_action
       ~ActorRQL.update_action
       ~ActorRQL.update_and_cache_weights
+      ~ActorRQL.update_target
       ~ActorRQL.update_weights
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorRQL.weights
    
    

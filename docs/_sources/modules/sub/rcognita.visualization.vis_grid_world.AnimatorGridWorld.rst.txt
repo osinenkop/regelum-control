@@ -15,15 +15,17 @@ rcognita.visualization.vis\_grid\_world.AnimatorGridWorld
    
       ~AnimatorGridWorld.__init__
       ~AnimatorGridWorld.animate
+      ~AnimatorGridWorld.animate_live
       ~AnimatorGridWorld.collect_dashboards
+      ~AnimatorGridWorld.connect_events
       ~AnimatorGridWorld.create_grid
-      ~AnimatorGridWorld.get_anm
       ~AnimatorGridWorld.get_index
       ~AnimatorGridWorld.init_anim
       ~AnimatorGridWorld.map_action2arrow
+      ~AnimatorGridWorld.play_live
       ~AnimatorGridWorld.playback
+      ~AnimatorGridWorld.save_animation
       ~AnimatorGridWorld.set_sim_data
-      ~AnimatorGridWorld.stop_anm
       ~AnimatorGridWorld.update_dashboards
       ~AnimatorGridWorld.update_grid
    

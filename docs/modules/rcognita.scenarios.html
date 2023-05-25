@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.scenarios &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.scenarios &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -17,7 +17,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="rcognita.scenarios.OnlineScenario" href="sub/rcognita.scenarios.OnlineScenario.html" />
+    <link rel="next" title="rcognita.scenarios.MonteCarloScenario" href="sub/rcognita.scenarios.MonteCarloScenario.html" />
     <link rel="prev" title="rcognita.predictors.TrivialPredictor" href="sub/rcognita.predictors.TrivialPredictor.html" /> 
 </head>
 
@@ -56,9 +56,12 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
@@ -66,23 +69,24 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html">rcognita.scenarios.OnlineScenario</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioAsyncAC.html">rcognita.scenarios.OnlineScenarioAsyncAC</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioREINFORCE.html">rcognita.scenarios.OnlineScenarioREINFORCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.MonteCarloScenario.html">rcognita.scenarios.MonteCarloScenario</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html">rcognita.scenarios.OnlineScenario</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.Scenario.html">rcognita.scenarios.Scenario</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.scenarios.TabularScenarioVI.html">rcognita.scenarios.TabularScenarioVI</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -110,8 +114,8 @@
              
   <div class="section" id="module-rcognita.scenarios">
 <span id="rcognita-scenarios"></span><h1><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code><a class="headerlink" href="#module-rcognita.scenarios" title="Permalink to this headline"></a></h1>
-<p>This module contains various simulation scenarios.
-For instance, an online scenario is when the controller and system interact with each other live via exchange of observations and actions, successively in time steps.</p>
+<p>This module contains various simulation scenarios.</p>
+<p>For instance, an online scenario is when the controller and system interact with each other live via exchange of observations and actions, successively in time steps.</p>
 <p class="rubric">Classes</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -119,17 +123,11 @@ For instance, an online scenario is when the controller and system interact with
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html#rcognita.scenarios.OnlineScenario" title="rcognita.scenarios.OnlineScenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenario</span></code></a>(N_episodes, N_iterations, *args)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioAsyncAC.html#rcognita.scenarios.OnlineScenarioAsyncAC" title="rcognita.scenarios.OnlineScenarioAsyncAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenarioAsyncAC</span></code></a>(*args, **kwargs)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenarioREINFORCE.html#rcognita.scenarios.OnlineScenarioREINFORCE" title="rcognita.scenarios.OnlineScenarioREINFORCE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenarioREINFORCE</span></code></a>(*args[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.MonteCarloScenario.html#rcognita.scenarios.MonteCarloScenario" title="rcognita.scenarios.MonteCarloScenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MonteCarloScenario</span></code></a>(simulator, controller, …)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.scenarios.OnlineScenario.html#rcognita.scenarios.OnlineScenario" title="rcognita.scenarios.OnlineScenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnlineScenario</span></code></a>(simulator, controller, …[, …])</p></td>
-<td><p>Online scenario: the controller and system interact with each other live via exchange of observations and actions, successively in time steps.</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.scenarios.Scenario.html#rcognita.scenarios.Scenario" title="rcognita.scenarios.Scenario"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Scenario</span></code></a>()</p></td>
 <td><p></p></td>
@@ -146,7 +144,7 @@ For instance, an online scenario is when the controller and system interact with
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="sub/rcognita.predictors.TrivialPredictor.html" class="btn btn-neutral float-left" title="rcognita.predictors.TrivialPredictor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="sub/rcognita.scenarios.OnlineScenario.html" class="btn btn-neutral float-right" title="rcognita.scenarios.OnlineScenario" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sub/rcognita.scenarios.MonteCarloScenario.html" class="btn btn-neutral float-right" title="rcognita.scenarios.MonteCarloScenario" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

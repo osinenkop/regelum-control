@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.systems.Sys3WRobot &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.systems.Sys3WRobot &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="rcognita.systems.Sys3WRobotNI" href="rcognita.systems.Sys3WRobotNI.html" />
-    <link rel="prev" title="rcognita.systems.GridWorld" href="rcognita.systems.GridWorld.html" /> 
+    <link rel="prev" title="rcognita.systems.LunarLander" href="rcognita.systems.LunarLander.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -57,9 +57,12 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
@@ -67,24 +70,30 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="rcognita.systems.CartPole.html">rcognita.systems.CartPole</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.GridWorld.html">rcognita.systems.GridWorld</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.systems.LunarLander.html">rcognita.systems.LunarLander</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.systems.Sys3WRobot</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.Sys3WRobotNI.html">rcognita.systems.Sys3WRobotNI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysInvertedPendulum.html">rcognita.systems.SysInvertedPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysInvertedPendulumPD.html">rcognita.systems.SysInvertedPendulumPD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.systems.SysKinematicPoint.html">rcognita.systems.SysKinematicPoint</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.System.html">rcognita.systems.System</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.systems.System2Tank.html">rcognita.systems.System2Tank</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -212,13 +221,16 @@ If empty, control is unconstrained (default)</p></li>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_dynamics</span></code>(time, state, action[, disturb])</p></td>
 <td><p>Description of the system internal dynamics.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">out</span></code>(state[, time, action])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_state</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">out</span></code>(state[, time, action])</p></td>
 <td><p>System output.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_action</span></code>(action)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_action</span></code>(action)</p></td>
 <td><p>Receive exogeneous control action to be fed into the system.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -231,7 +243,7 @@ If empty, control is unconstrained (default)</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="rcognita.systems.GridWorld.html" class="btn btn-neutral float-left" title="rcognita.systems.GridWorld" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rcognita.systems.LunarLander.html" class="btn btn-neutral float-left" title="rcognita.systems.LunarLander" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="rcognita.systems.Sys3WRobotNI.html" class="btn btn-neutral float-right" title="rcognita.systems.Sys3WRobotNI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

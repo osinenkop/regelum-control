@@ -20,13 +20,14 @@ rcognita.critics.CriticTrivial
       ~CriticTrivial.initialize_buffers
       ~CriticTrivial.objective
       ~CriticTrivial.optimize_weights
+      ~CriticTrivial.receive_state
       ~CriticTrivial.reset
       ~CriticTrivial.restore_weights
       ~CriticTrivial.update
       ~CriticTrivial.update_and_cache_weights
       ~CriticTrivial.update_buffers
-      ~CriticTrivial.update_total_objective
       ~CriticTrivial.update_target
+      ~CriticTrivial.update_total_objective
       ~CriticTrivial.update_weights
    
    
@@ -38,5 +39,6 @@ rcognita.critics.CriticTrivial
    .. autosummary::
    
       ~CriticTrivial.optimizer_engine
+      ~CriticTrivial.weights
    
    

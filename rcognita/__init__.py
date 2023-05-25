@@ -256,6 +256,7 @@ class ComplementedConfig:
 
     def refresh(self):
         """Reset all cached instances.
+
         Call this if you made changes to your config dynamically and would like those change to take
         effect in forthcoming instantiations.
         """

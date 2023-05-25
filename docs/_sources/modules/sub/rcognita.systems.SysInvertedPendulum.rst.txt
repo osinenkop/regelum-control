@@ -16,6 +16,7 @@ rcognita.systems.SysInvertedPendulum
       ~SysInvertedPendulum.__init__
       ~SysInvertedPendulum.compute_closed_loop_rhs
       ~SysInvertedPendulum.compute_dynamics
+      ~SysInvertedPendulum.get_state
       ~SysInvertedPendulum.out
       ~SysInvertedPendulum.receive_action
       ~SysInvertedPendulum.reset

@@ -59,8 +59,8 @@ rcognita.models.ModelNN
       ~ModelNN.to_empty
       ~ModelNN.train
       ~ModelNN.type
-      ~ModelNN.update
       ~ModelNN.update_and_cache_weights
+      ~ModelNN.update_weights
       ~ModelNN.weights2dict
       ~ModelNN.xpu
       ~ModelNN.zero_grad
@@ -77,5 +77,6 @@ rcognita.models.ModelNN
       ~ModelNN.cache
       ~ModelNN.dump_patches
       ~ModelNN.model_name
+      ~ModelNN.weights
    
    

@@ -14,10 +14,23 @@ rcognita.callbacks.Callback
    .. autosummary::
    
       ~Callback.__init__
+      ~Callback.is_target_event
+      ~Callback.on_episode_done
+      ~Callback.on_iteration_done
+      ~Callback.on_launch
+      ~Callback.on_termination
       ~Callback.perform
+      ~Callback.ready
+      ~Callback.trigger_cooldown
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Callback.cooldown
    
    

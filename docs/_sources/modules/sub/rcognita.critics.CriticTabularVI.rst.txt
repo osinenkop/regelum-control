@@ -19,14 +19,15 @@ rcognita.critics.CriticTabularVI
       ~CriticTabularVI.initialize_buffers
       ~CriticTabularVI.objective
       ~CriticTabularVI.optimize_weights
+      ~CriticTabularVI.receive_state
       ~CriticTabularVI.reset
       ~CriticTabularVI.restore_weights
       ~CriticTabularVI.update
       ~CriticTabularVI.update_and_cache_weights
       ~CriticTabularVI.update_buffers
-      ~CriticTabularVI.update_total_objective
       ~CriticTabularVI.update_single_cell
       ~CriticTabularVI.update_target
+      ~CriticTabularVI.update_total_objective
       ~CriticTabularVI.update_weights
    
    
@@ -38,5 +39,6 @@ rcognita.critics.CriticTabularVI
    .. autosummary::
    
       ~CriticTabularVI.optimizer_engine
+      ~CriticTabularVI.weights
    
    
