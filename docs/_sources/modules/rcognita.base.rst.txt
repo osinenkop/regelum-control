@@ -1,0 +1,44 @@
+``rcognita.base`` 
+=================
+
+
+.. automodule:: rcognita.base
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      FreePort
+      FreePublisher
+      Node
+      Port
+      Publisher
+      RcognitaBase
+      port
+      publisher
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      EmptyInboxException
+   
+   
+
+
+

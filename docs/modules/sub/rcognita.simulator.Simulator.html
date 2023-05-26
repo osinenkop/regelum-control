@@ -219,7 +219,8 @@ Same as above, this could be, say, <code class="docutils literal notranslate"><s
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.simulator.Simulator.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">system</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sys_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'diff_eqn'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disturb_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_final</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">first_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_disturb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_dynamic_controller</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ode_backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SciPy'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.simulator.Simulator.__init__" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Initialize a simulator.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sys_type</strong> (<em>: string</em>) – <p>Type of system by description:</p>
@@ -264,12 +265,7 @@ Same as above, this could be, say, <code class="docutils literal notranslate"><s
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.simulator.Simulator.__init__" title="rcognita.simulator.Simulator.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(system, state_init[, sys_type, …])</p></td>
-<td><p><dl class="field-list simple">
-<dt class="field-odd">param sys_type</dt>
-<dd class="field-odd"><p>Type of system by description:</p>
-</dd>
-</dl>
-</p></td>
+<td><p>Initialize a simulator.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_sim_step</span></code>()</p></td>
 <td><p>Do one simulation step and update current simulation data (time, system state and output).</p></td>

@@ -1,0 +1,42 @@
+rcognita.critics.CriticOfActionObservationOnPolicy
+==================================================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticOfActionObservationOnPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticOfActionObservationOnPolicy.__init__
+      ~CriticOfActionObservationOnPolicy.accept_or_reject_weights
+      ~CriticOfActionObservationOnPolicy.cache_weights
+      ~CriticOfActionObservationOnPolicy.initialize_buffers
+      ~CriticOfActionObservationOnPolicy.objective
+      ~CriticOfActionObservationOnPolicy.optimize_weights
+      ~CriticOfActionObservationOnPolicy.receive_state
+      ~CriticOfActionObservationOnPolicy.reset
+      ~CriticOfActionObservationOnPolicy.restore_weights
+      ~CriticOfActionObservationOnPolicy.update_and_cache_weights
+      ~CriticOfActionObservationOnPolicy.update_buffers
+      ~CriticOfActionObservationOnPolicy.update_target
+      ~CriticOfActionObservationOnPolicy.update_total_objective
+      ~CriticOfActionObservationOnPolicy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticOfActionObservationOnPolicy.optimizer_engine
+      ~CriticOfActionObservationOnPolicy.weights
+   
+   

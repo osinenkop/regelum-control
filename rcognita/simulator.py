@@ -86,7 +86,9 @@ class Simulator(rcognita.base.RcognitaBase):
         is_dynamic_controller=0,
         ode_backend="SciPy",
     ):
-        r"""Parameters
+        r"""Initialize a simulator.
+
+        Parameters
         ----------
         sys_type : : string
             Type of system by description:

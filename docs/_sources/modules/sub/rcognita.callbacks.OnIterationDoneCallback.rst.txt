@@ -1,0 +1,36 @@
+rcognita.callbacks.OnIterationDoneCallback
+==========================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: OnIterationDoneCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~OnIterationDoneCallback.__init__
+      ~OnIterationDoneCallback.is_target_event
+      ~OnIterationDoneCallback.on_episode_done
+      ~OnIterationDoneCallback.on_iteration_done
+      ~OnIterationDoneCallback.on_launch
+      ~OnIterationDoneCallback.on_termination
+      ~OnIterationDoneCallback.perform
+      ~OnIterationDoneCallback.ready
+      ~OnIterationDoneCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~OnIterationDoneCallback.cooldown
+   
+   

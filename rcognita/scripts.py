@@ -1,3 +1,4 @@
+"""Auxiliary routines for managing experiment data."""
 import distutils.errors
 import os
 import datetime

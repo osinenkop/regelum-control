@@ -1,0 +1,25 @@
+rcognita.controllers.Controller2TankPID
+=======================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: Controller2TankPID
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Controller2TankPID.__init__
+      ~Controller2TankPID.compute_action
+      ~Controller2TankPID.compute_action_sampled
+      ~Controller2TankPID.reset
+   
+   
+
+   
+   
+   

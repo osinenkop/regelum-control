@@ -1,4 +1,5 @@
-"""This module contains actors, i.e., entities that directly calculate actions.
+"""Contains actors, i.e., entities that directly calculate actions.
+
 Actors are inegrated into controllers (agents).
 
 Remarks: 
@@ -45,6 +46,7 @@ def force_type_safety(method):
 
 class Actor:
     """Class of actors.
+
     These are to be passed to a `controller`.
     An `objective` (a loss) as well as an `optimizer` are passed to an `actor` externally.
     """
@@ -177,7 +179,8 @@ class Actor:
     def create_observation_constraints(
         self, constraint_functions, action_sequence_reshaped, observation
     ):
-        """Method to create observation (or state) related constraints using a `predictor` over a `prediction_horizon`.
+        """Create observation (or state) related constraints using a `predictor` over a `prediction_horizon`.
+
         These constraints are related to observations, not actions, although they are ultimately imposed on the action
         (or action sequence), which is the decision variable for the `optimizer` passed to the `actor`.
         The `predictor` is used to generate a sequence of predicted observations over the `prediction_horizon`.
@@ -238,6 +241,7 @@ class Actor:
 
     def receive_observation(self, observation):
         """Update the current observation of the actor.
+
         :param observation: The current observation.
         :type observation: numpy array.
         """
@@ -245,6 +249,7 @@ class Actor:
 
     def receive_state(self, state):
         """Update the current observation of the actor.
+
         :param observation: The current observation.
         :type observation: numpy array.
         """
@@ -252,6 +257,7 @@ class Actor:
 
     def set_action(self, action):
         """Set the current action of the actor.
+
         :param action: The current action.
         :type action: numpy array.
         """
@@ -260,6 +266,7 @@ class Actor:
 
     def update_action(self, observation=None):
         """Update the current action of the actor.
+
         :param observation: The current observation. If not provided, the previously received observation will be used.
         :type observation: numpy array, optional.
         """
@@ -305,6 +312,7 @@ class Actor:
 
     def update_weights(self, weights=None):
         """Update the weights of the model of the actor.
+
         :param weights: The weights to update the model with. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional.
         """
@@ -315,6 +323,7 @@ class Actor:
 
     def cache_weights(self, weights=None):
         """Cache the current weights of the model of the actor.
+
         :param weights: The weights to cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional.
         """
@@ -325,6 +334,7 @@ class Actor:
 
     def update_and_cache_weights(self, weights=None):
         """Update and cache the weights of the model of the actor.
+
         :param weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional.
         """
@@ -339,7 +349,7 @@ class Actor:
     def accept_or_reject_weights(
         self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
-        """Determines whether the given weights should be accepted or rejected based on the specified constraints.
+        """Determine whether the given weights should be accepted or rejected based on the specified constraints.
 
         :param weights: Array of weights to be evaluated.
         :type weights: np.ndarray
@@ -365,7 +375,9 @@ class Actor:
             return "rejected"
 
     def optimize_weights(self, constraint_functions=None, time=None):
-        """Method to optimize the current actor weights. The old (previous) weights are stored.
+        """Optimize the current actor weights.
+
+        The old (previous) weights are stored.
         The `time` argument is used for debugging purposes.
         If weights satisfying constraints are found, the method returns the status `accepted`.
         Otherwise, it returns the status `rejected`.
@@ -491,6 +503,8 @@ class Actor:
 
 
 class ActorPGBase(Actor, ABC):
+    """Policy gradient actor (base)."""
+
     def __init__(
         self,
         is_use_derivative,
@@ -500,6 +514,13 @@ class ActorPGBase(Actor, ABC):
         *args,
         **kwargs,
     ):
+        """Initialize a policy gradient actor.
+
+        :param is_use_derivative: whether to add observation derivatives to the observation vector
+        :param N_episodes: number of episodes in one iteration
+        :param N_iterations: number of iterations
+        :param device: device for gradient descent step ("cpu", "cuda:0", "cuda:1", etc.)
+        """
         super().__init__(*args, **kwargs)
         self.is_use_derivative = is_use_derivative
         self.derivative = self.system.compute_dynamics
@@ -509,6 +530,11 @@ class ActorPGBase(Actor, ABC):
         self.N_iterations = N_iterations
 
     def optimize_weights_after_iteration(self, dataset):
+        """Make policy gradient descent step after episodes' simulation.
+
+        :param dataset: experience replay
+        :return: None
+        """
         # Send to device before optimization
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(self.device)
@@ -531,7 +557,9 @@ class ActorPGBase(Actor, ABC):
 
     @abstractmethod
     def objective(self, batch):
-        r"""The problem for PG is stated as follows.
+        r"""Compute objective.
+
+        The problem for PG is stated as follows.
 
         :math:`L = \\mathbb{E}\\left[\\sum_{k=1}^T r_k \\right] \\rightarrow \\min`
 
@@ -563,7 +591,9 @@ class ActorPGBase(Actor, ABC):
         pass
 
 
-class ActorPG(ActorPGBase):
+class ActorREINFORCE(ActorPGBase):
+    """Vanilla REINFORCE Actor."""
+
     def update_action(self, observation=None):
         if self.is_use_derivative:
             derivative = self.derivative([], observation, self.action)
@@ -598,7 +628,9 @@ class ActorPG(ActorPGBase):
         )
 
 
-class ActorSDPG(ActorPG):
+class ActorSDPG(ActorREINFORCE):
+    """Actor for Sample-based Distributional Policy Gradient."""
+
     @force_type_safety
     def objective(self, batch):
         observations_actions_for_actor = batch["observations_actions_for_actor"].to(
@@ -619,6 +651,8 @@ class ActorSDPG(ActorPG):
 
 
 class ActorDDPG(ActorPGBase):
+    """Actor for Deep Deterministic Policy Gradient."""
+
     @force_type_safety
     def objective(self, batch):
         observations_for_actor = batch["observations_for_actor"].to(self.device)
@@ -639,7 +673,13 @@ class ActorDDPG(ActorPGBase):
 
 
 class ActorPID(Actor):
+    r"""Proportional controller :math:`u = - kI x`."""
+
     def __init__(self, *args, gain=5.0, **kwargs):
+        """Initialize a proportional controller.
+
+        :param gain: coefficient for proportional controller.
+        """
         super().__init__(*args, **kwargs)
         self.gain = gain
 
@@ -659,6 +699,7 @@ class ActorPID(Actor):
 
 class ActorMPC(Actor):
     r"""Model-predictive control (MPC) actor.
+
     Optimizes the following actor objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
 
@@ -678,7 +719,7 @@ class ActorMPC(Actor):
         action_sequence,
         observation,
     ):
-        """Calculates the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
+        """Calculate the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
 
         :param action_sequence: sequence of actions to be evaluated in the objective function
         :type action_sequence: numpy.ndarray
@@ -710,6 +751,7 @@ class ActorMPC(Actor):
 
 class ActorMPCTerminal(Actor):
     r"""Model-predictive control (MPC) actor.
+
     Optimizes the following actor objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
 
@@ -729,7 +771,7 @@ class ActorMPCTerminal(Actor):
         action_sequence,
         observation,
     ):
-        """Calculates the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
+        """Calculate the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
 
         :param action_sequence: sequence of actions to be evaluated in the objective function
         :type action_sequence: numpy.ndarray
@@ -761,6 +803,7 @@ class ActorMPCTerminal(Actor):
 
 class ActorSQL(Actor):
     r"""Staked Q-learning (SQL) actor.
+
     Optimizes the following actor objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`.
 
@@ -781,7 +824,7 @@ class ActorSQL(Actor):
         action_sequence,
         observation,
     ):
-        """Calculates the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
+        """Calculate the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
@@ -822,6 +865,7 @@ class ActorSQL(Actor):
 
 class ActorRQL(Actor):
     r"""Rollout Q-learning (RQL) actor.
+
     Optimizes the following actor objective:
 
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
@@ -843,7 +887,7 @@ class ActorRQL(Actor):
         action_sequence,
         observation,
     ):
-        """Calculates the actor objective for the given action sequence and observation using Rollout Q-learning (RQL).
+        """Calculate the actor objective for the given action sequence and observation using Rollout Q-learning (RQL).
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
@@ -887,6 +931,7 @@ class ActorRQL(Actor):
 
 class ActorRPO(Actor):
     r"""Running (objective) Plus Optimal (objective) actor.
+
     Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
@@ -908,7 +953,7 @@ class ActorRPO(Actor):
         action_sequence,
         observation,
     ):
-        """Calculates the actor objective for the given action sequence and observation using Running Plus Optimal (RPO).
+        """Calculate the actor objective for the given action sequence and observation using Running Plus Optimal (RPO).
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
@@ -1040,7 +1085,9 @@ class ActorCLF(ActorCALF):
     """ActorCLF is an actor class that aims to optimize the decay of a Control-Lyapunov function (CLF)."""
 
     def __init__(self, *args, **kwargs):
-        """:param safe_controller: object of class SafeController that provides a safe action if the current action would violate the safe set.
+        """Initialize a CLF based actor.
+
+        :param safe_controller: object of class SafeController that provides a safe action if the current action would violate the safe set.
         :type safe_controller: SafeController
         """
         super().__init__(*args, **kwargs)
@@ -1052,7 +1099,7 @@ class ActorCLF(ActorCALF):
         action,
         observation,
     ):
-        """Computes the anticipated decay of the CLF.
+        """Compute the anticipated decay of the CLF.
 
         :param action: Action taken by the actor.
         :type action: ndarray
@@ -1072,6 +1119,7 @@ class ActorCLF(ActorCALF):
 
 class ActorTabular(ActorRPO):
     r"""Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
 
@@ -1100,7 +1148,7 @@ class ActorTabular(ActorRPO):
         discount_factor=1,
         terminal_state=None,
     ):
-        """Initializes an actorTabular object.
+        """Initialize an actorTabular object.
 
         :param dim_world: The dimensions of the world (i.e. the dimensions of the state space).
         :type dim_world: int
@@ -1134,7 +1182,7 @@ class ActorTabular(ActorRPO):
         self.gradients = []
 
     def update(self):
-        """Updates the action table using the optimizer."""
+        """Update the action table using the optimizer."""
         new_action_table = self.optimizer.optimize(self.objective, self.model.weights)
 
         self.model.update_and_cache_weights(new_action_table)
@@ -1144,7 +1192,8 @@ class ActorTabular(ActorRPO):
         action,
         observation,
     ):
-        """Calculates the actor objective for a given action and observation.
+        """Calculate the actor objective for a given action and observation.
+
         The actor objective is defined as the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
 
         :param action: The action for which the actor objective is to be calculated.
@@ -1179,6 +1228,7 @@ class ActorProbabilisticEpisodic(Actor):
         **kwargs,
     ):
         """Initialize an actor that samples actions from a probabilistic model.
+
         The actor also stores gradients for the model weights for each action taken.
 
         :param action_bounds: Bounds on the action.
@@ -1256,8 +1306,7 @@ class ActorProbabilisticEpisodic(Actor):
 
 class ActorProbabilisticEpisodicAC(ActorProbabilisticEpisodic):
     def update(self, observation):
-        """Samples an action from the actor's distribution, updates the action and action_old attributes,
-        and stores the current gradient in the gradients list.
+        """Sample an action from the actor's distribution, updates the action and action_old attributes, and stores the current gradient in the gradients list.
 
         :param observation: The current observation of the environment.
         """

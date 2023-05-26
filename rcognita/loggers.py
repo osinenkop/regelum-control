@@ -1,4 +1,4 @@
-"""This module contains the logger interface along with concrete realizations for each separate system.
+"""Contains the logger interface along with concrete realizations for each separate system.
 
 Remarks: 
 

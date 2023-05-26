@@ -1,0 +1,6 @@
+rcognita.obtain
+===============
+
+.. currentmodule:: rcognita
+
+.. autofunction:: obtain

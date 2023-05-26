@@ -27,6 +27,7 @@ def launch(system, playground_dir):
     sys.argv.insert(1, "controller.sampling_time=0.5")
     sys.argv.insert(1, "scenario.N_episodes=2")
     sys.argv.insert(1, "--single-thread")
+    sys.argv.insert(1, "--no-git")
 
     @rc.main(config_path=playground_dir + "/general", config_name="main")
     def launch(cfg):

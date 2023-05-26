@@ -1,0 +1,84 @@
+rcognita.models.GaussianPDFModel
+================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: GaussianPDFModel
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GaussianPDFModel.__init__
+      ~GaussianPDFModel.add_module
+      ~GaussianPDFModel.apply
+      ~GaussianPDFModel.bfloat16
+      ~GaussianPDFModel.buffers
+      ~GaussianPDFModel.cache_weights
+      ~GaussianPDFModel.children
+      ~GaussianPDFModel.cpu
+      ~GaussianPDFModel.cuda
+      ~GaussianPDFModel.detach_weights
+      ~GaussianPDFModel.double
+      ~GaussianPDFModel.eval
+      ~GaussianPDFModel.extra_repr
+      ~GaussianPDFModel.float
+      ~GaussianPDFModel.forward
+      ~GaussianPDFModel.get_buffer
+      ~GaussianPDFModel.get_extra_state
+      ~GaussianPDFModel.get_mean_of_action_action
+      ~GaussianPDFModel.get_parameter
+      ~GaussianPDFModel.get_submodule
+      ~GaussianPDFModel.half
+      ~GaussianPDFModel.ipu
+      ~GaussianPDFModel.load_state_dict
+      ~GaussianPDFModel.modules
+      ~GaussianPDFModel.named_buffers
+      ~GaussianPDFModel.named_children
+      ~GaussianPDFModel.named_modules
+      ~GaussianPDFModel.named_parameters
+      ~GaussianPDFModel.parameters
+      ~GaussianPDFModel.register_backward_hook
+      ~GaussianPDFModel.register_buffer
+      ~GaussianPDFModel.register_forward_hook
+      ~GaussianPDFModel.register_forward_pre_hook
+      ~GaussianPDFModel.register_full_backward_hook
+      ~GaussianPDFModel.register_load_state_dict_post_hook
+      ~GaussianPDFModel.register_module
+      ~GaussianPDFModel.register_parameter
+      ~GaussianPDFModel.requires_grad_
+      ~GaussianPDFModel.restore_weights
+      ~GaussianPDFModel.sample
+      ~GaussianPDFModel.set_extra_state
+      ~GaussianPDFModel.share_memory
+      ~GaussianPDFModel.soft_update
+      ~GaussianPDFModel.state_dict
+      ~GaussianPDFModel.to
+      ~GaussianPDFModel.to_empty
+      ~GaussianPDFModel.train
+      ~GaussianPDFModel.type
+      ~GaussianPDFModel.update_and_cache_weights
+      ~GaussianPDFModel.update_weights
+      ~GaussianPDFModel.weights2dict
+      ~GaussianPDFModel.xpu
+      ~GaussianPDFModel.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GaussianPDFModel.T_destination
+      ~GaussianPDFModel.cache
+      ~GaussianPDFModel.dump_patches
+      ~GaussianPDFModel.model_name
+      ~GaussianPDFModel.weights
+   
+   

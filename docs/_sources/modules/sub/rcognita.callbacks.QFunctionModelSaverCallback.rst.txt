@@ -1,0 +1,47 @@
+rcognita.callbacks.QFunctionModelSaverCallback
+==============================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: QFunctionModelSaverCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~QFunctionModelSaverCallback.__init__
+      ~QFunctionModelSaverCallback.add_datum
+      ~QFunctionModelSaverCallback.clear_recent_data
+      ~QFunctionModelSaverCallback.dump_and_clear_data
+      ~QFunctionModelSaverCallback.dump_data
+      ~QFunctionModelSaverCallback.get_save_directory
+      ~QFunctionModelSaverCallback.insert_column_left
+      ~QFunctionModelSaverCallback.is_target_event
+      ~QFunctionModelSaverCallback.load_data
+      ~QFunctionModelSaverCallback.on_episode_done
+      ~QFunctionModelSaverCallback.on_iteration_done
+      ~QFunctionModelSaverCallback.on_launch
+      ~QFunctionModelSaverCallback.on_termination
+      ~QFunctionModelSaverCallback.perform
+      ~QFunctionModelSaverCallback.plot
+      ~QFunctionModelSaverCallback.plot_gui
+      ~QFunctionModelSaverCallback.ready
+      ~QFunctionModelSaverCallback.save_plot
+      ~QFunctionModelSaverCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~QFunctionModelSaverCallback.cooldown
+      ~QFunctionModelSaverCallback.data
+   
+   

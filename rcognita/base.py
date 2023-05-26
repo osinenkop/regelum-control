@@ -1,3 +1,5 @@
+"""Base infrastructure of rcognita."""
+
 import abc
 import inspect
 from .callbacks import Callback
@@ -6,7 +8,10 @@ import weakref
 
 
 class RcognitaBase(abc.ABC):
+    """Base class designed to act as an abstraction over all rcognita objects."""
+
     def __init__(self):
+        """Initialize an object from rcognita."""
         callbacks = [
             getattr(self.__class__, d)
             for d in dir(self.__class__)
@@ -22,14 +27,25 @@ class RcognitaBase(abc.ABC):
 
 
 class Node(abc.ABC):
+    """A node is an object that is responsible for sending/receiving/rerouting/processing messages."""
+
     def __init__(self, input_type):
+        """Initialize a node.
+
+        :param input_type: type of messages sent/received by the node
+        :type input_type: type
+        """
         self.__subscribers = []
         self.__subscribees = []
         self.hooks = []
         self.type = input_type
 
     def hook(self, hook_function):
-        self.hooks.append(hook_function)
+        def new_hook_function(input_):
+            res = hook_function(input_)
+            assert isinstance(res, self.type), f"Values returned by hooks should match the type of their node (port/publisher). An object of type {type(res)} was returned, which does not match the node's type {self.type}."
+            return res
+        self.hooks.append(new_hook_function)
 
     def __forget(self, other):
         assert self.connected(
@@ -113,11 +129,21 @@ class Node(abc.ABC):
 
 
 class EmptyInboxException(Exception):
+    """Raised when trying to receive a message from a Port, to which no messages were yet sent."""
+
     pass
 
 
 class port:
+    """Decorator factory that replaces a method with a Port in such a way that the initial definition of the method is interpreted as said Port's handler."""
+
     def __init__(self, input_type=object, hooks=None):
+        """Initialize a decorator that transforms methods into handled ports.
+
+        :param input_type: type of messages accepted by the resulting port
+        :type input_type: type
+        :param hooks: hooks to add in addition to the handler obtained from the decorated method
+        """
         if hooks is None:
             hooks = []
         self.input_type = input_type
@@ -132,7 +158,15 @@ class port:
 
 
 class publisher:
+    """Decorator factory that replaces a method with a Publisher in such a way that the initial definition of the method is interpreted as said Publisher's hook."""
+
     def __init__(self, input_type=object, hooks=None):
+        """Initialize a decorator that transforms methods into hooked publishers.
+
+        :param input_type: type of messages sent by the resulting publisher
+        :type input_type: type
+        :param hooks: hooks to add in addition to the hook obtained from the decorated method
+        """
         if hooks is None:
             hooks = []
         self.input_type = input_type
@@ -147,7 +181,14 @@ class publisher:
 
 
 class Port(Node):
+    """A Port is a Node that accepts messages."""
+
     def __init__(self, input_type):
+        """Initialize a Port.
+
+        :param input_type: type of messages received by the port.
+        :type input_type: type
+        """
         super().__init__(input_type)
         self.__inbox = []
         self.__handler = None
@@ -177,6 +218,8 @@ class Port(Node):
 
 
 class Publisher(Node):
+    """A Publisher is a Node that sends messages."""
+
     def connect(self, other):
         self.__issue_subscription(other)
 
@@ -186,12 +229,18 @@ class Publisher(Node):
 
 
 class FreePort(Port):
+    """A Port that can accept messages of arbitrary type."""
+
     def __init__(self):
+        """Initialize a free port."""
         super().__init__(object)
 
 
 class FreePublisher(Publisher):
+    """A Publisher that can send messages of arbitrary type."""
+
     def __init__(self):
+        """Initialize a free publisher."""
         super().__init__(object)
 
 

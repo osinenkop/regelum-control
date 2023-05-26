@@ -1,0 +1,23 @@
+rcognita.data\_buffers.EpisodicRandomSampler
+============================================
+
+.. currentmodule:: rcognita.data_buffers
+
+.. autoclass:: EpisodicRandomSampler
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodicRandomSampler.__init__
+      ~EpisodicRandomSampler.update_data
+   
+   
+
+   
+   
+   

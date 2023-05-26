@@ -32,11 +32,11 @@
       ActorDDPG
       ActorMPC
       ActorMPCTerminal
-      ActorPG
       ActorPGBase
       ActorPID
       ActorProbabilisticEpisodic
       ActorProbabilisticEpisodicAC
+      ActorREINFORCE
       ActorRPO
       ActorRQL
       ActorSDPG

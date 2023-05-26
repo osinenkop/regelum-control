@@ -17,7 +17,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="rcognita.actors.ActorRPO" href="rcognita.actors.ActorRPO.html" />
+    <link rel="next" title="rcognita.actors.ActorREINFORCE" href="rcognita.actors.ActorREINFORCE.html" />
     <link rel="prev" title="rcognita.actors.ActorProbabilisticEpisodic" href="rcognita.actors.ActorProbabilisticEpisodic.html" /> 
 </head>
 
@@ -63,11 +63,11 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorDDPG.html">rcognita.actors.ActorDDPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorMPC.html">rcognita.actors.ActorMPC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorMPCTerminal.html">rcognita.actors.ActorMPCTerminal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPG.html">rcognita.actors.ActorPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPGBase.html">rcognita.actors.ActorPGBase</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPID.html">rcognita.actors.ActorPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorProbabilisticEpisodic.html">rcognita.actors.ActorProbabilisticEpisodic</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.actors.ActorProbabilisticEpisodicAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorREINFORCE.html">rcognita.actors.ActorREINFORCE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorRPO.html">rcognita.actors.ActorRPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorRQL.html">rcognita.actors.ActorRQL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorSDPG.html">rcognita.actors.ActorSDPG</a></li>
@@ -134,8 +134,8 @@
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="rcognita.actors.ActorProbabilisticEpisodicAC.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_output</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_input</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.actors.ActorProbabilisticEpisodicAC.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize an actor that samples actions from a probabilistic model.
-The actor also stores gradients for the model weights for each action taken.</p>
+<dd><p>Initialize an actor that samples actions from a probabilistic model.</p>
+<p>The actor also stores gradients for the model weights for each action taken.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -158,13 +158,13 @@ The actor also stores gradients for the model weights for each action taken.</p>
 <td><p>Initialize an actor that samples actions from a probabilistic model.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
-<td><p>Determines whether the given weights should be accepted or rejected based on the specified constraints.</p></td>
+<td><p>Determine whether the given weights should be accepted or rejected based on the specified constraints.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache_weights</span></code>([weights])</p></td>
 <td><p>Cache the current weights of the model of the actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_observation_constraints</span></code>(…)</p></td>
-<td><p>Method to create observation (or state) related constraints using a <cite>predictor</cite> over a <cite>prediction_horizon</cite>.</p></td>
+<td><p>Create observation (or state) related constraints using a <cite>predictor</cite> over a <cite>prediction_horizon</cite>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_action</span></code>()</p></td>
 <td><p>Get the current action.</p></td>
@@ -173,7 +173,7 @@ The actor also stores gradients for the model weights for each action taken.</p>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_weights</span></code>()</p></td>
-<td><p>Method to optimize the current actor weights.</p></td>
+<td><p>Optimize the current actor weights.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_observation</span></code>(observation)</p></td>
 <td><p>Update the current observation of the actor.</p></td>
@@ -194,7 +194,7 @@ The actor also stores gradients for the model weights for each action taken.</p>
 <td><p>Store the gradient of the model’s weights.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update</span></code>(observation)</p></td>
-<td><p>Samples an action from the actor’s distribution, updates the action and action_old attributes, and stores the current gradient in the gradients list.</p></td>
+<td><p>Sample an action from the actor’s distribution, updates the action and action_old attributes, and stores the current gradient in the gradients list.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_action</span></code>(observation)</p></td>
 <td><p>Sample an action from the probabilistic model, clip it to the action bounds, and store its gradient.</p></td>
@@ -234,7 +234,7 @@ The actor also stores gradients for the model weights for each action taken.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="rcognita.actors.ActorProbabilisticEpisodic.html" class="btn btn-neutral float-left" title="rcognita.actors.ActorProbabilisticEpisodic" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="rcognita.actors.ActorRPO.html" class="btn btn-neutral float-right" title="rcognita.actors.ActorRPO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="rcognita.actors.ActorREINFORCE.html" class="btn btn-neutral float-right" title="rcognita.actors.ActorREINFORCE" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

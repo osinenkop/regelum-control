@@ -1,0 +1,32 @@
+rcognita.controllers.ControllerMemoryPID
+========================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: ControllerMemoryPID
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControllerMemoryPID.__init__
+      ~ControllerMemoryPID.compute_action
+      ~ControllerMemoryPID.compute_error
+      ~ControllerMemoryPID.compute_error_derivative_numerically
+      ~ControllerMemoryPID.compute_integral
+      ~ControllerMemoryPID.is_stabilized
+      ~ControllerMemoryPID.reset
+      ~ControllerMemoryPID.reset_buffer
+      ~ControllerMemoryPID.set_initial_point
+      ~ControllerMemoryPID.set_setpoint
+      ~ControllerMemoryPID.update_observation_buffer
+   
+   
+
+   
+   
+   

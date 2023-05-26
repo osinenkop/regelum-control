@@ -1,0 +1,47 @@
+rcognita.callbacks.PolicyGradientObjectiveSaverCallback
+=======================================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: PolicyGradientObjectiveSaverCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PolicyGradientObjectiveSaverCallback.__init__
+      ~PolicyGradientObjectiveSaverCallback.add_datum
+      ~PolicyGradientObjectiveSaverCallback.clear_recent_data
+      ~PolicyGradientObjectiveSaverCallback.dump_and_clear_data
+      ~PolicyGradientObjectiveSaverCallback.dump_data
+      ~PolicyGradientObjectiveSaverCallback.get_save_directory
+      ~PolicyGradientObjectiveSaverCallback.insert_column_left
+      ~PolicyGradientObjectiveSaverCallback.is_target_event
+      ~PolicyGradientObjectiveSaverCallback.load_data
+      ~PolicyGradientObjectiveSaverCallback.on_episode_done
+      ~PolicyGradientObjectiveSaverCallback.on_iteration_done
+      ~PolicyGradientObjectiveSaverCallback.on_launch
+      ~PolicyGradientObjectiveSaverCallback.on_termination
+      ~PolicyGradientObjectiveSaverCallback.perform
+      ~PolicyGradientObjectiveSaverCallback.plot
+      ~PolicyGradientObjectiveSaverCallback.plot_gui
+      ~PolicyGradientObjectiveSaverCallback.ready
+      ~PolicyGradientObjectiveSaverCallback.save_plot
+      ~PolicyGradientObjectiveSaverCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PolicyGradientObjectiveSaverCallback.cooldown
+      ~PolicyGradientObjectiveSaverCallback.data
+   
+   

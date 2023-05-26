@@ -1,0 +1,23 @@
+rcognita.data\_buffers.UpdatableSampler
+=======================================
+
+.. currentmodule:: rcognita.data_buffers
+
+.. autoclass:: UpdatableSampler
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~UpdatableSampler.__init__
+      ~UpdatableSampler.update_data
+   
+   
+
+   
+   
+   

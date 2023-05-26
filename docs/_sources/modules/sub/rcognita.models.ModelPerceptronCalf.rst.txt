@@ -1,0 +1,39 @@
+rcognita.models.ModelPerceptronCalf
+===================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelPerceptronCalf
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelPerceptronCalf.Linear
+      ~ModelPerceptronCalf.__init__
+      ~ModelPerceptronCalf.cache_weights
+      ~ModelPerceptronCalf.forward
+      ~ModelPerceptronCalf.get_weights_markup
+      ~ModelPerceptronCalf.register_linear_weights
+      ~ModelPerceptronCalf.restore_weights
+      ~ModelPerceptronCalf.update_and_cache_weights
+      ~ModelPerceptronCalf.update_weights
+      ~ModelPerceptronCalf.wrap_weights_to_dict
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelPerceptronCalf.model_name
+      ~ModelPerceptronCalf.weights
+      ~ModelPerceptronCalf.weights_dict
+   
+   

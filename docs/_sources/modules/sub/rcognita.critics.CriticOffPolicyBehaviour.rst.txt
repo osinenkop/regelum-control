@@ -1,0 +1,45 @@
+rcognita.critics.CriticOffPolicyBehaviour
+=========================================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticOffPolicyBehaviour
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticOffPolicyBehaviour.__init__
+      ~CriticOffPolicyBehaviour.accept_or_reject_weights
+      ~CriticOffPolicyBehaviour.cache_weights
+      ~CriticOffPolicyBehaviour.get_batch_ids
+      ~CriticOffPolicyBehaviour.get_first_valid_idx_in_buffer
+      ~CriticOffPolicyBehaviour.initialize_buffers
+      ~CriticOffPolicyBehaviour.is_enough_valid_elements_in_buffer
+      ~CriticOffPolicyBehaviour.objective
+      ~CriticOffPolicyBehaviour.optimize_weights
+      ~CriticOffPolicyBehaviour.receive_state
+      ~CriticOffPolicyBehaviour.reset
+      ~CriticOffPolicyBehaviour.restore_weights
+      ~CriticOffPolicyBehaviour.update_and_cache_weights
+      ~CriticOffPolicyBehaviour.update_buffers
+      ~CriticOffPolicyBehaviour.update_target
+      ~CriticOffPolicyBehaviour.update_total_objective
+      ~CriticOffPolicyBehaviour.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticOffPolicyBehaviour.optimizer_engine
+      ~CriticOffPolicyBehaviour.weights
+   
+   

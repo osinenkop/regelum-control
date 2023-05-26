@@ -1,0 +1,82 @@
+rcognita.models.ModelDeepObjective
+==================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelDeepObjective
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelDeepObjective.__init__
+      ~ModelDeepObjective.add_module
+      ~ModelDeepObjective.apply
+      ~ModelDeepObjective.bfloat16
+      ~ModelDeepObjective.buffers
+      ~ModelDeepObjective.cache_weights
+      ~ModelDeepObjective.children
+      ~ModelDeepObjective.cpu
+      ~ModelDeepObjective.cuda
+      ~ModelDeepObjective.detach_weights
+      ~ModelDeepObjective.double
+      ~ModelDeepObjective.eval
+      ~ModelDeepObjective.extra_repr
+      ~ModelDeepObjective.float
+      ~ModelDeepObjective.forward
+      ~ModelDeepObjective.get_buffer
+      ~ModelDeepObjective.get_extra_state
+      ~ModelDeepObjective.get_parameter
+      ~ModelDeepObjective.get_submodule
+      ~ModelDeepObjective.half
+      ~ModelDeepObjective.ipu
+      ~ModelDeepObjective.load_state_dict
+      ~ModelDeepObjective.modules
+      ~ModelDeepObjective.named_buffers
+      ~ModelDeepObjective.named_children
+      ~ModelDeepObjective.named_modules
+      ~ModelDeepObjective.named_parameters
+      ~ModelDeepObjective.parameters
+      ~ModelDeepObjective.register_backward_hook
+      ~ModelDeepObjective.register_buffer
+      ~ModelDeepObjective.register_forward_hook
+      ~ModelDeepObjective.register_forward_pre_hook
+      ~ModelDeepObjective.register_full_backward_hook
+      ~ModelDeepObjective.register_load_state_dict_post_hook
+      ~ModelDeepObjective.register_module
+      ~ModelDeepObjective.register_parameter
+      ~ModelDeepObjective.requires_grad_
+      ~ModelDeepObjective.restore_weights
+      ~ModelDeepObjective.set_extra_state
+      ~ModelDeepObjective.share_memory
+      ~ModelDeepObjective.soft_update
+      ~ModelDeepObjective.state_dict
+      ~ModelDeepObjective.to
+      ~ModelDeepObjective.to_empty
+      ~ModelDeepObjective.train
+      ~ModelDeepObjective.type
+      ~ModelDeepObjective.update_and_cache_weights
+      ~ModelDeepObjective.update_weights
+      ~ModelDeepObjective.weights2dict
+      ~ModelDeepObjective.xpu
+      ~ModelDeepObjective.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelDeepObjective.T_destination
+      ~ModelDeepObjective.cache
+      ~ModelDeepObjective.dump_patches
+      ~ModelDeepObjective.model_name
+      ~ModelDeepObjective.weights
+   
+   

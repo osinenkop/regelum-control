@@ -63,11 +63,11 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorDDPG.html">rcognita.actors.ActorDDPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorMPC.html">rcognita.actors.ActorMPC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorMPCTerminal.html">rcognita.actors.ActorMPCTerminal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPG.html">rcognita.actors.ActorPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPGBase.html">rcognita.actors.ActorPGBase</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPID.html">rcognita.actors.ActorPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorProbabilisticEpisodic.html">rcognita.actors.ActorProbabilisticEpisodic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorProbabilisticEpisodicAC.html">rcognita.actors.ActorProbabilisticEpisodicAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorREINFORCE.html">rcognita.actors.ActorREINFORCE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorRPO.html">rcognita.actors.ActorRPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorRQL.html">rcognita.actors.ActorRQL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorSDPG.html">rcognita.actors.ActorSDPG</a></li>
@@ -135,7 +135,8 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.actors.ActorCLF.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.actors.ActorCLF.__init__" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Initialize a CLF based actor.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>safe_controller</strong> (<em>SafeController</em>) – object of class SafeController that provides a safe action if the current action would violate the safe set.</p>
 </dd>
@@ -156,21 +157,16 @@
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.actors.ActorCLF.__init__" title="rcognita.actors.ActorCLF.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
-<td><p><dl class="field-list simple">
-<dt class="field-odd">param safe_controller</dt>
-<dd class="field-odd"><p>object of class SafeController that provides a safe action if the current action would violate the safe set.</p>
-</dd>
-</dl>
-</p></td>
+<td><p>Initialize a CLF based actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
-<td><p>Determines whether the given weights should be accepted or rejected based on the specified constraints.</p></td>
+<td><p>Determine whether the given weights should be accepted or rejected based on the specified constraints.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache_weights</span></code>([weights])</p></td>
 <td><p>Cache the current weights of the model of the actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_observation_constraints</span></code>(…)</p></td>
-<td><p>Method to create observation (or state) related constraints using a <cite>predictor</cite> over a <cite>prediction_horizon</cite>.</p></td>
+<td><p>Create observation (or state) related constraints using a <cite>predictor</cite> over a <cite>prediction_horizon</cite>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">iteration_update</span></code>()</p></td>
 <td><p></p></td>
@@ -179,7 +175,7 @@
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_weights</span></code>([constraint_functions, time])</p></td>
-<td><p>Method to optimize the current actor weights.</p></td>
+<td><p>Optimize the current actor weights.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_observation</span></code>(observation)</p></td>
 <td><p>Update the current observation of the actor.</p></td>

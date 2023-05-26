@@ -1,0 +1,44 @@
+rcognita.actors.ActorSDPG
+=========================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorSDPG
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorSDPG.__init__
+      ~ActorSDPG.accept_or_reject_weights
+      ~ActorSDPG.cache_weights
+      ~ActorSDPG.create_observation_constraints
+      ~ActorSDPG.iteration_update
+      ~ActorSDPG.objective
+      ~ActorSDPG.optimize_weights
+      ~ActorSDPG.optimize_weights_after_iteration
+      ~ActorSDPG.receive_observation
+      ~ActorSDPG.receive_state
+      ~ActorSDPG.reset
+      ~ActorSDPG.restore_weights
+      ~ActorSDPG.set_action
+      ~ActorSDPG.update_action
+      ~ActorSDPG.update_and_cache_weights
+      ~ActorSDPG.update_target
+      ~ActorSDPG.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorSDPG.weights
+   
+   

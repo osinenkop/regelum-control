@@ -1,4 +1,4 @@
-"""This module contains high-level structures of controllers (agents).
+"""Contains high-level structures of controllers (agents).
 
 Remarks: 
 
@@ -84,7 +84,8 @@ class Controller(RcognitaBase, ABC):
 
 
 class RLController(Controller):
-    """Reinforcement learning controller class.
+    """Reinforcement learning controller.
+
     Takes instances of `actor` and `critic` to operate.
     Action computation is sampled, i.e., actions are computed at discrete, equi-distant moments in time.
     `critic` in turn is updated every `critic_period` units of time.
@@ -111,7 +112,8 @@ class RLController(Controller):
         self.weights_difference_norms = []
 
     def reset(self):
-        """Resets agent for use in multi-episode simulation.
+        """Reset agent for use in multi-episode simulation.
+
         Only internal clock and current actions are reset.
         All the learned parameters are retained.
 
@@ -319,7 +321,7 @@ class CALFControllerPredictive(CALFControllerExPost):
 
 
 class Controller3WRobotDisassembledCLF:
-    """This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
+    """Nominal controller for 3-wheel robots used for benchmarking of other controllers.
 
     The controller is sampled.
 
@@ -385,11 +387,11 @@ class Controller3WRobotDisassembledCLF:
             )
 
     def reset(self):
-        """Resets controller for use in multi-episode simulation."""
+        """Reset controller for use in multi-episode simulation."""
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI, theta):
-        """Generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators)."""
+        """Compute generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators)."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
@@ -480,10 +482,11 @@ class Controller3WRobotDisassembledCLF:
         return theta_val
 
     def _Cart2NH(self, coords_Cart):
-        r"""Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
+        r"""Transform from Cartesian coordinates to non-holonomic (NH) coordinates.
+
         See Section VIII.A in [[1]_].
 
-        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
+        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\dot x_3 = x_2 u_1 - x_1 u_2`.
 
         References
         ----------
@@ -513,9 +516,10 @@ class Controller3WRobotDisassembledCLF:
 
     def _NH2ctrl_Cart(self, xNI, eta, uNI):
         r"""Get control for Cartesian NI from NH coordinates.
+
         See Section VIII.A in [[1]_].
 
-        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
+        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\dot x_3 = x_2 u_1 - x_1 u_2`.
 
         References
         ----------
@@ -579,7 +583,7 @@ class Controller3WRobotDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0, observation_target=None):
-        """Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock."""
+        """Perform the same computation as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock."""
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
         kappa_val = self._kappa(xNI, theta_star)
@@ -1415,7 +1419,7 @@ class Controller3WRobotNIDisassembledCLF:
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def reset(self):
-        """Resets controller for use in multi-episode simulation."""
+        """Reset controller for use in multi-episode simulation."""
         self.controller_clock = self.time_start
         self.action_old = rc.zeros(2)
 
@@ -1509,7 +1513,7 @@ class Controller3WRobotNIDisassembledCLF:
         return F + 1 / 2 * rc.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
-        """Transformation from Cartesian coordinates to non-holonomic (NH) coordinates."""
+        """Transform from Cartesian coordinates to non-holonomic (NH) coordinates."""
         xNI = rc.zeros(3)
 
         xc = coords_Cart[0]
@@ -1560,7 +1564,7 @@ class Controller3WRobotNIDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0, observation_target=None):
-        """Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock."""
+        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock."""
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
         uNI = self.controller_gain * kappa_val

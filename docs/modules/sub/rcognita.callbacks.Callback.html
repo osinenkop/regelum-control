@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="rcognita.callbacks.ConfigDiagramCallback" href="rcognita.callbacks.ConfigDiagramCallback.html" />
-    <link rel="prev" title="rcognita.callbacks.CalfWeightsCallback" href="rcognita.callbacks.CalfWeightsCallback.html" /> 
+    <link rel="prev" title="rcognita.callbacks.CalfCallback" href="rcognita.callbacks.CalfCallback.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -62,8 +62,8 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.is_in_debug_mode.html">rcognita.callbacks.is_in_debug_mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.method_callback.html">rcognita.callbacks.method_callback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.AnimationCallback.html">rcognita.callbacks.AnimationCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.CALFWeightsCallback.html">rcognita.callbacks.CALFWeightsCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.CalfCallback.html">rcognita.callbacks.CalfCallback</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.CalfWeightsCallback.html">rcognita.callbacks.CalfWeightsCallback</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.callbacks.Callback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.ConfigDiagramCallback.html">rcognita.callbacks.ConfigDiagramCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.CriticObjectiveCallback.html">rcognita.callbacks.CriticObjectiveCallback</a></li>
@@ -71,7 +71,6 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.HistoricalCallback.html">rcognita.callbacks.HistoricalCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.HistoricalObjectiveCallback.html">rcognita.callbacks.HistoricalObjectiveCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.HistoricalObservationCallback.html">rcognita.callbacks.HistoricalObservationCallback</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.InspectReferrersCallback.html">rcognita.callbacks.InspectReferrersCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.ObjectiveCallback.html">rcognita.callbacks.ObjectiveCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.OnEpisodeDoneCallback.html">rcognita.callbacks.OnEpisodeDoneCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.callbacks.OnIterationDoneCallback.html">rcognita.callbacks.OnIterationDoneCallback</a></li>
@@ -139,7 +138,9 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.callbacks.Callback">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.callbacks.</span></span><span class="sig-name descname"><span class="pre">Callback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.callbacks.Callback" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
+<dd><p>Base class for callbacks.</p>
+<p>Callback objects are used to perform in response to some method being called.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="rcognita.callbacks.Callback.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'info'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.callbacks.Callback.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize a callback object.</p>
@@ -197,7 +198,7 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cooldown</span></code></p></td>
-<td><p>This is the base class for a callback object.</p></td>
+<td><p></p></td>
 </tr>
 </tbody>
 </table>
@@ -209,7 +210,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="rcognita.callbacks.CalfWeightsCallback.html" class="btn btn-neutral float-left" title="rcognita.callbacks.CalfWeightsCallback" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rcognita.callbacks.CalfCallback.html" class="btn btn-neutral float-left" title="rcognita.callbacks.CalfCallback" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="rcognita.callbacks.ConfigDiagramCallback.html" class="btn btn-neutral float-right" title="rcognita.callbacks.ConfigDiagramCallback" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

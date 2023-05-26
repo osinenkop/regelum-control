@@ -14,6 +14,7 @@
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -63,11 +64,11 @@
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorDDPG.html">rcognita.actors.ActorDDPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorMPC.html">rcognita.actors.ActorMPC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorMPCTerminal.html">rcognita.actors.ActorMPCTerminal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorPG.html">rcognita.actors.ActorPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorPGBase.html">rcognita.actors.ActorPGBase</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorPID.html">rcognita.actors.ActorPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodic.html">rcognita.actors.ActorProbabilisticEpisodic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodicAC.html">rcognita.actors.ActorProbabilisticEpisodicAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorREINFORCE.html">rcognita.actors.ActorREINFORCE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorRPO.html">rcognita.actors.ActorRPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorRQL.html">rcognita.actors.ActorRQL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.actors.ActorSDPG.html">rcognita.actors.ActorSDPG</a></li>
@@ -127,8 +128,8 @@
              
   <div class="section" id="module-rcognita.actors">
 <span id="rcognita-actors"></span><h1><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code><a class="headerlink" href="#module-rcognita.actors" title="Permalink to this headline"></a></h1>
-<p>This module contains actors, i.e., entities that directly calculate actions.
-Actors are inegrated into controllers (agents).</p>
+<p>Contains actors, i.e., entities that directly calculate actions.</p>
+<p>Actors are inegrated into controllers (agents).</p>
 <p>Remarks:</p>
 <ul class="simple">
 <li><p>All vectors are treated as of type [n,]</p></li>
@@ -164,7 +165,7 @@ Actors are inegrated into controllers (agents).</p>
 <td><p>ActorCLF is an actor class that aims to optimize the decay of a Control-Lyapunov function (CLF).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorDDPG.html#rcognita.actors.ActorDDPG" title="rcognita.actors.ActorDDPG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorDDPG</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
-<td><p></p></td>
+<td><p>Actor for Deep Deterministic Policy Gradient.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorMPC.html#rcognita.actors.ActorMPC" title="rcognita.actors.ActorMPC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorMPC</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Model-predictive control (MPC) actor.</p></td>
@@ -172,20 +173,20 @@ Actors are inegrated into controllers (agents).</p>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorMPCTerminal.html#rcognita.actors.ActorMPCTerminal" title="rcognita.actors.ActorMPCTerminal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorMPCTerminal</span></code></a>(dim_output, dim_input, …)</p></td>
 <td><p>Model-predictive control (MPC) actor.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPG.html#rcognita.actors.ActorPG" title="rcognita.actors.ActorPG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPG</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPGBase.html#rcognita.actors.ActorPGBase" title="rcognita.actors.ActorPGBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPGBase</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
+<td><p>Policy gradient actor (base).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPID.html#rcognita.actors.ActorPID" title="rcognita.actors.ActorPID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPID</span></code></a>(*args[, gain])</p></td>
+<td><p>Proportional controller <span class="math notranslate nohighlight">\(u = - kI x\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodic.html#rcognita.actors.ActorProbabilisticEpisodic" title="rcognita.actors.ActorProbabilisticEpisodic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodic</span></code></a>(dim_output, dim_input)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPGBase.html#rcognita.actors.ActorPGBase" title="rcognita.actors.ActorPGBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPGBase</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodicAC.html#rcognita.actors.ActorProbabilisticEpisodicAC" title="rcognita.actors.ActorProbabilisticEpisodicAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodicAC</span></code></a>(dim_output, …)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorPID.html#rcognita.actors.ActorPID" title="rcognita.actors.ActorPID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorPID</span></code></a>(*args[, gain])</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodic.html#rcognita.actors.ActorProbabilisticEpisodic" title="rcognita.actors.ActorProbabilisticEpisodic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodic</span></code></a>(dim_output, dim_input)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorProbabilisticEpisodicAC.html#rcognita.actors.ActorProbabilisticEpisodicAC" title="rcognita.actors.ActorProbabilisticEpisodicAC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorProbabilisticEpisodicAC</span></code></a>(dim_output, …)</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorREINFORCE.html#rcognita.actors.ActorREINFORCE" title="rcognita.actors.ActorREINFORCE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorREINFORCE</span></code></a>(is_use_derivative, …[, device])</p></td>
+<td><p>Vanilla REINFORCE Actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorRPO.html#rcognita.actors.ActorRPO" title="rcognita.actors.ActorRPO"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorRPO</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Running (objective) Plus Optimal (objective) actor.</p></td>
@@ -194,7 +195,7 @@ Actors are inegrated into controllers (agents).</p>
 <td><p>Rollout Q-learning (RQL) actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorSDPG.html#rcognita.actors.ActorSDPG" title="rcognita.actors.ActorSDPG"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorSDPG</span></code></a>(is_use_derivative, N_episodes, …)</p></td>
-<td><p></p></td>
+<td><p>Actor for Sample-based Distributional Policy Gradient.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.actors.ActorSQL.html#rcognita.actors.ActorSQL" title="rcognita.actors.ActorSQL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ActorSQL</span></code></a>(dim_output, dim_input, …[, …])</p></td>
 <td><p>Staked Q-learning (SQL) actor.</p></td>

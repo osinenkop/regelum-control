@@ -1,4 +1,4 @@
-"""This module contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
+"""Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
 Remarks: 
 
@@ -152,7 +152,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     @abstractmethod
     def compute_dynamics(self, time, state, action, disturb):
-        r"""Description of the system internal dynamics.
+        r"""Compute right hand side of the system's state dynamics equation.
 
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
         As a probability disitribution, ``compute_dynamics`` should return a number in :math:`[0,1]`.
@@ -451,7 +451,7 @@ class Sys3WRobot(System):
         r"""Initialize system.
 
         Description
-        -----------.
+        -----------
 
         We use here a 1st-order stochastic linear system of the type
 
@@ -507,7 +507,6 @@ class Sys3WRobotNI(System):
         return Dstate
 
     def _compute_disturbance_dynamics(self, time, disturb):
-        """ """
         Ddisturb = utilities.rc.zeros(self.dim_disturb)
 
         for k in range(0, self.dim_disturb):
@@ -664,9 +663,9 @@ class CartPole(System):
 
 
 class LunarLander(System):
-    """Lunar lander system. link:
-    https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf.
+    """Lunar lander system.
 
+    link: https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf.
     """
 
     def __init__(self, *args, **kwargs):

@@ -1,4 +1,5 @@
-"""This module contains model classes.
+"""Contains models.
+
 These can be used in system dynamics fitting, critic and other tasks.
 
 Updates to come.
@@ -14,7 +15,7 @@ import rcognita.base
 # CUR_DIR = os.path.abspath(__file__ + "/..")
 # sys.path.insert(0, CUR_DIR)
 
-from __utilities import rc
+from .__utilities import rc
 import numpy as np
 
 import math
@@ -97,7 +98,7 @@ class Model(rcognita.base.RcognitaBase, ABC):
 
 class ModelSS:
     model_name = "state-space"
-    """
+    r"""
     State-space model
             
     .. math::
@@ -743,7 +744,7 @@ class ModelPerceptronCalf(Model):
         }
 
     def Linear(self, dim_in, dim_out, name, bias=None):
-        """Here we take bias into account by introducing an additional row in the weight matrix.
+        """Take bias into account by introducing an additional row in the weight matrix.
 
         It is equivalent to $xW + b$.
         """
@@ -818,6 +819,16 @@ class ModelDQN(ModelNN):
         bias=False,
         leaky_relu_coef=0.2,
     ):
+        """Initialize a DQN model.
+
+        :param dim_observation: dimensionality of observation
+        :param dim_action: dimensionality of action
+        :param dim_hidden: dimensionality of hidden layers
+        :param weights: initial weights
+        :param force_positive_def: whether to make forward positive definite
+        :param bias: whether to use bias
+        :param leaky_relu_coef: coefficient for all nn.LeakyReLU in the model
+        """
         super().__init__()
 
         self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=bias)
@@ -903,7 +914,14 @@ class LookupTable(Model):
 
 
 class WeightClipper:
+    """Weight clipper for pytorch layers."""
+
     def __init__(self, weight_min=None, weight_max=None):
+        """Initialize a weight clipper.
+
+        :param weight_min: minimum value for weight
+        :param weight_max: maximum value for weight
+        """
         self.weight_min = weight_min
         self.weight_max = weight_max
 
@@ -915,6 +933,8 @@ class WeightClipper:
 
 
 class ModelFc(ModelNN):
+    """Fully connected layer with weight clipper."""
+
     def __init__(
         self,
         dim_observation,
@@ -923,6 +943,14 @@ class ModelFc(ModelNN):
         weight_min=None,
         weight_max=None,
     ):
+        """Initialize a fully connected layer.
+
+        :param dim_observation: dimensionality of observation
+        :param dim_action: dimensionality of action
+        :param use_derivative: whether the derivation of observation appended to observation
+        :param weight_min: minimal weight bound
+        :param weight_max: maximum weight bound
+        """
         super().__init__()
         self.weight_min = weight_min
         self.weight_max = weight_max
@@ -949,9 +977,18 @@ class ModelFc(ModelNN):
 
 
 class ModelNNElementWiseProduct(ModelNN):
+    """Model with only one diagonal linear layer."""
+
     def __init__(
         self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
     ):
+        """Initialize a model with one diagonal linear layer.
+
+        :param dim_observation: dimensionality of observation
+        :param weight_min: minimal weight bound
+        :param weight_max: maximal weight bound
+        :param use_derivative: whether observation derivatives are appended to observations
+        """
         super().__init__()
 
         if use_derivative:
@@ -979,6 +1016,12 @@ class ModelNNElementWiseProduct(ModelNN):
 
 
 class GaussianPDFModel(ModelNN):
+    r"""Model for REINFORCE Policy Gradient methods.
+
+    Markov kernel acts like :math:`u \mid x \sim \mathcal{N}\left( f_{\theta}(x), \sigma^2 \right)`.
+    :math:`f_{\theta}(x)` is the neural network with weights :math:`\theta`.
+    """
+
     def __init__(
         self,
         dim_observation,
@@ -988,6 +1031,15 @@ class GaussianPDFModel(ModelNN):
         weight_min=None,
         weight_max=None,
     ):
+        r"""Initialize an instance of GaussianPDFModel.
+
+        :param dim_observation: dimensionality of observation
+        :param dim_action: dimensionality of action
+        :param diag_scale_coef: standard deviation for distribution (parameter :math:`\\sigma`)
+        :param use_derivative: whether observation derivatives are appended to observations
+        :param weight_min: minimal weight bound
+        :param weight_max: maximal weight bound
+        """
         super().__init__()
 
         if use_derivative:
@@ -1050,6 +1102,7 @@ class GaussianPDFModel(ModelNN):
 
 
 class GaussianElementWisePDFModel(ModelNN):
+
     def __init__(
         self,
         dim_observation,
@@ -1130,8 +1183,7 @@ class GaussianElementWisePDFModel(ModelNN):
 
 
 class ModelGaussianConditional(Model):
-    """Gaussian probability distribution model with `weights[0]` being an expectation vector
-    and `weights[1]` being a covariance matrix.
+    """Gaussian probability distribution model with `weights[0]` being an expectation vector and `weights[1]` being a covariance matrix.
 
     The expectation vector can optionally be generated.
     """

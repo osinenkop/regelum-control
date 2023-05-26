@@ -1,4 +1,4 @@
-"""This module containing critics, which are integrated in controllers (agents).
+"""Contains critics, which are integrated in controllers (agents).
 
 Remarks: 
 
@@ -168,7 +168,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
             self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
-        """Stores a copy of the current model weights.
+        """Store a copy of the current model weights.
 
         :param weights: An optional ndarray of weights to store. If not provided, the current
             model weights are stored. Default is None.
@@ -194,6 +194,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
         """Determine whether to accept or reject the given weights based on whether they violate the given constraints.
+
         Normally, this method takes weights and checks CALF constraints by plugging them into the critic model.
         This works in a straightforward way with scipy and CASADi optimizers.
         In case of Torch, the weights are stored in the model after the learning.
@@ -233,6 +234,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         time=None,
     ):
         """Compute optimized critic weights, possibly subject to constraints.
+
         If weights satisfying constraints are found, the method returns the status `accepted`.
         Otherwise, it returns the status `rejected`.
 
@@ -265,7 +267,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return self.weights_acceptance_status
 
     def update_buffers(self, observation, action):
-        """Updates the buffers of the critic with the given observation and action.
+        """Update the buffers of the critic with the given observation and action.
 
         :param observation: the current observation of the system.
         :type observation: np.ndarray
@@ -297,6 +299,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
     def update_total_objective(self, observation, action):
         """Update the outcome variable based on the running objective and the current observation and action.
+
         :param observation: current observation
         :type observation: np.ndarray
         :param action: current action
@@ -403,7 +406,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
 
 class CriticOfObservation(Critic):
-    """This is the class of critics that are represented as functions of observation only."""
+    """Critic that is represented as a function of observation only."""
 
     def objective(self, data_buffer=None, weights=None):
         """Objective of the critic, say, a squared temporal difference."""
@@ -690,6 +693,7 @@ class CriticOffPolicyGreedy(Critic):
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
         """Compute the objective function of the critic, which is typically a squared temporal difference.
+
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
         :type data_buffer: dict, optional
         :param weights: the weights of the critic model, if different from the stored weights.
@@ -857,9 +861,9 @@ class CriticCALF(CriticOfObservation):
             # self.safe_decay_param = self.safe_deay_rate_param * rc norm ...
 
     def CALF_decay_constraint_no_prediction(self, weights=None):
-        """Constraint that ensures that the CALF value is decreasing by a certain rate. The rate is determined by the
-        `safe_decay_param` parameter. This constraint is used when there is no prediction of the next state.
+        """Constraint that ensures that the CALF value is decreasing by a certain rate.
 
+        The rate is determined by the `safe_decay_param` parameter. This constraint is used when there is no prediction of the next state.
         :param weights: critic weights to be evaluated
         :type weights: ndarray
         :return: constraint violation
@@ -881,9 +885,9 @@ class CriticCALF(CriticOfObservation):
         return self.stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(self, weights=None):
-        """Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
-        the `current_observation` and a certain constant.
+        """Constraint that ensures that the value of the critic is above a certain lower bound.
 
+        The lower bound is determined by the `current_observation` and a certain constant.
         :param weights: critic weights to be evaluated
         :type weights: ndarray
         :return: constraint violation
@@ -897,9 +901,10 @@ class CriticCALF(CriticOfObservation):
         return self.lb_constraint_violation
 
     def CALF_critic_lower_bound_constraint_predictive(self, weights=None):
-        """Constraint that ensures that the value of the critic is above a certain lower bound. The lower bound is determined by
-        the `current_observation` and a certain constant.
+        """Constraint that ensures that the value of the critic is above a certain lower bound.
 
+        The lower bound is determined by
+        the `current_observation` and a certain constant.
         :param weights: critic weights to be evaluated
         :type weights: ndarray
         :return: constraint violation
@@ -962,6 +967,7 @@ class CriticCALF(CriticOfObservation):
 
     def CALF_decay_constraint_predicted_on_policy(self, weights=None):
         """Constraint for ensuring that the CALF function decreases at each iteration.
+
         This constraint is used when prediction is done using the last action taken.
 
         :param weights: Current weights of the critic network.
@@ -1064,7 +1070,7 @@ class CriticTrivial(Critic):
         self.optimized_weights = []
 
     def __call__(self, *args, **kwargs):
-        """Returns the current estimate of the prospective total objective.
+        """Return the current estimate of the prospective total objective.
 
         :return: estimated total objective.
         :rtype: float
@@ -1092,7 +1098,7 @@ class CriticTrivial(Critic):
         pass
 
     def update_buffers(self, observation, action):
-        """Updates the estimate of prospective total objective.
+        """Update the estimate of prospective total objective.
 
         :param observation: Current observation.
         :type observation: ndarray or list
@@ -1114,8 +1120,7 @@ class CriticTrivial(Critic):
         pass
 
     def update_total_objective(self, observation, action):
-        """Update the value of the outcome variable by adding the value of the running_objective function evaluated
-        at the current observation and action, multiplied by the sampling time.
+        """Update the value of the outcome variable by adding the value of the running_objective function evaluated at the current observation and action, multiplied by the sampling time.
 
         :param observation: The current observation.
         :type observation: Any

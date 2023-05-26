@@ -1,4 +1,5 @@
-"""This module contains callbacks.
+"""Contains callbacks.
+
 Callbacks are lightweight event handlers, used mainly for logging.
 
 To make a method of a class trigger callbacks, one needs to
@@ -37,7 +38,7 @@ from pathlib import Path
 
 import sys
 import filelock
-import gc
+
 
 
 def is_in_debug_mode():
@@ -46,12 +47,17 @@ def is_in_debug_mode():
 
 class apply_callbacks:
     """Decorator that applies a list of callbacks to a given method of an object.
+
     If the object has no list of callbacks specified, the default callbacks are used.
 
     :param method: The method to which the callbacks should be applied.
     """
 
     def __init__(self, callbacks=None):
+        """Initialize a decorator that applies callbacks.
+
+        :param callbacks: list of callbacks to apply (applies all default callbacks if omitted)
+        """
         self.callbacks = callbacks
 
     def __call__(self, method):
@@ -67,11 +73,12 @@ class apply_callbacks:
 
 
 class Callback(ABC):
-    cooldown = None
-    """
-    This is the base class for a callback object. Callback objects are used to perform some action or computation after a method has been called.
+    """Base class for callbacks.
+
+    Callback objects are used to perform in response to some method being called.
     """
 
+    cooldown = None
     def __init__(self, log_level="info"):
         """Initialize a callback object.
 
@@ -144,6 +151,8 @@ class Callback(ABC):
 
 
 class TimeCallback(Callback):
+    """Callback responsible for keeping track of simulation time."""
+
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
 
@@ -155,7 +164,10 @@ class TimeCallback(Callback):
 
 
 class OnEpisodeDoneCallback(Callback):
+    """Callback responsible for logging and recording relevant data when an episode ends."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an OnEpisodeDoneCallback instance."""
         super().__init__(*args, **kwargs)
         self.episode_counter = 0
         self.iteration_counter = 1
@@ -182,7 +194,10 @@ class OnEpisodeDoneCallback(Callback):
 
 
 class OnIterationDoneCallback(Callback):
+    """Callback responsible for logging and recording relevant data when an iteration ends."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of OnIterationDoneCallback."""
         super().__init__(*args, **kwargs)
         self.iteration_counter = 0
 
@@ -205,11 +220,61 @@ class OnIterationDoneCallback(Callback):
 
 
 class ConfigDiagramCallback(Callback):
+    """Callback responsible for constructing SUMMARY.html and relevant data, including the config diagram."""
+
     def perform(self, *args, **kwargs):
         pass
 
     def is_target_event(self, obj, method, output):
         return False
+
+    @staticmethod
+    def __monitor_git():
+        try:
+            forbidden = False
+            with filelock.FileLock(rcognita.main.metadata["common_dir"] + "/diff.lock"):
+                repo = git.Repo(search_parent_directories=True)
+                commit_hash = repo.head.object.hexsha
+                if repo.is_dirty(untracked_files=True):
+                    commit_hash += (
+                        ' <font color="red">(uncommitted/unstaged changes)</font>'
+                    )
+                    forbidden = (
+                        "disallow_uncommitted" in rcognita.main.config
+                        and rcognita.main.config.disallow_uncommitted
+                        and not is_in_debug_mode()
+                    )
+                    untracked = repo.untracked_files
+                    if not os.path.exists(rcognita.main.metadata["common_dir"] + "/changes.diff"):
+                        repo.git.add(all=True)
+                        with open(rcognita.main.metadata["common_dir"] + "/changes.diff", "w") as f:
+                            diff = repo.git.diff(repo.head.commit.tree)
+                            if untracked:
+                                repo.index.remove(untracked, cached=True)
+                            f.write(diff + "\n")
+                        with open(".summary/changes.diff", "w") as f:
+                            f.write(diff + "\n")
+                    else:
+                        shutil.copy(
+                            rcognita.main.metadata["common_dir"] + "/changes.diff",
+                            ".summary/changes.diff",
+                        )
+            if forbidden:
+                raise Exception(
+                    "Running experiments without committing is disallowed. Please, commit your changes."
+                )
+        except git.exc.InvalidGitRepositoryError as err:
+            commit_hash = None
+            repo = None
+            if (
+                "disallow_uncommitted" in rcognita.main.cfg
+                and rcognita.main.cfg.disallow_uncommitted
+                and not is_in_debug_mode()
+            ):
+                raise Exception(
+                    "Running experiments without committing is disallowed. Please, commit your changes."
+                ) from err
+        return repo, commit_hash
 
     def on_launch(self):
         cfg = rcognita.main.config
@@ -221,49 +286,7 @@ class ConfigDiagramCallback(Callback):
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
             html = f.read()
-        try:
-            forbidden = False
-            with filelock.FileLock(metadata["common_dir"] + "/diff.lock"):
-                repo = git.Repo(search_parent_directories=True)
-                commit_hash = repo.head.object.hexsha
-                if repo.is_dirty(untracked_files=True):
-                    commit_hash += (
-                        ' <font color="red">(uncommitted/unstaged changes)</font>'
-                    )
-                    forbidden = (
-                        "disallow_uncommitted" in cfg
-                        and cfg.disallow_uncommitted
-                        and not is_in_debug_mode()
-                    )
-                    untracked = repo.untracked_files
-                    if not os.path.exists(metadata["common_dir"] + "/changes.diff"):
-                        repo.git.add(all=True)
-                        with open(metadata["common_dir"] + "/changes.diff", "w") as f:
-                            diff = repo.git.diff(repo.head.commit.tree)
-                            if untracked:
-                                repo.index.remove(untracked, cached=True)
-                            f.write(diff + "\n")
-                        with open(".summary/changes.diff", "w") as f:
-                            f.write(diff + "\n")
-                    else:
-                        shutil.copy(
-                            metadata["common_dir"] + "/changes.diff",
-                            ".summary/changes.diff",
-                        )
-            if forbidden:
-                raise Exception(
-                    "Running experiments without committing is disallowed. Please, commit your changes."
-                )
-        except git.exc.InvalidGitRepositoryError as err:
-            commit_hash = None
-            if (
-                "disallow_uncommitted" in cfg
-                and cfg.disallow_uncommitted
-                and not is_in_debug_mode()
-            ):
-                raise Exception(
-                    "Running experiments without committing is disallowed. Please, commit your changes."
-                ) from err
+        repo, commit_hash = self.__monitor_git() if not rcognita.main.metadata["no_git"] else (None, None)
         cfg_hash = hex(hash(cfg))
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
         overrides_table = ""
@@ -442,7 +465,7 @@ class ConfigDiagramCallback(Callback):
 os.chdir("{metadata["initial_working_directory"]}")
 sys.path[:0] = {metadata["initial_pythonpath"].split(":")}
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
-    callbacks = dill.load(f)</code></pre>
+    callbacks = dill.load(f)</code></pre>""" + (f"""
               <p>Reproduce experiment:</p>
               <pre><code class="language-bash">cd {repo.working_tree_dir}
 git reset
@@ -451,9 +474,8 @@ git clean -f
 {git_fragment}cd {metadata["initial_working_directory"]}
 export PYTHONPATH="{metadata["initial_pythonpath"]}"
 python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and "multirun" not in x, sys.argv)))} </code></pre>
-            </main>
-            """
-            + """
+            """ if repo is not None else "")
+            + """</main>
                 <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
             
               <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js'></script>
@@ -536,7 +558,10 @@ plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
 
 class AnimationCallback(Callback, ABC):
+    """Callback (base) responsible for rendering animated visualizations of the experiment."""
+
     def __init__(self):
+        """Initialize an instance of AnimationCallback."""
         self.frame_data = []
         self.fig = plt.figure()
         self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
@@ -592,7 +617,10 @@ class AnimationCallback(Callback, ABC):
 
 
 class HistoricalCallback(Callback, ABC):
+    """Callback (base) responsible for recording various temporal data."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of HistoricalCallback."""
         super().__init__(*args, **kwargs)
         self.xlabel = "Time"
         self.ylabel = "Value"
@@ -682,7 +710,7 @@ class HistoricalCallback(Callback, ABC):
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
-    """Creates a callback class that logs the output of a specific method of a class or any class.
+    """Create a callback class that logs the output of a specific method of a class or any class.
 
     :param method_name: Name of the method to log output for.
     :type method_name: str
@@ -734,16 +762,16 @@ class StateCallback(Callback):
 
 
 class ObjectiveCallback(Callback):
-    cooldown = 8.0
-    """
-    A Callback class that logs the current objective value of an Actor instance.
+    """A Callback class that logs the current objective value of an Actor instance.
 
     This callback is triggered whenever the Actor.objective method is called.
 
-    Attributes:
+    Attributes
+    ----------
     log (function): A logger function with the specified log level.
     """
 
+    cooldown = 8.0
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.actors.Actor) and method == "objective"
 
@@ -752,11 +780,10 @@ class ObjectiveCallback(Callback):
 
 
 class HistoricalObjectiveCallback(HistoricalCallback):
-    """A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime.
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of HistoricalObjectiveCallback."""
         super().__init__(*args, **kwargs)
 
         self.timeline = []
@@ -814,8 +841,9 @@ class HistoricalObjectiveCallback(HistoricalCallback):
 
 
 class SaveProgressCallback(Callback):
-    once_in = 1
+    """Callback responsible for regularly saving data collected by other callbacks to the hard-drive."""
 
+    once_in = 1
     def on_launch(self):
         with rcognita.main.metadata["report"]() as r:
             r["episode_current"] = 0
@@ -855,25 +883,11 @@ class SaveProgressCallback(Callback):
             self.on_episode_done(None, 0, None, None, None)
 
 
-class InspectReferrersCallback(Callback):
-    object_to_trace = "observation"
-
-    def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.OnlineScenario) and method == "step"
-
-    def perform(self, obj, method, output):
-        if hasattr(obj, self.object_to_trace):
-            refs = gc.get_referrers(getattr(obj, self.object_to_trace))
-            refs = [x for x in refs[1] if "__" not in x]
-            self.log(f"{self.object_to_trace} referrers: {refs}")
-
-
 class HistoricalObservationCallback(HistoricalCallback):
-    """A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime.
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of HistoricalObservationCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -931,11 +945,10 @@ class HistoricalObservationCallback(HistoricalCallback):
 
 
 class PolicyGradientObjectiveSaverCallback(HistoricalCallback):
-    """A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime.
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of PolicyGradientObjectiveSaverCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -975,7 +988,10 @@ class PolicyGradientObjectiveSaverCallback(HistoricalCallback):
 
 
 class TotalObjectiveCallback(HistoricalCallback):
+    """Callback that regularly logs total objective."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of TotalObjectiveCallback."""
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
         self.xlabel = "Episode"
@@ -1065,11 +1081,10 @@ class TotalObjectiveCallback(HistoricalCallback):
 
 
 class QFunctionModelSaverCallback(HistoricalCallback):
-    """A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime.
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of QFunctionModelSaverCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -1108,7 +1123,10 @@ class QFunctionModelSaverCallback(HistoricalCallback):
 
 
 class QFunctionCallback(HistoricalCallback):
+    """Callback that logs various data that concerns Q-critics."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of QFunctionCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -1148,7 +1166,10 @@ class QFunctionCallback(HistoricalCallback):
 
 
 class TimeRemainingCallback(Callback):
+    """Callback that logs an estimate of the time that remains till the end of the simulation."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of TimeRemainingCallback."""
         super().__init__(*args, **kwargs)
         self.time_episode = []
 
@@ -1191,7 +1212,10 @@ class TimeRemainingCallback(Callback):
 
 
 class CriticObjectiveCallback(HistoricalCallback):
+    """Callback that records the temporal difference loss of the critic."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CriticObjectiveCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 1.0
@@ -1222,7 +1246,10 @@ class CriticObjectiveCallback(HistoricalCallback):
 
 
 class CriticWeightsCallback(HistoricalCallback):
+    """Callback that records the critic's weights."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CriticWeightsCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 0.0
         self.time = 0.0
@@ -1277,8 +1304,11 @@ class CriticWeightsCallback(HistoricalCallback):
             return res[0].figure
 
 
-class CalfWeightsCallback(HistoricalCallback):
+class CALFWeightsCallback(HistoricalCallback):
+    """Callback that records the relevant model weights for CALF-based methods."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CALFWeightsCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 0.0
         self.time = 0.0
@@ -1331,7 +1361,10 @@ class CalfWeightsCallback(HistoricalCallback):
 
 
 class CalfCallback(HistoricalCallback):
+    """Callback that records various diagnostic data during experiments with CALF-based methods."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CalfCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 1.0
         self.time = 0.0

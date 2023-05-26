@@ -1,4 +1,4 @@
-"""This module contains auxiliary tools."""
+"""Contains auxiliary tools."""
 
 import inspect
 import numpy as np
@@ -32,6 +32,7 @@ except ModuleNotFoundError:
 
 class RCType(IntEnum):
     """Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
+
     That is, if, for instance, a function of two arguments gets an argument of a `NumPy` type and an argument of a `CasAdi` type,
     then the function's output type is inferred as a `CasADi` type.
     Mixture of CasADi types will raise a `TypeError` exception.
@@ -789,7 +790,7 @@ def rej_sampling_rvs(dim, pdf, M):
     pdf : : function
         desired probability density function
     M : : number greater than 1
-        it must hold that :math:`\\text{pdf}_{\\text{desired}} \le M \\text{pdf}_{\\text{proposal}}`.
+        it must hold that :math:`\text{pdf}_{\text{desired}} \le M \text{pdf}_{\text{proposal}}`.
         This function uses a normal pdf with zero mean and identity covariance matrix as a proposal distribution.
         The smaller `M` is, the fewer iterations to produce a sample are expected.
 

@@ -1,4 +1,4 @@
-"""This module contains various simulation scenarios.
+"""Contains various simulation scenarios.
 
 For instance, an online scenario is when the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
 
@@ -42,6 +42,7 @@ class Scenario(rcognita.base.RcognitaBase, ABC):
 
 class TabularScenarioVI(Scenario):
     """Tabular scenario for the use with tabular agents.
+
     Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
     Implements a scenario for value iteration (VI) update.
 

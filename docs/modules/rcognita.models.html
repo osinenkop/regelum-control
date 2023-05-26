@@ -137,8 +137,8 @@
              
   <div class="section" id="module-rcognita.models">
 <span id="rcognita-models"></span><h1><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code><a class="headerlink" href="#module-rcognita.models" title="Permalink to this headline"></a></h1>
-<p>This module contains model classes.
-These can be used in system dynamics fitting, critic and other tasks.</p>
+<p>Contains models.</p>
+<p>These can be used in system dynamics fitting, critic and other tasks.</p>
 <p>Updates to come.</p>
 <p class="rubric">Functions</p>
 <table class="longtable docutils align-default">
@@ -163,7 +163,7 @@ These can be used in system dynamics fitting, critic and other tasks.</p>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.GaussianPDFModel.html#rcognita.models.GaussianPDFModel" title="rcognita.models.GaussianPDFModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GaussianPDFModel</span></code></a>(dim_observation, …[, …])</p></td>
-<td><p></p></td>
+<td><p>Model for REINFORCE Policy Gradient methods.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.LookupTable.html#rcognita.models.LookupTable" title="rcognita.models.LookupTable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LookupTable</span></code></a>(*dims)</p></td>
 <td><p></p></td>
@@ -190,7 +190,7 @@ These can be used in system dynamics fitting, critic and other tasks.</p>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelFc.html#rcognita.models.ModelFc" title="rcognita.models.ModelFc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelFc</span></code></a>(dim_observation, dim_action[, …])</p></td>
-<td><p></p></td>
+<td><p>Fully connected layer with weight clipper.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelGaussianConditional.html#rcognita.models.ModelGaussianConditional" title="rcognita.models.ModelGaussianConditional"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelGaussianConditional</span></code></a>([…])</p></td>
 <td><p>Gaussian probability distribution model with <cite>weights[0]</cite> being an expectation vector and <cite>weights[1]</cite> being a covariance matrix.</p></td>
@@ -199,7 +199,7 @@ These can be used in system dynamics fitting, critic and other tasks.</p>
 <td><p>Class of pytorch neural network models.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.ModelNNElementWiseProduct.html#rcognita.models.ModelNNElementWiseProduct" title="rcognita.models.ModelNNElementWiseProduct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelNNElementWiseProduct</span></code></a>(dim_observation[, …])</p></td>
-<td><p></p></td>
+<td><p>Model with only one diagonal linear layer.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.models.ModelPerceptronCalf.html#rcognita.models.ModelPerceptronCalf" title="rcognita.models.ModelPerceptronCalf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModelPerceptronCalf</span></code></a>(dim_observation, dim_action)</p></td>
 <td><p></p></td>
@@ -235,7 +235,7 @@ These can be used in system dynamics fitting, critic and other tasks.</p>
 <td><p>Pytorch weight container for actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.models.WeightClipper.html#rcognita.models.WeightClipper" title="rcognita.models.WeightClipper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WeightClipper</span></code></a>([weight_min, weight_max])</p></td>
-<td><p></p></td>
+<td><p>Weight clipper for pytorch layers.</p></td>
 </tr>
 </tbody>
 </table>

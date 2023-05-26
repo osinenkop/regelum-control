@@ -1,0 +1,85 @@
+rcognita.models.GaussianElementWisePDFModel
+===========================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: GaussianElementWisePDFModel
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GaussianElementWisePDFModel.__init__
+      ~GaussianElementWisePDFModel.add_module
+      ~GaussianElementWisePDFModel.apply
+      ~GaussianElementWisePDFModel.bfloat16
+      ~GaussianElementWisePDFModel.buffers
+      ~GaussianElementWisePDFModel.cache_weights
+      ~GaussianElementWisePDFModel.children
+      ~GaussianElementWisePDFModel.clamp_and_multiply
+      ~GaussianElementWisePDFModel.cpu
+      ~GaussianElementWisePDFModel.cuda
+      ~GaussianElementWisePDFModel.detach_weights
+      ~GaussianElementWisePDFModel.double
+      ~GaussianElementWisePDFModel.eval
+      ~GaussianElementWisePDFModel.extra_repr
+      ~GaussianElementWisePDFModel.float
+      ~GaussianElementWisePDFModel.forward
+      ~GaussianElementWisePDFModel.get_buffer
+      ~GaussianElementWisePDFModel.get_extra_state
+      ~GaussianElementWisePDFModel.get_mean_of_action_action
+      ~GaussianElementWisePDFModel.get_parameter
+      ~GaussianElementWisePDFModel.get_submodule
+      ~GaussianElementWisePDFModel.half
+      ~GaussianElementWisePDFModel.ipu
+      ~GaussianElementWisePDFModel.load_state_dict
+      ~GaussianElementWisePDFModel.modules
+      ~GaussianElementWisePDFModel.named_buffers
+      ~GaussianElementWisePDFModel.named_children
+      ~GaussianElementWisePDFModel.named_modules
+      ~GaussianElementWisePDFModel.named_parameters
+      ~GaussianElementWisePDFModel.parameters
+      ~GaussianElementWisePDFModel.register_backward_hook
+      ~GaussianElementWisePDFModel.register_buffer
+      ~GaussianElementWisePDFModel.register_forward_hook
+      ~GaussianElementWisePDFModel.register_forward_pre_hook
+      ~GaussianElementWisePDFModel.register_full_backward_hook
+      ~GaussianElementWisePDFModel.register_load_state_dict_post_hook
+      ~GaussianElementWisePDFModel.register_module
+      ~GaussianElementWisePDFModel.register_parameter
+      ~GaussianElementWisePDFModel.requires_grad_
+      ~GaussianElementWisePDFModel.restore_weights
+      ~GaussianElementWisePDFModel.sample
+      ~GaussianElementWisePDFModel.set_extra_state
+      ~GaussianElementWisePDFModel.share_memory
+      ~GaussianElementWisePDFModel.soft_update
+      ~GaussianElementWisePDFModel.state_dict
+      ~GaussianElementWisePDFModel.to
+      ~GaussianElementWisePDFModel.to_empty
+      ~GaussianElementWisePDFModel.train
+      ~GaussianElementWisePDFModel.type
+      ~GaussianElementWisePDFModel.update_and_cache_weights
+      ~GaussianElementWisePDFModel.update_weights
+      ~GaussianElementWisePDFModel.weights2dict
+      ~GaussianElementWisePDFModel.xpu
+      ~GaussianElementWisePDFModel.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GaussianElementWisePDFModel.T_destination
+      ~GaussianElementWisePDFModel.cache
+      ~GaussianElementWisePDFModel.dump_patches
+      ~GaussianElementWisePDFModel.model_name
+      ~GaussianElementWisePDFModel.weights
+   
+   

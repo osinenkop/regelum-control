@@ -1,0 +1,25 @@
+rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive
+==========================================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: ControllerCartPoleEnergyBasedAdaptive
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControllerCartPoleEnergyBasedAdaptive.__init__
+      ~ControllerCartPoleEnergyBasedAdaptive.compute_action
+      ~ControllerCartPoleEnergyBasedAdaptive.compute_action_sampled
+      ~ControllerCartPoleEnergyBasedAdaptive.reset
+   
+   
+
+   
+   
+   

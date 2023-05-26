@@ -1,0 +1,32 @@
+``rcognita.visualization.plot_multirun`` 
+========================================
+
+
+.. automodule:: rcognita.visualization.plot_multirun
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      plot_objectives
+      plot_objectives_per_controller
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

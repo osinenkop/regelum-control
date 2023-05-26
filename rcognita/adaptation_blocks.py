@@ -1,3 +1,5 @@
+"""Contains adaptation blocks."""
+
 from abc import ABC, abstractmethod
 from rcognita.__utilities import rc
 

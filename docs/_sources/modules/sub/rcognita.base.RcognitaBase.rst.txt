@@ -1,0 +1,22 @@
+rcognita.base.RcognitaBase
+==========================
+
+.. currentmodule:: rcognita.base
+
+.. autoclass:: RcognitaBase
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RcognitaBase.__init__
+   
+   
+
+   
+   
+   

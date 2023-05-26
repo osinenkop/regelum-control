@@ -1,0 +1,47 @@
+rcognita.callbacks.CalfCallback
+===============================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: CalfCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CalfCallback.__init__
+      ~CalfCallback.add_datum
+      ~CalfCallback.clear_recent_data
+      ~CalfCallback.dump_and_clear_data
+      ~CalfCallback.dump_data
+      ~CalfCallback.get_save_directory
+      ~CalfCallback.insert_column_left
+      ~CalfCallback.is_target_event
+      ~CalfCallback.load_data
+      ~CalfCallback.on_episode_done
+      ~CalfCallback.on_iteration_done
+      ~CalfCallback.on_launch
+      ~CalfCallback.on_termination
+      ~CalfCallback.perform
+      ~CalfCallback.plot
+      ~CalfCallback.plot_gui
+      ~CalfCallback.ready
+      ~CalfCallback.save_plot
+      ~CalfCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CalfCallback.cooldown
+      ~CalfCallback.data
+   
+   

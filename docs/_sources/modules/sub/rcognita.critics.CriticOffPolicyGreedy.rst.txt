@@ -1,0 +1,45 @@
+rcognita.critics.CriticOffPolicyGreedy
+======================================
+
+.. currentmodule:: rcognita.critics
+
+.. autoclass:: CriticOffPolicyGreedy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticOffPolicyGreedy.__init__
+      ~CriticOffPolicyGreedy.accept_or_reject_weights
+      ~CriticOffPolicyGreedy.cache_weights
+      ~CriticOffPolicyGreedy.get_batch_ids
+      ~CriticOffPolicyGreedy.get_first_valid_idx_in_buffer
+      ~CriticOffPolicyGreedy.initialize_buffers
+      ~CriticOffPolicyGreedy.is_enough_valid_elements_in_buffer
+      ~CriticOffPolicyGreedy.objective
+      ~CriticOffPolicyGreedy.optimize_weights
+      ~CriticOffPolicyGreedy.receive_state
+      ~CriticOffPolicyGreedy.reset
+      ~CriticOffPolicyGreedy.restore_weights
+      ~CriticOffPolicyGreedy.update_and_cache_weights
+      ~CriticOffPolicyGreedy.update_buffers
+      ~CriticOffPolicyGreedy.update_target
+      ~CriticOffPolicyGreedy.update_total_objective
+      ~CriticOffPolicyGreedy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticOffPolicyGreedy.optimizer_engine
+      ~CriticOffPolicyGreedy.weights
+   
+   

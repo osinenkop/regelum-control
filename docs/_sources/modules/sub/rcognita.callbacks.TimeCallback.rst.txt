@@ -1,0 +1,36 @@
+rcognita.callbacks.TimeCallback
+===============================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: TimeCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TimeCallback.__init__
+      ~TimeCallback.is_target_event
+      ~TimeCallback.on_episode_done
+      ~TimeCallback.on_iteration_done
+      ~TimeCallback.on_launch
+      ~TimeCallback.on_termination
+      ~TimeCallback.perform
+      ~TimeCallback.ready
+      ~TimeCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TimeCallback.cooldown
+   
+   

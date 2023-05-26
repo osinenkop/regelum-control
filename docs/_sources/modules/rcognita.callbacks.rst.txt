@@ -28,8 +28,8 @@
       :toctree: sub
    
       AnimationCallback
+      CALFWeightsCallback
       CalfCallback
-      CalfWeightsCallback
       Callback
       ConfigDiagramCallback
       CriticObjectiveCallback
@@ -37,7 +37,6 @@
       HistoricalCallback
       HistoricalObjectiveCallback
       HistoricalObservationCallback
-      InspectReferrersCallback
       ObjectiveCallback
       OnEpisodeDoneCallback
       OnIterationDoneCallback

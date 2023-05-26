@@ -1,3 +1,4 @@
+"""Contains ODE integrators."""
 from abc import ABC, abstractmethod
 
 import rcognita.base

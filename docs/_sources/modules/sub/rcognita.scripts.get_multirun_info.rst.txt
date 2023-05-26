@@ -1,0 +1,6 @@
+rcognita.scripts.get\_multirun\_info
+====================================
+
+.. currentmodule:: rcognita.scripts
+
+.. autofunction:: get_multirun_info

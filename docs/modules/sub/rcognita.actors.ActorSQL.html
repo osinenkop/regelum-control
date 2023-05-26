@@ -64,11 +64,11 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorDDPG.html">rcognita.actors.ActorDDPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorMPC.html">rcognita.actors.ActorMPC</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorMPCTerminal.html">rcognita.actors.ActorMPCTerminal</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPG.html">rcognita.actors.ActorPG</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPGBase.html">rcognita.actors.ActorPGBase</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorPID.html">rcognita.actors.ActorPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorProbabilisticEpisodic.html">rcognita.actors.ActorProbabilisticEpisodic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorProbabilisticEpisodicAC.html">rcognita.actors.ActorProbabilisticEpisodicAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorREINFORCE.html">rcognita.actors.ActorREINFORCE</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorRPO.html">rcognita.actors.ActorRPO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorRQL.html">rcognita.actors.ActorRQL</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.actors.ActorSDPG.html">rcognita.actors.ActorSDPG</a></li>
@@ -132,9 +132,9 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.actors.ActorSQL">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.actors.</span></span><span class="sig-name descname"><span class="pre">ActorSQL</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_output</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_input</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_horizon</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span> </span><span class="pre">numpy.ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_init</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="rcognita.systems.System.html#rcognita.systems.System" title="rcognita.systems.System"><span class="pre">rcognita.systems.System</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="rcognita.predictors.Predictor.html#rcognita.predictors.Predictor" title="rcognita.predictors.Predictor"><span class="pre">rcognita.predictors.Predictor</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="rcognita.optimizers.Optimizer.html#rcognita.optimizers.Optimizer" title="rcognita.optimizers.Optimizer"><span class="pre">rcognita.optimizers.Optimizer</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">critic</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="rcognita.critics.Critic.html#rcognita.critics.Critic" title="rcognita.critics.Critic"><span class="pre">rcognita.critics.Critic</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">running_objective</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="rcognita.models.Model.html#rcognita.models.Model" title="rcognita.models.Model"><span class="pre">rcognita.models.Model</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discount_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_greedy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon_greedy_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_target</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.actors.ActorSQL" title="Permalink to this definition"></a></dt>
-<dd><p>Staked Q-learning (SQL) actor.
-Optimizes the following actor objective:
-<span class="math notranslate nohighlight">\(J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a} \gamma^i Q(y_{i|k}, u_{i|k})\)</span>.</p>
+<dd><p>Staked Q-learning (SQL) actor.</p>
+<p>Optimizes the following actor objective:
+<span class="math notranslate nohighlight">\(J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})\)</span>.</p>
 <p>Notation:</p>
 <ul class="simple">
 <li><p><span class="math notranslate nohighlight">\(y\)</span>: observation</p></li>
@@ -143,8 +143,8 @@ Optimizes the following actor objective:
 <li><p><span class="math notranslate nohighlight">\(gamma\)</span>: discount factor</p></li>
 <li><p><span class="math notranslate nohighlight">\(r\)</span>: running objective function</p></li>
 <li><p><span class="math notranslate nohighlight">\(Q\)</span>: action-objective function (or its estimate)</p></li>
-<li><p><span class="math notranslate nohighlight">\(\{\bullet\}_k^N\)</span>: sequence from index <span class="math notranslate nohighlight">\(k\)</span> to index <span class="math notranslate nohighlight">\(k+N-1\)</span></p></li>
-<li><p><span class="math notranslate nohighlight">\(\bullet_{i|k}\)</span>: element in a sequence with index <span class="math notranslate nohighlight">\(k+i-1\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\\{\\bullet\\}_k^N\)</span>: sequence from index <span class="math notranslate nohighlight">\(k\)</span> to index <span class="math notranslate nohighlight">\(k+N-1\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\\bullet_{i|k}\)</span>: element in a sequence with index <span class="math notranslate nohighlight">\(k+i-1\)</span></p></li>
 </ul>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.actors.ActorSQL.__init__">
@@ -180,22 +180,22 @@ Optimizes the following actor objective:
 <td><p>Initialize an actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
-<td><p>Determines whether the given weights should be accepted or rejected based on the specified constraints.</p></td>
+<td><p>Determine whether the given weights should be accepted or rejected based on the specified constraints.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache_weights</span></code>([weights])</p></td>
 <td><p>Cache the current weights of the model of the actor.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_observation_constraints</span></code>(…)</p></td>
-<td><p>Method to create observation (or state) related constraints using a <cite>predictor</cite> over a <cite>prediction_horizon</cite>.</p></td>
+<td><p>Create observation (or state) related constraints using a <cite>predictor</cite> over a <cite>prediction_horizon</cite>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">iteration_update</span></code>()</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">objective</span></code>(action_sequence, observation)</p></td>
-<td><p>Calculates the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.</p></td>
+<td><p>Calculate the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_weights</span></code>([constraint_functions, time])</p></td>
-<td><p>Method to optimize the current actor weights.</p></td>
+<td><p>Optimize the current actor weights.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">receive_observation</span></code>(observation)</p></td>
 <td><p>Update the current observation of the actor.</p></td>

@@ -1,0 +1,37 @@
+rcognita.callbacks.SaveProgressCallback
+=======================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: SaveProgressCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SaveProgressCallback.__init__
+      ~SaveProgressCallback.is_target_event
+      ~SaveProgressCallback.on_episode_done
+      ~SaveProgressCallback.on_iteration_done
+      ~SaveProgressCallback.on_launch
+      ~SaveProgressCallback.on_termination
+      ~SaveProgressCallback.perform
+      ~SaveProgressCallback.ready
+      ~SaveProgressCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SaveProgressCallback.cooldown
+      ~SaveProgressCallback.once_in
+   
+   
