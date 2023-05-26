@@ -14,7 +14,7 @@ import numpy as np
 import rcognita
 import rcognita.base
 from abc import ABC, abstractmethod
-from rcognita.__utilities import rc
+from .__utilities import rc
 
 
 class System(rcognita.base.RcognitaBase, ABC):
