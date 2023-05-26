@@ -18,9 +18,8 @@ callbacks:
   - rcognita.callbacks.CalfCallback
   - rcognita.callbacks.HistoricalObservationCallback
   - rcognita.callbacks.QFunctionModelSaverCallback
-  - rcognita.callbacks.CalfWeightsCallback
+  - rcognita.callbacks.CALFWeightsCallback
   - rcognita.callbacks.CriticWeightsCallback
-  - rcognita.callbacks.InspectReferrersCallback
   - rcognita.callbacks.PolicyGradientObjectiveSaverCallback
 
 disallow_uncommitted%%: False
