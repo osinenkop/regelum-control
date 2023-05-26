@@ -102,10 +102,10 @@ class ModelSS:
     State-space model
             
     .. math::
-        \\begin{array}{ll}
-			\\hat x^+ & = A \\hat x + B u, \\newline
-			y^+  & = C \\hat x + D u.
-        \\end{array}                 
+        \begin{array}{ll}
+			\hat x^+ & = A \hat x + B u, \newline
+			y^+  & = C \hat x + D u.
+        \end{array}                 
         
     Attributes
     ---------- 
@@ -1035,7 +1035,7 @@ class GaussianPDFModel(ModelNN):
 
         :param dim_observation: dimensionality of observation
         :param dim_action: dimensionality of action
-        :param diag_scale_coef: standard deviation for distribution (parameter :math:`\\sigma`)
+        :param diag_scale_coef: standard deviation for distribution (parameter :math:`\sigma`)
         :param use_derivative: whether observation derivatives are appended to observations
         :param weight_min: minimal weight bound
         :param weight_max: maximal weight bound

@@ -382,28 +382,28 @@ class Sys3WRobot(System):
     Three-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended non-holonomic double integrator) [[1]_]
 
     .. math::
-        \\begin{array}{ll}
-                        \dot x_с & = v \cos \\angle \\newline
-                        \dot y_с & = v \sin \\angle \\newline
-                        \dot \\angle & = \\omega \\newline
-                        \dot v & = \\left( \\frac 1 m F + q_1 \\right) \\newline
-                        \dot \\omega & = \\left( \\frac 1 I M + q_2 \\right)
-        \\end{array}
+        \begin{array}{ll}
+                        \dot x_с & = v \cos \angle \newline
+                        \dot y_с & = v \sin \angle \newline
+                        \dot \angle & = \omega \newline
+                        \dot v & = \left( \frac 1 m F + q_1 \right) \newline
+                        \dot \omega & = \left( \frac 1 I M + q_2 \right)
+        \end{array}
 
     **Variables**
 
     | :math:`x_с` : state-coordinate [m]
     | :math:`y_с` : observation-coordinate [m]
-    | :math:`\\angle` : turning angle [rad]
+    | :math:`\angle` : turning angle [rad]
     | :math:`v` : speed [m/s]
-    | :math:`\\omega` : revolution speed [rad/s]
+    | :math:`\omega` : revolution speed [rad/s]
     | :math:`F` : pushing force [N]
     | :math:`M` : steering torque [Nm]
     | :math:`m` : robot mass [kg]
     | :math:`I` : robot moment of inertia around vertical axis [kg m\ :sup:`2`]
     | :math:`disturb` : actuator disturbance (see :func:`~RLframe.system.disturbDyn`). Is zero if ``is_disturb = 0``
 
-    :math:`state = [x_c, y_c, \\angle, v, \\omega]`
+    :math:`state = [x_c, y_c, \angle, v, \omega]`
 
     :math:`action = [F, M]`
 
@@ -455,10 +455,10 @@ class Sys3WRobot(System):
 
         We use here a 1st-order stochastic linear system of the type
 
-        .. math:: \mathrm d Q_t = - \\frac{1}{\\tau_disturb} \\left( Q_t \\mathrm d t + \\sigma_disturb ( \\mathrm d B_t + \\mu_disturb ) \\right) ,
+        .. math:: \mathrm d Q_t = - \frac{1}{\tau_disturb} \left( Q_t \mathrm d t + \sigma_disturb ( \mathrm d B_t + \mu_disturb ) \right) ,
 
         where :math:`B` is the standard Brownian motion, :math:`Q` is the stochastic process whose realization is :math:`disturb`, and
-        :math:`\\tau_disturb, \\sigma_disturb, \\mu_disturb` are the time constant, standard deviation and mean, resp.
+        :math:`\tau_disturb, \sigma_disturb, \mu_disturb` are the time constant, standard deviation and mean, resp.
 
         ``pars_disturb = [sigma_disturb, mu_disturb, tau_disturb]``, with each being an array of shape ``[dim_disturb, ]``
 

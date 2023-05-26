@@ -561,21 +561,21 @@ class ActorPGBase(Actor, ABC):
 
         The problem for PG is stated as follows.
 
-        :math:`L = \\mathbb{E}\\left[\\sum_{k=1}^T r_k \\right] \\rightarrow \\min`
+        :math:`L = \mathbb{E}\left[\sum_{k=1}^T r_k \right] \rightarrow \min`
 
         The Monte-Carlo approximation of the gradient of :math `L` is following
 
-        :math `\\frac{1}{N_episodes}\\sum_{j=1}^{N_episodes} \\sum_{k=0} ^ T \\nabla_{\\theta} \\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
+        :math `\frac{1}{N_episodes}\sum_{j=1}^{N_episodes} \sum_{k=0} ^ T \nabla_{\theta} \log \pro^{\theta}(a_k^j | y_k^{j}) \mathcal{C}_k^j`
 
-        where :math `\\mathcal{C}^j` can be one of
+        where :math `\mathcal{C}^j` can be one of
             1. :math `Qfunction(s_k^j, a_k^j)`
             2. :math `ValueFunction(s_k^j, a_k^j)`
             3. :math `AdvantageFunction(s_k^j, a_k^j)`
-            4. :math `\\sum_{k=0}\\gamma ^ {k}r^j_k`
-            5. :math `\\sum_{k'=k}\\gamma ^ {k'}r^j_{k'}`
+            4. :math `\sum_{k=0}\gamma ^ {k}r^j_k`
+            5. :math `\sum_{k'=k}\gamma ^ {k'}r^j_{k'}`
 
-        We use batches from the set :math \\{(a_k^j, y_k^{j}, \\mathcal{C}_k^j)\\}_{k,j} with further calculation of
-        :math `\\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
+        We use batches from the set :math \{(a_k^j, y_k^{j}, \mathcal{C}_k^j)\}_{k,j} with further calculation of
+        :math `\log \pro^{\theta}(a_k^j | y_k^{j}) \mathcal{C}_k^j`
         and making the gradient steps
         """
         pass
@@ -701,7 +701,7 @@ class ActorMPC(Actor):
     r"""Model-predictive control (MPC) actor.
 
     Optimizes the following actor objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
+    :math:`J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a} \gamma^i r(y_{i|k}, u_{i|k})`.
 
     Notation:
 
@@ -710,8 +710,8 @@ class ActorMPC(Actor):
     * :math:`N_a`: prediction horizon
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -753,7 +753,7 @@ class ActorMPCTerminal(Actor):
     r"""Model-predictive control (MPC) actor.
 
     Optimizes the following actor objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
+    :math:`J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a} \gamma^i r(y_{i|k}, u_{i|k})`.
 
     Notation:
 
@@ -762,8 +762,8 @@ class ActorMPCTerminal(Actor):
     * :math:`N_a`: prediction horizon
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -805,7 +805,7 @@ class ActorSQL(Actor):
     r"""Staked Q-learning (SQL) actor.
 
     Optimizes the following actor objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`.
+    :math:`J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a} \gamma^i Q(y_{i|k}, u_{i|k})`.
 
     Notation:
 
@@ -815,8 +815,8 @@ class ActorSQL(Actor):
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`Q`: action-objective function (or its estimate)
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -868,7 +868,7 @@ class ActorRQL(Actor):
 
     Optimizes the following actor objective:
 
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
+    :math:`J^a \left( y_k| \{u\}_k^{N_a+1} \right) = \sum_{i=0}^{N_a-1} \gamma^i r(y_{i|k}, u_{i|k}) + \gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
 
     Notation:
 
@@ -878,8 +878,8 @@ class ActorRQL(Actor):
     * :math:`gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`Q`: action-objective function (or its estimate)
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
+    * :math:`\{\bullet\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
+    * :math:`\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
     """
 
     def objective(
@@ -936,13 +936,13 @@ class ActorRPO(Actor):
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
 
-    :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
+    :math:`J^a \left( y_k| \{u\}_k \right) =  r(y_{k}, u_{k}) + \gamma J^*(y_{k})`
 
     Notation:
 
     * :math:`y`: observation
     * :math:`u`: action
-    * :math:`\\gamma`: discount factor
+    * :math:`\gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`J^*`: optimal objective function (or its estimate)
     """
@@ -1123,13 +1123,13 @@ class ActorTabular(ActorRPO):
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the following actor objective:
 
-    :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
+    :math:`J^a \left( y_k| \{u\}_k \right) =  r(y_{k}, u_{k}) + \gamma J^*(y_{k})`
 
     Notation:
 
     * :math:`y`: observation
     * :math:`u`: action
-    * :math:`\\gamma`: discount factor
+    * :math:`\gamma`: discount factor
     * :math:`r`: running objective function
     * :math:`J^*`: optimal objective function (or its estimate)
 
