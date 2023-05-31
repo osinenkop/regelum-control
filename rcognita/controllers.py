@@ -16,7 +16,6 @@ from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
 from .optimizers import CasADiOptimizer
-from .callbacks import apply_callbacks
 from .base import RcognitaBase
 
 

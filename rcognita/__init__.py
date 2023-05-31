@@ -646,6 +646,7 @@ class main:
                         ),
                         "pid": os.getpid(),
                     }
+                    callbacks[0]._metadata = self.__class__.metadata
                     ccfg = ComplementedConfig(cfg)
                     self.apply_assignments(ccfg)
                     if "callbacks" in cfg and self.callbacks_enabled:

@@ -22,7 +22,6 @@ try:
 except ModuleNotFoundError:
     pass
 
-from rcognita.callbacks import apply_callbacks
 from rcognita.data_buffers import UpdatableSampler
 
 

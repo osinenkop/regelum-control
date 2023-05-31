@@ -39,40 +39,13 @@ from pathlib import Path
 import sys
 import filelock
 
+import rcognita.base
 
 
 def is_in_debug_mode():
     return sys.gettrace() is not None
 
-
-class apply_callbacks:
-    """Decorator that applies a list of callbacks to a given method of an object.
-
-    If the object has no list of callbacks specified, the default callbacks are used.
-
-    :param method: The method to which the callbacks should be applied.
-    """
-
-    def __init__(self, callbacks=None):
-        """Initialize a decorator that applies callbacks.
-
-        :param callbacks: list of callbacks to apply (applies all default callbacks if omitted)
-        """
-        self.callbacks = callbacks
-
-    def __call__(self, method):
-        def new_method(self2, *args, **kwargs):
-            res = method(self2, *args, **kwargs)
-            if self.callbacks is None:
-                callbacks = rcognita.main.callbacks
-            for callback in callbacks:
-                callback(obj=self2, method=method.__name__, output=res)
-            return res
-
-        return new_method
-
-
-class Callback(ABC):
+class Callback(rcognita.base.RcognitaBase, ABC):
     """Base class for callbacks.
 
     Callback objects are used to perform in response to some method being called.

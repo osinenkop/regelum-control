@@ -2,13 +2,58 @@
 
 import abc
 import inspect
-from .callbacks import Callback
+import rcognita.callbacks
 import rcognita
 import weakref
+from types import MappingProxyType
 
 
-class RcognitaBase(abc.ABC):
+class apply_callbacks:
+    """Decorator that applies a list of callbacks to a given method of an object.
+
+    If the object has no list of callbacks specified, the default callbacks are used.
+
+    :param method: The method to which the callbacks should be applied.
+    """
+
+    def __init__(self, callbacks=None):
+        """Initialize a decorator that applies callbacks.
+
+        :param callbacks: list of callbacks to apply (applies all default callbacks if omitted)
+        """
+        self.callbacks = callbacks
+
+    def __call__(self, method):
+        def new_method(self2, *args, **kwargs):
+            res = method(self2, *args, **kwargs)
+            if self.callbacks is None:
+                callbacks = rcognita.main.callbacks
+            for callback in callbacks:
+                callback(obj=self2, method=method.__name__, output=res)
+            return res
+
+        return new_method
+
+
+class RcognitaType(abc.ABCMeta):
+    @classmethod
+    def __prepare__(metacls, *args):
+        return {"apply_callbacks": apply_callbacks} | super().__prepare__(*args)
+
+
+class RcognitaBase(metaclass=RcognitaType):
     """Base class designed to act as an abstraction over all rcognita objects."""
+
+    @property
+    def _metadata(self):
+        return RcognitaBase.__metadata
+
+    @_metadata.setter
+    def _metadata(self, metadata):
+        if not hasattr(RcognitaBase, f"_{RcognitaBase.__name__}__metadata"):
+            RcognitaBase.__metadata = MappingProxyType(metadata)
+        else:
+            raise ValueError("Metadata has already been set, yet an attempt to set it again was made.")
 
     def __init__(self):
         """Initialize an object from rcognita."""
@@ -16,7 +61,7 @@ class RcognitaBase(abc.ABC):
             getattr(self.__class__, d)
             for d in dir(self.__class__)
             if inspect.isclass(getattr(self.__class__, d))
-            and issubclass(getattr(self.__class__, d), Callback)
+            and issubclass(getattr(self.__class__, d), rcognita.callbacks.Callback)
         ]
         existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
         for callback in callbacks:

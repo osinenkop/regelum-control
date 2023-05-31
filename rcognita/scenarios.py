@@ -18,7 +18,6 @@ from .critics import Critic, CriticTrivial
 from .simulator import Simulator
 from .controllers import Controller
 from .objectives import RunningObjective
-from .callbacks import apply_callbacks
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 
 try:

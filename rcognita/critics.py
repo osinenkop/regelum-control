@@ -37,7 +37,6 @@ from .optimizers import Optimizer
 from .models import Model
 from .objectives import Objective
 from typing import Optional
-from .callbacks import apply_callbacks
 
 
 class Critic(rcognita.base.RcognitaBase, ABC):

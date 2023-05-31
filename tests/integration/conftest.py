@@ -1,35 +1,22 @@
 import pytest
-import sys, os
-
-
+from .setup import *
 import rcognita as rc
 
-@pytest.fixture(params=["2tank", "3wrobot", "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "lunar_lander"])
-def system(request):
-    return request.param
-
-@pytest.fixture(params=["ddpg", "ddqn", "dqn", "dqn", "mpc", "pg", "pid", "rpo", "rpo_deep", "rql", "sarsa", "sdpg", "sql"])
-def controller(request):
-    return request.param
-
-@pytest.fixture
-def playground_dir():
-    return os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../../playground")
+def pytest_generate_tests(metafunc):
+    mode = metafunc.config.getoption("mode")
+    try:
+        metafunc.parametrize("setup", eval(mode), indirect=True)
+    except NameError:
+        raise ValueError(f'Invalid testing mode "{mode}". See tests/integration/setup.py for declared testing modes.')
 
 @pytest.fixture
-def launch(system, playground_dir):
-    sys.argv = [sys.argv[0]]
-    sys.argv.insert(1, f"system={system}")
-    sys.argv.insert(1, f"controller=mpc")
-    sys.argv.insert(1, f"controller.actor.predictor.prediction_horizon=2")
-    sys.argv.insert(1, "disallow_uncommitted=False")
-    sys.argv.insert(1, "simulator.time_final=1")
-    sys.argv.insert(1, "controller.sampling_time=0.5")
-    sys.argv.insert(1, "scenario.N_episodes=2")
-    sys.argv.insert(1, "--single-thread")
-    sys.argv.insert(1, "--no-git")
+def setup(request):
+    return request.param
 
-    @rc.main(config_path=playground_dir + "/general", config_name="main")
+
+@pytest.fixture
+def launch(setup):
+    @rc.main(**setup())
     def launch(cfg):
 
         scenario = ~cfg.scenario
@@ -45,9 +32,7 @@ def launch(system, playground_dir):
                 animator.playback()
         else:
             scenario.run()
-
         return 0
-
     return launch
 
 @pytest.fixture
