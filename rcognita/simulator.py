@@ -156,7 +156,7 @@ class Simulator(rcognita.base.RcognitaBase):
         self.state = state_init
         self.dim_state = state_init.shape[0]
         self.observation = self.get_observation(
-            time=self.time, state=state_init, action=action_init
+            time=self.time, state=state_init, inputs=action_init
         )
         self.max_step = max_step
         self.atol = atol
@@ -204,7 +204,7 @@ class Simulator(rcognita.base.RcognitaBase):
 
             self.state = self.state_full[0 : self.dim_state]
             self.observation = self.get_observation(
-                time=self.time, state=self.state, action=None
+                time=self.time, state=self.state, inputs=None
             )
 
         elif self.system.system_type == "discr_fnc":
@@ -235,7 +235,7 @@ class Simulator(rcognita.base.RcognitaBase):
         time, state, observation, state_full = (
             self.time,
             self.state,
-            self.get_observation(time=self.time, state=self.state, action=None),
+            self.get_observation(time=self.time, state=self.state, inputs=None),
             self.state_full,
         )
 
@@ -247,7 +247,7 @@ class Simulator(rcognita.base.RcognitaBase):
             self.time = self.time_start
             self.state = self.state_full_init
             self.observation = self.get_observation(
-                time=self.time, state=self.state_full_init, action=None
+                time=self.time, state=self.state_full_init, inputs=None
             )
             self.system.reset()
         else:  #### to extend further functionality

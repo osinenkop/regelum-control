@@ -1,0 +1,20 @@
+_target_: rcognita.systems.TwoTank
+
+###---Constructor arguments---###
+
+system_parameters_init: 
+  _target_: builtins.dict
+  tau1: 18.4
+  tau2: 24.4
+  K1: 1.3
+  K2: 1.
+  K3: 0.2
+
+###---Off-constructor variables---###
+
+action_min%%: 0.
+action_max%%: 1.
+action_bounds%%: = numpy.array([[${.action_min%%}, ${.action_max%%}]])
+
+dim_action%%: 1
+dim_observation%%: 2 

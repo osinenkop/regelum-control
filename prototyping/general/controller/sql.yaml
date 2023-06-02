@@ -1,0 +1,17 @@
+defaults:
+  - actor: sql
+  - critic: action_observation
+
+name%%: sql
+
+_target_: rcognita.controllers.RLController
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: $ system_specific.sampling_time
+is_fixed_critic_weights: false
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+action_bounds: $ system.action_bounds%%
+
+critic_period_multiplier%%: 1

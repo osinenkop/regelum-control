@@ -1096,10 +1096,10 @@ class ControllerCartPolePID:
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
         self.m_c, self.m_p, self.g, self.l = (
-            system.system_parameters["m_c"],
-            system.system_parameters["m_p"],
-            system.system_parameters["g"],
-            system.system_parameters["l"],
+            system.parameters["m_c"],
+            system.parameters["m_p"],
+            system.parameters["g"],
+            system.parameters["l"],
         )
         self.system = system
         self.upright_gain = upright_gain
@@ -1178,10 +1178,10 @@ class ControllerCartPoleEnergyBased:
         self.action = np.array([np.mean(action_bounds)])
         self.controller_gain = controller_gain
         self.m_c, self.m_p, self.g, self.l = (
-            system.system_parameters["m_c"],
-            system.system_parameters["m_p"],
-            system.system_parameters["g"],
-            system.system_parameters["l"],
+            system.parameters["m_c"],
+            system.parameters["m_p"],
+            system.parameters["g"],
+            system.parameters["l"],
         )
         self.system = system
 

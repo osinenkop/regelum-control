@@ -49,7 +49,7 @@ class KalmanFilter(rcognita.base.RcognitaBase):
         self.posterior_state_est = self.prior_state_est + K @ (
             z
             - self.my_sys.get_observation(
-                time=None, state=self.prior_state_est, action=None
+                time=None, state=self.prior_state_est, inputs=None
             )
         )
         self.posterior_est_cov = (np.eye(self.dim_state) - K @ J_h) @ P_pred

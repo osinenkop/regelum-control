@@ -1,0 +1,44 @@
+# _target_: rcognita.controllers.ControllerCartPolePID
+
+# ###---Constructor arguments---###
+
+# action_bounds: $ system.action_bounds%%
+# time_start: $ simulator.time_start
+# state_init: $ initial_conditions.state_init
+# sampling_time: 1.0E-2
+# swingup_gain: 10
+# system: ~ system
+# upright_gain: = numpy.array([50, 2., 20., 3.])
+# pid_loc_thr: 0.35
+# pid_scale_thr: 10.0
+# clip_bounds: = numpy.array([-1., 1.])
+
+############
+
+
+# _target_: rcognita.controllers.ControllerCartPoleEnergyBased
+
+# ###---Constructor arguments---###
+
+# action_bounds: $ system.action_bounds%%
+# time_start: $ simulator.time_start
+# state_init: $ initial_conditions.state_init
+# sampling_time: 1.0E-2
+# controller_gain: 10
+# system: ~ system
+
+###############
+
+_target_: rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive
+
+###---Constructor arguments---###
+defaults:
+ - adaptation_block: cartpole
+
+
+action_bounds: $ system.action_bounds%%
+time_start: $ simulator.time_start
+state_init: $ initial_conditions.state_init
+sampling_time: 1.0E-2
+controller_gain: 10
+system: ~ system

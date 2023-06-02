@@ -129,7 +129,7 @@ class OnlineScenario(Scenario):
         self.action_init = action_init
         self.action = self.action_init
         self.observation = self.system.get_observation(
-            time=0, state=self.state_init, action=self.action_init
+            time=0, state=self.state_init, inputs=self.action_init
         )
         self.observation_target = (
             np.zeros_like(self.observation)
@@ -155,7 +155,6 @@ class OnlineScenario(Scenario):
         self.speedup = speedup
         self.total_objective_threshold = total_objective_threshold
 
-        
     def set_speedup(self, speedup):
         self.speedup = speedup
         self.cached_timeline = islice(cycle(iter(self.cache)), 0, None, self.speedup)
@@ -191,7 +190,7 @@ class OnlineScenario(Scenario):
             self.controller.reset()
         self.simulator.reset()
         self.observation = self.system.get_observation(
-            time=0, state=self.state_init, action=self.action_init
+            time=0, state=self.state_init, inputs=self.action_init
         )
         self.sim_status = 0
         return self.recent_total_objective
@@ -364,7 +363,7 @@ class OnlineScenario(Scenario):
         self.pre_step()
         sim_status = self.simulator.do_sim_step()
         is_episode_ended = sim_status == -1
-        
+
         if not is_episode_ended:
             (
                 self.time,

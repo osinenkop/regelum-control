@@ -102,7 +102,7 @@ class Animator2Tank(Animator):
             running_objective = running_obj_init
         else:
             observation_init = self.system.get_observation(
-                time=time_start, state=state_init, action=action_init
+                time=time_start, state=state_init, inputs=action_init
             )
             running_objective = self.controller.running_objective(
                 observation_init, action_init

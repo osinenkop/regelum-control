@@ -1,0 +1,32 @@
+defaults:
+  - actor: calf
+  - critic: calf
+  - override actor/optimizer: casadi
+  - override critic/optimizer: casadi
+  
+
+name%%: calf_ex_post
+
+_target_: rcognita.controllers.CALFControllerExPost
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: $ system_specific.sampling_time
+is_fixed_critic_weights: false
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+action_bounds: $ system.action_bounds%%
+critic_period_multiplier%%: 1
+
+###---Overrides---###
+
+critic:
+  is_predictive: false
+  safe_decay_param: $ system_specific.safe_decay_param_ex_post
+  penalty_param: $ system_specific.critic_penalty_param
+  critic_regularization_param: $ system_specific.critic_regularization_param
+  is_dynamic_decay_rate: $ system_specific.is_dynamic_decay_rate
+
+
+
+

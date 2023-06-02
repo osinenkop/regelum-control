@@ -1,0 +1,5 @@
+_target_: rcognita.predictors.trivial
+
+###---Constructor arguments---###
+
+system: $ simulator.system

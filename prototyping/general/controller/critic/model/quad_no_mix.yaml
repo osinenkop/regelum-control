@@ -1,0 +1,4 @@
+_target_: rcognita.models.ModelQuadNoMix
+dim_input: $ controller.critic.dim_critic_model_input%%
+single_weight_min: $ system_specific.single_weight_min
+single_weight_max: $ system_specific.single_weight_max

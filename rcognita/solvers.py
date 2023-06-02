@@ -95,7 +95,7 @@ class CasADiSolver(Solver):
         if self.time >= self.time_final:
             raise RuntimeError("An attempt to step with a finished solver")
         self.state_new = np.squeeze(
-            self.integrator(x0=self.state, p=self.system.action)["xf"].full()
+            self.integrator(x0=self.state, p=self.system.inputs)["xf"].full()
         )
         self.time += self.step_size
         self.state = self.state_new

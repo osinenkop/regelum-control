@@ -1,0 +1,30 @@
+defaults:
+  - actor: dqn
+  - critic: dqn_greedy
+
+name%%: dqn
+
+_target_: rcognita.controllers.RLController
+
+###---Constructor arguments---###
+
+time_start: $ simulator.time_start
+sampling_time: $ system_specific.sampling_time
+is_fixed_critic_weights: false
+critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
+action_bounds: $ system.action_bounds%%
+critic_period_multiplier%%: 1
+
+actor:
+  epsilon_greedy: true
+  epsilon_greedy_parameter: 0.05
+  predictor:
+    prediction_horizon: 0
+
+critic:
+  optimizer:
+    opt_options:
+      lr: 0.00001
+  td_n: 10
+  batch_size: 50
+  discount_factor: 0.94

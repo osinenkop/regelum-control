@@ -1,0 +1,9 @@
+defaults:
+  - model: quad_form
+
+###---Constructor arguments---###
+
+_target_: rcognita.objectives.RunningObjective
+
+model:
+  R1_diag%%: = [1, 50, 1, 0.1, 0.1, 0, 0]

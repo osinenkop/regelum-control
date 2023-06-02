@@ -50,7 +50,7 @@ class EulerPredictor(Predictor):
 
     def predict(self, current_state, action):
         next_state = current_state + self.pred_step_size * self.compute_state_dynamics(
-            time=None, state=current_state, action=action
+            time=None, state=current_state, inputs=action
         )
         return next_state
 
@@ -64,7 +64,7 @@ class EulerPredictor(Predictor):
             current_action = action_sequence[:, k]
             next_state = self.predict(current_state, current_action)
             observation_sequence[:, k] = rc.transpose(
-                self.get_observation(time=None, state=next_state, action=current_action)
+                self.get_observation(time=None, state=next_state, inputs=current_action)
             )
             current_state = next_state
         return observation_sequence
@@ -103,7 +103,9 @@ class EulerPredictorPendulum(EulerPredictor):
         for k in range(self.prediction_horizon):
             current_action = action_sequence[k, :]
             next_observation = self.predict(current_observation, current_action)
-            observation_sequence[k, :] = self.get_observation(next_observation)
+            observation_sequence[k, :] = self.get_observation(
+                time=None, state=next_observation, inputs=None
+            )
             current_observation = next_observation
         return observation_sequence
 

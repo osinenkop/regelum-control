@@ -1,0 +1,12 @@
+_target_: rcognita.systems.KinematicPoint
+
+###---Constructor arguments---###
+
+###---Off-constructor variables---###
+
+action_max%%: 10
+action_min%%: -10
+action_bounds%%: = numpy.hstack([numpy.full((${.dim_observation%%}, 1), ${.action_min%%}), numpy.full((${.dim_observation%%}, 1), ${.action_max%%})])
+
+dim_action%%: 2
+dim_observation%%: 2 

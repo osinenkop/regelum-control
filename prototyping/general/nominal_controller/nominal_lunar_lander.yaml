@@ -1,0 +1,17 @@
+_target_: rcognita.controllers.ControllerLunarLanderPID
+
+###---Constructor arguments---###
+
+action_bounds: $ system.action_bounds%%
+time_start: $ simulator.time_start
+state_init: $ initial_conditions.state_init
+sampling_time: 1.0E-2
+PID_angle_parameters: = [100, 0, 8]
+PID_x_parameters: = [150, 0, 70]
+PID_height_parameters: = [150, 0, 45]
+
+
+# PID_angle_parameters: = [100, 0, 8]
+# PID_x_parameters: = [150, 0, 60]
+# PID_height_parameters: = [150, 0, 45]
+# a good one

@@ -1,0 +1,6 @@
+_target_: rcognita.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum
+
+scenario: ~ scenario
+fps: ${system_specific.fps}
+max_video_length: 60
+animation_max_size_mb: 200

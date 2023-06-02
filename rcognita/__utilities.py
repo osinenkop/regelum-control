@@ -30,7 +30,11 @@ import types
 try:
     import torch
 
-    TORCH_TYPES = tuple(x[1] for x in inspect.getmembers(torch, inspect.isclass))
+    TORCH_TYPES = tuple(
+        x[1]
+        for x in inspect.getmembers(torch, inspect.isclass)
+        if ("torch" in str(x[1]))
+    )
 except ModuleNotFoundError:
     TORCH_TYPES = tuple()
 
@@ -127,7 +131,6 @@ class Clock:
 
 
 class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
-
     TORCH = RCType.TORCH
     CASADI = RCType.CASADI
     NUMPY = RCType.NUMPY
@@ -256,7 +259,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def reshape(
         self, array, dim_params: Union[list, tuple, int], rc_type: RCType = NUMPY
     ):
-
         if rc_type == CASADI:
             if isinstance(dim_params, (list, tuple)):
                 if len(dim_params) > 1:
@@ -291,7 +293,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             self._array = torch.tensor(array)
         elif rc_type == CASADI:
-
             casadi_constructor = type(prototype) if prototype is not None else casadi.DM
 
             self._array = casadi_constructor(array)
@@ -304,7 +305,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         prototype=None,
         rc_type: RCType = NUMPY,
     ):
-
         if isinstance(prototype, (list, tuple)):
             rc_type = type_inference(*prototype)
 
@@ -313,7 +313,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             self._array = torch.ones(argin)
         elif rc_type == CASADI:
-
             if isinstance(prototype, (list, tuple)):
                 casadi_constructor = casadi.DM
 
@@ -344,7 +343,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.zeros(argin)
         elif rc_type == CASADI:
-
             if isinstance(prototype, (list, tuple)):
                 casadi_constructor = casadi.DM
 
@@ -388,7 +386,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return A.T
 
     def rep_mat(self, array, n, m, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.squeeze(np.tile(array, (n, m)))
         elif rc_type == TORCH:
@@ -397,7 +394,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.repmat(array, n, m)
 
     def matmul(self, A, B, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.matmul(A, B)
         elif rc_type == TORCH:
@@ -408,14 +404,12 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.mtimes(A, B)
 
     def casadi_outer(self, v1, v2, rc_type: RCType = NUMPY):
-
         if not is_CasADi_typecheck(v1):
             v1 = self.array_symb(v1)
 
         return casadi.horzcat(*[v1 * v2_i for v2_i in v2.nz])
 
     def outer(self, v1, v2, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.outer(v1, v2)
         elif rc_type == TORCH:
@@ -424,7 +418,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return self.casadi_outer(v1, v2)
 
     def sign(self, x, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.sign(x)
         elif rc_type == TORCH:
@@ -433,7 +426,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.sign(x)
 
     def abs(self, x, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.abs(x)
         elif rc_type == TORCH:
@@ -528,7 +520,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.cross(A, B)
 
     def dot(self, A, B, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.dot(A, B)
         elif rc_type == TORCH:
@@ -537,7 +528,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.dot(A, B)
 
     def sqrt(self, x, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.sqrt(x)
         elif rc_type == TORCH:
@@ -546,7 +536,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.sqrt(x)
 
     def shape(self, array, rc_type: RCType = NUMPY):
-
         if rc_type == CASADI:
             return array.size()
         elif rc_type == NUMPY:
@@ -557,7 +546,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def function_to_lambda_with_params(
         self, function_to_lambda, *params, var_prototype=None, rc_type: RCType = NUMPY
     ):
-
         if rc_type in (NUMPY, TORCH):
             if params:
                 return lambda x: function_to_lambda(x, *params)
@@ -596,7 +584,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return res
 
     def if_else(self, c, x, y, rc_type: RCType = NUMPY):
-
         if rc_type == CASADI:
             res = casadi.if_else(c, x, y)
             return res
@@ -604,7 +591,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return x if c else y
 
     def kron(self, A, B, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.kron(A, B)
         elif rc_type == TORCH:
@@ -637,7 +623,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             )
 
     def norm_1(self, v, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.linalg.norm(v, 1)
         elif rc_type == TORCH:
@@ -646,7 +631,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.norm_1(v)
 
     def norm_2(self, v, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.linalg.norm(v, 2)
         elif rc_type == TORCH:
@@ -655,7 +639,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.norm_2(v)
 
     def logic_and(self, a, b, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.logical_and(a, b)
         elif rc_type == TORCH:
@@ -670,7 +653,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return v
 
     def squeeze(self, v, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.squeeze(v)
         elif rc_type == TORCH:

@@ -808,7 +808,7 @@ class CriticCALF(CriticOfObservation):
         self.safe_controller = safe_controller
         self.predictor = predictor
         self.observation_init = self.predictor.system.get_observation(
-            time=0, state=state_init, action=action_init
+            time=0, state=state_init, inputs=action_init
         )
         self.action_init = action_init
         self.observation_last_good = self.observation_init
@@ -942,7 +942,7 @@ class CriticCALF(CriticOfObservation):
         """
         action = self.safe_controller.compute_action(self.current_observation)
         predicted_observation = self.predictor.system.get_observation(
-            time=None, state=self.predictor.predict(self.state, action), action=action
+            time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
         self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
             predicted_observation - self.observation_target
@@ -982,7 +982,7 @@ class CriticCALF(CriticOfObservation):
         self.predicted_observation = (
             predicted_observation
         ) = self.predictor.system.get_observation(
-            time=None, state=self.predictor.predict(self.state, action), action=action
+            time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
 
         self.critic_next = self.model(
@@ -1011,7 +1011,7 @@ class CriticCALF(CriticOfObservation):
         """
         action = self.action_buffer[:, -1]
         predicted_observation = self.predictor.system.get_observation(
-            time=None, state=self.predictor.predict(self.state, action), action=action
+            time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
         self.stabilizing_constraint_violation = (
             self.model(predicted_observation - self.observation_target, weights=weights)

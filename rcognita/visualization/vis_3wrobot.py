@@ -409,7 +409,7 @@ class Animator3WRobot(Animator):
             running_objective = running_obj_init
         else:
             observation_init = self.system.get_observation(
-                time=self.time_start, state=self.state_init, action=self.action_init
+                time=self.time_start, state=self.state_init, inputs=self.action_init
             )
             running_objective = self.running_objective(
                 observation_init, self.action_init
@@ -526,7 +526,7 @@ class Animator3WRobotNI(Animator):
             running_objective = running_obj_init
         else:
             observation_init = self.system.get_observation(
-                time=0, state=self.state_init, action=self.action_init
+                time=0, state=self.state_init, inputs=self.action_init
             )
             running_objective = self.running_objective(
                 observation_init, self.action_init

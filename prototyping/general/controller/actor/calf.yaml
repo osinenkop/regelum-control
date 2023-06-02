@@ -1,0 +1,27 @@
+defaults:
+  - model: weight_container
+  - optimizer: casadi
+  - predictor: rk_casadi
+
+_target_: rcognita.actors.ActorCALF
+
+running_objective: $ running_objective
+
+###---Constructor arguments---###
+system: ~ system
+actor_constraints_on: true
+penalty_param: 0
+actor_regularization_param: 0
+prediction_horizon: $ controller.actor.predictor.prediction_horizon
+dim_action: $ system.dim_action%%
+dim_observation: $ system.dim_observation%%
+discount_factor: 1.
+action_bounds: $ system.action_bounds%%
+action_init: $ scenario.action_init
+state_init: $ scenario.state_init
+critic: ~ controller.critic
+safe_controller: $ nominal_controller
+observation_target: $ system_specific.observation_target
+
+predictor:
+  prediction_horizon: 0
