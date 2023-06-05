@@ -28,3 +28,4 @@ single_weight_max: 1.0E+2
 
 fps: 25
 mpc_prediction_horizon: 5
+total_objective_threshold: 3000

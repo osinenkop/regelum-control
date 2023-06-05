@@ -108,7 +108,7 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
 
         if self.is_use_derivative:
             derivative = self.derivative([], observation_for_actor, action)
-            observation_for_actor = torch.cat([self.observations[idx], derivative])
+            observation_for_actor = torch.cat([observation_for_actor, derivative])
 
         if self.is_cat_action:
             return {
@@ -126,51 +126,3 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
                 "observations_for_critic": observation_for_critic,
                 "objective_acc_stats": torch.tensor(self.objectives_acc_stats[idx]),
             }
-
-
-class UpdatableSampler(Sampler, ABC):
-    @abstractmethod
-    def update_data(self, data_source, batch_size):
-        pass
-
-
-class EpisodicRandomSampler(UpdatableSampler):
-    def __init__(
-        self,
-        n_batches=None,
-    ) -> None:
-        self.init_n_batches = n_batches
-        self.episode_buffer_dataset = None
-
-    def update_data(self, episode_buffer_dataset, batch_size):
-        self.episode_buffer_dataset = episode_buffer_dataset
-        self.batch_size = batch_size
-
-        if self.init_n_batches is None:
-            self.n_batches = int(np.ceil(len(episode_buffer_dataset) / self.batch_size))
-        else:
-            self.n_batches = int(self.init_n_batches)
-
-    def __iter__(self):
-        for _ in range(self.n_batches):
-            episode_id = random.sample(
-                self.episode_buffer_dataset.get_episodes_lengths().index.tolist(), k=1
-            )[0]
-            episode_len = self.episode_buffer_dataset.get_episodes_lengths().loc[
-                episode_id
-            ]
-
-            yield iter(
-                [
-                    self.episode_buffer_dataset.transform_to_raw_idx(
-                        step_idx=s,
-                        episode_id=episode_id,
-                    )
-                    for s in np.random.randint(
-                        low=0, high=episode_len - 1, size=self.batch_size
-                    )
-                ]
-            )
-
-    def __len__(self) -> int:
-        return int(self.n_batches * self.batch_size)

@@ -156,7 +156,6 @@ class OnlineScenario(Scenario):
         self.speedup = speedup
         self.total_objective_threshold = total_objective_threshold
 
-        
     def set_speedup(self, speedup):
         self.speedup = speedup
         self.cached_timeline = islice(cycle(iter(self.cache)), 0, None, self.speedup)
@@ -363,8 +362,10 @@ class OnlineScenario(Scenario):
     def step(self):
         self.pre_step()
         sim_status = self.simulator.do_sim_step()
-        is_episode_ended = sim_status == -1
-        
+        is_episode_ended = (
+            sim_status == -1 or self.total_objective > self.total_objective_threshold
+        )
+
         if not is_episode_ended:
             (
                 self.time,
@@ -386,10 +387,7 @@ class OnlineScenario(Scenario):
             self.system.receive_action(self.action)
             self.post_step()
 
-            if self.total_objective > self.total_objective_threshold:
-                return "episode_ended"
-            else:
-                return "episode_continues"
+            return "episode_continues"
         else:
             self.reset_episode()
 
@@ -435,5 +433,7 @@ class MonteCarloScenario(OnlineScenario):
                 self.controller.episode_data_buffer
             )
             self.controller.episode_data_buffer.nullify_buffer()
+            print(self.actor.model.weights["in_layer.weight"].T)
+
         super().reset_episode()
         super().reset_iteration()

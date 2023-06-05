@@ -1,12 +1,11 @@
-_target_: rcognita.models.GaussianPDFModel
+_target_: rcognita.models.GaussianPerceptronPDFModel
 
 dim_observation: $ controller.actor.dim_input
 dim_action: $ controller.actor.dim_output
 use_derivative: $ controller.actor.is_use_derivative
-std: $ system_specific.diag_scale_coef 
+diag_scale_coef: $ system_specific.diag_scale_coef 
 weight_max: 1
 weight_min: = None
-weight_max_init: 2.
-weight_min_init: -2.
 action_bounds: $ system.action_bounds%%
-
+hidden_size: 2
+leaky_relu_coef: 0.2

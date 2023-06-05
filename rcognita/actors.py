@@ -592,37 +592,32 @@ class ActorPGBase(Actor, ABC):
 
 class ActorPG(ActorPGBase):
     def update_action(self, observation=None):
+        observation_target = torch.tensor(self.observation_target)
         if self.is_use_derivative:
-            derivative = self.derivative([], observation, self.action)
-            observation = torch.cat(
-                [torch.tensor(observation), torch.tensor(derivative)]
-            ).float()
+            derivative = torch.tensor(self.derivative([], observation, self.action))
+            observation = torch.cat([torch.tensor(observation), derivative]).float()
+        else:
+            observation = torch.tensor(observation)
         self.action_old = self.action
         if observation is None:
             observation = self.observation
 
         self.action = (
-            self.model.sample(
-                torch.tensor(observation - self.observation_target).float()
-            )
+            self.model.sample((observation - observation_target).float())
             .detach()
             .cpu()
             .numpy()
         )
 
+        return
+
     def objective(self, batch):
         observations_actions_for_actor = batch["observations_actions_for_actor"].to(
             self.device
         )
-        objectives_acc_stats = batch["objective_acc_stats"].to(self.device)
-        return (
-            self.dataset_size
-            * (
-                self.model(observations_actions_for_actor.float())
-                * objectives_acc_stats
-                / self.N_episodes
-            ).mean()
-        )
+        total_objectives = batch["objective_acc_stats"].to(self.device)
+        log_probs = self.model.log_probs(observations_actions_for_actor.float())
+        return (log_probs * total_objectives).sum() / self.N_episodes
 
 
 class ActorSDPG(ActorPG):

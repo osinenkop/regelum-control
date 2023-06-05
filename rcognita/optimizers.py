@@ -27,7 +27,6 @@ except ModuleNotFoundError:
     pass
 
 from rcognita.callbacks import apply_callbacks
-from rcognita.data_buffers import UpdatableSampler
 
 
 class Optimizer(rcognita.base.RcognitaBase, ABC):
@@ -340,12 +339,11 @@ class TorchDataloaderOptimizer(Optimizer):
         self,
         opt_options,
         model,
-        shuffle=True,
+        shuffle=False,
         opt_method=None,
         batch_size=None,
         sheduler_method=None,
         sheduler_options=None,
-        batch_sampler=None,
         verbose=False,
     ):
         """
@@ -372,12 +370,12 @@ class TorchDataloaderOptimizer(Optimizer):
         self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
         self.sheduler_method = sheduler_method
         self.sheduler_options = sheduler_options
-        self.sheduler = self.sheduler_method(self.optimizer, **self.sheduler_options)
-        
-        if isinstance(batch_sampler, UpdatableSampler):
-            self.batch_sampler = batch_sampler
+        if sheduler_method is not None:
+            self.sheduler = self.sheduler_method(
+                self.optimizer, **self.sheduler_options
+            )
         else:
-            self.batch_sampler = None
+            self.sheduler = None
 
     @apply_callbacks()
     def post_epoch(self, idx_epoch, last_epoch_objective):
@@ -395,7 +393,6 @@ class TorchDataloaderOptimizer(Optimizer):
         :type model_input: torch.Tensor
         """
 
-
         dataloader = DataLoader(
             dataset=dataset,
             shuffle=self.shuffle,
@@ -407,8 +404,10 @@ class TorchDataloaderOptimizer(Optimizer):
         objective_value = objective(batch_sample)
         last_epoch_objective = objective_value.item()
         objective_value.backward()
+        print(self.model.in_layer.weight.grad)
         self.optimizer.step()
-        self.sheduler.step()
+        if self.sheduler:
+            self.sheduler.step()
 
         self.post_epoch(1, last_epoch_objective)
 

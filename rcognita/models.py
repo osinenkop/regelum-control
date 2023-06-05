@@ -15,7 +15,7 @@ sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
 sys.path.insert(0, CUR_DIR)
 
-from __utilities import rc, rej_sampling_rvs
+from __utilities import rc, rej_sampling_rvs, torch_safe_log
 import numpy as np
 import warnings
 
@@ -984,10 +984,11 @@ class WeightClipper:
         self.weight_max = weight_max
 
     def __call__(self, module):
-        # filter the variables to get the ones you want
-        w = module.weight.data
-        w = w.clamp(self.weight_min, self.weight_max)
-        module.weight.data = w
+        if self.weight_min is not None or self.weight_max is not None:
+            # filter the variables to get the ones you want
+            w = module.weight.data
+            w = w.clamp(self.weight_min, self.weight_max)
+            module.weight.data = w
 
 
 class ModelFc(ModelNN):
@@ -1060,10 +1061,13 @@ class GaussianPDFModel(ModelNN):
         self,
         dim_observation,
         dim_action,
-        diag_scale_coef,
+        std,
         use_derivative=False,
         weight_min=None,
         weight_max=None,
+        weight_min_init=None,
+        weight_max_init=None,
+        action_bounds=None,
     ):
         super().__init__()
 
@@ -1071,20 +1075,182 @@ class GaussianPDFModel(ModelNN):
             dim_observation = dim_observation * 2
 
         self.dim_observation = dim_observation
+        self.dim_action = dim_action
+        self.std = std
+
+        self.weight_clipper = WeightClipper(weight_min, weight_max)
         self.in_layer = nn.Linear(self.dim_observation, dim_action, bias=False)
+        self.in_layer.apply(WeightClipper(weight_min_init, weight_max_init))
+
         self.register_parameter(
-            name="cov_matrix",
+            name="scale_tril_matrix",
             param=torch.nn.Parameter(
-                torch.diag(diag_scale_coef**2 * torch.ones(dim_action).float()),
+                (self.std * torch.eye(dim_action)).float(),
                 requires_grad=False,
             ),
         )
-        self.weight_min = weight_min
-        self.weight_max = weight_max
+
+        self.register_parameter(
+            name="action_bounds",
+            param=torch.nn.Parameter(
+                torch.tensor(action_bounds).float(),
+                requires_grad=False,
+            ),
+        )
 
         self.cache_weights()
 
-    def get_mean_of_action_action(self, input_tensor):
+    def get_unscale_coefs_from_minus_one_one_to_action_bounds(self):
+        action_bounds = self.get_parameter("action_bounds")
+        unscale_bias, unscale_multiplier = (
+            action_bounds.mean(dim=1),
+            (action_bounds[:, 1] - self.action_bounds[:, 0]) / 2.0,
+        )
+        return unscale_bias, unscale_multiplier
+
+    def unscale_from_minus_one_one_to_action_bounds(self, x):
+        (
+            unscale_bias,
+            unscale_multiplier,
+        ) = self.get_unscale_coefs_from_minus_one_one_to_action_bounds()
+
+        return x * unscale_multiplier + unscale_bias
+
+    def scale_from_action_bounds_to_minus_one_one(self, y):
+        (
+            unscale_bias,
+            unscale_multiplier,
+        ) = self.get_unscale_coefs_from_minus_one_one_to_action_bounds()
+
+        return (y - unscale_bias) / unscale_multiplier
+
+    def get_means(self, observation):
+        self.in_layer.apply(self.weight_clipper)
+        full_feedback = self.in_layer(observation)
+        assert 1 - 3 * self.std > 0, "1 - 3 std should be greater than 0"
+        # We should guarantee with good probability that sampled actions are within action bounds that are scaled to [-1, 1]
+        scale_coef_of_mean = 1 - 3 * self.std
+        out = scale_coef_of_mean * torch.tanh(full_feedback / scale_coef_of_mean)
+        return out
+
+    def split_tensor_to_observations_actions(self, observations_actions_tensor):
+        if len(observations_actions_tensor.shape) == 1:
+            observation, action = (
+                observations_actions_tensor[: self.dim_observation],
+                observations_actions_tensor[self.dim_observation :],
+            )
+        elif len(observations_actions_tensor.shape) == 2:
+            observation, action = (
+                observations_actions_tensor[:, : self.dim_observation],
+                observations_actions_tensor[:, self.dim_observation :],
+            )
+        else:
+            raise ValueError("Input tensor has unexpected dims")
+
+        return observation, action
+
+    def log_probs(self, observations_actions, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        observations, actions = self.split_tensor_to_observations_actions(
+            observations_actions
+        )
+        means = self.get_means(observations)
+        scaled_actions = self.scale_from_action_bounds_to_minus_one_one(actions)
+
+        return MultivariateNormal(
+            loc=means,
+            scale_tril=self.get_parameter("scale_tril_matrix"),
+        ).log_prob(scaled_actions)
+
+    def sample(self, observation):
+        mean = self.get_means(observation)
+        sampled_scaled_action = MultivariateNormal(
+            loc=mean,
+            scale_tril=self.get_parameter("scale_tril_matrix"),
+        ).sample()
+
+        sampled_action = self.unscale_from_minus_one_one_to_action_bounds(
+            sampled_scaled_action
+        )
+
+        return sampled_action
+
+
+class TanhGaussianPDFModel(ModelNN):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        scaled_std,
+        use_derivative=False,
+        weight_min=None,
+        weight_max=None,
+        action_bounds=None,
+        safe_log_eps=1e-10,
+    ):
+        super().__init__()
+
+        if use_derivative:
+            dim_observation = dim_observation * 2
+
+        self.dim_observation = dim_observation
+        self.dim_action = dim_action
+        self.scaled_std = scaled_std
+        self.safe_log_eps = safe_log_eps
+
+        self.weight_clipper = WeightClipper(weight_min, weight_max)
+        self.in_layer = nn.Linear(self.dim_observation, dim_action, bias=False)
+        self.in_layer.apply(self.weight_clipper)
+
+        self.register_parameter(
+            name="action_bounds",
+            param=torch.nn.Parameter(
+                torch.tensor(action_bounds).float(),
+                requires_grad=False,
+            ),
+        )
+        self.register_parameter(
+            name="cov_matrix",
+            param=torch.nn.Parameter(
+                torch.diag(self.scaled_std**2 * torch.ones(dim_action).float()),
+                requires_grad=False,
+            ),
+        )
+        self.cache_weights()
+
+    def get_unscale_coefs_from_minus_one_one_to_action_bounds(self):
+        action_bounds = self.get_parameter("action_bounds")
+        unscale_bias, unscale_multiplier = (
+            action_bounds.mean(dim=1),
+            (action_bounds[:, 1] - self.action_bounds[:, 0]) / 2.0,
+        )
+        return unscale_bias, unscale_multiplier
+
+    def unscale_from_minus_one_one_to_action_bounds(self, x):
+        (
+            unscale_bias,
+            unscale_multiplier,
+        ) = self.get_unscale_coefs_from_minus_one_one_to_action_bounds()
+
+        return x * unscale_multiplier + unscale_bias
+
+    def scale_from_action_bounds_to_minus_one_one(self, y):
+        (
+            unscale_bias,
+            unscale_multiplier,
+        ) = self.get_unscale_coefs_from_minus_one_one_to_action_bounds()
+
+        return (y - unscale_bias) / unscale_multiplier
+
+    def forward_observation(self, observation):
+        self.in_layer.apply(self.weight_clipper)
+        x = self.in_layer(observation)
+        out = torch.tanh(x)
+        return out
+
+    def split_tensor_to_observation_action(self, input_tensor):
         if len(input_tensor.shape) == 1:
             observation, action = (
                 input_tensor[: self.dim_observation],
@@ -1098,32 +1264,70 @@ class GaussianPDFModel(ModelNN):
         else:
             raise ValueError("Input tensor has unexpected dims")
 
-        mean_of_action = self.in_layer(observation)
-        return mean_of_action, action
+        return observation, action
 
     def forward(self, input_tensor, weights=None):
         if weights is not None:
             self.update(weights)
 
-        self.in_layer.apply(WeightClipper(self.weight_min, self.weight_max))
-        mean_of_action, action = self.get_mean_of_action_action(input_tensor)
-        cov_matrix = [
-            weight for name, weight in self.named_parameters() if name == "cov_matrix"
-        ][0]
-        return MultivariateNormal(
-            loc=mean_of_action, covariance_matrix=cov_matrix
-        ).log_prob(action)
+        observation, action = self.split_tensor_to_observation_action(input_tensor)
+        mean = self.forward_observation(observation)
+        scaled_action = self.scale_from_action_bounds_to_minus_one_one(action)
+        atanh_scaled_action = torch.atanh(scaled_action)
+        log_derivative_of_atanh_scaled_action = -torch_safe_log(
+            1 - scaled_action**2, eps=self.safe_log_eps
+        ).sum(dim=1)
+        return (
+            MultivariateNormal(
+                loc=mean,
+                covariance_matrix=self.get_parameter("cov_matrix"),
+            ).log_prob(atanh_scaled_action)
+            + log_derivative_of_atanh_scaled_action
+        )
 
     def sample(self, observation):
-        self.in_layer.apply(WeightClipper(self.weight_min, self.weight_max))
-        mean_of_action = self.in_layer(observation)
+        mean = self.forward_observation(observation)
+        sampled_scaled_action = torch.tanh(
+            MultivariateNormal(
+                loc=mean,
+                covariance_matrix=self.get_parameter("cov_matrix"),
+            ).sample()
+        )
+        sampled_action = self.unscale_from_minus_one_one_to_action_bounds(
+            sampled_scaled_action
+        )
 
-        cov_matrix = [
-            weight for name, weight in self.named_parameters() if name == "cov_matrix"
-        ][0]
-        return MultivariateNormal(
-            loc=mean_of_action, covariance_matrix=cov_matrix
-        ).sample()
+        return sampled_action
+
+
+class GaussianPerceptronPDFModel(TanhGaussianPDFModel):
+    def __init__(
+        self,
+        *args,
+        hidden_size=10,
+        leaky_relu_coef=0.2,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.in_layer = nn.Linear(self.dim_observation, hidden_size, bias=False)
+        self.hidden_layer = nn.Linear(hidden_size, hidden_size, bias=False)
+        self.out_layer = nn.Linear(hidden_size, self.dim_action, bias=False)
+        self.leaky_relu_coef = leaky_relu_coef
+
+    def forward_observation(self, observation):
+        self.in_layer.apply(self.weight_clipper)
+        self.hidden_layer.apply(self.weight_clipper)
+        # self.out_layer.apply(self.weight_clipper)
+
+        x = self.in_layer(observation)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        x = self.hidden_layer(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        x = self.out_layer(x)
+
+        out = self.normalize(x)
+
+        return out
 
 
 class GaussianElementWisePDFModel(ModelNN):

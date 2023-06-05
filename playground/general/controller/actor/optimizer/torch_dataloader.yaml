@@ -1,15 +1,13 @@
 _target_: rcognita.optimizers.TorchDataloaderOptimizer
 
-defaults:
-  - batch_sampler: none
-
 opt_options:
   lr: 1.0E-3
+  betas: = (0.1, 0.1)
 
 opt_method: = torch.optim.Adam
 model: ~ controller.actor.model
-sheduler_method: = torch.optim.lr_scheduler.StepLR
+# sheduler_method: = torch.optim.lr_scheduler.StepLR
 
-sheduler_options:
-  gamma: 0.25
-  step_size: 5
+# sheduler_options:
+#   gamma: 0.25
+#   step_size: 5

@@ -19,10 +19,11 @@ ub_parameter: 1.0E+3
 is_use_derivative: False
 
 data_buffer_size: 500
-diag_scale_coef: 0.5
+diag_scale_coef: 0.05
 
 calf_data_buffer_size: 8
 single_weight_min: 1.0E-6
 single_weight_max: 1.0E+2
 
 mpc_prediction_horizon: 3
+total_objective_threshold: 10000

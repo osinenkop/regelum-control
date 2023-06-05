@@ -52,6 +52,8 @@ TORCH = RCType.TORCH
 CASADI = RCType.CASADI
 NUMPY = RCType.NUMPY
 
+def torch_safe_log(x, eps=1e-10):
+    return torch.log(x + eps)
 
 def is_CasADi_typecheck(*args) -> Union[RCType, bool]:
     return CASADI if any([isinstance(arg, CASADI_TYPES) for arg in args]) else False

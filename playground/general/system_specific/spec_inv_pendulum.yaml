@@ -27,4 +27,4 @@ single_weight_max: 1.0E+2
 
 fps: 15
 mpc_prediction_horizon: 10
-total_objective_threshold: 2000
+total_objective_threshold: = np.inf

@@ -17,7 +17,7 @@ critic_regularization_param: 0
 is_dynamic_decay_rate: True
 lb_parameter: 1.0E-6
 ub_parameter: 1.0E+3
-is_use_derivative: True
+is_use_derivative: False
 mpc_prediction_horizon: 20
 
 
@@ -27,3 +27,4 @@ diag_scale_coef: 0.05
 calf_data_buffer_size: 8
 single_weight_min: 1.0E-6
 single_weight_max: 1.0E+2
+total_objective_threshold: 5000
