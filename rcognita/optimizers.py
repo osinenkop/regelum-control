@@ -22,12 +22,15 @@ try:
     import torch.optim as optim
     import torch
     from torch.utils.data import Dataset, DataLoader
+    from rcognita.data_buffers import UpdatableSampler
 
 except ModuleNotFoundError:
-    pass
+    from unittest.mock import MagicMock
+
+    torch = MagicMock()
+    UpdatableSampler = MagicMock()
 
 from rcognita.callbacks import apply_callbacks
-from rcognita.data_buffers import UpdatableSampler
 
 
 class Optimizer(rcognita.base.RcognitaBase, ABC):
@@ -373,7 +376,7 @@ class TorchDataloaderOptimizer(Optimizer):
         self.sheduler_method = sheduler_method
         self.sheduler_options = sheduler_options
         self.sheduler = self.sheduler_method(self.optimizer, **self.sheduler_options)
-        
+
         if isinstance(batch_sampler, UpdatableSampler):
             self.batch_sampler = batch_sampler
         else:
@@ -394,7 +397,6 @@ class TorchDataloaderOptimizer(Optimizer):
         :param model_input: Inputs to the model.
         :type model_input: torch.Tensor
         """
-
 
         dataloader = DataLoader(
             dataset=dataset,

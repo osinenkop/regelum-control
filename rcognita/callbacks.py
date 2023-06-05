@@ -19,7 +19,11 @@ from abc import ABC, abstractmethod
 
 import matplotlib.animation
 import mlflow
-import torch
+try:
+    import torch
+except:
+    from unittest.mock import MagicMock
+    torch = MagicMock()
 import rcognita
 import pandas as pd
 import numpy as np

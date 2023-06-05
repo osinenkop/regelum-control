@@ -36,8 +36,6 @@ setup(
         "hydra-core>=1.3.1",
         "hydra-joblib-launcher>=1.2.0",
         "pandas==1.4.0",
-        "gpytorch==1.8.0",
-        "torch==1.13.1",
         "casadi>=3.5.5",
         "dill==0.3.6",
         "plotly==5.13.0",
@@ -50,7 +48,7 @@ setup(
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],
         "CASADI": ["casadi>=3.5.5"],
-        "TORCH": ["torch==1.13.1"],
+        "TORCH": ["torch>=1.13.1", "gpytorch==1.8.0"],
     },
     python_requires=">=3.6",
 )

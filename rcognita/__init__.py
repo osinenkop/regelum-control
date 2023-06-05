@@ -53,7 +53,6 @@ from . import controllers
 from . import systems
 from . import simulator
 from . import systems
-from . import loggers
 from .visualization import animator
 from . import __utilities
 from . import models
@@ -557,7 +556,10 @@ class main:
         def rcognita_main(*args, **kwargs):
             common_dir = tempfile.TemporaryDirectory()
             initial_working_directory = os.getcwd()
-            initial_pythonpath = os.environ["PYTHONPATH"]
+            try:
+                initial_pythonpath = os.environ["PYTHONPATH"]
+            except KeyError:
+                initial_pythonpath = initial_working_directory
             script_path = inspect.getfile(old_app)
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])

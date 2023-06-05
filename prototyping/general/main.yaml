@@ -7,7 +7,6 @@ defaults:
   - running_objective: quadratic_${system}
   - observation_naming: naming_${system}
   - optional animator: animator_${system}
-  # - ${controller}_${system}
 
 callbacks:
   - rcognita.callbacks.HistoricalObjectiveCallback
