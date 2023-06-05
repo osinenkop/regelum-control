@@ -21,6 +21,8 @@ from .optimizers import CasADiOptimizer, SciPyOptimizer
 from .__w_plotting import plot_optimization_results
 from .callbacks import apply_callbacks, Callback
 from .base import RcognitaBase
+from .actors import Actor
+from .critics import Critic
 
 
 def apply_action_bounds(method):
@@ -45,44 +47,30 @@ class Controller(RcognitaBase, ABC):
         self,
         time_start: float = 0,
         sampling_time: float = 0.1,
-        is_fixed_critic_weights: bool = False,
     ):
         super().__init__()
         self.controller_clock = time_start
         self.sampling_time = sampling_time
-
-        self.observation_target = []
-        self.is_fixed_critic_weights = is_fixed_critic_weights
         self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.action_old = None
 
     @apply_action_bounds
-    def compute_action_sampled(
-        self, time, state, observation, constraints=(), observation_target=[]
-    ):
-        self.observation_target = observation_target
+    def compute_action_sampled(self, time, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
-        is_time_for_critic_update = self.critic.clock.check_time(time)
-
-        is_critic_update = (
-            is_time_for_critic_update and not self.is_fixed_critic_weights
-        )
-
-        if self.is_time_for_new_sample:  # New sample
-            # Update controller's internal clock
-
-            self.compute_action(
-                state,
+        if self.is_time_for_new_sample:
+            action = self.compute_action(
                 observation,
                 time=time,
-                is_critic_update=is_critic_update,
-                observation_target=observation_target,
             )
+            self.action_old = action
+        else:
+            action = self.action_old
 
-        return self.actor.action
+        return action
 
     @abstractmethod
     @apply_callbacks()
-    def compute_action(self):
+    def compute_action(self, observation, time=0):
         pass
 
 
@@ -97,24 +85,17 @@ class RLController(Controller):
     def __init__(
         self,
         *args,
-        critic_period=0.1,
-        actor=None,
-        critic=None,
+        actor: Actor,
+        critic: Critic,
         time_start=0,
         action_bounds=None,
-        episode_data_buffer=None,
-        critic_update_threshold=0.0,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.actor = actor
         self.critic = critic
         self.action_bounds = action_bounds
-        self.episode_data_buffer = episode_data_buffer
         self.critic_clock = time_start
-        self.critic_period = critic_period
-        self.critic_update_threshold = critic_update_threshold
-        self.weights_difference_norms = []
 
     def reset(self):
         """
@@ -132,16 +113,14 @@ class RLController(Controller):
         return None
 
     @apply_action_bounds
-    def compute_action(
-        self, state, observation, is_critic_update=True, time=0, observation_target=[]
-    ):
+    def compute_action(self, observation, time=0):
         ### This method is called to generate an event in order for callbacks to fire.
         ### Namely, we want to save the critic weights, for instance, and other stuff.
         self.pre_compute_action()
 
         ### Store current action and observation in critic's data buffer
-        if rc.norm_2(observation - observation_target) > self.critic_update_threshold:
-            self.critic.update_buffers(observation, self.actor.action)
+
+        self.critic.update_buffers(observation, self.actor.action)
         self.critic.receive_state(state)
 
         ### Store current observation in actor

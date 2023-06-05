@@ -18,7 +18,7 @@ from .optimizers import TorchOptimizer
 from .actors import Actor
 from .critics import Critic, CriticTrivial
 from .simulator import Simulator
-from .controllers import Controller
+from .controllers import Controller, RLController
 from .objectives import RunningObjective
 from .callbacks import apply_callbacks
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
@@ -67,17 +67,24 @@ class TabularScenarioVI(Scenario):
 
 
 class OnlineScenario(Scenario):
+
+    """
+    TODO:
+        1. get init state from simulator
+        2. get init action from controller in main loop first
+        3. access to system from simulator
+        4. access to policy and objective learner from controller
+        5. implement planner for system compositions
+    """
+
     cache = dict()
 
     def __init__(
         self,
         simulator: Simulator,
         controller: Controller,
-        running_objective: Optional[RunningObjective] = None,
-        howanim: str = None,
-        state_init: np.ndarray = None,
-        action_init: np.ndarray = None,
-        time_start: float = 0.0,
+        running_objective: RunningObjective,
+        howanim: Optional[str] = None,
         observation_target: list = [],
         observation_components_naming=[],
         N_episodes=1,
@@ -88,59 +95,24 @@ class OnlineScenario(Scenario):
         self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
-        self.weights_historical = []
         self.simulator = simulator
-
-        self.system = Mock() if not hasattr(simulator, "system") else simulator.system
-
         self.controller = controller
-        self.actor = (
-            MagicMock() if not hasattr(controller, "actor") else controller.actor
-        )
-        self.critic = (
-            CriticTrivial(running_objective)
-            if not hasattr(controller, "critic")
-            else controller.critic
-        )
-
-        self.running_objective = (
-            (lambda observation, action: 0)
-            if running_objective is None
-            else running_objective
-        )
+        self.running_objective = running_objective
         if observation_target != []:
             self.running_objective.observation_target = rc.array(observation_target)
-            if hasattr(self.actor, "running_objective"):
-                self.actor.running_objective.observation_target = rc.array(
+            if isinstance(self.controller, RLController):
+                self.controller.actor.running_objective.observation_target = rc.array(
                     observation_target
                 )
-            if hasattr(self.critic, "running_objective"):
-                self.critic.running_objective.observation_target = rc.array(
+                self.controller.critic.running_objective.observation_target = rc.array(
                     observation_target
                 )
-        self.time_start = time_start
-        self.time_final = self.simulator.time_final
         self.howanim = howanim
         self.is_playback = (
             self.howanim in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
         )
-        self.state_init = state_init
-        self.state_full = state_init
-        self.action_init = action_init
-        self.action = self.action_init
-        self.observation = self.system.get_observation(
-            time=0, state=self.state_init, inputs=self.action_init
-        )
-        self.observation_target = (
-            np.zeros_like(self.observation)
-            if observation_target is None or observation_target == []
-            else rc.array(observation_target)
-        )
-        self.running_objective_value = self.running_objective(
-            self.observation, self.action
-        )
         self.total_objective = 0
-        self.time = 0
+        self.time = None
         self.time_old = 0
         self.delta_time = 0
         self.observation_components_naming = observation_components_naming
@@ -148,12 +120,14 @@ class OnlineScenario(Scenario):
         self.recent_total_objectives_of_episodes = []
         self.total_objectives_of_episodes = []
         self.total_objective_episodic_means = []
+
         self.sim_status = 1
         self.episode_counter = 0
         self.iteration_counter = 0
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
         self.total_objective_threshold = total_objective_threshold
+        self.is_episode_ended = False
 
     def set_speedup(self, speedup):
         self.speedup = speedup
@@ -266,7 +240,7 @@ class OnlineScenario(Scenario):
                     self.time,
                     self.episode_counter,
                     self.iteration_counter,
-                    self.state_full,
+                    self.state,
                     self.action,
                     self.observation,
                     self.running_objective_value,
@@ -283,7 +257,7 @@ class OnlineScenario(Scenario):
                         self.time,
                         self.episode_counter,
                         self.iteration_counter,
-                        self.state_full,
+                        self.state,
                         self.action,
                         self.observation,
                         self.running_objective_value,
@@ -320,8 +294,6 @@ class OnlineScenario(Scenario):
                                         current_scenario_status_idx
                                     ] = self.cache[key_i][current_scenario_status_idx]
 
-                    # generator self.cached_timeline is needed for playback.
-                    # self.cached_timeline skips frames depending on self.speedup using islice.
                     self.cached_timeline = islice(
                         cycle(iter(self.cache)), 0, None, self.speedup
                     )
@@ -336,13 +308,14 @@ class OnlineScenario(Scenario):
             self.observation, self.action
         )
         self.update_total_objective(self.observation, self.action, self.delta_time)
-
-        return (
+        pre_step_statistics = (
             np.around(self.running_objective_value, decimals=2),
             self.observation.round(decimals=2),
             self.action.round(2),
             self.total_objective,
         )
+
+        return pre_step_statistics
 
     @apply_callbacks()
     def post_step(self):
@@ -361,15 +334,11 @@ class OnlineScenario(Scenario):
     @memorize
     def step(self):
         self.pre_step()
-        sim_status = self.simulator.do_sim_step()
-        is_episode_ended = sim_status == -1
-
-        if not is_episode_ended:
+        if not self.is_episode_ended:
             (
                 self.time,
                 self.state,
                 self.observation,
-                self.state_full,
             ) = self.simulator.get_sim_step_data()
 
             self.delta_time = self.time - self.time_old
@@ -380,18 +349,12 @@ class OnlineScenario(Scenario):
                 self.time,
                 self.state,
                 self.observation,
-                observation_target=self.observation_target,
             )
-            self.system.receive_action(self.action)
+            self.simulator.receive_action(self.action)
+            self.is_episode_ended = self.simulator.do_sim_step() == -1
             self.post_step()
-
-            if self.total_objective > self.total_objective_threshold:
-                return "episode_ended"
-            else:
-                return "episode_continues"
         else:
             self.reset_episode()
-
             is_iteration_ended = self.episode_counter >= self.N_episodes
 
             if is_iteration_ended:

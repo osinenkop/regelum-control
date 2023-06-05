@@ -16,6 +16,7 @@ import rcognita.base
 from abc import ABC, abstractmethod
 from .__utilities import rc
 from typing import Optional
+import types
 
 
 class ComposedSystem(rcognita.base.RcognitaBase):

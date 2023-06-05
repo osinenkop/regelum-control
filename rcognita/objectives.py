@@ -7,6 +7,8 @@ For instance, a running objective can be used commonly by a generic optimal cont
 from abc import ABC, abstractmethod
 
 import rcognita.base
+from .models import Model
+from typing import Optional
 
 
 class Objective(rcognita.base.RcognitaBase, ABC):
@@ -24,14 +26,16 @@ class RunningObjective(Objective):
     In minimzations problems, it is called cost or loss, say.
     """
 
-    def __init__(self, model):
+    # TODO: vypilit observation target
+    def __init__(self, model: Optional[Model] = None, observation_target=None):
         """
         Initialize a RunningObjective instance.
 
         :param model: function that calculates the running objective for a given observation and action.
         :type model: function
         """
-        self.model = model
+        self.observation_target = observation_target
+        self.model = (lambda observation, action: 0) if model is None else model
 
     def __call__(self, observation, action):
         """
@@ -45,10 +49,8 @@ class RunningObjective(Objective):
         :rtype: float
         """
 
-        if hasattr(self, "observation_target"):
-            observation_new = observation - self.observation_target
-            running_objective = self.model(observation_new, action)
-        else:
-            running_objective = self.model(observation, action)
+        if self.observation_target is not None:
+            observation = observation - self.observation_target
+        running_objective = self.model(observation, action)
 
         return running_objective
