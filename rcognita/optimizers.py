@@ -10,7 +10,7 @@ import numpy as np
 import warnings
 
 try:
-    from casadi import vertcat, nlpsol, DM, MX, Function
+    from casadi import vertcat, nlpsol, DM, MX, Function, Opti
 
 except (ModuleNotFoundError, ImportError):
     pass
@@ -38,11 +38,13 @@ class Optimizer(rcognita.base.RcognitaBase, ABC):
     Abstract base class for optimizers.
     """
 
+    _engine = None
+
     @property
     @abstractmethod
     def engine(self):
         """Name of the optimization engine being used"""
-        return "engine_name"
+        return _engine
 
     @abstractmethod
     def __init__(self):
@@ -90,7 +92,7 @@ class SciPyOptimizer(Optimizer):
         verbose (bool): Whether to print optimization progress and timing.
     """
 
-    engine = "SciPy"
+    _engine = "SciPy"
 
     def __init__(self, opt_method, opt_options, verbose=False):
         """
@@ -136,9 +138,21 @@ class SciPyOptimizer(Optimizer):
 
 
 class CasADiOptimizer(Optimizer):
-    engine = "CasADi"
+    _engine = "CasADi"
 
-    def __init__(self, opt_method, opt_options, verbose=False):
+    def __init__(
+        self,
+        opt_method,
+        opt_options,
+        objective_carrier,
+        decision_variable_dim,
+        free_parameters_dim,
+    ):
+        assert hasattr(
+            objective_carrier, "objective"
+        ), "objective_carrier must contain an 'objective' attribute"
+        import casadi
+
         self.opt_method = opt_method
         self.opt_options = opt_options
         self.verbose = verbose
@@ -161,6 +175,7 @@ class CasADiOptimizer(Optimizer):
         bounds,
         constraints=(),
         decision_variable_symbolic=None,
+        free_parameters=None,
     ):
         """
         Optimize the given objective function using the CasADi optimization engine.
@@ -220,70 +235,12 @@ class CasADiOptimizer(Optimizer):
         return rc.to_np_1D(result["x"])
 
 
-class GradientOptimizer(CasADiOptimizer):
-    def __init__(
-        self,
-        objective,
-        learning_rate,
-        N_steps,
-        grad_norm_upper_bound=1e-2,
-        verbose=False,
-    ):
-        self.objective = objective
-        self.learning_rate = learning_rate
-        self.N_steps = N_steps
-        self.grad_norm_upper_bound = grad_norm_upper_bound
-        self.verbose = verbose
-
-    def substitute_args(self, initial_guess, *args):
-        cost_function, symbolic_var = rc.function2MX(
-            self.objective, initial_guess=initial_guess, force=True, *args
-        )
-
-        return cost_function, symbolic_var
-
-    def grad_step(self, initial_guess, *args):
-        cost_function, symbolic_var = self.substitute_args(initial_guess, *args)
-        cost_function = Function("f", [symbolic_var], [cost_function])
-        gradient = rc.autograd(cost_function, symbolic_var)
-        grad_eval = gradient(initial_guess)
-        norm_grad = rc.norm_2(grad_eval)
-        if norm_grad > self.grad_norm_upper_bound:
-            grad_eval = grad_eval / norm_grad * self.grad_norm_upper_bound
-
-        initial_guess_res = initial_guess - self.learning_rate * grad_eval
-        return initial_guess_res
-
-    @Optimizer.verbose
-    def optimize(self, initial_guess, *args):
-        """
-        Optimize the given objective function using the CasADi optimization engine.
-
-        :param objective: The objective function to optimize.
-        :type objective: function
-        :param initial_guess: The initial guess for the optimization variables.
-        :type initial_guess: numpy array
-        :param bounds: A tuple of lower and upper bounds for the optimization variables.
-        :type bounds: tuple
-        :param constraints: Any constraints to enforce during optimization (default: no constraints).
-        :type constraints: tuple, optional
-        :param decision_variable_symbolic: A list of symbolic variables representing the optimization variables.
-        :type decision_variable_symbolic: list
-        :return: The optimized decision variables.
-        :rtype: numpy array
-        """
-        for _ in range(self.N_steps):
-            initial_guess = self.grad_step(initial_guess, *args)
-
-        return initial_guess
-
-
 class TorchOptimizer(Optimizer):
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
 
-    engine = "Torch"
+    _engine = "Torch"
 
     def __init__(
         self, opt_options, model, iterations=1, opt_method=None, verbose=False

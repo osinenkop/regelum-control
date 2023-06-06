@@ -15,7 +15,7 @@ import rcognita
 import rcognita.base
 from abc import ABC, abstractmethod
 from .__utilities import rc
-from typing import Optional
+from typing import Optional, Union
 from functools import reduce
 
 
