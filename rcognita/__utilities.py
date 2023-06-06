@@ -359,7 +359,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             return self._array
 
-    def concatenate(self, argin, rc_type: RCType = NUMPY, **kwargs):
+    def concatenate(self, argin, rc_type: Union[RCType, bool] = NUMPY, **kwargs):
         rc_type = type_inference(*safe_unpack(argin))
         if rc_type == NUMPY:
             return np.concatenate(argin, **kwargs)

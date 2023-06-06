@@ -57,7 +57,7 @@ from .visualization import animator
 from . import __utilities
 from . import models
 from . import predictors
-from . import actors
+from . import policies
 from . import visualization
 from .visualization import *
 import mlflow

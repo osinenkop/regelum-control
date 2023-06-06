@@ -15,7 +15,7 @@ from unittest.mock import Mock, MagicMock
 import rcognita.base
 from .__utilities import rc
 from .optimizers import TorchOptimizer
-from .actors import Actor
+from .policies import Policy
 from .critics import Critic, CriticTrivial
 from .simulator import Simulator
 from .controllers import Controller, RLController
@@ -42,30 +42,6 @@ class Scenario(rcognita.base.RcognitaBase, ABC):
         pass
 
 
-class TabularScenarioVI(Scenario):
-    """
-    Tabular scenario for the use with tabular agents.
-    Each iteration entails processing of the whole observation (or state) and action spaces, correponds to a signle update of the agent.
-    Implements a scenario for value iteration (VI) update.
-
-    """
-
-    def __init__(
-        self, actor: Actor, critic: Critic, N_iterations: int, is_playback=None
-    ):
-        self.actor = actor
-        self.critic = critic
-        self.N_iterations = N_iterations
-
-    def run(self):
-        for i in range(self.N_iterations):
-            self.step()
-
-    def step(self):
-        self.actor.update()
-        self.critic.update()
-
-
 class OnlineScenario(Scenario):
 
     """
@@ -85,12 +61,10 @@ class OnlineScenario(Scenario):
         controller: Controller,
         running_objective: RunningObjective,
         howanim: Optional[str] = None,
-        observation_target: list = [],
         observation_components_naming=[],
         N_episodes=1,
         N_iterations=1,
         speedup=1,
-        total_objective_threshold=np.inf,
     ):
         self.cache.clear()
         self.N_episodes = N_episodes
@@ -98,15 +72,6 @@ class OnlineScenario(Scenario):
         self.simulator = simulator
         self.controller = controller
         self.running_objective = running_objective
-        if observation_target != []:
-            self.running_objective.observation_target = rc.array(observation_target)
-            if isinstance(self.controller, RLController):
-                self.controller.actor.running_objective.observation_target = rc.array(
-                    observation_target
-                )
-                self.controller.critic.running_objective.observation_target = rc.array(
-                    observation_target
-                )
         self.howanim = howanim
         self.is_playback = (
             self.howanim in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
@@ -126,8 +91,11 @@ class OnlineScenario(Scenario):
         self.iteration_counter = 0
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
-        self.total_objective_threshold = total_objective_threshold
         self.is_episode_ended = False
+
+        self.state_init, self.action_init = self.simulator.get_init_state_and_action()
+        self.state = self.state_init
+        self.action = self.action_init
 
     def set_speedup(self, speedup):
         self.speedup = speedup
@@ -141,7 +109,8 @@ class OnlineScenario(Scenario):
 
     def update_total_objective(self, observation, action, delta):
         """
-        Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+        Sample-to-sample accumulated (summed up or integrated) stage objective.
+        This can be handy to evaluate the performance of the agent.
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
 
@@ -157,15 +126,13 @@ class OnlineScenario(Scenario):
         self.recent_total_objective = self.total_objective
         self.total_objective = 0
         self.action = self.action_init
-        self.system.reset()
-        self.actor.reset()
-        self.critic.reset()
-        if hasattr(self.controller, "reset"):
+        self.simulator.reset()
+        if isinstance(self.controller, RLController):
+            self.controller.policy.reset()
+            self.controller.critic.reset()
             self.controller.reset()
         self.simulator.reset()
-        self.observation = self.system.get_observation(
-            time=0, state=self.state_init, inputs=self.action_init
-        )
+        self.observation = self.simulator.observation
         self.sim_status = 0
         return self.recent_total_objective
 
@@ -245,7 +212,7 @@ class OnlineScenario(Scenario):
                     self.observation,
                     self.running_objective_value,
                     self.total_objective,
-                    self.actor.model.weights,
+                    self.policy.model.weights,
                     self.critic.model.weights,
                     self.current_scenario_status,
                 ) = self.cache[triple]
@@ -262,7 +229,7 @@ class OnlineScenario(Scenario):
                         self.observation,
                         self.running_objective_value,
                         self.total_objective,
-                        self.actor.model.weights,
+                        self.policy.model.weights,
                         self.critic.model.weights,
                         self.current_scenario_status,
                     ]
@@ -310,8 +277,10 @@ class OnlineScenario(Scenario):
         self.update_total_objective(self.observation, self.action, self.delta_time)
         pre_step_statistics = (
             np.around(self.running_objective_value, decimals=2),
-            self.observation.round(decimals=2),
-            self.action.round(2),
+            self.observation.round(decimals=2)
+            if self.observation is not None
+            else None,
+            self.action.round(2) if self.action is not None else None,
             self.total_objective,
         )
 
@@ -326,8 +295,10 @@ class OnlineScenario(Scenario):
 
         return (
             np.around(self.running_objective_value, decimals=2),
-            self.observation.round(decimals=2),
-            self.action.round(2),
+            self.observation.round(decimals=2)
+            if self.observation is not None
+            else None,
+            self.action.round(2) if self.action is not None else None,
             self.total_objective,
         )
 
@@ -341,7 +312,11 @@ class OnlineScenario(Scenario):
                 self.observation,
             ) = self.simulator.get_sim_step_data()
 
-            self.delta_time = self.time - self.time_old
+            self.delta_time = (
+                self.time - self.time_old
+                if self.time_old is not None and self.time is not None
+                else 0
+            )
             self.time_old = self.time
 
             # In future versions state vector being passed into controller should be obtained from an observer.
@@ -393,7 +368,7 @@ class MonteCarloScenario(OnlineScenario):
         )
 
         if self.current_scenario_status != "simulation_ended":
-            self.actor.optimize_weights_after_iteration(
+            self.controller.policy.optimize_weights_after_iteration(
                 self.controller.episode_data_buffer
             )
             self.controller.episode_data_buffer.nullify_buffer()

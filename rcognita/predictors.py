@@ -3,13 +3,11 @@ Module that contains state or observation (depending on the context) predictors.
 
 """
 
-import numpy as np
 from abc import ABC, abstractmethod
 
 import rcognita.base
 from .__utilities import rc
 from .systems import System
-from .solvers import create_CasADi_integrator
 
 
 class Predictor(rcognita.base.RcognitaBase, ABC):
@@ -17,6 +15,16 @@ class Predictor(rcognita.base.RcognitaBase, ABC):
     Blueprint of a predictor.
 
     """
+
+    def __init__(
+        self,
+        system: System,
+        pred_step_size: float,
+        prediction_horizon: int,
+    ):
+        self.system = system
+        self.pred_step_size = pred_step_size
+        self.prediction_horizon = prediction_horizon
 
     @abstractmethod
     def predict(self):
@@ -34,40 +42,32 @@ class EulerPredictor(Predictor):
 
     """
 
-    def __init__(
-        self,
-        pred_step_size: float,
-        system: System,
-        dim_observation: int,
-        prediction_horizon: int,
-    ):
-        self.system = system
-        self.pred_step_size = pred_step_size
-        self.compute_state_dynamics = system.compute_state_dynamics
-        self.get_observation = system.get_observation
-        self.dim_observation = dim_observation
-        self.prediction_horizon = prediction_horizon
-
     def predict(self, current_state, action):
-        next_state = current_state + self.pred_step_size * self.compute_state_dynamics(
-            time=None, state=current_state, inputs=action
+        next_state = (
+            current_state
+            + self.pred_step_size
+            * self.system.compute_state_dynamics(
+                time=None, state=current_state, inputs=action
+            )
         )
         return next_state
 
     def predict_sequence(self, state, action_sequence):
-        observation_sequence = rc.zeros(
-            [self.dim_observation, self.prediction_horizon], prototype=action_sequence
+        state_sequence = rc.zeros(
+            [self.system.dim_state, self.prediction_horizon], prototype=action_sequence
         )
         current_state = state
 
         for k in range(self.prediction_horizon):
             current_action = action_sequence[:, k]
             next_state = self.predict(current_state, current_action)
-            observation_sequence[:, k] = rc.transpose(
-                self.get_observation(time=None, state=next_state, inputs=current_action)
+            state_sequence[:, k] = rc.transpose(
+                self.system.get_observation(
+                    time=None, state=next_state, inputs=current_action
+                )
             )
             current_state = next_state
-        return observation_sequence
+        return state_sequence
 
 
 class EulerPredictorMultistep(EulerPredictor):
@@ -85,45 +85,47 @@ class EulerPredictorMultistep(EulerPredictor):
         return next_state_or_observation
 
 
-class EulerPredictorPendulum(EulerPredictor):
-    def predict(self, current_state_or_observation, action):
-        rhs = self.compute_state_dynamics([], current_state_or_observation, action)
-        next_state_or_observation = (
-            current_state_or_observation
-            + self.pred_step_size * rc.array([rhs[0], 0, rhs[1]])
-        )
-        return next_state_or_observation
-
-    def predict_sequence(self, observation, action_sequence):
-        observation_sequence = rc.zeros(
-            [self.prediction_horizon, self.dim_output], prototype=action_sequence
-        )
-        current_observation = observation
-
-        for k in range(self.prediction_horizon):
-            current_action = action_sequence[k, :]
-            next_observation = self.predict(current_observation, current_action)
-            observation_sequence[k, :] = self.get_observation(
-                time=None, state=next_observation, inputs=None
-            )
-            current_observation = next_observation
-        return observation_sequence
-
-
 class RKPredictor(EulerPredictor):
     """
     Predictor that makes use o Runge-Kutta finite difference methods.
     """
 
-    def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
+    def __init__(
+        self,
+        state_or_observation_init,
+        action_init,
+        *args,
+        atol: float = 1e-5,
+        rtol: float = 1e-3,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
-
-        self.integrator = create_CasADi_integrator(
+        self.atol = atol
+        self.rtol = rtol
+        self.integrator = self.create_CasADi_integrator(
             self.system,
-            state_or_observation_init,
-            action_init,
             self.pred_step_size,
         )
+
+    def create_CasADi_integrator(self, system, max_step):
+        try:
+            import casadi
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError(
+                "Cannot use RKPredictor without casadi being installed"
+            )
+
+        state_symbolic = rc.array_symb(self.system.dim_state, literal="x")
+        action_symbolic = rc.array_symb(self.system.dim_inputs, literal="u")
+        time = rc.array_symb((1, 1), literal="t")
+
+        ODE = system.compute_state_dynamics(time, state_symbolic, action_symbolic)
+        DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
+        options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
+
+        integrator = casadi.integrator("intg", "rk", DAE, options)
+
+        return integrator
 
     def predict(self, current_state_or_observation, action):
         state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
@@ -142,10 +144,10 @@ class TrivialPredictor(Predictor):
     """
 
     def __init__(self, system):
-        self.compute_state_dynamics = system.compute_state_dynamics
+        self.system = system
 
-    def predict(self, current_state_or_observation, action):
-        return self.compute_state_dynamics(current_state_or_observation, action)
+    def predict(self, time, state, action):
+        return self.system.compute_state_dynamics(time, state, action)
 
-    def predict_sequence(self, current_state_or_observation, action):
-        return self.predict(current_state_or_observation, action)
+    def predict_sequence(self, time, state, action):
+        return self.predict(time, state, action)

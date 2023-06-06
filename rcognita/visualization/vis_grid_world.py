@@ -25,7 +25,7 @@ class AnimatorGridWorld(Animator):
             3: np.array([0, -0.01 * length]),
             4: np.array([0, 0]),
         }
-        self.actor = scenario.actor
+        self.policy = scenario.policy
         self.critic = scenario.critic
         self.starting_cell_xy = starting_cell_xy
         self.reward_cell_xy = reward_cell_xy
@@ -84,7 +84,7 @@ class AnimatorGridWorld(Animator):
         for i in range(lenght):
             for j in range(width):
                 val = table[i, j]
-                action = self.actor.model.weights[i, j]
+                action = self.policy.model.weights[i, j]
                 table_range = np.ptp(np.fmax(table, 70))
                 color = self.colormap((val - np.max([np.min(table), 70])) / table_range)
                 rectangle = self.rect_patch_pack[i * width + j]
@@ -184,7 +184,7 @@ class AnimatorGridWorld(Animator):
                 rect_patch_pack.append(rectangle)
                 text_pack.append(text)
                 ax.set(xticks=[], yticks=[])
-                action = self.actor.model.weights[i, j]
+                action = self.policy.model.weights[i, j]
                 arr_x, arr_y = self.map_action2arrow(action, rectangle)
 
                 pos_head = self.actions_map[action]

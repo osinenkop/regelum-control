@@ -100,20 +100,20 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
         if self.objectives_acc_stats is None:
             self.objectives_acc_stats = self.calculate_objective_acc_stats()
 
-        observation_for_actor, observation_for_critic = (
+        observation_for_policy, observation_for_critic = (
             torch.tensor(self.observations[idx]),
             torch.tensor(self.observations[idx]),
         )
         action = torch.tensor(self.actions[idx])
 
         if self.is_use_derivative:
-            derivative = self.derivative([], observation_for_actor, action)
-            observation_for_actor = torch.cat([self.observations[idx], derivative])
+            derivative = self.derivative([], observation_for_policy, action)
+            observation_for_policy = torch.cat([self.observations[idx], derivative])
 
         if self.is_cat_action:
             return {
-                "observations_actions_for_actor": torch.cat(
-                    [observation_for_actor, action]
+                "observations_actions_for_policy": torch.cat(
+                    [observation_for_policy, action]
                 ),
                 "observations_actions_for_critic": torch.cat(
                     [observation_for_critic, action]
@@ -122,7 +122,7 @@ class ObservationActionObjectiveAccStatsDataset(Dataset, EpisodeBuffer):
             }
         else:
             return {
-                "observations_for_actor": observation_for_actor,
+                "observations_for_policy": observation_for_policy,
                 "observations_for_critic": observation_for_critic,
                 "objective_acc_stats": torch.tensor(self.objectives_acc_stats[idx]),
             }

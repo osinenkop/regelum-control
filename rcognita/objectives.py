@@ -1,6 +1,6 @@
 """
 Module that contains general objectives functions that can be used by various entities of the framework.
-For instance, a running objective can be used commonly by a generic optimal controller, an actor, a critic, a logger, an animator, a pipeline etc.
+For instance, a running objective can be used commonly by a generic optimal controller, an policy, a critic, a logger, an animator, a pipeline etc.
 
 """
 
@@ -26,15 +26,13 @@ class RunningObjective(Objective):
     In minimzations problems, it is called cost or loss, say.
     """
 
-    # TODO: vypilit observation target
-    def __init__(self, model: Optional[Model] = None, observation_target=None):
+    def __init__(self, model: Optional[Model] = None):
         """
         Initialize a RunningObjective instance.
 
         :param model: function that calculates the running objective for a given observation and action.
         :type model: function
         """
-        self.observation_target = observation_target
         self.model = (lambda observation, action: 0) if model is None else model
 
     def __call__(self, observation, action):
@@ -49,8 +47,6 @@ class RunningObjective(Objective):
         :rtype: float
         """
 
-        if self.observation_target is not None:
-            observation = observation - self.observation_target
         running_objective = self.model(observation, action)
 
         return running_objective

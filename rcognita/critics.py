@@ -60,7 +60,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         model: Optional[Model] = None,
         running_objective: Optional[Objective] = None,
         discount_factor: float = 1.0,
-        observation_target: Optional[np.ndarray] = None,
         sampling_time: float = 0.01,
         critic_regularization_param: float = 0.0,
     ):
@@ -81,8 +80,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         :type running_objective: Optional[Objective]
         :param discount_factor: Discount factor to use in the value calculation
         :type discount_factor: float
-        :param observation_target: Target observation for the critic
-        :type observation_target: Optional[np.ndarray]
         :param sampling_time: Sampling time for the critic
         :type sampling_time: float
         :param critic_regularization_param: Regularization parameter for the critic
@@ -104,11 +101,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         self.initialize_buffers()
 
-        if observation_target is None or observation_target == []:
-            observation_target = np.zeros(system_dim_output)
-        elif isinstance(observation_target, list):
-            self.observation_target = rc.array(observation_target)
-
         self.discount_factor = discount_factor
         self.running_objective = running_objective
 
@@ -120,9 +112,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.penalty_param = 0
         self.critic_regularization_param = critic_regularization_param
         self.state_init = state_init
-
-    def update_target(self, observation_target):
-        self.observation_target = observation_target
 
     def receive_state(self, state):
         self.state = state
@@ -287,7 +276,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         :param observation: the current observation of the system.
         :type observation: np.ndarray
-        :param action: the current action taken by the actor.
+        :param action: the current action taken by thepolicy.
         :type action: np.ndarray
         """
 
@@ -416,9 +405,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         self.current_critic_loss = self.objective(data_buffer).detach().numpy()
 
-    def update_target(self, new_target):
-        self.observation_target = new_target
-
     @abstractmethod
     def objective(self):
         pass
@@ -450,12 +436,8 @@ class CriticOfObservation(Critic):
 
             # Temporal difference
 
-            critic_old = self.model(
-                observation_old - self.observation_target, weights=weights
-            )
-            critic_next = self.model(
-                observation_next - self.observation_target, use_stored_weights=True
-            )
+            critic_old = self.model(observation_old, weights=weights)
+            critic_next = self.model(observation_next, use_stored_weights=True)
 
             weights_current = weights
             weights_last_good = self.model.cache.weights
@@ -512,11 +494,9 @@ class CriticOfActionObservationOnPolicy(Critic):
 
             # Temporal difference
 
-            critic_old = self.model(
-                observation_old - self.observation_target, action_next, weights=weights
-            )
+            critic_old = self.model(observation_old, action_next, weights=weights)
             critic_next = self.model(
-                observation_next - self.observation_target,
+                observation_next,
                 action_next_next,
                 use_stored_weights=True,
             )
@@ -898,11 +878,9 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
 
-        critic_curr = self.model(
-            self.current_observation - self.observation_target, weights=weights
-        )
+        critic_curr = self.model(self.current_observation, weights=weights)
         critic_prev = self.model(
-            self.observation_last_good - self.observation_target,
+            self.observation_last_good,
             use_stored_weights=True,
         )
 
@@ -924,10 +902,8 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
-            self.current_observation - self.observation_target
-        ) - self.model(
-            self.current_observation - self.observation_target, weights=weights
-        )
+            self.current_observation
+        ) - self.model(self.current_observation, weights=weights)
         return self.lb_constraint_violation
 
     def CALF_critic_lower_bound_constraint_predictive(self, weights=None):
@@ -945,8 +921,8 @@ class CriticCALF(CriticOfObservation):
             time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
         self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
-            predicted_observation - self.observation_target
-        ) - self.model(predicted_observation - self.observation_target, weights=weights)
+            predicted_observation
+        ) - self.model(predicted_observation, weights=weights)
         return self.lb_constraint_violation
 
     def CALF_critic_upper_bound_constraint(self, weights=None):
@@ -959,10 +935,8 @@ class CriticCALF(CriticOfObservation):
         :rtype: float
         """
         self.ub_constraint_violation = self.model(
-            self.current_observation - self.observation_target, weights=weights
-        ) - self.ub_parameter * rc.norm_2(
-            self.current_observation - self.observation_target
-        )
+            self.current_observation, weights=weights
+        ) - self.ub_parameter * rc.norm_2(self.current_observation)
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
@@ -985,12 +959,8 @@ class CriticCALF(CriticOfObservation):
             time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
 
-        self.critic_next = self.model(
-            predicted_observation - self.observation_target, weights=weights
-        )
-        self.critic_current = self.model(
-            observation_last_good - self.observation_target, use_stored_weights=True
-        )
+        self.critic_next = self.model(predicted_observation, weights=weights)
+        self.critic_current = self.model(observation_last_good, use_stored_weights=True)
 
         self.stabilizing_constraint_violation = (
             self.critic_next
@@ -1014,9 +984,9 @@ class CriticCALF(CriticOfObservation):
             time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
         self.stabilizing_constraint_violation = (
-            self.model(predicted_observation - self.observation_target, weights=weights)
+            self.model(predicted_observation, weights=weights)
             - self.model(
-                self.observation_last_good - self.observation_target,
+                self.observation_last_good,
                 use_stored_weights=True,
             )
             + self.predictor.pred_step_size * self.safe_decay_param
@@ -1044,12 +1014,8 @@ class CriticCALF(CriticOfObservation):
 
             # Temporal difference
 
-            critic_old = self.model(
-                observation_old - self.observation_target, weights=weights
-            )
-            critic_next = self.model(
-                observation_next - self.observation_target, use_stored_weights=True
-            )
+            critic_old = self.model(observation_old, weights=weights)
+            critic_next = self.model(observation_next, use_stored_weights=True)
 
             if self.critic_regularization_param > 1e-9:
                 weights_current = weights
@@ -1199,7 +1165,7 @@ class CriticTabularVI(Critic):
         running_objective,
         predictor,
         model,
-        actor_model,
+        policy_model,
         discount_factor=1,
         N_parallel_processes=5,
         terminal_state=None,
@@ -1215,8 +1181,8 @@ class CriticTabularVI(Critic):
         :type predictor: any
         :param model: The model object.
         :type model: Model
-        :param actor_model: The actor model object.
-        :type actor_model: any
+        :param policy_model: The policy model object.
+        :type policy_model: any
         :param discount_factor: The discount factor for the temporal difference.
         :type discount_factor: float, optional
         :param N_parallel_processes: The number of parallel processes to use.
@@ -1231,7 +1197,7 @@ class CriticTabularVI(Critic):
         self.running_objective = running_objective
         self.predictor = predictor
         self.model = model
-        self.actor_model = actor_model
+        self.policy_model = policy_model
         self.discount_factor = discount_factor
         self.N_parallel_processes = N_parallel_processes
         self.terminal_state = terminal_state
@@ -1245,7 +1211,7 @@ class CriticTabularVI(Critic):
         :return: value of the state
         :rtype: float
         """
-        action = self.actor_model.weights[observation]
+        action = self.policy_model.weights[observation]
         if tuple(self.terminal_state) == observation:
             return self.running_objective(observation, action)
 

@@ -348,7 +348,7 @@ class ModelQuadNoMix2D(Model):
 
 class ModelWeightContainer(Model):
     """
-    Trivial model, which is typically used in actor in which actions are being optimized directly.
+    Trivial model, which is typically used in policy in which actions are being optimized directly.
 
     """
 
@@ -974,7 +974,7 @@ class ModelDQN(ModelNN):
 
 class ModelWeightContainerTorch(ModelNN):
     """
-    Pytorch weight container for actor
+    Pytorch weight container for policy
 
     """
 

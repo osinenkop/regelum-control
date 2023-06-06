@@ -21,7 +21,7 @@ from .optimizers import CasADiOptimizer, SciPyOptimizer
 from .__w_plotting import plot_optimization_results
 from .callbacks import apply_callbacks, Callback
 from .base import RcognitaBase
-from .actors import Actor
+from .policies import Policy
 from .critics import Critic
 
 
@@ -55,12 +55,13 @@ class Controller(RcognitaBase, ABC):
         self.action_old = None
 
     @apply_action_bounds
-    def compute_action_sampled(self, time, observation):
+    def compute_action_sampled(self, time, state, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
         if self.is_time_for_new_sample:
             action = self.compute_action(
-                observation,
                 time=time,
+                state=state,
+                observation=observation,
             )
             self.action_old = action
         else:
@@ -70,14 +71,14 @@ class Controller(RcognitaBase, ABC):
 
     @abstractmethod
     @apply_callbacks()
-    def compute_action(self, observation, time=0):
+    def compute_action(self, time, state, observation):
         pass
 
 
 class RLController(Controller):
     """
     Reinforcement learning controller class.
-    Takes instances of `actor` and `critic` to operate.
+    Takes instances of `policy` and `critic` to operate.
     Action computation is sampled, i.e., actions are computed at discrete, equi-distant moments in time.
     `critic` in turn is updated every `critic_period` units of time.
     """
@@ -85,14 +86,14 @@ class RLController(Controller):
     def __init__(
         self,
         *args,
-        actor: Actor,
+        policy: Policy,
         critic: Critic,
         time_start=0,
         action_bounds=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.actor = actor
+        self.policy = policy
         self.critic = critic
         self.action_bounds = action_bounds
         self.critic_clock = time_start
@@ -106,59 +107,51 @@ class RLController(Controller):
         """
         self.clock.reset()
         self.critic.clock.reset()
-        self.actor.action_old = self.actor.action_init
+        self.policy.action_old = self.policy.action_init
 
     @apply_callbacks()
     def pre_compute_action(self):
         return None
 
     @apply_action_bounds
-    def compute_action(self, observation, time=0):
+    def compute_action(self, time, state, observation):
         ### This method is called to generate an event in order for callbacks to fire.
         ### Namely, we want to save the critic weights, for instance, and other stuff.
         self.pre_compute_action()
 
         ### Store current action and observation in critic's data buffer
 
-        self.critic.update_buffers(observation, self.actor.action)
+        self.critic.update_buffers(observation, self.policy.action)
         self.critic.receive_state(state)
 
-        ### Store current observation in actor
-        self.actor.receive_observation(observation)
-        self.actor.receive_state(state)
+        ### Store current observation in policy
+        self.policy.receive_observation(observation)
+        self.policy.receive_state(state)
 
-        self.actor.update_target(observation_target)
-        self.critic.update_target(observation_target)
+        ### Optimize critic's model weights
+        self.critic.optimize_weights(time=time)
+        ### Substitute and cache critic's model optimized weights
+        self.critic.update_and_cache_weights()
 
-        if (
-            is_critic_update
-            and rc.norm_2(observation - observation_target)
-            > self.critic_update_threshold
-        ):
-            ### Optimize critic's model weights
-            self.critic.optimize_weights(time=time)
-            ### Substitute and cache critic's model optimized weights
-            self.critic.update_and_cache_weights()
+        ### Optimize policy's model weights based on current observation
+        self.policy.optimize_weights()
 
-        ### Optimize actor's model weights based on current observation
-        self.actor.optimize_weights()
+        ### Substitute and cache weights in the policy's model
+        self.policy.update_and_cache_weights()
+        self.policy.update_action(observation)
 
-        ### Substitute and cache weights in the actor's model
-        self.actor.update_and_cache_weights()
-        self.actor.update_action(observation)
-
-        return self.actor.action
+        return self.policy.action
 
 
 class CALFControllerExPost(RLController):
     def __init__(self, *args, safe_only=False, **kwargs):
         super().__init__(*args, **kwargs)
         if safe_only:
-            self.compute_action = self.actor.safe_controller.compute_action
+            self.compute_action = self.policy.safe_controller.compute_action
             self.compute_action_sampled = (
-                self.actor.safe_controller.compute_action_sampled
+                self.policy.safe_controller.compute_action_sampled
             )
-            self.reset = self.actor.safe_controller.reset
+            self.reset = self.policy.safe_controller.reset
         self.safe_only = safe_only
 
     def compute_weights_disetpointlacement(self, agent):
@@ -168,32 +161,26 @@ class CALFControllerExPost(RLController):
         self.weights_difference_norms.append(self.weights_difference_norm)
 
     def invoke_safe_action(self, observation):
-        # self.actor.restore_weights()
+        # self.policy.restore_weights()
         self.critic.restore_weights()
-        action = self.actor.safe_controller.compute_action(
-            None, observation - self.observation_target
-        )
+        action = self.policy.safe_controller.compute_action(None, observation)
 
-        self.actor.set_action(action)
-        self.actor.model.update_and_cache_weights(action)
-        self.critic.r_prev += self.actor.running_objective(observation, action)
+        self.policy.set_action(action)
+        self.policy.model.update_and_cache_weights(action)
+        self.critic.r_prev += self.policy.running_objective(observation, action)
 
     @apply_callbacks()
-    def compute_action(
-        self, state, observation, is_critic_update=False, time=0, observation_target=[]
-    ):
+    def compute_action(self, state, observation, is_critic_update=False, time=0):
         # Update data buffers
         self.critic.update_buffers(
-            observation, self.actor.action
+            observation, self.policy.action
         )  ### store current action and observation in critic's data buffer
         self.critic.receive_state(state)
         # self.critic.safe_decay_param = 1e-1 * rc.norm_2(observation)
-        self.actor.receive_observation(
+        self.policy.receive_observation(
             observation
-        )  ### store current observation in actor
-        self.actor.receive_state(state)
-        self.actor.update_target(observation_target)
-        self.critic.update_target(observation_target)
+        )  ### store current observation in policy
+        self.policy.receive_state(state)
         self.critic.optimize_weights(time=time)
         critic_weights_accepted = self.critic.weights_acceptance_status == "accepted"
 
@@ -202,17 +189,19 @@ class CALFControllerExPost(RLController):
 
             # self.invoke_safe_action(observation)
 
-            self.actor.optimize_weights(time=time)
-            actor_weights_accepted = self.actor.weights_acceptance_status == "accepted"
+            self.policy.optimize_weights(time=time)
+            policy_weights_accepted = (
+                self.policy.weights_acceptance_status == "accepted"
+            )
 
-            if actor_weights_accepted:
-                self.actor.update_and_cache_weights()
-                self.actor.update_action()
+            if policy_weights_accepted:
+                self.policy.update_and_cache_weights()
+                self.policy.update_action()
 
                 self.critic.observation_last_good = observation
                 self.critic.cache_weights()
-                self.critic.r_prev = self.actor.running_objective(
-                    observation, self.actor.action
+                self.critic.r_prev = self.policy.running_objective(
+                    observation, self.policy.action
                 )
             else:
                 self.invoke_safe_action(observation)
@@ -220,7 +209,7 @@ class CALFControllerExPost(RLController):
             self.invoke_safe_action(observation)
 
         # self.collect_critic_stats(time)
-        return self.actor.action
+        return self.policy.action
 
     def collect_critic_stats(self, time):
         self.critic.stabilizing_constraint_violations.append(
@@ -249,29 +238,30 @@ class CALFControllerExPost(RLController):
 class CALFControllerPredictive(CALFControllerExPost):
     @apply_callbacks()
     def compute_action(
-        self, state, observation, is_critic_update=False, time=0, observation_target=[]
+        self,
+        state,
+        observation,
+        is_critic_update=False,
+        time=0,
     ):
         # Update data buffers
         self.critic.update_buffers(
-            observation, self.actor.action
+            observation, self.policy.action
         )  ### store current action and observation in critic's data buffer
 
-        self.actor.update_target(observation_target)
-        self.critic.update_target(observation_target)
-
         # if on prev step weifhtts were acccepted, then upd last good
-        if self.actor.weights_acceptance_status == "accepted":
+        if self.policy.weights_acceptance_status == "accepted":
             self.critic.observation_last_good = observation
             self.critic.weights_acceptance_status = "rejected"
-            self.actor.weights_acceptance_status = "rejected"
+            self.policy.weights_acceptance_status = "rejected"
             if self.critic.CALFs != []:
                 self.critic.CALFs[-1] = self.critic(
-                    self.critic.observation_last_good - observation_target,
+                    self.critic.observation_last_good,
                     use_stored_weights=True,
                 )
 
-        # Store current observation in actor
-        self.actor.receive_observation(observation)
+        # Store current observation in policy
+        self.policy.receive_observation(observation)
 
         self.critic.optimize_weights(time=time)
 
@@ -280,11 +270,11 @@ class CALFControllerPredictive(CALFControllerExPost):
 
             self.invoke_safe_action(observation)
 
-            self.actor.optimize_weights(time=time)
+            self.policy.optimize_weights(time=time)
 
-            if self.actor.weights_acceptance_status == "accepted":
-                self.actor.update_and_cache_weights()
-                self.actor.update_action()
+            if self.policy.weights_acceptance_status == "accepted":
+                self.policy.update_and_cache_weights()
+                self.policy.update_action()
 
                 self.critic.cache_weights()
             else:
@@ -292,7 +282,7 @@ class CALFControllerPredictive(CALFControllerExPost):
         else:
             self.invoke_safe_action(observation)
 
-        return self.actor.action
+        return self.policy.action
 
 
 class Controller3WRobotDisassembledCLF:
@@ -468,6 +458,11 @@ class Controller3WRobotDisassembledCLF:
                 decision_variable_symbolic=symbolic_var,
             )
 
+        else:
+            raise NotImplementedError(
+                f"Optimizer engine {self.optimizer_engine} not implemented."
+            )
+
         return theta_val
 
     def _Cart2NH(self, coords_Cart):
@@ -530,7 +525,7 @@ class Controller3WRobotDisassembledCLF:
 
         return uCart
 
-    def compute_action_sampled(self, state, time, observation, observation_target=[]):
+    def compute_action_sampled(self, state, time, observation):
         """
         See algorithm description in [[1]_], [[2]_].
 
@@ -574,7 +569,7 @@ class Controller3WRobotDisassembledCLF:
             return self.action_old
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         """
         Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
 
@@ -652,7 +647,6 @@ class ControllerMemoryPID:
         process_variable,
         error_derivative=None,
         time=0,
-        observation_target=[],
     ):
         error = self.compute_error(process_variable)
         integral = self.compute_integral(error)
@@ -750,7 +744,7 @@ class Controller3WRobotMemoryPID:
         return rc.sqrt(rc.norm_2(rc.array([x, y])))
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         x = observation[0]
         y = observation[1]
         angle = rc.array([observation[2]])
@@ -848,7 +842,7 @@ class Controller3WRobotMemoryPID:
 
         return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)])
 
-    def compute_action_sampled(self, state, time, observation, observation_target=[]):
+    def compute_action_sampled(self, state, time, observation):
         """
         Compute sampled action.
 
@@ -963,7 +957,7 @@ class Controller3WRobotPID:
         return rc.array([F_error_derivative])
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         x = observation[0]
         y = observation[1]
         angle = rc.array([observation[2]])
@@ -1025,7 +1019,7 @@ class Controller3WRobotPID:
 
         return action
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1090,7 +1084,7 @@ class ControllerCartPolePID:
     def reset(self):
         pass
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1117,7 +1111,7 @@ class ControllerCartPolePID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         theta_observed, x, theta_dot, x_dot = observation
 
         E_total = (
@@ -1164,7 +1158,7 @@ class ControllerCartPoleEnergyBased:
         )
         self.system = system
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1191,7 +1185,7 @@ class ControllerCartPoleEnergyBased:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         theta, x, theta_dot, x_dot = (
             observation[0],
             observation[1],
@@ -1270,7 +1264,7 @@ class ControllerLunarLanderPID:
     def reset(self):
         pass
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1297,7 +1291,7 @@ class ControllerLunarLanderPID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         self.action = [0, 0]
 
         if abs(observation[2]) > self.threshold:
@@ -1330,7 +1324,6 @@ class Controller2TankPID:
         PID_2tank_parameters_x1=[1, 0, 0],
         PID_2tank_parameters_x2=[1, 0, 0],
         swing_up_tol=0.1,
-        observation_target=[0.4, 0.4],
     ):
         self.tau1 = 18.4
         self.tau2 = 24.4
@@ -1351,19 +1344,16 @@ class Controller2TankPID:
         self.PID_2tank_x1 = ControllerMemoryPID(
             *PID_2tank_parameters_x1,
             initial_point=rc.array([state_init[0]]),
-            setpoint=rc.array([observation_target[0]]),
         )
         self.PID_2tank_x2 = ControllerMemoryPID(
             *PID_2tank_parameters_x2,
             initial_point=rc.array([state_init[1]]),
-            setpoint=rc.array([observation_target[1]]),
         )
-        self.observation_target = observation_target
 
     def reset(self):
         pass
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1375,9 +1365,7 @@ class Controller2TankPID:
             # Update internal clock
             self.controller_clock = time
 
-            action = self.compute_action(
-                state, observation, observation_target=observation_target
-            )
+            action = self.compute_action(state, observation)
 
             self.action_old = action
             return action
@@ -1386,7 +1374,7 @@ class Controller2TankPID:
             return self.action
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         # if rc.abs(observation[0]) > np.pi / 2:
         #     action = self.PID_swingup.compute_action(rc.array(observation[0]))
         # else:
@@ -1572,7 +1560,7 @@ class Controller3WRobotNIDisassembledCLF:
 
         return uCart
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1602,7 +1590,7 @@ class Controller3WRobotNIDisassembledCLF:
             return self.action_old
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         """
         Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
 
@@ -1644,9 +1632,7 @@ class NominalControllerInvertedPendulum:
         self.sampling_time = sampling_time
         self.action = np.array([np.mean(action_bounds)])
 
-    def compute_action_sampled(
-        self, time, state, observation, constraints=(), observation_target=[]
-    ):
+    def compute_action_sampled(self, time, state, observation, constraints=()):
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:
@@ -1658,7 +1644,7 @@ class NominalControllerInvertedPendulum:
         return self.compute_action(observation)
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         self.observation = observation
         return np.array(
             [-((observation[0]) + 0.1 * (observation[1])) * self.controller_gain]
@@ -1684,7 +1670,7 @@ class Controller3WRobotNIMotionPrimitive:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         x = observation[0]
         y = observation[1]
         angle = observation[2]
@@ -1716,7 +1702,7 @@ class Controller3WRobotNIMotionPrimitive:
 
         return rc.array([v, omega])
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 
@@ -1761,10 +1747,10 @@ class ControllerKinPoint:
         self.time_start = time_start
 
     @apply_action_bounds
-    def compute_action(self, state, observation, time=0, observation_target=[]):
+    def compute_action(self, state, observation, time=0):
         return -self.gain * observation
 
-    def compute_action_sampled(self, time, state, observation, observation_target=[]):
+    def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
 

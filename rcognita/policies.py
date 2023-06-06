@@ -1,6 +1,6 @@
 """
-This module contains actors, i.e., entities that directly calculate actions.
-Actors are inegrated into controllers (agents).
+This module contains policies, i.e., entities that directly calculate actions.
+Policys are inegrated into controllers (agents).
 
 Remarks: 
 
@@ -15,16 +15,16 @@ import numpy as np
 import scipy as sp
 from functools import partial
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Union, Optional
 
 from .__utilities import rc
 
-from rcognita.callbacks import apply_callbacks
 from .predictors import Predictor
 from .optimizers import Optimizer
 from .critics import Critic
-from .models import Model
-from .systems import System
+from .models import Model, ModelNN
+from .systems import System, ComposedSystem
+from .objectives import RunningObjective
 
 try:
     import torch
@@ -46,52 +46,28 @@ def force_type_safety(method):
     return wrapper
 
 
-class Actor:
+class Policy:
     """
-    Class of actors.
+    Class of policies.
     These are to be passed to a `controller`.
-    An `objective` (a loss) as well as an `optimizer` are passed to an `actor` externally.
+    An `objective` (a loss) as well as an `optimizer` are passed to an `policy` externally.
     """
-
-    def __call__(self, observation):
-        """
-        Return the most recent action taken by the actor.
-
-        :param observation: Current observation of the system.
-        :type observation: ndarray
-        :returns: Most recent action taken by the actor.
-        :rtype: ndarray
-        """
-        return self.action
-
-    def reset(self):
-        """
-        Reset the actor to its initial state.
-        """
-        self.action_old = self.action_init
-        self.action = self.action_init
 
     def __init__(
         self,
-        dim_action: int = 2,
-        dim_observation: int = 5,
-        prediction_horizon: int = 1,
-        action_bounds: Union[list, np.ndarray] = None,
-        action_init: list = None,
-        state_init: list = None,
-        system: System = None,
-        predictor: Predictor = None,
-        optimizer: Optimizer = None,
-        critic: Critic = None,
-        running_objective=None,
-        model: Model = None,
-        discount_factor=1,
-        epsilon_greedy=False,
-        epsilon_greedy_parameter=0.0,
-        observation_target=None,
+        system: Union[System, ComposedSystem],
+        model: Union[Model, ModelNN],
+        predictor: Optional[Predictor] = None,
+        action_bounds: Union[list, np.ndarray, None] = None,
+        optimizer: Optional[Optimizer] = None,
+        critic: Optional[Critic] = None,
+        running_objective: Optional[RunningObjective] = None,
+        discount_factor: Optional[float] = 1.0,
+        epsilon_greedy: bool = False,
+        epsilon_greedy_parameter: float = 0.0,
     ):
         """
-        Initialize an actor.
+        Initialize an policy.
 
         :param prediction_horizon: Number of time steps to look into the future.
         :type prediction_horizon: int
@@ -116,144 +92,91 @@ class Actor:
         :param discount_factor: discount factor to be used in conjunction with the critic.
         :type discount_factor: float, optional
         """
-        self.prediction_horizon = prediction_horizon
-        self.dim_action = dim_action
-        self.dim_observation = dim_observation
-        self.action_bounds = action_bounds
-        self.optimizer = optimizer
-        self.critic = critic
-        self.running_objective = running_objective
+        self.system = system
+        assert isinstance(model, Model), "Policy requires a model of type Model"
         self.model = model
-
-        if self.optimizer.engine == "torch":
-            import torch
-
         self.predictor = predictor
-        self.discount_factor = discount_factor
-        self.epsilon_greedy = epsilon_greedy
-        self.epsilon_greedy_parameter = epsilon_greedy_parameter
-
-        if isinstance(self.action_bounds, (list, np.ndarray)):
-            if len(self.action_bounds) > 0:
-                self.action_min = np.array(self.action_bounds)[:, 0]
-                self.action_max = np.array(self.action_bounds)[:, 1]
+        if self.predictor is not None:
+            self.prediction_horizon = self.predictor.prediction_horizon
         else:
-            self.action_min = np.array(self.action_bounds.lb[: self.dim_action])
-            self.action_max = np.array(self.action_bounds.ub[: self.dim_action])
+            self.prediction_horizon = 0
 
-        if len(action_init) == 0:
-            self.action_old = (self.action_min + self.action_max) / 2
-            self.action_sequence_init = rc.rep_mat(
-                self.action_old, 1, self.prediction_horizon + 1
-            )
-            self.action_init = self.action_old
-        else:
-            self.action_init = action_init
-            self.action_old = action_init
-            self.action_sequence_init = rc.rep_mat(
-                action_init, 1, self.prediction_horizon + 1
-            )
+        self.dim_action = self.system.dim_inputs
+        self.dim_observation = self.system.dim_observation
 
+        self._action_bounds = self.__handle_bounds(action_bounds)
+        self.action_min = self._action_bounds[:, 0]
+        self.action_max = self._action_bounds[:, 1]
+        self.action_old = (self.action_min + self.action_max) / 2
         self.action_sequence_min = rc.rep_mat(
-            self.action_min, 1, prediction_horizon + 1
+            self.action_min, 1, self.prediction_horizon + 1
         )
         self.action_sequence_max = rc.rep_mat(
-            self.action_max, 1, prediction_horizon + 1
+            self.action_max, 1, self.prediction_horizon + 1
         )
         self.action_bounds = np.array(
             [self.action_sequence_min, self.action_sequence_max]
         )
+
+        self.optimizer = optimizer
+        self.critic = critic
+        self.running_objective = running_objective
+        self.predictor = predictor
+        self.discount_factor = discount_factor if discount_factor is not None else 1.0
+        self.epsilon_greedy = epsilon_greedy
+        self.epsilon_greedy_parameter = epsilon_greedy_parameter
+        self.action_init = self.action_old
+        self.action_sequence_init = rc.rep_mat(
+            self.action_old, 1, self.prediction_horizon + 1
+        )
         self.action = self.action_old
         self.intrinsic_constraints = []
-        if observation_target is None or observation_target == []:
-            self.observation_target = rc.zeros(self.dim_observation)
-        elif isinstance(observation_target, list):
-            self.observation_target = rc.array(observation_target)
+        self.observation_init = None
 
-        self.state_init = state_init
-        self.system = system
-        self.observation_init = self.system.get_observation(
-            time=0, state=state_init, inputs=action_init
-        )
+    def __handle_bounds(
+        self, action_bounds: Union[list, np.ndarray, None]
+    ) -> np.ndarray:
+        if action_bounds is None:
+            assert (
+                self.system.dim_inputs is not None
+            ), "Dimension of the action must be specified"
+            action_bounds = np.array(
+                [[-np.inf, np.inf] for _ in range(self.system.dim_inputs)]
+            )
+        else:
+            assert isinstance(
+                action_bounds, (list, np.ndarray)
+            ), "action_bounds must be a list or ndarray"
+            if not isinstance(action_bounds, np.ndarray):
+                action_bounds = np.array(action_bounds)
+            assert len(action_bounds.shape) == 2, (
+                f"action_bounds must be of shape ({self.dim_action}, 2)."
+                + f" You have ({action_bounds.shape[0]}, {action_bounds.shape[1]}"
+            )
+            assert action_bounds.shape[0] == self.dim_action, (
+                f"Action bounds should be of size ({self.dim_action}, 2)."
+                + " You have ({action_bounds.shape[0]}, {action_bounds.shape[1]})."
+            )
+
+        for i, row in enumerate(action_bounds):
+            if row[0] > row[1]:
+                raise ValueError(
+                    "The lower bound of action is greater"
+                    + " than the upper bound of action "
+                    + f"at index {i} ({row[0] > row[1]})"
+                )
+        return action_bounds
 
     @property
     def weights(self):
         """
-        Get the weights of the actor model.
+        Get the weights of the policy model.
         """
         return self.model.weights
 
-    def update_target(self, observation_target):
-        self.observation_target = observation_target
-
-    def create_observation_constraints(
-        self, constraint_functions, action_sequence_reshaped, observation
-    ):
-        """
-        Method to create observation (or state) related constraints using a `predictor` over a `prediction_horizon`.
-        These constraints are related to observations, not actions, although they are ultimately imposed on the action
-        (or action sequence), which is the decision variable for the `optimizer` passed to the `actor`.
-        The `predictor` is used to generate a sequence of predicted observations over the `prediction_horizon`.
-        Constraint functions are then applied to each element of the predicted observation sequence.
-        The maximum constraint violation over the entire sequence is returned and passed to the `optimizer`.
-
-        :param constraint_functions: List of functions that take an observation as input and return a scalar constraint
-                                    violation.
-        :type constraint_functions: list[function]
-        :param action_sequence_reshaped: Flat action sequence array with shape (prediction_horizon * dim_input).
-        :type action_sequence_reshaped: numpy.ndarray
-        :param observation: Current observation of the system.
-        :type observation: numpy.ndarray
-        :return: Maximum constraint violation over the entire predicted observation sequence.
-        :rtype: float
-        """
-        current_observation = observation
-
-        resulting_constraints = [0 for _ in range(self.prediction_horizon - 1)]
-        constraint_violation_buffer = [0 for _ in constraint_functions]
-
-        for constraint_function in constraint_functions:
-            constraint_violation_buffer[0] = constraint_function(current_observation)
-
-        max_constraint_violation = rc.max(constraint_violation_buffer)
-
-        max_constraint_violation = -1
-        action_sequence = rc.reshape(
-            action_sequence_reshaped, [self.prediction_horizon, self.dim_input]
-        ).T
-
-        # Initialize for caclulation of the predicted observation sequence
-        predicted_observation = current_observation
-
-        for i in range(1, self.prediction_horizon):
-            current_action = action_sequence[i - 1, :]
-            current_state = predicted_observation
-
-            predicted_state = self.predictor.predict_state(
-                current_state, current_action
-            )
-            predicted_observation = self.predictor.system.get_observation(
-                time=0, state=predicted_state, inputs=current_action
-            )
-            constraint_violation_buffer = []
-            for constraint in constraint_functions:
-                constraint_violation_buffer.append(constraint(predicted_observation))
-
-            max_constraint_violation = rc.max(constraint_violation_buffer)
-            resulting_constraints[i - 1] = max_constraint_violation
-
-        for i in range(2, self.prediction_horizon - 1):
-            resulting_constraints[i] = rc.if_else(
-                resulting_constraints[i - 1] > 0,
-                resulting_constraints[i - 1],
-                resulting_constraints[i],
-            )
-
-        return resulting_constraints
-
     def receive_observation(self, observation):
         """
-        Update the current observation of the actor.
+        Update the current observation of thepolicy.
         :param observation: The current observation.
         :type observation: numpy array
         """
@@ -261,7 +184,7 @@ class Actor:
 
     def receive_state(self, state):
         """
-        Update the current observation of the actor.
+        Update the current observation of thepolicy.
         :param observation: The current observation.
         :type observation: numpy array
         """
@@ -269,7 +192,7 @@ class Actor:
 
     def set_action(self, action):
         """
-        Set the current action of the actor.
+        Set the current action of thepolicy.
         :param action: The current action.
         :type action: numpy array
         """
@@ -278,7 +201,7 @@ class Actor:
 
     def update_action(self, observation=None):
         """
-        Update the current action of the actor.
+        Update the current action of thepolicy.
         :param observation: The current observation. If not provided, the previously received observation will be used.
         :type observation: numpy array, optional
         """
@@ -300,13 +223,9 @@ class Actor:
             )
             if not is_exploration:
                 try:
-                    self.action = (
-                        self.model(observation - self.observation_target)
-                        .detach()
-                        .numpy()
-                    )
+                    self.action = self.model(observation).detach().numpy()
                 except AttributeError:
-                    self.action = self.model(observation - self.observation_target)
+                    self.action = self.model(observation)
             else:
                 self.action = np.array(
                     [
@@ -316,15 +235,13 @@ class Actor:
                 )
         else:
             try:
-                self.action = (
-                    self.model(observation - self.observation_target).detach().numpy()
-                )
+                self.action = self.model(observation).detach().numpy()
             except AttributeError:
-                self.action = self.model(observation - self.observation_target)
+                self.action = self.model(observation)
 
     def update_weights(self, weights=None):
         """
-        Update the weights of the model of the actor.
+        Update the weights of the model of thepolicy.
         :param weights: The weights to update the model with. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -335,7 +252,7 @@ class Actor:
 
     def cache_weights(self, weights=None):
         """
-        Cache the current weights of the model of the actor.
+        Cache the current weights of the model of thepolicy.
         :param weights: The weights to cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -346,7 +263,7 @@ class Actor:
 
     def update_and_cache_weights(self, weights=None):
         """
-        Update and cache the weights of the model of the actor.
+        Update and cache the weights of the model of thepolicy.
         :param weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -355,7 +272,7 @@ class Actor:
 
     def restore_weights(self):
         """
-        Restore the previously cached weights of the model of the actor.
+        Restore the previously cached weights of the model of thepolicy.
         """
         self.model.restore_weights()
         self.set_action(self.action_old)
@@ -390,9 +307,9 @@ class Actor:
         else:
             return "rejected"
 
-    def optimize_weights(self, constraint_functions=None, time=None):
+    def optimize_weights(self):
         """
-        Method to optimize the current actor weights. The old (previous) weights are stored.
+        Method to optimize the currentpolicy weights. The old (previous) weights are stored.
         The `time` argument is used for debugging purposes.
         If weights satisfying constraints are found, the method returns the status `accepted`.
         Otherwise, it returns the status `rejected`.
@@ -404,6 +321,7 @@ class Actor:
         :returns: String indicating whether the optimization process was accepted or rejected.
         :rtype: str
         """
+        assert self.optimizer is not None, "Optimizer is not set."
 
         final_count_of_actions = self.prediction_horizon + 1
         action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
@@ -420,43 +338,32 @@ class Actor:
 
             symbolic_dummy = rc.array_symb((1, 1))
 
-            symbolic_var = rc.array_symb(
+            symbolic_action = rc.array_symb(
                 tup=rc.shape(action_sequence_init_reshaped), prototype=symbolic_dummy
             )
 
-            actor_objective = lambda action_sequence: self.objective(
-                action_sequence, self.observation
+            policy_objective = rc.lambda2symb(
+                partial(self.objective, observation=self.observation), symbolic_action
             )
-
-            actor_objective = rc.lambda2symb(actor_objective, symbolic_var)
-            constraint_functions = []
-            if constraint_functions:
-                constraints = self.create_constraints(
-                    constraint_functions, symbolic_var, self.observation
-                )
 
             if self.intrinsic_constraints:
                 intrisic_constraints = [
-                    rc.lambda2symb(constraint, symbolic_var)
+                    rc.lambda2symb(constraint, symbolic_action)
                     for constraint in self.intrinsic_constraints
                 ]
             else:
                 intrisic_constraints = []
 
             self.optimized_weights = self.optimizer.optimize(
-                actor_objective,
+                policy_objective,
                 action_sequence_init_reshaped,
                 self.action_bounds,
                 constraints=intrisic_constraints + constraint_functions,
-                decision_variable_symbolic=symbolic_var,
+                decision_variable_symbolic=symbolic_action,
             )
-            # self.cost_function = actor_objective
-            # self.constraint = intrisic_constraints[0]
-            # self.weights_init = action_sequence_init_reshaped
-            # self.symbolic_var = symbolic_var
 
         elif self.optimizer.engine == "SciPy":
-            actor_objective = rc.function_to_lambda_with_params(
+            policy_objective = rc.function_to_lambda_with_params(
                 self.objective,
                 self.observation,
             )
@@ -484,7 +391,7 @@ class Actor:
                 intrinsic_constraints = []
 
             self.optimized_weights = self.optimizer.optimize(
-                actor_objective,
+                policy_objective,
                 action_sequence_init_reshaped,
                 self.action_bounds,
                 constraints=constraints + intrinsic_constraints,
@@ -518,8 +425,32 @@ class Actor:
     def iteration_update(self):
         pass
 
+    def __call__(self, observation):
+        """
+        Return the most recent action taken by thepolicy.
 
-class ActorPGBase(Actor, ABC):
+        :param observation: Current observation of the system.
+        :type observation: ndarray
+        :returns: Most recent action taken by the policy.
+        :rtype: ndarray
+        """
+        return self.action
+
+    def reset(self):
+        """
+        Reset the policy to its initial state.
+        """
+        self.action_old = self.action_init
+        self.action = self.action_init
+
+    def objective(self, action_sequence, observation):
+        """
+        Compute the objective of the policy.
+        """
+        raise NotImplementedError
+
+
+class PolicyPGBase(Policy, ABC):
     def __init__(
         self,
         is_use_derivative,
@@ -539,7 +470,7 @@ class ActorPGBase(Actor, ABC):
 
     def optimize_weights_after_iteration(self, dataset):
         # Send to device before optimization
-        if hasattr(self.critic.model, "to"):
+        if isinstance(self.critic.model, ModelNN):
             self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
         self.dataset_size = len(dataset)
@@ -550,13 +481,6 @@ class ActorPGBase(Actor, ABC):
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
-
-    def update_target(self, observation_target):
-        self.observation_target = (
-            rc.concatenate((observation_target, rc.zeros(len(observation_target))))
-            if self.is_use_derivative
-            else observation_target
-        )
 
     @abstractmethod
     def objective(self, batch):
@@ -594,7 +518,7 @@ class ActorPGBase(Actor, ABC):
         pass
 
 
-class ActorPG(ActorPGBase):
+class PolicyPG(PolicyPGBase):
     def update_action(self, observation=None):
         if self.is_use_derivative:
             derivative = self.derivative(None, observation, self.action)
@@ -606,33 +530,28 @@ class ActorPG(ActorPGBase):
             observation = self.observation
 
         self.action = (
-            self.model.sample(
-                torch.tensor(observation - self.observation_target).float()
-            )
-            .detach()
-            .cpu()
-            .numpy()
+            self.model.sample(torch.tensor(observation).float()).detach().cpu().numpy()
         )
 
     def objective(self, batch):
-        observations_actions_for_actor = batch["observations_actions_for_actor"].to(
+        observations_actions_for_policy = batch["observations_actions_for_policy"].to(
             self.device
         )
         objectives_acc_stats = batch["objective_acc_stats"].to(self.device)
         return (
             self.dataset_size
             * (
-                self.model(observations_actions_for_actor.float())
+                self.model(observations_actions_for_policy.float())
                 * objectives_acc_stats
                 / self.N_episodes
             ).mean()
         )
 
 
-class ActorSDPG(ActorPG):
+class PolicySDPG(PolicyPG):
     @force_type_safety
     def objective(self, batch):
-        observations_actions_for_actor = batch["observations_actions_for_actor"].to(
+        observations_actions_for_policy = batch["observations_actions_for_policy"].to(
             self.device
         )
         observations_actions_for_critic = batch["observations_actions_for_critic"].to(
@@ -642,21 +561,21 @@ class ActorSDPG(ActorPG):
         return (
             self.dataset_size
             * (
-                self.model(observations_actions_for_actor.float())
+                self.model(observations_actions_for_policy.float())
                 * critic_value
                 / self.N_episodes
             ).mean()
         )
 
 
-class ActorDDPG(ActorPGBase):
+class PolicyDDPG(PolicyPGBase):
     @force_type_safety
     def objective(self, batch):
-        observations_for_actor = batch["observations_for_actor"].to(self.device)
+        observations_for_policy = batch["observations_for_policy"].to(self.device)
         observations_for_critic = batch["observations_for_critic"].to(self.device)
         return self.critic(
             torch.cat(
-                [observations_for_critic, self.model(observations_for_actor)], dim=1
+                [observations_for_critic, self.model(observations_for_policy)], dim=1
             )
         ).sum()
 
@@ -669,29 +588,10 @@ class ActorDDPG(ActorPGBase):
         super().update_action(observation)
 
 
-class ActorPID(Actor):
-    def __init__(self, *args, gain=5.0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.gain = gain
-
-    def optimize_weights(self, *args, **kwargs):
-        pass
-
-    def objective(self, *args, **kwargs):
-        pass
-
-    def update_and_cache_weights(self, weights=None):
-        pass
-
-    def update_action(self, observation=None):
-        self.action = -self.gain * observation
-        return self.action
-
-
-class ActorMPC(Actor):
+class PolicyMPC(Policy):
     """
-    Model-predictive control (MPC) actor.
-    Optimizes the following actor objective:
+    Model-predictive control (MPC)policy.
+    Optimizes the followingpolicy objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
 
     Notation:
@@ -711,13 +611,13 @@ class ActorMPC(Actor):
         observation,
     ):
         """
-        Calculates the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
+        Calculates thepolicy objective for the given action sequence and observation using Model Predictive Control (MPC).
 
         :param action_sequence: sequence of actions to be evaluated in the objective function
         :type action_sequence: numpy.ndarray
         :param observation: current observation
         :type observation: numpy.ndarray
-        :return: the actor objective for the given action sequence
+        :return: thepolicy objective for the given action sequence
         :rtype: float
         """
         action_sequence_reshaped = rc.reshape(
@@ -733,18 +633,18 @@ class ActorMPC(Actor):
         observation_sequence = rc.column_stack(
             (observation, observation_sequence_predicted)
         )
-        actor_objective = 0
+        policy_objective = 0
         for k in range(self.prediction_horizon + 1):
-            actor_objective += self.discount_factor**k * self.running_objective(
+            policy_objective += self.discount_factor**k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
-        return actor_objective
+        return policy_objective
 
 
-class ActorMPCTerminal(Actor):
+class PolicyMPCTerminal(Policy):
     """
-    Model-predictive control (MPC) actor.
-    Optimizes the following actor objective:
+    Model-predictive control (MPC)policy.
+    Optimizes the followingpolicy objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
 
     Notation:
@@ -764,13 +664,13 @@ class ActorMPCTerminal(Actor):
         observation,
     ):
         """
-        Calculates the actor objective for the given action sequence and observation using Model Predictive Control (MPC).
+        Calculates thepolicy objective for the given action sequence and observation using Model Predictive Control (MPC).
 
         :param action_sequence: sequence of actions to be evaluated in the objective function
         :type action_sequence: numpy.ndarray
         :param observation: current observation
         :type observation: numpy.ndarray
-        :return: the actor objective for the given action sequence
+        :return: thepolicy objective for the given action sequence
         :rtype: float
         """
         action_sequence_reshaped = rc.reshape(
@@ -786,18 +686,18 @@ class ActorMPCTerminal(Actor):
         observation_sequence = rc.column_stack(
             (observation, observation_sequence_predicted)
         )
-        actor_objective = 0
+        policy_objective = 0
 
-        actor_objective += self.running_objective(
+        policy_objective += self.running_objective(
             observation_sequence[:, -1], action_sequence_reshaped[:, -1]
         )
-        return actor_objective
+        return policy_objective
 
 
-class ActorSQL(Actor):
+class PolicySQL(Policy):
     """
-    Staked Q-learning (SQL) actor.
-    Optimizes the following actor objective:
+    Staked Q-learning (SQL)policy.
+    Optimizes the followingpolicy objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`
 
     Notation:
@@ -818,13 +718,13 @@ class ActorSQL(Actor):
         observation,
     ):
         """
-        Calculates the actor objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
+        Calculates thepolicy objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
         :param observation: numpy array of shape (dim_output,) representing the current observation
         :type observation: numpy.ndarray
-        :return: actor objective for the given action sequence and observation
+        :return:policy objective for the given action sequence and observation
         :rtype: float
         """
 
@@ -845,23 +745,23 @@ class ActorSQL(Actor):
             )
         )
 
-        actor_objective = 0
+        policy_objective = 0
 
         for k in range(self.prediction_horizon + 1):
             action_objective = self.critic(
-                observation_sequence[:, k] - self.observation_target,
+                observation_sequence[:, k],
                 action_sequence_reshaped[:, k],
                 use_stored_weights=True,
             )
 
-            actor_objective += action_objective
-        return actor_objective
+            policy_objective += action_objective
+        return policy_objective
 
 
-class ActorRQL(Actor):
+class PolicyRQL(Policy):
     """
-    Rollout Q-learning (RQL) actor.
-    Optimizes the following actor objective:
+    Rollout Q-learning (RQL)policy.
+    Optimizes the followingpolicy objective:
 
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
 
@@ -883,13 +783,13 @@ class ActorRQL(Actor):
         observation,
     ):
         """
-        Calculates the actor objective for the given action sequence and observation using Rollout Q-learning (RQL).
+        Calculates thepolicy objective for the given action sequence and observation using Rollout Q-learning (RQL).
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
         :param observation: numpy array of shape (dim_output,) representing the current observation
         :type observation: numpy.ndarray
-        :return: actor objective for the given action sequence and observation
+        :return:policy objective for the given action sequence and observation
         :rtype: float
         """
         action_sequence_reshaped = rc.reshape(
@@ -909,28 +809,28 @@ class ActorRQL(Actor):
             )
         )
 
-        actor_objective = 0
+        policy_objective = 0
 
         for k in range(self.prediction_horizon):
-            actor_objective += self.discount_factor**k * self.running_objective(
+            policy_objective += self.discount_factor**k * self.running_objective(
                 observation_sequence[:, k], action_sequence_reshaped[:, k]
             )
 
-        actor_objective += self.critic(
-            observation_sequence[:, -1] - self.observation_target,
+        policy_objective += self.critic(
+            observation_sequence[:, -1],
             action_sequence_reshaped[:, -1],
             use_stored_weights=True,
         )
 
-        return actor_objective
+        return policy_objective
 
 
-class ActorRPO(Actor):
+class PolicyRPO(Policy):
     """
-    Running (objective) Plus Optimal (objective) actor.
-    Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+    Running (objective) Plus Optimal (objective)policy.
+    Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
-    Specifically, it optimizes the following actor objective:
+    Specifically, it optimizes the followingpolicy objective:
 
     :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
 
@@ -950,13 +850,13 @@ class ActorRPO(Actor):
         observation,
     ):
         """
-        Calculates the actor objective for the given action sequence and observation using Running Plus Optimal (RPO).
+        Calculates thepolicy objective for the given action sequence and observation using Running Plus Optimal (RPO).
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
         :param observation: numpy array of shape (dim_input,) representing the current observation
         :type observation: numpy.ndarray
-        :return: actor objective for the given action sequence and observation
+        :return:policy objective for the given action sequence and observation
         :rtype: float
         """
         current_action = action_sequence[: self.dim_action]
@@ -965,22 +865,20 @@ class ActorRPO(Actor):
 
         running_objective_value = self.running_objective(observation, current_action)
 
-        critic_of_observation = self.critic(
-            observation_predicted - self.observation_target
-        )
+        critic_of_observation = self.critic(observation_predicted)
 
-        actor_objective = running_objective_value + critic_of_observation
+        policy_objective = running_objective_value + critic_of_observation
 
         if self.intrinsic_constraints != [] and self.penalty_param > 0:
             for constraint in self.intrinsic_constraints:
-                actor_objective += self.penalty_param * rc.penalty_function(
+                policy_objective += self.penalty_param * rc.penalty_function(
                     constraint(), penalty_coeff=1.0e-1
                 )
 
-        return actor_objective
+        return policy_objective
 
 
-class ActorRPOWithRobustigyingTerm(ActorRPO):
+class PolicyRPOWithRobustigyingTerm(PolicyRPO):
     def __init__(self, *args, A=10, K=10, **kwargs):
         super().__init__(*args, **kwargs)
         self.A = A
@@ -995,41 +893,41 @@ class ActorRPOWithRobustigyingTerm(ActorRPO):
         )
 
 
-class ActorCALF(ActorRPO):
-    """Actor using Critic As a Lyapunov Function (CALF) to constrain the optimization."""
+class PolicyCALF(PolicyRPO):
+    """Policy using Critic As a Lyapunov Function (CALF) to constrain the optimization."""
 
     def __init__(
         self,
         safe_controller,
         *args,
-        actor_constraints_on=True,
+        policy_constraints_on=True,
         penalty_param=0,
-        actor_regularization_param=0,
+        policy_regularization_param=0,
         **kwargs,
     ):
         """
-        Initialize the actor with a safe controller, and optional arguments for constraint handling, penalty term, and actor regularization.
+        Initialize thepolicy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
 
         :param safe_controller: controller used to compute a safe action in case the optimization is rejected
         :type safe_controller: Controller
-        :param actor_constraints_on: whether to use the CALF constraints in the optimization
-        :type actor_constraints_on: bool
+        :param policy_constraints_on: whether to use the CALF constraints in the optimization
+        :type policy_constraints_on: bool
         :param penalty_param: penalty term for the optimization objective
         :type penalty_param: float
-        :param actor_regularization_param: regularization term for the actor weights
-        :type actor_regularization_param: float
+        :param policy_regularization_param: regularization term for thepolicy weights
+        :type policy_regularization_param: float
         """
         super().__init__(*args, **kwargs)
         self.safe_controller = safe_controller
         self.penalty_param = penalty_param
-        self.actor_regularization_param = actor_regularization_param
+        self.policy_regularization_param = policy_regularization_param
         self.predictive_constraint_violations = []
         self.intrinsic_constraints = (
             [
-                self.CALF_decay_constraint_for_actor,
-                # self.CALF_decay_constraint_for_actor_same_critic
+                self.CALF_decay_constraint_for_policy,
+                # self.CALF_decay_constraint_for_policy_same_critic
             ]
-            if actor_constraints_on
+            if policy_constraints_on
             else []
         )
         self.weights_acceptance_status = False
@@ -1040,25 +938,25 @@ class ActorCALF(ActorRPO):
         self.model.update_and_cache_weights(safe_action)
 
     @force_type_safety
-    def CALF_decay_constraint_for_actor(self, weights=None):
+    def CALF_decay_constraint_for_policy(self, weights=None):
         """
-        Constraint for the actor optimization, ensuring that the critic value will not decrease by less than the required decay rate.
+        Constraint for thepolicy optimization, ensuring that the critic value will not decrease by less than the required decay rate.
 
-        :param weights: actor weights to be evaluated
+        :param weights:policy weights to be evaluated
         :type weights: numpy.ndarray
         :return: difference between the predicted critic value and the current critic value, plus the sampling time times the required decay rate
         :rtype: float
         """
-        action = self.model(self.observation - self.observation_target, weights=weights)
+        action = self.model(self.observation, weights=weights)
 
         self.predicted_observation = predicted_observation = self.predictor.predict(
             self.observation, action
         )
         observation_last_good = self.critic.observation_last_good
 
-        self.critic_next = self.critic(predicted_observation - self.observation_target)
+        self.critic_next = self.critic(predicted_observation)
         self.critic_current = self.critic(
-            observation_last_good - self.observation_target, use_stored_weights=True
+            observation_last_good, use_stored_weights=True
         )
 
         self.predictive_constraint_violation = (
@@ -1070,35 +968,35 @@ class ActorCALF(ActorRPO):
         return self.predictive_constraint_violation
 
     @force_type_safety
-    def CALF_decay_constraint_for_actor_same_critic(self, weights=None):
+    def CALF_decay_constraint_for_policy_same_critic(self, weights=None):
         """
         Calculate the predictive constraint violation for the CALF.
 
         This function calculates the violation of the "CALF decay constraint" which is used to ensure that the critic's value function
         (as a Lyapunov function) decreases over time. This helps to guarantee that the system remains stable.
 
-        :param weights: (array) Weights for the actor model.
+        :param weights: (array) Weights for thepolicy model.
         :type weights: np.ndarray
         :return: (float) Predictive constraint violation.
         :rtype: float
         """
-        action = self.model(self.observation - self.observation_target, weights=weights)
+        action = self.model(self.observation, weights=weights)
 
         predicted_observation = self.predictor.predict(self.observation, action)
         observation_last_good = self.critic.observation_last_good
 
         self.predictive_constraint_violation = (
-            self.critic(predicted_observation - self.observation_target)
-            - self.critic(observation_last_good - self.observation_target)
+            self.critic(predicted_observation)
+            - self.critic(observation_last_good)
             + self.critic.sampling_time * self.critic.safe_decay_param
         )
 
         return self.predictive_constraint_violation
 
 
-class ActorCLF(ActorCALF):
+class PolicyCLF(PolicyCALF):
     """
-    ActorCLF is an actor class that aims to optimize the decay of a Control-Lyapunov function (CLF).
+    PolicyCLF is anpolicy class that aims to optimize the decay of a Control-Lyapunov function (CLF).
     """
 
     def __init__(self, *args, **kwargs):
@@ -1118,28 +1016,28 @@ class ActorCLF(ActorCALF):
         """
         Computes the anticipated decay of the CLF.
 
-        :param action: Action taken by the actor.
+        :param action: Action taken by thepolicy.
         :type action: ndarray
         :param observation: Observation of the system.
         :type observation: ndarray
-        :return: Actor objective
+        :return: Policy objective
         :rtype: float
         """
 
         observation_predicted = self.predictor.predict(observation, action)
 
-        actor_objective = 0
+        policy_objective = 0
 
-        actor_objective += self.safe_controller.compute_LF(observation_predicted)
+        policy_objective += self.safe_controller.compute_LF(observation_predicted)
 
-        return actor_objective
+        return policy_objective
 
 
-class ActorTabular(ActorRPO):
+class PolicyTabular(PolicyRPO):
     """
-    Actor minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+    Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
-    Specifically, it optimizes the following actor objective:
+    Specifically, it optimizes the followingpolicy objective:
 
     :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
 
@@ -1167,13 +1065,13 @@ class ActorTabular(ActorRPO):
         terminal_state=None,
     ):
         """
-        Initializes an actorTabular object.
+        Initializes anpolicyTabular object.
 
         :param dim_world: The dimensions of the world (i.e. the dimensions of the state space).
         :type dim_world: int
         :param predictor: An object that predicts the next state given an action and the current state.
         :type predictor: object
-        :param optimizer: An object that optimizes the actor's objective function.
+        :param optimizer: An object that optimizes thepolicy's objective function.
         :type optimizer: object
         :param running_objective: A function that returns a scalar representing the running objective for a given state and action.
         :type running_objective: function
@@ -1215,14 +1113,14 @@ class ActorTabular(ActorRPO):
         observation,
     ):
         """
-        Calculates the actor objective for a given action and observation.
-        The actor objective is defined as the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+        Calculates thepolicy objective for a given action and observation.
+        Thepolicy objective is defined as the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
 
-        :param action: The action for which the actor objective is to be calculated.
+        :param action: The action for which thepolicy objective is to be calculated.
         :type action: np.ndarray
-        :param observation: The observation for which the actor objective is to be calculated.
+        :param observation: The observation for which thepolicy objective is to be calculated.
         :type observation: np.ndarray
-        :return: The actor objective.
+        :return: Thepolicy objective.
         :rtype: float
         """
         if tuple(observation) == tuple(self.terminal_state):
@@ -1230,10 +1128,8 @@ class ActorTabular(ActorRPO):
 
         observation_predicted = self.predictor.predict_sequence(observation, action)
 
-        actor_objective = self.running_objective(
+        policy_objective = self.running_objective(
             observation, action
-        ) + self.discount_factor * self.critic(
-            observation_predicted - self.observation_target
-        )
+        ) + self.discount_factor * self.critic(observation_predicted)
 
-        return actor_objective
+        return policy_objective

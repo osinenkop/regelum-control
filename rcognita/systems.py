@@ -16,7 +16,13 @@ import rcognita.base
 from abc import ABC, abstractmethod
 from .__utilities import rc
 from typing import Optional
-import types
+from functools import reduce
+
+
+class SystemComposer:
+    @staticmethod
+    def compose(systems: list):
+        return reduce(lambda x, y: x @ y, systems)
 
 
 class ComposedSystem(rcognita.base.RcognitaBase):
@@ -35,6 +41,11 @@ class ComposedSystem(rcognita.base.RcognitaBase):
             "right",
             "both",
         ], "output_mode must be 'state', 'right' or 'both'"
+
+        if "diff_eqn" in [sys_left.system_type, sys_right.system_type]:
+            self.system_type = "diff_eqn"
+        else:
+            self.system_type = sys_right.system_type
 
         self.sys_left = sys_left
         self.sys_right = sys_right
@@ -127,6 +138,10 @@ class ComposedSystem(rcognita.base.RcognitaBase):
         )
         final_dstate_vector = rc.concatenate((dstate_of_left, dstate_of_right))
 
+        assert (
+            final_dstate_vector is not None
+        ), f"final dstate_vector of system {self.name} is None"
+
         return final_dstate_vector[self.inverse_permutation]
 
     def get_observation(self, time, state, inputs):
@@ -162,6 +177,8 @@ class ComposedSystem(rcognita.base.RcognitaBase):
             output = state
         elif self.output_mode == "both":
             output = rc.concatenate((state_for_left, state_for_right))
+        else:
+            raise NotImplementedError
 
         ## TODO: implement 'preserve' mode
 
@@ -186,7 +203,7 @@ class ComposedSystem(rcognita.base.RcognitaBase):
         self.state = state
 
     def reset(self):
-        self.update_system_parameters(self.system_parameters_init)
+        pass
 
     def permute_state(self, permutation):
         self.forward_permutation = permutation
@@ -199,6 +216,14 @@ class ComposedSystem(rcognita.base.RcognitaBase):
         inverse_permutation = np.empty_like(permutation)
         inverse_permutation[permutation] = np.arange(permutation.size)
         return inverse_permutation
+
+    def compose(self, sys_right, io_mapping=None, output_mode="state"):
+        return ComposedSystem(
+            self, sys_right, io_mapping=io_mapping, output_mode=output_mode
+        )
+
+    def __matmul__(self, sys_right):
+        return self.compose(sys_right)
 
 
 class System(rcognita.base.RcognitaBase, ABC):
@@ -252,20 +277,12 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     """
 
-    _name = None
-    _system_type = None
-    _dim_state = None
-    _dim_inputs = None
-    _dim_observation = None
+    _name: Optional[str] = None
+    _system_type: Optional[str] = None
+    _dim_state: Optional[int] = None
+    _dim_inputs: Optional[int] = None
+    _dim_observation: Optional[int] = None
     _parameters = {}
-
-    def compose(self, sys_right, io_mapping=None, output_mode="state"):
-        return ComposedSystem(
-            self, sys_right, io_mapping=io_mapping, output_mode=output_mode
-        )
-
-    def __matmul___(self, sys_right):
-        return self.compose(sys_right)
 
     def __init__(
         self,
@@ -309,12 +326,14 @@ class System(rcognita.base.RcognitaBase, ABC):
         pars_disturb : : list
             Parameters of the disturbance model
         """
-
-        assert self.system_type, "class.system_type should be set"
-        assert self.dim_state, "class.dim_state should be set"
-        assert self.dim_inputs, "class.dim_inputs should be set"
-        assert self.dim_observation, "class.dim_observation should be set"
-        assert isinstance(system_parameters_init, dict)
+        assert self.name is not None
+        assert self.system_type is not None
+        assert self.dim_state is not None
+        assert self.dim_inputs is not None
+        assert self.dim_observation is not None
+        assert isinstance(
+            system_parameters_init, dict
+        ), "system_parameters_init should be a dict"
 
         if system_parameters_init:
             self._parameters.update(system_parameters_init)
@@ -332,23 +351,33 @@ class System(rcognita.base.RcognitaBase, ABC):
             self.inputs = inputs_init
 
     @property
-    def name(self):
+    def name(self) -> str:
+        if self._name is None:
+            raise ValueError("system._name should be set")
         return self._name
 
     @property
-    def system_type(self):
+    def system_type(self) -> str:
+        if self._system_type is None:
+            raise ValueError("system._system_type should be set")
         return self._system_type
 
     @property
-    def dim_state(self):
+    def dim_state(self) -> int:
+        if self._dim_state is None:
+            raise ValueError("system._dim_state should be set")
         return self._dim_state
 
     @property
-    def dim_observation(self):
+    def dim_observation(self) -> int:
+        if self._dim_observation is None:
+            raise ValueError("system._dim_observation should be set")
         return self._dim_observation
 
     @property
     def dim_inputs(self):
+        if self._dim_inputs is None:
+            raise ValueError("system._dim_inputs should be set")
         return self._dim_inputs
 
     @property
@@ -356,7 +385,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         return self._parameters
 
     @abstractmethod
-    def compute_state_dynamics(self, time, state, inputs):
+    def compute_state_dynamics(self, time, state, inputs) -> np.ndarray:
         """
         Description of the system internal dynamics.
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
@@ -412,11 +441,19 @@ class System(rcognita.base.RcognitaBase, ABC):
             Current closed-loop system state
 
         """
-        inputs = self.inputs
+        action = self.inputs
 
-        rhs_full_state = self.compute_state_dynamics(time, state, inputs)
+        rhs_full_state = self.compute_state_dynamics(time, state, action)
 
         return rhs_full_state
+
+    def compose(self, sys_right, io_mapping=None, output_mode="state"):
+        return ComposedSystem(
+            self, sys_right, io_mapping=io_mapping, output_mode=output_mode
+        )
+
+    def __matmul__(self, sys_right):
+        return self.compose(sys_right)
 
     def reset(self):
         self.update_system_parameters(self.system_parameters_init)
@@ -562,6 +599,28 @@ class ThreeWheeledRobot(System):
         return Dstate
 
 
+class Integrator(System):
+    _name = "integral-parts"
+    _system_type = "diff_eqn"
+    _dim_state = 2
+    _dim_inputs = 2
+    _dim_observation = 2
+    _parameters = {"m": 10, "I": 1}
+
+    def compute_state_dynamics(self, time, state, inputs):
+        Dstate = rc.zeros(
+            self.dim_state,
+            prototype=(state, inputs),
+        )
+
+        m, I = self.parameters["m"], self.parameters["I"]
+
+        Dstate[0] = 1 / m * inputs[0]
+        Dstate[1] = 1 / I * inputs[1]
+
+        return Dstate
+
+
 class ThreeWheeledRobotNI(System):
     """
     System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator).
@@ -593,7 +652,7 @@ class TwoTank(System):
     _system_type = "diff_eqn"
     _dim_state = 2
     _dim_inputs = 1
-    _dim_observation = 3
+    _dim_observation = 2
     _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
 
     def compute_state_dynamics(self, time, state, inputs):
@@ -743,7 +802,7 @@ class LunarLander(System):
     _dim_state = 6
     _dim_inputs = 2
     _dim_observation = 6
-    _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1, "r": 0.5}
+    _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1, "r": 0.5, "sigma": 0.1}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -818,12 +877,17 @@ class LunarLander(System):
         return xi_2_new, xi_3_new
 
     def compute_reaction(self, r, r_support):
-        m, J, g = self.pars
+        m, _, g, sigma = (
+            self.parameters["m"],
+            self.parameters["J"],
+            self.parameters["g"],
+            self.parameters["sigma"],
+        )
         lvl = r_support[1]
         e = (r - r_support) / rc.sqrt(rc.norm_2(r - r_support))
         reaction = rc.if_else(
             lvl <= 0,
-            e * rc.dot(e, m * g * rc.array([0, 1])) * lvl * self.sigma,
+            e * rc.dot(e, m * g * rc.array([0, 1])) * lvl * sigma,
             rc.array([0.0, 0.0]),
         )
         return -reaction

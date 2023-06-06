@@ -23,7 +23,7 @@ import rcognita.base
 from .__utilities import rc
 from .systems import System, ComposedSystem
 from typing import Union, Optional
-from abc import ABC, abstractmethod
+from abc import ABC
 
 try:
     import casadi
@@ -38,40 +38,51 @@ class Simulator(rcognita.base.RcognitaBase, ABC):
         self,
         system: Union[System, ComposedSystem],
         state_init: Optional[np.ndarray] = None,
-        time_start: float = 0,
-        time_final: float = 1,
-        max_step: float = 1e-3,
-        first_step: float = 1e-6,
-        atol: float = 1e-5,
-        rtol: float = 1e-3,
+        action_init: Optional[np.ndarray] = None,
+        time_start: Optional[float] = 0,
+        time_final: Optional[float] = 1,
+        max_step: Optional[float] = 1e-3,
+        first_step: Optional[float] = 1e-6,
+        atol: Optional[float] = 1e-5,
+        rtol: Optional[float] = 1e-3,
     ):
         self.system = system
-        assert state_init, "Initial state for this simulator needs to be passed"
-        self.state = state_init
-        self.state_init = state_init
+        assert hasattr(
+            self.system, "system_type"
+        ), "System must contain a system_type attribute"
+        if self.system.system_type == "diff_eqn":
+            assert state_init, "Initial state for this simulator needs to be passed"
 
         self.time_start = time_start
         self.time_final = time_final
-        self.time = time_start
+        if state_init is None:
+            self.state_init = self.initialize_init_state()
+        if action_init is None:
+            self.action_init = self.initialize_init_action()
 
-        self.dim_state = state_init.shape[0]
-        self.observation = None
+        self.time = time_start
+        self.state = self.state_init
+        self.observation = self.get_observation(
+            time=self.time, state=self.state_init, inputs=self.action_init
+        )
 
         self.max_step = max_step
         self.atol = atol
         self.rtol = rtol
-
         self.first_step = first_step
-        assert hasattr(
-            self.system, "system_type"
-        ), "System must contain a system_type attribute"
 
         ## TODO: Add support for other types of systems
         if self.system.system_type == "diff_eqn":
-            self.initialize_ode_solver()
+            assert (
+                self.time_start is not None and self.time_final is not None
+            ), "Must specify time_start and time_final for diff_eqn systems"
+            self.ODE_solver = self.initialize_ode_solver()
 
     def receive_action(self, action):
         self.system.receive_action(action)
+
+    def get_observation(self, time, state, inputs):
+        return self.system.get_observation(time, state, inputs)
 
     def do_sim_step(self):
         """
@@ -95,30 +106,43 @@ class Simulator(rcognita.base.RcognitaBase, ABC):
             raise ValueError("Invalid system description")
 
     def get_sim_step_data(self):
-        return self.time, self.state
+        return self.time, self.state, self.observation
 
     def reset(self):
         if self.system.system_type == "diff_eqn":
-            self.initialize_ode_solver()
+            self.ODE_solver = self.initialize_ode_solver()
             self.time = self.time_start
             self.state = self.state_init
+            self.observation = self.get_observation(
+                time=self.time, state=self.state_init, inputs=self.action_init
+            )
             self.system.reset()
+        else:
+            self.time = self.time_start
             self.observation = self.get_observation(
                 time=self.time, state=self.state_init, inputs=self.system.inputs
             )
-        else:
-            self.time = self.time_start
-            self.observation = self.state_full_init
 
-    @abstractmethod
     def initialize_ode_solver(self):
-        pass
+        raise NotImplementedError("Not implemented ODE solver")
+
+    def get_init_state_and_action(self):
+        return self.state_init, rc.zeros(self.system.dim_inputs)
+
+    def initialize_init_state(self):
+        raise NotImplementedError(
+            "Implement this method to initialize the initial state"
+            + "if one is intended to be obtained during the runtime"
+        )
+
+    def initialize_init_action(self):
+        return rc.zeros(self.system.dim_inputs)
 
 
 class SciPy(Simulator):
     def initialize_ode_solver(self):
-        self.ODE_solver = sp.integrate.RK45(
-            self.system.compute_state_dynamics,
+        ODE_solver = sp.integrate.RK45(
+            self.system.compute_closed_loop_rhs,
             self.time_start,
             self.state,
             self.time_final,
@@ -127,18 +151,19 @@ class SciPy(Simulator):
             atol=self.atol,
             rtol=self.rtol,
         )
+        return ODE_solver
 
 
 class CaADi(Simulator):
     class CasADiSolver:
         def __init__(
             self,
-            integrator: casadi.integrator,
+            integrator,
             time_start: float,
             time_final: float,
             step_size: float,
-            state_init: Union[np.array, casadi.DM],
-            action_init: Union[np.array, casadi.DM],
+            state_init,
+            action_init,
             system: Union[System, ComposedSystem],
         ):
             """
@@ -193,14 +218,24 @@ class CaADi(Simulator):
 
     def initialize_ode_solver(self):
         self.integrator = self.create_CasADi_integrator(self.system, self.max_step)
-        self.ODE_solver = self.CasADiSolver(
+        assert (
+            self.time_start is not None
+            and self.time_final is not None
+            and self.max_step is not None
+        ), (
+            "Must specify time_start, time_final and max_step"
+            + " in order to initialize CasADi solver"
+        )
+        ODE_solver = self.CasADiSolver(
             self.integrator,
             self.time_start,
             self.time_final,
             self.max_step,
             self.state_init,
+            self.action_init,
             self.system,
         )
+        return ODE_solver
 
     def create_CasADi_integrator(self, system, max_step):
         state_symbolic = rc.array_symb(self.system.dim_state, literal="x")

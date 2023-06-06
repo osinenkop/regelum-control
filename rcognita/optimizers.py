@@ -1,5 +1,5 @@
 """
-This module contains optimization routines to be used in optimal controllers, actors, critics etc.
+This module contains optimization routines to be used in optimal controllers, policies, critics etc.
 
 """
 import rcognita.base
