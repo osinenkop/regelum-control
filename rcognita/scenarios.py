@@ -85,6 +85,7 @@ class OnlineScenario(Scenario):
         N_iterations=1,
         speedup=1,
         total_objective_threshold=np.inf,
+        discount_factor=1.0,
     ):
 
         self.cache.clear()
@@ -155,6 +156,7 @@ class OnlineScenario(Scenario):
         self.current_scenario_status = "episode_continues"
         self.speedup = speedup
         self.total_objective_threshold = total_objective_threshold
+        self.discount_factor = discount_factor
 
     def set_speedup(self, speedup):
         self.speedup = speedup
@@ -175,7 +177,11 @@ class OnlineScenario(Scenario):
 
         """
 
-        self.total_objective += self.running_objective(observation, action) * delta
+        self.total_objective += (
+            np.exp(self.time * np.log(self.discount_factor))
+            * self.running_objective(observation, action)
+            * delta
+        )
 
     @apply_callbacks()
     def reload_pipeline(self):
@@ -411,23 +417,22 @@ class OnlineScenario(Scenario):
 class MonteCarloScenario(OnlineScenario):
     def step(self):
         episode_status = super().step()
-        if self.controller.is_time_for_new_sample:
+        if (
+            self.controller.is_time_for_new_sample
+            and episode_status == "episode_continues"
+        ):
             self.controller.episode_data_buffer.add_step_data(
                 observation=self.observation,
                 action=self.action,
+                timestamp=self.time,
                 running_objective=self.running_objective_value,
                 current_total_objective=self.total_objective,
                 episode_id=self.episode_counter,
-                is_step_done=episode_status != "episode_continues",
             )
 
         return episode_status
 
     def reset_iteration(self):
-        self.controller.episode_data_buffer.set_total_objectives_of_episodes(
-            self.total_objectives_of_episodes
-        )
-
         if self.current_scenario_status != "simulation_ended":
             self.actor.optimize_weights_after_iteration(
                 self.controller.episode_data_buffer

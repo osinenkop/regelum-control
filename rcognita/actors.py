@@ -518,20 +518,21 @@ class Actor:
 class ActorPGBase(Actor, ABC):
     def __init__(
         self,
-        is_use_derivative,
         N_episodes,
         N_iterations,
+        is_with_baseline=False,
+        is_do_not_let_the_past_distract_you=True,
         device="cpu",
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.is_use_derivative = is_use_derivative
-        self.derivative = self.system.compute_dynamics
         self.device = torch.device(device)
         self.dataset_size = 0
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
+        self.is_with_baseline = is_with_baseline
+        self.is_do_not_let_the_past_distract_you = is_do_not_let_the_past_distract_you
 
     def optimize_weights_after_iteration(self, dataset):
         # Send to device before optimization
@@ -548,11 +549,7 @@ class ActorPGBase(Actor, ABC):
         self.model = self.model.to(torch.device("cpu"))
 
     def update_target(self, observation_target):
-        self.observation_target = (
-            rc.concatenate((observation_target, rc.zeros(len(observation_target))))
-            if self.is_use_derivative
-            else observation_target
-        )
+        self.observation_target = observation_target
 
     @abstractmethod
     def objective(self, batch):
@@ -593,14 +590,12 @@ class ActorPGBase(Actor, ABC):
 class ActorPG(ActorPGBase):
     def update_action(self, observation=None):
         observation_target = torch.tensor(self.observation_target)
-        if self.is_use_derivative:
-            derivative = torch.tensor(self.derivative([], observation, self.action))
-            observation = torch.cat([torch.tensor(observation), derivative]).float()
-        else:
-            observation = torch.tensor(observation)
-        self.action_old = self.action
         if observation is None:
             observation = self.observation
+        else:
+            observation = torch.tensor(observation)
+
+        self.action_old = self.action
 
         self.action = (
             self.model.sample((observation - observation_target).float())
@@ -612,12 +607,18 @@ class ActorPG(ActorPGBase):
         return
 
     def objective(self, batch):
-        observations_actions_for_actor = batch["observations_actions_for_actor"].to(
-            self.device
-        )
-        total_objectives = batch["objective_acc_stats"].to(self.device)
-        log_probs = self.model.log_probs(observations_actions_for_actor.float())
-        return (log_probs * total_objectives).sum() / self.N_episodes
+        observations_actions = batch["observations_actions"].to(self.device)
+        log_probs = self.model.log_probs(observations_actions.float())
+
+        if self.is_do_not_let_the_past_distract_you:
+            target_objectives = batch["tail_total_objectives"].to(self.device)
+        else:
+            target_objectives = batch["total_objectives"].to(self.device)
+
+        if self.is_with_baseline:
+            target_objectives -= batch["baselines"].to(self.device)
+
+        return (log_probs * target_objectives).sum() / self.N_episodes
 
 
 class ActorSDPG(ActorPG):
@@ -652,11 +653,7 @@ class ActorDDPG(ActorPGBase):
         ).sum()
 
     def update_action(self, observation=None):
-        if self.is_use_derivative:
-            derivative = self.derivative([], observation, self.action)
-            observation = torch.cat(
-                [torch.tensor(observation), torch.tensor(derivative)]
-            )
+
         super().update_action(observation)
 
 

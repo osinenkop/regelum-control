@@ -17,15 +17,6 @@ action_bounds: $ system.action_bounds%%
 
 critic_period_multiplier%%: 1
 
-critic:
-  optimizer:
-    opt_options:
-      lr: 0.00001
-  td_n: 10
-  batch_size: 50
-  discount_factor: 0.94
 
 
-episode_data_buffer:
-  is_use_derivative: $ system_specific.is_use_derivative
-  is_cat_action: True
+

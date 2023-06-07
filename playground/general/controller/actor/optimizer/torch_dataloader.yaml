@@ -2,7 +2,7 @@ _target_: rcognita.optimizers.TorchDataloaderOptimizer
 
 opt_options:
   lr: 1.0E-3
-  betas: = (0.1, 0.1)
+  betas: = (0.5, 0.5)
 
 opt_method: = torch.optim.Adam
 model: ~ controller.actor.model
