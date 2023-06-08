@@ -9,8 +9,8 @@ from .__utilities import rc
 def plot_optimization_results(
     critic_constr_expr,
     critic_obj_expr,
-   policy_constr_expr,
-   policy_obj_expr,
+    policy_constr_expr,
+    policy_obj_expr,
     symbolic_var_critic,
     symbolic_var_policy,
     w_init_critic,
@@ -23,8 +23,8 @@ def plot_optimization_results(
 ):
     f_obj_critic_csd = rc.to_casadi_function(critic_obj_expr, symbolic_var_critic)
     f_constr_critic_csd = rc.to_casadi_function(critic_constr_expr, symbolic_var_critic)
-    f_obj_policy_csd = rc.to_casadi_functionpolicy_obj_expr, symbolic_var_policy)
-    f_constr_policy_csd = rc.to_casadi_functionpolicy_constr_expr, symbolic_var_policy)
+    f_obj_policy_csd = rc.to_casadi_function(policy_obj_expr, symbolic_var_policy)
+    f_constr_policy_csd = rc.to_casadi_function(policy_constr_expr, symbolic_var_policy)
 
     def f_obj_critic(x, y):
         return f_obj_critic_csd([x, y]).full()

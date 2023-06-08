@@ -1,7 +1,8 @@
 from rcognita.systems import System, ThreeWheeledRobot, TwoTank
 from rcognita.planners import TwoTankPlanner
 from rcognita.__utilities import rc
-
+from rcognita.optimizers import LazyOptimizer, SciPyOptimizer, CasADiOptimizer
+import numpy as np
 
 # class ThreeWheeledRobotNI(System):
 #     """
@@ -46,6 +47,26 @@ from rcognita.__utilities import rc
 #         return Dstate
 
 
-system = TwoTank().compose(TwoTankPlanner(), output_mode="right")
-obs = system.get_observation(None, [0, 0.4], [1])
-print(obs)
+# system = TwoTank().compose(TwoTankPlanner(), output_mode="right")
+# obs = system.get_observation(None, [0, 0.4], [1])
+# print(obs)
+objective = lambda x: (x - 1) ** 2 + 1
+bounds = np.array([[-0.5, 0.5]])
+
+optimizer = LazyOptimizer(
+    class_object=SciPyOptimizer,
+    objective_function=objective,
+    decision_variable_bounds=bounds,
+)
+
+
+optimizer.specify_decision_variable_dimensions(decision_variable_dim=1)
+optimizer.specify_opt_method("SLSQP")
+optimizer.specify_parameters()
+optimizer.apply_bounds(bounds)
+optimizer.subject_to([lambda x: x**2 - 0.01, lambda x: x**2 + 0.01])
+print(type(optimizer))
+n_optimizer = optimizer.instantiate()
+print(type(n_optimizer))
+x = n_optimizer.optimize([0.0])
+print(x)

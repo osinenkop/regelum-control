@@ -53,10 +53,12 @@ class Policy:
     An `objective` (a loss) as well as an `optimizer` are passed to an `policy` externally.
     """
 
+    _intrinsic_constraints = None
+
     def __init__(
         self,
         system: Union[System, ComposedSystem],
-        model: Union[Model, ModelNN],
+        model,
         predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
         optimizer: Optional[Optimizer] = None,
@@ -77,8 +79,6 @@ class Policy:
         :type dim_action: int
         :param action_bounds: Bounds on the action.
         :type action_bounds: list or ndarray, optional
-        :param action_init: Initial action.
-        :type action_init: list, optional
         :param predictor: Predictor object for generating predictions.
         :type predictor: Predictor, optional
         :param optimizer: Optimizer object for optimizing the action.
@@ -104,38 +104,29 @@ class Policy:
         self.dim_action = self.system.dim_inputs
         self.dim_observation = self.system.dim_observation
 
-        self._action_bounds = self.__handle_bounds(action_bounds)
-        self.action_min = self._action_bounds[:, 0]
-        self.action_max = self._action_bounds[:, 1]
-        self.action_old = (self.action_min + self.action_max) / 2
-        self.action_sequence_min = rc.rep_mat(
-            self.action_min, 1, self.prediction_horizon + 1
-        )
-        self.action_sequence_max = rc.rep_mat(
-            self.action_max, 1, self.prediction_horizon + 1
-        )
-        self.action_bounds = np.array(
-            [self.action_sequence_min, self.action_sequence_max]
-        )
+        (
+            self.action_bounds,
+            self.action_initial_guess,
+            self.action_min,
+            self.action_max,
+        ) = self.__handle_bounds(action_bounds)
+        self.action_old = self.action_initial_guess[: self.dim_action]
+        self.action = self.action_initial_guess[: self.dim_action]
 
         self.optimizer = optimizer
         self.critic = critic
         self.running_objective = running_objective
-        self.predictor = predictor
         self.discount_factor = discount_factor if discount_factor is not None else 1.0
         self.epsilon_greedy = epsilon_greedy
         self.epsilon_greedy_parameter = epsilon_greedy_parameter
-        self.action_init = self.action_old
-        self.action_sequence_init = rc.rep_mat(
-            self.action_old, 1, self.prediction_horizon + 1
-        )
-        self.action = self.action_old
-        self.intrinsic_constraints = []
-        self.observation_init = None
+
+    @property
+    def intrinsic_constraints(self):
+        return self._intrinsic_constraints
 
     def __handle_bounds(
         self, action_bounds: Union[list, np.ndarray, None]
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         if action_bounds is None:
             assert (
                 self.system.dim_inputs is not None
@@ -165,7 +156,18 @@ class Policy:
                     + " than the upper bound of action "
                     + f"at index {i} ({row[0] > row[1]})"
                 )
-        return action_bounds
+        action_min = action_bounds[:, 0]
+        action_max = action_bounds[:, 1]
+        action_initial_guess = (action_min + action_max) / 2
+        if self.prediction_horizon > 0:
+            action_sequence_initial_guess = rc.rep_mat(
+                action_initial_guess, 1, self.prediction_horizon + 1
+            )
+            action_sequence_min = rc.rep_mat(action_min, 1, self.prediction_horizon + 1)
+            action_sequence_max = rc.rep_mat(action_max, 1, self.prediction_horizon + 1)
+            action_bounds = np.array([action_sequence_min, action_sequence_max])
+            action_initial_guess = action_sequence_initial_guess
+        return action_bounds, action_initial_guess, action_min, action_max
 
     @property
     def weights(self):
@@ -211,33 +213,36 @@ class Policy:
             observation = self.observation
 
         if self.epsilon_greedy:
-            is_exploration = bool(
-                np.random.choice(
-                    2,
-                    1,
-                    p=[
-                        1 - self.epsilon_greedy_parameter,
-                        self.epsilon_greedy_parameter,
-                    ],
-                )
+            toss = np.random.choice(
+                2,
+                1,
+                p=[
+                    1 - self.epsilon_greedy_parameter,
+                    self.epsilon_greedy_parameter,
+                ],
             )
-            if not is_exploration:
-                try:
-                    self.action = self.model(observation).detach().numpy()
-                except AttributeError:
-                    self.action = self.model(observation)
-            else:
-                self.action = np.array(
+            is_exploration = bool(toss)
+
+            if is_exploration:
+                action = np.array(
                     [
                         np.random.uniform(self.action_min[k], self.action_max[k])
                         for k in range(len(self.action))
                     ]
                 )
+            else:
+                action = self.get_action(observation)
         else:
-            try:
-                self.action = self.model(observation).detach().numpy()
-            except AttributeError:
-                self.action = self.model(observation)
+            action = self.get_action(observation)
+
+        return action
+
+    def get_action(self, observation):
+        if isinstance(self.model, ModelNN):
+            action = self.model(observation).detach().numpy()
+        else:
+            action = self.model(observation)
+        return action
 
     def update_weights(self, weights=None):
         """
@@ -300,7 +305,6 @@ class Policy:
         else:
             not_violated = [cond(weights) <= atol for cond in constraint_functions]
             constraints_not_violated = all(not_violated)
-            # print(not_violated)
 
         if constraints_not_violated:
             return "accepted"
@@ -333,92 +337,7 @@ class Policy:
 
         constraints = []
 
-        if self.optimizer.engine == "CasADi":
-            action_sequence_init_reshaped = rc.DM(action_sequence_init_reshaped)
-
-            symbolic_dummy = rc.array_symb((1, 1))
-
-            symbolic_action = rc.array_symb(
-                tup=rc.shape(action_sequence_init_reshaped), prototype=symbolic_dummy
-            )
-
-            policy_objective = rc.lambda2symb(
-                partial(self.objective, observation=self.observation), symbolic_action
-            )
-
-            if self.intrinsic_constraints:
-                intrisic_constraints = [
-                    rc.lambda2symb(constraint, symbolic_action)
-                    for constraint in self.intrinsic_constraints
-                ]
-            else:
-                intrisic_constraints = []
-
-            self.optimized_weights = self.optimizer.optimize(
-                policy_objective,
-                action_sequence_init_reshaped,
-                self.action_bounds,
-                constraints=intrisic_constraints + constraint_functions,
-                decision_variable_symbolic=symbolic_action,
-            )
-
-        elif self.optimizer.engine == "SciPy":
-            policy_objective = rc.function_to_lambda_with_params(
-                self.objective,
-                self.observation,
-            )
-
-            if constraint_functions is not None:
-                constraints = sp.optimize.NonlinearConstraint(
-                    partial(
-                        self.create_constraints,
-                        constraint_functions=constraint_functions,
-                        observation=self.observation,
-                    ),
-                    -np.inf,
-                    0,
-                )
-            if self.intrinsic_constraints:
-                intrinsic_constraints = [
-                    sp.optimize.NonlinearConstraint(
-                        constraint_function,
-                        -np.inf,
-                        0,
-                    )
-                    for constraint_function in self.intrinsic_constraints
-                ]
-            else:
-                intrinsic_constraints = []
-
-            self.optimized_weights = self.optimizer.optimize(
-                policy_objective,
-                action_sequence_init_reshaped,
-                self.action_bounds,
-                constraints=constraints + intrinsic_constraints,
-            )
-
-        elif self.optimizer.engine == "Torch":
-            self.optimized_weights = self.optimizer.optimize(
-                rc.torch_tensor(action_sequence_init_reshaped),
-                rc.torch_tensor(self.observation, requires_grad=False),
-                objective=self.objective,
-                model=self.model,
-            )
-
-        if self.intrinsic_constraints:
-            # DEBUG ==============================
-            # print("with constraint functions")
-            # /DEBUG =============================
-            self.weights_acceptance_status = self.accept_or_reject_weights(
-                self.optimized_weights,
-                constraint_functions=self.intrinsic_constraints,
-                optimizer_engine=self.optimizer.engine,
-            )
-        else:
-            # DEBUG ==============================
-            # print("without constraint functions")
-            # /DEBUG =============================
-            self.weights_acceptance_status = "accepted"
+        self.optimizer.optimize(action_sequence_init_reshaped, self.observation)
 
         return self.weights_acceptance_status
 
@@ -440,8 +359,8 @@ class Policy:
         """
         Reset the policy to its initial state.
         """
-        self.action_old = self.action_init
-        self.action = self.action_init
+        self.action_old = self.action_initial_guess[: self.dim_action]
+        self.action = self.action_initial_guess[: self.dim_action]
 
     def objective(self, action_sequence, observation):
         """

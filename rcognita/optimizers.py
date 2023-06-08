@@ -5,7 +5,7 @@ This module contains optimization routines to be used in optimal controllers, po
 import rcognita.base
 from rcognita.__utilities import rc
 import scipy as sp
-from scipy.optimize import minimize
+from scipy.optimize import minimize, NonlinearConstraint
 import numpy as np
 import warnings
 
@@ -31,211 +31,239 @@ except ModuleNotFoundError:
     UpdatableSampler = MagicMock()
 
 from rcognita.callbacks import apply_callbacks
+from typing import Callable, Optional, Union
+from functools import partial
 
 
-class Optimizer(rcognita.base.RcognitaBase, ABC):
-    """
-    Abstract base class for optimizers.
-    """
-
-    _engine = None
-
-    @property
-    @abstractmethod
-    def engine(self):
-        """Name of the optimization engine being used"""
-        return _engine
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def optimize(self):
-        pass
-
-    @staticmethod
-    def verbose(opt_func):
-        """
-        A static method decorator that makes the decorated function verbose.
-
-        This method will print the optimization time of the decorated function
-        if the `verbose` attribute of the instance is set to True.
-
-        Parameters:
-        opt_func (function): The function to be decorated.
-
-        Returns:
-        function: The decorated function.
-        """
-
-        def wrapper(self, *args, **kwargs):
-            tic = time.time()
-            result = opt_func(self, *args, **kwargs)
-            toc = time.time()
-            if self.verbose:
-                print(f"result optimization time:{toc-tic} \n")
-
-            return result
-
-        return wrapper
+class Optimizer:
+    pass
 
 
-class SciPyOptimizer(Optimizer):
-    """
-    Optimizer class using the SciPy optimization library.
+class LazyOptimizer:
+    _engine_name = "LazyOptimizer"
 
-    Attributes:
-        engine (str): Name of the optimization engine.
-        opt_method (str): Optimization method to use.
-        opt_options (dict): Options for the optimization method.
-        verbose (bool): Whether to print optimization progress and timing.
-    """
+    def __init__(
+        self,
+        class_object: Optional[type] = None,
+        objective_function: Optional[Callable] = None,
+        opt_method=None,
+        opt_options: Optional[dict] = None,
+        print_options: Optional[dict] = None,
+        decision_variable=None,
+        decision_variable_bounds: Optional[np.ndarray] = None,
+        decision_variable_dim: Optional[list] = None,
+        free_parameters: Optional[dict[str, int]] = None,
+        constraints: Union[
+            list[Optional[Callable]], tuple[Optional[Callable]], None
+        ] = None,
+        is_instantiated=False,
+    ) -> None:
+        if not is_instantiated and class_object is None:
+            raise ValueError("class_object must be specified if not instantiated")
+        assert objective_function is None or callable(
+            objective_function
+        ), "objective_function must be callable"
+        assert opt_options is None or isinstance(
+            opt_options, dict
+        ), "opt_options must be of type dict"
+        assert print_options is None or isinstance(
+            print_options, dict
+        ), "print_options must be of type dict"
+        assert constraints is None or all(
+            [callable(c) for c in constraints]
+        ), "constraints must be callable"
 
-    _engine = "SciPy"
+        self.class_object = class_object
+        if decision_variable_dim is not None:
+            self.specify_decision_variable_dimensions(
+                decision_variable_dim=decision_variable_dim
+            )
+        if free_parameters is not None:
+            self.specify_parameters(free_parameters=free_parameters)
 
-    def __init__(self, opt_method, opt_options, verbose=False):
-        """
-        Initialize a SciPyOptimizer instance.
+        self.specify_decision_variable(decision_variable)
+        self.specify_parameters(free_parameters)
+        if objective_function is not None:
+            self.minimize(objective_function)
+        else:
+            self.objective_function = None
 
-        :param opt_method: str, the name of the optimization method to use.
-        :param opt_options: dict, options for the optimization method.
-        :param verbose: bool, whether to print the optimization time and the objective function value before and after optimization.
-        """
+        self.opt_options = opt_options if opt_options is not None else {}
+        self.print_options = print_options if print_options is not None else {}
+        self.specify_opt_method(opt_method)
+
+        self.decision_variable_bounds = decision_variable_bounds
+        self.subject_to(constraints)
+        if self.decision_variable_bounds is not None:
+            self.apply_bounds(decision_variable_bounds)
+        else:
+            self.decision_variable_bounds = None
+
+    def minimize(self, objective_function: Callable) -> None:
+        assert callable(objective_function), "objective_function must be callable"
+        self.objective_function = objective_function
+
+    def subject_to(
+        self,
+        constraints: Union[
+            list[Optional[Callable]], tuple[Optional[Callable]], None
+        ] = None,
+    ) -> None:
+        if constraints is None:
+            ## TODO: change to log level info
+            print("No constraints specified")
+        self.constraints = constraints
+
+    def specify_opt_method(self, opt_method) -> None:
         self.opt_method = opt_method
-        self.opt_options = opt_options
-        self.verbose = verbose
 
-    @Optimizer.verbose
-    def optimize(self, objective, initial_guess, bounds, constraints=(), verbose=False):
-        """
-        Optimize the objective function using the specified method and options.
+    def specify_decision_variable_dimensions(
+        self,
+        decision_variable_dim: Optional[list] = None,
+    ) -> None:
+        if decision_variable_dim is not None:
+            self.decision_variable_dim = decision_variable_dim
+        else:
+            print("No decision variable dimension specified")
 
-        :param objective: function, the objective function to optimize.
-        :param initial_guess: array-like, the initial guess for the optimization.
-        :param bounds: tuple, the lower and upper bounds for the optimization.
-        :param constraints: tuple, the equality and inequality constraints for the optimization.
-        :param verbose: bool, whether to print the objective function value before and after optimization.
-        :return: array-like, the optimal solution.
-        """
+    def apply_bounds(
+        self, decision_variable_bounds: Optional[np.ndarray] = None
+    ) -> None:
+        assert (
+            isinstance(decision_variable_bounds, np.ndarray)
+            and len(decision_variable_bounds.shape) == 2
+        ), "decision_variable_bounds must be a 2D np.ndarray"
+        self.decision_variable_bounds = decision_variable_bounds
 
-        weight_bounds = sp.optimize.Bounds(bounds[0], bounds[1], keep_feasible=True)
+    def specify_parameters(self, free_parameters: Optional[dict] = None) -> None:
+        self.free_parameters = free_parameters
 
-        before_opt = objective(initial_guess)
+    def specify_decision_variable(self, decision_variable) -> None:
+        self.decision_variable = decision_variable
+
+    def instantiate(self):
+        assert self.class_object is not None
+        return self.class_object(
+            objective_function=self.objective_function,
+            opt_method=self.opt_method,
+            opt_options=self.opt_options,
+            print_options=self.print_options,
+            decision_variable=self.decision_variable,
+            decision_variable_bounds=self.decision_variable_bounds,
+            decision_variable_dim=self.decision_variable_dim,
+            free_parameters=self.free_parameters,
+            constraints=self.constraints,
+            is_instantiated=True,
+        )
+
+    def optimize(self, initial_guess, **free_parameters):
+        pass
+
+
+class SciPyOptimizer(LazyOptimizer):
+    def subject_to(
+        self,
+        constraints: Union[
+            list[Optional[Callable]], tuple[Optional[Callable]], None
+        ] = None,
+    ) -> None:
+        if constraints:
+            constraints = [
+                NonlinearConstraint(c, -np.inf, 0.0) for c in constraints if c
+            ]
+        super().subject_to(constraints)
+
+    def optimize(self, initial_guess, *free_parameters, **free_parameters_kwargs):
+        if self.decision_variable_bounds is not None:
+            bounds = sp.optimize.Bounds(
+                self.decision_variable_bounds[:, 0],
+                self.decision_variable_bounds[:, 1],
+                keep_feasible=True,
+            )
+        else:
+            bounds = None
         opt_result = minimize(
-            objective,
+            partial(
+                self.objective_function, *free_parameters, **free_parameters_kwargs
+            ),
             x0=initial_guess,
             method=self.opt_method,
-            bounds=weight_bounds,
+            bounds=bounds,
             options=self.opt_options,
-            constraints=constraints,
+            constraints=self.constraints,
             tol=1e-7,
         )
-        if verbose:
-            print(f"before:{before_opt},\nafter:{opt_result.fun}")
 
         return opt_result.x
 
 
-class CasADiOptimizer(Optimizer):
+class CasADiOptimizer(LazyOptimizer):
     _engine = "CasADi"
 
-    def __init__(
+    def __init__(self, *args, **kwargs):
+        self.__opti = Opti()
+        self.mx_constraints = []
+        self.mx_parameters = []
+        self.minimizer = None
+        super().__init__(*args, **kwargs)
+        self.minimizer = self.__opti.to_function("minimize", [self.__u], [self.__u])
+
+    def specify_decision_variable_dimensions(
+        self, decision_variable_dim: Optional[list] = None
+    ) -> None:
+        super().specify_decision_variable_dimensions(decision_variable_dim)
+        assert (
+            self.decision_variable_dim is not None
+        ), "decision_variable_dim must be specified"
+        self.__u = self.__opti.variable(self.decision_variable_dim)
+
+    def specify_parameters(self, free_parameters: Optional[dict] = None) -> None:
+        super().specify_parameters(free_parameters)
+        if self.free_parameters:
+            for k, v in self.free_parameters:
+                self.mx_parameters.append(self.__opti.parameter(v))
+
+    def apply_bounds(
+        self, decision_variable_bounds: Optional[np.ndarray] = None
+    ) -> None:
+        super().apply_bounds(decision_variable_bounds)
+        if self.decision_variable_bounds is not None:
+            self.__opti.subject_to(self.__u >= self.decision_variable_bounds[:, 0])
+            self.__opti.subject_to(self.__u <= self.decision_variable_bounds[:, 1])
+
+    def specify_opt_method(self, opt_method) -> None:
+        super().specify_opt_method(opt_method)
+        assert self.opt_method is not None, "opt_method must be specified"
+        self.__opti.solver(self.opt_method, self.opt_options, self.print_options)
+
+    def subject_to(
         self,
-        opt_method,
-        opt_options,
-        objective_carrier,
-        decision_variable_dim,
-        free_parameters_dim,
-    ):
-        assert hasattr(
-            objective_carrier, "objective"
-        ), "objective_carrier must contain an 'objective' attribute"
-        import casadi
+        constraints: Union[
+            list[Optional[Callable]], tuple[Optional[Callable]], None
+        ] = None,
+    ) -> None:
+        super().subject_to(constraints)
+        if self.constraints:
+            for c in self.constraints:
+                if c:
+                    self.__opti.subject_to(c(self.__u) <= 0)
 
-        self.opt_method = opt_method
-        self.opt_options = opt_options
-        self.verbose = verbose
-        """
-        Initialize the CasADiOptimizer object.
-        
-        :param opt_method: The optimization method to use (string).
-        :type opt_method: str
-        :param opt_options: A dictionary of options for the optimization method.
-        :type opt_options: dict
-        :param verbose: Whether or not to print messages during optimization (default: False).
-        :type verbose: bool, optional
-        """
+    def minimize(self, objective_function: Callable) -> None:
+        super().minimize(objective_function)
+        assert (
+            self.objective_function is not None
+        ), "objective_function must be specified"
+        self.__opti.minimize(objective_function(self.__u))
 
-    @Optimizer.verbose
     def optimize(
         self,
-        objective,
         initial_guess,
-        bounds,
-        constraints=(),
-        decision_variable_symbolic=None,
-        free_parameters=None,
     ):
-        """
-        Optimize the given objective function using the CasADi optimization engine.
-
-        :param objective: The objective function to optimize.
-        :type objective: function
-        :param initial_guess: The initial guess for the optimization variables.
-        :type initial_guess: numpy array
-        :param bounds: A tuple of lower and upper bounds for the optimization variables.
-        :type bounds: tuple
-        :param constraints: Any constraints to enforce during optimization (default: no constraints).
-        :type constraints: tuple, optional
-        :param decision_variable_symbolic: A list of symbolic variables representing the optimization variables.
-        :type decision_variable_symbolic: list
-        :return: The optimized decision variables.
-        :rtype: numpy array
-        """
-        optimization_problem = {
-            "f": objective,
-            "x": vertcat(decision_variable_symbolic),
-            "g": vertcat(*constraints),
-        }
-
-        atol = 1e-10
-        if isinstance(constraints, (tuple, list)):
-            upper_bound_constraint = [atol for _ in constraints]
-        elif isinstance(constraints, (MX, DM, int, float)):
-            upper_bound_constraint = [atol]
-
-        try:
-            solver = nlpsol(
-                "solver",
-                self.opt_method,
-                optimization_problem,
-                self.opt_options,
-            )
-        except Exception as e:
-            print(e)
-            return initial_guess
-
-        if upper_bound_constraint is not None and len(upper_bound_constraint) > 0:
-            result = solver(
-                x0=initial_guess,
-                lbx=bounds[0],
-                ubx=bounds[1],
-                ubg=upper_bound_constraint,
-            )
-        else:
-            result = solver(x0=initial_guess, lbx=bounds[0], ubx=bounds[1])
-
-        ##### DEBUG
-        # g1 = Function("g1", [symbolic_var], [constraints])
-
-        # print(g1(result["x"]))
-        ##### DEBUG
-
-        return rc.to_np_1D(result["x"])
+        result = self.minimizer(initial_guess)
+        return result
 
 
-class TorchOptimizer(Optimizer):
+class TorchOptimizer(LazyOptimizer):
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
@@ -289,7 +317,7 @@ class TorchOptimizer(Optimizer):
             self.optimizer.step()
 
 
-class TorchDataloaderOptimizer(Optimizer):
+class TorchDataloaderOptimizer(LazyOptimizer):
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
@@ -372,7 +400,7 @@ class TorchDataloaderOptimizer(Optimizer):
         self.post_epoch(1, last_epoch_objective)
 
 
-class TorchProjectiveOptimizer(Optimizer):
+class TorchProjectiveOptimizer(LazyOptimizer):
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
@@ -449,7 +477,7 @@ class TorchProjectiveOptimizer(Optimizer):
         return model_input[0]
 
 
-class BruteForceOptimizer(Optimizer):
+class BruteForceOptimizer(LazyOptimizer):
     """
     Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."
     """
