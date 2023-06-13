@@ -34,10 +34,55 @@ from rcognita.callbacks import apply_callbacks
 from typing import Callable, Optional, Union
 from functools import partial
 from inspect import signature
+from dataclasses import dataclass
 
 
-class Optimizer:
-    pass
+@dataclass
+class Optimizer(ABC):
+    objective: Callable
+    constraints: Union[list[Optional[Callable]], tuple[Optional[Callable]], None] = None
+    opt_options: Optional[dict] = None
+    log_options: Optional[dict] = None
+
+    def __parse_signature(self, func: Callable):
+        assert callable(func), "objective_function must be callable"
+        func_signature = signature(func)
+        assert all(
+            [
+                str(var_kind) not in ["KEYWORD_ONLY", "VAR_KEYWORD", "VAR_POSITIONAL"]
+                for var_kind in func_signature.parameters.values()
+            ]
+        ), (
+            "Forbidden signature of the objective function."
+            + " Explicit list of arguments must be specified"
+        )
+
+        return list(func_signature.parameters)
+
+    def __post_init__(self):
+        self.objective_parameters = self.__parse_signature(self.objective)
+        if self.constraints:
+            if isinstance(self.constraints, Callable):
+                self.constraints = [self.constraints]
+
+            for constraint in self.constraints:
+                setattr(self, constraint.__name__, constraint)
+
+            self.constraint_parameters = {
+                constraint.__name__: self.__parse_signature(constraint)
+                for constraint in self.constraints
+            }
+        else:
+            self.constraint_parameters = {}
+
+    @abstractmethod
+    def create_solver(self):
+        pass
+
+
+class CasadiOptimizer(Optimizer):
+    def create_solver(self):
+        self.__opti = Opti()
 
 
 class LazyOptimizer:
@@ -59,6 +104,9 @@ class LazyOptimizer:
         ] = None,
         is_instantiated=False,
     ) -> None:
+        if self.__class__.__name__ != "LazyOptimizer":
+            is_instantiated = True
+
         if not is_instantiated and class_object is None:
             raise ValueError("class_object must be specified if not instantiated")
         assert objective_function is None or callable(
@@ -131,7 +179,13 @@ class LazyOptimizer:
         if constraints is None:
             ## TODO: change to log level info
             print("No constraints specified")
-        self.constraints = constraints
+            constraints = []
+        if self.constraints is None:
+            self.constraints = constraints
+        else:
+            if not isinstance(self.constraints, (list)):
+                self.constraints = list(self.constraints)
+            self.constraints.extend(list(constraints))
 
     def specify_opt_method(self, opt_method) -> None:
         self.opt_method = opt_method
@@ -159,6 +213,19 @@ class LazyOptimizer:
 
     def specify_decision_variable(self, decision_variable) -> None:
         self.decision_variable = decision_variable
+
+    @staticmethod
+    def variable(*args):
+        if len(args) > 1:
+            assert all(
+                [isinstance(arg, int) for arg in args]
+            ), "All arguments must be integers when len(*args) > 1"
+        elif len(args) == 1:
+            args = args[0]
+            assert all(
+                [isinstance(arg, int) for arg in args]
+            ), f"All arguments must be integers inside {args}"
+        return args
 
     def instantiate(self):
         assert self.class_object is not None
@@ -227,11 +294,22 @@ class CasADiOptimizer(LazyOptimizer):
 
     def __init__(self, *args, **kwargs):
         self.__opti = Opti()
-        self.mx_constraints = []
-        self.mx_parameters = []
         self.minimizer = None
+        self.__u = None
         super().__init__(*args, **kwargs)
-        self.minimizer = self.__opti.to_function("minimize", [self.__u], [self.__u])
+        self.minimizer = self.__opti.to_function(
+            "minimize", [self.__u, *self.__parameters], [self.__u]
+        )
+
+    @property
+    def dvar(self):
+        if self.__u is None:
+            if self.decision_variable_dim is not None:
+                self.__u = self.__opti.variable(self.decision_variable_dim)
+            else:
+                Warning("Decision_variable_dim is not specified, returning None")
+                return None
+        return self.__u
 
     def specify_decision_variable_dimensions(
         self, decision_variable_dim: Optional[list] = None
@@ -241,12 +319,7 @@ class CasADiOptimizer(LazyOptimizer):
             self.decision_variable_dim is not None
         ), "decision_variable_dim must be specified"
         self.__u = self.__opti.variable(self.decision_variable_dim)
-
-    def specify_parameters(self, free_parameters: Optional[dict] = None) -> None:
-        super().specify_parameters(free_parameters)
-        if self.free_parameters:
-            for k, v in self.free_parameters:
-                self.mx_parameters.append(self.__opti.parameter(v))
+        return self.__u
 
     def apply_bounds(
         self, decision_variable_bounds: Optional[np.ndarray] = None
@@ -282,12 +355,13 @@ class CasADiOptimizer(LazyOptimizer):
         ), "objective_function must be specified"
         self.__opti.minimize(objective_function(self.__u))
 
-    def optimize(
-        self,
-        initial_guess,
-    ):
+    def variable(self, *args):
+        args = super().variable(*args)
+        return self.__opti.variable(*args)
+
+    def optimize(self, initial_guess, *args):
         assert self.minimizer is not None, "Objective function is not defined"
-        result = self.minimizer(initial_guess)
+        result = self.minimizer(initial_guess, *args)
         return result
 
 
