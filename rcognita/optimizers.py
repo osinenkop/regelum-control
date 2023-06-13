@@ -33,6 +33,7 @@ except ModuleNotFoundError:
 from rcognita.callbacks import apply_callbacks
 from typing import Callable, Optional, Union
 from functools import partial
+from inspect import signature
 
 
 class Optimizer:
@@ -101,12 +102,30 @@ class LazyOptimizer:
 
     def minimize(self, objective_function: Callable) -> None:
         assert callable(objective_function), "objective_function must be callable"
+        f_args = objective_function.__code__.co_varnames
+        obj_sign = signature(objective_function)
+        assert any(["dvar_" in arg for arg in f_args]), (
+            "Decision variable for "
+            + f"objective function {objective_function.__name__} "
+            "must be specified with 'dvar_' prefix"
+        )
+        assert all(
+            [
+                str(var_kind) not in ["KEYWORD_ONLY", "VAR_KEYWORD", "VAR_POSITIONAL"]
+                for var_kind in obj_sign.parameters.values()
+            ]
+        ), (
+            "Forbidden signature of the objective function."
+            + " Explicit list of arguments must be specified"
+        )
         self.objective_function = objective_function
 
     def subject_to(
         self,
         constraints: Union[
-            list[Optional[Callable]], tuple[Optional[Callable]], None
+            list[Optional[Union[Callable, NonlinearConstraint]]],
+            tuple[Optional[Union[Callable, NonlinearConstraint]]],
+            None,
         ] = None,
     ) -> None:
         if constraints is None:
@@ -119,7 +138,7 @@ class LazyOptimizer:
 
     def specify_decision_variable_dimensions(
         self,
-        decision_variable_dim: Optional[list] = None,
+        decision_variable_dim: Optional[Union[list, tuple, int]] = None,
     ) -> None:
         if decision_variable_dim is not None:
             self.decision_variable_dim = decision_variable_dim
@@ -164,7 +183,9 @@ class SciPyOptimizer(LazyOptimizer):
     def subject_to(
         self,
         constraints: Union[
-            list[Optional[Callable]], tuple[Optional[Callable]], None
+            list[Optional[Union[Callable, NonlinearConstraint]]],
+            tuple[Optional[Union[Callable, NonlinearConstraint]]],
+            None,
         ] = None,
     ) -> None:
         if constraints:
@@ -182,6 +203,10 @@ class SciPyOptimizer(LazyOptimizer):
             )
         else:
             bounds = None
+
+        assert (
+            self.objective_function is not None
+        ), "objective_function must be specified"
         opt_result = minimize(
             partial(
                 self.objective_function, *free_parameters, **free_parameters_kwargs
@@ -244,7 +269,9 @@ class CasADiOptimizer(LazyOptimizer):
     ) -> None:
         super().subject_to(constraints)
         if self.constraints:
+            assert all([callable(c) for c in self.constraints])
             for c in self.constraints:
+                assert callable(c)
                 if c:
                     self.__opti.subject_to(c(self.__u) <= 0)
 
@@ -259,6 +286,7 @@ class CasADiOptimizer(LazyOptimizer):
         self,
         initial_guess,
     ):
+        assert self.minimizer is not None, "Objective function is not defined"
         result = self.minimizer(initial_guess)
         return result
 
