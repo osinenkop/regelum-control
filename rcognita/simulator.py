@@ -218,6 +218,7 @@ class Simulator(rcognita.base.RcognitaBase):
         else:
             raise ValueError("Invalid system description")
 
+    @apply_callbacks()
     def get_sim_step_data(self):
         """Collect current simulation data: time, system state and output, and, for completeness, full closed-loop state."""
         time, state, observation, state_full = (

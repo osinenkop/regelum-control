@@ -15,10 +15,15 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 
 """
 from abc import ABC, abstractmethod
+from multiprocessing import Process
+from multiprocessing.managers import SharedMemoryManager
+from multiprocessing.shared_memory import ShareableList
 
 import matplotlib.animation
 import mlflow
 import torch
+from shared_memory_dict import SharedMemoryDict
+
 import rcognita
 import pandas as pd
 import numpy as np
@@ -40,10 +45,36 @@ import sys
 import filelock
 
 import rcognita.base
+from rcognita.__utilities import on_key_press, on_close
 
 
 def is_in_debug_mode():
     return sys.gettrace() is not None
+
+def passdown(CallbackClass):
+    """Decorates a callback class in such a way that its event handling is inherited by derived classes.
+
+    :param CallbackClass:
+    :type CallbackClass: type
+    :return: altered class that passes down its handlers to derived classes (regardless of whether handling methods are overriden)
+    """
+    class PassdownCallback(CallbackClass):
+        def __call_passdown(self, obj, method, output):
+            t = time.time()
+            if True:  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
+                try:
+                    if PassdownCallback.is_target_event(self, obj, method, output):
+                        PassdownCallback.perform(self, obj, method, output)
+                        self.on_trigger(PassdownCallback)
+                        #self.trigger_cooldown(t)
+                except rcognita.RcognitaExitException as e:
+                    raise e
+                except Exception as e:
+                    self.log(f"Callback {self.__class__.__name__} failed, when executing routines passed down from {CallbackClass.__name__}.")
+                    self.exception(e)
+    PassdownCallback.__name__ = CallbackClass.__name__
+    return PassdownCallback
+
 
 class Callback(rcognita.base.RcognitaBase, ABC):
     """Base class for callbacks.
@@ -52,7 +83,7 @@ class Callback(rcognita.base.RcognitaBase, ABC):
     """
 
     cooldown = None
-    def __init__(self, log_level="info"):
+    def __init__(self, log_level="info", attachee=None):
         """Initialize a callback object.
 
         :param logger: A logging object that will be used to log messages.
@@ -60,9 +91,11 @@ class Callback(rcognita.base.RcognitaBase, ABC):
         :param log_level: The level at which messages should be logged.
         :type log_level: str
         """
+        super().__init__()
+        self.attachee = attachee
         self.log = rcognita.main.logger.__getattribute__(log_level)
         self.exception = rcognita.main.logger.exception
-        self.last_trigger = 0.0
+        self.__last_trigger = 0.0
 
     @abstractmethod
     def is_target_event(self, obj, method, output):
@@ -78,6 +111,9 @@ class Callback(rcognita.base.RcognitaBase, ABC):
     ):
         pass
 
+    def on_trigger(self, caller):
+        pass
+
     def on_iteration_done(
         self,
         scenario,
@@ -91,13 +127,13 @@ class Callback(rcognita.base.RcognitaBase, ABC):
     def ready(self, t):
         if not self.cooldown:
             return True
-        if t - self.last_trigger > self.cooldown:
+        if t - self.__last_trigger > self.cooldown:
             return True
         else:
             return False
 
     def trigger_cooldown(self, t):
-        self.last_trigger = t
+        self.__last_trigger = t
 
     def on_launch(self):
         pass
@@ -112,12 +148,44 @@ class Callback(rcognita.base.RcognitaBase, ABC):
             try:
                 if self.is_target_event(obj, method, output):
                     self.perform(obj, method, output)
+                    self.on_trigger(self.__class__)
                     self.trigger_cooldown(t)
             except rcognita.RcognitaExitException as e:
                 raise e
             except Exception as e:
                 self.log(f"Callback {self.__class__.__name__} failed.")
                 self.exception(e)
+        for base in self.__class__.__bases__:
+            if hasattr(base, f"_{base.__name__}__call_passdown"):
+                base.__getattribute__(f"_{base.__name__}__call_passdown")(self, obj, method, output)
+
+    @classmethod
+    def attach(cls, other):
+        if hasattr(other, "_attached"):
+            attached = other._attached + [cls]
+        else:
+            attached = [cls]
+        class Attachee(other):
+            _real_name = other.__name__
+            _attached = attached
+        return Attachee
+
+    """
+    @classmethod
+    def detach(cls, other):
+        if hasattr(other, "_attached"):
+            attached = other._attached.copy()
+            if cls not in attached:
+                raise ValueError(f"Attempted to detach {cls.__name__}, but it was not attached.")
+            attached.pop(attached.index(cls))
+        else:
+            raise ValueError(f"Attempted to detach {cls.__name__}, but it was not attached.")
+        class Detachee(other):
+            _real_name = other.__name__
+            _attached = attached
+        Detachee.__name__ = other.__name__
+        return Detachee
+    """
 
     def on_termination(self, res):
         pass
@@ -532,31 +600,54 @@ plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
 class AnimationCallback(Callback, ABC):
     """Callback (base) responsible for rendering animated visualizations of the experiment."""
+    _frames = 100
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Initialize an instance of AnimationCallback."""
+        super().__init__(*args, **kwargs)
+        assert self.attachee is not None, "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
         self.frame_data = []
-        self.fig = plt.figure()
-        self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
+        #matplotlib.use('Qt5Agg', force=True)
+        #plt.ion()
+        self.fig, self.ax = plt.subplots(figsize=(10, 10))
+        #plt.grid()
+        #plt.show()
+        self.save_directory = Path(f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}").resolve()
         self.saved_counter = 0
 
+
     def get_save_directory(self):
-        return self.save_directory
+        return str(self.save_directory)
 
-    def on_launch(self):
-        os.mkdir(self.get_save_directory())
-
-    def add_frame_datum(self, frame_datum):
+    def add_frame(self, **frame_datum):
         self.frame_data.append(frame_datum)
+        #self.lim()
+
+        #self.construct_frame(**frame_datum)
+        #self.fig.canvas.draw()
+        #self.fig.canvas.flush_events()
+        if hasattr(self, "current_status"):
+            self.current_status["index"] = len(self.frame_data) - 1
+            self.current_status["frame"] = frame_datum
 
     def clear_frames(self):
-        self.frame_data = []
+        plt.close(self.fig)
+        if hasattr(self, "plotter"):
+            self.current_status["exit"] = None
+            self.plotter.join()
+            self.current_status.shm.close()
+            self.current_status.shm.unlink()
+            del self.current_status
+            del self.plotter
+        self.__init__(attachee=self.attachee)
 
     @abstractmethod
-    def update_frame(self, **frame_datum):
+    def construct_frame(self, **frame_datum):
         pass
 
-    def animate(self, frames="all"):
+    def animate(self, frames=None):
+        if frames is None:
+            frames = self.__class__._frames
         if frames == "all":
             frames = len(self.frame_data)
         elif isinstance(frames, int):
@@ -570,14 +661,18 @@ class AnimationCallback(Callback, ABC):
 
         def animation_update(i):
             j = int((i / frames) * len(self.frame_data) + 0.5)
-            return self.update_frame(**self.frame_data[j])
-
+            return self.construct_frame(**self.frame_data[j])
+        self.lim()
         anim = matplotlib.animation.FuncAnimation(
-            self.fig, animation_update, frames=frames, interval=1, blit=True
+            self.fig, animation_update, frames=frames, interval=30, blit=True, repeat=False
         )
         return anim.to_jshtml()
 
-    def animate_and_save(self, frames="all", name=None):
+    def on_launch(self):
+        os.mkdir(self.get_save_directory())
+
+
+    def animate_and_save(self, frames=None, name=None):
         if name is None:
             name = str(self.saved_counter)
             self.saved_counter += 1
@@ -587,6 +682,137 @@ class AnimationCallback(Callback, ABC):
             f.write(
                 f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
             )
+
+    def animate_live(self, frames=None, name=None):
+        name = f"animation_status{time.time()}"
+        self.current_status = SharedMemoryDict(name=name, size=1024)
+        self.current_status["index"] = -1
+        self.current_status["frame"] = None
+        def plotting_process(name):
+            try:
+                matplotlib.use('Qt5Agg', force=True)
+                #plt.ion()
+                plt.close()
+                self.fig, self.ax = plt.subplots(figsize=(10, 10))
+                self.anim = None
+                def animation_update(i):
+                    j = i
+                    status = SharedMemoryDict(name=name, size=1024)
+                    while status["index"] < j and "exit" not in status:
+                        time.sleep(0.02)
+                    if "exit" in status:
+                        status.shm.close()
+                        self.anim.event_source.stop()
+                    self.frame_data.append(status["frame"])
+                    self.lim()
+                    res = self.construct_frame(**status["frame"])
+                    status["i"] = i
+                    #status.shm.close()
+                    #del status
+                    return res
+                self.anim = matplotlib.animation.FuncAnimation(
+                        self.fig, animation_update, interval=30, blit=True,
+                       )
+                self.fig.canvas.mpl_connect(
+                    "key_press_event", lambda event: on_key_press(event, self.anim)
+                )
+
+                self.fig.canvas.mpl_connect("close_event", on_close)
+                plt.show()
+                print()
+            except BaseException as e:
+                pass
+        self.plotter = Process(target=plotting_process, args=(name,))
+        print(f'SharedMemoryDict(name="{name}", size=1024)', "!!!!!"*10)
+        plotting_process(name)
+        self.plotter.start()
+
+    def lim(self):
+        raise ValueError("No axis limits known for animation.")
+
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        self.animate_and_save(name=str(episode_number))
+        self.clear_frames()
+
+
+
+class PointAnimation(AnimationCallback, ABC):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.point, = self.ax.plot(0, 1, marker="o", label="location")
+
+    def construct_frame(self, x, y):
+        self.point.set_data([x], [y])
+        return self.point,
+
+    def lim(self):
+        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T
+        x_min, x_max = x.min(), x.max()
+        y_min, y_max = y.min(), y.max()
+        x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+        y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+        self.ax.set_xlim(x_min, x_min + max(x_max-x_min, y_max-y_min))
+        self.ax.set_ylim(y_min, y_min + max(x_max-x_min, y_max-y_min))
+
+
+
+@passdown
+class StateTracker(Callback):
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.simulator.Simulator)
+            and method == "get_sim_step_data"
+        )
+
+    def perform(self, obj, method, output):
+        self.system_state = obj.state
+
+
+class PlanarMotionAnimation(PointAnimation, StateTracker):
+    def on_trigger(self, _):
+        self.add_frame(x=self.system_state[0],
+                       y=self.system_state[1])
+
+
+class TriangleAnimation(AnimationCallback, ABC):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        point1, = self.ax.plot(0, 1, marker="o", label="location", color='red')
+        point2, = self.ax.plot(0, 1, marker="o", label="location", color='green')
+        point3, = self.ax.plot(0, 1, marker="o", label="location", color='blue')
+        self.points = (point1, point2, point3)
+
+    def lim(self):
+        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+        x_min, x_max = x.min(), x.max()
+        y_min, y_max = y.min(), y.max()
+        x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+        y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+        self.ax.set_xlim(x_min, x_min + max(x_max-x_min, y_max-y_min))
+        self.ax.set_ylim(y_min, y_min + max(x_max-x_min, y_max-y_min))
+
+    def construct_frame(self, x, y, theta):
+        offsets = np.array([[np.cos(theta + i * 2 * np.pi / 3),
+                            np.sin(theta + i * 2 * np.pi / 3)] for i in range(3)]) / 10
+        location = np.array([x, y])
+        for point, offset in zip(self.points, offsets):
+            x, y = location + offset
+            point.set_data([x], [y])
+        return self.points
+
+
+class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
+    def on_trigger(self, _):
+        self.add_frame(x=self.system_state[0],
+                       y=self.system_state[1],
+                       theta=self.system_state[2])
 
 
 class HistoricalCallback(Callback, ABC):
@@ -699,8 +925,8 @@ def method_callback(method_name, class_name=None, log_level="debug"):
         )
 
     class MethodCallback(Callback):
-        def __init__(self, log, log_level=log_level):
-            super().__init__(log, log_level=log_level)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
         def is_target_event(self, obj, method, output):
             return method == method_name and class_name in [

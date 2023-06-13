@@ -218,6 +218,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         """
         self.action = action
 
+
     def compute_closed_loop_rhs(self, time, state_full):
         """Right-hand side of the closed-loop system description.
 
@@ -270,19 +271,9 @@ class System(rcognita.base.RcognitaBase, ABC):
         pass
 
 
+#@rcognita.callbacks.PlanarMotionAnimation.attach
 class SysKinematicPoint(System):
     """System class: mathematical pendulum."""
-
-    class _KinematicPointAnimation(rcognita.callbacks.AnimationCallback):
-        def is_target_event(self, obj, method, output):
-            pass
-
-        def perform(self, obj, method, output):
-            pass
-
-        def update_frame(self, **frame_datum):
-            pass
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -374,6 +365,7 @@ class SysInvertedPendulumPD(SysInvertedPendulum):
         self.integral_alpha = 0
 
 
+#@rcognita.callbacks.DirectionalPlanarMotionAnimation.attach
 class Sys3WRobot(System):
     r"""System class: 3-wheel robot with dynamical actuators.
 

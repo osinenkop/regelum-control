@@ -63,6 +63,8 @@ import numpy
 
 from unittest.mock import MagicMock
 
+# main = MagicMock()
+
 from .__hydra_main import main as hydramain
 
 from .callbacks import (

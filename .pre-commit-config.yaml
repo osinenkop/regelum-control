@@ -9,7 +9,7 @@ repos:
         additional_dependencies: [ 'black' ]
       - id: ruff
         name: Linter (Ruff)
-        entry: bash -c "ruff check ./rcognita"
+        entry: bash -c "ruff check ./rcognita --ignore-noqa"
         language: system
         types: [ python ]
         require_serial: true

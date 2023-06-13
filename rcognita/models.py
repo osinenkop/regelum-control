@@ -50,6 +50,7 @@ class Model(rcognita.base.RcognitaBase, ABC):
     """Blueprint of a model."""
 
     def __call__(self, *args, weights=None, use_stored_weights=False):
+        super().__init__()
         if use_stored_weights is False:
             if weights is not None:
                 return self.forward(*args, weights=weights)

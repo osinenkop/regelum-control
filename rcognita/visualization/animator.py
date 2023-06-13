@@ -227,6 +227,7 @@ class Animator:
         self.update_dashboards("step")
         return self.artists
 
+
     def set_sim_data(self, **kwargs):
         """This function is needed for playback purposes when simulation data were generated elsewhere.
 

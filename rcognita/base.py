@@ -1,8 +1,12 @@
 """Base infrastructure of rcognita."""
 
 import abc
+import ctypes
 import inspect
-import rcognita.callbacks
+import threading
+from threading import Thread
+
+from . import callbacks as cb
 import rcognita
 import weakref
 from types import MappingProxyType
@@ -35,10 +39,40 @@ class apply_callbacks:
         return new_method
 
 
+class RcognitaTerminateThreadException(Exception):
+    pass
+
+
 class RcognitaType(abc.ABCMeta):
+    @classmethod
+    def __register_callback(cls, callback):
+        pass
+
     @classmethod
     def __prepare__(metacls, *args):
         return {"apply_callbacks": apply_callbacks} | super().__prepare__(*args)
+
+    def __new__(cls, *args, **kwargs):
+        x = super().__new__(cls, *args, **kwargs)
+        if x.__name__ == "RcognitaBase" or x.__name__ == "Callback" or issubclass(x, cb.Callback):
+            return x
+        if hasattr(x, "_real_name"):
+            x.__name__ = x._real_name
+            del x._real_name
+        callbacks = x._attached if hasattr(x, "_attached") else []
+        if callbacks:
+            del x._attached
+        existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        for callback in callbacks:
+            if callback not in existing_callbacks:
+                callback_instance = callback(attachee=x) ## Might want to move it to the metaclass
+                callback_instance.on_launch()  # I must change this
+                rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+        return x
+
+
+    #def __matmul__(self, other):
+    #    assert issubclass(self, rcognita.callbacks.Callback)
 
 
 class RcognitaBase(metaclass=RcognitaType):
@@ -57,18 +91,14 @@ class RcognitaBase(metaclass=RcognitaType):
 
     def __init__(self):
         """Initialize an object from rcognita."""
-        callbacks = [
-            getattr(self.__class__, d)
-            for d in dir(self.__class__)
-            if inspect.isclass(getattr(self.__class__, d))
-            and issubclass(getattr(self.__class__, d), rcognita.callbacks.Callback)
-        ]
-        existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
-        for callback in callbacks:
-            if callback not in existing_callbacks:
-                callback_instance = callback()
-                callback_instance.on_launch()
-                rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+        #callbacks = self.__class__._attached if hasattr(self.__class__, "_attached") else []
+        #existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        #for callback in callbacks:
+        #    if callback not in existing_callbacks:
+        #        callback_instance = callback(attachee=self.__class__) ## Might want to move it to the metaclass
+        #        callback_instance.on_launch()
+        #        rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+
 
 
 class Node(abc.ABC):

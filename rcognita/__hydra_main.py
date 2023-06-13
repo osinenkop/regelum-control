@@ -7,6 +7,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Callable, List, Optional
 
+import dill
 from omegaconf import DictConfig, open_dict, read_write
 
 from hydra import version
@@ -116,10 +117,10 @@ def main(
                         res = to_dataframe(res[0])
                         path = (
                             os.path.abspath(res["directory"][0] + "/..")
-                            + "/output.pickle"
+                            + "/output.dill"
                         )
                         with open(path, "wb") as f:
-                            pickle.dump(res, f)
+                            dill.dump(res, f)
                         return res
                     else:
                         return NotImplemented

@@ -72,6 +72,7 @@ class CasADiSolver(Solver):
         :param system: The system object for the solver.
         :type system: System
         """
+        super().__init__()
         self.integrator = integrator
         self.time_start = time_start
         self.time_final = time_final
