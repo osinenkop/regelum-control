@@ -31,341 +31,252 @@ except ModuleNotFoundError:
     UpdatableSampler = MagicMock()
 
 from rcognita.callbacks import apply_callbacks
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, Any
 from functools import partial
 from inspect import signature
 from dataclasses import dataclass
+from .__utilities import TORCH, CASADI, NUMPY, type_inference
 
 
-@dataclass
-class Optimizer(ABC):
-    objective: Callable
-    constraints: Union[list[Optional[Callable]], tuple[Optional[Callable]], None] = None
-    opt_options: Optional[dict] = None
-    log_options: Optional[dict] = None
-
-    def __parse_signature(self, func: Callable):
-        assert callable(func), "objective_function must be callable"
-        func_signature = signature(func)
-        assert all(
-            [
-                str(var_kind) not in ["KEYWORD_ONLY", "VAR_KEYWORD", "VAR_POSITIONAL"]
-                for var_kind in func_signature.parameters.values()
-            ]
-        ), (
-            "Forbidden signature of the objective function."
-            + " Explicit list of arguments must be specified"
-        )
-
-        return list(func_signature.parameters)
-
-    def __post_init__(self):
-        self.objective_parameters = self.__parse_signature(self.objective)
-        if self.constraints:
-            if isinstance(self.constraints, Callable):
-                self.constraints = [self.constraints]
-
-            for constraint in self.constraints:
-                setattr(self, constraint.__name__, constraint)
-
-            self.constraint_parameters = {
-                constraint.__name__: self.__parse_signature(constraint)
-                for constraint in self.constraints
-            }
-        else:
-            self.constraint_parameters = {}
-
-    @abstractmethod
-    def create_solver(self):
-        pass
-
-
-class CasadiOptimizer(Optimizer):
-    def create_solver(self):
-        self.__opti = Opti()
-
-
-class LazyOptimizer:
-    _engine_name = "LazyOptimizer"
-
-    def __init__(
-        self,
-        class_object: Optional[type] = None,
-        objective_function: Optional[Callable] = None,
-        opt_method=None,
-        opt_options: Optional[dict] = None,
-        print_options: Optional[dict] = None,
-        decision_variable=None,
-        decision_variable_bounds: Optional[np.ndarray] = None,
-        decision_variable_dim: Optional[list] = None,
-        free_parameters: Optional[dict[str, int]] = None,
-        constraints: Union[
-            list[Optional[Callable]], tuple[Optional[Callable]], None
-        ] = None,
-        is_instantiated=False,
-    ) -> None:
-        if self.__class__.__name__ != "LazyOptimizer":
-            is_instantiated = True
-
-        if not is_instantiated and class_object is None:
-            raise ValueError("class_object must be specified if not instantiated")
-        assert objective_function is None or callable(
-            objective_function
-        ), "objective_function must be callable"
-        assert opt_options is None or isinstance(
-            opt_options, dict
-        ), "opt_options must be of type dict"
-        assert print_options is None or isinstance(
-            print_options, dict
-        ), "print_options must be of type dict"
-        assert constraints is None or all(
-            [callable(c) for c in constraints]
-        ), "constraints must be callable"
-
-        self.class_object = class_object
-        if decision_variable_dim is not None:
-            self.specify_decision_variable_dimensions(
-                decision_variable_dim=decision_variable_dim
-            )
-        if free_parameters is not None:
-            self.specify_parameters(free_parameters=free_parameters)
-
-        self.specify_decision_variable(decision_variable)
-        self.specify_parameters(free_parameters)
-        if objective_function is not None:
-            self.minimize(objective_function)
-        else:
-            self.objective_function = None
-
-        self.opt_options = opt_options if opt_options is not None else {}
-        self.print_options = print_options if print_options is not None else {}
-        self.specify_opt_method(opt_method)
-
-        self.decision_variable_bounds = decision_variable_bounds
-        self.subject_to(constraints)
-        if self.decision_variable_bounds is not None:
-            self.apply_bounds(decision_variable_bounds)
-        else:
-            self.decision_variable_bounds = None
-
-    def minimize(self, objective_function: Callable) -> None:
-        assert callable(objective_function), "objective_function must be callable"
-        f_args = objective_function.__code__.co_varnames
-        obj_sign = signature(objective_function)
-        assert any(["dvar_" in arg for arg in f_args]), (
-            "Decision variable for "
-            + f"objective function {objective_function.__name__} "
-            "must be specified with 'dvar_' prefix"
-        )
-        assert all(
-            [
-                str(var_kind) not in ["KEYWORD_ONLY", "VAR_KEYWORD", "VAR_POSITIONAL"]
-                for var_kind in obj_sign.parameters.values()
-            ]
-        ), (
-            "Forbidden signature of the objective function."
-            + " Explicit list of arguments must be specified"
-        )
-        self.objective_function = objective_function
-
-    def subject_to(
-        self,
-        constraints: Union[
-            list[Optional[Union[Callable, NonlinearConstraint]]],
-            tuple[Optional[Union[Callable, NonlinearConstraint]]],
-            None,
-        ] = None,
-    ) -> None:
-        if constraints is None:
-            ## TODO: change to log level info
-            print("No constraints specified")
-            constraints = []
-        if self.constraints is None:
-            self.constraints = constraints
-        else:
-            if not isinstance(self.constraints, (list)):
-                self.constraints = list(self.constraints)
-            self.constraints.extend(list(constraints))
-
-    def specify_opt_method(self, opt_method) -> None:
-        self.opt_method = opt_method
-
-    def specify_decision_variable_dimensions(
-        self,
-        decision_variable_dim: Optional[Union[list, tuple, int]] = None,
-    ) -> None:
-        if decision_variable_dim is not None:
-            self.decision_variable_dim = decision_variable_dim
-        else:
-            print("No decision variable dimension specified")
-
-    def apply_bounds(
-        self, decision_variable_bounds: Optional[np.ndarray] = None
-    ) -> None:
-        assert (
-            isinstance(decision_variable_bounds, np.ndarray)
-            and len(decision_variable_bounds.shape) == 2
-        ), "decision_variable_bounds must be a 2D np.ndarray"
-        self.decision_variable_bounds = decision_variable_bounds
-
-    def specify_parameters(self, free_parameters: Optional[dict] = None) -> None:
-        self.free_parameters = free_parameters
-
-    def specify_decision_variable(self, decision_variable) -> None:
-        self.decision_variable = decision_variable
-
-    @staticmethod
-    def variable(*args):
-        if len(args) > 1:
-            assert all(
-                [isinstance(arg, int) for arg in args]
-            ), "All arguments must be integers when len(*args) > 1"
-        elif len(args) == 1:
-            args = args[0]
-            assert all(
-                [isinstance(arg, int) for arg in args]
-            ), f"All arguments must be integers inside {args}"
-        return args
-
-    def instantiate(self):
-        assert self.class_object is not None
-        return self.class_object(
-            objective_function=self.objective_function,
-            opt_method=self.opt_method,
-            opt_options=self.opt_options,
-            print_options=self.print_options,
-            decision_variable=self.decision_variable,
-            decision_variable_bounds=self.decision_variable_bounds,
-            decision_variable_dim=self.decision_variable_dim,
-            free_parameters=self.free_parameters,
-            constraints=self.constraints,
-            is_instantiated=True,
-        )
-
-    def optimize(self, initial_guess, **free_parameters):
-        pass
-
-
-class SciPyOptimizer(LazyOptimizer):
-    def subject_to(
-        self,
-        constraints: Union[
-            list[Optional[Union[Callable, NonlinearConstraint]]],
-            tuple[Optional[Union[Callable, NonlinearConstraint]]],
-            None,
-        ] = None,
-    ) -> None:
-        if constraints:
-            constraints = [
-                NonlinearConstraint(c, -np.inf, 0.0) for c in constraints if c
-            ]
-        super().subject_to(constraints)
-
-    def optimize(self, initial_guess, *free_parameters, **free_parameters_kwargs):
-        if self.decision_variable_bounds is not None:
-            bounds = sp.optimize.Bounds(
-                self.decision_variable_bounds[:, 0],
-                self.decision_variable_bounds[:, 1],
-                keep_feasible=True,
-            )
-        else:
-            bounds = None
-
-        assert (
-            self.objective_function is not None
-        ), "objective_function must be specified"
-        opt_result = minimize(
-            partial(
-                self.objective_function, *free_parameters, **free_parameters_kwargs
+def partial_positionals(func, positionals, **keywords):
+    def wrapper(*args, **kwargs):
+        arg = iter(args)
+        return func(
+            *(
+                positionals[i] if i in positionals else next(arg)
+                for i in range(len(args) + len(positionals))
             ),
-            x0=initial_guess,
-            method=self.opt_method,
-            bounds=bounds,
-            options=self.opt_options,
-            constraints=self.constraints,
-            tol=1e-7,
+            **{**keywords, **kwargs},
         )
 
-        return opt_result.x
+    return wrapper
 
 
-class CasADiOptimizer(LazyOptimizer):
-    _engine = "CasADi"
+class Optimizable:
+    def __init__(self, kind="symbolic", opt_options={}, log_options={}) -> None:
+        self.kind = kind
+        if self.kind == "symbolic":
+            self.__opti = Opti()
+            self.__variables = []
+            self.__parameters = []
+            self.__opt_func = None
+            self.__initial_guess_form = None
+        elif self.kind == "numeric":
+            self.__N_objective_args = None
+            self.__decision_var_idx = None
+            self.__obj_input_encoding = None
+            self.__constraint_input_encodings = None
+        elif self.kind == "tensor":
+            self.__decision_variable = None
 
-    def __init__(self, *args, **kwargs):
-        self.__opti = Opti()
-        self.minimizer = None
-        self.__u = None
-        super().__init__(*args, **kwargs)
-        self.minimizer = self.__opti.to_function(
-            "minimize", [self.__u, *self.__parameters], [self.__u]
+        self.__constraints = []
+        self.__bounds = []
+        self.__objective_kind = None
+        self.__constraints_kind = None
+        self.__opt_options = opt_options
+        self.__log_options = log_options
+
+    def register_objective(self, func, *args, decision_var_idx=0, **kwargs):
+        if self.kind == "symbolic":
+            self.__register_symbolic_objective(func, *args, **kwargs)
+        elif self.kind == "numeric":
+            self.__register_numeric_objective(func, decision_var_idx)
+
+    def __register_symbolic_objective(self, func, *args, **kwargs):
+        self._objective = func(*args, **kwargs)
+        self.__opti.minimize(self._objective)
+        self.__objective_kind = "symbolic"
+
+    def __register_numeric_objective(self, func, decision_var_idx):
+        assert callable(func), "objective_function must be callable"
+        f_args = func.__code__.co_varnames
+        assert decision_var_idx < len(
+            f_args
+        ), "decision variable index must be less than number of decision variables"
+        self._objective = func
+        self.__decision_var_idx = decision_var_idx
+        self.__N_objective_args = len(f_args)
+        self.__obj_input_encoding = [f"arg_{i}" for i in range(self.__N_objective_args)]
+        self.__obj_input_encoding[self.__decision_var_idx] = "dvar"
+        self.__objective_kind = "numeric"
+
+    def register_bounds(self, bounds, var=None):
+        if self.kind == "symbolic":
+            self.__register_symbolic_bounds(bounds, var)
+
+        elif self.kind == "numeric":
+            self.__register_numeric_bounds(bounds)
+
+    def __register_symbolic_bounds(self, bounds, var=None):
+        if var is None:
+            assert (
+                self.__variables is not None
+            ), "At least one decision variable must be specified!"
+            var = self.__variables[0]
+
+        self.__bounds = bounds
+        lb_constr = lambda var: bounds[:, 0] - var
+        ub_constr = lambda var: var - bounds[:, 1]
+        self.register_constraint(lb_constr, var)
+        self.register_constraint(ub_constr, var)
+
+    def __register_numeric_bounds(self, bounds):
+        self.__bounds = sp.optimize.Bounds(
+            bounds[:, 0],
+            bounds[:, 1],
+            keep_feasible=True,
         )
+
+    def register_constraint(self, func, *args, **kwargs):
+        if self.kind == "symbolic":
+            self.__register_symbolic_constraint(func, *args, **kwargs)
+        elif self.kind == "numeric":
+            self.__register_numeric_constraint(func)
+
+    def __register_symbolic_constraint(self, func, *args, **kwargs):
+        constr = func(*args, **kwargs) <= 0
+        self.__opti.subject_to(constr)
+        self.__constraints.append(constr)
+        self.__constraints_kind = "symbolic"
+
+    def __register_numeric_constraint(self, func):
+        self.__constraints.append(NonlinearConstraint(func, -np.inf, 0))
+        self.__constraints_kind = "numeric"
+
+    def form_initial_guess(self, *args):
+        if self.kind == "symbolic":
+            self.__initial_guess_form = list(args)
+        else:
+            raise NotImplementedError
+
+    def variable(self, dim):
+        assert (
+            self.kind == "symbolic"
+        ), "Variables definition only available for symbolic optimization."
+        var = self.__opti.variable(dim)
+        self.__variables.append(var)
+        return var
+
+    def parameter(self, dim):
+        assert (
+            self.kind == "symbolic"
+        ), "Parameters definition only available for symbolic optimization."
+        par = self.__opti.parameter(dim)
+        self.__parameters.append(par)
+        return par
+
+    def del_variable(self, idx):
+        assert (
+            self.kind == "symbolic"
+        ), "Variables definition only available for symbolic optimization."
+        self.__variables.pop(idx)
+
+    def del_parameter(self, idx):
+        assert (
+            self.kind == "symbolic"
+        ), "Parameters definition only available for symbolic optimization."
+        self.__parameters.pop(idx)
 
     @property
-    def dvar(self):
-        if self.__u is None:
-            if self.decision_variable_dim is not None:
-                self.__u = self.__opti.variable(self.decision_variable_dim)
-            else:
-                Warning("Decision_variable_dim is not specified, returning None")
-                return None
-        return self.__u
-
-    def specify_decision_variable_dimensions(
-        self, decision_variable_dim: Optional[list] = None
-    ) -> None:
-        super().specify_decision_variable_dimensions(decision_variable_dim)
+    def defined_params(self):
         assert (
-            self.decision_variable_dim is not None
-        ), "decision_variable_dim must be specified"
-        self.__u = self.__opti.variable(self.decision_variable_dim)
-        return self.__u
+            self.kind == "symbolic"
+        ), "Parameters definition only available for symbolic optimization."
+        return self.__parameters
 
-    def apply_bounds(
-        self, decision_variable_bounds: Optional[np.ndarray] = None
-    ) -> None:
-        super().apply_bounds(decision_variable_bounds)
-        if self.decision_variable_bounds is not None:
-            self.__opti.subject_to(self.__u >= self.decision_variable_bounds[:, 0])
-            self.__opti.subject_to(self.__u <= self.decision_variable_bounds[:, 1])
-
-    def specify_opt_method(self, opt_method) -> None:
-        super().specify_opt_method(opt_method)
-        assert self.opt_method is not None, "opt_method must be specified"
-        self.__opti.solver(self.opt_method, self.opt_options, self.print_options)
-
-    def subject_to(
-        self,
-        constraints: Union[
-            list[Optional[Callable]], tuple[Optional[Callable]], None
-        ] = None,
-    ) -> None:
-        super().subject_to(constraints)
-        if self.constraints:
-            assert all([callable(c) for c in self.constraints])
-            for c in self.constraints:
-                assert callable(c)
-                if c:
-                    self.__opti.subject_to(c(self.__u) <= 0)
-
-    def minimize(self, objective_function: Callable) -> None:
-        super().minimize(objective_function)
+    @property
+    def defined_vars(self):
         assert (
-            self.objective_function is not None
-        ), "objective_function must be specified"
-        self.__opti.minimize(objective_function(self.__u))
+            self.kind == "symbolic"
+        ), "Variables definition only available for symbolic optimization."
+        return self.__variables
 
-    def variable(self, *args):
-        args = super().variable(*args)
-        return self.__opti.variable(*args)
+    @property
+    def summary(self):
+        return {
+            "kind": self.kind,
+            "variables": self.__variables,
+            "parameters": self.__parameters,
+            "constraints": self.__constraints,
+            "bounds": self.__bounds,
+            "objective": self._objective,
+        }
 
-    def optimize(self, initial_guess, *args):
-        assert self.minimizer is not None, "Objective function is not defined"
-        result = self.minimizer(initial_guess, *args)
+    @property
+    def initial_guess_form(self):
+        if self.__initial_guess_form is None:
+            self.form_initial_guess(*self.__variables, *self.__parameters)
+        return self.__initial_guess_form
+
+    def __optimize_symbolic(self, *args, **kwargs):
+        if self.__initial_guess_form is None:
+            self.form_initial_guess(*self.__variables, *self.__parameters)
+        if self.__opt_func is None:
+            self.__opti.solver("ipopt", self.__log_options, self.__opt_options)
+            self.__opt_func = self.__opti.to_function(
+                "min_fun",
+                self.__variables + self.__parameters,
+                [*self.__variables, self._objective],
+            )
+        result = self.__opt_func(*args, **kwargs)
+        return {"d_vars": result[:-1], "objective": result[-1]}
+
+    def __optimize_numeric(self, initial_guess, *args):
+        if len(args) > 0:
+            arg_idxs = list(range(self.__N_objective_args))
+            arg_idxs.remove(self.__decision_var_idx)
+            objective = partial_positionals(
+                self._objective, {arg_idxs[i]: x for i, x in enumerate(args)}
+            )
+        else:
+            objective = self._objective
+        opt_result = minimize(
+            objective,
+            x0=initial_guess,
+            method="SLSQP",
+            bounds=self.__bounds,
+            options=self.__opt_options,
+            constraints=self.__constraints,
+            tol=1e-7,
+        )
+        return opt_result.x, opt_result
+    
+    def __optimize_tensor(self, initial_guess, *args):
+        
+
+    def recreate_constraints(self, *constraints):
+        for c in constraints:
+            self.register_constraint(c)
+
+    def optimize(self, *args, raw=True, **kwargs):
+        if self.kind == "symbolic":
+            result = self.__optimize_symbolic(*args, **kwargs)
+            if raw:
+                result = result["d_vars"][0].full().reshape(-1)
+        elif self.kind == "numeric":
+            result = self.__optimize_numeric(*args, **kwargs)
+            if raw:
+                result = result[0]
+
+        else:
+            raise NotImplementedError
+
         return result
 
 
-class TorchOptimizer(LazyOptimizer):
+class CasADiOptimizer:
+    pass
+
+
+class SciPyOptimizer:
+    pass
+
+
+class Optimizer:
+    pass
+
+
+class TorchOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
@@ -419,7 +330,7 @@ class TorchOptimizer(LazyOptimizer):
             self.optimizer.step()
 
 
-class TorchDataloaderOptimizer(LazyOptimizer):
+class TorchDataloaderOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
@@ -502,7 +413,7 @@ class TorchDataloaderOptimizer(LazyOptimizer):
         self.post_epoch(1, last_epoch_objective)
 
 
-class TorchProjectiveOptimizer(LazyOptimizer):
+class TorchProjectiveOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """
@@ -579,7 +490,7 @@ class TorchProjectiveOptimizer(LazyOptimizer):
         return model_input[0]
 
 
-class BruteForceOptimizer(LazyOptimizer):
+class BruteForceOptimizer:
     """
     Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."
     """

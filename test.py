@@ -1,72 +1,33 @@
-from rcognita.systems import System, ThreeWheeledRobot, TwoTank
-from rcognita.planners import TwoTankPlanner
-from rcognita.__utilities import rc
-from rcognita.optimizers import LazyOptimizer, SciPyOptimizer, CasADiOptimizer
+from rcognita.optimizers import Optimizable, partial_positionals
 import numpy as np
-
-# class ThreeWheeledRobotNI(System):
-#     """
-#     System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator).
-#     """
-
-#     _name = "three-wheeled-robot-ni"
-#     _system_type = "diff_eqn"
-#     _dim_state = 3
-#     _dim_inputs = 2
-#     _dim_observation = 3
-
-#     def compute_state_dynamics(self, time, state, inputs):
-#         Dstate = rc.zeros(self.dim_state, prototype=(state, inputs))
-
-#         Dstate[0] = inputs[0] * rc.cos(state[2])
-#         Dstate[1] = inputs[0] * rc.sin(state[2])
-#         Dstate[2] = inputs[1]
-
-#         return Dstate
+from functools import partial
 
 
-# class Integrator(System):
-#     _name = "integral-parts"
-#     _system_type = "diff_eqn"
-#     _dim_state = 0
-#     _dim_inputs = 2
-#     _dim_observation = 2
-#     _parameters = {"m": 10, "I": 1}
-
-#     def compute_state_dynamics(self, time, state, inputs):
-#         Dstate = rc.zeros(
-#             self.dim_state,
-#             prototype=(state, inputs),
-#         )
-
-#         m, I = self.parameters["m"], self.parameters["I"]
-
-#         Dstate[0] = 1 / m * inputs[0]
-#         Dstate[1] = 1 / I * inputs[1]
-
-#         return Dstate
+def f(x, y):
+    return (x - 1) ** 2 + y**2 + 10
 
 
-# system = TwoTank().compose(TwoTankPlanner(), output_mode="right")
-# obs = system.get_observation(None, [0, 0.4], [1])
-# print(obs)
-objective = lambda x: (x - 1) ** 2 + 1
-bounds = np.array([[-0.5, 0.5]])
+bounds = np.array([[-5, 5]])
 
-optimizer = LazyOptimizer(
-    class_object=SciPyOptimizer,
-    objective_function=objective,
-    decision_variable_bounds=bounds,
+
+def c1(x, p1):
+    return x**2 - p1
+
+
+O = Optimizable(kind="numeric")
+O.register_objective(f)
+O.register_bounds(bounds)
+O.recreate_constraints(partial_positionals(c1, {1: 0.5}))
+print(O.optimize(3, 1))
+
+O = Optimizable(
+    log_options={"print_in": False, "print_out": False, "print_time": True},
+    opt_options={"print_level": 0},
 )
-
-
-optimizer.specify_decision_variable_dimensions(decision_variable_dim=1)
-optimizer.specify_opt_method("SLSQP")
-optimizer.specify_parameters()
-optimizer.apply_bounds(bounds)
-optimizer.subject_to([lambda x: x**2 - 0.01, lambda x: x**2 + 0.01])
-print(type(optimizer))
-n_optimizer = optimizer.instantiate()
-print(type(n_optimizer))
-x = n_optimizer.optimize([0.0])
-print(x)
+x_p = O.variable(1)
+y_p = O.parameter(1)
+p1 = O.parameter(1)
+O.register_objective(f, x_p, y_p)
+O.register_bounds(bounds)
+O.register_constraint(c1, x_p, p1)
+print(O.optimize(3, 1, 0.5))
