@@ -4,8 +4,7 @@ This module contains optimization routines to be used in optimal controllers, po
 """
 import rcognita.base
 from rcognita.__utilities import rc
-import scipy as sp
-from scipy.optimize import minimize, NonlinearConstraint
+from scipy.optimize import minimize, NonlinearConstraint, Bounds
 import numpy as np
 import warnings
 
@@ -34,8 +33,12 @@ from rcognita.callbacks import apply_callbacks
 from typing import Callable, Optional, Union, Any
 from functools import partial
 from inspect import signature
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from .__utilities import TORCH, CASADI, NUMPY, type_inference
+
+
+class Optimizer:
+    pass
 
 
 def partial_positionals(func, positionals, **keywords):
@@ -52,35 +55,62 @@ def partial_positionals(func, positionals, **keywords):
     return wrapper
 
 
+@dataclass
+class OptimizerConfig:
+    kind: str
+    opt_method: Optional[Any] = None
+    opt_options: dict = field(default_factory=lambda: {})
+    log_options: dict = field(default_factory=lambda: {})
+    config_options: dict = field(default_factory=lambda: {})
+
+    def __post_init__(self) -> None:
+        self.__dict__.update(self.config_options)
+
+
 class Optimizable:
-    def __init__(self, kind="symbolic", opt_options={}, log_options={}) -> None:
-        self.kind = kind
+    def __init__(self, optimizer_config: OptimizerConfig) -> None:
+        self.optimizer_config = optimizer_config
+        self.kind = optimizer_config.kind
         if self.kind == "symbolic":
             self.__opti = Opti()
             self.__variables = []
             self.__parameters = []
             self.__opt_func = None
             self.__initial_guess_form = None
+            if optimizer_config.opt_method is None:
+                optimizer_config.opt_method = "ipopt"
         elif self.kind == "numeric":
             self.__N_objective_args = None
             self.__decision_var_idx = None
             self.__obj_input_encoding = None
             self.__constraint_input_encodings = None
+            if optimizer_config.opt_method is None:
+                optimizer_config.opt_method = "SLSQP"
         elif self.kind == "tensor":
             self.__decision_variable = None
+            self.optimizer = None
+            if optimizer_config.opt_method is None:
+                from torch.optim import Adam
 
+                optimizer_config.opt_method = Adam
+        else:
+            raise NotImplementedError("Not implemented this kind of optimizer")
+
+        self.opt_method = optimizer_config.opt_method
         self.__constraints = []
         self.__bounds = []
         self.__objective_kind = None
         self.__constraints_kind = None
-        self.__opt_options = opt_options
-        self.__log_options = log_options
+        self.__opt_options = optimizer_config.opt_options
+        self.__log_options = optimizer_config.log_options
 
     def register_objective(self, func, *args, decision_var_idx=0, **kwargs):
         if self.kind == "symbolic":
             self.__register_symbolic_objective(func, *args, **kwargs)
         elif self.kind == "numeric":
             self.__register_numeric_objective(func, decision_var_idx)
+        elif self.kind == "tensor":
+            self.__register_tensor_objective(func, decision_var_idx)
 
     def __register_symbolic_objective(self, func, *args, **kwargs):
         self._objective = func(*args, **kwargs)
@@ -100,12 +130,27 @@ class Optimizable:
         self.__obj_input_encoding[self.__decision_var_idx] = "dvar"
         self.__objective_kind = "numeric"
 
+    def __register_tensor_objective(self, func, decision_var_idx):
+        f_args = func.__code__.co_varnames
+        assert decision_var_idx < len(
+            f_args
+        ), "decision variable index must be less than number of decision variables"
+        self._objective = func
+        self.__decision_var_idx = decision_var_idx
+        self.__N_objective_args = len(f_args)
+        self.__obj_input_encoding = [f"arg_{i}" for i in range(self.__N_objective_args)]
+        self.__obj_input_encoding[self.__decision_var_idx] = "dvar"
+        self.__objective_kind = "tensor"
+
     def register_bounds(self, bounds, var=None):
         if self.kind == "symbolic":
             self.__register_symbolic_bounds(bounds, var)
 
         elif self.kind == "numeric":
             self.__register_numeric_bounds(bounds)
+
+        elif self.kind == "tensor":
+            self.__register_tensor_bounds(bounds)
 
     def __register_symbolic_bounds(self, bounds, var=None):
         if var is None:
@@ -121,17 +166,22 @@ class Optimizable:
         self.register_constraint(ub_constr, var)
 
     def __register_numeric_bounds(self, bounds):
-        self.__bounds = sp.optimize.Bounds(
+        self.__bounds = Bounds(
             bounds[:, 0],
             bounds[:, 1],
             keep_feasible=True,
         )
+
+    def __register_tensor_bounds(self, bounds):
+        self.__bounds = bounds
 
     def register_constraint(self, func, *args, **kwargs):
         if self.kind == "symbolic":
             self.__register_symbolic_constraint(func, *args, **kwargs)
         elif self.kind == "numeric":
             self.__register_numeric_constraint(func)
+        elif self.kind == "tensor":
+            self.__register_tensor_constraint(func, *args, **kwargs)
 
     def __register_symbolic_constraint(self, func, *args, **kwargs):
         constr = func(*args, **kwargs) <= 0
@@ -142,6 +192,11 @@ class Optimizable:
     def __register_numeric_constraint(self, func):
         self.__constraints.append(NonlinearConstraint(func, -np.inf, 0))
         self.__constraints_kind = "numeric"
+
+    def __register_tensor_constraint(self, func, *args, **kwargs):
+        assert callable(func), "constraint function must be callable"
+        self.__constraints.append(func)
+        self.__constraints_kind = "tensor"
 
     def form_initial_guess(self, *args):
         if self.kind == "symbolic":
@@ -192,7 +247,7 @@ class Optimizable:
         return self.__variables
 
     @property
-    def summary(self):
+    def summary_symbolic(self):
         return {
             "kind": self.kind,
             "variables": self.__variables,
@@ -212,7 +267,7 @@ class Optimizable:
         if self.__initial_guess_form is None:
             self.form_initial_guess(*self.__variables, *self.__parameters)
         if self.__opt_func is None:
-            self.__opti.solver("ipopt", self.__log_options, self.__opt_options)
+            self.__opti.solver(self.opt_method, self.__log_options, self.__opt_options)
             self.__opt_func = self.__opti.to_function(
                 "min_fun",
                 self.__variables + self.__parameters,
@@ -223,7 +278,14 @@ class Optimizable:
 
     def __optimize_numeric(self, initial_guess, *args):
         if len(args) > 0:
+            assert (
+                self.__N_objective_args is not None
+                and self.__N_objective_args == len(args) + 1
+            ), "Wrong number of arguments or objective function not defined."
             arg_idxs = list(range(self.__N_objective_args))
+            assert (
+                self.__decision_var_idx is not None
+            ), "Something went wrong, check your arguments"
             arg_idxs.remove(self.__decision_var_idx)
             objective = partial_positionals(
                 self._objective, {arg_idxs[i]: x for i, x in enumerate(args)}
@@ -233,16 +295,35 @@ class Optimizable:
         opt_result = minimize(
             objective,
             x0=initial_guess,
-            method="SLSQP",
+            method=self.opt_method,
             bounds=self.__bounds,
             options=self.__opt_options,
             constraints=self.__constraints,
             tol=1e-7,
         )
         return opt_result.x, opt_result
-    
-    def __optimize_tensor(self, initial_guess, *args):
-        
+
+    def __optimize_tensor(self, initial_guess, dataset):
+        dataloader = DataLoader(
+            dataset=dataset,
+            shuffle=self.optimizer_config.config_options.shuffle,
+            batch_size=self.optimizer_config.config_options.batch_size
+            if self.optimizer_config.config_options.batch_size is not None
+            else len(dataset),
+        )
+        if self.optimizer is None:
+            assert (
+                self.__decision_variable is not None
+            ), "Optimization parameters not defined."
+            assert callable(self.opt_method), "Optimization method not defined."
+            self.optimizer = self.opt_method(
+                self.__decision_variable, **self.__opt_options
+            )
+        batch_sample = next(iter(dataloader))
+        self.optimizer.zero_grad()
+        objective_value = self._objective(batch_sample)
+        objective_value.backward()
+        self.optimizer.step()
 
     def recreate_constraints(self, *constraints):
         for c in constraints:
@@ -264,70 +345,20 @@ class Optimizable:
         return result
 
 
-class CasADiOptimizer:
-    pass
-
-
-class SciPyOptimizer:
-    pass
-
-
-class Optimizer:
-    pass
-
-
-class TorchOptimizer:
-    """
-    Optimizer class that uses PyTorch as its optimization engine.
-    """
-
-    _engine = "Torch"
-
-    def __init__(
-        self, opt_options, model, iterations=1, opt_method=None, verbose=False
-    ):
-        """
-        Initialize an instance of TorchOptimizer.
-
-        :param opt_options: Options for the PyTorch optimizer.
-        :type opt_options: dict
-        :param iterations: Number of iterations to optimize the model.
-        :type iterations: int
-        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
-        :type opt_method: torch.optim.Optimizer
-        :param verbose: Whether to print optimization progress.
-        :type verbose: bool
-        """
-        if opt_method is None:
-            opt_method = torch.optim.Adam
-
-        self.opt_method = opt_method
-        self.opt_options = opt_options
-        self.iterations = iterations
-        self.verbose = verbose
-        self.loss_history = []
-        self.model = model
-        self.optimizer = self.opt_method(model.parameters(), **self.opt_options)
-
-    def optimize(
-        self, objective, model_input=None
-    ):  # remove model and add parameters instead
-        """
-        Optimize the model with the given objective.
-
-        :param objective: Objective function to optimize.
-        :type objective: callable
-        :param model: Model to optimize.
-        :type model: torch.nn.Module
-        :param model_input: Inputs to the model.
-        :type model_input: torch.Tensor
-        """
-
-        for _ in range(self.iterations):
-            self.optimizer.zero_grad()
-            loss = objective(model_input)
-            loss.backward()
-            self.optimizer.step()
+torch_default_config = OptimizerConfig(
+    kind="tensor",
+    opt_options={"lr": 1e-3},
+    config_options={"batch_size": 500, "shuffle": False, "iterations": 30},
+)
+casadi_default_config = OptimizerConfig(
+    kind="symbolic",
+    opt_options={"print_level": 0},
+    log_options={"print_in": False, "print_out": False, "print_time": True},
+    opt_method="ipopt",
+)
+scipy_default_config = OptimizerConfig(
+    kind="numeric",
+)
 
 
 class TorchDataloaderOptimizer:

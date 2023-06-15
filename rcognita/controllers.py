@@ -17,7 +17,6 @@ from numpy.random import rand
 from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
-from .optimizers import CasADiOptimizer, SciPyOptimizer
 from .__w_plotting import plot_optimization_results
 from .callbacks import apply_callbacks, Callback
 from .base import RcognitaBase

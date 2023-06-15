@@ -1,4 +1,9 @@
-from rcognita.optimizers import Optimizable, partial_positionals
+from rcognita.optimizers import (
+    Optimizable,
+    partial_positionals,
+    casadi_default_config,
+    scipy_default_config,
+)
 import numpy as np
 from functools import partial
 
@@ -14,16 +19,13 @@ def c1(x, p1):
     return x**2 - p1
 
 
-O = Optimizable(kind="numeric")
+O = Optimizable(scipy_default_config)
 O.register_objective(f)
 O.register_bounds(bounds)
 O.recreate_constraints(partial_positionals(c1, {1: 0.5}))
 print(O.optimize(3, 1))
 
-O = Optimizable(
-    log_options={"print_in": False, "print_out": False, "print_time": True},
-    opt_options={"print_level": 0},
-)
+O = Optimizable(casadi_default_config)
 x_p = O.variable(1)
 y_p = O.parameter(1)
 p1 = O.parameter(1)
