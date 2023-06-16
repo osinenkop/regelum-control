@@ -117,6 +117,9 @@ class Optimizable:
         self.__opti.minimize(self._objective)
         self.__objective_kind = "symbolic"
 
+    def register_decision_variable(self, dvar):
+        self.__decision_variable = dvar
+
     def __register_numeric_objective(self, func, decision_var_idx):
         assert callable(func), "objective_function must be callable"
         f_args = func.__code__.co_varnames
@@ -303,19 +306,21 @@ class Optimizable:
         )
         return opt_result.x, opt_result
 
-    def __optimize_tensor(self, initial_guess, dataset):
+    def __optimize_tensor(self, dataset):
         dataloader = DataLoader(
             dataset=dataset,
-            shuffle=self.optimizer_config.config_options.shuffle,
-            batch_size=self.optimizer_config.config_options.batch_size
-            if self.optimizer_config.config_options.batch_size is not None
+            shuffle=self.optimizer_config.config_options["shuffle"],
+            batch_size=self.optimizer_config.config_options["batch_size"]
+            if self.optimizer_config.config_options["batch_size"] is not None
             else len(dataset),
         )
         if self.optimizer is None:
             assert (
                 self.__decision_variable is not None
             ), "Optimization parameters not defined."
-            assert callable(self.opt_method), "Optimization method not defined."
+            assert self.opt_method is not None and callable(
+                self.opt_method
+            ), f"Wrong optimization method {self.opt_method}."
             self.optimizer = self.opt_method(
                 self.__decision_variable, **self.__opt_options
             )
@@ -330,6 +335,7 @@ class Optimizable:
             self.register_constraint(c)
 
     def optimize(self, *args, raw=True, **kwargs):
+        result = None
         if self.kind == "symbolic":
             result = self.__optimize_symbolic(*args, **kwargs)
             if raw:
@@ -338,7 +344,8 @@ class Optimizable:
             result = self.__optimize_numeric(*args, **kwargs)
             if raw:
                 result = result[0]
-
+        elif self.kind == "tensor":
+            self.__optimize_tensor(*args, **kwargs)
         else:
             raise NotImplementedError
 
