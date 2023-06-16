@@ -438,7 +438,7 @@ class MonteCarloScenario(OnlineScenario):
                 self.controller.episode_data_buffer
             )
             self.controller.episode_data_buffer.nullify_buffer()
-            print(self.actor.model.weights["in_layer.weight"].T)
+            # print(self.actor.model.weights["in_layer.weight"].T)
 
         super().reset_episode()
         super().reset_iteration()

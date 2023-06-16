@@ -1056,31 +1056,47 @@ class ModelNNElementWiseProduct(ModelNN):
         return input_tensor * dot_layer
 
 
+def weights_init_normal(model, std):
+    """Takes in a module and initializes all linear layers with weight
+    values taken from a normal distribution."""
+
+    classname = model.__class__.__name__
+    # for every Linear layer in a model
+    if classname.find("Linear") != -1:
+        y = model.in_features
+        # m.weight.data shoud be taken from a normal distribution
+        model.weight.data.normal_(0.0, std)
+        # m.bias.data should be 0
+        model.bias.data.fill_(0)
+
+
 class GaussianPDFModel(ModelNN):
     def __init__(
         self,
         dim_observation,
         dim_action,
+        dim_hidden,
         std,
-        use_derivative=False,
-        weight_min=None,
-        weight_max=None,
-        weight_min_init=None,
-        weight_max_init=None,
-        action_bounds=None,
+        action_bounds,
+        leakyrelu_coef=0.2,
+        normalize_output_coef=400.0,
     ):
         super().__init__()
 
-        if use_derivative:
-            dim_observation = dim_observation * 2
-
         self.dim_observation = dim_observation
         self.dim_action = dim_action
+        self.dim_hidden = dim_hidden
+        self.leakyrelu_coef = leakyrelu_coef
         self.std = std
+        self.normalize_output_coef = normalize_output_coef
 
-        self.weight_clipper = WeightClipper(weight_min, weight_max)
-        self.in_layer = nn.Linear(self.dim_observation, dim_action, bias=False)
-        self.in_layer.apply(WeightClipper(weight_min_init, weight_max_init))
+        self.perceptron = nn.Sequential(
+            nn.Linear(self.dim_observation, self.dim_hidden),
+            nn.LeakyReLU(self.leakyrelu_coef),
+            nn.Linear(self.dim_hidden, self.dim_hidden),
+            nn.LeakyReLU(self.leakyrelu_coef),
+            nn.Linear(self.dim_hidden, dim_action),
+        )
 
         self.register_parameter(
             name="scale_tril_matrix",
@@ -1125,13 +1141,11 @@ class GaussianPDFModel(ModelNN):
         return (y - unscale_bias) / unscale_multiplier
 
     def get_means(self, observation):
-        self.in_layer.apply(self.weight_clipper)
-        full_feedback = self.in_layer(observation)
         assert 1 - 3 * self.std > 0, "1 - 3 std should be greater than 0"
         # We should guarantee with good probability that sampled actions are within action bounds that are scaled to [-1, 1]
-        scale_coef_of_mean = 1 - 3 * self.std
-        out = scale_coef_of_mean * torch.tanh(full_feedback / scale_coef_of_mean)
-        return out
+        return (1 - 3 * self.std) * torch.tanh(
+            self.perceptron(observation) / self.normalize_output_coef
+        )
 
     def split_tensor_to_observations_actions(self, observations_actions_tensor):
         if len(observations_actions_tensor.shape) == 1:

@@ -2,10 +2,7 @@ _target_: rcognita.models.GaussianPDFModel
 
 dim_observation: $ controller.actor.dim_input
 dim_action: $ controller.actor.dim_output
+dim_hidden: 10
 std: $ system_specific.diag_scale_coef 
-weight_max: 1
-weight_min: = None
-weight_max_init: 2.
-weight_min_init: -2.
 action_bounds: $ system.action_bounds%%
 

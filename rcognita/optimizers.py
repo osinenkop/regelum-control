@@ -404,7 +404,8 @@ class TorchDataloaderOptimizer(Optimizer):
         objective_value = objective(batch_sample)
         last_epoch_objective = objective_value.item()
         objective_value.backward()
-        print(self.model.in_layer.weight.grad)
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 100.0)
+        # print(self.model.in_layer.weight.grad)
         self.optimizer.step()
         if self.sheduler:
             self.sheduler.step()

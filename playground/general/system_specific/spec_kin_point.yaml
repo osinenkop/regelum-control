@@ -26,4 +26,4 @@ single_weight_min: 1.0E-6
 single_weight_max: 1.0E+2
 
 mpc_prediction_horizon: 3
-total_objective_threshold: 10000
+total_objective_threshold: = np.inf
