@@ -646,7 +646,7 @@ class AnimationCallback(Callback, ABC):
         if hasattr(self, "interactive_status"):
             self.interactive_status["frame"] = frame_datum
 
-        if self.interactive:
+        if self.interactive_mode:
             self.lim()
             self.construct_frame(**frame_datum)
             self.fig.canvas.draw()
@@ -692,7 +692,6 @@ class AnimationCallback(Callback, ABC):
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
-        self.interactive()
 
 
     def animate_and_save(self, frames=None, name=None):
