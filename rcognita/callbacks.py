@@ -18,10 +18,12 @@ from abc import ABC, abstractmethod
 from multiprocessing import Process
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import ShareableList
+from threading import Thread
 
 import matplotlib.animation
 import mlflow
 import torch
+from matplotlib.figure import Figure
 from shared_memory_dict import SharedMemoryDict
 
 import rcognita
@@ -46,6 +48,15 @@ import filelock
 
 import rcognita.base
 from rcognita.__utilities import on_key_press, on_close
+
+import sys
+from PyQt5 import QtWidgets
+from matplotlib.backends.backend_qt5agg import (
+    FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.figure import Figure
+import numpy as np
+from matplotlib.backends import backend_qt5agg  # e.g.
+
 
 
 def is_in_debug_mode():
@@ -608,10 +619,20 @@ class AnimationCallback(Callback, ABC):
         assert self.attachee is not None, "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
         self.frame_data = []
         #matplotlib.use('Qt5Agg', force=True)
-        #plt.ion()
-        self.fig, self.ax = plt.subplots(figsize=(10, 10))
-        #plt.grid()
-        #plt.show()
+
+        self.interactive_mode = True # TO DO: Change this
+        if self.interactive_mode:
+            self.fig = Figure()
+            # backend_qt5agg.new_figure_manager_given_figure(1, fig)
+            canvas = FigureCanvas(self.fig)
+            self.ax = canvas.figure.add_subplot(111)
+
+            canvas.show()
+
+            backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+            self.fig.show()
+        else:
+            self.fig, self.ax = None, None
         self.save_directory = Path(f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}").resolve()
         self.saved_counter = 0
 
@@ -619,26 +640,21 @@ class AnimationCallback(Callback, ABC):
     def get_save_directory(self):
         return str(self.save_directory)
 
+
     def add_frame(self, **frame_datum):
         self.frame_data.append(frame_datum)
-        #self.lim()
+        if hasattr(self, "interactive_status"):
+            self.interactive_status["frame"] = frame_datum
 
-        #self.construct_frame(**frame_datum)
-        #self.fig.canvas.draw()
-        #self.fig.canvas.flush_events()
-        if hasattr(self, "current_status"):
-            self.current_status["index"] = len(self.frame_data) - 1
-            self.current_status["frame"] = frame_datum
+        if self.interactive:
+            self.lim()
+            self.construct_frame(**frame_datum)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            self.fig.show()
 
-    def clear_frames(self):
+    def reset(self):
         plt.close(self.fig)
-        if hasattr(self, "plotter"):
-            self.current_status["exit"] = None
-            self.plotter.join()
-            self.current_status.shm.close()
-            self.current_status.shm.unlink()
-            del self.current_status
-            del self.plotter
         self.__init__(attachee=self.attachee)
 
     @abstractmethod
@@ -646,6 +662,9 @@ class AnimationCallback(Callback, ABC):
         pass
 
     def animate(self, frames=None):
+        temp_fig, temp_ax = self.fig, self.ax
+        plt.ioff()
+        self.fig, self.ax = plt.subplots(figsize=(10, 10))
         if frames is None:
             frames = self.__class__._frames
         if frames == "all":
@@ -666,10 +685,14 @@ class AnimationCallback(Callback, ABC):
         anim = matplotlib.animation.FuncAnimation(
             self.fig, animation_update, frames=frames, interval=30, blit=True, repeat=False
         )
-        return anim.to_jshtml()
+        res = anim.to_jshtml()
+        plt.close(self.fig)
+        self.fig, self.ax = temp_fig, temp_ax
+        return res
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
+        self.interactive()
 
 
     def animate_and_save(self, frames=None, name=None):
@@ -683,50 +706,6 @@ class AnimationCallback(Callback, ABC):
                 f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
             )
 
-    def animate_live(self, frames=None, name=None):
-        name = f"animation_status{time.time()}"
-        self.current_status = SharedMemoryDict(name=name, size=1024)
-        self.current_status["index"] = -1
-        self.current_status["frame"] = None
-        def plotting_process(name):
-            try:
-                matplotlib.use('Qt5Agg', force=True)
-                #plt.ion()
-                plt.close()
-                self.fig, self.ax = plt.subplots(figsize=(10, 10))
-                self.anim = None
-                def animation_update(i):
-                    j = i
-                    status = SharedMemoryDict(name=name, size=1024)
-                    while status["index"] < j and "exit" not in status:
-                        time.sleep(0.02)
-                    if "exit" in status:
-                        status.shm.close()
-                        self.anim.event_source.stop()
-                    self.frame_data.append(status["frame"])
-                    self.lim()
-                    res = self.construct_frame(**status["frame"])
-                    status["i"] = i
-                    #status.shm.close()
-                    #del status
-                    return res
-                self.anim = matplotlib.animation.FuncAnimation(
-                        self.fig, animation_update, interval=30, blit=True,
-                       )
-                self.fig.canvas.mpl_connect(
-                    "key_press_event", lambda event: on_key_press(event, self.anim)
-                )
-
-                self.fig.canvas.mpl_connect("close_event", on_close)
-                plt.show()
-                print()
-            except BaseException as e:
-                pass
-        self.plotter = Process(target=plotting_process, args=(name,))
-        print(f'SharedMemoryDict(name="{name}", size=1024)', "!!!!!"*10)
-        plotting_process(name)
-        self.plotter.start()
-
     def lim(self):
         raise ValueError("No axis limits known for animation.")
 
@@ -739,7 +718,7 @@ class AnimationCallback(Callback, ABC):
         iterations_total,
     ):
         self.animate_and_save(name=str(episode_number))
-        self.clear_frames()
+        self.reset()
 
 
 
