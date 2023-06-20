@@ -5,6 +5,7 @@ It is made for researchers and engineers in reinforcement learning and control t
 
 __version__ = "0.2.1"
 
+import argparse
 import datetime
 import platform
 import shelve
@@ -466,6 +467,47 @@ class main:
     ]
     objects_created = {}
 
+    class RcognitaArgumentParser(argparse.ArgumentParser):
+        def __init__(self, *args, **kwargs):
+            self._stored_args = []
+            self._registered_args = []
+            self._triggers = {}
+            super().__init__(*args, **kwargs)
+
+
+        def add_argument(self, *args, trigger=None, **kwargs):
+            res = super().add_argument(*args, **kwargs)
+            self._registered_args = self._registered_args + list(args)
+            for arg in args:
+                if arg.startswith('--'):
+                    key = arg[2:]
+                elif arg.startswith('-'):
+                    key = arg[1:]
+                else:
+                    raise ValueError("Argument name should start with either a '-' or a '--'.")
+                key = key.replace('-', '_')
+                if key == "help" or key == "h":
+                    continue
+                self._triggers[key] = trigger if trigger is not None else lambda v: None
+            return res
+
+        def parse_args(self):
+            self.old_args = sys.argv
+            self._stored_args = [arg for arg in sys.argv if arg.split("=")[0] in self._registered_args]
+            res = super().parse_args(self._stored_args)
+            sys.argv = [arg for arg in sys.argv if arg not in self._stored_args]
+            for key in self._triggers:
+                self._triggers[key](vars(res)[key])
+            self._registered_args = []
+
+            sys.argv.insert(1, "--multirun")
+            sys.argv.insert(-1, "hydra.job.chdir=True")
+
+            return res
+
+        def restore_args(self):
+            sys.argv = self.old_args
+
     @classmethod
     def post_weak_assignment(cls, key, value):
         cls.weak_assignments.append((key, value))
@@ -509,64 +551,66 @@ class main:
         :type logger: Logger, optional
 
         """
+
+
+
+
         if logger is None:
             logger = logging.getLogger("rcognita")
         if callbacks is None:
             callbacks = []
-        # os.environ["PYTHONHASHSEED"] = "0"
-        callbacks = callbacks + self.builtin_callbacks
-        sys.argv.insert(1, "--multirun")
-        sys.argv.insert(-1, "hydra.job.chdir=True")
+
+        self.callbacks_ = callbacks + self.builtin_callbacks
+
+        self.parser = self.RcognitaArgumentParser(description="Run with config ...")
+
+        self.parser.add_argument("--no-git", action='store_true')
+
+        def disable_logging(flag):
+            if flag:
+                sys.argv.insert(-1, "hydra/job_logging=disabled")
+        self.parser.add_argument("--disable-logging", action='store_true',
+                                 trigger=disable_logging)
+
+        def disable_callbacks(flag):
+            if flag:
+                self.__class__.builtin_callbacks = []
+                self.callbacks_ = []
+        self.parser.add_argument("--disable-callbacks", action='store_true', trigger=disable_callbacks)
+
+        self.parser.add_argument("--enable-streamlit", action='store_true')
+
+        self.parser.add_argument("--cooldown-factor", default=1.0)
+
+        def single_thread(flag):
+            if not flag:
+                sys.argv.insert(-1, "hydra/launcher=joblib")
+        self.parser.add_argument("--single-thread", action='store_true', trigger=single_thread)
+
+        def sweep(flag):
+            if flag:
+                sys.argv.insert(-1, "hydra/sweeper=ax")
+                self.is_sweep = True
+            else:
+                self.is_sweep = False
+        self.parser.add_argument("--sweep", action='store_true')
+
+
+        def tags(val):
+            if val:
+                tags_str = val.split(",")
+                self.tags = {tag.split(":")[0]: tag.split(":")[1] for tag in tags_str}
+            else:
+                self.tags = {}
+        self.parser.add_argument("--tags", trigger=tags)
+
+        def experiment(val):
+            self.experiment_name = val
+        self.parser.add_argument("--experiment", trigger=experiment)
+
         self.mlflow_uri = f"file://{os.getcwd()}/mlruns"
         self.tags = {}
         self.experiment_name = "Default"
-        to_remove = []
-        for i, arg in enumerate(sys.argv):
-            if "--experiment" in arg:
-                self.experiment_name = arg.split("=")[1]
-                to_remove.append(i)
-            if "--tags" in arg:
-                tags_str = arg.split("=")[1].split(",")
-                self.tags = {tag.split(":")[0]: tag.split(":")[1] for tag in tags_str}
-                to_remove.append(i)
-        for i in to_remove[::-1]:
-            sys.argv.pop(i)
-        if "--no-git" in sys.argv:
-            sys.argv.pop(sys.argv.index("--no-git"))
-            self.no_git = True
-        else:
-            self.no_git = False
-        if "--disable-logging" in sys.argv:
-            sys.argv.pop(sys.argv.index("--disable-logging"))
-            sys.argv.insert(-1, "hydra/job_logging=disabled")
-        if "--disable-callbacks" in sys.argv:
-            sys.argv.pop(sys.argv.index("--disable-callbacks"))
-            self.__class__.builtin_callbacks = []
-            callbacks = []
-            self.callbacks_enabled = False
-        else:
-            self.callbacks_enabled = True
-        if "--enable-streamlit" in sys.argv:
-            sys.argv.pop(sys.argv.index("--enable-streamlit"))
-            self.streamlit_enabled = True
-        else:
-            self.streamlit_enabled = False
-        self.cooldown_factor = 1.0
-        for i, arg in enumerate(sys.argv):
-            if "--cooldown-factor" in arg:
-                self.cooldown_factor = float(arg.split("=")[-1])
-                sys.argv.pop(i)
-                break
-        if "--single-thread" not in sys.argv:
-            sys.argv.insert(-1, "hydra/launcher=joblib")
-        else:
-            sys.argv.pop(sys.argv.index("--single-thread"))
-        if "--sweep" in sys.argv:
-            sys.argv.insert(-1, "hydra/sweeper=ax")
-            sys.argv.pop(sys.argv.index("--sweep"))
-            self.is_sweep = True
-        else:
-            self.is_sweep = False
 
         self.__class__.is_clear_matplotlib_cache_in_callbacks = True
         for arg in sys.argv:
@@ -582,17 +626,18 @@ class main:
             "." if "config_path" not in kwargs else kwargs["config_path"]
         )
         self.__class__.logger = logger
-        self.__class__.callbacks = [callback() for callback in callbacks]
+        self.__class__.callbacks = [callback() for callback in self.callbacks_]
 
     def __call__(self, old_app):
         def rcognita_main(*args, **kwargs):
+            argv = self.parser.parse_args()
             common_dir = tempfile.TemporaryDirectory()
             initial_working_directory = os.getcwd()
             initial_pythonpath = (
                 os.environ["PYTHONPATH"] if "PYTHONPATH" in os.environ else ""
             )
             script_path = inspect.getfile(old_app)
-            no_git = self.no_git
+            no_git = argv.no_git
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])
             os.chdir(path_parent)
@@ -602,9 +647,11 @@ class main:
             def app(
                 cfg,
                 callbacks=self.__class__.callbacks,
+                argv=argv,
                 logger=self.__class__.logger,
                 is_clear_matplotlib_cache_in_callbacks=self.__class__.is_clear_matplotlib_cache_in_callbacks,
             ):
+                #args = self.parser.parse_args()
                 self.__class__.is_clear_matplotlib_cache_in_callbacks = (
                     is_clear_matplotlib_cache_in_callbacks
                 )
@@ -629,7 +676,6 @@ class main:
                     f["common_dir"] = common_dir.name
                     f["hostname"] = platform.node()
                     f["seed"] = seed
-                    f["started"]
                 os.mkdir("gfx")
                 os.mkdir(".callbacks")
                 with omegaconf.flag_override(cfg, "allow_objects", True):
@@ -647,11 +693,12 @@ class main:
                             + os.getcwd().split("/")[-1].zfill(5)
                         ),
                         "pid": os.getpid(),
+                        "argv": argv
                     }
                     callbacks[0]._metadata = self.__class__.metadata
                     ccfg = ComplementedConfig(cfg)
                     self.apply_assignments(ccfg)
-                    if "callbacks" in cfg and self.callbacks_enabled:
+                    if "callbacks" in cfg and not argv.disable_callbacks:
                         for callback in cfg.callbacks:
                             callback = (
                                 obtain(callback)
@@ -667,7 +714,7 @@ class main:
                     try:
                         for callback in self.__class__.callbacks:
                             if callback.cooldown:
-                                callback.cooldown *= self.cooldown_factor
+                                callback.cooldown *= argv.cooldown_factor
                             callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
                         with self.__class__.metadata["report"]() as r:
                             r["path"] = os.getcwd()
@@ -729,7 +776,7 @@ class main:
                         )
                         f["finished"] = datetime.datetime.now()
                     ccfg.refresh()
-                    if self.is_sweep:
+                    if argv.sweep:
                         return res
                     else:
                         return {
@@ -748,13 +795,14 @@ class main:
                 # streamlit.cli.main_run(filename, args)
                 streamlit.web.bootstrap.run(gui_script_file, "", args, flag_options={})
 
-            gui = Process(target=gui_server) if self.streamlit_enabled else Mock()
+            gui = Process(target=gui_server) if argv.enable_streamlit else Mock()
             gui.start()
             app.__module__ = old_app.__module__
             res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
             common_dir.cleanup()
             time.sleep(2.0)
             gui.terminate()
+            self.parser.restore_args()
             return res
 
         return rcognita_main
