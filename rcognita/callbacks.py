@@ -622,17 +622,22 @@ class AnimationCallback(Callback, ABC):
         self.frame_data = []
         #matplotlib.use('Qt5Agg', force=True)
 
-        self.interactive_mode = True # TO DO: Change this
+        self.interactive_mode = self._metadata["argv"].interactive
         if self.interactive_mode:
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
             self.ax = canvas.figure.add_subplot(111)
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+            self.setup()
         else:
             self.mng = None
             self.fig, self.ax = None, None
         self.save_directory = Path(f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}").resolve()
         self.saved_counter = 0
+
+    @abstractmethod
+    def setup(self):
+        pass
 
 
     def get_save_directory(self):
@@ -674,6 +679,7 @@ class AnimationCallback(Callback, ABC):
         temp_fig, temp_ax = self.fig, self.ax
         plt.ioff()
         self.fig, self.ax = plt.subplots(figsize=(10, 10))
+        self.setup()
         if frames is None:
             frames = self.__class__._frames
         if frames == "all":
@@ -743,8 +749,7 @@ class AnimationCallback(Callback, ABC):
 
 
 class PointAnimation(AnimationCallback, ABC):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def setup(self):
         self.point, = self.ax.plot(0, 1, marker="o", label="location")
 
     def construct_frame(self, x, y):
@@ -787,8 +792,7 @@ class PlanarMotionAnimation(PointAnimation, StateTracker):
 
 
 class TriangleAnimation(AnimationCallback, ABC):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def setup(self):
         point1, = self.ax.plot(0, 1, marker="o", label="location", color='red')
         point2, = self.ax.plot(0, 1, marker="o", label="location", color='green')
         point3, = self.ax.plot(0, 1, marker="o", label="location", color='blue')

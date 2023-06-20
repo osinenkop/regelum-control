@@ -18,6 +18,7 @@ import warnings
 
 import random
 import omegaconf
+from hydra.errors import InstantiationException
 
 from omegaconf import DictConfig, OmegaConf, ListConfig
 from omegaconf.resolvers import oc
@@ -27,7 +28,7 @@ from typing import Any
 
 from omegaconf import Container
 from omegaconf._utils import _DEFAULT_MARKER_
-from omegaconf.errors import ConfigKeyError
+from omegaconf.errors import ConfigKeyError, InterpolationResolutionError
 
 # from omegaconf.grammar_parser import *
 
@@ -580,6 +581,8 @@ class main:
 
         self.parser.add_argument("--enable-streamlit", action='store_true')
 
+        self.parser.add_argument("--interactive", action='store_true')
+
         self.parser.add_argument("--cooldown-factor", default=1.0)
 
         def single_thread(flag):
@@ -694,6 +697,7 @@ class main:
                         ),
                         "pid": os.getpid(),
                         "argv": argv
+
                     }
                     callbacks[0]._metadata = self.__class__.metadata
                     ccfg = ComplementedConfig(cfg)
@@ -754,6 +758,12 @@ class main:
                         )
                     except RcognitaExitException as e:
                         res = e
+                    except InterpolationResolutionError as e:
+                        with self.__class__.metadata["report"]() as r:
+                            r["traceback"] = traceback.format_exc()
+                        res = e
+                        self.__class__.callbacks[0].log("Script terminated with error. This error occurred when trying to instantiate something from the config.")
+                        self.__class__.callbacks[0].exception(e)
                     except Exception as e:
                         with self.__class__.metadata["report"]() as r:
                             r["traceback"] = traceback.format_exc()
