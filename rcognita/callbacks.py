@@ -624,15 +624,10 @@ class AnimationCallback(Callback, ABC):
 
         self.interactive_mode = True # TO DO: Change this
         if self.interactive_mode:
-            self.fig = Figure()
-            # backend_qt5agg.new_figure_manager_given_figure(1, fig)
+            self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
             self.ax = canvas.figure.add_subplot(111)
-
-            canvas.show()
-
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
-            self.fig.show()
         else:
             self.mng = None
             self.fig, self.ax = None, None
@@ -668,7 +663,7 @@ class AnimationCallback(Callback, ABC):
     def reset(self):
         if self.interactive_mode:
             self.mng.window.close()
-        plt.close(self.fig)
+            plt.close(self.fig)
         self.__init__(attachee=self.attachee)
 
     @abstractmethod
@@ -719,8 +714,20 @@ class AnimationCallback(Callback, ABC):
                 f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
             )
 
-    def lim(self):
-        raise ValueError("No axis limits known for animation.")
+    def lim(self, width=None, height=None, center=None, extra_margin=0.):
+        if width is not None or height is not None:
+            if center is None:
+                center = [0., 0.]
+            if width is None:
+                width = height
+            if height is None:
+                height = width
+            self.ax.set_xlim(center[0] - width / 2 - extra_margin,
+                             center[0] + width / 2 + extra_margin)
+            self.ax.set_ylim(center[1] - height / 2 - extra_margin,
+                             center[1] - height / 2 + extra_margin)
+        else:
+            raise ValueError("No axis limits known for animation.")
 
     def on_episode_done(
         self,
@@ -744,14 +751,20 @@ class PointAnimation(AnimationCallback, ABC):
         self.point.set_data([x], [y])
         return self.point,
 
-    def lim(self):
-        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T
-        x_min, x_max = x.min(), x.max()
-        y_min, y_max = y.min(), y.max()
-        x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
-        y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-        self.ax.set_xlim(x_min, x_min + max(x_max-x_min, y_max-y_min))
-        self.ax.set_ylim(y_min, y_min + max(x_max-x_min, y_max-y_min))
+    def lim(self, *args, extra_margin=0.01, **kwargs):
+        try:
+            super().lim(*args, extra_margin=extra_margin, **kwargs)
+            return
+        except ValueError:
+            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T
+            x_min, x_max = x.min(), x.max()
+            y_min, y_max = y.min(), y.max()
+            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+            self.ax.set_xlim(x_min - extra_margin,
+                             x_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+            self.ax.set_ylim(y_min - extra_margin,
+                             y_min + max(x_max-x_min, y_max-y_min) + extra_margin)
 
 
 
@@ -781,14 +794,21 @@ class TriangleAnimation(AnimationCallback, ABC):
         point3, = self.ax.plot(0, 1, marker="o", label="location", color='blue')
         self.points = (point1, point2, point3)
 
-    def lim(self):
-        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
-        x_min, x_max = x.min(), x.max()
-        y_min, y_max = y.min(), y.max()
-        x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
-        y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-        self.ax.set_xlim(x_min, x_min + max(x_max-x_min, y_max-y_min))
-        self.ax.set_ylim(y_min, y_min + max(x_max-x_min, y_max-y_min))
+    def lim(self, *args, extra_margin=0.11, **kwargs):
+        try:
+            super().lim(*args, extra_margin=extra_margin, **kwargs)
+            return
+        except ValueError:
+            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+            x_min, x_max = x.min(), x.max()
+            y_min, y_max = y.min(), y.max()
+            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+            self.ax.set_xlim(x_min - extra_margin,
+                             x_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+            self.ax.set_ylim(y_min - extra_margin,
+                             y_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+
 
     def construct_frame(self, x, y, theta):
         offsets = np.array([[np.cos(theta + i * 2 * np.pi / 3),
