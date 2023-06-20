@@ -15,10 +15,12 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 
 """
 from abc import ABC, abstractmethod
+from copy import copy
 from multiprocessing import Process
 from multiprocessing.managers import SharedMemoryManager
 from multiprocessing.shared_memory import ShareableList
 from threading import Thread
+from unittest.mock import Mock
 
 import matplotlib.animation
 import mlflow
@@ -629,9 +631,10 @@ class AnimationCallback(Callback, ABC):
 
             canvas.show()
 
-            backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+            self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
             self.fig.show()
         else:
+            self.mng = None
             self.fig, self.ax = None, None
         self.save_directory = Path(f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}").resolve()
         self.saved_counter = 0
@@ -653,7 +656,18 @@ class AnimationCallback(Callback, ABC):
             self.fig.canvas.flush_events()
             self.fig.show()
 
+    def __getstate__(self):
+        state = copy(self.__dict__)
+        del state["mng"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.mng = Mock()
+
     def reset(self):
+        if self.interactive_mode:
+            self.mng.window.close()
         plt.close(self.fig)
         self.__init__(attachee=self.attachee)
 
