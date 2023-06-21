@@ -25,6 +25,7 @@ from .critics import Critic
 from .models import Model, ModelNN
 from .systems import System, ComposedSystem
 from .objectives import RunningObjective
+from .optimizers import Optimizable
 
 try:
     import torch
@@ -46,27 +47,24 @@ def force_type_safety(method):
     return wrapper
 
 
-class Policy:
+class Policy(Optimizable):
     """
     Class of policies.
     These are to be passed to a `controller`.
     An `objective` (a loss) as well as an `optimizer` are passed to an `policy` externally.
     """
 
-    _intrinsic_constraints = None
-
     def __init__(
         self,
-        system: Union[System, ComposedSystem],
         model,
+        system: Union[System, ComposedSystem] = None,
         predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
-        optimizer: Optional[Optimizer] = None,
-        critic: Optional[Critic] = None,
-        running_objective: Optional[RunningObjective] = None,
+        opt_config=None,
+        objective=None,
         discount_factor: Optional[float] = 1.0,
-        epsilon_greedy: bool = False,
-        epsilon_greedy_parameter: float = 0.0,
+        epsilon_random: bool = False,
+        epsilon_random_parameter: float = 0.0,
     ):
         """
         Initialize an policy.
@@ -93,7 +91,6 @@ class Policy:
         :type discount_factor: float, optional
         """
         self.system = system
-        assert isinstance(model, Model), "Policy requires a model of type Model"
         self.model = model
         self.predictor = predictor
         if self.predictor is not None:
@@ -104,70 +101,31 @@ class Policy:
         self.dim_action = self.system.dim_inputs
         self.dim_observation = self.system.dim_observation
 
+        self.action_old = self.action_initial_guess[: self.dim_action]
+        self.action = self.action_initial_guess[: self.dim_action]
+
+        self.objective = objective
+        self.discount_factor = discount_factor if discount_factor is not None else 1.0
+        self.epsilon_random = epsilon_random
+        self.epsilon_random_parameter = epsilon_random_parameter
+
+        super().__init__(opt_config)
         (
             self.action_bounds,
             self.action_initial_guess,
             self.action_min,
             self.action_max,
-        ) = self.__handle_bounds(action_bounds)
-        self.action_old = self.action_initial_guess[: self.dim_action]
-        self.action = self.action_initial_guess[: self.dim_action]
+        ) = self.handle_bounds(
+            action_bounds, self.dim_action, tile_parameter=self.prediction_horizon
+        )
+        self.register_bounds(self.action_bounds)
 
-        self.optimizer = optimizer
-        self.critic = critic
-        self.running_objective = running_objective
-        self.discount_factor = discount_factor if discount_factor is not None else 1.0
-        self.epsilon_greedy = epsilon_greedy
-        self.epsilon_greedy_parameter = epsilon_greedy_parameter
+    def __call__(self, observation):
+        return self.get_action(observation)
 
     @property
     def intrinsic_constraints(self):
         return self._intrinsic_constraints
-
-    def __handle_bounds(
-        self, action_bounds: Union[list, np.ndarray, None]
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        if action_bounds is None:
-            assert (
-                self.system.dim_inputs is not None
-            ), "Dimension of the action must be specified"
-            action_bounds = np.array(
-                [[-np.inf, np.inf] for _ in range(self.system.dim_inputs)]
-            )
-        else:
-            assert isinstance(
-                action_bounds, (list, np.ndarray)
-            ), "action_bounds must be a list or ndarray"
-            if not isinstance(action_bounds, np.ndarray):
-                action_bounds = np.array(action_bounds)
-            assert len(action_bounds.shape) == 2, (
-                f"action_bounds must be of shape ({self.dim_action}, 2)."
-                + f" You have ({action_bounds.shape[0]}, {action_bounds.shape[1]}"
-            )
-            assert action_bounds.shape[0] == self.dim_action, (
-                f"Action bounds should be of size ({self.dim_action}, 2)."
-                + " You have ({action_bounds.shape[0]}, {action_bounds.shape[1]})."
-            )
-
-        for i, row in enumerate(action_bounds):
-            if row[0] > row[1]:
-                raise ValueError(
-                    "The lower bound of action is greater"
-                    + " than the upper bound of action "
-                    + f"at index {i} ({row[0] > row[1]})"
-                )
-        action_min = action_bounds[:, 0]
-        action_max = action_bounds[:, 1]
-        action_initial_guess = (action_min + action_max) / 2
-        if self.prediction_horizon > 0:
-            action_sequence_initial_guess = rc.rep_mat(
-                action_initial_guess, 1, self.prediction_horizon + 1
-            )
-            action_sequence_min = rc.rep_mat(action_min, 1, self.prediction_horizon + 1)
-            action_sequence_max = rc.rep_mat(action_max, 1, self.prediction_horizon + 1)
-            action_bounds = np.array([action_sequence_min, action_sequence_max])
-            action_initial_guess = action_sequence_initial_guess
-        return action_bounds, action_initial_guess, action_min, action_max
 
     @property
     def weights(self):
@@ -212,13 +170,13 @@ class Policy:
         if observation is None:
             observation = self.observation
 
-        if self.epsilon_greedy:
+        if self.epsilon_random:
             toss = np.random.choice(
                 2,
                 1,
                 p=[
-                    1 - self.epsilon_greedy_parameter,
-                    self.epsilon_greedy_parameter,
+                    1 - self.epsilon_random_parameter,
+                    self.epsilon_random_parameter,
                 ],
             )
             is_exploration = bool(toss)
@@ -246,7 +204,7 @@ class Policy:
 
     def update_weights(self, weights=None):
         """
-        Update the weights of the model of thepolicy.
+        Update the weights of the model of the policy.
         :param weights: The weights to update the model with. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -257,18 +215,20 @@ class Policy:
 
     def cache_weights(self, weights=None):
         """
-        Cache the current weights of the model of thepolicy.
+        Cache the current weights of the model of the policy.
         :param weights: The weights to cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
         if weights is not None:
             self.model.cache_weights(weights)
-        else:
+        elif self.optimized_weights is not None:
             self.model.cache_weights(self.optimized_weights)
+        else:
+            raise ValueError("Nothing to cache")
 
     def update_and_cache_weights(self, weights=None):
         """
-        Update and cache the weights of the model of thepolicy.
+        Update and cache the weights of the model of the policy.
         :param weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -311,6 +271,15 @@ class Policy:
         else:
             return "rejected"
 
+    def get_initial_guess(self, guess_from):
+        final_count_of_actions = self.prediction_horizon + 1
+        action_sequence = rc.rep_mat(guess_from, 1, final_count_of_actions)
+        action_sequence = rc.reshape(
+            action_sequence,
+            [final_count_of_actions * self.dim_action],
+        )
+        return action_sequence
+
     def optimize_weights(self):
         """
         Method to optimize the currentpolicy weights. The old (previous) weights are stored.
@@ -327,33 +296,11 @@ class Policy:
         """
         assert self.optimizer is not None, "Optimizer is not set."
 
-        final_count_of_actions = self.prediction_horizon + 1
-        action_sequence = rc.rep_mat(self.action, 1, final_count_of_actions)
+        action_initial_guess = self.get_initial_guess(self.action)
 
-        action_sequence_init_reshaped = rc.reshape(
-            action_sequence,
-            [final_count_of_actions * self.dim_action],
-        )
-
-        constraints = []
-
-        self.optimizer.optimize(action_sequence_init_reshaped, self.observation)
+        self.optimizer.optimize(action_initial_guess, self.observation)
 
         return self.weights_acceptance_status
-
-    def iteration_update(self):
-        pass
-
-    def __call__(self, observation):
-        """
-        Return the most recent action taken by thepolicy.
-
-        :param observation: Current observation of the system.
-        :type observation: ndarray
-        :returns: Most recent action taken by the policy.
-        :rtype: ndarray
-        """
-        return self.action
 
     def reset(self):
         """
@@ -362,14 +309,8 @@ class Policy:
         self.action_old = self.action_initial_guess[: self.dim_action]
         self.action = self.action_initial_guess[: self.dim_action]
 
-    def objective(self, action_sequence, observation):
-        """
-        Compute the objective of the policy.
-        """
-        raise NotImplementedError
 
-
-class PolicyPGBase(Policy, ABC):
+class PolicyGradient(Policy):
     def __init__(
         self,
         is_use_derivative,
@@ -430,14 +371,8 @@ class PolicyPGBase(Policy, ABC):
     def update_action(self):
         pass
 
-    def optimize_weights(self, constraint_functions=None, time=None):
-        pass
 
-    def update_and_cache_weights(self):
-        pass
-
-
-class PolicyPG(PolicyPGBase):
+class Reinforce(PolicyGradient):
     def update_action(self, observation=None):
         if self.is_use_derivative:
             derivative = self.derivative(None, observation, self.action)
@@ -467,7 +402,7 @@ class PolicyPG(PolicyPGBase):
         )
 
 
-class PolicySDPG(PolicyPG):
+class SDPG(PolicyGradient):
     @force_type_safety
     def objective(self, batch):
         observations_actions_for_policy = batch["observations_actions_for_policy"].to(
@@ -487,7 +422,7 @@ class PolicySDPG(PolicyPG):
         )
 
 
-class PolicyDDPG(PolicyPGBase):
+class DDPG(PolicyGradient):
     @force_type_safety
     def objective(self, batch):
         observations_for_policy = batch["observations_for_policy"].to(self.device)
@@ -507,7 +442,7 @@ class PolicyDDPG(PolicyPGBase):
         super().update_action(observation)
 
 
-class PolicyMPC(Policy):
+class MPC(Policy):
     """
     Model-predictive control (MPC)policy.
     Optimizes the followingpolicy objective:
@@ -560,7 +495,7 @@ class PolicyMPC(Policy):
         return policy_objective
 
 
-class PolicyMPCTerminal(Policy):
+class MPCTerminal(Policy):
     """
     Model-predictive control (MPC)policy.
     Optimizes the followingpolicy objective:
@@ -613,7 +548,7 @@ class PolicyMPCTerminal(Policy):
         return policy_objective
 
 
-class PolicySQL(Policy):
+class SQL(Policy):
     """
     Staked Q-learning (SQL)policy.
     Optimizes the followingpolicy objective:
@@ -677,7 +612,7 @@ class PolicySQL(Policy):
         return policy_objective
 
 
-class PolicyRQL(Policy):
+class RQL(Policy):
     """
     Rollout Q-learning (RQL)policy.
     Optimizes the followingpolicy objective:
@@ -744,7 +679,7 @@ class PolicyRQL(Policy):
         return policy_objective
 
 
-class PolicyRPO(Policy):
+class RPO(Policy):
     """
     Running (objective) Plus Optimal (objective)policy.
     Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
@@ -797,7 +732,7 @@ class PolicyRPO(Policy):
         return policy_objective
 
 
-class PolicyRPOWithRobustigyingTerm(PolicyRPO):
+class RPOWithRobustigyingTerm(RPO):
     def __init__(self, *args, A=10, K=10, **kwargs):
         super().__init__(*args, **kwargs)
         self.A = A
@@ -812,7 +747,7 @@ class PolicyRPOWithRobustigyingTerm(PolicyRPO):
         )
 
 
-class PolicyCALF(PolicyRPO):
+class CALF(RPO):
     """Policy using Critic As a Lyapunov Function (CALF) to constrain the optimization."""
 
     def __init__(
@@ -913,7 +848,7 @@ class PolicyCALF(PolicyRPO):
         return self.predictive_constraint_violation
 
 
-class PolicyCLF(PolicyCALF):
+class CLF(CALF):
     """
     PolicyCLF is anpolicy class that aims to optimize the decay of a Control-Lyapunov function (CLF).
     """
@@ -952,7 +887,7 @@ class PolicyCLF(PolicyCALF):
         return policy_objective
 
 
-class PolicyTabular(PolicyRPO):
+class Tabular(RPO):
     """
     Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.

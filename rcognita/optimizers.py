@@ -104,6 +104,9 @@ class Optimizable:
         self.__opt_options = optimizer_config.opt_options
         self.__log_options = optimizer_config.log_options
 
+    def register_decision_variable(self, dvar):
+        self.__decision_variable = dvar
+
     def register_objective(self, func, *args, decision_var_idx=0, **kwargs):
         if self.kind == "symbolic":
             self.__register_symbolic_objective(func, *args, **kwargs)
@@ -116,9 +119,6 @@ class Optimizable:
         self._objective = func(*args, **kwargs)
         self.__opti.minimize(self._objective)
         self.__objective_kind = "symbolic"
-
-    def register_decision_variable(self, dvar):
-        self.__decision_variable = dvar
 
     def __register_numeric_objective(self, func, decision_var_idx):
         assert callable(func), "objective_function must be callable"
@@ -145,6 +145,50 @@ class Optimizable:
         self.__obj_input_encoding[self.__decision_var_idx] = "dvar"
         self.__objective_kind = "tensor"
 
+    @staticmethod
+    def handle_bounds(
+        bounds: Union[list, np.ndarray, None],
+        dim_variable: int,
+        tile_parameter: int = 0,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        if bounds is None:
+            assert dim_variable is not None, "Dimension of the action must be specified"
+            bounds = np.array([[-np.inf, np.inf] for _ in range(dim_variable)])
+        else:
+            assert isinstance(
+                bounds, (list, np.ndarray)
+            ), "action_bounds must be a list or ndarray"
+            if not isinstance(bounds, np.ndarray):
+                bounds = np.array(bounds)
+            assert len(bounds.shape) == 2, (
+                f"action_bounds must be of shape ({dim_variable}, 2)."
+                + f" You have ({bounds.shape[0]}, {bounds.shape[1]}"
+            )
+            assert bounds.shape[0] == dim_variable, (
+                f"Action bounds should be of size ({dim_variable}, 2)."
+                + f" You have ({bounds.shape[0]}, {bounds.shape[1]})."
+            )
+
+        for i, row in enumerate(bounds):
+            if row[0] > row[1]:
+                raise ValueError(
+                    "The lower bound of action is greater"
+                    + " than the upper bound of action "
+                    + f"at index {i} ({row[0] > row[1]})"
+                )
+        variable_min = bounds[:, 0]
+        variable_max = bounds[:, 1]
+        variable_initial_guess = (variable_min + variable_max) / 2
+        if tile_parameter > 0:
+            variable_sequence_initial_guess = rc.rep_mat(
+                variable_initial_guess, 1, tile_parameter
+            )
+            action_sequence_min = rc.rep_mat(variable_min, 1, tile_parameter)
+            action_sequence_max = rc.rep_mat(variable_max, 1, tile_parameter)
+            result_bounds = np.array([action_sequence_min, action_sequence_max])
+            variable_initial_guess = variable_sequence_initial_guess
+        return result_bounds, variable_initial_guess, variable_min, variable_max
+
     def register_bounds(self, bounds, var=None):
         if self.kind == "symbolic":
             self.__register_symbolic_bounds(bounds, var)
@@ -163,8 +207,13 @@ class Optimizable:
             var = self.__variables[0]
 
         self.__bounds = bounds
-        lb_constr = lambda var: bounds[:, 0] - var
-        ub_constr = lambda var: var - bounds[:, 1]
+
+        def lb_constr(var):
+            return bounds[:, 0] - var
+
+        def ub_constr(var):
+            return var - bounds[:, 1]
+
         self.register_constraint(lb_constr, var)
         self.register_constraint(ub_constr, var)
 
@@ -200,12 +249,6 @@ class Optimizable:
         assert callable(func), "constraint function must be callable"
         self.__constraints.append(func)
         self.__constraints_kind = "tensor"
-
-    def form_initial_guess(self, *args):
-        if self.kind == "symbolic":
-            self.__initial_guess_form = list(args)
-        else:
-            raise NotImplementedError
 
     def variable(self, dim):
         assert (
@@ -260,13 +303,41 @@ class Optimizable:
             "objective": self._objective,
         }
 
+    def form_initial_guess(self, *args):
+        if self.kind == "symbolic":
+            self.__initial_guess_form = list(args)
+        else:
+            raise NotImplementedError
+
     @property
     def initial_guess_form(self):
         if self.__initial_guess_form is None:
             self.form_initial_guess(*self.__variables, *self.__parameters)
         return self.__initial_guess_form
 
-    def __optimize_symbolic(self, *args, **kwargs):
+    def recreate_constraints(self, *constraints):
+        for c in constraints:
+            self.register_constraint(c)
+
+    def optimize(self, *args, raw=True, **kwargs):
+        result = None
+        if self.kind == "symbolic":
+            result = self._optimize_symbolic(*args, **kwargs)
+            if raw:
+                result = result["d_vars"][0].full().reshape(-1)
+        elif self.kind == "numeric":
+            result = self._optimize_numeric(*args, **kwargs)
+            if raw:
+                result = result[0]
+        elif self.kind == "tensor":
+            self._optimize_tensor(*args, **kwargs)
+            result = self.__decision_variable
+        else:
+            raise NotImplementedError
+
+        return result
+
+    def _optimize_symbolic(self, *args, **kwargs):
         if self.__initial_guess_form is None:
             self.form_initial_guess(*self.__variables, *self.__parameters)
         if self.__opt_func is None:
@@ -279,7 +350,7 @@ class Optimizable:
         result = self.__opt_func(*args, **kwargs)
         return {"d_vars": result[:-1], "objective": result[-1]}
 
-    def __optimize_numeric(self, initial_guess, *args):
+    def _optimize_numeric(self, initial_guess, *args):
         if len(args) > 0:
             assert (
                 self.__N_objective_args is not None
@@ -306,7 +377,7 @@ class Optimizable:
         )
         return opt_result.x, opt_result
 
-    def __optimize_tensor(self, dataset):
+    def _optimize_tensor(self, dataset):
         dataloader = DataLoader(
             dataset=dataset,
             shuffle=self.optimizer_config.config_options["shuffle"],
@@ -329,27 +400,6 @@ class Optimizable:
         objective_value = self._objective(batch_sample)
         objective_value.backward()
         self.optimizer.step()
-
-    def recreate_constraints(self, *constraints):
-        for c in constraints:
-            self.register_constraint(c)
-
-    def optimize(self, *args, raw=True, **kwargs):
-        result = None
-        if self.kind == "symbolic":
-            result = self.__optimize_symbolic(*args, **kwargs)
-            if raw:
-                result = result["d_vars"][0].full().reshape(-1)
-        elif self.kind == "numeric":
-            result = self.__optimize_numeric(*args, **kwargs)
-            if raw:
-                result = result[0]
-        elif self.kind == "tensor":
-            self.__optimize_tensor(*args, **kwargs)
-        else:
-            raise NotImplementedError
-
-        return result
 
 
 torch_default_config = OptimizerConfig(
