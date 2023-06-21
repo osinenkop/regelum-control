@@ -1,3 +1,5 @@
+# TO DO: REMOVE COPYRIGHT STATEMENT. JUST WRITE THAT THIS IS A PATCHED MODULE AND HOW EXACTLY. DESCRIBE WHY THIS IS A FAKE MODULE
+
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
 import os

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 This module contains one single class that simulates controller-system (agent-environment) loops.
 The system can be of three types:
@@ -32,7 +30,7 @@ except ModuleNotFoundError:
 
     casadi = MagicMock()
 
-
+# TO DO: DOCSTRING
 class Simulator(rcognita.base.RcognitaBase, ABC):
     def __init__(
         self,

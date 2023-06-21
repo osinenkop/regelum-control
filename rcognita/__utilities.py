@@ -3,6 +3,8 @@ This module contains auxiliary tools.
 
 """
 
+# TO DO: THIS DESCRIPTION IS TOO SHORT. EXTEND IT
+
 import inspect
 import warnings
 import numpy as np
@@ -38,7 +40,7 @@ try:
 except ModuleNotFoundError:
     TORCH_TYPES = tuple()
 
-
+# TO DO: MISSING ENTRANCE SENTENCE: this class is bla-bla, it is needed to do bla-bla
 class RCType(IntEnum):
     """
     Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
@@ -64,7 +66,7 @@ def is_CasADi_typecheck(*args) -> Union[RCType, bool]:
 def is_Torch_typecheck(*args) -> Union[RCType, bool]:
     return TORCH if any([isinstance(arg, TORCH_TYPES) for arg in args]) else False
 
-
+# TO DO: ADD DOCSTRING
 def type_inference(*args, **kwargs) -> Union[RCType, bool]:
     is_CasADi = is_CasADi_typecheck(*args, *kwargs.values())
     is_Torch = is_Torch_typecheck(*args, *kwargs.values())
@@ -77,13 +79,14 @@ def type_inference(*args, **kwargs) -> Union[RCType, bool]:
         return result_type
 
 
+# TO DO: ADD DOCSTRING
 def safe_unpack(argin):
     if isinstance(argin, (list, tuple)):
         return argin
     else:
         return (argin,)
 
-
+# TO DO: ADD DOCSTRING
 def decorateAll(decorator):
     class MetaClassDecorator(type):
         def __new__(cls, classname, supers, classdict):
@@ -99,6 +102,7 @@ def decorateAll(decorator):
     return MetaClassDecorator
 
 
+# TO DO: ADD DOCSTRING
 @decorateAll
 def metaclassTypeInferenceDecorator(function):
     def wrapper(*args, **kwargs):
@@ -130,6 +134,7 @@ class Clock:
         self.time = self.time_start
 
 
+# TO DO: ADD DOCSTRING
 class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     TORCH = RCType.TORCH
     CASADI = RCType.CASADI
@@ -684,6 +689,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         if rc_type == NUMPY:
             return np.append(array, to_append)
 
+    # TO DO: DO WE REALLY NEED THIS DM? WHY NOT TO USE HUMAN READABLE TERMINOLOGY? SAY CASADI_NUMERIC, CASADI_SYMB, CASADI_MATSYMB
     @staticmethod
     def DM(mat):
         return casadi.DM(mat)
@@ -712,7 +718,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
 rc = RCTypeHandler()
 
-
+# TO DO: ADD DOCSTRING??
 def simulation_progress(bar_length=10, print_level=100):
     counter = 0
 
@@ -788,7 +794,7 @@ def simulation_progress(bar_length=10, print_level=100):
 
 #         RCTypeHandler.is_force_row = True
 
-
+# TO DO: REMOVE THESE?
 def rej_sampling_rvs(dim, pdf, M):
     """
     Random variable (pseudo)-realizations via rejection sampling.
@@ -914,7 +920,7 @@ def dss_sim(A, B, C, D, uSqn, initial_guess, y0):
 
         return ySqn, xSqn
 
-
+# TO DO: CHECK IF THESE ARE NEEDED
 def update_line(line, newX, newY):
     line.set_xdata(np.append(line.get_xdata(), newX))
     line.set_ydata(np.append(line.get_ydata(), newY))
@@ -964,7 +970,7 @@ def on_close(event):
 
 log = None
 
-
+# TO DO: ADD DOCSTRING?
 def logging_callback(obj, method, output):
     if not log:
         return
@@ -974,7 +980,7 @@ def logging_callback(obj, method, output):
 
 default_callbacks = [logging_callback]
 
-
+# TO DO: ADD DOCSTRING?
 def apply_callbacks(method):
     def new_method(self, *args, **kwargs):
         res = method(self, *args, **kwargs)
@@ -983,7 +989,7 @@ def apply_callbacks(method):
 
     return new_method
 
-
+# TO DO: ADD DOCSTRING?
 class introduce_callbacks:
     def __init__(self, default_callbacks=default_callbacks):
         self.default_callbacks = default_callbacks

@@ -35,7 +35,7 @@ except ImportError:
 
     torch = MagicMock()
 
-
+# TO DO: WHY NOT IN UTILITIES? REMOVE?
 def force_type_safety(method):
     def wrapper(self, *args, **kwargs):
         result = method(self, *args, **kwargs)
@@ -46,7 +46,7 @@ def force_type_safety(method):
 
     return wrapper
 
-
+# TO DO: BAD INHERITANCE. USE AS SUBCLASS. 
 class Policy(Optimizable):
     """
     Class of policies.

@@ -1,3 +1,5 @@
+# TO DO: REMOVE THIS
+
 import os, sys
 
 PARENT_DIR = os.path.abspath(__file__ + "/../..")
@@ -6,10 +8,8 @@ import rcognita
 
 import numpy as np
 
-
 import os
 from scipy.spatial import ConvexHull
-
 
 class myPoint:
     def __init__(self, R, x, y, angle):

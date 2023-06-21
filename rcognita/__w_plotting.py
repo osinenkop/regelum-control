@@ -1,3 +1,5 @@
+# TO DO: WHAT IS THIS MODULE? IF NOT NEEDED, REMOVE
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib

@@ -18,13 +18,13 @@ from .__utilities import rc
 from typing import Optional, Union
 from functools import reduce
 
-
+# TO DO: DOCSTRING
 class SystemComposer:
     @staticmethod
     def compose(systems: list):
         return reduce(lambda x, y: x @ y, systems)
 
-
+# TO DO: DOCSTRING
 class ComposedSystem(rcognita.base.RcognitaBase):
     def __init__(
         self,
@@ -76,6 +76,7 @@ class ComposedSystem(rcognita.base.RcognitaBase):
         self.forward_permutation = rc.ones(self.dim_observation).astype(int)
         self.inverse_permutation = rc.ones(self.dim_observation).astype(int)
 
+    # TO DO: DOCSTRING
     @staticmethod
     def __get_routing(io_mapping):
         io_mapping_extended = []
@@ -187,11 +188,13 @@ class ComposedSystem(rcognita.base.RcognitaBase):
     def receive_action(self, action):
         self.inputs = action
 
+    # TO DO: NEED THIS? REVIEW THIS
     def update_system_parameters(self, inputs):
         assert isinstance(inputs, dict)
         self.sys_left.update_system_parameters(inputs)
         self.sys_right.update_system_parameters(inputs)
 
+    # TO DO: NEED THIS?
     def compute_closed_loop_rhs(self, time, state):
         action = self.inputs
 
@@ -205,11 +208,13 @@ class ComposedSystem(rcognita.base.RcognitaBase):
     def reset(self):
         pass
 
+    # TO DO: WHAT IS THIS?    
     def permute_state(self, permutation):
         self.forward_permutation = permutation
         self.inverse_permutation = self.get_inverse_permutation(permutation)
         return self
 
+    # TO DO: WHAT IS THIS?
     def get_inverse_permutation(self, permutation):
         self.current_permutation = permutation
         permutation = np.asanyarray(permutation)  # in case p is a tuple, etc.

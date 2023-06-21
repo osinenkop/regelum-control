@@ -1,3 +1,5 @@
+# TO DO: CHECK IF WE NEED THIS. IF YES, DESCRIBE
+
 import os, sys, shelve, time
 import signal
 

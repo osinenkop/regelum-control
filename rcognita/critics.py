@@ -1,3 +1,5 @@
+# TO DO: OBJECTIVE LEARNERS? THERE IS OBJECTIVE LEARNER AND EVERY CRITIC INHERITS IT
+
 """
 This module containing critics, which are integrated in controllers (agents).
 
@@ -13,6 +15,7 @@ import os, sys
 
 import rcognita.base
 
+# TO DO: WHAT IS THIS FOR?
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
@@ -193,6 +196,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.update_weights(weights)
         self.cache_weights(weights)
 
+    # TO DO: DESCRIBED THAT IN GENERAL AN OBJECTIVE LEARNER MAY HAVE INTRINSIC CONSTRAINTS ON WEIGHTS. ONLY REFER TO CALF AS AN EXAMPLE, USE CROSSREF
     def accept_or_reject_weights(
         self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
     ):
@@ -270,6 +274,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         return self.weights_acceptance_status
 
+    # TO DO: THIS GOES AWAY, RIGHT?
     def update_buffers(self, observation, action):
         """
         Updates the buffers of the critic with the given observation and action.
@@ -326,6 +331,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.current_critic_loss = 0
         self.initialize_buffers()
 
+    # TO DO: REMOVE?
     def _SciPy_update(self, intrinsic_constraints=None):
         weights_init = self.model.cache.weights
 
@@ -354,6 +360,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         )
         return optimized_weights
 
+    # TO DO: REMOVE?
     def _CasADi_update(self, intrinsic_constraints=None):
         weights_init = rc.DM(self.model.cache.weights)
         symbolic_var = rc.array_symb(tup=rc.shape(weights_init), prototype=weights_init)
@@ -392,6 +399,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         return optimized_weights
 
+    # TO DO: REMOVE?
     def _Torch_update(self):
         data_buffer = {
             "observation_buffer": self.observation_buffer,
@@ -434,6 +442,7 @@ class CriticOfObservation(Critic):
             observation_next = observation_buffer[:, k]
             action_old = action_buffer[:, k - 1]
 
+            # TO DO: PROPERLY COMMENT. ACTUALLY, ADD MORE COMMENTS ON WHAT IS GOING ON HERE
             # Temporal difference
 
             critic_old = self.model(observation_old, weights=weights)
@@ -463,7 +472,7 @@ class CriticOfObservation(Critic):
 
         return critic_objective
 
-
+# TO DO: REMOVE THIS?
 class CriticOfActionObservationOnPolicy(Critic):
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
@@ -515,7 +524,7 @@ class CriticOfActionObservationOnPolicy(Critic):
 
         return critic_objective
 
-
+# TO DO: DOCSTRING. REMOVE?
 class CriticOffPolicyBehaviour(Critic):
     def __init__(self, *args, batch_size, td_n, **kwargs):
         super().__init__(*args, **kwargs)
@@ -627,7 +636,7 @@ class CriticOffPolicyBehaviour(Critic):
             critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
         return critic_objective
 
-
+# TO DO: DOCSTRING. REMOVE?
 class CriticOffPolicyGreedy(Critic):
     def __init__(self, *args, action_bounds, batch_size, td_n, **kwargs):
         super().__init__(*args, **kwargs)
@@ -747,7 +756,7 @@ class CriticOffPolicyGreedy(Critic):
             critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
         return critic_objective
 
-
+# TO DO: DOCSTRING, ADD ALGORITHM OR PRINCIPLE?
 class CriticCALF(CriticOfObservation):
     def __init__(
         self,
@@ -836,6 +845,7 @@ class CriticCALF(CriticOfObservation):
         if hasattr(self.safe_controller, "reset_all_PID_controllers"):
             self.safe_controller.reset_all_PID_controllers()
 
+    # TO DO: DO NOT MIX. THERE IS A UNIFIED BUFFER UPDATE. HERE WE JUST UPDATE SAFE DECAY RATE
     def update_buffers(self, observation, action):
         """
         Update data buffers and dynamic safe decay rate.
@@ -969,6 +979,7 @@ class CriticCALF(CriticOfObservation):
         )
         return self.stabilizing_constraint_violation
 
+    # TO DO: APPLY OBJECTIVE PENALIZATION
     def CALF_decay_constraint_predicted_on_policy(self, weights=None):
         """
         Constraint for ensuring that the CALF function decreases at each iteration.
@@ -1152,7 +1163,7 @@ class CriticTrivial(Critic):
         """
         self.total_objective = 0
 
-
+# TO DO: REVIEW AND REFACTOR THIS
 class CriticTabularVI(Critic):
     """
     Critic for tabular agents.
@@ -1250,7 +1261,7 @@ class CriticTabularVI(Critic):
             * self.model.weights[self.predictor.predict(observation, action)]
         )
 
-
+# TO DO: SAME AS VI
 class CriticTabularPI(CriticTabularVI):
     def __init__(self, *args, tolerance=1e-3, N_update_iters_max=50, **kwargs):
         """

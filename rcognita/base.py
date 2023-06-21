@@ -1,9 +1,12 @@
+# TO DO: DOCSTRING. NEED DOCSTRINGS EVERYWHERE
+
 import abc
 import inspect
 from .callbacks import Callback
 import rcognita
 import weakref
 
+# TO DO: DOCSTRING
 class RcognitaBase(abc.ABC):
     def __init__(self):
         callbacks = [getattr(self.__class__, d) for d in dir(self.__class__)
@@ -15,6 +18,7 @@ class RcognitaBase(abc.ABC):
                 callback_instance.on_launch()
                 rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
 
+# TO DO: DOCSTRING
 class Node(abc.ABC):
     def __init__(self, input_type):
         self.__subscribers = []
@@ -22,9 +26,11 @@ class Node(abc.ABC):
         self.hooks = []
         self.type = input_type
 
+    # TO DO: DOCSTRING
     def hook(self, hook_function):
         self.hooks.append(hook_function)
 
+    # TO DO: DOCSTRING
     def __forget(self, other):
         assert self.connected(other), "Attempt to disconnect a node that was not connected."
         for i, subscriber_ref in enumerate(self.__subscribers):
@@ -37,26 +43,30 @@ class Node(abc.ABC):
             if subscribee is other:
                 self.__subscribees.pop(i)
                 break
-
+    
+    # TO DO: DOCSTRING
     def connected(self, other):
         return other in self.subscribees or other in self.subscribers
-
+    
+    # TO DO: DOCSTRING
     def disconnect(self, other):
         self.__forget(other)
         other.__forget(self)
 
+    # TO DO: DOCSTRING
     def __del__(self):
         for subscriber in self.subscribers:
             self.disconnect(subscriber)
         for subscribee in self.subscribees:
             self.disconnect(subscribee)
-
+    # TO DO: DOCSTRING 
     def __subscribe(self, other):
         assert isinstance(other, Node), "Attempt to subscribe to something that is neither a Port nor a Publisher."
         assert issubclass(other.type, self.type), f"Type mismatch. Attempt to subscribe a node of type {self.type} to node of type {other.type}."
         self.__subscribees.append(weakref.ref(other))
         other.__subscribers.append(weakref.ref(self))
 
+    # TO DO: DOCSTRING
     def __issue_subscription(self, other):
         assert isinstance(other, Node), "Attempt to issue subscription to something that is neither a Port nor a Publisher."
         assert issubclass(self.type, other.type), f"Type mismatch. Attempt to subscribe a node of type {other.type} to node of type {self.type}."
@@ -86,10 +96,11 @@ class Node(abc.ABC):
         return self.__on_input(message)
 
 
+# TO DO: DOCSTRING
 class EmptyInboxException(Exception):
     pass
 
-
+# TO DO: DOCSTRING
 class port:
     def __init__(self, input_type=object, hooks=[]):
         self.input_type = input_type
@@ -141,6 +152,7 @@ class Port(Node):
         else:
             raise EmptyInboxException("The port's inbox was empty at the time of calling ``receive``.")
 
+# TO DO: DOCSTRING
 class Publisher(Node):
     def connect(self, other):
         self.__issue_subscription(other)

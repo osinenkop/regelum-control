@@ -1,5 +1,5 @@
 """
-Module that contains state or observation (depending on the context) predictors.
+Contains state or observation (depending on the context) predictors.
 
 """
 
@@ -88,6 +88,7 @@ class EulerPredictorMultistep(EulerPredictor):
 class RKPredictor(EulerPredictor):
     """
     Predictor that makes use o Runge-Kutta finite difference methods.
+    
     """
 
     def __init__(

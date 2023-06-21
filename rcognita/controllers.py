@@ -73,7 +73,7 @@ class Controller(RcognitaBase, ABC):
     def compute_action(self, time, state, observation):
         pass
 
-
+# TO DO: OBJECTIVE LEARNER?
 class RLController(Controller):
     """
     Reinforcement learning controller class.
@@ -112,6 +112,7 @@ class RLController(Controller):
     def pre_compute_action(self):
         return None
 
+    # TO DO: DOCSTRING. FORMAT COMMENTS CORRECTLY
     @apply_action_bounds
     def compute_action(self, time, state, observation):
         ### This method is called to generate an event in order for callbacks to fire.
@@ -141,7 +142,7 @@ class RLController(Controller):
 
         return self.policy.action
 
-
+# TO DO: DOCSTRING. CLEANUP: NO COMMENTED OUT CODE! NEED ALL DOCSTRINGS HERE
 class CALFControllerExPost(RLController):
     def __init__(self, *args, safe_only=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -153,6 +154,7 @@ class CALFControllerExPost(RLController):
             self.reset = self.policy.safe_controller.reset
         self.safe_only = safe_only
 
+    # TO DO: DOCSTRING. RENAME TO HUMAN LANGUAGE. DISPLACEMENT?
     def compute_weights_disetpointlacement(self, agent):
         self.weights_difference_norm = rc.norm_2(
             self.critic.model.cache.weights - self.critic.optimized_weights
@@ -168,6 +170,7 @@ class CALFControllerExPost(RLController):
         self.policy.model.update_and_cache_weights(action)
         self.critic.r_prev += self.policy.running_objective(observation, action)
 
+    # TO DO: DOCSTRING
     @apply_callbacks()
     def compute_action(self, state, observation, is_critic_update=False, time=0):
         # Update data buffers
@@ -210,6 +213,7 @@ class CALFControllerExPost(RLController):
         # self.collect_critic_stats(time)
         return self.policy.action
 
+    # TODO: NEED IT?
     def collect_critic_stats(self, time):
         self.critic.stabilizing_constraint_violations.append(
             np.squeeze(self.critic.stabilizing_constraint_violation)
@@ -233,7 +237,7 @@ class CALFControllerExPost(RLController):
 
         self.critic.CALFs.append(current_CALF)
 
-
+# TO DO: DOCSTRING. CLEANUP: NO COMMENTED OUT CODE! NEED ALL DOCSTRINGS HERE
 class CALFControllerPredictive(CALFControllerExPost):
     @apply_callbacks()
     def compute_action(
@@ -283,7 +287,7 @@ class CALFControllerPredictive(CALFControllerExPost):
 
         return self.policy.action
 
-
+# TO DO: DOCSTRING CLEANUP
 class Controller3WRobotDisassembledCLF:
     """
     This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
@@ -309,10 +313,10 @@ class Controller3WRobotDisassembledCLF:
     .. [1] W. Abbasi, F. urRehman, and I. Shah. “Backstepping based nonlinear adaptive control for the extended
            nonholonomic double integrator”. In: Kybernetika 53.4 (2017), pp. 578–594
 
-    ..   [2] Matsumoto, R., Nakamura, H., Satoh, Y., and Kimura, S. (2015). Position control of two-wheeled mobile robot
+    .. [2] Matsumoto, R., Nakamura, H., Satoh, Y., and Kimura, S. (2015). Position control of two-wheeled mobile robot
              via semiconcave function backstepping. In 2015 IEEE Conference on Control Applications (CCA), 882–887
 
-    ..   [3] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational asetpointects." arXiv preprint arXiv:2006.14013 (2020)
+    .. [3] Osinenko, Pavel, Patrick Schmidt, and Stefan Streif. "Nonsmooth stabilization and its computational asetpointects." arXiv preprint arXiv:2006.14013 (2020)
 
     """
 
@@ -540,6 +544,7 @@ class Controller3WRobotDisassembledCLF:
         """
         is_time_for_new_sample = self.clock.check_time(time)
 
+        # TO DO: REMOVE NASTY COMMENTED OUT DEBUG CODE
         if is_time_for_new_sample:  # New sample
             # This controller needs full-state measurement
             action = self.compute_action(None, observation)
@@ -591,7 +596,7 @@ class Controller3WRobotDisassembledCLF:
 
         return self._Fc(xNI, eta, theta_star)
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT. MAKE UNIVERSAL, NOT JUST FOR 3W ROBOT
 class ControllerMemoryPID:
     def __init__(
         self,
@@ -687,7 +692,7 @@ class ControllerMemoryPID:
         )
         return is_stabilized
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT
 class Controller3WRobotMemoryPID:
     def __init__(
         self,
@@ -878,7 +883,7 @@ class Controller3WRobotMemoryPID:
     def compute_LF(self, observation):
         pass
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT.
 class Controller3WRobotPID:
     def __init__(
         self,
@@ -1047,7 +1052,7 @@ class Controller3WRobotPID:
     def compute_LF(self, observation):
         pass
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT.
 class ControllerCartPolePID:
     def __init__(
         self,
@@ -1083,6 +1088,7 @@ class ControllerCartPolePID:
     def reset(self):
         pass
 
+    # TO DO: DO YOU NEED THIS COMMENT?
     def compute_action_sampled(self, time, state, observation):
         """
         Compute sampled action.
@@ -1202,7 +1208,7 @@ class ControllerCartPoleEnergyBased:
     def reset(self):
         pass
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT.
 class ControllerCartPoleEnergyBasedAdaptive(ControllerCartPoleEnergyBased):
     def __init__(self, *args, adaptation_block=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1224,7 +1230,7 @@ class ControllerCartPoleEnergyBasedAdaptive(ControllerCartPoleEnergyBased):
         ) - c * x_dot**2 * rc.sign(x_dot)
         return self.action
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT.
 class ControllerLunarLanderPID:
     def __init__(
         self,
@@ -1311,7 +1317,7 @@ class ControllerLunarLanderPID:
         self.action = rc.array(self.action)
         return self.action
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT.
 class Controller2TankPID:
     def __init__(
         self,
@@ -1398,7 +1404,7 @@ class Controller2TankPID:
         )
         return self.action
 
-
+# TO DO: IF NEEDED, THEN DOCUMENT IT. FIX TYPOSE
 class Controller3WRobotNIDisassembledCLF:
     """
     Nominal parking controller for NI using disassembled supper_bound_constraintradients.
@@ -1615,7 +1621,7 @@ class Controller3WRobotNIDisassembledCLF:
 
         return LF_value
 
-
+# TO DO: DOCUMENT IT
 class NominalControllerInvertedPendulum:
     def __init__(
         self,
@@ -1652,7 +1658,7 @@ class NominalControllerInvertedPendulum:
     def reset(self):
         self.clock.reset()
 
-
+# TO DO: DOCUMENT IT
 class Controller3WRobotNIMotionPrimitive:
     def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
         if action_bounds is None:
@@ -1729,7 +1735,7 @@ class Controller3WRobotNIMotionPrimitive:
     def compute_LF(self, observation):
         pass
 
-
+# TO DO: DOCUMENT IT. SPECIFY ITS NAME. PID ALSO?
 class ControllerKinPoint:
     def __init__(self, gain, time_start=0, sampling_time=0.01, action_bounds=None):
         if action_bounds is None:

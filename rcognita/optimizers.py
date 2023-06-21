@@ -1,3 +1,4 @@
+# TO DO: EXTEND DOCSTRING
 """
 This module contains optimization routines to be used in optimal controllers, policies, critics etc.
 
@@ -66,7 +67,7 @@ class OptimizerConfig:
     def __post_init__(self) -> None:
         self.__dict__.update(self.config_options)
 
-
+# TO DO: DOCSTRING, RENAME INTO OPTIMIZER
 class Optimizable:
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         self.optimizer_config = optimizer_config
@@ -417,7 +418,7 @@ scipy_default_config = OptimizerConfig(
     kind="numeric",
 )
 
-
+# TO DO: WHTA IS THIS? NEEDED?
 class TorchDataloaderOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
@@ -500,7 +501,7 @@ class TorchDataloaderOptimizer:
 
         self.post_epoch(1, last_epoch_objective)
 
-
+# TO DO: REMOVE
 class TorchProjectiveOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
@@ -577,7 +578,7 @@ class TorchProjectiveOptimizer:
         model.weights = torch.nn.Parameter(model_input[0][: self.action_size])
         return model_input[0]
 
-
+# TO DO: REMOVE?
 class BruteForceOptimizer:
     """
     Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."

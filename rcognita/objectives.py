@@ -1,5 +1,5 @@
 """
-Module that contains general objectives functions that can be used by various entities of the framework.
+This module that contains general objectives functions that can be used by various entities of the framework.
 For instance, a running objective can be used commonly by a generic optimal controller, an policy, a critic, a logger, an animator, a pipeline etc.
 
 """

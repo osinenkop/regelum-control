@@ -1,8 +1,10 @@
+# TO DO: DOCSTRING. NEED TRIVIAL OBSERVER
+
 import numpy as np
 
 import rcognita.base
 
-
+# TO DO: DOCSTRING
 class KalmanFilter(rcognita.base.RcognitaBase):
     def __init__(
         self,
