@@ -1,4 +1,4 @@
-# TO DO: WHAT IS THIS MODULE? IF NOT NEEDED, REMOVE
+# TODO: WHAT IS THIS MODULE? IF NOT NEEDED, REMOVE
 
 import numpy as np
 import matplotlib.pyplot as plt

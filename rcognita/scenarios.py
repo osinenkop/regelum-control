@@ -28,7 +28,8 @@ try:
 except ImportError:
     torch = MagicMock()
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class Scenario(rcognita.base.RcognitaBase, ABC):
     def __init__(self):
         pass
@@ -41,7 +42,8 @@ class Scenario(rcognita.base.RcognitaBase, ABC):
     def step(self):
         pass
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class OnlineScenario(Scenario):
 
     """
@@ -181,7 +183,7 @@ class OnlineScenario(Scenario):
             self.cached_timeline
         )
 
-    # TO DO: BETTER REMOVE AND RECONSIDER
+    # TODO: BETTER REMOVE AND RECONSIDER
     def memorize(step_method):
         """
         This is a decorator for a simulator step method.
@@ -270,7 +272,7 @@ class OnlineScenario(Scenario):
 
         return step_with_memory
 
-    # TO DO: DOCSTRING
+    # TODO: DOCSTRING
     @apply_callbacks()
     def pre_step(self):
         self.running_objective_value = self.running_objective(
@@ -288,7 +290,7 @@ class OnlineScenario(Scenario):
 
         return pre_step_statistics
 
-    # TO DO: DOCSTRING
+    # TODO: DOCSTRING
     @apply_callbacks()
     def post_step(self):
         self.running_objective_value = self.running_objective(
@@ -305,7 +307,7 @@ class OnlineScenario(Scenario):
             self.total_objective,
         )
 
-    # TO DO: DOCSTRING
+    # TODO: DOCSTRING
     @memorize
     def step(self):
         self.pre_step()

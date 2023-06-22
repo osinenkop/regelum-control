@@ -30,7 +30,8 @@ except ModuleNotFoundError:
 
     casadi = MagicMock()
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class Simulator(rcognita.base.RcognitaBase, ABC):
     def __init__(
         self,

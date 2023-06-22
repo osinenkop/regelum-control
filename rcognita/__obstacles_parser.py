@@ -1,4 +1,4 @@
-# TO DO: REMOVE THIS
+# TODO: REMOVE THIS
 
 import os, sys
 
@@ -10,6 +10,7 @@ import numpy as np
 
 import os
 from scipy.spatial import ConvexHull
+
 
 class myPoint:
     def __init__(self, R, x, y, angle):
@@ -40,7 +41,7 @@ class Obstacles_parser:
         return self.constraints
 
     def d(self, R_i, R_i1, delta_angle=np.radians(1)):
-        answ = np.sqrt(R_i ** 2 + R_i1 ** 2 - 2 * R_i * R_i1 * np.cos(delta_angle))
+        answ = np.sqrt(R_i**2 + R_i1**2 - 2 * R_i * R_i1 * np.cos(delta_angle))
         return answ
 
     def k(self, R_i, R_i1):
@@ -379,7 +380,7 @@ class Obstacles_parser:
             return (
                 np.max(
                     [
-                        (r ** 2 - (a - x[0]) ** 2 - (b - x[1]) ** 2)
+                        (r**2 - (a - x[0]) ** 2 - (b - x[1]) ** 2)
                         for [a, b], r in zip(centers, radiuses)
                     ]
                 )

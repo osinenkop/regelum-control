@@ -18,13 +18,15 @@ from .__utilities import rc
 from typing import Optional, Union
 from functools import reduce
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class SystemComposer:
     @staticmethod
     def compose(systems: list):
         return reduce(lambda x, y: x @ y, systems)
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ComposedSystem(rcognita.base.RcognitaBase):
     def __init__(
         self,
@@ -76,7 +78,7 @@ class ComposedSystem(rcognita.base.RcognitaBase):
         self.forward_permutation = rc.ones(self.dim_observation).astype(int)
         self.inverse_permutation = rc.ones(self.dim_observation).astype(int)
 
-    # TO DO: DOCSTRING
+    # TODO: DOCSTRING
     @staticmethod
     def __get_routing(io_mapping):
         io_mapping_extended = []
@@ -188,13 +190,13 @@ class ComposedSystem(rcognita.base.RcognitaBase):
     def receive_action(self, action):
         self.inputs = action
 
-    # TO DO: NEED THIS? REVIEW THIS
+    # TODO: NEED THIS? REVIEW THIS
     def update_system_parameters(self, inputs):
         assert isinstance(inputs, dict)
         self.sys_left.update_system_parameters(inputs)
         self.sys_right.update_system_parameters(inputs)
 
-    # TO DO: NEED THIS?
+    # TODO: NEED THIS?
     def compute_closed_loop_rhs(self, time, state):
         action = self.inputs
 
@@ -208,13 +210,13 @@ class ComposedSystem(rcognita.base.RcognitaBase):
     def reset(self):
         pass
 
-    # TO DO: WHAT IS THIS?    
+    # TODO: WHAT IS THIS?
     def permute_state(self, permutation):
         self.forward_permutation = permutation
         self.inverse_permutation = self.get_inverse_permutation(permutation)
         return self
 
-    # TO DO: WHAT IS THIS?
+    # TODO: WHAT IS THIS?
     def get_inverse_permutation(self, permutation):
         self.current_permutation = permutation
         permutation = np.asanyarray(permutation)  # in case p is a tuple, etc.
@@ -832,8 +834,17 @@ class LunarLander(System):
 
         left_support, right_support = self.compute_supports_geometry(state[:2], theta)
 
-        F_l = inputs[0]
-        F_t = inputs[1]
+        self.is_landed = (
+            rc.if_else(left_support[1] <= 0, 1, 0)
+            + rc.if_else(right_support[1] <= 0, 1, 0)
+        ) > 0
+
+        F_l = inputs[0] * (1 - self.is_landed)
+        F_t = inputs[1] * (1 - self.is_landed)
+
+        N_left, N_right = self.compute_reaction(
+            state[:2], left_support
+        ), self.compute_reaction(state[:2], right_support)
 
         Dstate[0] = x_dot
 
@@ -841,18 +852,20 @@ class LunarLander(System):
 
         Dstate[2] = theta_dot
 
-        Dstate[3] = 1 / m * (F_l * rc.cos(theta) - F_t * rc.sin(theta))
+        Dstate[3] = (
+            1 / m * (F_l * rc.cos(theta) - F_t * rc.sin(theta)) + N_left[0] + N_right[0]
+        )
 
-        Dstate[4] = 1 / m * (F_l * rc.sin(theta) + F_t * rc.cos(theta)) - g
+        Dstate[4] = (
+            1 / m * (F_l * rc.sin(theta) + F_t * rc.cos(theta))
+            - g
+            + N_left[1]
+            + N_right[1]
+        )
 
         Dstate[5] = (4 * F_l) / J
 
         # Check if any of the two lander's supports touched the ground. If yes, freeze the state.
-        self.is_landed = rc.if_else(left_support[1] <= 0, 1, 0) * rc.if_else(
-            right_support[1] <= 0, 1, 0
-        )
-
-        Dstate = Dstate * (1 - self.is_landed)
 
         return Dstate
 
@@ -881,7 +894,11 @@ class LunarLander(System):
         xi_3_new = xi + xi_3_d_rot
         return xi_2_new, xi_3_new
 
-    def compute_reaction(self, r, r_support):
+    def compute_reaction(
+        self,
+        r,
+        r_support,
+    ):
         m, _, g, sigma = (
             self.parameters["m"],
             self.parameters["J"],

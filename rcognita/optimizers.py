@@ -1,4 +1,4 @@
-# TO DO: EXTEND DOCSTRING
+# TODO: EXTEND DOCSTRING
 """
 This module contains optimization routines to be used in optimal controllers, policies, critics etc.
 
@@ -36,6 +36,7 @@ from functools import partial
 from inspect import signature
 from dataclasses import dataclass, field
 from .__utilities import TORCH, CASADI, NUMPY, type_inference
+from .base import RcognitaBase
 
 
 class Optimizer:
@@ -67,8 +68,21 @@ class OptimizerConfig:
     def __post_init__(self) -> None:
         self.__dict__.update(self.config_options)
 
-# TO DO: DOCSTRING, RENAME INTO OPTIMIZER
-class Optimizable:
+
+@dataclass(frozen=True)
+class Constraint:
+    kind: str
+    func: Callable
+    params: dict
+    dvar_idx: int = 0
+
+    def __call__(self, dvar, **params):
+        _params = list(map(params.get, list(self.params.keys())))
+        return self.func(dvar, *_params)
+
+
+# TODO: DOCSTRING, RENAME INTO OPTIMIZER
+class Optimizable(RcognitaBase):
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
@@ -418,7 +432,8 @@ scipy_default_config = OptimizerConfig(
     kind="numeric",
 )
 
-# TO DO: WHTA IS THIS? NEEDED?
+
+# TODO: WHTA IS THIS? NEEDED?
 class TorchDataloaderOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
@@ -501,7 +516,8 @@ class TorchDataloaderOptimizer:
 
         self.post_epoch(1, last_epoch_objective)
 
-# TO DO: REMOVE
+
+# TODO: REMOVE
 class TorchProjectiveOptimizer:
     """
     Optimizer class that uses PyTorch as its optimization engine.
@@ -578,7 +594,8 @@ class TorchProjectiveOptimizer:
         model.weights = torch.nn.Parameter(model_input[0][: self.action_size])
         return model_input[0]
 
-# TO DO: REMOVE?
+
+# TODO: REMOVE?
 class BruteForceOptimizer:
     """
     Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."

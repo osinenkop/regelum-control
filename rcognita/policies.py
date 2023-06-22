@@ -35,7 +35,8 @@ except ImportError:
 
     torch = MagicMock()
 
-# TO DO: WHY NOT IN UTILITIES? REMOVE?
+
+# TODO: WHY NOT IN UTILITIES? REMOVE?
 def force_type_safety(method):
     def wrapper(self, *args, **kwargs):
         result = method(self, *args, **kwargs)
@@ -46,7 +47,7 @@ def force_type_safety(method):
 
     return wrapper
 
-# TO DO: BAD INHERITANCE. USE AS SUBCLASS. 
+
 class Policy(Optimizable):
     """
     Class of policies.
@@ -60,6 +61,7 @@ class Policy(Optimizable):
         system: Union[System, ComposedSystem] = None,
         predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
+        action_init=None,
         opt_config=None,
         objective=None,
         discount_factor: Optional[float] = 1.0,
@@ -83,11 +85,14 @@ class Policy(Optimizable):
         :type optimizer: Optimizer, optional
         :param critic: Critic object for evaluating actions.
         :type critic: Critic, optional
-        :param running_objective: Running objective object for recording the running objective.
+        :param running_objective: Running objective object for recording
+        the running objective.
         :type running_objective: RunningObjective, optional
-        :param model: Model object to be used as reference by the Predictor and the Critic.
+        :param model: Model object to be used as reference by the Predictor
+        and the Critic.
         :type model: Model, optional
-        :param discount_factor: discount factor to be used in conjunction with the critic.
+        :param discount_factor: discount factor to be used in conjunction with
+        the critic.
         :type discount_factor: float, optional
         """
         self.system = system
@@ -100,9 +105,6 @@ class Policy(Optimizable):
 
         self.dim_action = self.system.dim_inputs
         self.dim_observation = self.system.dim_observation
-
-        self.action_old = self.action_initial_guess[: self.dim_action]
-        self.action = self.action_initial_guess[: self.dim_action]
 
         self.objective = objective
         self.discount_factor = discount_factor if discount_factor is not None else 1.0
@@ -119,6 +121,16 @@ class Policy(Optimizable):
             action_bounds, self.dim_action, tile_parameter=self.prediction_horizon
         )
         self.register_bounds(self.action_bounds)
+        self.action_old = (
+            self.action_initial_guess[: self.dim_action]
+            if action_init is None
+            else action_init
+        )
+        self.action = (
+            self.action_initial_guess[: self.dim_action]
+            if action_init is None
+            else action_init
+        )
 
     def __call__(self, observation):
         return self.get_action(observation)

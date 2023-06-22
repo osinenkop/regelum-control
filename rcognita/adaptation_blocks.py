@@ -1,4 +1,4 @@
-# TO DO: DOCSTRING
+# TODO: DOCSTRING
 
 from abc import ABC, abstractmethod
 from rcognita.__utilities import rc

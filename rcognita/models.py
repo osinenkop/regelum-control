@@ -10,7 +10,7 @@ import os, sys
 
 import rcognita.base
 
-# TO DO: REMOVE?
+# TODO: REMOVE?
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
@@ -353,7 +353,7 @@ class ModelWeightContainer(Model):
 
     """
 
-    # TO DO: WHY THIS NAME?
+    # TODO: WHY THIS NAME?
     model_name = "action-sequence"
 
     def __init__(self, dim_output, weights_init=None):
@@ -365,7 +365,8 @@ class ModelWeightContainer(Model):
     def forward(self, *argin, weights=None):
         return weights[: self.dim_output]
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ModelQuadMix(Model):
     model_name = "quad-mix"
 
@@ -436,7 +437,8 @@ class ModelBiquadForm(Model):
 
         return result
 
-# TO DO: ADD TRAILING PERIODS IN DOCSTRINGS
+
+# TODO: ADD TRAILING PERIODS IN DOCSTRINGS
 class ModelNN(nn.Module):
     """
     Class of pytorch neural network models. This class is not to be used barebones.
@@ -533,7 +535,7 @@ class ModelNN(nn.Module):
 
         self.update_and_cache_weights(self.cache.state_dict())
 
-    # TO DO: REMOVE? OR DOCUMENT PROPERLY
+    # TODO: REMOVE? OR DOCUMENT PROPERLY
     def soft_update(self, tau):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
@@ -570,7 +572,8 @@ class ModelNN(nn.Module):
 
         return result
 
-# TO DO: WHY IS THIS CALLED QUAD MIX BLA-BLA IF IT'S JUST ONE LAYER? FIX
+
+# TODO: WHY IS THIS CALLED QUAD MIX BLA-BLA IF IT'S JUST ONE LAYER? FIX
 class ModelQuadNoMixTorch(ModelNN):
     """
     pytorch neural network of one layer: fully connected.
@@ -608,7 +611,8 @@ class ModelQuadNoMixTorch(ModelNN):
 
         return x
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ModelDDQNAdvantage(ModelNN):
     def __init__(
         self,
@@ -640,7 +644,8 @@ class ModelDDQNAdvantage(ModelNN):
 
         return torch.squeeze(x)
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ModelDeepObjective(ModelNN):
     def __init__(
         self,
@@ -672,7 +677,8 @@ class ModelDeepObjective(ModelNN):
 
         return torch.squeeze(x)
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ModelDDQN(ModelNN):
     def __init__(
         self,
@@ -721,7 +727,8 @@ class ModelDDQN(ModelNN):
 
         return objective + (advantage - advantage_grid_mean)
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ModelDQNSimple(ModelNN):
     def __init__(
         self,
@@ -765,7 +772,8 @@ class ModelDQNSimple(ModelNN):
 
         return torch.squeeze(x)
 
-# TO DO: WHAT IS THIS? REVIEW AND/OR REMOVE. COMMIT TO SEPARATE BRANCH MAYBE, BUT DO A CLEANUP OF CODE AND DOCSTRINGS, REMOVE $$ SAY ETC.
+
+# TODO: WHAT IS THIS? REVIEW AND/OR REMOVE. COMMIT TO SEPARATE BRANCH MAYBE, BUT DO A CLEANUP OF CODE AND DOCSTRINGS, REMOVE $$ SAY ETC.
 class ModelPerceptronCalf(Model):
     model_name = "DQN_simple_casadi"
     weights_dict = {}
@@ -916,7 +924,8 @@ class ModelPerceptronCalf(Model):
 
         return x
 
-# TO DO: DOCSTRING TOO SHORT AND UNIFORMATIVE. DON'T ABUSE ABBREIVATIONS
+
+# TODO: DOCSTRING TOO SHORT AND UNIFORMATIVE. DON'T ABUSE ABBREIVATIONS
 class ModelDQN(ModelNN):
     """
     pytorch neural network DQN
@@ -974,7 +983,8 @@ class ModelDQN(ModelNN):
 
         return torch.squeeze(x)
 
-# TO DO: NOT FOR POLICY. NO MENTIONS OF POLICIES IN THIS MODULE
+
+# TODO: NOT FOR POLICY. NO MENTIONS OF POLICIES IN THIS MODULE
 class ModelWeightContainerTorch(ModelNN):
     """
     Pytorch weight container for policy
@@ -1019,7 +1029,8 @@ class LookupTable(Model):
         )
         return self.weights[indices]
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class WeightClipper:
     def __init__(self, weight_min=None, weight_max=None):
         self.weight_min = weight_min
@@ -1031,7 +1042,8 @@ class WeightClipper:
         w = w.clamp(self.weight_min, self.weight_max)
         module.weight.data = w
 
-# TO DO: DOCSTRING. RENAME TO FULLY CONNECTED
+
+# TODO: DOCSTRING. RENAME TO FULLY CONNECTED
 class ModelFc(ModelNN):
     def __init__(
         self,
@@ -1065,7 +1077,8 @@ class ModelFc(ModelNN):
 
         return x
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ModelNNElementWiseProduct(ModelNN):
     def __init__(
         self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
@@ -1080,7 +1093,7 @@ class ModelNNElementWiseProduct(ModelNN):
         self.register_parameter(
             name="dot_layer",
             param=torch.nn.Parameter(
-                # TO DO: REMOVE NUMBERS
+                # TODO: REMOVE NUMBERS
                 0.1 * torch.ones(self.dim_observation),
                 requires_grad=True,
             ),
@@ -1096,7 +1109,8 @@ class ModelNNElementWiseProduct(ModelNN):
             return input_tensor * dot_layer[None, :]
         return input_tensor * dot_layer
 
-""" TO DO:
+
+""" TODO:
 IS THIS A PDF? LOG PDF? RENAME PROPERLY
 `ModelNNGaussianNoise`
 RENAME FORWARD TO LOG_PDF
@@ -1109,6 +1123,8 @@ THEN, SAY, GAUSSIAN NOISE AS DECORATOR. RATRHER MODELNN AS SUBCLASS
 ...
 CLASS GAUSSIANNOISEADDER
 """
+
+
 class GaussianPDFModel(ModelNN):
     def __init__(
         self,
@@ -1180,7 +1196,7 @@ class GaussianPDFModel(ModelNN):
         ).sample()
 
 
-# TO DO: DOCSTRING
+# TODO: DOCSTRING
 class GaussianElementWisePDFModel(ModelNN):
     def __init__(
         self,
@@ -1260,7 +1276,8 @@ class GaussianElementWisePDFModel(ModelNN):
             loc=mean_of_action, covariance_matrix=cov_matrix
         ).sample()
 
-# TO DO: DOCSTRING: WHAT DOES IT MEAN CAN OPTIONALLY BE GENERATED?
+
+# TODO: DOCSTRING: WHAT DOES IT MEAN CAN OPTIONALLY BE GENERATED?
 class ModelGaussianConditional(Model):
     """
     Gaussian probability distribution model with `weights[0]` being an expectation vector

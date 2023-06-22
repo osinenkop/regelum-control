@@ -1,4 +1,4 @@
-# TO DO: REVIEW THIS DOCSTRING
+# TODO: REVIEW THIS DOCSTRING
 """
 This module contains callbacks.
 Callbacks are lightweight event handlers, used mainly for logging.
@@ -50,7 +50,8 @@ import gc
 def is_in_debug_mode():
     return not sys.gettrace() is None
 
-# TO DO: WHAT IS MISSING IN DOCSTRINGS IN THIS MODULE IS EXAMPLES?
+
+# TODO: WHAT IS MISSING IN DOCSTRINGS IN THIS MODULE IS EXAMPLES?
 class apply_callbacks:
     """
     Decorator that applies a list of callbacks to a given method of an object.
@@ -151,7 +152,8 @@ class Callback(ABC):
     def on_termination(self, res):
         pass
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class TimeCallback(Callback):
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
@@ -162,7 +164,8 @@ class TimeCallback(Callback):
     def perform(self, obj, method, output):
         rcognita.main.metadata["time"] = obj.time
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class OnEpisodeDoneCallerCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -189,7 +192,8 @@ class OnEpisodeDoneCallerCallback(Callback):
             self.episode_counter = 0
             self.iteration_counter += 1
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class OnIterationDoneCallerCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -212,7 +216,8 @@ class OnIterationDoneCallerCallback(Callback):
                     obj.N_iterations,
                 )
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class ConfigDiagramCallback(Callback):
     def perform(self, *args, **kwargs):
         pass
@@ -537,7 +542,8 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
 
 plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
-# TO DO: DOCSTRING
+
+# TODO: DOCSTRING
 class AnimationCallback(Callback, ABC):
     def __init__(self):
         self.frame_data = []
