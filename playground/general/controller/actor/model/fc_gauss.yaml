@@ -2,7 +2,8 @@ _target_: rcognita.models.GaussianPDFModel
 
 dim_observation: $ controller.actor.dim_input
 dim_action: $ controller.actor.dim_output
-dim_hidden: 10
+dim_hidden: 4 
 std: $ system_specific.diag_scale_coef 
 action_bounds: $ system.action_bounds%%
+normalize_output_coef: 400
 

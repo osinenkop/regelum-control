@@ -1,10 +1,8 @@
-defaults:
-  - system: 3wrobot
-
 _target_: rcognita.simulator.Simulator
 
 ###---Constructor arguments---###
 
+system: ~ system
 sys_type: $ system.sys_type
 state_init: $ initial_conditions.state_init
 action_init: $ initial_conditions.action_init

@@ -622,23 +622,22 @@ class ActorPG(ActorPGBase):
 
 
 class ActorSDPG(ActorPG):
-    @force_type_safety
     def objective(self, batch):
-        observations_actions_for_actor = batch["observations_actions_for_actor"].to(
-            self.device
-        )
-        observations_actions_for_critic = batch["observations_actions_for_critic"].to(
-            self.device
-        )
-        critic_value = self.critic(observations_actions_for_critic).detach()
-        return (
-            self.dataset_size
-            * (
-                self.model(observations_actions_for_actor.float())
-                * critic_value
-                / self.N_episodes
-            ).mean()
-        )
+        observations_actions = batch["observations_actions"].to(self.device)
+        log_probs = self.model.log_probs(observations_actions.float())
+
+        if self.is_do_not_let_the_past_distract_you:
+            target_objectives = batch["tail_total_objectives"].to(self.device)
+        else:
+            target_objectives = batch["total_objectives"].to(self.device)
+
+        if self.is_with_baseline:
+            target_objectives -= batch["baselines"].to(self.device)
+
+        # TODO: FIX TYPES
+        critic_value = self.critic(observations_actions.double()).detach().float()
+
+        return (log_probs * critic_value).sum() / self.N_episodes
 
 
 class ActorDDPG(ActorPGBase):

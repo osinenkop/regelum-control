@@ -682,20 +682,24 @@ class LunarLander(System):
         self.name = "lander"
         self.a = 1
         self.r = 1
+        self.alpha = np.arctan(self.a / self.r)
+        self.l = np.sqrt(self.a**2 + self.r**2)
         self.sigma = 1
         self.state_cache = []
         self.is_landed = False
 
     def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate = utilities.rc.zeros(
+        Dstate_before_landing = utilities.rc.zeros(
             self.dim_state,
             prototype=(state, action),
         )
 
         m, J, g = self.pars
 
-        F_g = m * g * utilities.rc.array([0, 1], prototype=Dstate)
+        F_g = m * g * utilities.rc.array([0, 1], prototype=Dstate_before_landing)
 
+        x = state[0]
+        y = state[1]
         theta = state[2]
         x_dot = state[3]
         y_dot = state[4]
@@ -721,29 +725,80 @@ class LunarLander(System):
         #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
         # )[2] * utilities.rc.if_else(right_support[1] < 0, 1, 0)
 
-        Dstate[0] = x_dot
+        self.is_landed_left = utilities.rc.if_else(left_support[1] <= 0, 1, 0)
+        self.is_landed_right = utilities.rc.if_else(right_support[1] <= 0, 1, 0)
+        self.is_landed_vertex = utilities.rc.if_else(state[1] <= 0, 1, 0)
+        self.is_freezed = (
+            self.is_landed_left * self.is_landed_right + self.is_landed_vertex
+        ) > 0
+        self.is_landed = (
+            self.is_landed_left + self.is_landed_right + self.is_landed_vertex
+        ) > 0
 
-        Dstate[1] = y_dot
-
-        Dstate[2] = theta_dot
-
-        Dstate[3] = (
+        Dstate_before_landing[0] = x_dot
+        Dstate_before_landing[1] = y_dot
+        Dstate_before_landing[2] = theta_dot
+        Dstate_before_landing[3] = (
             1 / m * (F_l * utilities.rc.cos(theta) - F_t * utilities.rc.sin(theta))
         )
-
-        Dstate[4] = (
+        Dstate_before_landing[4] = (
             1 / m * (F_l * utilities.rc.sin(theta) + F_t * utilities.rc.cos(theta)) - g
         )
+        Dstate_before_landing[5] = (4 * F_l) / J
 
-        # Dstate[5] = (4 * F_l + M_l + M_r) / J
-        Dstate[5] = (4 * F_l) / J
+        Dstate_landed_right = self._compute_pendulum_dynamics(
+            # x=x,
+            # y=y,
+            angle=-theta - self.alpha,
+            angle_dot=theta_dot,
+            prototype=(state, action),
+        )
+
+        Dstate_landed_left = self._compute_pendulum_dynamics(
+            # x=x,
+            # y=y,
+            angle=self.alpha - theta,
+            angle_dot=theta_dot,
+            prototype=(state, action),
+        )
 
         # Check if any of the two lander's supports touched the ground. If yes, freeze the state.
-        self.is_landed = utilities.rc.if_else(
-            left_support[1] <= 0, 1, 0
-        ) * utilities.rc.if_else(right_support[1] <= 0, 1, 0)
 
-        Dstate = Dstate * (1 - self.is_landed)
+        Dstate = (1 - self.is_freezed) * (
+            (1 - self.is_landed) * Dstate_before_landing
+            + self.is_landed
+            * (
+                self.is_landed_right * Dstate_landed_right
+                + self.is_landed_left * Dstate_landed_left
+            )
+        )
+
+        return Dstate
+
+    def _compute_pendulum_dynamics(self, angle, angle_dot, prototype):
+        Dstate = utilities.rc.zeros(
+            self.dim_state,
+            prototype=prototype,
+        )
+        m, J, g = self.pars
+
+        x = self.l * utilities.rc.sin(angle)
+        y = self.l * utilities.rc.cos(angle)
+
+        Dstate[5] = g / self.l**2 * x
+
+        # Dstate[0] = angle_dot * y
+        # Dstate[1] = -angle_dot * x
+        # Dstate[2] = angle_dot
+        # Dstate[3] = y * Dstate[5] - angle_dot**2 * x
+        # Dstate[4] = -x * Dstate[5] - angle_dot**2 * y
+        # angle_dot = 1
+        # Dstate[5] = 0.0
+        Dstate[0] = angle_dot * y
+        Dstate[1] = -angle_dot * x
+        Dstate[2] = -angle_dot
+        Dstate[3] = y * Dstate[5] - angle_dot**2 * x
+        Dstate[4] = -x * Dstate[5] - angle_dot**2 * y
 
         return Dstate
 
@@ -807,12 +862,14 @@ class LunarLander(System):
         #     self.is_landed > 0, utilities.rc.array([0, self.a, 0, 0, 0, 0]), state
         # )
         # return state
-        left_support, right_support = self.compute_supports_geometry(
-            state[:2], state[2]
-        )
-        self.is_landed = utilities.rc.if_else(
-            left_support[1] <= 0, 1, 0
-        ) * utilities.rc.if_else(right_support[1] <= 0, 1, 0)
-        return state * (1 - self.is_landed) + self.is_landed * utilities.rc.array(
-            [0, self.a, 0, 0, 0, 0]
-        )
+        # left_support, right_support = self.compute_supports_geometry(
+        #     state[:2], state[2]
+        # )
+        # self.is_landed = utilities.rc.if_else(
+        #     left_support[1] <= 0, 1, 0
+        # ) * utilities.rc.if_else(right_support[1] <= 0, 1, 0)
+        # return state * (1 - self.is_landed) + self.is_landed * utilities.rc.array(
+        #     [0, self.a, 0, 0, 0, 0]
+        # )
+
+        return state

@@ -689,6 +689,7 @@ class ModelDQNSimple(ModelNN):
         force_positive_def=False,
         bias=False,
         leaky_relu_coef=0.2,
+        is_double_precision=True,
     ):
         super().__init__()
 
@@ -699,7 +700,8 @@ class ModelDQNSimple(ModelNN):
         self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
 
-        self.double()
+        if is_double_precision:
+            self.double()
 
         if weights is not None:
             self.load_state_dict(weights)
