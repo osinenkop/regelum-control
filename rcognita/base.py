@@ -52,6 +52,10 @@ class RcognitaType(abc.ABCMeta):
     def __prepare__(metacls, *args):
         return {"apply_callbacks": apply_callbacks} | super().__prepare__(*args)
 
+    def __add__(self, other):
+        assert hasattr(self, "_compose")
+        return self._compose(other)
+
     def __new__(cls, *args, **kwargs):
         x = super().__new__(cls, *args, **kwargs)
         if x.__name__ == "RcognitaBase" or x.__name__ == "Callback" or issubclass(x, cb.Callback):

@@ -23,6 +23,7 @@ from threading import Thread
 from unittest.mock import Mock
 
 import matplotlib.animation
+import matplotx.styles
 import mlflow
 import torch
 from matplotlib.figure import Figure
@@ -610,19 +611,35 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
 
 plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
+plt.style.use(matplotx.styles.dracula)
 
 class AnimationCallback(Callback, ABC):
     """Callback (base) responsible for rendering animated visualizations of the experiment."""
     _frames = 100
 
-    def __init__(self, *args, **kwargs):
+    @classmethod
+    def _compose(cls_left, cls_right):
+        animations = []
+        for cls in [cls_left, cls_right]:
+            if issubclass(cls, ComposedAnimationCallback):
+                assert cls is not ComposedAnimationCallback, "Adding a composed animation in this way is ambiguous."
+                animations += cls._animations
+            else:
+                animations.append(cls)
+        class Composed(ComposedAnimationCallback):
+            _animations = animations
+            def __init__(self, **kwargs):
+                super().__init__(*self._animations, **kwargs)
+        return Composed
+
+    def __init__(self, *args, interactive=None, **kwargs):
         """Initialize an instance of AnimationCallback."""
         super().__init__(*args, **kwargs)
         assert self.attachee is not None, "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
         self.frame_data = []
         #matplotlib.use('Qt5Agg', force=True)
 
-        self.interactive_mode = self._metadata["argv"].interactive
+        self.interactive_mode = self._metadata["argv"].interactive if interactive is None else interactive
         if self.interactive_mode:
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
@@ -666,10 +683,12 @@ class AnimationCallback(Callback, ABC):
         self.mng = Mock()
 
     def reset(self):
+        self.frame_data = []
         if self.interactive_mode:
             self.mng.window.close()
-            plt.close(self.fig)
-        self.__init__(attachee=self.attachee)
+            self.ax.clear()
+            self.setup()
+        #self.__init__(attachee=self.attachee, interactive=self.interactive_mode)
 
     @abstractmethod
     def construct_frame(self, **frame_datum):
@@ -678,7 +697,9 @@ class AnimationCallback(Callback, ABC):
     def animate(self, frames=None):
         temp_fig, temp_ax = self.fig, self.ax
         plt.ioff()
-        self.fig, self.ax = plt.subplots(figsize=(10, 10))
+        self.fig = Figure(figsize=(10, 10))
+        canvas = FigureCanvas(self.fig)
+        self.ax = canvas.figure.add_subplot(111)
         self.setup()
         if frames is None:
             frames = self.__class__._frames
@@ -746,6 +767,51 @@ class AnimationCallback(Callback, ABC):
         self.animate_and_save(name=str(episode_number))
         self.reset()
 
+class ComposedAnimationCallback(AnimationCallback):
+    def __init__(self, *animations, **kwargs):
+        Callback.__init__(self, **kwargs)
+        self.animations = [Animation(interactive=False, **kwargs) for Animation in animations]
+        self.fig = Figure(figsize=(10, 10))
+        canvas = FigureCanvas(self.fig)
+        width = int(len(self.animations) ** 0.5 + 0.5)
+        height = width - (width ** 2 - len(self.animations)) // width
+        for i, animation in enumerate(self.animations):
+            animation.fig = self.fig
+            animation.ax = canvas.figure.add_subplot(width, height, 1 + i)
+            animation.ax.set_aspect('equal', 'box')
+        self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+        for i, animation in enumerate(self.animations):
+            animation.mng = self.mng
+            animation.interactive_mode = True
+            animation.setup()
+
+    def perform(self, obj, method, output):
+        assert False
+
+    def construct_frame(self, **frame_datum):
+        assert False
+
+    def setup(self):
+        assert False
+
+    def is_target_event(self, obj, method, output):
+        assert False
+
+    def on_launch(self):
+        for animation in self.animations:
+            animation.on_launch()
+
+    def on_episode_done(
+        self,
+        *args,
+        **kwargs
+    ):
+        for animation in self.animations:
+            animation.on_episode_done(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        for animation in self.animations:
+            animation(*args, **kwargs)
 
 
 class PointAnimation(AnimationCallback, ABC):
@@ -793,10 +859,11 @@ class PlanarMotionAnimation(PointAnimation, StateTracker):
 
 class TriangleAnimation(AnimationCallback, ABC):
     def setup(self):
-        point1, = self.ax.plot(0, 1, marker="o", label="location", color='red')
-        point2, = self.ax.plot(0, 1, marker="o", label="location", color='green')
-        point3, = self.ax.plot(0, 1, marker="o", label="location", color='blue')
+        point1, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        point2, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        point3, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
         self.points = (point1, point2, point3)
+        self.ax.grid()
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
         try:
@@ -825,6 +892,12 @@ class TriangleAnimation(AnimationCallback, ABC):
 
 
 class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
+
     def on_trigger(self, _):
         self.add_frame(x=self.system_state[0],
                        y=self.system_state[1],
