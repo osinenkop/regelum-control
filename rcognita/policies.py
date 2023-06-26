@@ -136,10 +136,6 @@ class Policy(Optimizable):
         return self.get_action(observation)
 
     @property
-    def intrinsic_constraints(self):
-        return self._intrinsic_constraints
-
-    @property
     def weights(self):
         """
         Get the weights of the policy model.
@@ -254,35 +250,6 @@ class Policy(Optimizable):
         self.model.restore_weights()
         self.set_action(self.action_old)
 
-    def accept_or_reject_weights(
-        self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
-    ):
-        """
-        Determines whether the given weights should be accepted or rejected based on the specified constraints.
-
-        :param weights: Array of weights to be evaluated.
-        :type weights: np.ndarray
-        :param constraint_functions: List of constraint functions to be evaluated.
-        :type constraint_functions: Optional[List[Callable[[np.ndarray], float]]], optional
-        :param optimizer_engine: String indicating the optimization engine being used.
-        :type optimizer_engine: str, optional
-        :param atol: Absolute tolerance used when evaluating the constraints.
-        :type atol: float, optional
-        :return: String indicating whether the weights were accepted ("accepted") or rejected ("rejected").
-        :rtype: str
-        """
-
-        if constraint_functions is None:
-            constraints_not_violated = True
-        else:
-            not_violated = [cond(weights) <= atol for cond in constraint_functions]
-            constraints_not_violated = all(not_violated)
-
-        if constraints_not_violated:
-            return "accepted"
-        else:
-            return "rejected"
-
     def get_initial_guess(self, guess_from):
         final_count_of_actions = self.prediction_horizon + 1
         action_sequence = rc.rep_mat(guess_from, 1, final_count_of_actions)
@@ -291,28 +258,6 @@ class Policy(Optimizable):
             [final_count_of_actions * self.dim_action],
         )
         return action_sequence
-
-    def optimize_weights(self):
-        """
-        Method to optimize the currentpolicy weights. The old (previous) weights are stored.
-        The `time` argument is used for debugging purposes.
-        If weights satisfying constraints are found, the method returns the status `accepted`.
-        Otherwise, it returns the status `rejected`.
-
-        :param constraint_functions: List of functions defining constraints on the optimization.
-        :type constraint_functions: list of callables, optional
-        :param time: Debugging parameter to track time during optimization process.
-        :type time: float, optional
-        :returns: String indicating whether the optimization process was accepted or rejected.
-        :rtype: str
-        """
-        assert self.optimizer is not None, "Optimizer is not set."
-
-        action_initial_guess = self.get_initial_guess(self.action)
-
-        self.optimizer.optimize(action_initial_guess, self.observation)
-
-        return self.weights_acceptance_status
 
     def reset(self):
         """

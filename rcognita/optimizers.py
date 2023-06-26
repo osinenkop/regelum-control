@@ -37,6 +37,7 @@ from inspect import signature
 from dataclasses import dataclass, field
 from .__utilities import TORCH, CASADI, NUMPY, type_inference
 from .base import RcognitaBase
+import inspect
 
 
 class Optimizer:
@@ -70,35 +71,117 @@ class OptimizerConfig:
 
 
 @dataclass(frozen=True)
-class Constraint:
-    kind: str
+class Variable:
+    name: str
+    dims: tuple
+    data: Any = None
+
+
+@dataclass(frozen=True)
+class Parameter:
+    name: str
+    dims: tuple
+    data: Any = None
+
+
+@dataclass(frozen=True)
+class FunctionWithParameters:
     func: Callable
-    params: dict
-    dvar_idx: int = 0
+    signature: list
+    default_parameters: dict = field(default_factory=lambda: {})
 
-    def __call__(self, dvar, **params):
-        _params = list(map(params.get, list(self.params.keys())))
-        return self.func(dvar, *_params)
+    def __call__(self, **kwargs):
+        kwargs.update(self.default_parameters)
+        return self.func(**kwargs)
 
 
-# TODO: DOCSTRING, RENAME INTO OPTIMIZER
+class WithSignature:
+    def __init__(self, func: Callable):
+        self.__signature = self.__parse_signature(func)
+        self.__func = FunctionWithParameters(func, self.__signature)
+        self.func = FunctionWithParameters(func, self.__signature)
+        self.got_parameters = True
+        self.parameters = []
+
+    def declare_parameters(self, param_names):
+        assert all(
+            [name in self.__signature for name in param_names]
+        ), "Unknown parameters"
+        if set(self.parameters) != set(param_names):
+            self.parameters = param_names
+            self.got_parameters = False
+
+    @property
+    def signature(self):
+        return self.__func.signature
+
+    @property
+    def free_placeholders(self):
+        return set(self.__signature) - set(self.__func.default_parameters.keys())
+
+    def __parse_signature(self, func: Callable):
+        __signature = []
+
+        parameters = (
+            func.signature
+            if hasattr(func, "signature")
+            else signature(func).parameters.values()
+        )
+        for param in parameters:
+            if param.kind == param.VAR_POSITIONAL:
+                raise ValueError("Undefined number of arguments")
+            if param.kind == param.VAR_KEYWORD:
+                raise ValueError("Undefined number of keyword arguments")
+            __signature.append(param.name)
+
+        return __signature
+
+    def set_parameters(self, **kwargs):
+        assert list(kwargs.keys()) == self.parameters, "Wrong parameters passed"
+
+        kwargs_intersection = kwargs.keys() & set(self.func.signature)
+        if kwargs_intersection != kwargs.keys():
+            raise ValueError(
+                f"Unknown parameters encountered: {kwargs.keys() - kwargs_intersection}"
+            )
+
+        new_func = FunctionWithParameters(
+            self.func,
+            default_parameters=kwargs,
+            signature=list(filter(lambda x: x not in kwargs.keys(), self.__signature)),
+        )
+
+        self.__func = new_func
+        self.got_parameters = True
+
+    def __call__(self, **kwargs):
+        if self.got_parameters:
+            return self.__func(
+                **{k: v for k, v in kwargs.items() if k in self.free_placeholders}
+            )
+        else:
+            raise ValueError("Not all parameters were passed")
+
+
+# TODO: DOCSTRING
 class Optimizable(RcognitaBase):
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
+        self.__is_problem_defined = False
+        self.__variables = {}
+        self.__parameters = {}
+
         if self.kind == "symbolic":
             self.__opti = Opti()
-            self.__variables = []
-            self.__parameters = []
+            self.__variables_symbolic = None
+            self.__parameters_symbolic = None
             self.__opt_func = None
-            self.__initial_guess_form = None
             if optimizer_config.opt_method is None:
                 optimizer_config.opt_method = "ipopt"
         elif self.kind == "numeric":
             self.__N_objective_args = None
             self.__decision_var_idx = None
-            self.__obj_input_encoding = None
-            self.__constraint_input_encodings = None
             if optimizer_config.opt_method is None:
                 optimizer_config.opt_method = "SLSQP"
         elif self.kind == "tensor":
@@ -114,51 +197,31 @@ class Optimizable(RcognitaBase):
         self.opt_method = optimizer_config.opt_method
         self.__constraints = []
         self.__bounds = []
-        self.__objective_kind = None
-        self.__constraints_kind = None
         self.__opt_options = optimizer_config.opt_options
         self.__log_options = optimizer_config.log_options
 
     def register_decision_variable(self, dvar):
         self.__decision_variable = dvar
 
-    def register_objective(self, func, *args, decision_var_idx=0, **kwargs):
+    def register_objective(self, func, **kwargs):
+        func = WithSignature(func)
         if self.kind == "symbolic":
-            self.__register_symbolic_objective(func, *args, **kwargs)
+            self.__register_symbolic_objective(func, **kwargs)
         elif self.kind == "numeric":
-            self.__register_numeric_objective(func, decision_var_idx)
+            self.__register_numeric_objective(func, **kwargs)
         elif self.kind == "tensor":
-            self.__register_tensor_objective(func, decision_var_idx)
+            self.__register_tensor_objective(func, **kwargs)
 
-    def __register_symbolic_objective(self, func, *args, **kwargs):
-        self._objective = func(*args, **kwargs)
+    def __register_symbolic_objective(self, func, **kwargs):
+        self._objective = func(**{k: v.data for k, v in kwargs.items()})
         self.__opti.minimize(self._objective)
-        self.__objective_kind = "symbolic"
 
-    def __register_numeric_objective(self, func, decision_var_idx):
+    def __register_numeric_objective(self, func, **kwargs):
         assert callable(func), "objective_function must be callable"
-        f_args = func.__code__.co_varnames
-        assert decision_var_idx < len(
-            f_args
-        ), "decision variable index must be less than number of decision variables"
         self._objective = func
-        self.__decision_var_idx = decision_var_idx
-        self.__N_objective_args = len(f_args)
-        self.__obj_input_encoding = [f"arg_{i}" for i in range(self.__N_objective_args)]
-        self.__obj_input_encoding[self.__decision_var_idx] = "dvar"
-        self.__objective_kind = "numeric"
 
-    def __register_tensor_objective(self, func, decision_var_idx):
-        f_args = func.__code__.co_varnames
-        assert decision_var_idx < len(
-            f_args
-        ), "decision variable index must be less than number of decision variables"
+    def __register_tensor_objective(self, func, **kwargs):
         self._objective = func
-        self.__decision_var_idx = decision_var_idx
-        self.__N_objective_args = len(f_args)
-        self.__obj_input_encoding = [f"arg_{i}" for i in range(self.__N_objective_args)]
-        self.__obj_input_encoding[self.__decision_var_idx] = "dvar"
-        self.__objective_kind = "tensor"
 
     @staticmethod
     def handle_bounds(
@@ -172,15 +235,15 @@ class Optimizable(RcognitaBase):
         else:
             assert isinstance(
                 bounds, (list, np.ndarray)
-            ), "action_bounds must be a list or ndarray"
+            ), "bounds must be a list or ndarray"
             if not isinstance(bounds, np.ndarray):
                 bounds = np.array(bounds)
             assert len(bounds.shape) == 2, (
-                f"action_bounds must be of shape ({dim_variable}, 2)."
+                f"bounds must be of shape ({dim_variable}, 2)."
                 + f" You have ({bounds.shape[0]}, {bounds.shape[1]}"
             )
             assert bounds.shape[0] == dim_variable, (
-                f"Action bounds should be of size ({dim_variable}, 2)."
+                f"bounds should be of size ({dim_variable}, 2)."
                 + f" You have ({bounds.shape[0]}, {bounds.shape[1]})."
             )
 
@@ -204,9 +267,9 @@ class Optimizable(RcognitaBase):
             variable_initial_guess = variable_sequence_initial_guess
         return result_bounds, variable_initial_guess, variable_min, variable_max
 
-    def register_bounds(self, bounds, var=None):
+    def register_bounds(self, bounds):
         if self.kind == "symbolic":
-            self.__register_symbolic_bounds(bounds, var)
+            self.__register_symbolic_bounds(bounds)
 
         elif self.kind == "numeric":
             self.__register_numeric_bounds(bounds)
@@ -214,13 +277,10 @@ class Optimizable(RcognitaBase):
         elif self.kind == "tensor":
             self.__register_tensor_bounds(bounds)
 
-    def __register_symbolic_bounds(self, bounds, var=None):
-        if var is None:
-            assert (
-                self.__variables is not None
-            ), "At least one decision variable must be specified!"
-            var = self.__variables[0]
-
+    def __register_symbolic_bounds(self, bounds):
+        assert (
+            self.__variables_symbolic is not None
+        ), "Decision variable must be specified!"
         self.__bounds = bounds
 
         def lb_constr(var):
@@ -229,8 +289,12 @@ class Optimizable(RcognitaBase):
         def ub_constr(var):
             return var - bounds[:, 1]
 
-        self.register_constraint(lb_constr, var)
-        self.register_constraint(ub_constr, var)
+        self.register_constraint(
+            lb_constr, var=self.__variables_symbolic[self.__decision_variable]
+        )
+        self.register_constraint(
+            ub_constr, var=self.__variables_symbolic[self.__decision_variable]
+        )
 
     def __register_numeric_bounds(self, bounds):
         self.__bounds = Bounds(
@@ -242,73 +306,80 @@ class Optimizable(RcognitaBase):
     def __register_tensor_bounds(self, bounds):
         self.__bounds = bounds
 
-    def register_constraint(self, func, *args, **kwargs):
+    def register_constraint(self, func, **kwargs):
+        func = WithSignature(func)
         if self.kind == "symbolic":
-            self.__register_symbolic_constraint(func, *args, **kwargs)
+            self.__register_symbolic_constraint(func, **kwargs)
         elif self.kind == "numeric":
             self.__register_numeric_constraint(func)
         elif self.kind == "tensor":
-            self.__register_tensor_constraint(func, *args, **kwargs)
+            self.__register_tensor_constraint(func)
 
-    def __register_symbolic_constraint(self, func, *args, **kwargs):
-        constr = func(*args, **kwargs) <= 0
+    def __register_symbolic_constraint(self, func, **kwargs):
+        constr = func(**kwargs) <= 0
         self.__opti.subject_to(constr)
         self.__constraints.append(constr)
-        self.__constraints_kind = "symbolic"
 
     def __register_numeric_constraint(self, func):
         self.__constraints.append(NonlinearConstraint(func, -np.inf, 0))
-        self.__constraints_kind = "numeric"
 
-    def __register_tensor_constraint(self, func, *args, **kwargs):
+    def __register_tensor_constraint(self, func):
         assert callable(func), "constraint function must be callable"
         self.__constraints.append(func)
-        self.__constraints_kind = "tensor"
 
-    def variable(self, dim):
-        assert (
-            self.kind == "symbolic"
-        ), "Variables definition only available for symbolic optimization."
-        var = self.__opti.variable(dim)
-        self.__variables.append(var)
+    def variable(self, *dims, name: str):
+        self.decision_variable = name
+        if self.kind == "symbolic":
+            if len(dims) == 1:
+                assert isinstance(
+                    dims[0], (int, tuple)
+                ), "Dimension must be integer or tuple"
+                if isinstance(dims[0], tuple):
+                    assert len(dims[0]) <= 2, "Symbolic variable dimension must be <= 2"
+                    var = self.__opti.variable(*dims[0])
+                else:
+                    var = self.__opti.variable(dims[0])
+            else:
+                var = self.__opti.variable(*dims)
+            self.__variables[name] = var
+            self.__variables_symbolic[name] = var
+        else:
+            self.__variables[name] = dims
+
+        var = Variable(name, dims, var)
         return var
 
-    def parameter(self, dim):
-        assert (
-            self.kind == "symbolic"
-        ), "Parameters definition only available for symbolic optimization."
-        par = self.__opti.parameter(dim)
-        self.__parameters.append(par)
-        return par
-
-    def del_variable(self, idx):
-        assert (
-            self.kind == "symbolic"
-        ), "Variables definition only available for symbolic optimization."
-        self.__variables.pop(idx)
-
-    def del_parameter(self, idx):
-        assert (
-            self.kind == "symbolic"
-        ), "Parameters definition only available for symbolic optimization."
-        self.__parameters.pop(idx)
+    def parameter(self, dims, name: str):
+        if self.kind == "symbolic":
+            if len(dims) == 1:
+                assert isinstance(
+                    dims[0], (int, tuple)
+                ), "Dimension must be integer or tuple"
+                if isinstance(dims[0], tuple):
+                    assert len(dims[0]) <= 2, "Symbolic variable dimension must be <= 2"
+                    var = self.__opti.parameter(*dims[0])
+                else:
+                    var = self.__opti.parameter(dims[0])
+            else:
+                var = self.__opti.parameter(*dims)
+            self.__parameters[name] = var
+            self.__parameters_symbolic[name] = var
+            return var
+        else:
+            self.__parameters[name] = dims
+        var = Parameter(name, dims, var)
+        return self.__parameters[name]
 
     @property
     def defined_params(self):
-        assert (
-            self.kind == "symbolic"
-        ), "Parameters definition only available for symbolic optimization."
         return self.__parameters
 
     @property
     def defined_vars(self):
-        assert (
-            self.kind == "symbolic"
-        ), "Variables definition only available for symbolic optimization."
         return self.__variables
 
     @property
-    def summary_symbolic(self):
+    def summary(self):
         return {
             "kind": self.kind,
             "variables": self.__variables,
@@ -318,41 +389,32 @@ class Optimizable(RcognitaBase):
             "objective": self._objective,
         }
 
-    def form_initial_guess(self, *args):
-        if self.kind == "symbolic":
-            self.__initial_guess_form = list(args)
-        else:
-            raise NotImplementedError
-
-    @property
-    def initial_guess_form(self):
-        if self.__initial_guess_form is None:
-            self.form_initial_guess(*self.__variables, *self.__parameters)
-        return self.__initial_guess_form
-
     def recreate_constraints(self, *constraints):
         for c in constraints:
             self.register_constraint(c)
 
-    def optimize(self, *args, raw=True, **kwargs):
+    def optimize(self, raw=True, **kwargs):
+        if not self.__is_problem_defined:
+            self.__define_problem()
+        self.__pre_optimize(**kwargs)
         result = None
         if self.kind == "symbolic":
-            result = self._optimize_symbolic(*args, **kwargs)
+            result = self.optimize_symbolic(**kwargs)
             if raw:
                 result = result["d_vars"][0].full().reshape(-1)
         elif self.kind == "numeric":
-            result = self._optimize_numeric(*args, **kwargs)
+            result = self.optimize_numeric(**kwargs)
             if raw:
                 result = result[0]
         elif self.kind == "tensor":
-            self._optimize_tensor(*args, **kwargs)
+            self.optimize_tensor(**kwargs)
             result = self.__decision_variable
         else:
             raise NotImplementedError
 
         return result
 
-    def _optimize_symbolic(self, *args, **kwargs):
+    def optimize_symbolic(self, *args, **kwargs):
         if self.__initial_guess_form is None:
             self.form_initial_guess(*self.__variables, *self.__parameters)
         if self.__opt_func is None:
@@ -363,9 +425,9 @@ class Optimizable(RcognitaBase):
                 [*self.__variables, self._objective],
             )
         result = self.__opt_func(*args, **kwargs)
-        return {"d_vars": result[:-1], "objective": result[-1]}
+        return {"d_vars": result["o0"], "objective": result["o1"]}
 
-    def _optimize_numeric(self, initial_guess, *args):
+    def optimize_numeric(self, initial_guess, *args):
         if len(args) > 0:
             assert (
                 self.__N_objective_args is not None
@@ -392,14 +454,8 @@ class Optimizable(RcognitaBase):
         )
         return opt_result.x, opt_result
 
-    def _optimize_tensor(self, dataset):
-        dataloader = DataLoader(
-            dataset=dataset,
-            shuffle=self.optimizer_config.config_options["shuffle"],
-            batch_size=self.optimizer_config.config_options["batch_size"]
-            if self.optimizer_config.config_options["batch_size"] is not None
-            else len(dataset),
-        )
+    def optimize_tensor(self, dataloader):
+        options = self.optimizer_config.config_options
         if self.optimizer is None:
             assert (
                 self.__decision_variable is not None
@@ -410,11 +466,51 @@ class Optimizable(RcognitaBase):
             self.optimizer = self.opt_method(
                 self.__decision_variable, **self.__opt_options
             )
-        batch_sample = next(iter(dataloader))
-        self.optimizer.zero_grad()
-        objective_value = self._objective(batch_sample)
-        objective_value.backward()
-        self.optimizer.step()
+        n_epochs = options.get("n_epochs") if options.get("n_epochs") is not None else 1
+        for _ in range(n_epochs):
+            for batch_sample in dataloader:
+                self.optimizer.zero_grad()
+                objective_value = self._objective(batch_sample)
+                objective_value.backward()
+                self.optimizer.step()
+
+    def pre_optimize_symbolic(self):
+        pass
+
+    def pre_optimize_numeric(self):
+        pass
+
+    def pre_optimize_tensor(self):
+        pass
+
+    def __pre_optimize(self):
+        if self.kind == "symbolic":
+            self.pre_optimize_symbolic()
+        elif self.kind == "numeric":
+            self.pre_optimize_numeric()
+        elif self.kind == "tensor":
+            self.pre_optimize_tensor()
+        else:
+            raise NotImplementedError
+
+    def define_problem_symbolic(self):
+        pass
+
+    def define_problem_numeric(self):
+        pass
+
+    def define_problem_tensor(self):
+        pass
+
+    def __define_problem(self):
+        if self.kind == "symbolic":
+            self.define_problem_symbolic()
+        elif self.kind == "numeric":
+            self.define_problem_numeric()
+        elif self.kind == "tensor":
+            self.define_problem_tensor()
+
+        self.__is_problem_defined = True
 
 
 torch_default_config = OptimizerConfig(
