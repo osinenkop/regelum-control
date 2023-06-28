@@ -37,7 +37,6 @@ from inspect import signature
 from dataclasses import dataclass, field
 from .__utilities import TORCH, CASADI, NUMPY, type_inference
 from .base import RcognitaBase
-import inspect
 from functools import lru_cache
 from collections.abc import Mapping
 
@@ -710,8 +709,6 @@ class Optimizable(RcognitaBase):
             result = self.optimize_symbolic(**parameters, raw=raw)
         elif self.kind == "numeric":
             result = self.optimize_numeric(**parameters, raw=raw)
-            if raw:
-                result = result[0]
         elif self.kind == "tensor":
             self.optimize_tensor(**parameters)
             result = self.__decision_variable
@@ -763,9 +760,10 @@ class Optimizable(RcognitaBase):
             constraints=constraints,
             tol=1e-7,
         )
-        return opt_result.x, opt_result
+        return opt_result if raw else opt_result.x
 
     def optimize_tensor(self, **parameters):
+        dataloader = parameters.get("dataloader")
         options = self.optimizer_config.config_options
         if self.optimizer is None:
             assert (

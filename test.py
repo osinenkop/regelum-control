@@ -10,20 +10,20 @@ import numpy as np
 
 class Example(Optimizable):
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
-        super().__init__(optimizer_config)
-        self.bounds = np.array([[-20, 20]])
+        Optimizable.__init__(self, optimizer_config)
+        self.bounds = np.array([[-2, 2]])
 
     @staticmethod
     def f(x, y=1, z=2):
-        return x**2 + y**2 - z * x
+        return (x - 3) ** 2 + y**2
 
     @staticmethod
     def g(x, y):
-        return x + y
+        return x**2 + y**2 - 9
 
     @staticmethod
     def h(x, p):
-        return x - p
+        return -(x**2)
 
     def define_problem(self):
         x = self.create_variable(1, 1, name="x")
@@ -37,7 +37,7 @@ class Example(Optimizable):
 
 
 e = Example(scipy_default_config)
-print(e.optimize(x=1000, y=10, z=1, p=1, raw=True))
+print(e.optimize(x=-1, y=0, z=1, p=1, raw=False))
 
 e = Example(casadi_default_config)
-print(e.optimize(x=1000, y=10, z=1, p=1, raw=True))
+print(e.optimize(x=-1, y=0, z=1, p=1, raw=False))
