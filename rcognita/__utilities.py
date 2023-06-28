@@ -17,8 +17,6 @@ from numpy.random import rand
 from scipy import signal
 from typing import Union
 
-import systems
-
 try:
     import casadi
 

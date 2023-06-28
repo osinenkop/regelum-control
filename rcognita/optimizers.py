@@ -31,13 +31,15 @@ except ModuleNotFoundError:
     UpdatableSampler = MagicMock()
 
 from rcognita.callbacks import apply_callbacks
-from typing import Callable, Optional, Union, Any
+from typing import Callable, Optional, Union, Any, List, Iterable
 from functools import partial
 from inspect import signature
 from dataclasses import dataclass, field
 from .__utilities import TORCH, CASADI, NUMPY, type_inference
 from .base import RcognitaBase
 import inspect
+from functools import lru_cache
+from collections.abc import Mapping
 
 
 class Optimizer:
@@ -74,17 +76,101 @@ class OptimizerConfig:
 class Variable:
     name: str
     dims: tuple
-    data: Any = None
+    metadata: Any = None
+    is_constant: bool = False
+
+    def renamed(self, new_name):
+        return Variable(
+            name=new_name,
+            dims=self.dims,
+            metadata=self.metadata,
+            is_constant=self.is_constant,
+        )
+
+    def with_data(self):
+        return {self.name: self.metadata}
+
+    def with_dims(self):
+        return {self.name: self.dims}
+
+    def __radd__(self, other):
+        return self
+
+    def __add__(self, other):
+        if isinstance(other, Variable):
+            return VarContainer([self, other])
+        elif isinstance(other, VarContainer):
+            return VarContainer([self] + other.variables)
 
 
 @dataclass(frozen=True)
-class Parameter:
-    name: str
-    dims: tuple
-    data: Any = None
+class VarContainer(Mapping):
+    _variables: Iterable[Variable]
+
+    def __post_init__(self):
+        super().__setattr__("_variables", tuple(getattr(self, "_variables")))
+        super().__setattr__(
+            "_variables_hashmap", {var.name: var for var in getattr(self, "_variables")}
+        )
+
+    def to_dict(self):
+        return self._variables_hashmap
+
+    @property
+    def variables(self):
+        return self._variables
+
+    @property
+    def constants(self):
+        return VarContainer(
+            tuple(variable for variable in self.variables if variable.is_constant)
+        )
+
+    @property
+    def decision_variables(self):
+        return VarContainer(
+            tuple(variable for variable in self.variables if not variable.is_constant)
+        )
+
+    def __radd__(self, other):
+        return self
+
+    def __add__(self, other):
+        if isinstance(other, VarContainer):
+            return VarContainer(other.variables + self.variables)
+        elif isinstance(other, Variable):
+            return VarContainer(self.variables + (other,))
+
+    def __iter__(self):
+        for variable in self.variables:
+            yield variable
+
+    def __len__(self):
+        return len(self.to_dict())
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            assert 0 <= key < len(self.variables), f"Index {key} is out of bounds."
+            return self.variables[key]
+        elif isinstance(key, slice):
+            return VarContainer(self.variables[key])
+        elif isinstance(key, str):
+            res = self._variables_hashmap.get(key)
+            assert res is not None, f"Variable {key} not found."
+            return res
+
+    @property
+    @lru_cache
+    def names(self):
+        return tuple(var.name for var in self.variables)
+
+    @property
+    @lru_cache
+    def metadatas(self):
+        return tuple(var.metadata for var in self.variables)
 
 
-@dataclass(frozen=True)
+@dataclass
 class FunctionWithParameters:
     func: Callable
     signature: list
@@ -94,33 +180,126 @@ class FunctionWithParameters:
         kwargs.update(self.default_parameters)
         return self.func(**kwargs)
 
+    def update_default_parameters(self, **kwargs):
+        self.default_parameters.update(kwargs)
 
-class WithSignature:
-    def __init__(self, func: Callable):
+    def set_default_parameters(self, **kwargs):
+        self.default_parameters = kwargs
+
+
+class FunctionWithSignature:
+    def __init__(self, func: Callable, is_objective=False):
         self.__signature = self.__parse_signature(func)
         self.__func = FunctionWithParameters(func, self.__signature)
         self.func = FunctionWithParameters(func, self.__signature)
-        self.got_parameters = True
-        self.parameters = []
+        self.parameters = VarContainer([])
+        self.parameters_obtained = True
+        self.name = func.__name__
+        self.is_objective = is_objective
 
-    def declare_parameters(self, param_names):
-        assert all(
-            [name in self.__signature for name in param_names]
-        ), "Unknown parameters"
-        if set(self.parameters) != set(param_names):
-            self.parameters = param_names
-            self.got_parameters = False
+    def __call__(self, *args, **kwargs):
+        """
+        Call the function with the given keyword arguments.
+        Only keyword arguments that are set will be passed to the function.
+
+        :param kwargs: The keyword arguments to be passed to the function.
+        :type kwargs: dict
+        :return: The return value of the function.
+        :raises ValueError: If not all required parameters have been set.
+        :rtype: Any
+        """
+        if kwargs == {} and len(args) == 1:
+            return self.__func(**{self.free_placeholders[0]: args[0]})
+        if self.parameters_obtained:
+            return self.__func(
+                **{k: v for k, v in kwargs.items() if k in self.free_placeholders}
+            )
+        else:
+            raise ValueError("Not all parameters were set")
 
     @property
     def signature(self):
         return self.__func.signature
 
     @property
-    def free_placeholders(self):
-        return set(self.__signature) - set(self.__func.default_parameters.keys())
+    @lru_cache
+    def occupied(self):
+        return tuple(self.__func.default_parameters.keys())
 
-    def __parse_signature(self, func: Callable):
-        __signature = []
+    @property
+    @lru_cache
+    def free_placeholders(self):
+        """
+        Returns a list of free placeholders of the current function.
+        Free placeholders are the arguments that
+        are not defaulted and do not have a corresponding value.
+        This method uses the signature of the function
+        and the default parameters keys to determine the free placeholders.
+
+        :return: A list of free placeholders of the current function.
+        :rtype: list
+        """
+        signature_set = set(self.__signature)
+        default_keys = self.__func.default_parameters.keys()
+        return tuple(signature_set - default_keys)
+
+    def declare_parameters(self, parameters: VarContainer):
+        """
+        Declare new parameter names for the function.
+
+        :param param_names: A list of string containing the names
+        of the new parameters to be declared.
+        :type param_names: list[str]
+        :raises AssertionError: Raised if unknown parameter is passed.
+        """
+        assert all(
+            [name in self.__signature for name in parameters.names]
+        ), "Unknown parameters"
+        assert all(
+            [parameter.is_constant for parameter in parameters]
+        ), "Parameters should be constant variables"
+        if set(self.parameters.constants.names) != set(parameters.constants.names):
+            self.parameters = parameters
+            self.parameters_obtained = False
+
+    def set_parameters(self, **kwargs):
+        """
+        Sets the parameters of the function and returns
+        a new function object with the updated parameters.
+
+        Args:
+            **kwargs: A dictionary of key-value pairs where
+            the keys are parameter names and the values
+                are their respective values.
+
+        Raises:
+            AssertionError: If the keys of the kwargs dictionary
+            are not equal to the parameters of the function.
+            ValueError: If unknown parameters are encountered.
+
+        Returns:
+            resulting function object
+        """
+        assert kwargs.keys() == set(self.parameters.names), "Wrong parameters passed"
+
+        kwargs_intersection = kwargs.keys() & set(self.func.signature)
+        if kwargs_intersection != kwargs.keys():
+            raise ValueError(
+                f"Unknown parameters encountered: {kwargs.keys() - kwargs_intersection}"
+            )
+        new_signature = list(filter(lambda x: x not in kwargs.keys(), self.__signature))
+        new_func = FunctionWithParameters(
+            self.func,
+            default_parameters=kwargs,
+            signature=new_signature,
+        )
+
+        self.__func = new_func
+        self.parameters_obtained = True
+        return self.__func
+
+    def __parse_signature(self, func: Callable) -> List[str]:
+        signature_list = []
 
         parameters = (
             func.signature
@@ -132,35 +311,80 @@ class WithSignature:
                 raise ValueError("Undefined number of arguments")
             if param.kind == param.VAR_KEYWORD:
                 raise ValueError("Undefined number of keyword arguments")
-            __signature.append(param.name)
+            signature_list.append(param.name)
 
-        return __signature
+        return signature_list
 
-    def set_parameters(self, **kwargs):
-        assert list(kwargs.keys()) == self.parameters, "Wrong parameters passed"
+    def __radd__(self, other):
+        return self
 
-        kwargs_intersection = kwargs.keys() & set(self.func.signature)
-        if kwargs_intersection != kwargs.keys():
-            raise ValueError(
-                f"Unknown parameters encountered: {kwargs.keys() - kwargs_intersection}"
-            )
+    def __add__(self, other):
+        if isinstance(other, FunctionWithSignature):
+            return FuncContainer([self, other])
+        elif isinstance(other, FuncContainer):
+            return FuncContainer((self,) + other.functions)
 
-        new_func = FunctionWithParameters(
-            self.func,
-            default_parameters=kwargs,
-            signature=list(filter(lambda x: x not in kwargs.keys(), self.__signature)),
+
+@dataclass(frozen=True)
+class FuncContainer(Mapping):
+    _functions: Iterable[FunctionWithSignature]
+
+    def __post_init__(self):
+        super().__setattr__("_functions", tuple(getattr(self, "_functions")))
+        super().__setattr__(
+            "_functions_hashmap", {var.name: var for var in getattr(self, "_functions")}
         )
 
-        self.__func = new_func
-        self.got_parameters = True
+    def to_dict(self):
+        return self._functions_hashmap
 
-    def __call__(self, **kwargs):
-        if self.got_parameters:
-            return self.__func(
-                **{k: v for k, v in kwargs.items() if k in self.free_placeholders}
-            )
-        else:
-            raise ValueError("Not all parameters were passed")
+    @property
+    def functions(self):
+        return self._functions
+
+    @property
+    def objectives(self):
+        return FuncContainer(
+            tuple(function for function in self.functions if function.is_objective)
+        )
+
+    @property
+    def constraints(self):
+        return FuncContainer(
+            tuple(function for function in self.functions if not function.is_objective)
+        )
+
+    def __radd__(self, other):
+        return self
+
+    def __add__(self, other):
+        if isinstance(other, FuncContainer):
+            return FuncContainer(other.functions + self.functions)
+        elif isinstance(other, FunctionWithSignature):
+            return FuncContainer(self.functions + (other,))
+
+    def __iter__(self):
+        for function in self.functions:
+            yield function
+
+    def __len__(self):
+        return len(self.to_dict())
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            assert 0 <= key < len(self.functions), f"Index {key} is out of bounds."
+            return self.functions[key]
+        elif isinstance(key, slice):
+            return VarContainer(self.functions[key])
+        elif isinstance(key, str):
+            res = self._functions_hashmap.get(key)
+            assert res is not None, f"Function {key} not found."
+            return res
+
+    @property
+    @lru_cache
+    def names(self):
+        return tuple(function.name for function in self.functions)
 
 
 # TODO: DOCSTRING
@@ -169,23 +393,19 @@ class Optimizable(RcognitaBase):
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
         self.__is_problem_defined = False
-        self.__variables = {}
-        self.__parameters = {}
+        self.__parameters = VarContainer([])
+        self.__variables = VarContainer([])
+        self.__functions = FuncContainer([])
 
         if self.kind == "symbolic":
             self.__opti = Opti()
-            self.__variables_symbolic = None
-            self.__parameters_symbolic = None
             self.__opt_func = None
             if optimizer_config.opt_method is None:
                 optimizer_config.opt_method = "ipopt"
         elif self.kind == "numeric":
-            self.__N_objective_args = None
-            self.__decision_var_idx = None
             if optimizer_config.opt_method is None:
                 optimizer_config.opt_method = "SLSQP"
         elif self.kind == "tensor":
-            self.__decision_variable = None
             self.optimizer = None
             if optimizer_config.opt_method is None:
                 from torch.optim import Adam
@@ -195,32 +415,114 @@ class Optimizable(RcognitaBase):
             raise NotImplementedError("Not implemented this kind of optimizer")
 
         self.opt_method = optimizer_config.opt_method
-        self.__constraints = []
-        self.__bounds = []
         self.__opt_options = optimizer_config.opt_options
         self.__log_options = optimizer_config.log_options
 
-    def register_decision_variable(self, dvar):
-        self.__decision_variable = dvar
+    @property
+    def objectives(self):
+        return self.__functions.objectives
 
-    def register_objective(self, func, **kwargs):
-        func = WithSignature(func)
+    @property
+    def constraints(self):
+        return self.__functions.constraints
+
+    @property
+    def functions(self):
+        return self.__functions
+
+    def create_variable(self, *dims, name: str, is_constant=False):
+        metadata = None
         if self.kind == "symbolic":
-            self.__register_symbolic_objective(func, **kwargs)
-        elif self.kind == "numeric":
-            self.__register_numeric_objective(func, **kwargs)
-        elif self.kind == "tensor":
-            self.__register_tensor_objective(func, **kwargs)
+            if len(dims) == 1:
+                assert isinstance(
+                    dims[0], (int, tuple)
+                ), "Dimension must be integer or tuple"
+                if isinstance(dims[0], tuple):
+                    assert len(dims[0]) <= 2, "Symbolic variable dimension must be <= 2"
+                    metadata = (
+                        self.__opti.variable(*dims[0])
+                        if not is_constant
+                        else self.__opti.parameter(*dims[0])
+                    )
+                else:
+                    metadata = (
+                        self.__opti.variable(dims[0])
+                        if not is_constant
+                        else self.__opti.parameter(dims[0])
+                    )
+            else:
+                metadata = (
+                    self.__opti.variable(*dims)
+                    if not is_constant
+                    else self.__opti.parameter(*dims)
+                )
+        new_variable = Variable(
+            name=name, dims=dims, metadata=metadata, is_constant=is_constant
+        )
+        self.__variables = self.__variables + new_variable
+        return new_variable
 
-    def __register_symbolic_objective(self, func, **kwargs):
-        self._objective = func(**{k: v.data for k, v in kwargs.items()})
+    def register_objective(
+        self, func: FunctionWithSignature, variables: List[Variable]
+    ):
+        func = FunctionWithSignature(func, is_objective=True)
+        variables = VarContainer(variables)
+
+        if self.kind == "symbolic":
+            self.__register_symbolic_objective(
+                func,
+                variables=variables,
+            )
+        elif self.kind == "numeric":
+            self.__register_numeric_objective(
+                func,
+                variables=variables.constants,
+            )
+        elif self.kind == "tensor":
+            self.__register_tensor_objective(
+                func,
+                variables=variables.constants,
+            )
+
+        self.__functions = self.__functions + func
+
+    @property
+    def variables(self):
+        return self.__variables
+
+    def __infer_symbolic_prototype(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
+        func.declare_parameters(variables.constants)
+        func.set_parameters(
+            **{k: v.metadata for k, v in variables.constants.to_dict().items()}
+        )
+        return func(
+            **{
+                k: v.metadata for k, v in variables.decision_variables.to_dict().items()
+            },
+        )
+
+    def __register_symbolic_objective(
+        self,
+        func: FunctionWithSignature,
+        variables: VarContainer,
+    ):
+        self._objective = self.__infer_symbolic_prototype(func, variables)
         self.__opti.minimize(self._objective)
 
-    def __register_numeric_objective(self, func, **kwargs):
+    def __register_numeric_objective(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
         assert callable(func), "objective_function must be callable"
+        func.declare_parameters(variables.constants)
         self._objective = func
 
-    def __register_tensor_objective(self, func, **kwargs):
+    def __register_tensor_objective(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
+        assert callable(func), "objective_function must be callable"
+        func.declare_parameters(variables.constants)
         self._objective = func
 
     @staticmethod
@@ -229,6 +531,36 @@ class Optimizable(RcognitaBase):
         dim_variable: int,
         tile_parameter: int = 0,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Given bounds for each dimension of a variable, this function returns a tuple of
+        the following arrays: the bounds of each action,
+        the initial guess for a variable,
+        the minimum value of each variable, and the maximum value of each variable.
+
+        :param bounds: A list, numpy array, or None that represents the bounds for each
+        dimension of a variable. If None is given,
+        bounds will be assumed to be (-inf, inf)
+        for each dimension. Otherwise, bounds should have shape (dim_variable, 2),
+        where
+        dim_variable is the number of dimensions of the variable.
+        :type bounds: Union[list, np.ndarray, None]
+
+        :param dim_variable: An integer representing the number of dimensions
+        of the variable.
+        :type dim_variable: int
+
+        :param tile_parameter: An optional integer that represents
+        the number of copies of
+        the variable to be made. If tile_parameter is greater than zero,
+        variable_initial_guess
+        and result_bounds will be tiled with this number of copies.
+        :type tile_parameter: int, optional
+
+        :return: A tuple of numpy arrays containing the bounds of each action,
+        the initial guess for a variable, the minimum value of each variable,
+        and the maximum value of each variable.
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
+        """
         if bounds is None:
             assert dim_variable is not None, "Dimension of the action must be specified"
             bounds = np.array([[-np.inf, np.inf] for _ in range(dim_variable)])
@@ -267,9 +599,14 @@ class Optimizable(RcognitaBase):
             variable_initial_guess = variable_sequence_initial_guess
         return result_bounds, variable_initial_guess, variable_min, variable_max
 
-    def register_bounds(self, bounds):
+    def register_bounds(self, variable_to_bound: Variable, bounds: np.ndarray):
+        assert isinstance(
+            variable_to_bound, Variable
+        ), "variable_to_bound should be of type Variable, "
+        f"not {type(variable_to_bound)}"
+
         if self.kind == "symbolic":
-            self.__register_symbolic_bounds(bounds)
+            self.__register_symbolic_bounds(variable_to_bound, bounds)
 
         elif self.kind == "numeric":
             self.__register_numeric_bounds(bounds)
@@ -277,10 +614,9 @@ class Optimizable(RcognitaBase):
         elif self.kind == "tensor":
             self.__register_tensor_bounds(bounds)
 
-    def __register_symbolic_bounds(self, bounds):
-        assert (
-            self.__variables_symbolic is not None
-        ), "Decision variable must be specified!"
+    def __register_symbolic_bounds(
+        self, variable_to_bound: Variable, bounds: np.ndarray
+    ):
         self.__bounds = bounds
 
         def lb_constr(var):
@@ -290,10 +626,10 @@ class Optimizable(RcognitaBase):
             return var - bounds[:, 1]
 
         self.register_constraint(
-            lb_constr, var=self.__variables_symbolic[self.__decision_variable]
+            lb_constr, variables=[variable_to_bound.renamed("var")]
         )
         self.register_constraint(
-            ub_constr, var=self.__variables_symbolic[self.__decision_variable]
+            ub_constr, variables=[variable_to_bound.renamed("var")]
         )
 
     def __register_numeric_bounds(self, bounds):
@@ -306,77 +642,43 @@ class Optimizable(RcognitaBase):
     def __register_tensor_bounds(self, bounds):
         self.__bounds = bounds
 
-    def register_constraint(self, func, **kwargs):
-        func = WithSignature(func)
+    def register_constraint(self, func: Callable, variables: List[Variable]):
+        func = FunctionWithSignature(func)
+        variables = VarContainer(variables)
+
         if self.kind == "symbolic":
-            self.__register_symbolic_constraint(func, **kwargs)
+            self.__register_symbolic_constraint(func, variables)
         elif self.kind == "numeric":
-            self.__register_numeric_constraint(func)
+            self.__register_numeric_constraint(func, variables.constants)
         elif self.kind == "tensor":
-            self.__register_tensor_constraint(func)
+            self.__register_tensor_constraint(func, variables.constants)
 
-    def __register_symbolic_constraint(self, func, **kwargs):
-        constr = func(**kwargs) <= 0
+        self.__functions = self.__functions + func
+
+    def __register_symbolic_constraint(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
+        func = self.__infer_symbolic_prototype(func, variables)
+        constr = func <= 0
         self.__opti.subject_to(constr)
-        self.__constraints.append(constr)
 
-    def __register_numeric_constraint(self, func):
-        self.__constraints.append(NonlinearConstraint(func, -np.inf, 0))
+    def __register_numeric_constraint(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
+        func.declare_parameters(variables)
 
-    def __register_tensor_constraint(self, func):
-        assert callable(func), "constraint function must be callable"
-        self.__constraints.append(func)
-
-    def variable(self, *dims, name: str):
-        self.decision_variable = name
-        if self.kind == "symbolic":
-            if len(dims) == 1:
-                assert isinstance(
-                    dims[0], (int, tuple)
-                ), "Dimension must be integer or tuple"
-                if isinstance(dims[0], tuple):
-                    assert len(dims[0]) <= 2, "Symbolic variable dimension must be <= 2"
-                    var = self.__opti.variable(*dims[0])
-                else:
-                    var = self.__opti.variable(dims[0])
-            else:
-                var = self.__opti.variable(*dims)
-            self.__variables[name] = var
-            self.__variables_symbolic[name] = var
-        else:
-            self.__variables[name] = dims
-
-        var = Variable(name, dims, var)
-        return var
-
-    def parameter(self, dims, name: str):
-        if self.kind == "symbolic":
-            if len(dims) == 1:
-                assert isinstance(
-                    dims[0], (int, tuple)
-                ), "Dimension must be integer or tuple"
-                if isinstance(dims[0], tuple):
-                    assert len(dims[0]) <= 2, "Symbolic variable dimension must be <= 2"
-                    var = self.__opti.parameter(*dims[0])
-                else:
-                    var = self.__opti.parameter(dims[0])
-            else:
-                var = self.__opti.parameter(*dims)
-            self.__parameters[name] = var
-            self.__parameters_symbolic[name] = var
-            return var
-        else:
-            self.__parameters[name] = dims
-        var = Parameter(name, dims, var)
-        return self.__parameters[name]
+    def __register_tensor_constraint(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
+        func.declare_parameters(variables.names)
 
     @property
-    def defined_params(self):
-        return self.__parameters
+    def constants(self):
+        return self.__variables.constants
 
     @property
-    def defined_vars(self):
-        return self.__variables
+    def decision_variables(self):
+        return self.__variables.decision_variables
 
     @property
     def summary(self):
@@ -389,72 +691,81 @@ class Optimizable(RcognitaBase):
             "objective": self._objective,
         }
 
-    def recreate_constraints(self, *constraints):
-        for c in constraints:
-            self.register_constraint(c)
+    def substitute_parameters(self, **parameters):
+        for function in self.functions:
+            function.set_parameters(
+                **{
+                    k: v
+                    for k, v in parameters.items()
+                    if k in function.parameters.constants.names
+                }
+            )
 
-    def optimize(self, raw=True, **kwargs):
+    def optimize(self, raw=False, **parameters):
         if not self.__is_problem_defined:
-            self.__define_problem()
-        self.__pre_optimize(**kwargs)
+            self.define_problem()
+
         result = None
         if self.kind == "symbolic":
-            result = self.optimize_symbolic(**kwargs)
-            if raw:
-                result = result["d_vars"][0].full().reshape(-1)
+            result = self.optimize_symbolic(**parameters, raw=raw)
         elif self.kind == "numeric":
-            result = self.optimize_numeric(**kwargs)
+            result = self.optimize_numeric(**parameters, raw=raw)
             if raw:
                 result = result[0]
         elif self.kind == "tensor":
-            self.optimize_tensor(**kwargs)
+            self.optimize_tensor(**parameters)
             result = self.__decision_variable
         else:
             raise NotImplementedError
 
         return result
 
-    def optimize_symbolic(self, *args, **kwargs):
-        if self.__initial_guess_form is None:
-            self.form_initial_guess(*self.__variables, *self.__parameters)
+    @property
+    def opt_func(self):
+        return self.__opt_func
+
+    def optimize_symbolic(self, raw=False, **kwargs):
+        # ToDo: add multiple objectives
         if self.__opt_func is None:
             self.__opti.solver(self.opt_method, self.__log_options, self.__opt_options)
             self.__opt_func = self.__opti.to_function(
                 "min_fun",
-                self.__variables + self.__parameters,
-                [*self.__variables, self._objective],
+                list(self.variables.metadatas),
+                [*self.decision_variables.metadatas, self._objective],
+                list(self.variables.names),
+                [*self.decision_variables.names, *self.objectives.names],
+                {"allow_duplicate_io_names": True},
             )
-        result = self.__opt_func(*args, **kwargs)
-        return {"d_vars": result["o0"], "objective": result["o1"]}
 
-    def optimize_numeric(self, initial_guess, *args):
-        if len(args) > 0:
-            assert (
-                self.__N_objective_args is not None
-                and self.__N_objective_args == len(args) + 1
-            ), "Wrong number of arguments or objective function not defined."
-            arg_idxs = list(range(self.__N_objective_args))
-            assert (
-                self.__decision_var_idx is not None
-            ), "Something went wrong, check your arguments"
-            arg_idxs.remove(self.__decision_var_idx)
-            objective = partial_positionals(
-                self._objective, {arg_idxs[i]: x for i, x in enumerate(args)}
-            )
-        else:
-            objective = self._objective
+        result = self.__opt_func(**kwargs)
+        return (
+            result
+            if raw
+            else {
+                name: value
+                for name, value in result.items()
+                if name in self.decision_variables.names
+            }
+        )
+
+    def optimize_numeric(self, raw=False, **parameters):
+        self.substitute_parameters(**parameters)
+        constraints = [
+            NonlinearConstraint(func, -np.inf, 0) for func in self.constraints
+        ]
+        initial_guess = parameters.get(self.decision_variables.names[0])
         opt_result = minimize(
-            objective,
+            self._objective,
             x0=initial_guess,
             method=self.opt_method,
             bounds=self.__bounds,
             options=self.__opt_options,
-            constraints=self.__constraints,
+            constraints=constraints,
             tol=1e-7,
         )
         return opt_result.x, opt_result
 
-    def optimize_tensor(self, dataloader):
+    def optimize_tensor(self, **parameters):
         options = self.optimizer_config.config_options
         if self.optimizer is None:
             assert (
@@ -474,42 +785,8 @@ class Optimizable(RcognitaBase):
                 objective_value.backward()
                 self.optimizer.step()
 
-    def pre_optimize_symbolic(self):
-        pass
-
-    def pre_optimize_numeric(self):
-        pass
-
-    def pre_optimize_tensor(self):
-        pass
-
-    def __pre_optimize(self):
-        if self.kind == "symbolic":
-            self.pre_optimize_symbolic()
-        elif self.kind == "numeric":
-            self.pre_optimize_numeric()
-        elif self.kind == "tensor":
-            self.pre_optimize_tensor()
-        else:
-            raise NotImplementedError
-
-    def define_problem_symbolic(self):
-        pass
-
-    def define_problem_numeric(self):
-        pass
-
-    def define_problem_tensor(self):
-        pass
-
-    def __define_problem(self):
-        if self.kind == "symbolic":
-            self.define_problem_symbolic()
-        elif self.kind == "numeric":
-            self.define_problem_numeric()
-        elif self.kind == "tensor":
-            self.define_problem_tensor()
-
+    def define_problem(self):
+        raise NotImplementedError
         self.__is_problem_defined = True
 
 
