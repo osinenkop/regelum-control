@@ -75,6 +75,7 @@ class OptimizerConfig:
 class Variable:
     name: str
     dims: tuple
+    data: Any = None
     metadata: Any = None
     is_constant: bool = False
 
@@ -82,14 +83,39 @@ class Variable:
         return Variable(
             name=new_name,
             dims=self.dims,
+            data=self.data,
             metadata=self.metadata,
             is_constant=self.is_constant,
         )
 
-    def with_data(self):
+    def with_data(self, data):
+        return Variable(
+            name=self.name,
+            dims=self.dims,
+            data=data,
+            metadata=self.metadata,
+            is_constant=self.is_constant,
+        )
+
+    def as_constant(self):
+        if not self.is_constant:
+            return Variable(
+                name=self.name,
+                dims=self.dims,
+                data=self.data,
+                metadata=self.metadata,
+                is_constant=True,
+            )
+        else:
+            return self
+
+    def to_metadata_dict(self):
         return {self.name: self.metadata}
 
-    def with_dims(self):
+    def to_data_dict(self):
+        return {self.name: self.data}
+
+    def to_dims_dict(self):
         return {self.name: self.dims}
 
     def __radd__(self, other):
@@ -114,6 +140,14 @@ class VarContainer(Mapping):
 
     def to_dict(self):
         return self._variables_hashmap
+
+    def set_data(self, **kwargs):
+        return VarContainer(
+            [
+                var.with_data(kwargs.get(var.name)) if var.name in kwargs else var
+                for var in self.variables
+            ]
+        )
 
     @property
     def variables(self):
@@ -168,33 +202,32 @@ class VarContainer(Mapping):
     def metadatas(self):
         return tuple(var.metadata for var in self.variables)
 
+    def to_data_dict(self):
+        return {var.name: var.data for var in self.variables}
+
+    @property
+    def with_data(self):
+        return {name: data for name, data in self.to_data_dict().items()}
+
 
 @dataclass
-class FunctionWithParameters:
-    func: Callable
-    signature: list
-    default_parameters: dict = field(default_factory=lambda: {})
-
-    def __call__(self, **kwargs):
-        kwargs.update(self.default_parameters)
-        return self.func(**kwargs)
-
-    def update_default_parameters(self, **kwargs):
-        self.default_parameters.update(kwargs)
-
-    def set_default_parameters(self, **kwargs):
-        self.default_parameters = kwargs
-
-
 class FunctionWithSignature:
-    def __init__(self, func: Callable, is_objective=False):
-        self.__signature = self.__parse_signature(func)
-        self.__func = FunctionWithParameters(func, self.__signature)
-        self.func = FunctionWithParameters(func, self.__signature)
-        self.parameters = VarContainer([])
-        self.parameters_obtained = True
-        self.name = func.__name__
-        self.is_objective = is_objective
+    func: Callable
+    parameters: VarContainer = field(default_factory=lambda: VarContainer([]))
+    is_objective: bool = False
+
+    def __post_init__(self) -> None:
+        self.__signature = self.__parse_signature(self.func)
+        parameter_names = set(self.parameters.names)
+        kwargs_intersection = parameter_names & set(self.__signature)
+        if kwargs_intersection != parameter_names:
+            raise ValueError(
+                "Unknown parameters encountered: "
+                f"{self.parameters.keys() - kwargs_intersection}"
+            )
+
+        self.name = self.func.__name__
+        self.await_parameters = False
 
     def __call__(self, *args, **kwargs):
         """
@@ -208,26 +241,46 @@ class FunctionWithSignature:
         :rtype: Any
         """
         if kwargs == {} and len(args) == 1:
-            return self.__func(**{self.free_placeholders[0]: args[0]})
-        if self.parameters_obtained:
-            return self.__func(
-                **{k: v for k, v in kwargs.items() if k in self.free_placeholders}
-            )
+            return self.func(**{self.free_placeholders[0]: args[0]})
+        if not self.await_parameters:
+            kwargs_to_pass = {
+                k: v for k, v in kwargs.items() if k in self.free_placeholders
+            }
+            return self.func(**{**kwargs_to_pass, **self.parameters.to_data_dict()})
         else:
             raise ValueError("Not all parameters were set")
 
-    @property
-    def signature(self):
-        return self.__func.signature
+    @staticmethod
+    @lru_cache
+    def __cached_signature(signature) -> tuple:
+        return tuple(signature)
 
     @property
+    def signature(self) -> tuple:
+        return self.__cached_signature(self.__signature)
+
+    @staticmethod
     @lru_cache
-    def occupied(self):
-        return tuple(self.__func.default_parameters.keys())
+    def __cached_occupied(parameters) -> tuple:
+        return tuple(parameters.constants.names)
 
     @property
+    def occupied(self) -> tuple:
+        return self.__cached_occupied(self.parameters)
+
+    @staticmethod
     @lru_cache
-    def free_placeholders(self):
+    def __cached_free_placeholders(signature, default_parameters) -> tuple:
+        signature_set = set(signature)
+        default_keys = {
+            name: data
+            for name, data in default_parameters.to_data_dict().items()
+            if data is not None
+        }.keys()
+        return tuple(signature_set - default_keys)
+
+    @property
+    def free_placeholders(self) -> tuple:
         """
         Returns a list of free placeholders of the current function.
         Free placeholders are the arguments that
@@ -238,11 +291,9 @@ class FunctionWithSignature:
         :return: A list of free placeholders of the current function.
         :rtype: list
         """
-        signature_set = set(self.__signature)
-        default_keys = self.__func.default_parameters.keys()
-        return tuple(signature_set - default_keys)
+        return self.__cached_free_placeholders(self.__signature, self.parameters)
 
-    def declare_parameters(self, parameters: VarContainer):
+    def declare_parameters(self, parameters: VarContainer) -> None:
         """
         Declare new parameter names for the function.
 
@@ -259,9 +310,9 @@ class FunctionWithSignature:
         ), "Parameters should be constant variables"
         if set(self.parameters.constants.names) != set(parameters.constants.names):
             self.parameters = parameters
-            self.parameters_obtained = False
+            self.await_parameters = True
 
-    def set_parameters(self, **kwargs):
+    def set_parameters(self, **kwargs) -> None:
         """
         Sets the parameters of the function and returns
         a new function object with the updated parameters.
@@ -281,21 +332,16 @@ class FunctionWithSignature:
         """
         assert kwargs.keys() == set(self.parameters.names), "Wrong parameters passed"
 
-        kwargs_intersection = kwargs.keys() & set(self.func.signature)
+        kwargs_intersection = kwargs.keys() & self.occupied
         if kwargs_intersection != kwargs.keys():
             raise ValueError(
                 f"Unknown parameters encountered: {kwargs.keys() - kwargs_intersection}"
             )
-        new_signature = list(filter(lambda x: x not in kwargs.keys(), self.__signature))
-        new_func = FunctionWithParameters(
-            self.func,
-            default_parameters=kwargs,
-            signature=new_signature,
-        )
-
-        self.__func = new_func
-        self.parameters_obtained = True
-        return self.__func
+        self.parameters = self.parameters.set_data(**kwargs)
+        if set(self.parameters.constants.names) == set(
+            self.parameters.with_data.keys()
+        ):
+            self.await_parameters = False
 
     def __parse_signature(self, func: Callable) -> List[str]:
         signature_list = []
@@ -312,7 +358,7 @@ class FunctionWithSignature:
                 raise ValueError("Undefined number of keyword arguments")
             signature_list.append(param.name)
 
-        return signature_list
+        return tuple(signature_list)
 
     def __radd__(self, other):
         return self
@@ -381,7 +427,6 @@ class FuncContainer(Mapping):
             return res
 
     @property
-    @lru_cache
     def names(self):
         return tuple(function.name for function in self.functions)
 
@@ -461,9 +506,7 @@ class Optimizable(RcognitaBase):
         self.__variables = self.__variables + new_variable
         return new_variable
 
-    def register_objective(
-        self, func: FunctionWithSignature, variables: List[Variable]
-    ):
+    def register_objective(self, func: Callable, variables: List[Variable]):
         func = FunctionWithSignature(func, is_objective=True)
         variables = VarContainer(variables)
 
