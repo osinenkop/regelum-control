@@ -97,15 +97,60 @@ class Variable:
             is_constant=self.is_constant,
         )
 
-    def as_constant(self):
+    def with_metadata(self, metadata):
+        return Variable(
+            name=self.name,
+            dims=self.dims,
+            data=self.data,
+            metadata=metadata,
+            is_constant=self.is_constant,
+        )
+
+    def as_constant(self, pass_metadata=False, **kwargs):
+        data_possible = kwargs.get(self.name)
         if not self.is_constant:
-            return Variable(
-                name=self.name,
-                dims=self.dims,
-                data=self.data,
-                metadata=self.metadata,
-                is_constant=True,
-            )
+            if not pass_metadata:
+                return Variable(
+                    name=self.name,
+                    dims=self.dims,
+                    data=data_possible if data_possible is not None else self.data,
+                    metadata=self.metadata,
+                    is_constant=True,
+                )
+            else:
+                return Variable(
+                    name=self.name,
+                    dims=self.dims,
+                    data=self.data,
+                    metadata=data_possible
+                    if data_possible is not None
+                    else self.metadata,
+                    is_constant=True,
+                )
+        else:
+            return self
+
+    def as_decision_variable(self, pass_metadata=False, **kwargs):
+        data_possible = kwargs.get(self.name)
+        if self.is_constant:
+            if not pass_metadata:
+                return Variable(
+                    name=self.name,
+                    dims=self.dims,
+                    data=None,
+                    metadata=self.metadata,
+                    is_constant=False,
+                )
+            else:
+                return Variable(
+                    name=self.name,
+                    dims=self.dims,
+                    data=None,
+                    metadata=data_possible
+                    if data_possible is not None
+                    else self.metadata,
+                    is_constant=False,
+                )
         else:
             return self
 
@@ -141,10 +186,37 @@ class VarContainer(Mapping):
     def to_dict(self):
         return self._variables_hashmap
 
+    @property
+    @lru_cache
+    def metadatas(self):
+        return tuple(var.metadata for var in self.variables)
+
+    def to_data_dict(self):
+        return {var.name: var.data for var in self.variables}
+
+    @property
+    def with_data(self):
+        return {name: data for name, data in self.to_data_dict().items()}
+
+    def to_metadata_dict(self):
+        return {var.name: var.metadata for var in self.variables}
+
+    @property
+    def with_metadata(self):
+        return {name: data for name, data in self.to_metadata_dict().items()}
+
     def set_data(self, **kwargs):
         return VarContainer(
             [
                 var.with_data(kwargs.get(var.name)) if var.name in kwargs else var
+                for var in self.variables
+            ]
+        )
+
+    def set_metadata(self, **kwargs):
+        return VarContainer(
+            [
+                var.with_metadata(kwargs.get(var.name)) if var.name in kwargs else var
                 for var in self.variables
             ]
         )
@@ -197,17 +269,27 @@ class VarContainer(Mapping):
     def names(self):
         return tuple(var.name for var in self.variables)
 
-    @property
-    @lru_cache
-    def metadatas(self):
-        return tuple(var.metadata for var in self.variables)
+    def with_fixed_variables(
+        self, variables_to_fix: Iterable[str], pass_metadata=False, **kwargs
+    ):
+        return VarContainer(
+            [
+                var.as_constant(pass_metadata=pass_metadata, **kwargs)
+                if var.name in variables_to_fix
+                else var
+                for var in self.variables
+            ]
+        )
 
-    def to_data_dict(self):
-        return {var.name: var.data for var in self.variables}
-
-    @property
-    def with_data(self):
-        return {name: data for name, data in self.to_data_dict().items()}
+    def with_unfixed_variables(
+        self, variables_to_unfix: Iterable[str], pass_metadata=False
+    ):
+        return VarContainer(
+            [
+                var.as_decision_variable() if var.name in variables_to_unfix else var
+                for var in self.variables
+            ]
+        )
 
 
 @dataclass
@@ -215,6 +297,7 @@ class FunctionWithSignature:
     func: Callable
     parameters: VarContainer = field(default_factory=lambda: VarContainer([]))
     is_objective: bool = False
+    metadata: Any = None
 
     def __post_init__(self) -> None:
         self.__signature = self.__parse_signature(self.func)
@@ -227,9 +310,17 @@ class FunctionWithSignature:
             )
 
         self.name = self.func.__name__
-        self.await_parameters = False
 
-    def __call__(self, *args, **kwargs):
+    @property
+    def await_constant_parameters(self):
+        return not all(
+            [
+                (var.data is not None) or (var.metadata is not None)
+                for var in self.parameters.constants
+            ]
+        )
+
+    def __call__(self, *args, with_metadata: bool = False, **kwargs):
         """
         Call the function with the given keyword arguments.
         Only keyword arguments that are set will be passed to the function.
@@ -242,11 +333,18 @@ class FunctionWithSignature:
         """
         if kwargs == {} and len(args) == 1:
             return self.func(**{self.free_placeholders[0]: args[0]})
-        if not self.await_parameters:
+        if not self.await_constant_parameters:
             kwargs_to_pass = {
                 k: v for k, v in kwargs.items() if k in self.free_placeholders
             }
-            return self.func(**{**kwargs_to_pass, **self.parameters.to_data_dict()})
+            if not with_metadata:
+                return self.func(
+                    **{**kwargs_to_pass, **self.parameters.constants.to_data_dict()}
+                )
+            else:
+                return self.func(
+                    **{**kwargs_to_pass, **self.parameters.constants.to_metadata_dict()}
+                )
         else:
             raise ValueError("Not all parameters were set")
 
@@ -293,24 +391,27 @@ class FunctionWithSignature:
         """
         return self.__cached_free_placeholders(self.__signature, self.parameters)
 
-    def declare_parameters(self, parameters: VarContainer) -> None:
-        """
-        Declare new parameter names for the function.
-
-        :param param_names: A list of string containing the names
-        of the new parameters to be declared.
-        :type param_names: list[str]
-        :raises AssertionError: Raised if unknown parameter is passed.
-        """
+    def declare_parameters(
+        self,
+        parameters: Union[VarContainer, Variable],
+    ) -> None:
+        if isinstance(parameters, Variable):
+            parameters = VarContainer([parameters])
         assert all(
             [name in self.__signature for name in parameters.names]
-        ), "Unknown parameters"
-        assert all(
-            [parameter.is_constant for parameter in parameters]
-        ), "Parameters should be constant variables"
-        if set(self.parameters.constants.names) != set(parameters.constants.names):
-            self.parameters = parameters
-            self.await_parameters = True
+        ), "Unknown parameters: "
+        f"{list(filter(lambda x: x not in self.__signature, parameters.names))}"
+        self.parameters = self.parameters + parameters
+
+    def fix_variables(
+        self, variables_to_fix: Iterable[str], pass_metadata=False, **kwargs
+    ):
+        self.parameters = self.parameters.with_fixed_variables(
+            variables_to_fix, pass_metadata=pass_metadata, **kwargs
+        )
+
+    def unfix_variables(self, variables_to_unfix: Iterable[str]):
+        self.parameters = self.parameters.with_unfixed_variables(variables_to_unfix)
 
     def set_parameters(self, **kwargs) -> None:
         """
@@ -330,18 +431,12 @@ class FunctionWithSignature:
         Returns:
             resulting function object
         """
-        assert kwargs.keys() == set(self.parameters.names), "Wrong parameters passed"
-
         kwargs_intersection = kwargs.keys() & self.occupied
         if kwargs_intersection != kwargs.keys():
             raise ValueError(
                 f"Unknown parameters encountered: {kwargs.keys() - kwargs_intersection}"
             )
         self.parameters = self.parameters.set_data(**kwargs)
-        if set(self.parameters.constants.names) == set(
-            self.parameters.with_data.keys()
-        ):
-            self.await_parameters = False
 
     def __parse_signature(self, func: Callable) -> List[str]:
         signature_list = []
@@ -437,7 +532,6 @@ class Optimizable(RcognitaBase):
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
         self.__is_problem_defined = False
-        self.__parameters = VarContainer([])
         self.__variables = VarContainer([])
         self.__functions = FuncContainer([])
 
@@ -474,7 +568,18 @@ class Optimizable(RcognitaBase):
     def functions(self):
         return self.__functions
 
-    def create_variable(self, *dims, name: str, is_constant=False):
+    def fix_variables(self, variables_to_fix: Iterable[str], **kwargs):
+        metadata_kwargs = {
+            name: self.create_variable_metadata(
+                self.variables[name].dims, is_constant=True
+            )
+            for name in variables_to_fix
+        }
+        self.__variables = self.variables.with_fixed_variables(
+            variables_to_fix, **kwargs
+        ).with_fixed_variables(variables_to_fix, pass_metadata=True, **metadata_kwargs)
+
+    def create_variable_metadata(self, *dims, is_constant=False):
         metadata = None
         if self.kind == "symbolic":
             if len(dims) == 1:
@@ -500,31 +605,33 @@ class Optimizable(RcognitaBase):
                     if not is_constant
                     else self.__opti.parameter(*dims)
                 )
+        return metadata
+
+    def create_variable(self, *dims, name: str, is_constant=False):
+        metadata = self.create_variable_metadata(*dims, is_constant=is_constant)
         new_variable = Variable(
             name=name, dims=dims, metadata=metadata, is_constant=is_constant
         )
         self.__variables = self.__variables + new_variable
         return new_variable
 
-    def register_objective(self, func: Callable, variables: List[Variable]):
+    def register_objective(
+        self, func: Callable, variables: Union[List[Variable], VarContainer, Variable]
+    ):
         func = FunctionWithSignature(func, is_objective=True)
-        variables = VarContainer(variables)
+        if isinstance(variables, Variable):
+            variables = [variables]
+        if isinstance(variables, List):
+            variables = VarContainer(variables)
+        func.declare_parameters(variables)
 
         if self.kind == "symbolic":
             self.__register_symbolic_objective(
                 func,
                 variables=variables,
             )
-        elif self.kind == "numeric":
-            self.__register_numeric_objective(
-                func,
-                variables=variables.constants,
-            )
-        elif self.kind == "tensor":
-            self.__register_tensor_objective(
-                func,
-                variables=variables.constants,
-            )
+        else:
+            pass
 
         self.__functions = self.__functions + func
 
@@ -532,40 +639,20 @@ class Optimizable(RcognitaBase):
     def variables(self):
         return self.__variables
 
-    def __infer_symbolic_prototype(
+    def __infer_and_register_symbolic_prototype(
         self, func: FunctionWithSignature, variables: VarContainer
     ):
-        func.declare_parameters(variables.constants)
-        func.set_parameters(
-            **{k: v.metadata for k, v in variables.constants.to_dict().items()}
-        )
-        return func(
-            **{
-                k: v.metadata for k, v in variables.decision_variables.to_dict().items()
-            },
-        )
+        metadata = func(**variables.with_metadata, with_metadata=True)
+        func.metadata = metadata
+        return func
 
     def __register_symbolic_objective(
         self,
         func: FunctionWithSignature,
         variables: VarContainer,
     ):
-        self._objective = self.__infer_symbolic_prototype(func, variables)
-        self.__opti.minimize(self._objective)
-
-    def __register_numeric_objective(
-        self, func: FunctionWithSignature, variables: VarContainer
-    ):
-        assert callable(func), "objective_function must be callable"
-        func.declare_parameters(variables.constants)
-        self._objective = func
-
-    def __register_tensor_objective(
-        self, func: FunctionWithSignature, variables: VarContainer
-    ):
-        assert callable(func), "objective_function must be callable"
-        func.declare_parameters(variables.constants)
-        self._objective = func
+        func = self.__infer_and_register_symbolic_prototype(func, variables)
+        self.__opti.minimize(func.metadata)
 
     @staticmethod
     def handle_bounds(
