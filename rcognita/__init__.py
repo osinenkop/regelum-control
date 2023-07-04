@@ -18,7 +18,6 @@ import warnings
 
 import random
 import omegaconf
-from hydra.errors import InstantiationException
 
 from omegaconf import DictConfig, OmegaConf, ListConfig
 from omegaconf.resolvers import oc
@@ -552,10 +551,6 @@ class main:
         :type logger: Logger, optional
 
         """
-
-
-
-
         if logger is None:
             logger = logging.getLogger("rcognita")
         if callbacks is None:

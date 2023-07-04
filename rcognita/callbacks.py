@@ -16,22 +16,17 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 """
 from abc import ABC, abstractmethod
 from copy import copy
-from multiprocessing import Process
-from multiprocessing.managers import SharedMemoryManager
-from multiprocessing.shared_memory import ShareableList
-from threading import Thread
 from unittest.mock import Mock
 
 import matplotlib.animation
 import matplotx.styles
 import mlflow
 import torch
-from matplotlib.figure import Figure
-from shared_memory_dict import SharedMemoryDict
+
 
 import rcognita
 import pandas as pd
-import numpy as np
+
 import time
 import datetime
 import dill
@@ -50,10 +45,7 @@ import sys
 import filelock
 
 import rcognita.base
-from rcognita.__utilities import on_key_press, on_close
 
-import sys
-from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas)
 from matplotlib.figure import Figure
@@ -66,7 +58,7 @@ def is_in_debug_mode():
     return sys.gettrace() is not None
 
 def passdown(CallbackClass):
-    """Decorates a callback class in such a way that its event handling is inherited by derived classes.
+    """Decorate a callback class in such a way that its event handling is inherited by derived classes.
 
     :param CallbackClass:
     :type CallbackClass: type
@@ -74,7 +66,6 @@ def passdown(CallbackClass):
     """
     class PassdownCallback(CallbackClass):
         def __call_passdown(self, obj, method, output):
-            t = time.time()
             if True:  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
                 try:
                     if PassdownCallback.is_target_event(self, obj, method, output):
@@ -615,6 +606,7 @@ plt.style.use(matplotx.styles.dracula)
 
 class AnimationCallback(Callback, ABC):
     """Callback (base) responsible for rendering animated visualizations of the experiment."""
+
     _frames = 100
 
     @classmethod
@@ -768,7 +760,14 @@ class AnimationCallback(Callback, ABC):
         self.reset()
 
 class ComposedAnimationCallback(AnimationCallback):
+    """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
+
     def __init__(self, *animations, **kwargs):
+        """Initialize an instance of ComposedAnimationCallback.
+
+        :param animations: animation classes to be composed
+        :param kwargs: keyword arguments to be passed to __init__ of said animations and the base class
+        """
         Callback.__init__(self, **kwargs)
         self.animations = [Animation(interactive=False, **kwargs) for Animation in animations]
         self.fig = Figure(figsize=(10, 10))
@@ -780,22 +779,22 @@ class ComposedAnimationCallback(AnimationCallback):
             animation.ax = canvas.figure.add_subplot(width, height, 1 + i)
             animation.ax.set_aspect('equal', 'box')
         self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
-        for i, animation in enumerate(self.animations):
+        for animation in self.animations:
             animation.mng = self.mng
             animation.interactive_mode = True
             animation.setup()
 
     def perform(self, obj, method, output):
-        assert False
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `perform` method called.")
 
     def construct_frame(self, **frame_datum):
-        assert False
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `construct_frame` method called.")
 
     def setup(self):
-        assert False
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `setup` method called.")
 
     def is_target_event(self, obj, method, output):
-        assert False
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `is_target_event` method called.")
 
     def on_launch(self):
         for animation in self.animations:
@@ -815,6 +814,8 @@ class ComposedAnimationCallback(AnimationCallback):
 
 
 class PointAnimation(AnimationCallback, ABC):
+    """Animation that sets the location of a planar point at each frame."""
+
     def setup(self):
         self.point, = self.ax.plot(0, 1, marker="o", label="location")
 
@@ -841,6 +842,11 @@ class PointAnimation(AnimationCallback, ABC):
 
 @passdown
 class StateTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
     def is_target_event(self, obj, method, output):
         return (
             isinstance(obj, rcognita.simulator.Simulator)
@@ -852,12 +858,16 @@ class StateTracker(Callback):
 
 
 class PlanarMotionAnimation(PointAnimation, StateTracker):
+    """Animates dynamics of systems that can be viewed as a point moving on a plane."""
+
     def on_trigger(self, _):
         self.add_frame(x=self.system_state[0],
                        y=self.system_state[1])
 
 
 class TriangleAnimation(AnimationCallback, ABC):
+    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
+
     def setup(self):
         point1, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
         point2, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
@@ -892,6 +902,8 @@ class TriangleAnimation(AnimationCallback, ABC):
 
 
 class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
+    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+
     def setup(self):
         super().setup()
         self.ax.set_xlabel("x")
@@ -905,6 +917,11 @@ class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
 
 
 class PendulumAnimation(PlanarMotionAnimation):
+    """Animates the head of a swinging pendulum.
+
+    Interprets the first state coordinate as the angle of the pendulum with respect to the topmost position.
+    """
+
     def on_trigger(self, _):
         self.add_frame(x=np.cos(self.system_state[0] - np.pi / 2), y = np.sin(self.system_state[0] - np.pi / 2))
 
@@ -914,6 +931,8 @@ class PendulumAnimation(PlanarMotionAnimation):
 
 
 class BarAnimation(AnimationCallback, StateTracker):
+    """Animates the state of a system as a collection of vertical bars."""
+
     def setup(self):
         self.bar = None
 

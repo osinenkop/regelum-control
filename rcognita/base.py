@@ -1,10 +1,6 @@
 """Base infrastructure of rcognita."""
 
 import abc
-import ctypes
-import inspect
-import threading
-from threading import Thread
 
 from . import callbacks as cb
 import rcognita
@@ -37,11 +33,6 @@ class apply_callbacks:
             return res
 
         return new_method
-
-
-class RcognitaTerminateThreadException(Exception):
-    pass
-
 
 class RcognitaType(abc.ABCMeta):
     @classmethod

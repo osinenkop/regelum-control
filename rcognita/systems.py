@@ -274,6 +274,7 @@ class System(rcognita.base.RcognitaBase, ABC):
 #@rcognita.callbacks.PlanarMotionAnimation.attach
 class SysKinematicPoint(System):
     """System class: mathematical pendulum."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
