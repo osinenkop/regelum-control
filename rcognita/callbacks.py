@@ -904,6 +904,34 @@ class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
                        theta=self.system_state[2])
 
 
+class PendulumAnimation(PlanarMotionAnimation):
+    def on_trigger(self, _):
+        self.add_frame(x=np.cos(self.system_state[0] - np.pi / 2), y = np.sin(self.system_state[0] - np.pi / 2))
+
+    def lim(self):
+        self.ax.set_xlim(-1.1, 1.1)
+        self.ax.set_ylim(-1.1, 1.1)
+
+
+class BarAnimation(AnimationCallback, StateTracker):
+    def setup(self):
+        self.bar = None
+
+    def construct_frame(self, state):
+        if self.bar is None:
+            self.bar = self.ax.bar(range(len(state)), state)
+        else:
+            for rect, h in zip(self.bar, state):
+                rect.set_height(h)
+        return self.bar
+
+    def on_trigger(self, _):
+        self.add_frame(state=self.system_state)
+
+    def lim(self):
+        pass
+
+
 class HistoricalCallback(Callback, ABC):
     """Callback (base) responsible for recording various temporal data."""
 

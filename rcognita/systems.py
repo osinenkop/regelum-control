@@ -365,7 +365,8 @@ class SysInvertedPendulumPD(SysInvertedPendulum):
         self.integral_alpha = 0
 
 
-@(rcognita.callbacks.DirectionalPlanarMotionAnimation + rcognita.callbacks.PlanarMotionAnimation).attach
+#@(rcognita.callbacks.DirectionalPlanarMotionAnimation + rcognita.callbacks.PlanarMotionAnimation).attach
+#@rcognita.callbacks.PendulumAnimation.attach
 class Sys3WRobot(System):
     r"""System class: 3-wheel robot with dynamical actuators.
 
