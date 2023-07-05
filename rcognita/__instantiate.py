@@ -334,11 +334,20 @@ def instantiate_node(
     # If OmegaConf list, create new list of instances if recursive
     if OmegaConf.is_list(node):
         # raise NotImplementedError("List configs are yet to become supported.")
-        items = [
-            instantiate_node(item, convert=convert, recursive=recursive, path=None)
-            for item in node._iter_ex(resolve=True)
-        ]
-
+        #items = [
+        #    instantiate_node(item,
+        #                     convert=convert,
+        #                     recursive=recursive,
+        #                     path=None)
+        #    for item in node._iter_ex(resolve=True)
+        #]
+        items = []
+        for i, item in enumerate([item for item in node._iter_ex(resolve=True)]):
+            new_path = path + f"[{i}]" if path is not None else None
+            items.append(instantiate_node(item,
+                             convert=convert,
+                             recursive=recursive,
+                             path=new_path))
         if convert in (ConvertMode.ALL, ConvertMode.PARTIAL, ConvertMode.OBJECT):
             # If ALL or PARTIAL or OBJECT, use plain list as container
             return items
@@ -383,16 +392,24 @@ def instantiate_node(
                 dict_items = {}
                 for key, value in node.items():
                     # list items inherits recursive flag from the containing dict.
+                    if path is not None:
+                        new_path = key if not path else path + "." + key
+                    else:
+                        new_path = None
                     dict_items[key] = instantiate_node(
-                        value, convert=convert, recursive=recursive
+                        value, convert=convert, recursive=recursive, path=new_path
                     )
                 return dict_items
             else:
                 # Otherwise use DictConfig and resolve interpolations lazily.
                 cfg = OmegaConf.create({}, flags={"allow_objects": True})
                 for key, value in node.items():
+                    if path is not None:
+                        new_path = key if not path else path + "." + key
+                    else:
+                        new_path = None
                     cfg[key] = instantiate_node(
-                        value, convert=convert, recursive=recursive
+                        value, convert=convert, recursive=recursive, path=new_path
                     )
                 cfg._set_parent(node)
                 cfg._metadata.object_type = node._metadata.object_type

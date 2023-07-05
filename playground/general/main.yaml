@@ -24,6 +24,11 @@ callbacks:
 
 disallow_uncommitted%%: False
 
+whatever%%:
+  - a: 1
+  - 2
+  - 3
+
 hydra:
   sweep:
     dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}

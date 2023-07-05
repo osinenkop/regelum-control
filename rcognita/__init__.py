@@ -265,15 +265,24 @@ class ComplementedConfigDict(ComplementedConfig):
             parents = []
             colors = []
             text = []
-            for name, value in parent_node.items():
+            if isinstance(parent_node, ComplementedConfigDict):
+                items = parent_node.items()
+            else:
+                items = enumerate(parent_node)
+            for name, value in items:
                 # check if node as attribute value
                 parents.append(parent_name)
                 # if type(parent_node_raw) is str:
                 #    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__hydra_config)
-                if isinstance(value, ComplementedConfigDict):
-                    while name in occupied:
-                        name += " "
-                    node_raw = parent_node_raw[name.strip()]
+                if not isinstance(name, int):
+                    real_name = (name if name in parent_node_raw else name + "__IGNORE__").strip()
+                else:
+                    real_name = name
+                    name = str(name)
+                while name in occupied:
+                    name += " "
+                if isinstance(value, ComplementedConfig):
+                    node_raw = parent_node_raw[real_name]
                     if type(node_raw) is str:
                         text.append(node_raw.replace("__IGNORE__", "%%"))
                         node_raw = omegaconf.OmegaConf.to_container(
@@ -303,7 +312,6 @@ class ComplementedConfigDict(ComplementedConfig):
                     colors += subnode_colors
                     text += subnode_text
                 else:
-                    real_name = name if name in parent_node_raw else name + "__IGNORE__"
                     if (
                         type(parent_node_raw[real_name]) is str
                         and "$" in parent_node_raw[real_name]
@@ -424,7 +432,7 @@ class ComplementedConfigDict(ComplementedConfig):
                 value
                 if not isinstance(value, DictConfig)
                 and not isinstance(value, ListConfig)
-                else ComplementedConfigDict(
+                else (ComplementedConfigDict if isinstance(value, DictConfig) else ComplementedConfigList)(
                     value,
                     config_path=key
                     if not self.config_path
@@ -440,7 +448,7 @@ class ComplementedConfigDict(ComplementedConfig):
                 value
                 if not isinstance(value, DictConfig)
                 and not isinstance(value, ListConfig)
-                else ComplementedConfigDict(
+                else (ComplementedConfigDict if isinstance(value, DictConfig) else ComplementedConfigList)(
                     value,
                     config_path=key
                     if not self.config_path
