@@ -886,6 +886,8 @@ class Controller3WRobotMemoryPID:
 
 
 class Controller3WRobotPID:
+    """Nominal stabilzing policy for 3wrobot inertial system."""
+
     def __init__(
         self,
         state_init,
@@ -900,8 +902,23 @@ class Controller3WRobotPID:
         v_to_zero_bounds=(0.0, 0.05),
         to_origin_bounds=(0.0, 0.1),
         to_arctan_bounds=(0.01, 0.2),
-        v_to_zero_left_bound=0.0,
     ):
+        """Initialize Controller3WRobotPID.
+
+        :param state_init: initial state of 3wrobot
+        :param params: mass and moment of inertia `(M, I)`
+        :type params: tuple
+        :param time_start: time start
+        :param sampling_time: sampling time
+        :param action_bounds: bounds that actions should not exceed `[[lower_bound, upper_bound], ...]`
+        :param PID_arctg_params: coefficients for PD controller which sets the direction of robot to origin
+        :param PID_v_zero_params: coefficients for PD controller which forces speed to zero as robot moves to origin
+        :param PID_x_y_origin_params: coefficients for PD controller which moves robot to origin
+        :param PID_angle_origin_params: coefficients for PD controller which sets angle to zero near origin
+        :param v_to_zero_bounds: bounds for enabling controller which decelerates
+        :param to_origin_bounds: bounds for enabling controller which moves robot to origin
+        :param to_arctan_bounds: bounds for enabling controller which direct robot to origin
+        """
         if params is None:
             params = [10, 1]
 

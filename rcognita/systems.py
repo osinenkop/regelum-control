@@ -549,10 +549,16 @@ class GridWorld(System):
     """A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
 
     The action encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
-
     """
 
     def __init__(self, dims, terminal_state):
+        """Initialize an instance of GridWorld.
+
+        :param dims: grid dimensions (height, width)
+        :type dims: tuple
+        :param terminal_state: coordinates of goal cell
+        :type terminal_state: list
+        """
         self.dims = dims
         self.terminal_state = terminal_state
 

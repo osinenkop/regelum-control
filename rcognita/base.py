@@ -35,6 +35,11 @@ class apply_callbacks:
         return new_method
 
 class RcognitaType(abc.ABCMeta):
+    """Rcognita type that all classes in rcognita share.
+
+    Used for certain infrastructural and syntactic sugar features.
+    """
+
     @classmethod
     def __register_callback(cls, callback):
         pass

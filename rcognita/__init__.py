@@ -468,7 +468,14 @@ class main:
     objects_created = {}
 
     class RcognitaArgumentParser(argparse.ArgumentParser):
+        """A parser object designed for handling peculiar nuances of arg parsing while interfacing with hydra."""
+
         def __init__(self, *args, **kwargs):
+            """Initialize and instance of RcognitaArgumentParser.
+
+            :param args: arguments to pass to base
+            :param kwargs: keyword arguments to pass to base
+            """
             self._stored_args = []
             self._registered_args = []
             self._triggers = {}
