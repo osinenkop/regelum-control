@@ -610,7 +610,8 @@ class main:
         self.parser.add_argument("--tags", trigger=tags)
 
         def experiment(val):
-            self.experiment_name = val
+            if val:
+                self.experiment_name = val
         self.parser.add_argument("--experiment", trigger=experiment)
 
         self.mlflow_uri = f"file://{os.getcwd()}/mlruns"
