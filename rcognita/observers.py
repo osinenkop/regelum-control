@@ -1,9 +1,13 @@
+"""Tools for systems' state estimation."""
+
 import numpy as np
 
 import rcognita.base
 
 
 class KalmanFilter(rcognita.base.RcognitaBase):
+    """A class implementing Kalman filter."""
+
     def __init__(
         self,
         t0,
@@ -13,6 +17,15 @@ class KalmanFilter(rcognita.base.RcognitaBase):
         prior_est_cov,
         state_init,
     ):
+        """Initialize an instance of KalmanFilter.
+
+        :param t0: time at which simulation starts
+        :param my_sys: an instance of a system of which state is to be observed
+        :param sys_noise_cov: system noise covariance matrix
+        :param observ_noise_cov: observation noise covariance matrix
+        :param prior_est_cov: prior esimation covariance
+        :param state_init: initial state
+        """
         self.my_sys = my_sys
 
         self.posterior_state_est = state_init

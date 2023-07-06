@@ -34,6 +34,13 @@ class EulerPredictor(Predictor):
         dim_input: int,
         prediction_horizon: int,
     ):
+        """Initialize an instance of EulerPredictor.
+
+        :param pred_step_size: time interval between consecutive state predictoins
+        :param system: an instance of a system
+        :param dim_input: input dimensionality
+        :param prediction_horizon: number of steps to be predicted
+        """
         self.system = system
         self.pred_step_size = pred_step_size
         self.compute_state_dynamics = system.compute_dynamics
@@ -62,7 +69,15 @@ class EulerPredictor(Predictor):
 
 
 class EulerPredictorMultistep(EulerPredictor):
+    """Applies several iterations of Euler estimation to predict a single step."""
+
     def __init__(self, *args, n_steps=5, **kwargs):
+        """Initialize an instance of EulerPredictorMultistep.
+
+        :param args: positional arguments for EulerPredictor
+        :param n_steps: number of estimations to predict a single step
+        :param kwargs: keyword arguments for EulerPredictor
+        """
         super().__init__(*args, **kwargs)
         self.n_steps = n_steps
         self.pred_step_size /= self.n_steps
@@ -75,34 +90,17 @@ class EulerPredictorMultistep(EulerPredictor):
             )
         return next_state_or_observation
 
-
-class EulerPredictorPendulum(EulerPredictor):
-    def predict(self, current_state_or_observation, action):
-        rhs = self.compute_state_dynamics([], current_state_or_observation, action)
-        next_state_or_observation = (
-            current_state_or_observation
-            + self.pred_step_size * rc.array([rhs[0], 0, rhs[1]])
-        )
-        return next_state_or_observation
-
-    def predict_sequence(self, observation, action_sequence):
-        observation_sequence = rc.zeros(
-            [self.prediction_horizon, self.dim_output], prototype=action_sequence
-        )
-        current_observation = observation
-
-        for k in range(self.prediction_horizon):
-            current_action = action_sequence[k, :]
-            next_observation = self.predict(current_observation, current_action)
-            observation_sequence[k, :] = self.sys_out(next_observation)
-            current_observation = next_observation
-        return observation_sequence
-
-
 class RKPredictor(EulerPredictor):
     """Predictor that makes use o Runge-Kutta finite difference methods."""
 
     def __init__(self, state_or_observation_init, action_init, *args, **kwargs):
+        """Initialize an instance of RKPredictor.
+
+        :param state_or_observation_init: initial state
+        :param action_init: initial action
+        :param args: positional arguments for EulerPredictor
+        :param kwargs: keyword arguments for Euler predictor
+        """
         super().__init__(*args, **kwargs)
 
         self.integrator = create_CasADi_integrator(
@@ -123,6 +121,10 @@ class TrivialPredictor(Predictor):
     """A predictor that propagates the observation or state directly through the system dynamics law."""
 
     def __init__(self, system):
+        """Initialize an instance of TrivialPredictor.
+
+        :param system: an instance of a discrete system
+        """
         self.compute_dynamics = system.compute_dynamics
 
     def predict(self, current_state_or_observation, action):

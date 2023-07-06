@@ -27,7 +27,10 @@ except ImportError:
 
 
 class Scenario(rcognita.base.RcognitaBase, ABC):
+    """A base scenario class."""
+
     def __init__(self):
+        """Initialize an instance of Scenario."""
         pass
 
     @abstractmethod
@@ -48,8 +51,14 @@ class TabularScenarioVI(Scenario):
     """
 
     def __init__(
-        self, actor: Actor, critic: Critic, N_iterations: int, is_playback=None
+        self, actor: Actor, critic: Critic, N_iterations: int
     ):
+        """Initialize an instance of TabularScenarioVI.
+
+        :param actor: an instance of policy
+        :param critic: an instance of objective learner
+        :param N_iterations: number of iterations
+        """
         self.actor = actor
         self.critic = critic
         self.N_iterations = N_iterations
@@ -64,6 +73,8 @@ class TabularScenarioVI(Scenario):
 
 
 class OnlineScenario(Scenario):
+    """Basic scenario for simulation and online learning."""
+
     cache = dict()
 
     def __init__(
@@ -71,20 +82,30 @@ class OnlineScenario(Scenario):
         simulator: Simulator,
         controller: Controller,
         running_objective: Optional[RunningObjective] = None,
-        is_log: bool = False,
         howanim: str = None,
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
         time_start: float = 0.0,
-        observation_target: list = None,
         observation_components_naming=None,
         N_episodes=1,
         N_iterations=1,
         speedup=1,
-        total_objective_threshold=np.inf,
     ):
-        if observation_target is None:
-            observation_target = []
+        """Initialize an instance of OnlineScenario.
+
+        This scenario is designed to run a simulation that involves an online learner.
+        :param simulator: simulator in charge of said simulation
+        :param controller: a controller that computes an action on each simulation step
+        :param running_objective: an objective to be computed at each simulation step
+        :param howanim: specifies animation mode
+        :param state_init: initial state
+        :param action_init: initial action
+        :param time_start: time at which simulation starts
+        :param observation_components_naming: names of each component of observation
+        :param N_episodes: number of episodes in one iteration
+        :param N_iterations: number of iterations in simulation
+        :param speedup: number of frames to skip in order to speed up animation rendering
+        """
         if observation_components_naming is None:
             observation_components_naming = []
 
@@ -409,6 +430,8 @@ class OnlineScenario(Scenario):
 
 
 class MonteCarloScenario(OnlineScenario):
+    """A Monte-Carlo scenario which is used for Monte-Carlo learning."""
+
     def step(self):
         episode_status = super().step()
         if self.controller.is_time_for_new_sample:

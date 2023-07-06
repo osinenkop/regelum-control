@@ -5,11 +5,17 @@ from rcognita.__utilities import rc
 
 
 class AdaptationBlock(ABC):
-    def __init__(self, c_hat_init, learning_rate, **kwargs):
+    """An interface for controller parameters adaptation."""
+
+    def __init__(self, c_hat_init, learning_rate):
+        """Initialize an instance of AdaptationBlock.
+
+        :param c_hat_init:  initial value of adapted parameter
+        :param learning_rate: rate of adaptation
+        """
         self.c_hat_init = c_hat_init
         self.current_c_hat = c_hat_init
         self.learning_rate = learning_rate
-        self.__dict__.update(**kwargs)
 
     @abstractmethod
     def parameter_estimation_derivative(self, current_state):
@@ -27,7 +33,15 @@ class AdaptationBlock(ABC):
 
 
 class AdaptationBlockCartpole(AdaptationBlock):
+    """An adaptation block for Cartpole."""
+
     def __init__(self, c_hat_init, learning_rate, system=None):
+        """Initialize an instance of AdaptationBlockCartpole.
+
+        :param c_hat_init:  initial value of adapted parameter
+        :param learning_rate: rate of adaptation
+        :param system: an instance of Cartpole system to be adapted to
+        """
         super().__init__(c_hat_init, learning_rate)
         self.m_c, self.m_p, self.g, self.l = system.pars
 

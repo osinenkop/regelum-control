@@ -23,7 +23,6 @@ import matplotx.styles
 import mlflow
 import torch
 
-
 import rcognita
 import pandas as pd
 
@@ -52,7 +51,8 @@ from matplotlib.figure import Figure
 import numpy as np
 from matplotlib.backends import backend_qt5agg  # e.g.
 
-
+from svgpathtools import svg2paths
+from svgpath2mpl import parse_path
 
 def is_in_debug_mode():
     return sys.gettrace() is not None
@@ -781,7 +781,7 @@ class ComposedAnimationCallback(AnimationCallback):
         self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
         for animation in self.animations:
             animation.mng = self.mng
-            animation.interactive_mode = True
+            animation.interactive_mode = self._metadata["argv"].interactive
             animation.setup()
 
     def perform(self, obj, method, output):
@@ -868,12 +868,29 @@ class PlanarMotionAnimation(PointAnimation, StateTracker):
 class TriangleAnimation(AnimationCallback, ABC):
     """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
 
+    _pic = None # must be an svg located in rcognita/img
+
     def setup(self):
+        if self._pic is None:
+            return self.setup_points()
+        else:
+            return self.setup_pic()
+
+    def setup_points(self):
         point1, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
         point2, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
         point3, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
         self.points = (point1, point2, point3)
         self.ax.grid()
+
+    def setup_pic(self):
+        self.path = rcognita.__file__.replace("__init__.py", f"img/{self._pic}")
+        self.pic_data, self.attributes = svg2paths(self.path)
+        parsed = parse_path(self.attributes[0]['d'])
+        parsed.vertices -= parsed.vertices.mean(axis=0)
+        self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
+        self.triangle, = self.ax.plot(0, 1, marker=self.marker, ms=30)
+
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
         try:
@@ -892,13 +909,25 @@ class TriangleAnimation(AnimationCallback, ABC):
 
 
     def construct_frame(self, x, y, theta):
+        if self._pic is None:
+            return self.construct_frame_points(x, y, theta)
+        else:
+            return self.construct_frame_pic(x, y, theta)
+
+    def construct_frame_points(self, x, y, theta):
         offsets = np.array([[np.cos(theta + i * 2 * np.pi / 3),
-                            np.sin(theta + i * 2 * np.pi / 3)] for i in range(3)]) / 10
+                             np.sin(theta + i * 2 * np.pi / 3)] for i in range(3)]) / 10
         location = np.array([x, y])
         for point, offset in zip(self.points, offsets):
             x, y = location + offset
             point.set_data([x], [y])
         return self.points
+
+    def construct_frame_pic(self, x, y, theta):
+        self.triangle.set_data([x], [y])
+        self.marker._transform = self.marker.get_transform().rotate_deg(180 * theta / np.pi)
+        return self.triangle,
+
 
 
 class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):

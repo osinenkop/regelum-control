@@ -73,7 +73,6 @@ class Simulator(rcognita.base.RcognitaBase):
         system,
         state_init,
         sys_type="diff_eqn",
-        disturb_init=None,
         action_init=None,
         time_start=0,
         time_final=1,
@@ -82,9 +81,7 @@ class Simulator(rcognita.base.RcognitaBase):
         first_step=1e-6,
         atol=1e-5,
         rtol=1e-3,
-        is_disturb=0,
         is_dynamic_controller=0,
-        ode_backend="SciPy",
     ):
         r"""Initialize a simulator.
 
@@ -123,6 +120,10 @@ class Simulator(rcognita.base.RcognitaBase):
 
         max_step, first_step, atol, rtol : : numbers
             Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
+
+        system : : `System`
+            System to be simulated.
+
         """
         self.system = system
         self.sys_type = sys_type

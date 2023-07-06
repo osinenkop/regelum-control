@@ -360,7 +360,6 @@ def instantiate_node(
     elif OmegaConf.is_dict(node):
         exclude_keys = set({"_target_", "_convert_", "_recursive_", "_partial_"})
         if _is_target(node):
-            _target_ = _resolve_target(node.get(_Keys.TARGET), full_key)
             kwargs = {}
             is_partial = node.get("_partial_", False) or partial
             for key in node.keys():
@@ -377,6 +376,23 @@ def instantiate_node(
                             value, convert=convert, recursive=recursive, path=new_path
                         )
                     kwargs[key] = _convert_node(value, convert)
+            _target_ = _resolve_target(node.get(_Keys.TARGET),
+                                       full_key)
+            if "callbacks__IGNORE__" in kwargs:
+                for callback in kwargs["callbacks__IGNORE__"]:
+                    if "." not in callback:
+                        callback = "rcognita.callbacks." + callback
+                    _target_ = _locate(callback).attach(_target_)
+            if "animations__IGNORE__" in kwargs:
+                animation = kwargs["animations__IGNORE__"][0]
+                if "." not in animation:
+                    animation = "rcognita.callbacks." + animation
+                animation_sum = _locate(animation)
+                for animation in kwargs["animations__IGNORE__"][1:]:
+                    if "." not in animation:
+                        animation = "rcognita.callbacks." + animation
+                    animation_sum = animation_sum + _locate(animation)
+                _target_ = animation_sum.attach(_target_)
 
             res = _call_target(_target_, partial, args, kwargs, full_key)
             if path:

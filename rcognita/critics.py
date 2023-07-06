@@ -456,71 +456,15 @@ class CriticOfObservation(Critic):
 
         return critic_objective
 
-
-class CriticOfActionObservationOnPolicy(Critic):
-    @apply_callbacks()
-    def objective(self, data_buffer=None, weights=None):
-        """Compute the objective function of the critic, which is typically a squared temporal difference.
-
-        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
-        :type data_buffer: dict, optional
-        :param weights: the weights of the critic model, if different from the stored weights.
-        :type weights: numpy.ndarray, optional
-        :return: the value of the objective function
-        :rtype: float
-        """
-        if data_buffer is None:
-            observation_buffer = self.observation_buffer
-            action_buffer = self.action_buffer
-        else:
-            observation_buffer = data_buffer["observation_buffer"]
-            action_buffer = data_buffer["action_buffer"]
-
-        critic_objective = 0
-
-        for k in range(self.data_buffer_size - 2, 0, -1):
-            observation_old = observation_buffer[:, k - 1]
-            observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k]
-            action_next_next = action_buffer[:, k + 1]  ##
-
-            # Temporal difference
-
-            critic_old = self.model(
-                observation_old - self.observation_target, action_next, weights=weights
-            )
-            critic_next = self.model(
-                observation_next - self.observation_target,
-                action_next_next,
-                use_stored_weights=True,
-            )
-
-            temporal_difference = (
-                critic_old
-                - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_next)
-            )
-
-            critic_objective += 1 / 2 * temporal_difference**2
-
-        if self.intrinsic_constraints != [] and self.penalty_param > 0:
-            for constraint in self.intrinsic_constraints:
-                critic_objective += self.penalty_param * rc.penalty_function(constraint)
-
-        return critic_objective
-
-
 class CriticOffPolicyBehaviour(Critic):
+    """Critic that is represented as functions of observation only."""
+
     def __init__(self, *args, batch_size, td_n, **kwargs):
         super().__init__(*args, **kwargs)
         self.batch_size = batch_size
         self.td_n = td_n
 
         self.n_buffer_updates = 0
-
-    """
-    This is the class of critics that are represented as functions of observation only.
-    """
 
     def reset(self):
         super().reset()

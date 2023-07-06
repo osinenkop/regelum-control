@@ -1,5 +1,10 @@
 _target_: rcognita.systems.Sys3WRobot
 
+
+animations%%:
+  - DirectionalPlanarMotionAnimation
+  - BarAnimation
+
 ###---Constructor arguments---###
 
 dim_input: 2

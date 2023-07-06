@@ -21,7 +21,10 @@ def inject_observation_target(observation_target):
 
 
 class Objective(rcognita.base.RcognitaBase, ABC):
+    """A base class for objective implementations."""
+
     def __init__(self):
+        """Initialize an instance of Objective."""
         pass
 
     @abstractmethod
