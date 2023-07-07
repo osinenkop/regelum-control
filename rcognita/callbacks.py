@@ -1116,8 +1116,9 @@ class StateCallback(Callback):
     """
 
     def is_target_event(self, obj, method, output):
+        attachee = self.attachee if self.attachee is not None else rcognita.systems.System
         return (
-            isinstance(obj, rcognita.systems.System)
+            isinstance(obj, attachee)
             and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
         )
 
