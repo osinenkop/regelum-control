@@ -82,14 +82,17 @@ class OnlineScenario(Scenario):
         simulator: Simulator,
         controller: Controller,
         running_objective: Optional[RunningObjective] = None,
+        is_log: bool = False,
         howanim: str = None,
         state_init: np.ndarray = None,
         action_init: np.ndarray = None,
         time_start: float = 0.0,
+        observation_target: list = None,
         observation_components_naming=None,
         N_episodes=1,
         N_iterations=1,
         speedup=1,
+        total_objective_threshold=np.inf,
     ):
         """Initialize an instance of OnlineScenario.
 
@@ -106,6 +109,8 @@ class OnlineScenario(Scenario):
         :param N_iterations: number of iterations in simulation
         :param speedup: number of frames to skip in order to speed up animation rendering
         """
+        if observation_target is None:
+            observation_target = []
         if observation_components_naming is None:
             observation_components_naming = []
 
