@@ -1,11 +1,11 @@
 defaults:
-  - actor: pg
+  - actor: reinforce
   - critic: trivial
-  - episode_data_buffer: observation_action
+  - data_buffer: data_buffer
 
 name%%: pg
 
-_target_: rcognita.controllers.RLController
+_target_: rcognita.controllers.PGController
 
 ###---Constructor arguments---###
 

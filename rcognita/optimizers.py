@@ -282,7 +282,12 @@ class TorchOptimizer(Optimizer):
     engine = "Torch"
 
     def __init__(
-        self, opt_options, model, iterations=1, opt_method=None, verbose=False
+        self,
+        opt_options,
+        model,
+        iterations=1,
+        opt_method=None,
+        verbose=False,
     ):
         """
         Initialize an instance of TorchOptimizer.
@@ -305,7 +310,11 @@ class TorchOptimizer(Optimizer):
         self.verbose = verbose
         self.loss_history = []
         self.model = model
-        self.optimizer = self.opt_method(model.parameters(), **self.opt_options)
+        self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
+
+    @apply_callbacks()
+    def post_epoch(self, idx_epoch, last_epoch_objective):
+        return idx_epoch, last_epoch_objective
 
     def optimize(
         self, objective, model_input=None
@@ -321,11 +330,22 @@ class TorchOptimizer(Optimizer):
         :type model_input: torch.Tensor
         """
 
-        for _ in range(self.iterations):
-            self.optimizer.zero_grad()
-            loss = objective(model_input)
-            loss.backward()
-            self.optimizer.step()
+        # for _ in range(self.iterations):
+        #     self.optimizer.zero_grad()
+        #     loss = objective(model_input)
+        #     loss.backward()
+        #     self.optimizer.step()
+
+        for epoch in range(self.iterations):
+            for batch in model_input:
+                self.optimizer.zero_grad()
+                loss = objective(batch)
+                loss.backward()
+                self.optimizer.step()
+
+                self.model.update_and_cache_weights()
+
+            self.post_epoch(epoch, loss.item())
 
 
 class TorchDataloaderOptimizer(Optimizer):
@@ -381,7 +401,9 @@ class TorchDataloaderOptimizer(Optimizer):
     def post_epoch(self, idx_epoch, last_epoch_objective):
         return idx_epoch, last_epoch_objective
 
-    def optimize(self, objective, dataset):  # remove model and add parameters instead
+    def optimize(
+        self, objective, dataloader
+    ):  # remove model and add parameters instead
         """
         Optimize the model with the given objective.
 
@@ -393,18 +415,18 @@ class TorchDataloaderOptimizer(Optimizer):
         :type model_input: torch.Tensor
         """
 
-        dataloader = DataLoader(
-            dataset=dataset,
-            shuffle=self.shuffle,
-            batch_size=self.batch_size if self.batch_size is not None else len(dataset),
-        )
+        # dataloader = DataLoader(
+        #     dataset=dataset,
+        #     shuffle=self.shuffle,
+        #     batch_size=self.batch_size if self.batch_size is not None else len(dataset),
+        # )
 
         batch_sample = next(iter(dataloader))
         self.optimizer.zero_grad()
         objective_value = objective(batch_sample)
         last_epoch_objective = objective_value.item()
         objective_value.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 100.0)
+        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 100.0)
         # print(self.model.in_layer.weight.grad)
         self.optimizer.step()
         if self.sheduler:

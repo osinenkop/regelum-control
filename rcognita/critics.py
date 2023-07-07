@@ -39,6 +39,7 @@ from .models import Model
 from .objectives import Objective
 from typing import Optional, Union
 from .callbacks import apply_callbacks
+from .data_buffers import EpisodicSampler, ForwardSampler
 
 
 class Critic(rcognita.base.RcognitaBase, ABC):
@@ -338,7 +339,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.initialize_buffers()
 
     def _SciPy_update(self, intrinsic_constraints=None):
-
         weights_init = self.model.cache.weights
 
         constraints = ()
@@ -367,7 +367,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return optimized_weights
 
     def _CasADi_update(self, intrinsic_constraints=None):
-
         weights_init = rc.DM(self.model.cache.weights)
         symbolic_var = rc.array_symb(tup=rc.shape(weights_init), prototype=weights_init)
 
@@ -406,7 +405,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         return optimized_weights
 
     def _Torch_update(self):
-
         data_buffer = {
             "observation_buffer": self.observation_buffer,
             "action_buffer": self.action_buffer,
@@ -483,6 +481,75 @@ class CriticOfObservation(Critic):
                 critic_objective += self.penalty_param * rc.penalty_function(constraint)
 
         return critic_objective
+
+
+class CriticOnPolicy(Critic):
+    def __init__(self, *args, batch_size, td_n, device, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.batch_size = batch_size
+        self.td_n = td_n
+        self.device = device
+
+    """
+    This is the class of critics that are represented as functions of observation only.
+    """
+
+    # @apply_callbacks()
+    def objective(self, batch):
+        """
+        Compute the objective function of the critic, which is typically a squared temporal difference.
+        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
+        :type data_buffer: dict, optional
+        :param weights: the weights of the critic model, if different from the stored weights.
+        :type weights: numpy.ndarray, optional
+        :return: the value of the objective function
+        :rtype: float
+        """
+        first_tdn_observations_actions = torch.cat(
+            [batch["observation"][: -self.td_n], batch["action"][: -self.td_n]], dim=1
+        ).to(self.device)
+        last_tdn_observations_actions = torch.cat(
+            [batch["observation"][self.td_n :], batch["action"][self.td_n :]], dim=1
+        ).to(self.device)
+        discount = torch.DoubleTensor(
+            [self.discount_factor**i for i in range(self.td_n)]
+        )
+        discounted_tdn_sum_of_running_objectives = torch.DoubleTensor(
+            [
+                (
+                    self.sampling_time
+                    * batch["running_objective"][i : i + self.td_n]
+                    * discount
+                ).sum()
+                for i in range(len(batch["running_objective"]) - self.td_n)
+            ]
+        ).to(self.device)
+
+        temporal_difference = (
+            (
+                self.model(first_tdn_observations_actions)
+                - discounted_tdn_sum_of_running_objectives
+                - self.discount_factor**self.td_n
+                * self.model(last_tdn_observations_actions, use_stored_weights=True)
+                # * self.model(last_tdn_observations_actions).detach()
+            )
+            ** 2
+        ).mean()
+        return temporal_difference
+
+    def optimize_weights_after_iteration(self, data_buffer):
+        self.model.to(self.device)
+        self.model.cache.to(self.device)
+
+        self.optimizer.optimize(
+            objective=self.objective,
+            model_input=data_buffer.iter_batches(
+                sampler=EpisodicSampler,
+                batch_size=self.batch_size,
+                keys=["observation", "action", "running_objective"],
+                dtype=torch.DoubleTensor,
+            ),
+        )
 
 
 class CriticOfActionObservationOnPolicy(Critic):

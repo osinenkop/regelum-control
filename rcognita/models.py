@@ -355,7 +355,7 @@ class ModelQuadForm(Model):
     def __init__(self, weights=None):
         self.weights = weights
 
-    def forward(self, *argin, weights=None):
+    def forward(self, *argin, weights=None, device="cpu"):
         if len(argin) != 2:
             raise ValueError("ModelQuadForm assumes two vector arguments!")
 
@@ -363,8 +363,13 @@ class ModelQuadForm(Model):
 
         try:
             result = vec.T @ weights @ vec
-        except RuntimeError:
-            result = vec.T @ torch.tensor(weights, requires_grad=False).double() @ vec
+        except:
+
+            result = (
+                vec.T
+                @ torch.tensor(weights, requires_grad=False, device=device).double()
+                @ vec
+            )
 
         result = rc.squeeze(result)
 
@@ -696,6 +701,7 @@ class ModelDQNSimple(ModelNN):
         self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=bias)
         self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
         self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        self.hidden3 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
         self.out_layer = nn.Linear(dim_hidden, 1, bias=bias)
         self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
@@ -719,6 +725,8 @@ class ModelDQNSimple(ModelNN):
         x = self.hidden1(x)
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden2(x)
+        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        x = self.hidden3(x)
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.out_layer(x)
 

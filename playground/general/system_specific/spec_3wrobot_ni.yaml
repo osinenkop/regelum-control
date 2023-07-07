@@ -19,7 +19,7 @@ v_max%%: 25.
 omega_min%%: -5.
 omega_max%%: 5.
 
-actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.v_min%%}, ${.v_max%%}, ${.grid_dim%%}), numpy.linspace(${.omega_min%%}, ${.omega_max%%}, ${.grid_dim%%}))))
+# actions_grid: = numpy.vstack(map(numpy.ravel, numpy.meshgrid(numpy.linspace(${.v_min%%}, ${.v_max%%}, ${.grid_dim%%}), numpy.linspace(${.omega_min%%}, ${.omega_max%%}, ${.grid_dim%%}))))
 diag_scale_coef: 5.
 
 calf_data_buffer_size: 8

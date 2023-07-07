@@ -20,5 +20,5 @@ critic: ~ controller.critic
 observation_target: $ system_specific.observation_target
 running_objective: $ running_objective
 device: cuda:0
-is_with_baseline: True 
+is_with_baseline: False 
 is_do_not_let_the_past_distract_you: False

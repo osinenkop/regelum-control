@@ -45,7 +45,7 @@ setup(
         "filelock==3.0.12",
         "streamlit==1.17.0",
         "tables==3.8.0",
-        "mlflow==2.2.2",
+        "mlflow==2.4.1",
     ],
     extras_require={
         "SIPPY": ["sippy-rcognita == 0.2.1"],

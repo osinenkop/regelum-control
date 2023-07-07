@@ -25,6 +25,7 @@ from .optimizers import Optimizer
 from .critics import Critic
 from .models import Model
 from .systems import System
+from .data_buffers import DataBuffer
 
 try:
     import torch
@@ -33,6 +34,8 @@ except ImportError:
     from unittest.mock import MagicMock
 
     torch = MagicMock()
+
+import pandas as pd
 
 
 def force_type_safety(method):
@@ -534,14 +537,33 @@ class ActorPGBase(Actor, ABC):
         self.is_with_baseline = is_with_baseline
         self.is_do_not_let_the_past_distract_you = is_do_not_let_the_past_distract_you
 
-    def optimize_weights_after_iteration(self, dataset):
+        self.next_baseline = 0.0
+
+    def update_data_buffer(self, data_buffer):
+        pass
+
+    def optimize_weights_after_iteration(self, data_buffer: DataBuffer):
         # Send to device before optimization
         if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
-        self.dataset_size = len(dataset)
+        self.dataset_size = len(data_buffer)
 
-        self.optimizer.optimize(self.objective, dataset)
+        self.update_data_buffer(data_buffer)
+        self.optimizer.optimize(
+            self.objective,
+            data_buffer.iter_batches(
+                batch_size=len(data_buffer),
+                dtype=torch.FloatTensor,
+                keys=[
+                    "observation",
+                    "action",
+                    "total_objective",
+                    "tail_total_objective",
+                    "baseline",
+                ],
+            ),
+        )
 
         # Send back to cpu after optimization
         if hasattr(self.critic.model, "to"):
@@ -587,52 +609,92 @@ class ActorPGBase(Actor, ABC):
         pass
 
 
-class ActorPG(ActorPGBase):
+class ActorREINFORCE(ActorPGBase):
     def update_action(self, observation=None):
-        observation_target = torch.tensor(self.observation_target)
         if observation is None:
             observation = self.observation
         else:
             observation = torch.tensor(observation)
 
         self.action_old = self.action
-
-        self.action = (
-            self.model.sample((observation - observation_target).float())
-            .detach()
-            .cpu()
-            .numpy()
-        )
-
+        self.action = self.model.sample((observation).float()).detach().cpu().numpy()
         return
 
-    def objective(self, batch):
-        observations_actions = batch["observations_actions"].to(self.device)
-        log_probs = self.model.log_probs(observations_actions.float())
+    def update_data_buffer(self, data_buffer: DataBuffer):
+        data_buffer.update(
+            {
+                "total_objective": self.calculate_last_total_objectives(data_buffer),
+            }
+        )
+        data_buffer.update(
+            {"tail_total_objective": self.calculate_tail_total_objectives(data_buffer)}
+        )
+        data_buffer.update({"baseline": self.calculate_baseline(data_buffer)})
 
+    def calculate_last_total_objectives(self, data_buffer: DataBuffer):
+        data = data_buffer.to_pandas(keys=["episode_id", "current_total_objective"])
+        return (
+            data.groupby("episode_id")["current_total_objective"]
+            .last()
+            .loc[data["episode_id"]]
+            .values.reshape(-1)
+        )
+
+    def calculate_tail_total_objectives(
+        self,
+        data_buffer: DataBuffer,
+    ):
+        """Calculate tail total costs and baseline.
+
+        Returns:
+            Tuple[np.array, float, float]: tuple of 3 elements tail_total_objectives, baseline, gradent_normalization_constant
+        """
+
+        groupby_episode_total_objectives = data_buffer.to_pandas(
+            keys=["episode_id", "current_total_objective"]
+        ).groupby(["episode_id"])["current_total_objective"]
+
+        return (
+            groupby_episode_total_objectives.last()
+            - groupby_episode_total_objectives.shift(periods=1, fill_value=0.0)
+        ).values.reshape(-1)
+
+    def calculate_baseline(self, data_buffer: DataBuffer):
+        baseline = self.next_baseline
+        self.next_baseline = np.mean(data_buffer.to_pandas(keys=["total_objective"]))
+        return np.full(shape=len(data_buffer), fill_value=baseline)
+
+    def objective(self, batch):
+        observations_actions = torch.cat(
+            [batch["observation"], batch["action"]], dim=1
+        ).to(self.device)
+
+        log_probs = self.model.log_probs(observations_actions)
         if self.is_do_not_let_the_past_distract_you:
-            target_objectives = batch["tail_total_objectives"].to(self.device)
+            target_objectives = batch["tail_total_objective"].to(self.device)
         else:
-            target_objectives = batch["total_objectives"].to(self.device)
+            target_objectives = batch["total_objective"].to(self.device)
 
         if self.is_with_baseline:
-            target_objectives -= batch["baselines"].to(self.device)
+            target_objectives -= batch["baseline"].to(self.device)
 
         return (log_probs * target_objectives).sum() / self.N_episodes
 
 
-class ActorSDPG(ActorPG):
+class ActorSDPG(ActorREINFORCE):
     def objective(self, batch):
-        observations_actions = batch["observations_actions"].to(self.device)
+        observations_actions = torch.cat(
+            [batch["observation"], batch["action"]], dim=1
+        ).to(self.device)
         log_probs = self.model.log_probs(observations_actions.float())
 
         if self.is_do_not_let_the_past_distract_you:
-            target_objectives = batch["tail_total_objectives"].to(self.device)
+            target_objectives = batch["tail_total_objective"].to(self.device)
         else:
-            target_objectives = batch["total_objectives"].to(self.device)
+            target_objectives = batch["total_objective"].to(self.device)
 
         if self.is_with_baseline:
-            target_objectives -= batch["baselines"].to(self.device)
+            target_objectives -= batch["baseline"].to(self.device)
 
         # TODO: FIX TYPES
         critic_value = self.critic(observations_actions.double()).detach().float()
@@ -652,7 +714,6 @@ class ActorDDPG(ActorPGBase):
         ).sum()
 
     def update_action(self, observation=None):
-
         super().update_action(observation)
 
 

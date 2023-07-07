@@ -1,11 +1,11 @@
 defaults:
   - actor: sdpg
-  - critic: dqn_behaviour
-  - episode_data_buffer: observation_action
+  - critic: critic_on_policy
+  - data_buffer: data_buffer
 
 name%%: sdpg
 
-_target_: rcognita.controllers.RLController
+_target_: rcognita.controllers.PGController
 
 ###---Constructor arguments---###
 
@@ -19,13 +19,17 @@ critic_period_multiplier%%: 1
 
 critic:
   model:
+    dim_hidden: 32
     is_double_precision: True
+    bias: False
   optimizer:
+    iterations: 50000 
     opt_options:
-      lr: 0.00001
-  td_n: 10
-  batch_size: 50
-  discount_factor: 0.94
+      lr: 0.001
+  td_n: 10 
+  batch_size: 100
+  discount_factor: 1. 
+
 
   
 

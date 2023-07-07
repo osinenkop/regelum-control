@@ -87,7 +87,6 @@ class OnlineScenario(Scenario):
         total_objective_threshold=np.inf,
         discount_factor=1.0,
     ):
-
         self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -169,7 +168,6 @@ class OnlineScenario(Scenario):
         return len(self.cache)
 
     def update_total_objective(self, observation, action, delta):
-
         """
         Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
@@ -393,6 +391,20 @@ class OnlineScenario(Scenario):
             self.system.receive_action(self.action)
             self.post_step()
 
+            if (
+                self.controller.is_time_for_new_sample
+                and self.controller.data_buffer is not None
+            ):
+                self.controller.data_buffer.push_to_end(
+                    observation=self.observation,
+                    action=self.action,
+                    timestamp=self.time,
+                    running_objective=self.running_objective_value,
+                    current_total_objective=self.total_objective,
+                    episode_id=self.episode_counter,
+                    iteration_id=self.iteration_counter,
+                )
+
             return "episode_continues"
         else:
             self.reset_episode()
@@ -415,30 +427,11 @@ class OnlineScenario(Scenario):
 
 
 class MonteCarloScenario(OnlineScenario):
-    def step(self):
-        episode_status = super().step()
-        if (
-            self.controller.is_time_for_new_sample
-            and episode_status == "episode_continues"
-        ):
-            self.controller.episode_data_buffer.add_step_data(
-                observation=self.observation,
-                action=self.action,
-                timestamp=self.time,
-                running_objective=self.running_objective_value,
-                current_total_objective=self.total_objective,
-                episode_id=self.episode_counter,
-            )
-
-        return episode_status
-
     def reset_iteration(self):
         if self.current_scenario_status != "simulation_ended":
-            self.actor.optimize_weights_after_iteration(
-                self.controller.episode_data_buffer
-            )
-            self.controller.episode_data_buffer.nullify_buffer()
-            # print(self.actor.model.weights["in_layer.weight"].T)
+            self.critic.optimize_weights_after_iteration(self.controller.data_buffer)
+            self.actor.optimize_weights_after_iteration(self.controller.data_buffer)
+            self.controller.data_buffer.nullify_buffer()
 
         super().reset_episode()
         super().reset_iteration()

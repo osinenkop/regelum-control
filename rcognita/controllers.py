@@ -26,7 +26,7 @@ from .base import RcognitaBase
 def apply_action_bounds(method):
     def wrapper(self, *args, **kwargs):
         self.action = method(self, *args, **kwargs)
-        if hasattr(self, "action_bounds") and self.action_bounds != []:
+        if hasattr(self, "action_bounds") and len(self.action_bounds) > 0:
             action = np.clip(
                 self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
             )
@@ -102,14 +102,14 @@ class RLController(Controller):
         critic=None,
         time_start=0,
         action_bounds=None,
-        episode_data_buffer=None,
+        data_buffer=None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.actor = actor
         self.critic = critic
         self.action_bounds = action_bounds
-        self.episode_data_buffer = episode_data_buffer
+        self.data_buffer = data_buffer
         self.critic_clock = time_start
         self.critic_period = critic_period
         self.weights_difference_norms = []
@@ -159,6 +159,25 @@ class RLController(Controller):
 
         ### Substitute and cache weights in the actor's model
         self.actor.update_and_cache_weights()
+        self.actor.update_action(observation)
+
+        return self.actor.action
+
+
+class PGController(RLController):
+    @apply_action_bounds
+    def compute_action(
+        self, state, observation, is_critic_update=True, time=0, observation_target=[]
+    ):
+        self.critic.receive_state(state)
+
+        ### Store current observation in actor
+        self.actor.receive_observation(observation)
+        self.actor.receive_state(state)
+
+        self.actor.update_target(observation_target)
+        self.critic.update_target(observation_target)
+
         self.actor.update_action(observation)
 
         return self.actor.action
