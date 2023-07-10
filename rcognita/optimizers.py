@@ -35,6 +35,7 @@ from functools import lru_cache
 from inspect import signature
 from typing import Any, Callable, Iterable, List, Tuple, Optional, Union, Dict
 from typing_extensions import Self
+from types import GeneratorType
 
 from rcognita.callbacks import apply_callbacks
 
@@ -68,23 +69,88 @@ class OptimizerConfig:
     config_options: dict = field(default_factory=lambda: {})
 
     def __post_init__(self) -> None:
-        self.__dict__.update(self.config_options)
+        self.__dict__.update(**self.config_options)
+
+
+class ChainedHook:
+    def __init__(self, hooks: List["FunctionWithSignature"]):
+        self.hooks = hooks
+        self.enabled_hashmap = {hook.name: True for hook in hooks}
+
+    def __call__(self, arg, **kwargs):
+        curr_result = arg
+        for hook in self.hooks:
+            if self.enabled_hashmap[hook.name]:
+                curr_result = hook(arg, **kwargs)
+        return curr_result
+
+    def permute_order(self, hook1, hook2):
+        for i, hook in enumerate(self.hooks):
+            if hook == hook1:
+                self.hooks[i] = hook2
+            elif hook == hook2:
+                self.hooks[i] = hook1
+
+    def set_priority(self, hook1, hook2):
+        assert (
+            hook1 in self.hooks and hook2 in self.hooks
+        ), f"Hook {hook1} or {hook2} not found."
+        if self.hooks.index(hook1) > self.hooks.index(hook2):
+            self.permute_order(hook1, hook2)
+
+    def __iter__(self):
+        for hook in self.hooks:
+            yield hook
+
+    def __len__(self):
+        return len(self.hooks)
+
+    def register_hook(self, hook, first=True):
+        if hook not in self.hooks:
+            self.__append_hook(hook, first=first)
+        else:
+            self.enabled_hashmap[hook.name] = True
+
+    def __append_hook(self, hook, first=True):
+        if first:
+            self.hooks.insert(0, hook)
+        else:
+            self.hooks.append(hook)
+        self.enabled_hashmap[hook.name] = True
+
+    def disable_hook(self, hook):
+        assert hook in self.hooks, f"Hook {hook} not found."
+        self.enabled_hashmap[hook.name] = False
+
+    def remove_hook(self, hook):
+        assert hook in self.hooks, f"Hook {hook} not found."
+        self.hooks.remove(hook)
+        del self.enabled_hashmap[hook.name]
 
 
 @dataclass(slots=True)
-class Variable:
+class OptimizationVariable:
     name: str
     dims: tuple
     data: Any = None
     metadata: Any = None
     is_constant: bool = False
+    hooks: ChainedHook = ChainedHook([])
+
+    def __call__(self, with_metadata: bool = False):
+        obj_to_transform = self.data if not with_metadata else self.metadata
+        obj_to_transform = self.hooks(
+            obj_to_transform, with_metadata=with_metadata, raw_eval=True
+        )
+
+        return obj_to_transform
 
     def renamed(self, new_name: str, inplace=True) -> Self:
         if inplace:
             self.name = new_name
             return self
         else:
-            return Variable(
+            return OptimizationVariable(
                 name=new_name,
                 dims=self.dims,
                 data=self.data,
@@ -93,11 +159,14 @@ class Variable:
             )
 
     def with_data(self, new_data, inplace=True):
+        if isinstance(new_data, GeneratorType):
+            new_data = list(new_data)
+
         if inplace:
             self.data = new_data
             return self
         else:
-            return Variable(
+            return OptimizationVariable(
                 name=self.name,
                 dims=self.dims,
                 data=new_data,
@@ -107,18 +176,18 @@ class Variable:
 
     def with_metadata(self, new_metadata, inplace=True):
         """
-        Constructs a new Variable object with the given metadata.
+        Constructs a new OptimizationVariable object with the given metadata.
 
         :param metadata: The metadata to associate with the variable.
         :type metadata: dict
-        :return: A new Variable object with the specified metadata.
-        :rtype: Variable
+        :return: A new OptimizationVariable object with the specified metadata.
+        :rtype: OptimizationVariable
         """
         if inplace:
             self.metadata = new_metadata
             return self
         else:
-            return Variable(
+            return OptimizationVariable(
                 name=self.name,
                 dims=self.dims,
                 data=self.data,
@@ -134,7 +203,7 @@ class Variable:
                 self.is_constant = True
                 return self
             else:
-                return Variable(
+                return OptimizationVariable(
                     name=self.name,
                     dims=self.dims,
                     data=self.data,
@@ -149,7 +218,7 @@ class Variable:
             if inplace:
                 self.is_constant = False
                 return self
-            return Variable(
+            return OptimizationVariable(
                 name=self.name,
                 dims=self.dims,
                 data=self.data,
@@ -170,49 +239,84 @@ class Variable:
         return self
 
     def __add__(self, other):
-        if isinstance(other, Variable):
+        if isinstance(other, OptimizationVariable):
             return VarContainer([self, other])
         elif isinstance(other, VarContainer):
             return VarContainer((self,) + tuple(other.variables))
 
+    def register_hook(
+        self, hook: Union["FunctionWithSignature", Callable], first=False
+    ):
+        if not isinstance(hook, FunctionWithSignature):
+            hook = FunctionWithSignature(hook)
+        self.hooks.register_hook(hook, first=first)
+
+    def remove_hook(self, hook: "FunctionWithSignature", disable_only=True):
+        if disable_only:
+            self.hooks.disable_hook(hook)
+        else:
+            self.hooks.remove_hook(hook)
+
 
 @dataclass(slots=True)
 class VarContainer(Mapping):
-    _variables: Union[list[Variable], Tuple[Variable], Tuple[Variable, Variable]]
-    _variables_hashmap: Optional[Dict[str, Variable]] = None
+    _variables: Union[
+        list[OptimizationVariable],
+        Tuple[OptimizationVariable],
+        Tuple[OptimizationVariable, OptimizationVariable],
+    ]
 
     def __post_init__(self):
         self._variables = tuple(self._variables)
-        self._variables_hashmap = {var.name: var for var in self._variables}
+
+    @property
+    def variables_hashmap(self):
+        return {var.name: var for var in self._variables}
 
     def to_dict(self):
-        return self._variables_hashmap
+        return self.variables_hashmap
+
+    def __repr__(self):
+        return "VarContainer:\n  " + "".join(
+            [f"{variable}\n  " for variable in self._variables]
+        )
+
+    def __str__(self):
+        return "VarContainer:\n  " + "".join(
+            [f"{variable}\n  " for variable in self._variables]
+        )
 
     @property
     def metadatas(self):
         return tuple(var.metadata for var in self.variables)
 
     def to_data_dict(self):
-        return {var.name: var.data for var in self.variables}
+        return {var.name: var() for var in self.variables}
 
     def to_metadata_dict(self):
-        return {var.name: var.metadata for var in self.variables}
+        return {var.name: var(with_metadata=True) for var in self.variables}
 
-    def selected(self, var_names: List[str]) -> Tuple[Variable]:
+    def selected(self, var_names: List[str]) -> Tuple[OptimizationVariable]:
         return tuple(var for var in self.variables if var.name in var_names)
 
-    def substitute_data(self, **name_data_dict) -> None:
+    def substitute_data(self, **name_data_dict) -> Self:
         for var in self.selected(list(name_data_dict.keys())):
             new_data = name_data_dict.get(var.name)
             var.with_data(new_data, inplace=True)
+        return self
 
-    def substitute_metadata(self, **name_metadata_dict) -> None:
+    def substitute_metadata(self, **name_metadata_dict) -> Self:
         for var in self.selected(list(name_metadata_dict.keys())):
             new_metadata = name_metadata_dict.get(var.name)
             var.with_metadata(new_metadata, inplace=True)
+        return self
 
     @property
-    def variables(self) -> Union[Tuple[Variable], Tuple[Variable, Variable]]:
+    def variables(
+        self,
+    ) -> Union[
+        Tuple[OptimizationVariable], Tuple[OptimizationVariable, OptimizationVariable]
+    ]:
         if isinstance(self._variables, tuple):
             return self._variables
         elif isinstance(self._variables, list):
@@ -246,7 +350,9 @@ class VarContainer(Mapping):
             and isinstance(self.variables, tuple)
         ):
             return VarContainer(other.variables + self.variables)
-        elif isinstance(other, Variable) and isinstance(self.variables, tuple):
+        elif isinstance(other, OptimizationVariable) and isinstance(
+            self.variables, tuple
+        ):
             return VarContainer(self.variables + (other,))
         elif other is None:
             return self
@@ -260,24 +366,59 @@ class VarContainer(Mapping):
     def __len__(self):
         return len(self._variables)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Union[OptimizationVariable, Self]:
         if isinstance(key, int) and isinstance(self.variables, tuple):
             assert 0 <= key < len(self.variables), f"Index {key} is out of bounds."
             return self.variables[key]
         elif isinstance(key, slice) and isinstance(self.variables, tuple):
             return VarContainer(self.variables[key])
-        elif isinstance(key, str) and self._variables_hashmap is not None:
-            res = self._variables_hashmap.get(key)
-            assert res is not None, f"Variable {key} not found."
+        elif isinstance(key, str) and self.variables_hashmap is not None:
+            res = self.variables_hashmap.get(key)
+            assert res is not None, f"OptimizationVariable {key} not found."
             return res
+        else:
+            raise NotImplementedError
 
-    def fix_variables(self, variables_to_fix: list[str]) -> None:
+    def fix(
+        self,
+        variables_to_fix: list[str],
+        hook: Optional["FunctionWithSignature"] = None,
+    ) -> None:
+        """
+        Hooks passed into this function are intended to be used here for torch grad setup.
+        Hook setting grad is named _requires_grad.
+        Hook unset grad is named _detach
+        """
         for var in self.decision_variables.selected(variables_to_fix):
             var.as_constant(inplace=True)
+            hook_names = [hook.name for hook in var.hooks]
+            if "_requires_grad" in hook_names:
+                req_grad_hook = [
+                    hook for hook in var.hooks if "_requires_grad" in hook.name
+                ][0]
+                var.remove_hook(hook=req_grad_hook)
+            if hook:
+                assert (
+                    hook.name == "_detach"
+                ), f"Unfixing of variable should be provided with _detach hook, not {hook.name}"
+                var.register_hook(hook=hook, first=True)
 
-    def unfix_variables(self, variables_to_unfix: list[str]):
-        for var in self.decision_variables.selected(variables_to_unfix):
+    def unfix(
+        self,
+        variables_to_unfix: list[str],
+        hook: Optional["FunctionWithSignature"] = None,
+    ) -> None:
+        for var in self.constants.selected(variables_to_unfix):
             var.as_decision_variable(inplace=True)
+            hook_names = [hook.name for hook in var.hooks]
+            if "_detach" in hook_names:
+                detach_hook = [hook for hook in var.hooks if "_detach" in hook.name][0]
+                var.remove_hook(hook=detach_hook)
+            if hook:
+                assert (
+                    hook.name == "_requires_grad"
+                ), f"Unfixing of variable should be provided with _requires_grad hook, not {hook.name}"
+                var.register_hook(hook=hook, first=True)
 
 
 @dataclass
@@ -300,15 +441,16 @@ class FunctionWithSignature:
         self.name = self.func.__name__
 
     @property
-    def await_constant_parameters(self):
-        return not all(
-            [
-                (var.data is not None) or (var.metadata is not None)
-                for var in self.variables.constants
-            ]
-        )
+    def await_constants(self):
+        return not (self.constants_to_substitute == [])
 
-    def __call__(self, *args, with_metadata: bool = False, **kwargs):
+    @property
+    def constants_to_substitute(self):
+        return [var.name for var in self.variables.constants if var.data is None]
+
+    def __call__(
+        self, *args, with_metadata: bool = False, raw_eval: bool = False, **kwargs
+    ):
         """
         Call the function with the given keyword arguments.
         Only keyword arguments that are set will be passed to the function.
@@ -319,54 +461,41 @@ class FunctionWithSignature:
         :raises ValueError: If not all required parameters have been set.
         :rtype: Any
         """
+        if raw_eval:
+            return self.func(*args, **kwargs)
         if kwargs == {} and len(args) == 1:
-            return self.func(**{self.free_variables[0]: args[0]})
-        if not self.await_constant_parameters:
-            kwargs_to_pass = {
-                k: v for k, v in kwargs.items() if k in self.free_variables
-            }
-            if not with_metadata:
-                return self.func(
-                    **{**kwargs_to_pass, **self.variables.constants.to_data_dict()}
-                )
-            else:
-                return self.func(
-                    **{
-                        **kwargs_to_pass,
-                        **self.variables.constants.to_metadata_dict(),
-                    }
-                )
-        else:
-            raise ValueError("Not all parameters were substituted")
+            return self.func(**{self.free_placeholders[0]: args[0]})
 
-    @staticmethod
-    def __cached_signature(signature) -> tuple:
-        return tuple(signature)
+        kwargs_to_pass = {
+            k: v for k, v in kwargs.items() if k in self.free_placeholders
+        }
+
+        if with_metadata:
+            return self.func(
+                **{**kwargs_to_pass, **self.variables.constants.to_metadata_dict()}
+            )
+        elif not self.await_constants:
+            return self.func(
+                **{
+                    **kwargs_to_pass,
+                    **self.variables.constants.to_data_dict(),
+                }
+            )
+        else:
+            raise ValueError(
+                f"Not all declared constants were substituted: {self.constants_to_substitute}"
+            )
 
     @property
     def signature(self) -> tuple:
-        return self.__cached_signature(self.__signature)
-
-    @staticmethod
-    def __cached_occupied(variables) -> tuple:
-        return tuple(variables.constants.names)
+        return tuple(self.__signature)
 
     @property
     def occupied(self) -> tuple:
-        return self.__cached_occupied(self.variables)
-
-    @staticmethod
-    def __cached_free_variables(signature, default_parameters) -> tuple:
-        signature_set = set(signature)
-        default_keys = {
-            name: data
-            for name, data in default_parameters.to_data_dict().items()
-            if data is not None
-        }.keys()
-        return tuple(signature_set - default_keys)
+        return tuple(self.variables.constants.names)
 
     @property
-    def free_variables(self) -> tuple:
+    def free_placeholders(self) -> tuple:
         """
         Returns a list of free variables of the current function.
         Free variables are the arguments that
@@ -377,19 +506,27 @@ class FunctionWithSignature:
         :return: A list of free variables of the current function.
         :rtype: list
         """
-        return self.__cached_free_variables(self.__signature, self.variables)
+
+        signature_set = set(self.__signature)
+        default_keys = {
+            name: data
+            for name, data in self.variables.to_data_dict().items()
+            if data is not None
+        }.keys()
+        return tuple(signature_set - default_keys)
 
     def declare_variables(
         self,
-        variables: Union[VarContainer, Variable],
+        variables: Union[VarContainer, OptimizationVariable],
         replace=False,
     ) -> Self:
-        if isinstance(variables, Variable):
+        if isinstance(variables, OptimizationVariable):
             variables = VarContainer([variables])
-        assert all(
-            [name in self.__signature for name in variables.names]
-        ), "Unknown parameters: "
-        f"{list(filter(lambda x: x not in self.__signature, variables.names))}"
+        unknown_params = [
+            name for name in variables.names if name not in self.__signature
+        ]
+        assert unknown_params == [], f"Unknown parameters: {unknown_params}"
+
         if not replace:
             if self.variables is not None:
                 new_variables = self.variables + variables
@@ -399,40 +536,33 @@ class FunctionWithSignature:
             self.variables = variables
         return self
 
-    def fix_variables(
-        self, variables_to_fix: Iterable[str], pass_metadata=False, **kwargs
-    ):
-        self.variables = self.variables.with_fixed_variables(
-            variables_to_fix, pass_metadata=pass_metadata, **kwargs
-        )
-
-    def unfix_variables(self, variables_to_unfix: Iterable[str]):
-        self.variables = self.variables.with_unfixed_variables(variables_to_unfix)
-
     def set_parameters(self, **kwargs) -> None:
-        """
-        Sets the parameters of the function and returns
-        a new function object with the updated parameters.
-
-        Args:
-            **kwargs: A dictionary of key-value pairs where
-            the keys are parameter names and the values
-                are their respective values.
-
-        Raises:
-            AssertionError: If the keys of the kwargs dictionary
-            are not equal to the parameters of the function.
-            ValueError: If unknown parameters are encountered.
-
-        Returns:
-            resulting function object
-        """
         kwargs_intersection = kwargs.keys() & self.occupied
         if kwargs_intersection != kwargs.keys():
             raise ValueError(
                 f"Unknown parameters encountered: {kwargs.keys() - kwargs_intersection}"
             )
-        self.variables = self.variables.set_data(**kwargs)
+        self.variables.substitute_data(**kwargs)
+
+    def fix_variables(
+        self,
+        variables_to_fix: List[str],
+        data_dict: Optional[Dict],
+        metadata_dict: Optional[Dict],
+        hook: Optional["FunctionWithSignature"] = None,
+    ):
+        self.variables.fix(variables_to_fix, hook=hook)
+        if data_dict:
+            self.set_parameters(**data_dict)
+        if metadata_dict:
+            self.variables.substitute_metadata(**metadata_dict)
+
+    def unfix_variables(
+        self,
+        variables_to_unfix: List[str],
+        hook: Optional["FunctionWithSignature"] = None,
+    ):
+        self.variables.unfix(variables_to_unfix, hook=hook)
 
     def __parse_signature(self, func: Callable) -> Tuple[str]:
         signature_list = []
@@ -454,26 +584,41 @@ class FunctionWithSignature:
     def __radd__(self, other):
         return self
 
-    def __add__(self, other):
+    def __add__(self, other) -> Optional["FuncContainer"]:
         if isinstance(other, FunctionWithSignature):
-            return FuncContainer([self, other])
+            return FuncContainer((self, other))
         elif isinstance(other, FuncContainer):
-            return FuncContainer([self, *other.functions])
+            return FuncContainer((self, *other.functions))
+        else:
+            return None
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class FuncContainer(Mapping):
-    _functions: Iterable[FunctionWithSignature]
-    _functions_hashmap: Optional[Dict[str, FunctionWithSignature]] = None
+    _functions: Union[
+        Tuple[FunctionWithSignature, FunctionWithSignature],
+        Tuple[FunctionWithSignature],
+    ]
 
     def __post_init__(self):
-        super().__setattr__("_functions", tuple(getattr(self, "_functions")))
-        super().__setattr__(
-            "_functions_hashmap", {var.name: var for var in getattr(self, "_functions")}
-        )
+        self._functions = tuple(self._functions)
+
+    @property
+    def functions_hashmap(self):
+        return {func.name: func for func in self._functions}
 
     def to_dict(self):
-        return self._functions_hashmap
+        return self.functions_hashmap
+
+    def __repr__(self):
+        return "FuncContainer:\n  " + "".join(
+            [f"{function}\n  " for function in self._functions]
+        )
+
+    def __str__(self):
+        return "FuncContainer:\n  " + "".join(
+            [f"{function}\n  " for function in self._functions]
+        )
 
     @property
     def functions(self):
@@ -505,34 +650,34 @@ class FuncContainer(Mapping):
             yield function
 
     def __len__(self):
-        d = self.to_dict()
-        if d is not None:
-            return len(d)
+        return len(self.functions)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Union[FunctionWithSignature, Self]:
         if isinstance(key, int):
             assert 0 <= key < len(self.functions), f"Index {key} is out of bounds."
             return self.functions[key]
         elif isinstance(key, slice):
-            return VarContainer(self.functions[key])
-        elif isinstance(key, str) and self._functions_hashmap is not None:
-            res = self._functions_hashmap.get(key)
+            return FuncContainer(self.functions[key])
+        elif isinstance(key, str) and self.functions_hashmap is not None:
+            res = self.functions_hashmap.get(key)
             assert res is not None, f"Function {key} not found."
             return res
+        else:
+            raise NotImplementedError
 
     @property
     def names(self):
         return tuple(function.name for function in self.functions)
 
 
-# TODO: DOCSTRING
 class Optimizable(RcognitaBase):
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
         self.__is_problem_defined = False
         self.__variables: VarContainer = VarContainer([])
-        self.__functions: FuncContainer = FuncContainer([])
+        self.__functions: FuncContainer = FuncContainer(tuple())
+        self.objective_name = None
 
         if self.kind == "symbolic":
             self.__opti = Opti()
@@ -556,6 +701,31 @@ class Optimizable(RcognitaBase):
         self.__log_options = optimizer_config.log_options
 
     @property
+    def objective(self):
+        assert (
+            len(self.objectives) == 1 or self.objective_name is not None
+        ), "Ambiguous objective definition. Specify objective name."
+        return self.objectives[self.objective_name]
+
+    def _requires_grad(self, variable_data):
+        if self.kind == "tensor":
+            if isinstance(variable_data, List):
+                for datum in variable_data:
+                    datum[1].requires_grad_(True)
+            else:
+                variable_data[1].requires_grad_(True)
+        return variable_data
+
+    def _detach(self, variable_data):
+        if self.kind == "tensor":
+            if isinstance(variable_data, List):
+                for datum in variable_data:
+                    datum[1].requires_grad_(False)
+            else:
+                variable_data[1].requires_grad_(False)
+        return variable_data
+
+    @property
     def objectives(self):
         return self.__functions.objectives
 
@@ -567,34 +737,28 @@ class Optimizable(RcognitaBase):
     def functions(self):
         return self.__functions
 
-    def fix_variables(self, variables_to_fix: Iterable[str], **kwargs):
-        self.__variables = self.variables.with_fixed_variables(
-            variables_to_fix, **kwargs
-        )
-        if self.kind == "symbolic":
-            metadata_kwargs = {
-                name: self.create_variable_metadata(
-                    self.variables[name].dims, is_constant=True
-                )
-                for name in variables_to_fix
-            }
-            self.__variables = self.variables.with_fixed_variables(
-                variables_to_fix, pass_metadata=True, **metadata_kwargs
-            )
-        self.__functions = FuncContainer(
-            [
-                func.declare_variables(
-                    VarContainer(
-                        [
-                            var
-                            for var in self.variables
-                            if var.name in func.variables.names
-                        ],
-                    ),
-                    replace=True,
-                )
-                for func in self.__functions
-            ]
+    @property
+    def variables(self) -> VarContainer:
+        return self.__variables
+
+    def fix_variables(
+        self,
+        variables_to_fix: List[str],
+        data_dict: Optional[Dict] = None,
+        metadata_dict: Optional[Dict] = None,
+    ):
+        self.__variables.fix(variables_to_fix, hook=FunctionWithSignature(self._detach))
+        if data_dict:
+            self.__variables.substitute_data(**data_dict)
+        if metadata_dict:
+            self.__variables.substitute_metadata(**metadata_dict)
+
+    def unfix_variables(
+        self,
+        variables_to_unfix: List[str],
+    ):
+        self.__variables.unfix(
+            variables_to_unfix, hook=FunctionWithSignature(self._requires_grad)
         )
 
     def create_variable_metadata(self, *dims, is_constant=False):
@@ -627,17 +791,28 @@ class Optimizable(RcognitaBase):
 
     def create_variable(self, *dims, name: str, is_constant=False):
         metadata = self.create_variable_metadata(*dims, is_constant=is_constant)
-        new_variable = Variable(
+        new_variable = OptimizationVariable(
             name=name, dims=dims, metadata=metadata, is_constant=is_constant
         )
         self.__variables = self.__variables + new_variable
         return new_variable
 
+    def __infer_and_register_symbolic_prototype(
+        self, func: FunctionWithSignature, variables: VarContainer
+    ):
+        metadata = func(**variables.to_metadata_dict(), with_metadata=True)
+        func.metadata = metadata
+        return func
+
     def register_objective(
-        self, func: Callable, variables: Union[List[Variable], VarContainer, Variable]
+        self,
+        func: Callable,
+        variables: Union[
+            List[OptimizationVariable], VarContainer, OptimizationVariable
+        ],
     ):
         func = FunctionWithSignature(func, is_objective=True)
-        if isinstance(variables, Variable):
+        if isinstance(variables, OptimizationVariable):
             variables = [variables]
         if isinstance(variables, List):
             variables = VarContainer(variables)
@@ -651,18 +826,9 @@ class Optimizable(RcognitaBase):
         else:
             pass
 
-        self.__functions = self.__functions + func
-
-    @property
-    def variables(self) -> VarContainer:
-        return self.__variables
-
-    def __infer_and_register_symbolic_prototype(
-        self, func: FunctionWithSignature, variables: VarContainer
-    ):
-        metadata = func(**variables.with_metadata, with_metadata=True)
-        func.metadata = metadata
-        return func
+        new_container = self.__functions + func
+        assert new_container is not None, f"Couldn't register objective {func}"
+        self.__functions = new_container
 
     def __register_symbolic_objective(
         self,
@@ -677,7 +843,7 @@ class Optimizable(RcognitaBase):
         bounds: Union[list, np.ndarray, None],
         dim_variable: int,
         tile_parameter: int = 0,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> Tuple:
         """
         Given bounds for each dimension of a variable, this function returns a tuple of
         the following arrays: the bounds of each action,
@@ -740,16 +906,20 @@ class Optimizable(RcognitaBase):
             variable_sequence_initial_guess = rc.rep_mat(
                 variable_initial_guess, 1, tile_parameter
             )
-            action_sequence_min = rc.rep_mat(variable_min, 1, tile_parameter)
-            action_sequence_max = rc.rep_mat(variable_max, 1, tile_parameter)
-            result_bounds = np.array([action_sequence_min, action_sequence_max])
+            sequence_min = rc.rep_mat(variable_min, 1, tile_parameter)
+            sequence_max = rc.rep_mat(variable_max, 1, tile_parameter)
+            result_bounds = np.array([sequence_min, sequence_max])
             variable_initial_guess = variable_sequence_initial_guess
+        else:
+            result_bounds = np.array([variable_min, variable_max])
         return result_bounds, variable_initial_guess, variable_min, variable_max
 
-    def register_bounds(self, variable_to_bound: Variable, bounds: np.ndarray):
+    def register_bounds(
+        self, variable_to_bound: OptimizationVariable, bounds: np.ndarray
+    ):
         assert isinstance(
-            variable_to_bound, Variable
-        ), "variable_to_bound should be of type Variable, "
+            variable_to_bound, OptimizationVariable
+        ), "variable_to_bound should be of type OptimizationVariable, "
         f"not {type(variable_to_bound)}"
 
         if self.kind == "symbolic":
@@ -762,7 +932,7 @@ class Optimizable(RcognitaBase):
             self.__register_tensor_bounds(bounds)
 
     def __register_symbolic_bounds(
-        self, variable_to_bound: Variable, bounds: np.ndarray
+        self, variable_to_bound: OptimizationVariable, bounds: np.ndarray
     ):
         self.__bounds = bounds
 
@@ -789,18 +959,23 @@ class Optimizable(RcognitaBase):
     def __register_tensor_bounds(self, bounds):
         self.__bounds = bounds
 
-    def register_constraint(self, func: Callable, variables: List[Variable]):
+    def register_constraint(
+        self, func: Callable, variables: List[OptimizationVariable]
+    ):
         func = FunctionWithSignature(func)
-        variables = VarContainer(variables)
+        _variables = VarContainer(variables)
 
         if self.kind == "symbolic":
-            self.__register_symbolic_constraint(func, variables)
+            self.__register_symbolic_constraint(func, _variables)
         elif self.kind == "numeric":
-            self.__register_numeric_constraint(func, variables)
+            self.__register_numeric_constraint(func, _variables)
         elif self.kind == "tensor":
-            self.__register_tensor_constraint(func, variables)
+            self.__register_tensor_constraint(func, _variables)
 
-        self.__functions = self.__functions + func
+        new_container = self.__functions + func
+        assert new_container is not None, f"Couldn't register objective {func}"
+
+        self.__functions = new_container
 
     def __register_symbolic_constraint(
         self, func: FunctionWithSignature, variables: VarContainer
@@ -848,7 +1023,7 @@ class Optimizable(RcognitaBase):
             result = self.optimize_numeric(**parameters, raw=raw)
         elif self.kind == "tensor":
             self.optimize_tensor(**parameters)
-            result = self.__decision_variable
+            result = self.variables.decision_variables
         else:
             raise NotImplementedError
 
@@ -865,7 +1040,7 @@ class Optimizable(RcognitaBase):
             self.__opt_func = self.__opti.to_function(
                 "min_fun",
                 list(self.variables.metadatas),
-                [*self.decision_variables.metadatas, self._objective],
+                [*self.decision_variables.metadatas, self.objective],
                 list(self.variables.names),
                 [*self.decision_variables.names, *self.objectives.names],
                 {"allow_duplicate_io_names": True},
@@ -889,7 +1064,7 @@ class Optimizable(RcognitaBase):
         ]
         initial_guess = parameters.get(self.decision_variables.names[0])
         opt_result = minimize(
-            self._objective,
+            self.objective,
             x0=initial_guess,
             method=self.opt_method,
             bounds=self.__bounds,
@@ -901,22 +1076,25 @@ class Optimizable(RcognitaBase):
 
     def optimize_tensor(self, **parameters):
         dataloader = parameters.get("dataloader")
+        assert dataloader is not None, "Couldn't find dataloader"
         options = self.optimizer_config.config_options
         if self.optimizer is None:
-            assert (
-                self.__decision_variable is not None
-            ), "Optimization parameters not defined."
             assert self.opt_method is not None and callable(
                 self.opt_method
             ), f"Wrong optimization method {self.opt_method}."
-            self.optimizer = self.opt_method(
-                self.__decision_variable, **self.__opt_options
-            )
+            dvar = self.variables.decision_variables[0]
+            assert dvar is not None, "Couldn't find decision variable"
+            assert isinstance(dvar, OptimizationVariable), "Something went wrong..."
+            self.optimizer = self.opt_method(dvar(), **self.__opt_options)
         n_epochs = options.get("n_epochs") if options.get("n_epochs") is not None else 1
+        assert isinstance(n_epochs, int), "n_epochs must be an integer"
+        assert len(self.functions.objectives) == 1, "Only one objective is supported"
+        objective = self.functions.objectives[0]
+        assert isinstance(objective, FunctionWithSignature), "Something went wrong..."
         for _ in range(n_epochs):
             for batch_sample in dataloader:
                 self.optimizer.zero_grad()
-                objective_value = self._objective(batch_sample)
+                objective_value = objective(batch_sample)
                 objective_value.backward()
                 self.optimizer.step()
 
@@ -985,7 +1163,11 @@ class TorchDataloaderOptimizer:
         self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
         self.sheduler_method = sheduler_method
         self.sheduler_options = sheduler_options
-        self.sheduler = self.sheduler_method(self.optimizer, **self.sheduler_options)
+        self.sheduler = (
+            self.sheduler_method(self.optimizer, **self.sheduler_options)
+            if self.sheduler_method is not None
+            else None
+        )
 
         if isinstance(batch_sampler, UpdatableSampler):
             self.batch_sampler = batch_sampler
@@ -1020,7 +1202,8 @@ class TorchDataloaderOptimizer:
         last_epoch_objective = objective_value.item()
         objective_value.backward()
         self.optimizer.step()
-        self.sheduler.step()
+        if self.sheduler:
+            self.sheduler.step()
 
         self.post_epoch(1, last_epoch_objective)
 
