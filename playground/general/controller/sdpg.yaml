@@ -19,17 +19,20 @@ critic_period_multiplier%%: 1
 
 critic:
   model:
-    dim_hidden: 32
+    dim_hidden: 16
     is_double_precision: True
-    bias: False
+    bias: True
+    is_force_infinitesimal: True
   optimizer:
-    iterations: 50000 
+    iterations: 100 
     opt_options:
-      lr: 0.001
-  td_n: 10 
+      lr: 0.01
+  td_n: 128 
   batch_size: 100
-  discount_factor: 1. 
+  discount_factor: 0.9
 
+actor:
+  discount_factor: 0.9
 
   
 
