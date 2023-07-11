@@ -738,7 +738,8 @@ class main:
                             + os.getcwd().split("/")[-1].zfill(5)
                         ),
                         "pid": os.getpid(),
-                        "argv": argv
+                        "argv": argv,
+                        "main": main
 
                     }
                     callbacks[0]._metadata = self.__class__.metadata

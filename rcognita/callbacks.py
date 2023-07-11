@@ -102,6 +102,15 @@ class Callback(rcognita.base.RcognitaBase, ABC):
         self.exception = rcognita.main.logger.exception
         self.__last_trigger = 0.0
 
+    @classmethod
+    def register(cls, *args, launch=False, **kwargs):
+        existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        if cls not in existing_callbacks:
+            callback_instance = cls(*args, **kwargs)
+            if launch:
+                callback_instance.on_launch()
+            cls._metadata["main"].callbacks = [callback_instance] + rcognita.main.callbacks
+
     @abstractmethod
     def is_target_event(self, obj, method, output):
         pass

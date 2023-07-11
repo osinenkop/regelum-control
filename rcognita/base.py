@@ -62,23 +62,60 @@ class RcognitaType(abc.ABCMeta):
         callbacks = x._attached if hasattr(x, "_attached") else []
         if callbacks:
             del x._attached
-        existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
-        for callback in callbacks:
-            if callback not in existing_callbacks:
-                callback_instance = callback(attachee=x) ## Might want to move it to the metaclass
-                callback_instance.on_launch()  # I must change this
-                rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+        old_init = x.__init__
+        def new_init(self, *args, **kwargs):
+            for callback in callbacks:
+                callback.register(attachee=x, launch=True)
+            return old_init(self, *args, **kwargs)
+        x.__init__ = new_init
         return x
 
 
-    #def __matmul__(self, other):
-    #    assert issubclass(self, rcognita.callbacks.Callback)
 
+class ClassPropertyDescriptor(object):
+    """Enables to declear class properties."""
+
+    def __init__(self, fget, fset=None):
+        """Initialize an instance of ClassPropertyDescriptor
+
+        :param fget: class getter
+        :param fset: class setter
+        """
+        self.fget = fget
+        self.fset = fset
+
+    def __get__(self, obj, cls=None):
+        if cls is None:
+            cls = type(obj)
+        return self.fget.__get__(obj, cls)()
+
+    def __set__(self, obj, value):
+        if not self.fset:
+            raise AttributeError("can't set attribute")
+        type_ = type(obj)
+        return self.fset.__get__(obj, type_)(value)
+
+    def setter(self, func):
+        if not isinstance(func, (classmethod, staticmethod)):
+            func = classmethod(func)
+        self.fset = func
+        return self
+
+def classproperty(func):
+    """Decorates a method in such a way that it becomes a class property.
+
+    :param func: method to decorate
+    :return:
+    """
+    if not isinstance(func, (classmethod, staticmethod)):
+        func = classmethod(func)
+
+    return ClassPropertyDescriptor(func)
 
 class RcognitaBase(metaclass=RcognitaType):
     """Base class designed to act as an abstraction over all rcognita objects."""
 
-    @property
+    @classproperty
     def _metadata(self):
         return RcognitaBase.__metadata
 
@@ -91,6 +128,14 @@ class RcognitaBase(metaclass=RcognitaType):
 
     def __init__(self):
         """Initialize an object from rcognita."""
+        #if hasattr(self.__class__, "_attached"):
+        #    existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        #    for callback in self._attached:
+        #        if callback not in existing_callbacks:
+        #            callback_instance = callback(attachee=self.__class__)  ## Might want to move it to the metaclass
+        #            callback_instance.on_launch()  # I must change this
+        #            rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+
         #callbacks = self.__class__._attached if hasattr(self.__class__, "_attached") else []
         #existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
         #for callback in callbacks:
