@@ -36,6 +36,7 @@ from inspect import signature
 from typing import Any, Callable, Iterable, List, Tuple, Optional, Union, Dict
 from typing_extensions import Self
 from types import GeneratorType
+import warnings
 
 from rcognita.callbacks import apply_callbacks
 
@@ -75,7 +76,7 @@ class OptimizerConfig:
 class ChainedHook:
     def __init__(self, hooks: List["FunctionWithSignature"]):
         self.hooks = hooks
-        self.hooks_container = sum(self.hooks) if len(hooks) > 0 else None
+        self.hooks_container = sum(self.hooks) if len(hooks) > 0 else FuncContainer([])
         self.enabled_hashmap = {hook.name: True for hook in hooks}
 
     def __call__(self, arg, **kwargs):
@@ -111,6 +112,10 @@ class ChainedHook:
         else:
             self.enabled_hashmap[hook.name] = True
 
+    def enable_hook(self, hook):
+        assert hook in self.hooks, f"Hook {hook} not found."
+        self.enabled_hashmap[hook.name] = True
+
     def __append_hook(self, hook, first=True):
         if first:
             self.hooks.insert(0, hook)
@@ -130,6 +135,7 @@ class ChainedHook:
         assert hook in self.hooks, f"Hook {hook} not found."
         self.hooks.remove(hook)
         del self.enabled_hashmap[hook.name]
+        self.hooks_container = sum(self.hooks)
 
     def call_hook(self, name, *args, with_metadata=False, **kwargs):
         assert name in self.enabled_hashmap.keys(), f"Hook {name} not found."
@@ -150,7 +156,7 @@ class OptimizationVariable:
     data: Any = None
     metadata: Any = None
     is_constant: bool = False
-    hooks: ChainedHook = ChainedHook([])
+    hooks: ChainedHook = field(default_factory=lambda: ChainedHook([]))
 
     def __call__(self, with_metadata: bool = False):
         obj_to_transform = self.data if not with_metadata else self.metadata
@@ -251,7 +257,7 @@ class OptimizationVariable:
         return {self.name: self.dims}
 
     def __radd__(self, other):
-        return self
+        return VarContainer((self,))
 
     def __add__(self, other):
         if isinstance(other, OptimizationVariable):
@@ -264,9 +270,15 @@ class OptimizationVariable:
     ):
         if not isinstance(hook, FunctionWithSignature):
             hook = FunctionWithSignature(hook)
-        self.hooks.register_hook(hook, first=first)
+        if (
+            self.hooks.hooks_container is not None
+            and hook.name in self.hooks.hooks_container.names
+        ):
+            warnings.warn(f"Hook {hook.name} already registered.")
+        else:
+            self.hooks.register_hook(hook, first=first)
 
-    def remove_hook(self, hook: "FunctionWithSignature", disable_only=True):
+    def discard_hook(self, hook: "FunctionWithSignature", disable_only=True):
         if disable_only:
             self.hooks.disable_hook(hook)
         else:
@@ -411,7 +423,7 @@ class VarContainer(Mapping):
                 req_grad_hook = [
                     hook for hook in var.hooks if "_requires_grad" in hook.name
                 ][0]
-                var.remove_hook(hook=req_grad_hook)
+                var.discard_hook(hook=req_grad_hook)
             if hook:
                 assert (
                     hook.name == "_detach"
@@ -428,7 +440,7 @@ class VarContainer(Mapping):
             hook_names = [hook.name for hook in var.hooks]
             if "_detach" in hook_names:
                 detach_hook = [hook for hook in var.hooks if "_detach" in hook.name][0]
-                var.remove_hook(hook=detach_hook)
+                var.discard_hook(hook=detach_hook)
             if hook:
                 assert (
                     hook.name == "_requires_grad"
@@ -477,6 +489,9 @@ class FunctionWithSignature:
         :rtype: Any
         """
         if raw_eval:
+            kwargs_to_pass = {
+                k: v for k, v in kwargs.items() if k in self.variables.names
+            }
             return self.func(*args, **kwargs)
         if kwargs == {} and len(args) == 1:
             return self.func(**{self.free_placeholders[0]: args[0]})
@@ -597,7 +612,7 @@ class FunctionWithSignature:
         return tuple(signature_list)
 
     def __radd__(self, other):
-        return self
+        return FuncContainer((self,))
 
     def __add__(self, other) -> Optional["FuncContainer"]:
         if isinstance(other, FunctionWithSignature):
@@ -740,6 +755,12 @@ class Optimizable(RcognitaBase):
                 variable_data[1].requires_grad_(False)
         return variable_data
 
+    def _mutate_metadata(self, new_metadata):
+        def metadata_mutator(var):
+            return new_metadata
+
+        return metadata_mutator
+
     @property
     def objectives(self):
         return self.__functions.objectives
@@ -762,19 +783,79 @@ class Optimizable(RcognitaBase):
         data_dict: Optional[Dict] = None,
         metadata_dict: Optional[Dict] = None,
     ):
-        self.__variables.fix(variables_to_fix, hook=FunctionWithSignature(self._detach))
-        if data_dict:
-            self.__variables.substitute_data(**data_dict)
-        if metadata_dict:
-            self.__variables.substitute_metadata(**metadata_dict)
+        if self.kind == "tensor":
+            self.__variables.fix(
+                variables_to_fix, hook=FunctionWithSignature(self._detach)
+            )
+        elif self.kind == "symbolic":
+            if metadata_dict is None:
+                metadata_dict = {}
+            passed_unfixed_variables = sum(self.variables.selected(variables_to_fix))
+            assert isinstance(
+                passed_unfixed_variables, VarContainer
+            ), "An error occured while fixing variables."
+
+            for variable in passed_unfixed_variables:
+                if "metadata_mutator" not in variable.hooks.hooks_container.names:
+                    metadata = self.create_variable_metadata(
+                        *variable.dims, is_constant=True
+                    )
+                    metadata_dict[variable.name] = metadata
+                    variable.register_hook(self._mutate_metadata(metadata), first=True)
+                else:
+                    hook = variable.hooks.hooks_container["metadata_mutator"]
+                    variable.discard_hook(hook)
+
+            self.__variables.fix(variables_to_fix)
+            # self.__variables.substitute_metadata(**metadata_dict)
+            for function in self.functions:
+                metafunc = function(**self.variables.to_metadata_dict(), raw_eval=True)
+                function.metadata = metafunc
+                if function.is_objective:
+                    self.__opti.minimize(metafunc)
+                else:
+                    self.__opti.subject_to(metafunc < 0)
+        else:
+            self.__variables.fix(variables_to_fix)
 
     def unfix_variables(
         self,
         variables_to_unfix: List[str],
     ):
-        self.__variables.unfix(
-            variables_to_unfix, hook=FunctionWithSignature(self._requires_grad)
-        )
+        if self.kind == "tensor":
+            self.__variables.unfix(
+                variables_to_unfix, hook=FunctionWithSignature(self._requires_grad)
+            )
+        elif self.kind == "symbolic":
+            metadata_dict = {}
+            passed_fixed_variables = sum(self.variables.selected(variables_to_unfix))
+            assert isinstance(
+                passed_fixed_variables, VarContainer
+            ), "An error occured while fixing variables."
+
+            for variable in passed_fixed_variables:
+                if "metadata_mutator" not in variable.hooks.hooks_container.names:
+                    metadata = self.create_variable_metadata(
+                        *variable.dims, is_constant=False
+                    )
+                    metadata_dict[variable.name] = metadata
+                    variable.register_hook(self._mutate_metadata(metadata), first=True)
+                else:
+                    hook = variable.hooks.hooks_container["metadata_mutator"]
+                    variable.discard_hook(hook)
+
+            self.__variables.fix(variables_to_unfix)
+            # self.__variables.substitute_metadata(**metadata_dict)
+            for function in self.functions:
+                metafunc = function(**self.variables.to_metadata_dict(), raw_eval=True)
+                function.metadata = metafunc
+                if function.is_objective:
+                    self.__opti.minimize(metafunc)
+                else:
+                    self.__opti.subject_to(metafunc < 0)
+                    
+        else:
+            self.__variables.unfix(variables_to_unfix)
 
     def create_variable_metadata(self, *dims, is_constant=False):
         metadata = None
@@ -815,7 +896,9 @@ class Optimizable(RcognitaBase):
     def __infer_and_register_symbolic_prototype(
         self, func: FunctionWithSignature, variables: VarContainer
     ):
-        metadata = func(**variables.to_metadata_dict(), with_metadata=True)
+        metadata = func(
+            **variables.to_metadata_dict(), with_metadata=True, raw_eval=True
+        )
         func.metadata = metadata
         return func
 
