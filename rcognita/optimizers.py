@@ -75,13 +75,13 @@ class OptimizerConfig:
 class ChainedHook:
     def __init__(self, hooks: List["FunctionWithSignature"]):
         self.hooks = hooks
+        self.hooks_container = sum(self.hooks) if len(hooks) > 0 else None
         self.enabled_hashmap = {hook.name: True for hook in hooks}
 
     def __call__(self, arg, **kwargs):
         curr_result = arg
-        for hook in self.hooks:
-            if self.enabled_hashmap[hook.name]:
-                curr_result = hook(arg, **kwargs)
+        for hook in [hook for hook in self.hooks if self.enabled_hashmap[hook.name]]:
+            curr_result = self.call_hook(hook.name, curr_result, **kwargs)
         return curr_result
 
     def permute_order(self, hook1, hook2):
@@ -116,6 +116,10 @@ class ChainedHook:
             self.hooks.insert(0, hook)
         else:
             self.hooks.append(hook)
+
+        self.hooks_container = (
+            sum(self.hooks) if len(self.hooks) > 1 else FuncContainer(tuple(self.hooks))
+        )
         self.enabled_hashmap[hook.name] = True
 
     def disable_hook(self, hook):
@@ -126,6 +130,17 @@ class ChainedHook:
         assert hook in self.hooks, f"Hook {hook} not found."
         self.hooks.remove(hook)
         del self.enabled_hashmap[hook.name]
+
+    def call_hook(self, name, *args, with_metadata=False, **kwargs):
+        assert name in self.enabled_hashmap.keys(), f"Hook {name} not found."
+        assert isinstance(
+            self.hooks_container, FuncContainer
+        ), f"Unexpected type of hook container: {type(self.hooks_container)}."
+        hook = self.hooks_container[name]
+        if isinstance(hook, FunctionWithSignature):
+            return hook(*args, **kwargs, with_metadata=with_metadata)
+        else:
+            raise NotImplementedError
 
 
 @dataclass(slots=True)
