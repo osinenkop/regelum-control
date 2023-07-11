@@ -401,6 +401,7 @@ class OnlineScenario(Scenario):
                     timestamp=self.time,
                     running_objective=self.running_objective_value,
                     current_total_objective=self.total_objective,
+                    observation_target=self.observation_target,
                     episode_id=self.episode_counter,
                     iteration_id=self.iteration_counter,
                 )

@@ -22,10 +22,12 @@ class DataBuffer:
         keys: List[str] = [
             "observation",
             "action",
+            "observation_target",
             "running_objective",
             "current_total_objective",
             "episode_id",
             "timestamp",
+            "iteration_id",
         ],
         max_buffer_size: Optional[int] = None,
         keys_for_indexing: Optional[List[str]] = None,
