@@ -364,7 +364,6 @@ class ModelQuadForm(Model):
         try:
             result = vec.T @ weights @ vec
         except:
-
             result = (
                 vec.T
                 @ torch.tensor(weights, requires_grad=False, device=device).double()
@@ -692,6 +691,7 @@ class ModelDQNSimple(ModelNN):
         dim_hidden=40,
         weights=None,
         force_positive_def=False,
+        is_force_infinitesimal=False,
         bias=False,
         leaky_relu_coef=0.2,
         is_double_precision=True,
@@ -701,11 +701,10 @@ class ModelDQNSimple(ModelNN):
         self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=bias)
         self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
         self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
-        self.hidden3 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
         self.out_layer = nn.Linear(dim_hidden, 1, bias=bias)
         self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
-
+        self.is_force_infinitesimal = is_force_infinitesimal
         if is_double_precision:
             self.double()
 
@@ -714,11 +713,7 @@ class ModelDQNSimple(ModelNN):
 
         self.cache_weights()
 
-    @force_positive_def
-    def forward(self, input_tensor, weights=None):
-        if weights is not None:
-            self.update(weights)
-
+    def _forward(self, input_tensor):
         x = input_tensor
         x = self.in_layer(x)
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
@@ -726,11 +721,21 @@ class ModelDQNSimple(ModelNN):
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden2(x)
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
-        x = self.hidden3(x)
-        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.out_layer(x)
 
         return torch.squeeze(x)
+
+    @force_positive_def
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        if self.is_force_infinitesimal:
+            return self._forward(input_tensor) - self._forward(
+                torch.zeros_like(input_tensor)
+            )
+
+        return self._forward(input_tensor)
 
 
 class ModelPerceptronCalf(Model):
@@ -847,7 +852,6 @@ class ModelPerceptronCalf(Model):
         bias=False,
         leaky_relu_coef=0.2,
     ):
-
         self.weight_min = single_weight_min
         self.weight_max = single_weight_max
         self.in_layer = self.Linear(
@@ -1039,7 +1043,6 @@ class ModelNNElementWiseProduct(ModelNN):
     def __init__(
         self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
     ):
-
         super().__init__()
 
         if use_derivative:
