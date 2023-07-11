@@ -335,7 +335,9 @@ class TorchOptimizer(Optimizer):
         #     loss = objective(model_input)
         #     loss.backward()
         #     self.optimizer.step()
-
+        loss_history = []
+        window = 20
+        # self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
         for epoch in range(self.iterations):
             for batch in model_input:
                 self.optimizer.zero_grad()
@@ -343,9 +345,18 @@ class TorchOptimizer(Optimizer):
                 loss.backward()
                 self.optimizer.step()
 
-                self.model.update_and_cache_weights()
-
+                # self.model.update_and_cache_weights()
             self.post_epoch(epoch, loss.item())
+            # loss_history.append(loss.item())
+            # if (
+            #     len(loss_history) >= window
+            #     and np.abs(
+            #         (loss_history[-window] - loss_history[-1]) / loss_history[-window]
+            #     )
+            #     < 0.02
+            #     and (np.array(loss_history[-window:]) / loss_history[-1]).std() < 0.02
+            # ):
+            #     break
 
 
 class TorchDataloaderOptimizer(Optimizer):

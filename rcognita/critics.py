@@ -128,6 +128,9 @@ class Critic(rcognita.base.RcognitaBase, ABC):
     def receive_state(self, state):
         self.state = state
 
+    def optimize_weights_after_iteration(self, data_buffer):
+        pass
+
     @property
     def optimizer_engine(self):
         """Returns the engine used by the optimizer.
@@ -505,11 +508,22 @@ class CriticOnPolicy(Critic):
         :return: the value of the objective function
         :rtype: float
         """
+
         first_tdn_observations_actions = torch.cat(
-            [batch["observation"][: -self.td_n], batch["action"][: -self.td_n]], dim=1
+            [
+                batch["observation"][: -self.td_n]
+                - batch["observation_target"][: -self.td_n],
+                batch["action"][: -self.td_n],
+            ],
+            dim=1,
         ).to(self.device)
         last_tdn_observations_actions = torch.cat(
-            [batch["observation"][self.td_n :], batch["action"][self.td_n :]], dim=1
+            [
+                batch["observation"][self.td_n :]
+                - batch["observation_target"][self.td_n :],
+                batch["action"][self.td_n :],
+            ],
+            dim=1,
         ).to(self.device)
         discount = torch.DoubleTensor(
             [self.discount_factor**i for i in range(self.td_n)]
@@ -530,8 +544,7 @@ class CriticOnPolicy(Critic):
                 self.model(first_tdn_observations_actions)
                 - discounted_tdn_sum_of_running_objectives
                 - self.discount_factor**self.td_n
-                * self.model(last_tdn_observations_actions, use_stored_weights=True)
-                # * self.model(last_tdn_observations_actions).detach()
+                * self.model(last_tdn_observations_actions)
             )
             ** 2
         ).mean()
@@ -546,7 +559,12 @@ class CriticOnPolicy(Critic):
             model_input=data_buffer.iter_batches(
                 sampler=EpisodicSampler,
                 batch_size=self.batch_size,
-                keys=["observation", "action", "running_objective"],
+                keys=[
+                    "observation",
+                    "action",
+                    "observation_target",
+                    "running_objective",
+                ],
                 dtype=torch.DoubleTensor,
             ),
         )

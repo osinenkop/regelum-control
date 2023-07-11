@@ -558,7 +558,9 @@ class ActorPGBase(Actor, ABC):
                 keys=[
                     "observation",
                     "action",
+                    "observation_target",
                     "total_objective",
+                    "timestamp",
                     "tail_total_objective",
                     "baseline",
                 ],
@@ -688,17 +690,29 @@ class ActorSDPG(ActorREINFORCE):
         ).to(self.device)
         log_probs = self.model.log_probs(observations_actions.float())
 
-        if self.is_do_not_let_the_past_distract_you:
-            target_objectives = batch["tail_total_objective"].to(self.device)
-        else:
-            target_objectives = batch["total_objective"].to(self.device)
+        # if self.is_do_not_let_the_past_distract_you:
+        #     target_objectives = batch["tail_total_objective"].to(self.device)
+        # else:
+        #     target_objectives = batch["total_objective"].to(self.device)
 
-        if self.is_with_baseline:
-            target_objectives -= batch["baseline"].to(self.device)
+        # if self.is_with_baseline:
+        #     target_objectives -= batch["baseline"].to(self.device)
 
         # TODO: FIX TYPES
-        critic_value = self.critic(observations_actions.double()).detach().float()
-
+        observations_actions = torch.cat(
+            [batch["observation"] - batch["observation_target"], batch["action"]], dim=1
+        ).to(self.device)
+        observations_zero_actions = torch.cat(
+            [
+                batch["observation"] - batch["observation_target"],
+                torch.zeros_like(batch["action"]),
+            ],
+            dim=1,
+        ).to(self.device)
+        baseline = self.critic(observations_zero_actions.double()).detach().float()
+        critic_value = (self.discount_factor ** batch["timestamp"].to(self.device)) * (
+            self.critic(observations_actions.double()).detach().float() - baseline
+        )
         return (log_probs * critic_value).sum() / self.N_episodes
 
 
