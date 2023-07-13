@@ -155,6 +155,7 @@ class ChainedHook:
                 hook
                 for hook in self.hooks_container
                 if (hook.act_on == "metadata" or hook.act_on == "all")
+                and self.enabled_hashmap[hook.name]
             ]
         )
 
@@ -165,6 +166,7 @@ class ChainedHook:
                 hook
                 for hook in self.hooks_container
                 if (hook.act_on == "data" or hook.act_on == "all")
+                and self.enabled_hashmap[hook.name]
             ]
         )
 
@@ -201,8 +203,8 @@ class OptimizationVariable:
             )
 
     def with_data(self, new_data, inplace=True):
-        if isinstance(new_data, GeneratorType):
-            new_data = list(new_data)
+        # if isinstance(new_data, GeneratorType):
+        #     new_data = list(new_data)
 
         if inplace:
             self.data = new_data
@@ -523,7 +525,8 @@ class FunctionWithSignature:
             kwargs_to_pass = {
                 k: v for k, v in kwargs.items() if k in self.variables.names
             }
-            return self.func(*args, **kwargs)
+            return self.func(*args, **kwargs_to_pass)
+
         if kwargs == {} and len(args) == 1:
             return self.func(**{self.free_placeholders[0]: args[0]})
 
@@ -569,11 +572,12 @@ class FunctionWithSignature:
         """
 
         signature_set = set(self.__signature)
-        default_keys = {
-            name: data
-            for name, data in self.variables.to_data_dict().items()
-            if data is not None
-        }.keys()
+        # default_keys = {
+        #     name: data
+        #     for name, data in self.variables.to_data_dict().items()
+        #     if data is not None
+        # }.keys()
+        default_keys = set(self.variables.constants.names)
         return tuple(signature_set - default_keys)
 
     def declare_variables(
@@ -743,10 +747,11 @@ class Optimizable(RcognitaBase):
         self.__is_problem_defined = False
         self.__variables: VarContainer = VarContainer([])
         self.__functions: FuncContainer = FuncContainer(tuple())
-        self.objective_name = None
+        self.params_changed = False
 
         if self.kind == "symbolic":
-            self.__opti = Opti()
+            self.__opti_common = Opti()
+            self.__opti = self.__opti_common.copy()
             self.__opt_func = None
             if optimizer_config.opt_method is None:
                 optimizer_config.opt_method = "ipopt"
@@ -767,11 +772,78 @@ class Optimizable(RcognitaBase):
         self.__log_options = optimizer_config.log_options
 
     @property
+    def opt_options(self):
+        return self.__opt_options
+
+    @property
+    def log_options(self):
+        return self.__log_options
+
+    def __recreate_opti(self):
+        self.__opti = Opti()
+
+    def __recreate_symbolic_variables(self):
+        self.__recreate_opti()
+
+        for variable in self.variables:
+            dims = variable.dims
+            if isinstance(dims, tuple):
+                if len(dims) == 1:
+                    dims = dims[0]
+
+            is_constant = variable.is_constant
+            if isinstance(dims, tuple):
+                metadata = (
+                    self.__opti.variable(*dims)
+                    if not is_constant
+                    else self.__opti.parameter(*dims)
+                )
+            elif isinstance(dims, int):
+                metadata = (
+                    self.__opti.variable(dims)
+                    if not is_constant
+                    else self.__opti.parameter(dims)
+                )
+            else:
+                raise ValueError("Unknown dimensions format")
+
+            variable.with_metadata(metadata, inplace=True)
+
+        self.__recreate_symbolic_functions()
+
+    def __recreate_symbolic_functions(self):
+        __functions = sum(
+            [
+                function
+                for function in self.functions
+                if not (
+                    ("__bound" in function.name) and (function.variables[0].is_constant)
+                )
+            ]
+        )
+        for function in __functions:
+            function: FunctionWithSignature
+            for variable in function.variables:
+                if variable.name == "var":
+                    variable.metadata = variable.data.metadata
+
+            function = self.__infer_and_register_symbolic_prototype(
+                function, function.variables
+            )
+            metafunc = function.metadata
+            if function.is_objective:
+                self.__opti.minimize(metafunc)
+            else:
+                self.__opti.subject_to(metafunc <= 0)
+
+    @property
+    def opti(self):
+        return self.__opti
+
+    @property
     def objective(self):
-        assert (
-            len(self.objectives) == 1 or self.objective_name is not None
-        ), "Ambiguous objective definition. Specify objective name."
-        return self.objectives[self.objective_name]
+        assert len(self.objectives) == 1, "Ambiguous objective definition."
+        return self.objectives[0]
 
     def _requires_grad(self, variable_data):
         if self.kind == "tensor":
@@ -795,7 +867,8 @@ class Optimizable(RcognitaBase):
         def metadata_mutator(whatever):
             return new_metadata
 
-        return Hook(metadata_mutator, metadata=tag, act_on="metadata")
+        hook = Hook(metadata_mutator, metadata=tag, act_on="metadata")
+        return hook
 
     @property
     def objectives(self):
@@ -813,6 +886,28 @@ class Optimizable(RcognitaBase):
     def variables(self) -> VarContainer:
         return self.__variables
 
+    def __refresh_binded_variables(self):
+        for function in self.functions:
+            for variable in function.variables:
+                if isinstance(variable.data, OptimizationVariable):
+                    variable.is_constant = variable.data.is_constant
+
+    def __fix_variables_tensor(self, variables_to_fix, data_dict, metadata_dict):
+        self.__variables.fix(variables_to_fix, hook=Hook(self._detach, act_on="data"))
+
+    def __fix_variables_symbolic(self, variables_to_fix, data_dict, metadata_dict):
+        if metadata_dict is None:
+            metadata_dict = {}
+        passed_unfixed_variables = sum(self.variables.selected(variables_to_fix))
+        assert isinstance(
+            passed_unfixed_variables, VarContainer
+        ), "An error occured while fixing variables."
+        self.__variables.fix(variables_to_fix)
+        self.__refresh_binded_variables()
+        self.__recreate_symbolic_variables()
+
+        self.params_changed = True
+
     def fix_variables(
         self,
         variables_to_fix: List[str],
@@ -820,86 +915,42 @@ class Optimizable(RcognitaBase):
         metadata_dict: Optional[Dict] = None,
     ):
         if self.kind == "tensor":
-            self.__variables.fix(
-                variables_to_fix, hook=Hook(self._detach, act_on="data")
+            self.__fix_variables_tensor(
+                variables_to_fix, data_dict=data_dict, metadata_dict=metadata_dict
             )
+
         elif self.kind == "symbolic":
-            if metadata_dict is None:
-                metadata_dict = {}
-            passed_unfixed_variables = sum(self.variables.selected(variables_to_fix))
-            assert isinstance(
-                passed_unfixed_variables, VarContainer
-            ), "An error occured while fixing variables."
-
-            for variable in passed_unfixed_variables:
-                if "metadata_mutator" not in variable.hooks.hooks_container.names:
-                    metadata = self.create_variable_metadata(
-                        *variable.dims, is_constant=True
-                    )
-                    metadata_dict[variable.name] = metadata
-                    variable.register_hook(
-                        self._mutate_metadata(metadata, tag="fix"), first=True
-                    )
-                else:
-                    hook = variable.hooks.hooks_container["metadata_mutator"]
-                    if hook.metadata == "unfix":
-                        variable.discard_hook(hook)
-                    elif hook.metadata == "fix":
-                        variable.enable_hook(hook)
-
-            self.__variables.fix(variables_to_fix)
-            # self.__variables.substitute_metadata(**metadata_dict)
-            for function in self.functions:
-                metafunc = function(**self.variables.to_metadata_dict(), raw_eval=True)
-                function.metadata = metafunc
-                if function.is_objective:
-                    self.__opti.minimize(metafunc)
-                else:
-                    self.__opti.subject_to(metafunc < 0)
+            self.__fix_variables_symbolic(
+                variables_to_fix, data_dict=data_dict, metadata_dict=metadata_dict
+            )
         else:
             self.__variables.fix(variables_to_fix)
+
+    def __unfix_variables_tensor(self, variables_to_unfix):
+        self.__variables.unfix(
+            variables_to_unfix, hook=Hook(self._requires_grad, act_on="data")
+        )
+
+    def __unfix_variables_symbolic(self, variables_to_unfix):
+        passed_fixed_variables = sum(self.variables.selected(variables_to_unfix))
+        assert isinstance(
+            passed_fixed_variables, VarContainer
+        ), "An error occured while fixing variables."
+
+        self.__variables.unfix(variables_to_unfix)
+        self.__refresh_binded_variables()
+        self.__recreate_symbolic_variables()
+
+        self.params_changed = True
 
     def unfix_variables(
         self,
         variables_to_unfix: List[str],
     ):
         if self.kind == "tensor":
-            self.__variables.unfix(
-                variables_to_unfix, hook=Hook(self._requires_grad, act_on="data")
-            )
+            self.__unfix_variables_tensor(variables_to_unfix=variables_to_unfix)
         elif self.kind == "symbolic":
-            metadata_dict = {}
-            passed_fixed_variables = sum(self.variables.selected(variables_to_unfix))
-            assert isinstance(
-                passed_fixed_variables, VarContainer
-            ), "An error occured while fixing variables."
-
-            for variable in passed_fixed_variables:
-                if "metadata_mutator" not in variable.hooks.hooks_container.names:
-                    metadata = self.create_variable_metadata(
-                        *variable.dims, is_constant=False
-                    )
-                    metadata_dict[variable.name] = metadata
-                    variable.register_hook(
-                        self._mutate_metadata(metadata, tag="unfix"), first=True
-                    )
-                else:
-                    hook = variable.hooks.hooks_container["metadata_mutator"]
-                    if hook.metadata == "fix":
-                        variable.discard_hook(hook)
-                    elif hook.metadata == "unfix":
-                        variable.enable_hook(hook)
-
-            self.__variables.fix(variables_to_unfix)
-            # self.__variables.substitute_metadata(**metadata_dict)
-            for function in self.functions:
-                metafunc = function(**self.variables.to_metadata_dict(), raw_eval=True)
-                function.metadata = metafunc
-                if function.is_objective:
-                    self.__opti.minimize(metafunc)
-                else:
-                    self.__opti.subject_to(metafunc < 0)
-
+            self.__unfix_variables_symbolic(variables_to_unfix=variables_to_unfix)
         else:
             self.__variables.unfix(variables_to_unfix)
 
@@ -982,6 +1033,9 @@ class Optimizable(RcognitaBase):
         func = self.__infer_and_register_symbolic_prototype(func, variables)
         self.__opti.minimize(func.metadata)
 
+    def register_torch_model(self, model):
+        assert self.kind == "tensor", "Available for tensor optimization only."
+
     @staticmethod
     def handle_bounds(
         bounds: Union[list, np.ndarray, None],
@@ -1019,7 +1073,7 @@ class Optimizable(RcognitaBase):
         :rtype: Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
         """
         if bounds is None:
-            assert dim_variable is not None, "Dimension of the action must be specified"
+            assert dim_variable is not None, "Dimension of the bounds must be specified"
             bounds = np.array([[-np.inf, np.inf] for _ in range(dim_variable)])
         else:
             assert isinstance(
@@ -1086,11 +1140,13 @@ class Optimizable(RcognitaBase):
         def ub_constr(var):
             return var - bounds[:, 1]
 
+        var = variable_to_bound.renamed("var", inplace=False)
+        var.data = variable_to_bound
         self.register_constraint(
-            lb_constr, variables=[variable_to_bound.renamed("var")]
+            lb_constr, variables=[var], name=f"{variable_to_bound.name}__bound_lower"
         )
         self.register_constraint(
-            ub_constr, variables=[variable_to_bound.renamed("var")]
+            ub_constr, variables=[var], name=f"{variable_to_bound.name}__bound_upper"
         )
 
     def __register_numeric_bounds(self, bounds):
@@ -1104,11 +1160,14 @@ class Optimizable(RcognitaBase):
         self.__bounds = bounds
 
     def register_constraint(
-        self, func: Callable, variables: List[OptimizationVariable]
+        self, func: Callable, variables: List[OptimizationVariable], name=None
     ):
         func = FunctionWithSignature(func)
-        _variables = VarContainer(variables)
+        if name is not None:
+            func.name = name
 
+        _variables = VarContainer(variables)
+        func.declare_variables(_variables)
         if self.kind == "symbolic":
             self.__register_symbolic_constraint(func, _variables)
         elif self.kind == "numeric":
@@ -1179,16 +1238,30 @@ class Optimizable(RcognitaBase):
 
     def optimize_symbolic(self, raw=False, **kwargs):
         # ToDo: add multiple objectives
-        if self.__opt_func is None:
+        if self.__opt_func is None or self.params_changed:
             self.__opti.solver(self.opt_method, self.__log_options, self.__opt_options)
             self.__opt_func = self.__opti.to_function(
                 "min_fun",
-                list(self.variables.metadatas),
-                [*self.decision_variables.metadatas, self.objective],
+                [variable(with_metadata=True) for variable in self.variables],
+                [
+                    *[
+                        variable(with_metadata=True)
+                        for variable in self.decision_variables
+                    ],
+                    self.objective.metadata,
+                ],
                 list(self.variables.names),
                 [*self.decision_variables.names, *self.objectives.names],
                 {"allow_duplicate_io_names": True},
             )
+            self.params_changed = False
+
+        for k, v in kwargs.items():
+            if k in self.variables:
+                if self.variables[k].is_constant:
+                    self.__opti.set_value(self.variables[k](with_metadata=True), v)
+                else:
+                    self.__opti.set_initial(self.variables[k](with_metadata=True), v)
 
         result = self.__opt_func(**kwargs)
         return (
@@ -1243,7 +1316,6 @@ class Optimizable(RcognitaBase):
                 self.optimizer.step()
 
     def define_problem(self):
-        raise NotImplementedError
         self.__is_problem_defined = True
 
 
