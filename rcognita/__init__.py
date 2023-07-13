@@ -756,10 +756,10 @@ class main:
                         delattr(cfg, "callbacks")
                     elif "callbacks" in cfg:
                         delattr(cfg, "callbacks")
-                    self.__class__.callbacks = callbacks
+                    self.callbacks = callbacks
                     self.__class__.config = ccfg
                     try:
-                        for callback in self.__class__.callbacks:
+                        for callback in self.callbacks:
                             if callback.cooldown:
                                 callback.cooldown *= argv.cooldown_factor
                             callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality

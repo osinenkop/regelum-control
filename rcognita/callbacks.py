@@ -104,7 +104,7 @@ class Callback(rcognita.base.RcognitaBase, ABC):
 
     @classmethod
     def register(cls, *args, launch=False, **kwargs):
-        existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        existing_callbacks = [type(callback) for callback in cls._metadata["main"].callbacks]
         if cls not in existing_callbacks:
             callback_instance = cls(*args, **kwargs)
             if launch:

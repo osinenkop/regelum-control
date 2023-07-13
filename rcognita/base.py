@@ -73,7 +73,7 @@ class RcognitaType(abc.ABCMeta):
 
 
 class ClassPropertyDescriptor(object):
-    """Enables to declear class properties."""
+    """Enables to declare class properties."""
 
     def __init__(self, fget, fset=None):
         """Initialize an instance of ClassPropertyDescriptor
