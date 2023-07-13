@@ -2,6 +2,7 @@
 
 import copy
 import functools
+import sys
 from enum import Enum
 from textwrap import dedent
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
@@ -376,8 +377,25 @@ def instantiate_node(
                             value, convert=convert, recursive=recursive, path=new_path
                         )
                     kwargs[key] = _convert_node(value, convert)
-            _target_ = _resolve_target(node.get(_Keys.TARGET),
-                                       full_key)
+            if "inline__IGNORE__" in kwargs:
+                class Inline:
+                    exec(kwargs["inline__IGNORE__"])
+                sys.modules["inline"] = Inline
+                name = node.get(_Keys.TARGET)
+                if '.' not in name:
+                    new_name = "inline." + name
+                    try:
+                        _target_ = _resolve_target(new_name,
+                                                   full_key)
+                    except NameError:
+                        _target_ = _resolve_target(name,
+                                                   full_key)
+                else:
+                    _target_ = _resolve_target(name,
+                                               full_key)
+            else:
+                _target_ = _resolve_target(node.get(_Keys.TARGET),
+                                           full_key)
             if "callbacks__IGNORE__" in kwargs:
                 for callback in kwargs["callbacks__IGNORE__"]:
                     if "." not in callback:
