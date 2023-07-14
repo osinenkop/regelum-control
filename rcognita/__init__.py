@@ -120,7 +120,7 @@ def obtain(obj_repr):
         .replace("__TILDE__", "~")
     )
     obj_repr = _Plugins__fake_file_config_source.numerize_string(obj_repr)
-    pattern = re.compile(r"(\A|[^a-zA-Z\._])[a-zA-Z_][a-zA-Z0-9_]*")
+    pattern = re.compile(r"(\A|[^a-zA-Z0-9\._])[a-zA-Z_][a-zA-Z0-9_]*")
     resolved = []
 
     def resolve(s):
@@ -133,6 +133,7 @@ def obtain(obj_repr):
             entity = _locate(s)
         except:
             entity = eval(s)
+
         resolved.append(entity)
         return f"{prefix}resolved[{len(resolved) - 1}]"
 
@@ -491,7 +492,11 @@ class main:
         callbacks = callbacks + self.builtin_callbacks
         sys.argv.insert(1, "--multirun")
         sys.argv.insert(-1, "hydra.job.chdir=True")
-        self.mlflow_uri = f"file://{os.getcwd()}/mlruns"
+        self.mlflow_tracking_uri = f"file://{os.getcwd()}/mlruns"
+        self.mlflow_artifacts_location = self.mlflow_tracking_uri + "/artifacts"
+        # self.mlflow_uri = (
+        #     f"postgresql+psycopg2://abolychev:aidalab@localhost:5432/postgres"
+        # )
         self.tags = {}
         self.experiment_name = "Default"
         to_remove = []
@@ -575,12 +580,30 @@ class main:
                     is_clear_matplotlib_cache_in_callbacks
                 )
                 self.__class__.logger = logger
-                mlflow.set_tracking_uri(self.mlflow_uri)
+
                 if "seed" in cfg:
                     seed = cfg["seed"]
                     delattr(cfg, "seed")
                 else:
                     seed = 0
+
+                if "mlflow_tracking_uri__IGNORE__" in cfg:
+                    try:
+                        mlflow_tracking_uri = cfg.mlflow_tracking_uri__IGNORE__
+                    except:  # noqa: E722
+                        mlflow_tracking_uri = self.mlflow_tracking_uri
+                    delattr(cfg, "mlflow_tracking_uri__IGNORE__")
+                    self.mlflow_tracking_uri = mlflow_tracking_uri
+
+                mlflow.set_tracking_uri(self.mlflow_tracking_uri)
+
+                if "mlflow_artifacts_location__IGNORE__" in cfg:
+                    try:
+                        artifacts_location = cfg.mlflow_artifacts_location__IGNORE__
+                    except:  # noqa: E722
+                        artifacts_location = self.mlflow_artifacts_location
+                    delattr(cfg, "mlflow_artifacts_location__IGNORE__")
+                    self.mlflow_artifacts_location = artifacts_location
                 numpy.random.seed(seed)
                 torch.manual_seed(seed)
                 random.seed(seed)
@@ -628,6 +651,7 @@ class main:
                         delattr(cfg, "callbacks")
                     self.__class__.callbacks = callbacks
                     self.__class__.config = ccfg
+
                     try:
                         for callback in self.__class__.callbacks:
                             if callback.cooldown:
@@ -637,9 +661,17 @@ class main:
                             r["path"] = os.getcwd()
                             r["pid"] = os.getpid()
                         self.tags.update({"run_path": os.getcwd()})
-                        experiment_id = mlflow.set_experiment(
-                            self.experiment_name
-                        ).experiment_id
+
+                        if mlflow.get_experiment_by_name(self.experiment_name) is None:
+                            experiment_id = mlflow.create_experiment(
+                                name=self.experiment_name,
+                                artifact_location=self.mlflow_artifacts_location,
+                            )
+                        else:
+                            experiment_id = mlflow.set_experiment(
+                                self.experiment_name
+                            ).experiment_id
+
                         with mlflow.start_run(
                             experiment_id=experiment_id,
                             tags=self.tags,

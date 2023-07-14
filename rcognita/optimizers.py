@@ -282,6 +282,56 @@ class TorchOptimizer(Optimizer):
     engine = "Torch"
 
     def __init__(
+        self, opt_options, model, iterations=1, opt_method=None, verbose=False
+    ):
+        """
+        Initialize an instance of TorchOptimizer.
+        :param opt_options: Options for the PyTorch optimizer.
+        :type opt_options: dict
+        :param iterations: Number of iterations to optimize the model.
+        :type iterations: int
+        :param opt_method: PyTorch optimizer class to use. If not provided        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
+        :type opt_method: torch.optim.Optimizer
+        :param verbose: Whether to print optimization progress.
+        :type verbose: bool
+        """
+        if opt_method is None:
+            opt_method = torch.optim.Adam
+        self.opt_method = opt_method
+        self.opt_options = opt_options
+        self.iterations = iterations
+        self.verbose = verbose
+        self.loss_history = []
+        self.model = model
+        self.optimizer = self.opt_method(model.parameters(), **self.opt_options)
+
+    def optimize(
+        self, objective, model_input=None
+    ):  # remove model and add parameters instead
+        """
+        Optimize the model with the given objective.
+        :param objective: Objective function to optimize.
+        :type objective: callable
+        :param model: Model to optimize.
+        :type model: torch.nn.Module
+        :param model_input: Inputs to the model.
+        :type model_input: torch.Tensor
+        """
+        for _ in range(self.iterations):
+            self.optimizer.zero_grad()
+            loss = objective(model_input)
+            loss.backward()
+            self.optimizer.step()
+
+
+class TorchOptimizerWithDataBuffer(Optimizer):
+    """
+    Optimizer class that uses PyTorch as its optimization engine.
+    """
+
+    engine = "Torch"
+
+    def __init__(
         self,
         opt_options,
         model,
@@ -316,28 +366,8 @@ class TorchOptimizer(Optimizer):
     def post_epoch(self, idx_epoch, last_epoch_objective):
         return idx_epoch, last_epoch_objective
 
-    def optimize(
-        self, objective, model_input=None
-    ):  # remove model and add parameters instead
-        """
-        Optimize the model with the given objective.
-
-        :param objective: Objective function to optimize.
-        :type objective: callable
-        :param model: Model to optimize.
-        :type model: torch.nn.Module
-        :param model_input: Inputs to the model.
-        :type model_input: torch.Tensor
-        """
-
-        # for _ in range(self.iterations):
-        #     self.optimizer.zero_grad()
-        #     loss = objective(model_input)
-        #     loss.backward()
-        #     self.optimizer.step()
-        loss_history = []
-        window = 20
-        # self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
+    def optimize(self, objective, model_input=None):
+        self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
         for epoch in range(self.iterations):
             for batch in model_input:
                 self.optimizer.zero_grad()
@@ -347,16 +377,6 @@ class TorchOptimizer(Optimizer):
 
                 # self.model.update_and_cache_weights()
             self.post_epoch(epoch, loss.item())
-            # loss_history.append(loss.item())
-            # if (
-            #     len(loss_history) >= window
-            #     and np.abs(
-            #         (loss_history[-window] - loss_history[-1]) / loss_history[-window]
-            #     )
-            #     < 0.02
-            #     and (np.array(loss_history[-window:]) / loss_history[-1]).std() < 0.02
-            # ):
-            #     break
 
 
 class TorchDataloaderOptimizer(Optimizer):

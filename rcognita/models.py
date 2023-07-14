@@ -602,21 +602,52 @@ class ModelDDQNAdvantage(ModelNN):
         return torch.squeeze(x)
 
 
+# class ModelDeepObjective(ModelNN):
+#     def __init__(
+#         self,
+#         dim_observation,
+#         dim_hidden=40,
+#     ):
+#         super().__init__()
+
+#         self.fc1 = nn.Linear(dim_observation, dim_hidden)
+#         self.a1 = nn.LeakyReLU(0.2)
+#         self.fc2 = nn.Linear(dim_hidden, dim_hidden)
+#         self.a2 = nn.LeakyReLU(0.2)
+#         self.fc3 = nn.Linear(dim_hidden, dim_hidden)
+#         self.a3 = nn.LeakyReLU(0.2)
+#         self.fc4 = nn.Linear(dim_hidden, 1)
+
+#         self.double()
+#         self.cache_weights()
+
+#     def forward(self, input_tensor):
+#         x = input_tensor
+#         x = self.fc1(x)
+#         x = self.a1(x)
+#         x = self.fc2(x)
+#         x = self.a2(x)
+#         x = self.fc3(x)
+#         x = self.a3(x)
+#         x = self.fc4(x)
+
+#         return torch.squeeze(x)
+
+
 class ModelDeepObjective(ModelNN):
     def __init__(
         self,
         dim_observation,
         dim_hidden=40,
+        force_positive_def=False,
     ):
         super().__init__()
 
-        self.fc1 = nn.Linear(dim_observation, dim_hidden)
+        self.fc1 = nn.Linear(dim_observation, dim_hidden, bias=False)
         self.a1 = nn.LeakyReLU(0.2)
-        self.fc2 = nn.Linear(dim_hidden, dim_hidden)
-        self.a2 = nn.LeakyReLU(0.2)
-        self.fc3 = nn.Linear(dim_hidden, dim_hidden)
-        self.a3 = nn.LeakyReLU(0.2)
-        self.fc4 = nn.Linear(dim_hidden, 1)
+        self.fc2 = nn.Linear(dim_hidden, dim_hidden, bias=False)
+        self.a2 = nn.LeakyReLU(0.1)
+        self.fc3 = nn.Linear(dim_hidden, 1, bias=False)
 
         self.double()
         self.cache_weights()
@@ -628,8 +659,6 @@ class ModelDeepObjective(ModelNN):
         x = self.fc2(x)
         x = self.a2(x)
         x = self.fc3(x)
-        x = self.a3(x)
-        x = self.fc4(x)
 
         return torch.squeeze(x)
 
@@ -693,14 +722,14 @@ class ModelDQNSimple(ModelNN):
         force_positive_def=False,
         is_force_infinitesimal=False,
         bias=False,
-        leaky_relu_coef=0.2,
+        leaky_relu_coef=0.15,
         is_double_precision=True,
     ):
         super().__init__()
 
         self.in_layer = nn.Linear(dim_observation + dim_action, dim_hidden, bias=bias)
         self.hidden1 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
-        self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
+        # self.hidden2 = nn.Linear(dim_hidden, dim_hidden, bias=bias)
         self.out_layer = nn.Linear(dim_hidden, 1, bias=bias)
         self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
@@ -716,11 +745,13 @@ class ModelDQNSimple(ModelNN):
     def _forward(self, input_tensor):
         x = input_tensor
         x = self.in_layer(x)
+        # x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.hidden1(x)
+        # x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = nn.LeakyReLU(self.leaky_relu_coef)(x)
-        x = self.hidden2(x)
-        x = nn.LeakyReLU(self.leaky_relu_coef)(x)
+        # x = self.hidden2(x)
+        # x = nn.LeakyReLU(self.leaky_relu_coef)(x)
         x = self.out_layer(x)
 
         return torch.squeeze(x)

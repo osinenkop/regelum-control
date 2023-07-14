@@ -1028,7 +1028,7 @@ class ActorRPO(Actor):
         running_objective_value = self.running_objective(observation, current_action)
 
         critic_of_observation = self.critic(
-            observation_predicted - self.observation_target
+            observation_predicted - torch.tensor(self.observation_target)
         )
 
         actor_objective = running_objective_value + critic_of_observation

@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "postgres"
+      POSTGRES_USER: ${MLFLOW_POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${MLFLOW_POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./playground/mlruns-sql-database:/var/lib/postgresql/data

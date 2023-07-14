@@ -1,6 +1,6 @@
 defaults:
   - model: dqn_simple
-  - optimizer: torch
+  - optimizer: torch_with_data_buffer
 
 _target_: rcognita.critics.CriticOnPolicy
 

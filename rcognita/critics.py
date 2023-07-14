@@ -487,11 +487,12 @@ class CriticOfObservation(Critic):
 
 
 class CriticOnPolicy(Critic):
-    def __init__(self, *args, batch_size, td_n, device, **kwargs):
+    def __init__(self, *args, batch_size, td_n, device, is_same_critic, **kwargs):
         super().__init__(*args, **kwargs)
         self.batch_size = batch_size
         self.td_n = td_n
         self.device = device
+        self.is_same_critic = is_same_critic
 
     """
     This is the class of critics that are represented as functions of observation only.
@@ -544,7 +545,10 @@ class CriticOnPolicy(Critic):
                 self.model(first_tdn_observations_actions)
                 - discounted_tdn_sum_of_running_objectives
                 - self.discount_factor**self.td_n
-                * self.model(last_tdn_observations_actions)
+                * self.model(
+                    last_tdn_observations_actions,
+                    use_stored_weights=not self.is_same_critic,
+                )
             )
             ** 2
         ).mean()
@@ -568,6 +572,9 @@ class CriticOnPolicy(Critic):
                 dtype=torch.DoubleTensor,
             ),
         )
+
+        if self.is_same_critic:
+            self.update_and_cache_weights()
 
 
 class CriticOfActionObservationOnPolicy(Critic):

@@ -14,6 +14,7 @@ Callbacks can be registered by simply supplying them in the respective keyword a
         ...
 
 """
+import logging
 import typing
 from abc import ABC, abstractmethod
 
@@ -82,7 +83,8 @@ class Callback(ABC):
         :param log_level: The level at which messages should be logged.
         :type log_level: str
         """
-        self.log = rcognita.main.logger.__getattribute__(log_level)
+        rcognita.main.logger.setLevel(logging.INFO)
+        self.log = rcognita.main.logger.__getattribute__("info")
         self.exception = rcognita.main.logger.exception
         self.last_trigger = 0.0
 
@@ -942,7 +944,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         self.iteration_number = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.optimizers.TorchOptimizer) and (
+        return isinstance(obj, rcognita.optimizers.TorchOptimizerWithDataBuffer) and (
             method == "post_epoch"
         )
 

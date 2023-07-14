@@ -166,7 +166,10 @@ multirun
 
 *.ipynb
 *mlruns/
+*mlruns*
 *.h5
 *.json
 
 docsrc/*
+
+*.envrc

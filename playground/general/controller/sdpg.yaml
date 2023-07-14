@@ -16,8 +16,10 @@ critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 action_bounds: $ system.action_bounds%%
 
 critic_period_multiplier%%: 1
+discount_factor%%: 1.0 
 
 critic:
+  is_same_critic: False
   model:
     dim_hidden: 16
     is_double_precision: True
@@ -29,10 +31,10 @@ critic:
       lr: 0.01
   td_n: 128 
   batch_size: 100
-  discount_factor: 0.9
+  discount_factor: $ controller.discount_factor%%
 
 actor:
-  discount_factor: 0.9
+  discount_factor: $ controller.discount_factor%%
 
   
 
