@@ -20,12 +20,12 @@ from typing import Union, Optional
 from .__utilities import rc
 
 from .predictors import Predictor
-from .optimizers import Optimizer
+from .optimizable.optimizers import Optimizer
 from .critics import Critic
 from .models import Model, ModelNN
 from .systems import System, ComposedSystem
 from .objectives import RunningObjective
-from .optimizers import Optimizable
+from .optimizable.optimizers import Optimizable
 
 try:
     import torch

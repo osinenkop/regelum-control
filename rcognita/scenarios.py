@@ -14,7 +14,7 @@ from unittest.mock import Mock, MagicMock
 
 import rcognita.base
 from .__utilities import rc
-from .optimizers import TorchOptimizer
+from .optimizable.optimizers import TorchOptimizer
 from .policies import Policy
 from .critics import Critic, CriticTrivial
 from .simulator import Simulator

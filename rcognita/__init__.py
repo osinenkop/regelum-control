@@ -59,6 +59,9 @@ from . import models
 from . import predictors
 from . import policies
 from . import visualization
+from . import optimizable
+from .optimizable import *
+from .optimizable.core import *
 from .visualization import *
 import mlflow
 from unittest.mock import Mock, MagicMock

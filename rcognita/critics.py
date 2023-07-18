@@ -37,7 +37,7 @@ except:
 from copy import deepcopy
 from multiprocessing import Pool
 from .models import ModelWeightContainer
-from .optimizers import Optimizer
+from .optimizable.optimizers import Optimizer
 from .models import Model
 from .objectives import Objective
 from typing import Optional, Union

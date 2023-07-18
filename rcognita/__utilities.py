@@ -6,10 +6,8 @@ This module contains auxiliary tools.
 # TODO: THIS DESCRIPTION IS TOO SHORT. EXTEND IT
 
 import inspect
-import warnings
 import numpy as np
 import scipy.stats as st
-import scipy as sp
 import matplotlib.pyplot as plt
 
 from enum import IntEnum

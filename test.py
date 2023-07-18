@@ -1,4 +1,4 @@
-from rcognita.optimizers import (
+from rcognita.optimizable.optimizers import (
     Optimizable,
     casadi_default_config,
 )
