@@ -41,7 +41,7 @@ from .core.entities import (
     VarContainer,
     FuncContainer,
 )
-from .core.hooks import requires_grad, detach
+from .core.hooks import requires_grad, detach, data_closure, metadata_closure
 
 
 class Optimizer:
@@ -241,6 +241,11 @@ class Optimizable:
     def create_variable_metadata(self, *dims, is_constant=False, like=None):
         metadata = None
         if self.kind == "symbolic":
+            if like is not None:
+                assert hasattr(
+                    like, "shape"
+                ), "Symbolic variable prototype must have shape"
+                dims = like.shape
             if len(dims) == 1:
                 assert isinstance(
                     dims[0], (int, tuple)
@@ -276,23 +281,6 @@ class Optimizable:
             name=name, dims=dims, metadata=metadata, is_constant=is_constant
         )
         if self.kind == "tensor":
-
-            def data_closure(gen_method):
-                def hook_data(whatever):
-                    gen_tmp = gen_method()
-                    for x in gen_tmp:
-                        yield x[1]
-
-                return hook_data
-
-            def metadata_closure(gen_method):
-                def hook_metadata(whatever):
-                    gen_tmp = gen_method()
-                    for x in gen_tmp:
-                        yield x
-
-                return hook_metadata
-
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
                 new_variable.register_hook(data_closure(like), act_on="data")
@@ -618,6 +606,7 @@ class Optimizable:
         for _ in range(n_epochs):
             for batch_sample in dataloader:
                 self.optimizer.zero_grad()
+                self.substitute_parameters(**batch_sample)
                 objective_value = objective(**batch_sample)
                 objective_value.backward()
                 self.optimizer.step()

@@ -64,6 +64,10 @@ class Model(rcognita.base.RcognitaBase, ABC):
             return self.cache.forward(*args, weights=self.cache.weights)
 
     @property
+    def named_parameters(self):
+        return self.weights
+
+    @property
     @abstractmethod
     def model_name(self):
         return "model_name"
@@ -100,43 +104,6 @@ class Model(rcognita.base.RcognitaBase, ABC):
         """
 
         self.update_and_cache_weights(self.cache.weights)
-
-
-class ModelSS:
-    model_name = "state-space"
-    """
-    State-space model
-            
-    .. math::
-        \\begin{array}{ll}
-			\\hat x^+ & = A \\hat x + B u, \\newline
-			y^+  & = C \\hat x + D u.
-        \\end{array}                 
-        
-    Attributes
-    ---------- 
-    A, B, C, D : : arrays of proper shape
-        State-space model parameters.
-    initial_guessset : : array
-        Initial state estimate.
-            
-    """
-
-    def __init__(self, A, B, C, D, initial_guessest):
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
-        self.initial_guessest = initial_guessest
-
-    def update_pars(self, Anew, Bnew, Cnew, Dnew):
-        self.A = Anew
-        self.B = Bnew
-        self.C = Cnew
-        self.D = Dnew
-
-    def updateIC(self, initial_guesssetNew):
-        self.initial_guessset = initial_guesssetNew
 
 
 class ModelQuadLin(Model):
@@ -534,25 +501,6 @@ class ModelNN(nn.Module):
         """
 
         self.update_and_cache_weights(self.cache.state_dict())
-
-    # TODO: REMOVE? OR DOCUMENT PROPERLY
-    def soft_update(self, tau):
-        """Soft update model parameters.
-        θ_target = τ*θ_local + (1 - τ)*θ_target
-
-        Params
-        ======
-            local_model (Torch model): weights will be copied from
-            target_model (Torch model): weights will be copied to
-            tau (float): interpolation parameter
-
-        """
-        for target_param, local_param in zip(
-            self.cache.parameters(), self.parameters()
-        ):
-            target_param.data.copy_(
-                tau * local_param.data + (1.0 - tau) * target_param.data
-            )
 
     def __call__(self, *argin, weights=None, use_stored_weights=False):
         if len(argin) > 1:

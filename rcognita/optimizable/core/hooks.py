@@ -44,3 +44,34 @@ def mutate_metadata(self, new_metadata, tag="default"):
 
     hook = rcognita.Hook(metadata_mutator, metadata=tag, act_on="metadata")
     return hook
+
+
+def data_closure(gen_method):
+    def hook_data(whatever):
+        gen_tmp = gen_method()
+        for x in gen_tmp:
+            yield x[1]
+
+    return hook_data
+
+
+def metadata_closure(gen_method):
+    def hook_metadata(whatever):
+        gen_tmp = gen_method()
+        for x in gen_tmp:
+            yield x
+
+    return hook_metadata
+
+
+def connect_source(
+    var,
+    func: Callable,
+    source,
+    act_on="data",
+):
+    def func_hook(whatever):
+        return func(source())
+
+    hook = rcognita.Hook(func_hook, act_on=act_on)
+    var.register_hook(hook, first=True)

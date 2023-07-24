@@ -332,7 +332,7 @@ class VarContainer(Mapping):
                 var.register_hook(hook=hook, first=True)
 
 
-@dataclass(slots=True)
+@dataclass
 class FunctionWithSignature:
     func: Callable
     variables: VarContainer = field(default_factory=lambda: VarContainer([]))
@@ -357,7 +357,7 @@ class FunctionWithSignature:
 
     @property
     def constants_to_substitute(self):
-        return [var.name for var in self.variables.constants if var.data is None]
+        return [var.name for var in self.variables.constants if var().data is None]
 
     def __call__(
         self, *args, with_metadata: bool = False, raw_eval: bool = False, **kwargs
