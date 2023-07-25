@@ -45,7 +45,6 @@ class Animator2Tank(Animator):
             action_min,
             action_max,
             no_print,
-            is_log,
             is_playback,
             running_obj_init,
             level_target,
@@ -58,7 +57,6 @@ class Animator2Tank(Animator):
         self.control_mode = control_mode
         self.action_manual = action_manual
         self.no_print = no_print
-        self.is_log = is_log
         self.is_playback = is_playback
 
         self.level_target = level_target
@@ -103,7 +101,9 @@ class Animator2Tank(Animator):
         if is_playback:
             running_objective = running_obj_init
         else:
-            observation_init = self.system.out(state_init)
+            observation_init = self.system.get_observation(
+                time=time_start, state=state_init, inputs=action_init
+            )
             running_objective = self.controller.running_objective(
                 observation_init, action_init
             )
@@ -203,7 +203,6 @@ class Animator2Tank(Animator):
         self.datafile_curr = self.datafiles[0]
 
     def animate(self, k):
-
         if self.is_playback:
             self.update_sim_data_row()
             time = self.time
@@ -232,11 +231,6 @@ class Animator2Tank(Animator):
         if not self.no_print:
             self.logger.print_sim_step(time, h1, h2, p, running_objective, outcome)
 
-        if self.is_log:
-            self.logger.log_data_row(
-                self.datafile_curr, time, h1, h2, p, running_objective, outcome
-            )
-
         # # Solution
         update_line(self.line_h1, time, h1)
         update_line(self.line_h2, time, h2)
@@ -264,9 +258,6 @@ class Animator2Tank(Animator):
                 )
 
             self.run_curr += 1
-
-            if self.is_log:
-                self.datafile_curr = self.datafiles[self.run_curr - 1]
 
             # Reset simulator
             self.simulator.reset()

@@ -1,3 +1,5 @@
+# TODO: REMOVE COPYRIGHT STATEMENT. JUST WRITE THAT THIS IS A PATCHED MODULE AND HOW EXACTLY. DESCRIBE WHY THIS IS A FAKE MODULE
+
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
 import os
@@ -370,7 +372,9 @@ class ConfigLoaderImpl(ConfigLoader):
                         if OmegaConf.select(
                             cfg, key, throw_on_missing=False
                         ) is None or isinstance(value, (dict, list)):
-                            OmegaConf.update(cfg, key, value, merge=True, force_add=True)
+                            OmegaConf.update(
+                                cfg, key, value, merge=True, force_add=True
+                            )
                         else:
                             assert override.input_line is not None
                             raise ConfigCompositionException(
@@ -419,13 +423,15 @@ class ConfigLoaderImpl(ConfigLoader):
                                 del cfg[key]
                             else:
                                 node = OmegaConf.select(cfg, key[0:last_dot])
-                                del node[key[last_dot + 1:]]
+                                del node[key[last_dot + 1 :]]
 
                     elif override.is_add():
                         if OmegaConf.select(
-                                cfg, key, throw_on_missing=False
+                            cfg, key, throw_on_missing=False
                         ) is None or isinstance(value, (dict, list)):
-                            OmegaConf.update(cfg, key, value, merge=True, force_add=True)
+                            OmegaConf.update(
+                                cfg, key, value, merge=True, force_add=True
+                            )
                         else:
                             assert override.input_line is not None
                             raise ConfigCompositionException(

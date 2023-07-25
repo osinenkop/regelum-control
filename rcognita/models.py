@@ -10,6 +10,7 @@ import os, sys
 
 import rcognita.base
 
+# TODO: REMOVE?
 PARENT_DIR = os.path.abspath(__file__ + "/../../")
 sys.path.insert(0, PARENT_DIR)
 CUR_DIR = os.path.abspath(__file__ + "/..")
@@ -63,6 +64,10 @@ class Model(rcognita.base.RcognitaBase, ABC):
             return self.cache.forward(*args, weights=self.cache.weights)
 
     @property
+    def named_parameters(self):
+        return self.weights
+
+    @property
     @abstractmethod
     def model_name(self):
         return "model_name"
@@ -101,43 +106,6 @@ class Model(rcognita.base.RcognitaBase, ABC):
         self.update_and_cache_weights(self.cache.weights)
 
 
-class ModelSS:
-    model_name = "state-space"
-    """
-    State-space model
-            
-    .. math::
-        \\begin{array}{ll}
-			\\hat x^+ & = A \\hat x + B u, \\newline
-			y^+  & = C \\hat x + D u.
-        \\end{array}                 
-        
-    Attributes
-    ---------- 
-    A, B, C, D : : arrays of proper shape
-        State-space model parameters.
-    initial_guessset : : array
-        Initial state estimate.
-            
-    """
-
-    def __init__(self, A, B, C, D, initial_guessest):
-        self.A = A
-        self.B = B
-        self.C = C
-        self.D = D
-        self.initial_guessest = initial_guessest
-
-    def update_pars(self, Anew, Bnew, Cnew, Dnew):
-        self.A = Anew
-        self.B = Bnew
-        self.C = Cnew
-        self.D = Dnew
-
-    def updateIC(self, initial_guesssetNew):
-        self.initial_guessset = initial_guesssetNew
-
-
 class ModelQuadLin(Model):
     """
     Quadratic-linear model.
@@ -171,6 +139,46 @@ class ModelQuadLin(Model):
         polynom = rc.uptria2vec(rc.outer(vec, vec))
         polynom = rc.concatenate([polynom, vec])
         result = rc.dot(weights, polynom)
+
+        return result
+
+
+class ModelQuadLinQuad(Model):
+    """
+    Quadratic-linear model.
+
+    """
+
+    model_name = "quad-lin"
+
+    def __init__(
+        self,
+        dim_input,
+        single_weight_min=1e-6,
+        single_weight_max=1e2,
+        force_positive_def=True,
+    ):
+        self.dim_weights = int((dim_input + 1) * dim_input / 2 + dim_input) + dim_input
+        self.dim_input = dim_input
+        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
+        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
+        self.weights_init = (self.weight_min + self.weight_max) / 20.0
+        self.weights = self.weights_init
+        self.force_positive_def = force_positive_def
+        self.update_and_cache_weights(self.weights)
+
+    @force_positive_def
+    def forward(self, *argin, weights=None):
+        if len(argin) > 1:
+            vec = rc.concatenate(tuple(argin))
+        else:
+            vec = argin[0]
+
+        polynom = rc.uptria2vec(rc.outer(vec, vec))
+        polynom = rc.concatenate([polynom, vec])
+        result = (rc.abs(rc.dot(weights[: -self.dim_input], polynom)) + 1) * rc.sqrt(
+            rc.dot(weights[-self.dim_input :], vec**2)
+        )
 
         return result
 
@@ -308,10 +316,11 @@ class ModelQuadNoMix2D(Model):
 
 class ModelWeightContainer(Model):
     """
-    Trivial model, which is typically used in actor in which actions are being optimized directly.
+    Trivial model, which is typically used in policy in which actions are being optimized directly.
 
     """
 
+    # TODO: WHY THIS NAME?
     model_name = "action-sequence"
 
     def __init__(self, dim_output, weights_init=None):
@@ -322,26 +331,6 @@ class ModelWeightContainer(Model):
 
     def forward(self, *argin, weights=None):
         return weights[: self.dim_output]
-
-
-class ModelQuadMix(Model):
-    model_name = "quad-mix"
-
-    def __init__(self, dim_input, weight_min=1.0, weight_max=1e3):
-        self.dim_weights = int(
-            self.dim_output + self.dim_output * self.dim_input + self.dim_input
-        )
-        self.weight_min = weight_min * np.ones(self.dim_weights)
-        self.weight_max = weight_max * np.ones(self.dim_weights)
-
-    def _forward(self, vec, weights):
-        v1 = rc.force_column(v1)
-        v2 = rc.force_column(v2)
-
-        polynom = rc.concatenate([v1**2, rc.kron(v1, v2), v2**2])
-        result = rc.dot(weights, polynom)
-
-        return result
 
 
 class ModelQuadForm(Model):
@@ -399,6 +388,7 @@ class ModelBiquadForm(Model):
         return result
 
 
+# TODO: ADD TRAILING PERIODS IN DOCSTRINGS
 class ModelNN(nn.Module):
     """
     Class of pytorch neural network models. This class is not to be used barebones.
@@ -495,24 +485,6 @@ class ModelNN(nn.Module):
 
         self.update_and_cache_weights(self.cache.state_dict())
 
-    def soft_update(self, tau):
-        """Soft update model parameters.
-        θ_target = τ*θ_local + (1 - τ)*θ_target
-
-        Params
-        ======
-            local_model (Torch model): weights will be copied from
-            target_model (Torch model): weights will be copied to
-            tau (float): interpolation parameter
-
-        """
-        for target_param, local_param in zip(
-            self.cache.parameters(), self.parameters()
-        ):
-            target_param.data.copy_(
-                tau * local_param.data + (1.0 - tau) * target_param.data
-            )
-
     def __call__(self, *argin, weights=None, use_stored_weights=False):
         if len(argin) > 1:
             argin = rc.concatenate(argin)
@@ -532,6 +504,7 @@ class ModelNN(nn.Module):
         return result
 
 
+# TODO: WHY IS THIS CALLED QUAD MIX BLA-BLA IF IT'S JUST ONE LAYER? FIX
 class ModelQuadNoMixTorch(ModelNN):
     """
     pytorch neural network of one layer: fully connected.
@@ -570,6 +543,7 @@ class ModelQuadNoMixTorch(ModelNN):
         return x
 
 
+# TODO: DOCSTRING
 class ModelDDQNAdvantage(ModelNN):
     def __init__(
         self,
@@ -663,6 +637,7 @@ class ModelDeepObjective(ModelNN):
         return torch.squeeze(x)
 
 
+# TODO: DOCSTRING
 class ModelDDQN(ModelNN):
     def __init__(
         self,
@@ -712,6 +687,7 @@ class ModelDDQN(ModelNN):
         return objective + (advantage - advantage_grid_mean)
 
 
+# TODO: DOCSTRING
 class ModelDQNSimple(ModelNN):
     def __init__(
         self,
@@ -769,6 +745,7 @@ class ModelDQNSimple(ModelNN):
         return self._forward(input_tensor)
 
 
+# TODO: WHAT IS THIS? REVIEW AND/OR REMOVE. COMMIT TO SEPARATE BRANCH MAYBE, BUT DO A CLEANUP OF CODE AND DOCSTRINGS, REMOVE $$ SAY ETC.
 class ModelPerceptronCalf(Model):
     model_name = "DQN_simple_casadi"
     weights_dict = {}
@@ -920,6 +897,7 @@ class ModelPerceptronCalf(Model):
         return x
 
 
+# TODO: DOCSTRING TOO SHORT AND UNIFORMATIVE. DON'T ABUSE ABBREIVATIONS
 class ModelDQN(ModelNN):
     """
     pytorch neural network DQN
@@ -978,9 +956,10 @@ class ModelDQN(ModelNN):
         return torch.squeeze(x)
 
 
+# TODO: NOT FOR POLICY. NO MENTIONS OF POLICIES IN THIS MODULE
 class ModelWeightContainerTorch(ModelNN):
     """
-    Pytorch weight container for actor
+    Pytorch weight container for policy
 
     """
 
@@ -1023,6 +1002,7 @@ class LookupTable(Model):
         return self.weights[indices]
 
 
+# TODO: DOCSTRING
 class WeightClipper:
     def __init__(self, weight_min=None, weight_max=None):
         self.weight_min = weight_min
@@ -1036,6 +1016,7 @@ class WeightClipper:
             module.weight.data = w
 
 
+# TODO: DOCSTRING. RENAME TO FULLY CONNECTED
 class ModelFc(ModelNN):
     def __init__(
         self,
@@ -1070,6 +1051,7 @@ class ModelFc(ModelNN):
         return x
 
 
+# TODO: DOCSTRING
 class ModelNNElementWiseProduct(ModelNN):
     def __init__(
         self, dim_observation, weight_min=None, weight_max=None, use_derivative=False
@@ -1084,6 +1066,7 @@ class ModelNNElementWiseProduct(ModelNN):
         self.register_parameter(
             name="dot_layer",
             param=torch.nn.Parameter(
+                # TODO: REMOVE NUMBERS
                 0.1 * torch.ones(self.dim_observation),
                 requires_grad=True,
             ),
@@ -1370,7 +1353,7 @@ class TanhGaussianPDFModel(ModelNN):
                 input_tensor[:, self.dim_observation :],
             )
         else:
-            raise ValueError("Input tensor has unexpected dims")
+            raise ValueError("Input tensor has unexpected dims.")
 
         return observation, action
 
@@ -1438,6 +1421,7 @@ class GaussianPerceptronPDFModel(TanhGaussianPDFModel):
         return out
 
 
+# TODO: DOCSTRING
 class GaussianElementWisePDFModel(ModelNN):
     def __init__(
         self,
@@ -1518,6 +1502,7 @@ class GaussianElementWisePDFModel(ModelNN):
         ).sample()
 
 
+# TODO: DOCSTRING: WHAT DOES IT MEAN CAN OPTIONALLY BE GENERATED?
 class ModelGaussianConditional(Model):
     """
     Gaussian probability distribution model with `weights[0]` being an expectation vector

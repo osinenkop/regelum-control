@@ -1,13 +1,21 @@
+# TODO: DOCSTRING. NEED TRIVIAL OBSERVER
+
 import numpy as np
 
 import rcognita.base
 
 
+# TODO: DOCSTRING
 class KalmanFilter(rcognita.base.RcognitaBase):
     def __init__(
-        self, t0, my_sys, sys_noise_cov, observ_noise_cov, prior_est_cov, state_init,
+        self,
+        t0,
+        my_sys,
+        sys_noise_cov,
+        observ_noise_cov,
+        prior_est_cov,
+        state_init,
     ):
-
         self.my_sys = my_sys
 
         self.posterior_state_est = state_init
@@ -42,7 +50,10 @@ class KalmanFilter(rcognita.base.RcognitaBase):
 
         K = np.array(P_pred @ J_h.T @ np.linalg.inv(J_h @ P_pred @ J_h.T + R))
         self.posterior_state_est = self.prior_state_est + K @ (
-            z - self.my_sys.out(self.prior_state_est)
+            z
+            - self.my_sys.get_observation(
+                time=None, state=self.prior_state_est, inputs=None
+            )
         )
         self.posterior_est_cov = (np.eye(self.dim_state) - K @ J_h) @ P_pred
         print(f"Kalman gain:\n{K}, \n Post est cov: \n{self.posterior_est_cov}")

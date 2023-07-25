@@ -202,7 +202,7 @@ class WeightsEpisodicDashboard(Dashboard):
         self.policy_line_handles_pack = [
             self.axs_action_params.plot(
                 [0],
-                [self.scenario.actor.model.weights_init[i]],
+                [self.scenario.policy.model.weights_init[i]],
                 label=f"w_{i+1}",
             )[0]
             for i in range(len(self.weights_init))
@@ -215,7 +215,7 @@ class WeightsEpisodicDashboard(Dashboard):
             update_line(
                 handle,
                 self.scenario.iteration_counter,
-                self.scenario.actor.model.weights[i],
+                self.scenario.policy.model.weights[i],
             )
 
 
@@ -250,7 +250,7 @@ class AnimatorInvertedPendulum(Animator):
         self.outcome = 0
 
         self.angle_0 = self.state_init[0]
-        self.rod_length = self.system.pars[2]
+        self.rod_length = self.system.parameters["l"]
 
         ########### SUBPLOT 1  --------- PENDULUM TRACKING ################
         pendulum_tracking_dashboard = InvPendulumTrackingDashboard(
@@ -268,7 +268,7 @@ class AnimatorInvertedPendulum(Animator):
         ########### SUBPLOT 4  --------- POLICY PARAMETERS ################
         weights_episodic_dashboard = WeightsEpisodicDashboard(
             self.scenario.N_iterations,
-            self.scenario.actor.model.weights_init,
+            self.scenario.policy.model.weights_init,
             self.scenario,
         )
         ###################################################################

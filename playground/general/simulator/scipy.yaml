@@ -2,8 +2,11 @@ _target_: rcognita.simulator.Simulator
 
 ###---Constructor arguments---###
 
+<<<<<<< HEAD
 system: ~ system
 sys_type: $ system.sys_type
+=======
+>>>>>>> origin/fix-inits
 state_init: $ initial_conditions.state_init
 action_init: $ initial_conditions.action_init
 disturb_init: = None

@@ -1,3 +1,5 @@
+# TODO: DOCSTRING
+
 from abc import ABC, abstractmethod
 from rcognita.__utilities import rc
 
@@ -27,7 +29,12 @@ class AdaptationBlock(ABC):
 class AdaptationBlockCartpole(AdaptationBlock):
     def __init__(self, c_hat_init, learning_rate, system=None):
         super().__init__(c_hat_init, learning_rate)
-        self.m_c, self.m_p, self.g, self.l = system.pars
+        self.m_c, self.m_p, self.g, self.l = (
+            system.parameters["m_c"],
+            system.parameters["m_p"],
+            system.parameters["g"],
+            system.parameters["l"],
+        )
 
     def parameter_estimation_derivative(self, current_state):
         theta = current_state[0]

@@ -1,0 +1,6 @@
+_target_: rcognita.data_buffers.ObservationActionObjectiveAccStatsDataset
+
+system: ~ system
+is_use_derivative: False
+is_cat_action: True 
+is_tail_sum_running_objectives: False

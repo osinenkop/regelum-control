@@ -1,23 +1,14 @@
 """
-Module that contains general objectives functions that can be used by various entities of the framework.
-For instance, a running objective can be used commonly by a generic optimal controller, an actor, a critic, a logger, an animator, a pipeline etc.
+This module that contains general objectives functions that can be used by various entities of the framework.
+For instance, a running objective can be used commonly by a generic optimal controller, an policy, a critic, a logger, an animator, a pipeline etc.
 
 """
 
 from abc import ABC, abstractmethod
 
 import rcognita.base
-
-
-def inject_observation_target(observation_target):
-    def decorator(objective):
-        def wrapper(self, observation, action):
-            observation -= observation_target
-            return objective(self, observation, action)
-
-        return wrapper
-
-    return decorator
+from .models import Model
+from typing import Optional
 
 
 class Objective(rcognita.base.RcognitaBase, ABC):
@@ -35,14 +26,14 @@ class RunningObjective(Objective):
     In minimzations problems, it is called cost or loss, say.
     """
 
-    def __init__(self, model):
+    def __init__(self, model: Optional[Model] = None):
         """
         Initialize a RunningObjective instance.
 
         :param model: function that calculates the running objective for a given observation and action.
         :type model: function
         """
-        self.model = model
+        self.model = (lambda observation, action: 0) if model is None else model
 
     def __call__(self, observation, action):
         """
@@ -56,10 +47,6 @@ class RunningObjective(Objective):
         :rtype: float
         """
 
-        if hasattr(self, "observation_target"):
-            observation_new = observation - self.observation_target
-            running_objective = self.model(observation_new, action)
-        else:
-            running_objective = self.model(observation, action)
+        running_objective = self.model(observation, action)
 
         return running_objective

@@ -151,8 +151,8 @@ this could be just <code class="docutils literal notranslate"><span class="pre">
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="rcognita.simulator.Simulator.sys_out">
-<span class="sig-name descname"><span class="pre">sys_out</span></span><a class="headerlink" href="#rcognita.simulator.Simulator.sys_out" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="rcognita.simulator.Simulator.get_observation">
+<span class="sig-name descname"><span class="pre">get_observation</span></span><a class="headerlink" href="#rcognita.simulator.Simulator.get_observation" title="Permalink to this definition"></a></dt>
 <dd><p>System output function.
 Same as above, this could be, say, <code class="docutils literal notranslate"><span class="pre">system.out</span></code>.</p>
 <dl class="field-list simple">
@@ -232,7 +232,7 @@ Same as above, this could be, say, <code class="docutils literal notranslate"><s
 <li><p><strong>compute_closed_loop_rhs</strong> (<em>: function</em>) – Right-hand side description of the closed-loop system.
 Say, if you instantiated a concrete system (i.e., as an instance of a subclass of <code class="docutils literal notranslate"><span class="pre">System</span></code> class with concrete <code class="docutils literal notranslate"><span class="pre">compute_closed_loop_rhs</span></code> method) as <code class="docutils literal notranslate"><span class="pre">system</span></code>,
 this could be just <code class="docutils literal notranslate"><span class="pre">system.compute_closed_loop_rhs</span></code>.</p></li>
-<li><p><strong>sys_out</strong> (<em>: function</em>) – System output function.
+<li><p><strong>get_observation</strong> (<em>: function</em>) – System output function.
 Same as above, this could be, say, <code class="docutils literal notranslate"><span class="pre">system.out</span></code>.</p></li>
 <li><p><strong>is_dynamic_controller</strong> (<em>: 0</em><em> or </em><em>1</em>) – If 1, the controller (a.k.a. agent) is considered as a part of the full state vector.</p></li>
 <li><p><strong>state_init</strong> (<em>: vectors</em>) – Initial values of the (open-loop) system state, disturbance and input.</p></li>

@@ -3,19 +3,17 @@ This module contains auxiliary tools.
 
 """
 
+# TODO: THIS DESCRIPTION IS TOO SHORT. EXTEND IT
+
 import inspect
-import warnings
 import numpy as np
 import scipy.stats as st
-import scipy as sp
 import matplotlib.pyplot as plt
 
 from enum import IntEnum
 from numpy.random import rand
 from scipy import signal
 from typing import Union
-
-import systems
 
 try:
     import casadi
@@ -30,11 +28,16 @@ import types
 try:
     import torch
 
-    TORCH_TYPES = tuple(x[1] for x in inspect.getmembers(torch, inspect.isclass))
+    TORCH_TYPES = tuple(
+        x[1]
+        for x in inspect.getmembers(torch, inspect.isclass)
+        if ("torch" in str(x[1]))
+    )
 except ModuleNotFoundError:
     TORCH_TYPES = tuple()
 
 
+# TODO: MISSING ENTRANCE SENTENCE: this class is bla-bla, it is needed to do bla-bla
 class RCType(IntEnum):
     """
     Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
@@ -63,6 +66,7 @@ def is_Torch_typecheck(*args) -> Union[RCType, bool]:
     return TORCH if any([isinstance(arg, TORCH_TYPES) for arg in args]) else False
 
 
+# TODO: ADD DOCSTRING
 def type_inference(*args, **kwargs) -> Union[RCType, bool]:
     is_CasADi = is_CasADi_typecheck(*args, *kwargs.values())
     is_Torch = is_Torch_typecheck(*args, *kwargs.values())
@@ -75,6 +79,7 @@ def type_inference(*args, **kwargs) -> Union[RCType, bool]:
         return result_type
 
 
+# TODO: ADD DOCSTRING
 def safe_unpack(argin):
     if isinstance(argin, (list, tuple)):
         return argin
@@ -82,6 +87,7 @@ def safe_unpack(argin):
         return (argin,)
 
 
+# TODO: ADD DOCSTRING
 def decorateAll(decorator):
     class MetaClassDecorator(type):
         def __new__(cls, classname, supers, classdict):
@@ -97,6 +103,7 @@ def decorateAll(decorator):
     return MetaClassDecorator
 
 
+# TODO: ADD DOCSTRING
 @decorateAll
 def metaclassTypeInferenceDecorator(function):
     def wrapper(*args, **kwargs):
@@ -128,8 +135,8 @@ class Clock:
         self.time = self.time_start
 
 
+# TODO: ADD DOCSTRING
 class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
-
     TORCH = RCType.TORCH
     CASADI = RCType.CASADI
     NUMPY = RCType.NUMPY
@@ -258,7 +265,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def reshape(
         self, array, dim_params: Union[list, tuple, int], rc_type: RCType = NUMPY
     ):
-
         if rc_type == CASADI:
             if isinstance(dim_params, (list, tuple)):
                 if len(dim_params) > 1:
@@ -293,7 +299,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             self._array = torch.tensor(array)
         elif rc_type == CASADI:
-
             casadi_constructor = type(prototype) if prototype is not None else casadi.DM
 
             self._array = casadi_constructor(array)
@@ -306,7 +311,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         prototype=None,
         rc_type: RCType = NUMPY,
     ):
-
         if isinstance(prototype, (list, tuple)):
             rc_type = type_inference(*prototype)
 
@@ -315,7 +319,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             self._array = torch.ones(argin)
         elif rc_type == CASADI:
-
             if isinstance(prototype, (list, tuple)):
                 casadi_constructor = casadi.DM
 
@@ -346,7 +349,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.zeros(argin)
         elif rc_type == CASADI:
-
             if isinstance(prototype, (list, tuple)):
                 casadi_constructor = casadi.DM
 
@@ -363,7 +365,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             return self._array
 
-    def concatenate(self, argin, rc_type: RCType = NUMPY, **kwargs):
+    def concatenate(self, argin, rc_type: Union[RCType, bool] = NUMPY, **kwargs):
         rc_type = type_inference(*safe_unpack(argin))
         if rc_type == NUMPY:
             return np.concatenate(argin, **kwargs)
@@ -390,7 +392,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return A.T
 
     def rep_mat(self, array, n, m, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.squeeze(np.tile(array, (n, m)))
         elif rc_type == TORCH:
@@ -399,7 +400,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.repmat(array, n, m)
 
     def matmul(self, A, B, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.matmul(A, B)
         elif rc_type == TORCH:
@@ -410,14 +410,12 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.mtimes(A, B)
 
     def casadi_outer(self, v1, v2, rc_type: RCType = NUMPY):
-
         if not is_CasADi_typecheck(v1):
             v1 = self.array_symb(v1)
 
         return casadi.horzcat(*[v1 * v2_i for v2_i in v2.nz])
 
     def outer(self, v1, v2, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.outer(v1, v2)
         elif rc_type == TORCH:
@@ -426,7 +424,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return self.casadi_outer(v1, v2)
 
     def sign(self, x, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.sign(x)
         elif rc_type == TORCH:
@@ -435,7 +432,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.sign(x)
 
     def abs(self, x, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.abs(x)
         elif rc_type == TORCH:
@@ -530,7 +526,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.cross(A, B)
 
     def dot(self, A, B, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.dot(A, B)
         elif rc_type == TORCH:
@@ -539,7 +534,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.dot(A, B)
 
     def sqrt(self, x, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.sqrt(x)
         elif rc_type == TORCH:
@@ -548,7 +542,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.sqrt(x)
 
     def shape(self, array, rc_type: RCType = NUMPY):
-
         if rc_type == CASADI:
             return array.size()
         elif rc_type == NUMPY:
@@ -559,7 +552,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
     def function_to_lambda_with_params(
         self, function_to_lambda, *params, var_prototype=None, rc_type: RCType = NUMPY
     ):
-
         if rc_type in (NUMPY, TORCH):
             if params:
                 return lambda x: function_to_lambda(x, *params)
@@ -598,7 +590,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return res
 
     def if_else(self, c, x, y, rc_type: RCType = NUMPY):
-
         if rc_type == CASADI:
             res = casadi.if_else(c, x, y)
             return res
@@ -606,7 +597,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return x if c else y
 
     def kron(self, A, B, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.kron(A, B)
         elif rc_type == TORCH:
@@ -639,7 +629,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             )
 
     def norm_1(self, v, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.linalg.norm(v, 1)
         elif rc_type == TORCH:
@@ -648,7 +637,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.norm_1(v)
 
     def norm_2(self, v, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.linalg.norm(v, 2)
         elif rc_type == TORCH:
@@ -657,7 +645,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.norm_2(v)
 
     def logic_and(self, a, b, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.logical_and(a, b)
         elif rc_type == TORCH:
@@ -672,7 +659,6 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return v
 
     def squeeze(self, v, rc_type: RCType = NUMPY):
-
         if rc_type == NUMPY:
             return np.squeeze(v)
         elif rc_type == TORCH:
@@ -704,6 +690,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         if rc_type == NUMPY:
             return np.append(array, to_append)
 
+    # TODO: DO WE REALLY NEED THIS DM? WHY NOT TO USE HUMAN READABLE TERMINOLOGY? SAY CASADI_NUMERIC, CASADI_SYMB, CASADI_MATSYMB
     @staticmethod
     def DM(mat):
         return casadi.DM(mat)
@@ -733,6 +720,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 rc = RCTypeHandler()
 
 
+# TODO: ADD DOCSTRING??
 def simulation_progress(bar_length=10, print_level=100):
     counter = 0
 
@@ -809,6 +797,7 @@ def simulation_progress(bar_length=10, print_level=100):
 #         RCTypeHandler.is_force_row = True
 
 
+# TODO: REMOVE THESE?
 def rej_sampling_rvs(dim, pdf, M):
     """
     Random variable (pseudo)-realizations via rejection sampling.
@@ -935,6 +924,7 @@ def dss_sim(A, B, C, D, uSqn, initial_guess, y0):
         return ySqn, xSqn
 
 
+# TODO: CHECK IF THESE ARE NEEDED
 def update_line(line, newX, newY):
     line.set_xdata(np.append(line.get_xdata(), newX))
     line.set_ydata(np.append(line.get_ydata(), newY))
@@ -985,6 +975,7 @@ def on_close(event):
 log = None
 
 
+# TODO: ADD DOCSTRING?
 def logging_callback(obj, method, output):
     if not log:
         return
@@ -995,6 +986,7 @@ def logging_callback(obj, method, output):
 default_callbacks = [logging_callback]
 
 
+# TODO: ADD DOCSTRING?
 def apply_callbacks(method):
     def new_method(self, *args, **kwargs):
         res = method(self, *args, **kwargs)
@@ -1004,6 +996,7 @@ def apply_callbacks(method):
     return new_method
 
 
+# TODO: ADD DOCSTRING?
 class introduce_callbacks:
     def __init__(self, default_callbacks=default_callbacks):
         self.default_callbacks = default_callbacks

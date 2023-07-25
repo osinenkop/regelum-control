@@ -1,3 +1,5 @@
+# TODO: REMOVE COPYRIGHT STATEMENT. JUST WRITE THAT THIS IS A PATCHED MODULE AND HOW EXACTLY. DESCRIBE WHY THIS IS A FAKE MODULE
+
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import importlib
 import importlib.util
@@ -122,7 +124,6 @@ class Plugins(metaclass=Singleton):
 
     @staticmethod
     def is_in_toplevel_plugins_module(clazz: str) -> bool:
-
         return clazz.startswith("hydra_plugins.") or clazz.startswith(
             "hydra._internal.core_plugins."
         )
@@ -165,7 +166,6 @@ class Plugins(metaclass=Singleton):
     def _scan_all_plugins(
         modules: List[Any],
     ) -> Tuple[List[Type[Plugin]], ScanStats]:
-
         stats = ScanStats()
         stats.total_time = timer()
 
@@ -188,9 +188,14 @@ class Plugins(metaclass=Singleton):
                         if sys.version_info < (3, 10):
                             m = importer.find_module(modname)  # type: ignore
                             assert m is not None
-                            if modname == 'hydra._internal.core_plugins.file_config_source': ## RCOGNITA CODE HERE
+                            if (
+                                modname
+                                == "hydra._internal.core_plugins.file_config_source"
+                            ):  ## RCOGNITA CODE HERE
                                 loaded_mod = m.load_module(modname)
-                                loaded_mod.FileConfigSource = rcognita.__fake_file_config_source.FileConfigSource
+                                loaded_mod.FileConfigSource = (
+                                    rcognita.__fake_file_config_source.FileConfigSource
+                                )
                             else:
                                 loaded_mod = m.load_module(modname)
                         else:

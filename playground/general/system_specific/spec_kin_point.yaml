@@ -3,7 +3,7 @@ observation_target: = []
 sampling_time: 0.01
 time_final: 5
 
-grid_dim%%: $ system.dim_kin_point_system%%
+grid_dim%%: $ system.dim_observation%%
 action_min%%: $ system.action_min%%
 action_max%%: $ system.action_max%%
 

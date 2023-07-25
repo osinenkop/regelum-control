@@ -1,3 +1,5 @@
+# TODO: REMOVE COPYRIGHT STATEMENT. JUST WRITE THAT THIS IS A PATCHED MODULE AND HOW EXACTLY
+
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 import copy
 import functools

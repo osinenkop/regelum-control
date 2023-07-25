@@ -1,3 +1,4 @@
+# TODO: REVIEW THIS DOCSTRING
 """
 This module contains callbacks.
 Callbacks are lightweight event handlers, used mainly for logging.
@@ -20,7 +21,13 @@ from abc import ABC, abstractmethod
 
 import matplotlib.animation
 import mlflow
-import torch
+
+try:
+    import torch
+except:
+    from unittest.mock import MagicMock
+
+    torch = MagicMock()
 import rcognita
 import pandas as pd
 import numpy as np
@@ -45,6 +52,7 @@ def is_in_debug_mode():
     return not sys.gettrace() is None
 
 
+# TODO: WHAT IS MISSING IN DOCSTRINGS IN THIS MODULE IS EXAMPLES?
 class apply_callbacks:
     """
     Decorator that applies a list of callbacks to a given method of an object.
@@ -147,6 +155,7 @@ class Callback(ABC):
         pass
 
 
+# TODO: DOCSTRING
 class TimeCallback(Callback):
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
@@ -158,6 +167,7 @@ class TimeCallback(Callback):
         rcognita.main.metadata["time"] = obj.time
 
 
+# TODO: DOCSTRING
 class OnEpisodeDoneCallerCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -185,6 +195,7 @@ class OnEpisodeDoneCallerCallback(Callback):
             self.iteration_counter += 1
 
 
+# TODO: DOCSTRING
 class OnIterationDoneCallerCallback(Callback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -208,6 +219,7 @@ class OnIterationDoneCallerCallback(Callback):
                 )
 
 
+# TODO: DOCSTRING
 class ConfigDiagramCallback(Callback):
     def perform(self, *args, **kwargs):
         pass
@@ -533,6 +545,7 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
 plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
 
+# TODO: DOCSTRING
 class AnimationCallback(Callback, ABC):
     def __init__(self):
         self.frame_data = []
@@ -735,16 +748,16 @@ class StateCallback(Callback):
 class ObjectiveCallback(Callback):
     cooldown = 8.0
     """
-    A Callback class that logs the current objective value of an Actor instance.
+    A Callback class that logs the current objective value of an Policy instance.
 
-    This callback is triggered whenever the Actor.objective method is called.
+    This callback is triggered whenever the Policy.objective method is called.
 
     Attributes:
     log (function): A logger function with the specified log level.
     """
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.actors.Actor) and method == "objective"
+        return isinstance(obj, rcognita.policies.Policy) and method == "objective"
 
     def perform(self, obj, method, output):
         self.log(f"Current objective: {output}")
@@ -958,6 +971,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         )
         mlflow.log_metric(
             f"B. Critic td loss on iteration {str(self.iteration_number).zfill(5)}",
+            f"Policy learning objective on iteration {str(self.iteration_number).zfill(5)}",
             objective,
             step=epoch_idx,
         )
@@ -971,7 +985,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         iterations_total,
     ):
         self.dump_and_clear_data(
-            f"actor_objective_on_iteration_{str(iteration_number).zfill(5)}"
+            f"policy_objective_on_iteration_{str(iteration_number).zfill(5)}"
         )
         self.iteration_number = iteration_number + 1
 
@@ -1348,7 +1362,7 @@ class CalfCallback(HistoricalCallback):
 
     def perform(self, obj, method, output):
         current_CALF = obj.critic(
-            obj.critic.observation_last_good - obj.critic.observation_target,
+            obj.critic.observation_last_good,
             use_stored_weights=True,
         )
         self.log(
@@ -1356,7 +1370,7 @@ class CalfCallback(HistoricalCallback):
         )
         is_calf = (
             obj.critic.weights_acceptance_status == "accepted"
-            and obj.actor.weights_acceptance_status == "accepted"
+            and obj.policy.weights_acceptance_status == "accepted"
         )
         if not self.data.empty:
             prev_CALF = self.data["J_hat"].iloc[-1]

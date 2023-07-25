@@ -10,12 +10,227 @@ Remarks:
 """
 
 import numpy as np
-from numpy.random import randn
 
+import rcognita
 import rcognita.base
-from rcognita import __utilities as utilities
 from abc import ABC, abstractmethod
-import rcognita.__utilities as utilities
+from .__utilities import rc
+from typing import Optional, Union
+from functools import reduce
+
+
+# TODO: DOCSTRING
+class SystemComposer:
+    @staticmethod
+    def compose(systems: list):
+        return reduce(lambda x, y: x @ y, systems)
+
+
+# TODO: DOCSTRING
+class ComposedSystem(rcognita.base.RcognitaBase):
+    def __init__(
+        self,
+        sys_left,
+        sys_right,
+        io_mapping: Optional[list] = None,
+        output_mode="right",
+    ):
+        if io_mapping is None:
+            io_mapping = np.arange(min(sys_left.dim_state, sys_right.dim_inputs))
+
+        assert output_mode in [
+            "state",
+            "right",
+            "both",
+        ], "output_mode must be 'state', 'right' or 'both'"
+
+        if "diff_eqn" in [sys_left.system_type, sys_right.system_type]:
+            self.system_type = "diff_eqn"
+        else:
+            self.system_type = sys_right.system_type
+
+        self.sys_left = sys_left
+        self.sys_right = sys_right
+        self.parameters = sys_left.parameters | sys_right.parameters
+        self.dim_state = self.sys_right.dim_state + self.sys_left.dim_state
+        if output_mode == "state":
+            self.dim_observation = self.sys_left.dim_state + self.sys_right.dim_state
+        elif output_mode == "right":
+            self.dim_observation = self.sys_right.dim_observation
+        elif output_mode == "both":
+            self.dim_observation = (
+                self.sys_left.dim_observation + self.sys_right.dim_observation
+            )
+
+        self.rout_idx, self.occupied_idx = self.__get_routing(io_mapping)
+        self.dim_inputs = (
+            self.sys_right.dim_inputs
+            + self.sys_left.dim_inputs
+            - len(self.occupied_idx)
+        )
+        self.name = self.sys_left.name + " + " + self.sys_right.name
+
+        self.free_right_input_indices = np.setdiff1d(
+            np.arange(self.sys_right.dim_inputs).astype(int),
+            self.occupied_idx.astype(int),
+        )
+        self.output_mode = output_mode
+        self.forward_permutation = rc.ones(self.dim_observation).astype(int)
+        self.inverse_permutation = rc.ones(self.dim_observation).astype(int)
+
+    # TODO: DOCSTRING
+    @staticmethod
+    def __get_routing(io_mapping):
+        io_mapping_extended = []
+
+        for i, outputs in enumerate(io_mapping):
+            assert type(outputs) in [
+                tuple,
+                int,
+                np.int32,
+                np.int64,
+                None,
+            ], (
+                "io_mapping must be a list of ints or tuples or Nones. "
+                + f"However a value of type {type(outputs)} was provided."
+            )
+            if not isinstance(outputs, tuple):
+                outputs = (outputs,)
+            elif outputs is None:
+                continue
+            for output in outputs:
+                io_mapping_extended.append([i, output])
+
+        io_mapping_extended = sorted(io_mapping_extended, key=lambda x: x[1])
+        rout_idx, occupied_idx = rc.array(io_mapping_extended).astype(int).T
+        return rout_idx, occupied_idx
+
+    def compute_state_dynamics(self, time, state, inputs):
+        state = rc.array(state)
+        inputs = rc.array(inputs)
+        state = state[self.forward_permutation]
+
+        state_for_left, state_for_right = (
+            state[: self.sys_left.dim_state],
+            state[self.sys_left.dim_state :],
+        )
+        inputs_for_left = inputs[: self.sys_left.dim_inputs]
+        dstate_of_left = self.sys_left.compute_state_dynamics(
+            time=time,
+            state=state_for_left,
+            inputs=inputs_for_left,
+        )
+        outputs_of_left = self.sys_left.get_observation(
+            time=time,
+            state=state_for_left,
+            inputs=inputs_for_left,
+        )
+
+        inputs_for_right = rc.zeros(
+            self.sys_right.dim_inputs, prototype=(state, inputs)
+        )
+        inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
+        inputs_for_right[self.free_right_input_indices] = inputs[
+            self.sys_left.dim_inputs :
+        ]
+
+        dstate_of_right = self.sys_right.compute_state_dynamics(
+            time=time,
+            state=state_for_right,
+            inputs=inputs_for_right,
+        )
+        final_dstate_vector = rc.concatenate((dstate_of_left, dstate_of_right))
+
+        assert (
+            final_dstate_vector is not None
+        ), f"final dstate_vector of system {self.name} is None"
+
+        return final_dstate_vector[self.inverse_permutation]
+
+    def get_observation(self, time, state, inputs):
+        state = rc.array(state)
+        inputs = rc.array(inputs)
+
+        inputs_for_left = inputs[: self.sys_left.dim_inputs]
+        state_for_left, state_for_right = (
+            state[: self.sys_left.dim_state],
+            state[self.sys_left.dim_state :],
+        )
+        outputs_of_left = self.sys_left.get_observation(
+            time=time,
+            state=state_for_left,
+            inputs=inputs_for_left,
+        )
+
+        inputs_for_right = rc.zeros(
+            self.sys_right.dim_inputs, prototype=(state, inputs)
+        )
+        inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
+        inputs_for_right[self.free_right_input_indices] = inputs[
+            self.sys_left.dim_inputs :
+        ]
+        outputs_of_right = self.sys_right.get_observation(
+            time=time,
+            state=state_for_right,
+            inputs=inputs_for_right,
+        )
+        if self.output_mode == "right":
+            output = outputs_of_right
+        elif self.output_mode == "state":
+            output = state
+        elif self.output_mode == "both":
+            output = rc.concatenate((state_for_left, state_for_right))
+        else:
+            raise NotImplementedError
+
+        ## TODO: implement 'preserve' mode
+
+        return output
+
+    def receive_action(self, action):
+        self.inputs = action
+
+    # TODO: NEED THIS? REVIEW THIS
+    def update_system_parameters(self, inputs):
+        assert isinstance(inputs, dict)
+        self.sys_left.update_system_parameters(inputs)
+        self.sys_right.update_system_parameters(inputs)
+
+    # TODO: NEED THIS?
+    def compute_closed_loop_rhs(self, time, state):
+        action = self.inputs
+
+        rhs_full_state = self.compute_state_dynamics(time, state, action)
+
+        return rhs_full_state
+
+    def receive_state(self, state):
+        self.state = state
+
+    def reset(self):
+        pass
+
+    # TODO: WHAT IS THIS?
+    def permute_state(self, permutation):
+        self.forward_permutation = permutation
+        self.inverse_permutation = self.get_inverse_permutation(permutation)
+        return self
+
+    # TODO: WHAT IS THIS?
+    def get_inverse_permutation(self, permutation):
+        self.current_permutation = permutation
+        permutation = np.asanyarray(permutation)  # in case p is a tuple, etc.
+        inverse_permutation = np.empty_like(permutation)
+        inverse_permutation[permutation] = np.arange(permutation.size)
+        return inverse_permutation
+
+    def compose(self, sys_right, io_mapping=None, output_mode="state"):
+        return ComposedSystem(
+            self, sys_right, io_mapping=io_mapping, output_mode=output_mode
+        )
+
+    def __matmul__(self, sys_right):
+        return self.compose(sys_right)
 
 
 class System(rcognita.base.RcognitaBase, ABC):
@@ -23,28 +238,26 @@ class System(rcognita.base.RcognitaBase, ABC):
      Interface class of dynamical systems a.k.a. environments.
      Concrete systems should be built upon this class.
      To design a concrete system: inherit this class, override:
-         | :func:`~systems.system.compute_dynamics` :
+         | :func:`~systems.system.compute_state_dynamics` :
          | right-hand side of system description (required)
-         | :func:`~systems.system._compute_disturbance_dynamics` :
-         | right-hand side of disturbance model (if necessary)
          | :func:`~systems.system._dynamic_control` :
          | right-hand side of controller dynamical model (if necessary)
-         | :func:`~systems.system.out` :
+         | :func:`~systems.system.get_observation` :
          | system out (if not overridden, output is identical to state)
 
      Attributes
      ----------
-     sys_type : : string
+     system_type : : string
          Type of system by description:
 
-         | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, action, disturb)`
-         | ``discr_fnc`` : difference equation :math:`state^+ = f(state, action, disturb)`
-         | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, action, disturb)`
+         | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, inputs, disturb)`
+         | ``discr_fnc`` : difference equation :math:`state^+ = f(state, inputs, disturb)`
+         | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, inputs, disturb)`
 
      where:
 
          | :math:`state` : state
-         | :math:`action` : input
+         | :math:`inputs` : input
          | :math:`disturb` : disturbance
 
      The time variable ``time`` is commonly used by ODE solvers, and you shouldn't have it explicitly referenced in the definition, unless your system is non-autonomous.
@@ -71,32 +284,33 @@ class System(rcognita.base.RcognitaBase, ABC):
 
     """
 
+    _name: Optional[str] = None
+    _system_type: Optional[str] = None
+    _dim_state: Optional[int] = None
+    _dim_inputs: Optional[int] = None
+    _dim_observation: Optional[int] = None
+    _parameters = {}
+
     def __init__(
         self,
-        sys_type: str,
-        dim_state: int,
-        dim_input: int,
-        dim_output: int,
-        dim_disturb: int,
-        pars: list = None,
-        is_dynamic_controller: bool = 0,
-        is_disturb: bool = 0,
-        pars_disturb: list = None,
+        system_parameters_init={},
+        state_init=None,
+        inputs_init=None,
     ):
         """
         Parameters
         ----------
-        sys_type : : string
+        system_type : : string
             Type of system by description:
 
-            | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, action, disturb)`
-            | ``discr_fnc`` : difference equation :math:`state^+ = f(state, action, disturb)`
-            | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, action, disturb)`
+            | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, inputs, disturb)`
+            | ``discr_fnc`` : difference equation :math:`state^+ = f(state, inputs, disturb)`
+            | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, inputs, disturb)`
 
         where:
 
             | :math:`state` : state
-            | :math:`action` : input
+            | :math:`inputs` : input
             | :math:`disturb` : disturbance
 
         The time variable ``time`` is commonly used by ODE solvers, and you shouldn't have it explicitly referenced in the definition, unless your system is non-autonomous.
@@ -119,77 +333,75 @@ class System(rcognita.base.RcognitaBase, ABC):
         pars_disturb : : list
             Parameters of the disturbance model
         """
+        assert self.name is not None
+        assert self.system_type is not None
+        assert self.dim_state is not None
+        assert self.dim_inputs is not None
+        assert self.dim_observation is not None
+        assert isinstance(
+            system_parameters_init, dict
+        ), "system_parameters_init should be a dict"
 
-        self.sys_type = sys_type
+        if system_parameters_init:
+            self._parameters.update(system_parameters_init)
 
-        self.dim_state = dim_state
-        self.dim_input = dim_input
-        self.dim_output = dim_output
-        self.dim_disturb = dim_disturb
-        self.pars = pars
-        self.is_dynamic_controller = is_dynamic_controller
-        self.is_disturb = is_disturb
-        self.pars_disturb = pars_disturb
+        self.system_parameters_init = self._parameters
 
-        # Track system's state
-        self.state = np.zeros(dim_state)
-
-        # Current input (a.k.a. action)
-        self.action = np.zeros(dim_input)
-
-        if is_dynamic_controller:
-            if is_disturb:
-                self._dim_full_state = (
-                    self.dim_state + self.dim_disturb + self.dim_input
-                )
-            else:
-                self._dim_full_state = self.dim_state
+        if state_init is None:
+            self.state = rc.zeros(self.dim_state)
         else:
-            if is_disturb:
-                self._dim_full_state = self.dim_state + self.dim_disturb
-            else:
-                self._dim_full_state = self.dim_state
+            self.state = state_init
+
+        if inputs_init is None:
+            self.inputs = rc.zeros(self.dim_inputs)
+        else:
+            self.inputs = inputs_init
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise ValueError("system._name should be set")
+        return self._name
+
+    @property
+    def system_type(self) -> str:
+        if self._system_type is None:
+            raise ValueError("system._system_type should be set")
+        return self._system_type
+
+    @property
+    def dim_state(self) -> int:
+        if self._dim_state is None:
+            raise ValueError("system._dim_state should be set")
+        return self._dim_state
+
+    @property
+    def dim_observation(self) -> int:
+        if self._dim_observation is None:
+            raise ValueError("system._dim_observation should be set")
+        return self._dim_observation
+
+    @property
+    def dim_inputs(self):
+        if self._dim_inputs is None:
+            raise ValueError("system._dim_inputs should be set")
+        return self._dim_inputs
+
+    @property
+    def parameters(self):
+        return self._parameters
 
     @abstractmethod
-    def compute_dynamics(self, time, state, action, disturb):
+    def compute_state_dynamics(self, time, state, inputs) -> np.ndarray:
         """
         Description of the system internal dynamics.
         Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
-        As a probability disitribution, ``compute_dynamics`` should return a number in :math:`[0,1]`
+        As a probability disitribution, ``compute_state_dynamics`` should return a number in :math:`[0,1]`
 
         """
         pass
 
-    def _compute_disturbance_dynamics(self, time, disturb):
-        """
-        Dynamical disturbance model depending on the system type:
-
-        | ``sys_type = "diff_eqn"`` : :math:`\mathcal D disturb = f_q(disturb)`
-        | ``sys_type = "discr_fnc"`` : :math:`disturb^+ = f_q(disturb)`
-        | ``sys_type = "discr_prob"`` : :math:`disturb^+ \sim P_Q(disturb^+|disturb)`
-
-        """
-        pass
-
-    def _dynamic_control(self, time, action, observation):
-        """
-        Right-hand side of a dynamical controller. When ``is_dynamic_control=0``, the controller is considered static, which is to say that the control actions are
-        computed immediately from the system's output.
-        In case of a dynamical controller, the system's state vector effectively gets extended.
-        Dynamical controllers have some advantages compared to the static ones.
-
-        Depending on the system type, can be:
-
-        | ``sys_type = "diff_eqn"`` : :math:`\mathcal D action = f_u(action, observation)`
-        | ``sys_type = "discr_fnc"`` : :math:`action^+ = f_u(action, observation)`
-        | ``sys_type = "discr_prob"`` : :math:`action^+ \sim P_U(action^+|action, observation)`
-
-        """
-        Daction = utilities.rc.zeros(self.dim_input)
-
-        return Daction
-
-    def out(self, state, time=None, action=None):
+    def get_observation(self, time, state, inputs):
         """
         System output.
         This is commonly associated with signals that are measured in the system.
@@ -197,27 +409,35 @@ class System(rcognita.base.RcognitaBase, ABC):
 
         See also
         --------
-        :func:`~systems.system.compute_dynamics`
+        :func:`~systems.system.compute_state_dynamics`
 
         """
         # Trivial case: output identical to state
-        observation = state
-        return observation
+
+        return state
 
     def receive_action(self, action):
         """
-        Receive exogeneous control action to be fed into the system.
-        This action is commonly computed by your controller (agent) using the system output :func:`~systems.system.out`.
+        Receive exogeneous control inputs to be fed into the system.
+        This inputs is commonly computed by your controller (agent) using the system output :func:`~systems.system.get_observation`.
 
         Parameters
         ----------
-        action : : array of shape ``[dim_input, ]``
+        inputs : : array of shape ``[dim_input, ]``
             Action
 
         """
-        self.action = action
+        self.inputs = action
 
-    def compute_closed_loop_rhs(self, time, state_full):
+    def receive_state(self, state):
+        self.state = state
+
+    def update_system_parameters(self, inputs):
+        assert isinstance(inputs, dict)
+        self._parameters.update(inputs)
+        return self.parameters
+
+    def compute_closed_loop_rhs(self, time, state):
         """
         Right-hand side of the closed-loop system description.
         Combines everything into a single vector that corresponds to the right-hand side of the closed-loop system description for further use by simulators.
@@ -228,149 +448,100 @@ class System(rcognita.base.RcognitaBase, ABC):
             Current closed-loop system state
 
         """
+        action = self.inputs
 
-        rhs_full_state = utilities.rc.zeros(
-            self._dim_full_state,
-            prototype=(state_full),
-        )
-
-        state = state_full[0 : self.dim_state]
-
-        if self.is_disturb:
-            disturb = state_full[self.dim_state :]
-        else:
-            disturb = []
-
-        if self.is_dynamic_controller:
-            action = state_full[-self.dim_input :]
-            observation = self.out(state)
-            rhs_full_state[-self.dim_input :] = self._ctrlDyn(time, action, observation)
-        else:
-            # Fetch the control action stored in the system
-            action = self.action
-
-        rhs_full_state[0 : self.dim_state] = self.compute_dynamics(
-            time, state, action, disturb
-        )
-
-        if self.is_disturb:
-            rhs_full_state[self.dim_state :] = self._compute_disturbance_dynamics(
-                time, disturb
-            )
-
-        # Track system's state
-        self.state = state
+        rhs_full_state = self.compute_state_dynamics(time, state, action)
 
         return rhs_full_state
 
-    def get_state(self):
-        return self.state
-
-    def reset(self):
-        pass
-
-
-class SysKinematicPoint(System):
-    """
-    System class: mathematical pendulum
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.name = "kinematic-point"
-
-    def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate = utilities.rc.zeros(
-            self.dim_state,
-            prototype=(state, action),
+    def compose(self, sys_right, io_mapping=None, output_mode="state"):
+        return ComposedSystem(
+            self, sys_right, io_mapping=io_mapping, output_mode=output_mode
         )
 
-        for i in range(utilities.rc.shape(action)[0]):
-            Dstate[i] = action[i]
+    def __matmul__(self, sys_right):
+        return self.compose(sys_right)
+
+    def reset(self):
+        self.update_system_parameters(self.system_parameters_init)
+
+
+class KinematicPoint(System):
+    _name = "kinematic-point"
+    _system_type = "diff_eqn"
+    _dim_state = 2
+    _dim_inputs = 2
+    _dim_observation = 2
+
+    def compute_state_dynamics(self, time, state, inputs):
+        Dstate = rc.zeros(
+            self.dim_state,
+            prototype=(state, inputs),
+        )
+
+        for i in range(rc.shape(inputs)[0]):
+            Dstate[i] = inputs[i]
 
         return Dstate
 
-    def out(self, state, time=None, action=None):
-        return state
 
-
-class SysInvertedPendulum(System):
+class InvertedPendulumPID(System):
     """
     System class: mathematical pendulum
 
     """
 
-    # DEBUG ====================================
-    # def __init__(self, *args, is_angle_overflow=True, **kwargs):
-    # /DEBUG ===================================
+    _name = "inverted-pendulum"
+    _system_type = "diff_eqn"
+    _dim_state = 2
+    _dim_inputs = 2
+    _dim_observation = 3
+    _parameters = {"m": 1, "g": 9.8, "l": 1}
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.name = "inverted-pendulum"
-
-        if self.is_disturb:
-            self.sigma_disturb = self.pars_disturb[0]
-            self.mu_disturb = self.pars_disturb[1]
-            self.tau_disturb = self.pars_disturb[2]
 
         self.time_old = 0
         self.integral_alpha = 0
 
-        # DEBUG ====================================
-        # self.is_angle_overflow = is_angle_overflow
-        # /DEBUG ===================================
-
-    def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate = utilities.rc.zeros(
+    def compute_state_dynamics(self, time, state, inputs):
+        Dstate = rc.zeros(
             self.dim_state,
-            prototype=(state, action),
+            prototype=(state, inputs),
         )
 
-        m, g, l = self.pars[0], self.pars[1], self.pars[2]
+        m, g, l = (
+            self.parameters["m"],
+            self.parameters["g"],
+            self.parameters["l"],
+        )
 
         Dstate[0] = state[1]
-        Dstate[1] = g / l * utilities.rc.sin(state[0]) + action[0] / (m * l**2)
+        Dstate[1] = g / l * rc.sin(state[0]) + inputs[0] / (m * l**2)
 
         return Dstate
 
-    def out(self, state, time=None, action=None):
-        # DEBUG ====================================
-        # observation = utilities.rc.zeros(self.dim_output)
-        # observation = state[:3] + measNoise  # <-- Measure only position and orientation
-        # observation = state  # <-- Position, force and torque sensors on
-        # if self.is_angle_overflow:
-        #     delta = np.abs(np.pi - state[0])
-        #     if state[0] > 0:
-        #         if state[0] > np.pi:
-        #             state = [-np.pi + delta, state[1]]
-        #     else:
-        #         if state[0] < -np.pi:
-        #             state = [np.pi - delta, state[1]]
-        # /DEBUG ===================================
+    def get_observation(self, time, state, inputs):
         delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
-        return state  # utilities.rc.array([state[0], self.integral_alpha, state[1]])
+        return rc.array([state[0], self.integral_alpha, state[1]])
 
     def reset(self):
         self.time_old = 0
         self.integral_alpha = 0
 
 
-class SysInvertedPendulumPD(SysInvertedPendulum):
-    def out(self, state, time=None, action=None):
-        return utilities.rc.array([state[0], 0, state[1]])
+class InvertedPendulumPD(InvertedPendulumPID):
+    _dim_observation = 2
 
-    def reset(self):
-        self.time_old = 0
-        self.integral_alpha = 0
+    def get_observation(self, time, state, inputs):
+        return rc.array([state[0], state[1]])
 
 
-class Sys3WRobot(System):
+class ThreeWheeledRobot(System):
     """
-    System class: 3-wheel robot with dynamical actuators.
+    System class: 3-wheeled robot with dynamical actuators.
 
     Description
     -----------
@@ -400,7 +571,7 @@ class Sys3WRobot(System):
 
     :math:`state = [x_c, y_c, \\angle, v, \\omega]`
 
-    :math:`action = [F, M]`
+    :math:`inputs = [F, M]`
 
     ``pars`` = :math:`[m, I]`
 
@@ -411,153 +582,109 @@ class Sys3WRobot(System):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    _name = "three-wheeled-robot"
+    _system_type = "diff_eqn"
+    _dim_state = 5
+    _dim_inputs = 2
+    _dim_observation = 5
+    _parameters = {"m": 10, "I": 1}
 
-        self.name = "3wrobot"
-
-        if self.is_disturb:
-            self.sigma_disturb = self.pars_disturb[0]
-            self.mu_disturb = self.pars_disturb[1]
-            self.tau_disturb = self.pars_disturb[2]
-
-    def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate = utilities.rc.zeros(
+    def compute_state_dynamics(self, time, state, inputs):
+        Dstate = rc.zeros(
             self.dim_state,
-            prototype=(state, action),
+            prototype=(state, inputs),
         )
 
-        m, I = self.pars[0], self.pars[1]
+        m, I = self.parameters["m"], self.parameters["I"]
 
-        Dstate[0] = state[3] * utilities.rc.cos(state[2])
-        Dstate[1] = state[3] * utilities.rc.sin(state[2])
+        Dstate[0] = state[3] * rc.cos(state[2])
+        Dstate[1] = state[3] * rc.sin(state[2])
         Dstate[2] = state[4]
-
-        if self.is_disturb and (disturb != []):
-            Dstate[3] = 1 / m * (action[0] + disturb[0])
-            Dstate[4] = 1 / I * (action[1] + disturb[1])
-        else:
-            Dstate[3] = 1 / m * action[0]
-            Dstate[4] = 1 / I * action[1]
+        Dstate[3] = 1 / m * inputs[0]
+        Dstate[4] = 1 / I * inputs[1]
 
         return Dstate
 
-    def _compute_disturbance_dynamics(self, time, disturb):
-        """
-        Description
-        -----------
 
-        We use here a 1st-order stochastic linear system of the type
+class Integrator(System):
+    _name = "integral-parts"
+    _system_type = "diff_eqn"
+    _dim_state = 2
+    _dim_inputs = 2
+    _dim_observation = 2
+    _parameters = {"m": 10, "I": 1}
 
-        .. math:: \mathrm d Q_t = - \\frac{1}{\\tau_disturb} \\left( Q_t \\mathrm d t + \\sigma_disturb ( \\mathrm d B_t + \\mu_disturb ) \\right) ,
+    def compute_state_dynamics(self, time, state, inputs):
+        Dstate = rc.zeros(
+            self.dim_state,
+            prototype=(state, inputs),
+        )
 
-        where :math:`B` is the standard Brownian motion, :math:`Q` is the stochastic process whose realization is :math:`disturb`, and
-        :math:`\\tau_disturb, \\sigma_disturb, \\mu_disturb` are the time constant, standard deviation and mean, resp.
+        m, I = self.parameters["m"], self.parameters["I"]
 
-        ``pars_disturb = [sigma_disturb, mu_disturb, tau_disturb]``, with each being an array of shape ``[dim_disturb, ]``
+        Dstate[0] = 1 / m * inputs[0]
+        Dstate[1] = 1 / I * inputs[1]
 
-        """
-
-        Ddisturb = utilities.rc.zeros(self.dim_disturb, prototype=disturb)
-
-        for k in range(0, self.dim_disturb):
-            Ddisturb[k] = -self.tau_disturb[k] * (
-                disturb[k] + self.sigma_disturb[k] * (randn() + self.mu_disturb[k])
-            )
-
-        return Ddisturb
-
-    def out(self, state, time=None, action=None):
-        # observation = utilities.rc.zeros(self.dim_output)
-        # observation = state[:3] + measNoise # <-- Measure only position and orientation
-        # observation = state  # <-- Position, force and torque sensors on
-        return state
+        return Dstate
 
 
-class Sys3WRobotNI(System):
+class ThreeWheeledRobotNI(System):
     """
     System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator).
-
-
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    _name = "three-wheeled-robot-ni"
+    _system_type = "diff_eqn"
+    _dim_state = 3
+    _dim_inputs = 2
+    _dim_observation = 3
 
-        self.name = "3wrobotNI"
+    def compute_state_dynamics(self, time, state, inputs):
+        Dstate = rc.zeros(self.dim_state, prototype=(state, inputs))
 
-        if self.is_disturb:
-            self.sigma_disturb = self.pars_disturb[0]
-            self.mu_disturb = self.pars_disturb[1]
-            self.tau_disturb = self.pars_disturb[2]
-
-    def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate = utilities.rc.zeros(self.dim_state, prototype=(state, action))
-
-        if self.is_disturb and (disturb != []):
-            Dstate[0] = action[0] * utilities.rc.cos(state[2]) + disturb[0]
-            Dstate[1] = action[0] * utilities.rc.sin(state[2]) + disturb[0]
-            Dstate[2] = action[1] + disturb[1]
-        else:
-            Dstate[0] = action[0] * utilities.rc.cos(state[2])
-            Dstate[1] = action[0] * utilities.rc.sin(state[2])
-            Dstate[2] = action[1]
+        Dstate[0] = inputs[0] * rc.cos(state[2])
+        Dstate[1] = inputs[0] * rc.sin(state[2])
+        Dstate[2] = inputs[1]
 
         return Dstate
 
-    def _compute_disturbance_dynamics(self, time, disturb):
-        """ """
-        Ddisturb = utilities.rc.zeros(self.dim_disturb)
 
-        for k in range(0, self.dim_disturb):
-            Ddisturb[k] = -self.tau_disturb[k] * (
-                disturb[k] + self.sigma_disturb[k] * (randn() + self.mu_disturb[k])
-            )
-
-        return Ddisturb
-
-    def out(self, state, time=None, action=None):
-        return state
-
-
-class System2Tank(System):
+class TwoTank(System):
     """
     Two-tank system with nonlinearity.
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    _name = "two-tank"
+    _system_type = "diff_eqn"
+    _dim_state = 2
+    _dim_inputs = 1
+    _dim_observation = 2
+    _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
 
-        self.name = "2tank"
-
-    def compute_dynamics(self, time, state, action, disturb=None):
-        tau1, tau2, K1, K2, K3 = self.pars
-
-        Dstate = utilities.rc.zeros(
-            self.dim_state,
-            prototype=(state, action),
+    def compute_state_dynamics(self, time, state, inputs):
+        tau1, tau2, K1, K2, K3 = (
+            self.parameters["tau1"],
+            self.parameters["tau2"],
+            self.parameters["K1"],
+            self.parameters["K2"],
+            self.parameters["K3"],
         )
-        Dstate[0] = 1 / (tau1) * (-state[0] + K1 * action[0])
+
+        Dstate = rc.zeros(
+            self.dim_state,
+            prototype=(state, inputs),
+        )
+        Dstate[0] = 1 / (tau1) * (-state[0] + K1 * inputs[0])
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 
         return Dstate
-
-    def _compute_disturbance_dynamics(self, time, disturb):
-        Ddisturb = utilities.rc.zeros(self.dim_disturb)
-
-        return utilities.rc.array(Ddisturb)
-
-    def out(self, observation, time=None, action=None):
-        state = observation
-
-        return state
 
 
 class GridWorld(System):
     """
     A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
-    The action encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
+    The inputs encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
 
     """
 
@@ -565,19 +692,19 @@ class GridWorld(System):
         self.dims = dims
         self.terminal_state = terminal_state
 
-    def compute_dynamics(self, current_state, action):
+    def compute_state_dynamics(self, current_state, inputs):
         if tuple(self.terminal_state) == tuple(current_state):
             return current_state
-        if action == 0:
+        if inputs == 0:
             if current_state[1] < self.dims[1] - 1:
                 return (current_state[0], current_state[1] + 1)
-        elif action == 2:
+        elif inputs == 2:
             if current_state[0] > 0:
                 return (current_state[0] - 1, current_state[1])
-        elif action == 1:
+        elif inputs == 1:
             if current_state[1] > 0:
                 return (current_state[0], current_state[1] - 1)
-        elif action == 3:
+        elif inputs == 3:
             if current_state[0] < self.dims[0] - 1:
                 return (current_state[0] + 1, current_state[1])
         return current_state
@@ -590,22 +717,34 @@ class CartPole(System):
 
     """
 
+    _name = "cartpole"
+    _system_type = "diff_eqn"
+    _dim_state = 4
+    _dim_inputs = 1
+    _dim_observation = 4
+    _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.name = "2wrobot"
-
-    def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate = utilities.rc.zeros(
+    def compute_state_dynamics(self, time, state, inputs, disturb=None):
+        Dstate = rc.zeros(
             self.dim_state,
-            prototype=(state, action),
+            prototype=(state, inputs),
         )
 
-        m_c, m_p, g, l = self.pars
+        m_c, m_p, g, l = (
+            self.parameters["m_c"],
+            self.parameters["m_p"],
+            self.parameters["g"],
+            self.parameters["l"],
+        )
         theta = state[0]
-        x = state[1]
         theta_dot = state[2]
         x_dot = state[3]
+
+        sin_theta = rc.sin(theta)
+        cos_theta = rc.cos(theta)
 
         # Dstate[0] = theta_dot
 
@@ -613,21 +752,21 @@ class CartPole(System):
 
         # Dstate[2] = (
         #     (
-        #         g * utilities.rc.sin(theta)
-        #         - utilities.rc.cos(theta)
-        #         * (action[0] + m_p * l * theta_dot**2 * utilities.rc.sin(theta))
+        #         g * rc.sin(theta)
+        #         - rc.cos(theta)
+        #         * (inputs[0] + m_p * l * theta_dot**2 * rc.sin(theta))
         #         / (m_c + m_p)
         #     )
         #     / l
-        #     / (4 / 3 - m_p * (utilities.rc.cos(theta) ** 2) / (m_c + m_p))
+        #     / (4 / 3 - m_p * (rc.cos(theta) ** 2) / (m_c + m_p))
         # )
         # Dstate[3] = (
-        #     action[0]
+        #     inputs[0]
         #     + m_p
         #     * l
         #     * (
-        #         theta_dot**2 * utilities.rc.sin(theta)
-        #         - Dstate[0] * utilities.rc.cos(theta)
+        #         theta_dot**2 * rc.sin(theta)
+        #         - Dstate[0] * rc.cos(theta)
         #     )
         # ) / (m_c + m_p)
 
@@ -636,37 +775,26 @@ class CartPole(System):
         Dstate[1] = x_dot
 
         Dstate[3] = (
-            -m_p * g * utilities.rc.cos(theta) * utilities.rc.sin(theta)
-            - m_p * l * theta_dot**2 * utilities.rc.sin(theta)
-            + action[0]
-        ) / (
-            m_c + m_p * utilities.rc.sin(theta) ** 2
-        ) - 100 * x_dot**2 * utilities.rc.sign(
-            x_dot
-        )
+            -m_p * g * cos_theta * sin_theta
+            - m_p * l * theta_dot**2 * sin_theta
+            + inputs[0]
+        ) / (m_c + m_p * sin_theta**2)
 
-        Dstate[2] = -g / l * utilities.rc.sin(theta) + Dstate[3] / l * utilities.rc.cos(
-            theta
-        )
+        Dstate[2] = -g / l * sin_theta + Dstate[3] / l * cos_theta
 
         return Dstate
 
-    def _compute_disturbance_dynamics(self, time, disturb):
-        Ddisturb = utilities.rc.zeros(self.dim_disturb)
-
-        return utilities.rc.array(Ddisturb)
-
-    def out(self, state, time=None, action=None):
+    def get_observation(self, time, state, inputs):
         theta = state[0]
         x = state[1]
         theta_dot = state[2]
         x_dot = state[3]
-        theta_observed = theta
-        theta_observed = theta - utilities.rc.floor(theta / (2 * np.pi)) * 2 * np.pi
+
+        theta_observed = theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi
         if theta_observed > np.pi:
             theta_observed = theta_observed - 2 * np.pi
 
-        return utilities.rc.array([theta_observed, x, theta_dot, x_dot])
+        return rc.array([theta_observed, x, theta_dot, x_dot])
 
 
 class LunarLander(System):
@@ -675,6 +803,13 @@ class LunarLander(System):
     https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf
 
     """
+
+    _name = "lander"
+    _system_type = "diff_eqn"
+    _dim_state = 6
+    _dim_inputs = 2
+    _dim_observation = 6
+    _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1, "r": 0.5, "sigma": 0.1}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -688,15 +823,19 @@ class LunarLander(System):
         self.state_cache = []
         self.is_landed = False
 
-    def compute_dynamics(self, time, state, action, disturb=None):
-        Dstate_before_landing = utilities.rc.zeros(
+    def compute_state_dynamics(self, time, state, inputs, disturb=None):
+        Dstate_before_landing = rc.zeros(
             self.dim_state,
-            prototype=(state, action),
+            prototype=(state, inputs),
         )
 
-        m, J, g = self.pars
+        m, J, g = (
+            self.parameters["m"],
+            self.parameters["J"],
+            self.parameters["g"],
+        )
 
-        F_g = m * g * utilities.rc.array([0, 1], prototype=Dstate_before_landing)
+        F_g = m * g * rc.array([0, 1], prototype=Dstate_before_landing)
 
         x = state[0]
         y = state[1]
@@ -706,28 +845,22 @@ class LunarLander(System):
         theta_dot = state[5]
 
         left_support, right_support = self.compute_supports_geometry(state[:2], theta)
-        # l_reaction = self.compute_reaction(state[:2], left_support)
-        # r_reaction = self.compute_reaction(state[:2], right_support)
 
-        F_l = action[0]
-        F_t = action[1]
+        self.is_landed = (
+            rc.if_else(left_support[1] <= 0, 1, 0)
+            + rc.if_else(right_support[1] <= 0, 1, 0)
+        ) > 0
 
-        # M_l = utilities.rc.cross(
-        #     utilities.rc.concatenate(
-        #         (left_support - state[:2], utilities.rc.array([0]))
-        #     ),
-        #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
-        # )[2] * utilities.rc.if_else(left_support[1] < 0, 1, 0)
-        # M_r = utilities.rc.cross(
-        #     utilities.rc.concatenate(
-        #         (right_support - state[:2], utilities.rc.array([0]))
-        #     ),
-        #     utilities.rc.concatenate((F_g, utilities.rc.array([0]))),
-        # )[2] * utilities.rc.if_else(right_support[1] < 0, 1, 0)
+        F_l = inputs[0] * (1 - self.is_landed)
+        F_t = inputs[1] * (1 - self.is_landed)
 
-        self.is_landed_left = utilities.rc.if_else(left_support[1] <= 0, 1, 0)
-        self.is_landed_right = utilities.rc.if_else(right_support[1] <= 0, 1, 0)
-        self.is_landed_vertex = utilities.rc.if_else(state[1] <= 0, 1, 0)
+        N_left, N_right = self.compute_reaction(
+            state[:2], left_support
+        ), self.compute_reaction(state[:2], right_support)
+
+        self.is_landed_left = rc.if_else(left_support[1] <= 0, 1, 0)
+        self.is_landed_right = rc.if_else(right_support[1] <= 0, 1, 0)
+        self.is_landed_vertex = rc.if_else(state[1] <= 0, 1, 0)
         self.is_freezed = (
             self.is_landed_left * self.is_landed_right + self.is_landed_vertex
         ) > 0
@@ -738,11 +871,9 @@ class LunarLander(System):
         Dstate_before_landing[0] = x_dot
         Dstate_before_landing[1] = y_dot
         Dstate_before_landing[2] = theta_dot
-        Dstate_before_landing[3] = (
-            1 / m * (F_l * utilities.rc.cos(theta) - F_t * utilities.rc.sin(theta))
-        )
+        Dstate_before_landing[3] = 1 / m * (F_l * rc.cos(theta) - F_t * rc.sin(theta))
         Dstate_before_landing[4] = (
-            1 / m * (F_l * utilities.rc.sin(theta) + F_t * utilities.rc.cos(theta)) - g
+            1 / m * (F_l * rc.sin(theta) + F_t * rc.cos(theta)) - g
         )
         Dstate_before_landing[5] = (4 * F_l) / J
 
@@ -751,7 +882,7 @@ class LunarLander(System):
             # y=y,
             angle=-theta - self.alpha,
             angle_dot=theta_dot,
-            prototype=(state, action),
+            prototype=(state, inputs),
         )
 
         Dstate_landed_left = self._compute_pendulum_dynamics(
@@ -759,7 +890,7 @@ class LunarLander(System):
             # y=y,
             angle=self.alpha - theta,
             angle_dot=theta_dot,
-            prototype=(state, action),
+            prototype=(state, inputs),
         )
 
         # Check if any of the two lander's supports touched the ground. If yes, freeze the state.
@@ -776,14 +907,14 @@ class LunarLander(System):
         return Dstate
 
     def _compute_pendulum_dynamics(self, angle, angle_dot, prototype):
-        Dstate = utilities.rc.zeros(
+        Dstate = rc.zeros(
             self.dim_state,
             prototype=prototype,
         )
         m, J, g = self.pars
 
-        x = self.l * utilities.rc.sin(angle)
-        y = self.l * utilities.rc.cos(angle)
+        x = self.l * rc.sin(angle)
+        y = self.l * rc.cos(angle)
 
         Dstate[5] = g / self.l**2 * x
 
@@ -802,25 +933,21 @@ class LunarLander(System):
 
         return Dstate
 
-    def _compute_disturbance_dynamics(self, time, disturb):
-        Ddisturb = utilities.rc.zeros(self.dim_disturb)
-
-        return utilities.rc.array(Ddisturb)
-
     def compute_supports_geometry(self, xi, theta):
-        A = utilities.rc.zeros((2, 2), prototype=xi)
-        xi_2 = utilities.rc.zeros(2, prototype=xi)
-        xi_3 = utilities.rc.zeros(2, prototype=xi)
+        A = rc.zeros((2, 2), prototype=xi)
+        xi_2 = rc.zeros(2, prototype=xi)
+        xi_3 = rc.zeros(2, prototype=xi)
 
-        A[0, 0] = utilities.rc.cos(theta)
-        A[0, 1] = -utilities.rc.sin(theta)
-        A[1, 0] = utilities.rc.sin(theta)
-        A[1, 1] = utilities.rc.cos(theta)
+        A[0, 0] = rc.cos(theta)
+        A[0, 1] = -rc.sin(theta)
+        A[1, 0] = rc.sin(theta)
+        A[1, 1] = rc.cos(theta)
 
-        xi_2[0] = xi[0] - self.a
-        xi_2[1] = xi[1] - self.r
-        xi_3[0] = xi[0] + self.a
-        xi_3[1] = xi[1] - self.r
+        a, r = self.parameters["a"], self.parameters["r"]
+        xi_2[0] = xi[0] - a
+        xi_2[1] = xi[1] - r
+        xi_3[0] = xi[0] + a
+        xi_3[1] = xi[1] - r
 
         xi_2_d = xi_2 - xi
         xi_3_d = xi_3 - xi
@@ -831,45 +958,22 @@ class LunarLander(System):
         xi_3_new = xi + xi_3_d_rot
         return xi_2_new, xi_3_new
 
-    def compute_reaction(self, r, r_support):
-        m, J, g = self.pars
+    def compute_reaction(
+        self,
+        r,
+        r_support,
+    ):
+        m, _, g, sigma = (
+            self.parameters["m"],
+            self.parameters["J"],
+            self.parameters["g"],
+            self.parameters["sigma"],
+        )
         lvl = r_support[1]
-        e = (r - r_support) / utilities.rc.sqrt(utilities.rc.norm_2(r - r_support))
-        reaction = utilities.rc.if_else(
+        e = (r - r_support) / rc.sqrt(rc.norm_2(r - r_support))
+        reaction = rc.if_else(
             lvl <= 0,
-            e
-            * utilities.rc.dot(e, m * g * utilities.rc.array([0, 1]))
-            * lvl
-            * self.sigma,
-            utilities.rc.array([0.0, 0.0]),
+            e * rc.dot(e, m * g * rc.array([0, 1])) * lvl * sigma,
+            rc.array([0.0, 0.0]),
         )
         return -reaction
-
-    def out(self, state, time=None, action=None):
-        # If landed, we artificially output the target as an indicator of episode end
-        # state = utilities
-
-        # (
-        #     observation
-        #     if not self.is_landed
-        #     else utilities.rc.array([0, self.a, 0, 0, 0, 0])
-        # )
-
-        # return state * (1 - self.is_landed) + self.is_landed * utilities.rc.array(
-        #     [0, self.a, 0, 0, 0, 0]
-        # )
-        # return utilities.rc.if_else(
-        #     self.is_landed > 0, utilities.rc.array([0, self.a, 0, 0, 0, 0]), state
-        # )
-        # return state
-        # left_support, right_support = self.compute_supports_geometry(
-        #     state[:2], state[2]
-        # )
-        # self.is_landed = utilities.rc.if_else(
-        #     left_support[1] <= 0, 1, 0
-        # ) * utilities.rc.if_else(right_support[1] <= 0, 1, 0)
-        # return state * (1 - self.is_landed) + self.is_landed * utilities.rc.array(
-        #     [0, self.a, 0, 0, 0, 0]
-        # )
-
-        return state
