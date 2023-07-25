@@ -477,7 +477,6 @@ class CriticOfObservation(Critic):
         return critic_objective
 
 
-<<<<<<< HEAD
 class CriticOnPolicy(Critic):
     def __init__(self, *args, batch_size, td_n, device, is_same_critic, **kwargs):
         super().__init__(*args, **kwargs)
@@ -569,9 +568,6 @@ class CriticOnPolicy(Critic):
             self.model.update_and_cache_weights()
 
 
-=======
-# TODO: REMOVE THIS?
->>>>>>> origin/fix-inits
 class CriticOfActionObservationOnPolicy(Critic):
     @apply_callbacks()
     def objective(self, data_buffer=None, weights=None):
