@@ -957,7 +957,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
             }
         )
         mlflow.log_metric(
-            f"Critic td loss on iteration {str(self.iteration_number).zfill(5)}",
+            f"B. Critic td loss on iteration {str(self.iteration_number).zfill(5)}",
             objective,
             step=epoch_idx,
         )
@@ -995,17 +995,17 @@ class TotalObjectiveCallback(HistoricalCallback):
         iterations_total,
     ):
         mlflow.log_metric(
-            "Iteration stats avg total objectives",
+            "A. Iteration stats avg total objectives",
             np.mean(scenario.recent_total_objectives_of_episodes),
             step=iteration_number,
         )
         mlflow.log_metric(
-            "Iteration stats med total objectives",
+            "A. Iteration stats med total objectives",
             np.median(scenario.recent_total_objectives_of_episodes),
             step=iteration_number,
         )
         mlflow.log_metric(
-            "Iteration stats std total objectives",
+            "A. Iteration stats std total objectives",
             np.std(scenario.recent_total_objectives_of_episodes),
             step=iteration_number,
         )
@@ -1031,7 +1031,7 @@ class TotalObjectiveCallback(HistoricalCallback):
             f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
         )
         mlflow.log_metric(
-            f"Total objectives in iteration {str(iteration_number).zfill(5)}",
+            f"C. Total objectives in iteration {str(iteration_number).zfill(5)}",
             scenario.recent_total_objective,
             step=len(self.data),
         )

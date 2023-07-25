@@ -22,3 +22,4 @@ running_objective: $ running_objective
 device: cuda:0
 is_with_baseline: False 
 is_do_not_let_the_past_distract_you: False
+batch_keys: = ["observation", "action", "observation_target", "total_objective", "timestamp", "tail_total_objective", "baseline"]

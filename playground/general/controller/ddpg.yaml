@@ -1,11 +1,11 @@
 defaults:
   - actor: ddpg
-  - critic: dqn_behaviour
-  - episode_data_buffer: observation_action
+  - critic: critic_on_policy 
+  - data_buffer: data_buffer
 
 name%%: ddpg
 
-_target_: rcognita.controllers.RLController
+_target_: rcognita.controllers.PGController
 
 ###---Constructor arguments---###
 
@@ -16,15 +16,22 @@ critic_period: = ${.critic_period_multiplier%%} * ${.sampling_time}
 action_bounds: $ system.action_bounds%%
 
 critic_period_multiplier%%: 1
+discount_factor%%: 1.0 
 
 critic:
+  is_same_critic: False
+  model:
+    dim_hidden: 16
+    is_double_precision: True
+    bias: True
+    is_force_infinitesimal: True
   optimizer:
+    iterations: 100 
     opt_options:
-      lr: 0.00001
-  td_n: 10
-  batch_size: 50
-  discount_factor: 0.94
+      lr: 0.01
+  td_n: 128 
+  batch_size: 100
+  discount_factor: $ controller.discount_factor%%
 
-episode_data_buffer:
-  is_use_derivative: $ system_specific.is_use_derivative
-  is_cat_action: False
+actor:
+  discount_factor: $ controller.discount_factor%%

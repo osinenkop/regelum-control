@@ -1114,42 +1114,9 @@ def weights_init_normal(model, std):
         model.bias.data.fill_(0)
 
 
-class GaussianPDFModel(ModelNN):
-    def __init__(
-        self,
-        dim_observation,
-        dim_action,
-        dim_hidden,
-        std,
-        action_bounds,
-        leakyrelu_coef=0.2,
-        normalize_output_coef=400.0,
-    ):
+class ModelWithScaledAction(ModelNN):
+    def __init__(self, action_bounds):
         super().__init__()
-
-        self.dim_observation = dim_observation
-        self.dim_action = dim_action
-        self.dim_hidden = dim_hidden
-        self.leakyrelu_coef = leakyrelu_coef
-        self.std = std
-        self.normalize_output_coef = normalize_output_coef
-
-        self.perceptron = nn.Sequential(
-            nn.Linear(self.dim_observation, self.dim_hidden),
-            nn.LeakyReLU(self.leakyrelu_coef),
-            nn.Linear(self.dim_hidden, self.dim_hidden),
-            nn.LeakyReLU(self.leakyrelu_coef),
-            nn.Linear(self.dim_hidden, dim_action),
-        )
-
-        self.register_parameter(
-            name="scale_tril_matrix",
-            param=torch.nn.Parameter(
-                (self.std * torch.eye(dim_action)).float(),
-                requires_grad=False,
-            ),
-        )
-
         self.register_parameter(
             name="action_bounds",
             param=torch.nn.Parameter(
@@ -1157,8 +1124,6 @@ class GaussianPDFModel(ModelNN):
                 requires_grad=False,
             ),
         )
-
-        self.cache_weights()
 
     def get_unscale_coefs_from_minus_one_one_to_action_bounds(self):
         action_bounds = self.get_parameter("action_bounds")
@@ -1184,13 +1149,6 @@ class GaussianPDFModel(ModelNN):
 
         return (y - unscale_bias) / unscale_multiplier
 
-    def get_means(self, observation):
-        assert 1 - 3 * self.std > 0, "1 - 3 std should be greater than 0"
-        # We should guarantee with good probability that sampled actions are within action bounds that are scaled to [-1, 1]
-        return (1 - 3 * self.std) * torch.tanh(
-            self.perceptron(observation) / self.normalize_output_coef
-        )
-
     def split_tensor_to_observations_actions(self, observations_actions_tensor):
         if len(observations_actions_tensor.shape) == 1:
             observation, action = (
@@ -1206,6 +1164,98 @@ class GaussianPDFModel(ModelNN):
             raise ValueError("Input tensor has unexpected dims")
 
         return observation, action
+
+
+class DDPGActorModel(ModelWithScaledAction):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden,
+        action_bounds,
+        leakyrelu_coef=0.2,
+        normalize_output_coef=400.0,
+    ):
+        super().__init__(action_bounds)
+        self.dim_observation = dim_observation
+        self.dim_action = dim_action
+        self.dim_hidden = dim_hidden
+        self.leakyrelu_coef = leakyrelu_coef
+        self.normalize_output_coef = normalize_output_coef
+
+        self.perceptron = nn.Sequential(
+            nn.Linear(self.dim_observation, self.dim_hidden, bias=True),
+            # nn.LeakyReLU(self.leakyrelu_coef),
+            # nn.Tanh(),
+            # nn.Linear(self.dim_hidden, self.dim_hidden, bias=True),
+            # # nn.LeakyReLU(self.leakyrelu_coef),
+            # nn.Tanh(),
+            # nn.Linear(self.dim_hidden, self.dim_hidden, bias=True),
+            nn.LeakyReLU(self.leakyrelu_coef),
+            # nn.Tanh(),
+            nn.Linear(self.dim_hidden, self.dim_hidden, bias=True),
+            nn.LeakyReLU(self.leakyrelu_coef),
+            # nn.Tanh(),
+            nn.Linear(self.dim_hidden, dim_action, bias=True),
+        )
+
+    def forward(self, observation):
+        return self.unscale_from_minus_one_one_to_action_bounds(
+            torch.tanh(self.perceptron(observation) / self.normalize_output_coef)
+        )
+
+    def sample(self, observation):
+        return self.forward(observation)
+
+
+class GaussianPDFModel(ModelWithScaledAction):
+    def __init__(
+        self,
+        dim_observation,
+        dim_action,
+        dim_hidden,
+        std,
+        action_bounds,
+        leakyrelu_coef=0.2,
+        normalize_output_coef=400.0,
+    ):
+        super().__init__(action_bounds)
+
+        self.dim_observation = dim_observation
+        self.dim_action = dim_action
+        self.dim_hidden = dim_hidden
+        self.leakyrelu_coef = leakyrelu_coef
+        self.std = std
+        self.normalize_output_coef = normalize_output_coef
+
+        self.perceptron = nn.Sequential(
+            nn.Linear(self.dim_observation, self.dim_hidden),
+            nn.LeakyReLU(self.leakyrelu_coef),
+            nn.Linear(self.dim_hidden, self.dim_hidden),
+            nn.LeakyReLU(self.leakyrelu_coef),
+            nn.Linear(self.dim_hidden, dim_action),
+        )
+
+        self.register_parameter(
+            name="scale_tril_matrix",
+            param=torch.nn.Parameter(
+                (self.std * torch.eye(dim_action)).float(),
+                requires_grad=False,
+            ),
+        )
+        self.cache_weights()
+
+    def get_means(self, observation):
+        assert 1 - 3 * self.std > 0, "1 - 3 std should be greater than 0"
+        # We should guarantee with good probability that sampled actions are within action bounds that are scaled to [-1, 1]
+        return (1 - 3 * self.std) * torch.tanh(
+            self.perceptron(observation) / self.normalize_output_coef
+        )
+
+    def forward(self, observation):
+        return self.unscale_from_minus_one_one_to_action_bounds(
+            self.get_means(observation)
+        )
 
     def log_probs(self, observations_actions, weights=None):
         if weights is not None:

@@ -1,0 +1,7 @@
+_target_:  rcognita.models.DDPGActorModel
+
+dim_observation: $ controller.actor.dim_input
+dim_action: $ controller.actor.dim_output
+dim_hidden: 10 
+action_bounds: $ system.action_bounds%%
+normalize_output_coef: 800

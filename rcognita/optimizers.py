@@ -396,6 +396,7 @@ class TorchDataloaderOptimizer(Optimizer):
         sheduler_method=None,
         sheduler_options=None,
         verbose=False,
+        max_gradient_norm=None,
     ):
         """
         Initialize an instance of TorchOptimizer.
@@ -428,6 +429,8 @@ class TorchDataloaderOptimizer(Optimizer):
         else:
             self.sheduler = None
 
+        self.max_gradient_norm = max_gradient_norm
+
     @apply_callbacks()
     def post_epoch(self, idx_epoch, last_epoch_objective):
         return idx_epoch, last_epoch_objective
@@ -455,8 +458,14 @@ class TorchDataloaderOptimizer(Optimizer):
         batch_sample = next(iter(dataloader))
         self.optimizer.zero_grad()
         objective_value = objective(batch_sample)
+
         last_epoch_objective = objective_value.item()
         objective_value.backward()
+        if self.max_gradient_norm is not None:
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), self.max_gradient_norm
+            )
+
         # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 100.0)
         # print(self.model.in_layer.weight.grad)
         self.optimizer.step()

@@ -523,6 +523,8 @@ class ActorPGBase(Actor, ABC):
         self,
         N_episodes,
         N_iterations,
+        batch_keys,
+        batch_size=None,
         is_with_baseline=False,
         is_do_not_let_the_past_distract_you=True,
         device="cpu",
@@ -534,10 +536,12 @@ class ActorPGBase(Actor, ABC):
         self.dataset_size = 0
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
+        self.batch_keys = batch_keys
         self.is_with_baseline = is_with_baseline
         self.is_do_not_let_the_past_distract_you = is_do_not_let_the_past_distract_you
 
         self.next_baseline = 0.0
+        self.batch_size = batch_size
 
     def update_data_buffer(self, data_buffer):
         pass
@@ -553,17 +557,11 @@ class ActorPGBase(Actor, ABC):
         self.optimizer.optimize(
             self.objective,
             data_buffer.iter_batches(
-                batch_size=len(data_buffer),
+                batch_size=len(data_buffer)
+                if self.batch_size is None
+                else self.batch_size,
                 dtype=torch.FloatTensor,
-                keys=[
-                    "observation",
-                    "action",
-                    "observation_target",
-                    "total_objective",
-                    "timestamp",
-                    "tail_total_objective",
-                    "baseline",
-                ],
+                keys=self.batch_keys,
             ),
         )
 
@@ -717,18 +715,34 @@ class ActorSDPG(ActorREINFORCE):
 
 
 class ActorDDPG(ActorPGBase):
-    @force_type_safety
     def objective(self, batch):
-        observations_for_actor = batch["observations_for_actor"].to(self.device)
-        observations_for_critic = batch["observations_for_critic"].to(self.device)
-        return self.critic(
-            torch.cat(
-                [observations_for_critic, self.model(observations_for_actor)], dim=1
+        observations = batch["observation"].to(self.device)
+        # first_observation = (
+        #     batch["observation"][0].reshape(1, -1).to(device=self.device)
+        # )
+        observation_targets = batch["observation_target"].to(self.device)
+        # first_observation_target = (
+        #     batch["observation_target"][0].reshape(1, -1).to(device=self.device)
+        # )
+        return (
+            # self.discount_factor ** batch["timestamp"].to(self.device)
+            self.critic.model(
+                torch.cat(
+                    [
+                        observations - observation_targets,
+                        self.model(observations),
+                    ],
+                    dim=1,
+                ).double()
             )
-        ).sum()
+        ).mean()
 
     def update_action(self, observation=None):
-        super().update_action(observation)
+        self.action_old = self.action
+        with torch.no_grad():
+            self.action = (
+                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
+            )
 
 
 class ActorPID(Actor):

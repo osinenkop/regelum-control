@@ -573,8 +573,8 @@ class CriticOnPolicy(Critic):
             ),
         )
 
-        if self.is_same_critic:
-            self.update_and_cache_weights()
+        if not self.is_same_critic:
+            self.model.update_and_cache_weights()
 
 
 class CriticOfActionObservationOnPolicy(Critic):

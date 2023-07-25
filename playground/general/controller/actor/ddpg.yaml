@@ -1,8 +1,10 @@
 defaults:
-  - model: fc 
+  - model: ddpg_actor 
   - optimizer: torch_dataloader
 
+
 _target_: rcognita.actors.ActorDDPG
+
 
 ###---Constructor arguments---###
 system: ~ system
@@ -18,4 +20,4 @@ critic: ~ controller.critic
 observation_target: $ system_specific.observation_target
 running_objective: $ running_objective
 device: cuda:0
-is_use_derivative: $ system_specific.is_use_derivative
+batch_keys: = ["observation", "action", "observation_target", "timestamp"]

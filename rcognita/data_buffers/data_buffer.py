@@ -14,48 +14,31 @@ from typing import Optional, List, Union, Any, Type, Iterable
 from .types import Array, ArrayType
 from .samplers import ForwardSampler
 from .fifo_list import FifoList
+from collections import defaultdict
 
 
 class DataBuffer:
     def __init__(
         self,
-        keys: List[str] = [
-            "observation",
-            "action",
-            "observation_target",
-            "running_objective",
-            "current_total_objective",
-            "episode_id",
-            "timestamp",
-            "iteration_id",
-        ],
         max_buffer_size: Optional[int] = None,
         keys_for_indexing: Optional[List[str]] = None,
         dtype_for_indexing: Optional[ArrayType] = None,
     ):
         self.max_buffer_size = max_buffer_size
-        self.keys = list(keys)
-        self.initial_keys = list(keys)
-        self.keys_for_indexing = (
-            keys if keys_for_indexing is None else keys_for_indexing
-        )
+        self.keys_for_indexing = keys_for_indexing
         self.dtype_for_indexing = dtype_for_indexing
         self.nullify_buffer()
 
     def nullify_buffer(self) -> None:
-        self.data = {
-            key: FifoList(max_size=self.max_buffer_size) for key in self.initial_keys
-        }
+        self.data = defaultdict(lambda: FifoList(max_size=self.max_buffer_size))
 
-    def update(self, data_in_dict_format) -> None:
-        self.keys += list(data_in_dict_format.keys())
+    def update(self, data_in_dict_format: dict[str, Array]) -> None:
         for key, data_for_key in data_in_dict_format.items():
             self.data[key] = data_for_key
 
     def push_to_end(self, **kwargs) -> None:
-        for key in self.keys:
-            if kwargs.get(key) is not None:
-                self.data[key].append(kwargs[key])
+        for key, data_item_for_key in kwargs.items():
+            self.data[key].append(data_item_for_key)
 
     def last(self) -> dict[str, Array]:
         return self[-1]
@@ -64,13 +47,13 @@ class DataBuffer:
         return self.data
 
     def to_pandas(self, keys: Optional[List[str]] = None) -> pd.DataFrame:
-        df = pd.DataFrame(self.data)
         if keys is not None:
-            return df[keys]
-        return df
+            return pd.DataFrame({k: self.data[k] for k in keys})
+
+        return pd.DataFrame(self.data)
 
     def __len__(self):
-        return len(self.data[self.keys[0]])
+        return max([len(self.data[k]) for k in self.data.keys()])
 
     def getitem(
         self,
@@ -78,7 +61,7 @@ class DataBuffer:
         keys: Optional[Union[List[str], np.array]] = None,
         dtype: Optional[ArrayType] = None,
     ) -> dict[str, Array]:
-        _keys = keys if keys is not None else self.keys
+        _keys = keys if keys is not None else self.data.keys
         if (
             isinstance(idx, int)
             or isinstance(idx, slice)
