@@ -324,6 +324,19 @@ class Optimizable:
         assert new_container is not None, f"Couldn't register objective {func}"
         self.__functions = new_container
 
+    @staticmethod
+    def connect_source(
+        connect_to: OptimizationVariable,
+        func: Callable,
+        source: OptimizationVariable,
+        act_on="data",
+    ):
+        def source_hook(whatever):
+            return func(source())
+
+        hook = Hook(source_hook, act_on=act_on)
+        connect_to.register_hook(hook, first=True)
+
     def __register_symbolic_objective(
         self,
         func: FunctionWithSignature,

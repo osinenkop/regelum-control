@@ -756,3 +756,4 @@ warnings.filterwarnings("ignore", category=OptimizeWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 array = __utilities.rc.array
+rc = __utilities.rc
