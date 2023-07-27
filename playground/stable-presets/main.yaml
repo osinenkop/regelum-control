@@ -1,0 +1,33 @@
+defaults:
+  - system: inv_pendulum 
+  - scenario: monte_carlo
+  - simulator: casadi
+  # - optional nominal_controller: nominal_${system}
+  - controller: reinforce
+  - running_objective: quadratic_${system}
+  - initial_conditions: ic_${system}
+  - observation_naming: naming_${system}
+  - system_specific: spec_${system}
+  # - optional animator: animator_${system}
+  # - ${controller}_${system}
+
+callbacks:
+  - rcognita.callbacks.HistoricalObjectiveCallback
+  - rcognita.callbacks.TotalObjectiveCallback
+  # - rcognita.callbacks.CriticObjectiveCallback
+  - rcognita.callbacks.CalfCallback
+  - rcognita.callbacks.HistoricalObservationCallback
+  # - rcognita.callbacks.QFunctionModelSaverCallback
+  - rcognita.callbacks.CalfWeightsCallback
+  # - rcognita.callbacks.CriticWeightsCallback
+  - rcognita.callbacks.InspectReferrersCallback
+  - rcognita.callbacks.ObjectiveLearningSaver
+
+
+disallow_uncommitted%%: False
+mlflow_tracking_uri%%: ${oc.env:RCOGNITA_MLFLOW_TRACKING_URI}
+mlflow_artifacts_location%%: ${oc.env:RCOGNITA_MLFLOW_ARTIFACTS_LOCATION}
+
+hydra:
+  sweep:
+    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}

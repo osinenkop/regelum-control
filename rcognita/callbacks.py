@@ -68,7 +68,11 @@ class apply_callbacks:
         def new_method(self2, *args, **kwargs):
             res = method(self2, *args, **kwargs)
             if self.callbacks is None:
-                callbacks = rcognita.main.callbacks
+                callbacks = (
+                    rcognita.main.callbacks
+                    if rcognita.main.callbacks is not None
+                    else []
+                )
             for callback in callbacks:
                 callback(obj=self2, method=method.__name__, output=res)
             return res
@@ -957,7 +961,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         self.iteration_number = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.optimizers.TorchOptimizerWithDataBuffer) and (
+        return isinstance(obj, rcognita.critics.CriticOnPolicy) and (
             method == "post_epoch"
         )
 
@@ -971,7 +975,6 @@ class ObjectiveLearningSaver(HistoricalCallback):
         )
         mlflow.log_metric(
             f"B. Critic td loss on iteration {str(self.iteration_number).zfill(5)}",
-            f"Policy learning objective on iteration {str(self.iteration_number).zfill(5)}",
             objective,
             step=epoch_idx,
         )

@@ -8,7 +8,7 @@ import warnings
 from .hooks import get_data_hook
 
 
-@dataclass(slots=True)
+@dataclass
 class OptimizationVariable:
     name: str
     dims: tuple
@@ -164,7 +164,7 @@ class OptimizationVariable:
         )
 
 
-@dataclass(slots=True)
+@dataclass
 class VarContainer(Mapping):
     _variables: Union[
         list[OptimizationVariable],
@@ -357,7 +357,7 @@ class FunctionWithSignature:
 
     @property
     def constants_to_substitute(self):
-        return [var.name for var in self.variables.constants if var().data is None]
+        return [var.name for var in self.variables.constants if var() is None]
 
     def __call__(
         self, *args, with_metadata: bool = False, raw_eval: bool = False, **kwargs
@@ -509,7 +509,7 @@ class FunctionWithSignature:
             return None
 
 
-@dataclass(slots=True)
+@dataclass
 class FuncContainer(Mapping):
     _functions: Union[
         Tuple[FunctionWithSignature, FunctionWithSignature],
@@ -586,7 +586,7 @@ class FuncContainer(Mapping):
         return tuple(function.name for function in self.functions)
 
 
-@dataclass(slots=True)
+@dataclass
 class Hook(FunctionWithSignature):
     act_on: str = "all"
 

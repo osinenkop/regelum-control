@@ -26,6 +26,7 @@ from abc import ABC, abstractmethod
 import scipy as sp
 from functools import partial
 import random
+from .optimizable import Optimizable
 
 try:
     import torch
@@ -56,11 +57,7 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
     def __init__(
         self,
-        system_dim_input: int,
-        system_dim_output: int,
-        data_buffer_size: int,
         state_init: np.ndarray = None,
-        optimizer: Optional[Optimizer] = None,
         model: Optional[Model] = None,
         running_objective: Optional[Objective] = None,
         discount_factor: float = 1.0,
@@ -70,12 +67,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         """
         Initialize a critic object.
 
-        :param system_dim_input: Dimension of the input data
-        :type system_dim_input: int
-        :param system_dim_output: Dimension of the output data
-        :type system_dim_output: int
-        :param data_buffer_size: Maximum size of the data buffer
-        :type data_buffer_size: int
         :param optimizer: Optimizer to use for training the critic
         :type optimizer: Optional[Optimizer]
         :param model: Model to use for the critic
@@ -89,21 +80,11 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         :param critic_regularization_param: Regularization parameter for the critic
         :type critic_regularization_param: float
         """
-        self.data_buffer_size = data_buffer_size
-        self.system_dim_input = system_dim_input
-        self.system_dim_output = system_dim_output
-
-        if optimizer is not None:
-            self.optimizer = optimizer
-        else:
-            raise ValueError("No optimizer defined")
 
         if model:
             self.model = model
         else:
             raise ValueError("No model defined")
-
-        self.initialize_buffers()
 
         self.discount_factor = discount_factor
         self.running_objective = running_objective
@@ -301,19 +282,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         self.current_observation = observation
         self.current_action = action
 
-    def initialize_buffers(self):
-        """
-        Initialize the action and observation buffers with zeros.
-        """
-        self.action_buffer = rc.zeros(
-            (int(self.system_dim_input), int(self.data_buffer_size)),
-            rc_type=self.optimizer_engine,
-        )
-        self.observation_buffer = rc.zeros(
-            (int(self.system_dim_output), int(self.data_buffer_size)),
-            rc_type=self.optimizer_engine,
-        )
-
     def update_total_objective(self, observation, action):
         """
         Update the outcome variable based on the running objective and the current observation and action.
@@ -333,7 +301,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
         """
         self.total_objective = 0
         self.current_critic_loss = 0
-        self.initialize_buffers()
 
     # TODO: REMOVE?
     def _SciPy_update(self, intrinsic_constraints=None):
@@ -417,10 +384,6 @@ class Critic(rcognita.base.RcognitaBase, ABC):
 
         self.current_critic_loss = self.objective(data_buffer).detach().numpy()
 
-    @abstractmethod
-    def objective(self):
-        pass
-
 
 class CriticOfObservation(Critic):
     """
@@ -477,20 +440,54 @@ class CriticOfObservation(Critic):
         return critic_objective
 
 
-class CriticOnPolicy(Critic):
-    def __init__(self, *args, batch_size, td_n, device, is_same_critic, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.batch_size = batch_size
+class CriticOnPolicy(Critic, Optimizable):
+    def __init__(
+        self,
+        *args,
+        td_n,
+        device,
+        is_same_critic,
+        optimizer_config,
+        **kwargs,
+    ):
+        Critic.__init__(self, *args, **kwargs)
+        Optimizable.__init__(self, optimizer_config=optimizer_config)
         self.td_n = td_n
         self.device = device
         self.is_same_critic = is_same_critic
+        self.initialize_optimize_procedure()
 
-    """
-    This is the class of critics that are represented as functions of observation only.
-    """
+    def initialize_optimize_procedure(self):
+        self.var_observation = self.create_variable(
+            name="observation", is_constant=True
+        )
+        self.var_action = self.create_variable(name="action", is_constant=True)
+        self.var_running_objective = self.create_variable(
+            name="running_objective", is_constant=True
+        )
+
+        self.var_critic_weights = self.create_variable(
+            name="critic_weights", is_constant=False, like=self.model.named_parameters
+        )
+
+        self.register_objective(
+            func=self.temporal_difference_objective,
+            variables=[
+                self.var_observation,
+                self.var_action,
+                self.var_running_objective,
+            ],
+        )
+
+    def optimize_tensor(self, **parameters):
+        # Call method from parent class
+        Optimizable.optimize_tensor(self, **parameters)
+
+        # Force to recreate torch.optim.Optimizer object before every optimization
+        self.optimizer = None
 
     # @apply_callbacks()
-    def objective(self, batch):
+    def temporal_difference_objective(self, observation, action, running_objective):
         """
         Compute the objective function of the critic, which is typically a squared temporal difference.
         :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
@@ -502,32 +499,25 @@ class CriticOnPolicy(Critic):
         """
 
         first_tdn_observations_actions = torch.cat(
-            [
-                batch["observation"][: -self.td_n]
-                - batch["observation_target"][: -self.td_n],
-                batch["action"][: -self.td_n],
-            ],
+            [observation[: -self.td_n], action[: -self.td_n]],
             dim=1,
         ).to(self.device)
         last_tdn_observations_actions = torch.cat(
-            [
-                batch["observation"][self.td_n :]
-                - batch["observation_target"][self.td_n :],
-                batch["action"][self.td_n :],
-            ],
+            [observation[self.td_n :], action[self.td_n :]],
             dim=1,
         ).to(self.device)
-        discount = torch.DoubleTensor(
+        discount_factors = torch.DoubleTensor(
             [self.discount_factor**i for i in range(self.td_n)]
         )
+        batch_size = len(running_objective)
         discounted_tdn_sum_of_running_objectives = torch.DoubleTensor(
             [
                 (
                     self.sampling_time
-                    * batch["running_objective"][i : i + self.td_n]
-                    * discount
+                    * running_objective[i : i + self.td_n]
+                    * discount_factors
                 ).sum()
-                for i in range(len(batch["running_objective"]) - self.td_n)
+                for i in range(batch_size - self.td_n)
             ]
         ).to(self.device)
 
@@ -549,23 +539,19 @@ class CriticOnPolicy(Critic):
         self.model.to(self.device)
         self.model.cache.to(self.device)
 
-        self.optimizer.optimize(
-            objective=self.objective,
-            model_input=data_buffer.iter_batches(
+        self.optimize(
+            dataloader=data_buffer.iter_batches(
                 sampler=EpisodicSampler,
-                batch_size=self.batch_size,
                 keys=[
                     "observation",
                     "action",
-                    "observation_target",
                     "running_objective",
                 ],
-                dtype=torch.DoubleTensor,
+                dtype=torch.FloatTensor,
             ),
         )
 
-        if not self.is_same_critic:
-            self.model.update_and_cache_weights()
+        self.model.update_and_cache_weights()
 
 
 class CriticOfActionObservationOnPolicy(Critic):

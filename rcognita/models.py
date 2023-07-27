@@ -745,6 +745,64 @@ class ModelDQNSimple(ModelNN):
         return self._forward(input_tensor)
 
 
+class ModelPerceptron(ModelNN):
+    def __init__(
+        self,
+        dim_input: int,
+        dim_output: int,
+        dim_hidden: int,
+        n_hidden_layers: int,
+        leaky_relu_coef: float = 0.15,
+        force_positive_def: bool = False,
+        is_force_infinitesimal: bool = False,
+        is_bias: bool = True,
+        weights=None,
+    ):
+        super().__init__()
+        self.dim_input = dim_input
+        self.dim_output = dim_output
+        self.n_hidden_layers = n_hidden_layers
+        self.leaky_relu_coef = leaky_relu_coef
+        self.force_positive_def = force_positive_def
+        self.is_force_infinitesimal = is_force_infinitesimal
+        self.is_bias = is_bias
+
+        self.input_layer = nn.Linear(dim_input, dim_hidden, bias=is_bias)
+        self.hidden_layers = nn.ModuleList(
+            [
+                nn.Linear(dim_hidden, dim_hidden, bias=is_bias)
+                for _ in range(n_hidden_layers)
+            ]
+        )
+        self.output_layer = nn.Linear(dim_hidden, dim_output, bias=is_bias)
+
+        if weights is not None:
+            self.load_state_dict(weights)
+
+        self.cache_weights()
+
+    def _forward(self, x):
+        x = nn.functional.leaky_relu(
+            self.input_layer(x), negative_slope=self.leaky_relu_coef
+        )
+        for layer in self.hidden_layers:
+            x = nn.functional.leaky_relu(layer(x), negative_slope=self.leaky_relu_coef)
+        x = self.output_layer(x)
+        return torch.squeeze(x)
+
+    @force_positive_def
+    def forward(self, input_tensor, weights=None):
+        if weights is not None:
+            self.update(weights)
+
+        if self.is_force_infinitesimal:
+            return self._forward(input_tensor) - self._forward(
+                torch.zeros_like(input_tensor)
+            )
+
+        return self._forward(input_tensor)
+
+
 # TODO: WHAT IS THIS? REVIEW AND/OR REMOVE. COMMIT TO SEPARATE BRANCH MAYBE, BUT DO A CLEANUP OF CODE AND DOCSTRINGS, REMOVE $$ SAY ETC.
 class ModelPerceptronCalf(Model):
     model_name = "DQN_simple_casadi"
@@ -1240,7 +1298,7 @@ class GaussianPDFModel(ModelWithScaledAction):
             self.get_means(observation)
         )
 
-    def log_probs(self, observations_actions, weights=None):
+    def log_pdf(self, observations_actions, weights=None):
         if weights is not None:
             self.update(weights)
 

@@ -1,0 +1,20 @@
+_target_: rcognita.policies.SDPG
+
+defaults:
+  - model: perceptron_with_normal_noise
+
+system: ~ system
+critic: ~ controller.critic
+action_bounds: $ system_specific.action_bounds
+batch_keys: = ["observation", "action", "timestamp"]
+discount_factor: $ scenario.discount_factor
+device: cpu
+
+optimizer_config: 
+  _target_: rcognita.OptimizerConfig
+  kind: tensor
+  opt_method: = torch.optim.Adam
+  opt_options: 
+    lr: 0.1
+  config_options:
+    n_epochs: 1

@@ -494,7 +494,7 @@ class InvertedPendulumPID(System):
     _name = "inverted-pendulum"
     _system_type = "diff_eqn"
     _dim_state = 2
-    _dim_inputs = 2
+    _dim_inputs = 1
     _dim_observation = 3
     _parameters = {"m": 1, "g": 9.8, "l": 1}
 

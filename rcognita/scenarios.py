@@ -14,7 +14,6 @@ from unittest.mock import Mock, MagicMock
 
 import rcognita.base
 from .__utilities import rc
-from .optimizable.optimizers import TorchOptimizer
 from .policies import Policy
 from .critics import Critic, CriticTrivial
 from .simulator import Simulator
@@ -81,7 +80,7 @@ class OnlineScenario(Scenario):
             self.howanim in ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
         )
         self.total_objective = 0
-        self.time = None
+        self.time = self.simulator.time_start
         self.time_old = 0
         self.delta_time = 0
         self.observation_components_naming = observation_components_naming
@@ -101,7 +100,10 @@ class OnlineScenario(Scenario):
 
         self.state_init, self.action_init = self.simulator.get_init_state_and_action()
         self.state = self.state_init
-        self.action = self.action_init
+        self.action = self.controller.action = self.action_init
+        self.observation = self.simulator.system.get_observation(
+            self.time, self.state, self.action
+        )
 
     def set_speedup(self, speedup):
         self.speedup = speedup
@@ -174,6 +176,7 @@ class OnlineScenario(Scenario):
     def reset_episode(self):
         self.total_objectives_of_episodes.append(self.total_objective)
         self.episode_counter += 1
+        self.is_episode_ended = False
         return self.total_objective
 
     def reset_simulation(self):
@@ -319,12 +322,14 @@ class OnlineScenario(Scenario):
     @memorize
     def step(self):
         self.pre_step()
-        sim_status = self.simulator.do_sim_step()
-        self.is_episode_ended = (
-            sim_status == -1 or self.total_objective > self.total_objective_threshold
+        # sim_status = self.simulator.do_sim_step()
+        is_total_objective_termination_criteria_satisfied = (
+            self.total_objective > self.total_objective_threshold
         )
-
-        if not self.is_episode_ended:
+        if (
+            not self.is_episode_ended
+            and not is_total_objective_termination_criteria_satisfied
+        ):
             (
                 self.time,
                 self.state,
@@ -358,11 +363,9 @@ class OnlineScenario(Scenario):
                     timestamp=self.time,
                     running_objective=self.running_objective_value,
                     current_total_objective=self.total_objective,
-                    observation_target=self.observation_target,
                     episode_id=self.episode_counter,
                     iteration_id=self.iteration_counter,
                 )
-
             return "episode_continues"
         else:
             self.reset_episode()
@@ -386,8 +389,12 @@ class OnlineScenario(Scenario):
 class MonteCarloScenario(OnlineScenario):
     def reset_iteration(self):
         if self.current_scenario_status != "simulation_ended":
-            self.critic.optimize_weights_after_iteration(self.controller.data_buffer)
-            self.policy.optimize_weights_after_iteration(self.controller.data_buffer)
+            self.controller.critic.optimize_weights_after_iteration(
+                self.controller.data_buffer
+            )
+            self.controller.policy.optimize_weights_after_iteration(
+                self.controller.data_buffer
+            )
             self.controller.data_buffer.nullify_buffer()
 
         super().reset_episode()

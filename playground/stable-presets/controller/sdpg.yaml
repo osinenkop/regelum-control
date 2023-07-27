@@ -1,0 +1,27 @@
+_target_: rcognita.controllers.PGController
+
+name%%: sdpg 
+
+defaults:
+  - policy: policy_sdpg
+  - critic: critic_on_policy
+
+action_bounds: $ system_specific.action_bounds
+data_buffer: = rcognita.data_buffers.DataBuffer()
+sampling_time: $ system_specific.sampling_time
+
+device%%: cpu
+
+critic:
+  device: $ controller.device%%
+  optimizer_config: 
+    _target_: rcognita.OptimizerConfig
+    kind: tensor
+    opt_method: = torch.optim.Adam
+    opt_options: 
+      lr: 0.001
+    config_options:
+      n_epochs: 50
+
+actor:
+  device: $ controller.device%%

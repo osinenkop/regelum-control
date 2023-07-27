@@ -60,6 +60,9 @@ from . import predictors
 from . import policies
 from . import visualization
 from . import optimizable
+from . import scenarios
+from . import critics
+from . import objectives
 from .optimizable import *
 from .optimizable.core import *
 from .visualization import *

@@ -55,8 +55,10 @@ TORCH = RCType.TORCH
 CASADI = RCType.CASADI
 NUMPY = RCType.NUMPY
 
+
 def torch_safe_log(x, eps=1e-10):
     return torch.log(x + eps)
+
 
 def is_CasADi_typecheck(*args) -> Union[RCType, bool]:
     return CASADI if any([isinstance(arg, CASADI_TYPES) for arg in args]) else False
@@ -976,17 +978,6 @@ log = None
 
 
 # TODO: ADD DOCSTRING?
-def logging_callback(obj, method, output):
-    if not log:
-        return
-    if isinstance(obj, systems.System):
-        log.info(f"System's state{obj._state}")
-
-
-default_callbacks = [logging_callback]
-
-
-# TODO: ADD DOCSTRING?
 def apply_callbacks(method):
     def new_method(self, *args, **kwargs):
         res = method(self, *args, **kwargs)
@@ -994,17 +985,3 @@ def apply_callbacks(method):
             callback(obj=self, method=method.__name__, output=res)
 
     return new_method
-
-
-# TODO: ADD DOCSTRING?
-class introduce_callbacks:
-    def __init__(self, default_callbacks=default_callbacks):
-        self.default_callbacks = default_callbacks
-
-    def __call__(self, cls):
-        class whatever(cls):
-            def __init__(self, *args, callbacks=self.default_callbacks, **kwargs):
-                super().__init__(self, *args, **kwargs)
-                self.callbacks = callbacks
-
-        return whatever

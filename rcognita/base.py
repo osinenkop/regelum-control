@@ -16,12 +16,20 @@ class RcognitaBase(abc.ABC):
             if inspect.isclass(getattr(self.__class__, d))
             and issubclass(getattr(self.__class__, d), Callback)
         ]
-        existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
-        for callback in callbacks:
-            if callback not in existing_callbacks:
-                callback_instance = callback()
-                callback_instance.on_launch()
-                rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+        existing_callbacks = []
+        try:
+            existing_callbacks = [
+                type(callback) for callback in rcognita.main.callbacks
+            ]
+            for callback in callbacks:
+                if callback not in existing_callbacks:
+                    callback_instance = callback()
+                    callback_instance.on_launch()
+                    rcognita.main.callbacks = [
+                        callback_instance
+                    ] + rcognita.main.callbacks
+        except:
+            pass
 
 
 # TODO: DOCSTRING

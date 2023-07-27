@@ -50,14 +50,20 @@ class Simulator(rcognita.base.RcognitaBase, ABC):
             self.system, "system_type"
         ), "System must contain a system_type attribute"
         if self.system.system_type == "diff_eqn":
-            assert state_init, "Initial state for this simulator needs to be passed"
+            assert (
+                state_init is not None
+            ), "Initial state for this simulator needs to be passed"
 
         self.time_start = time_start
         self.time_final = time_final
         if state_init is None:
             self.state_init = self.initialize_init_state()
+        else:
+            self.state_init = state_init
         if action_init is None:
             self.action_init = self.initialize_init_action()
+        else:
+            self.action_init = action_init
 
         self.time = time_start
         self.state = self.state_init
@@ -153,7 +159,7 @@ class SciPy(Simulator):
         return ODE_solver
 
 
-class CaADi(Simulator):
+class CasADi(Simulator):
     class CasADiSolver:
         def __init__(
             self,
@@ -243,8 +249,8 @@ class CaADi(Simulator):
 
         ODE = system.compute_state_dynamics(time, state_symbolic, action_symbolic)
         DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
-        options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
-
+        # options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
+        options = {"tf": max_step}
         integrator = casadi.integrator("intg", "rk", DAE, options)
 
         return integrator

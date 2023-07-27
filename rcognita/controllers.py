@@ -26,7 +26,10 @@ from .critics import Critic
 
 def apply_action_bounds(method):
     def wrapper(self, *args, **kwargs):
-        self.action = method(self, *args, **kwargs)
+        action = method(self, *args, **kwargs)
+        if action is not None:
+            self.action = action
+
         if hasattr(self, "action_bounds") and len(self.action_bounds) > 0:
             action = np.clip(
                 self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
@@ -149,16 +152,17 @@ class RLController(Controller):
 class PGController(RLController):
     @apply_action_bounds
     def compute_action(
-        self, state, observation, is_critic_update=True, time=0, observation_target=[]
+        self,
+        state,
+        observation,
+        is_critic_update=True,
+        time=0,
     ):
         self.critic.receive_state(state)
 
         ### Store current observation in policy
         self.policy.receive_observation(observation)
         self.policy.receive_state(state)
-
-        self.policy.update_target(observation_target)
-        self.critic.update_target(observation_target)
 
         self.policy.update_action(observation)
 
