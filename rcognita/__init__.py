@@ -40,26 +40,34 @@ from . import __utilities
 
 
 
-from . import controllers
-from . import systems
-from . import simulator
-from . import systems
-from .visualization import animator
-from . import __utilities
-from . import models
-from . import predictors
-from . import policies
-from . import visualization
-from . import optimizable
-from . import scenarios
-from . import critics
-from . import objectives
-from .optimizable import *
-from .optimizable.core import *
-from .visualization import *
+#from . import controllers
+#from . import systems
+#from . import simulator
+#from . import systems
+#from .visualization import animator
+#from . import __utilities
+#from . import models
+#from . import predictors
+#from . import policies
+#from . import visualization
+#from . import optimizable
+#from . import scenarios
+#from . import critics
+#from . import objectives
+#from .optimizable import *
+#from .optimizable.core import *
+#from .visualization import *
 import mlflow
 from unittest.mock import Mock, MagicMock
 from hydra._internal.utils import _locate
+
+import hydra.core.plugins
+import hydra._internal.config_loader_impl
+from scipy.optimize import OptimizeWarning
+from . import _Plugins__fake_file_config_source
+from . import __fake_plugins
+from . import __fake_config_loader_impl
+from .__gui_server import __file__ as gui_script_file
 
 from . import __instantiate as inst
 
@@ -94,14 +102,14 @@ from unittest.mock import MagicMock
 
 # main = MagicMock()
 
-from . import optimizable
-from . import scenarios
-from . import critics
-from . import objectives
-from .optimizable import *
-from .optimizable.core import *
-from .visualization import *
-from . import policies
+#from . import optimizable
+#from . import scenarios
+#from . import critics
+#from . import objectives
+#from .optimizable import *
+#from .optimizable.core import *
+#from .visualization import *
+#from . import policies
 
 from .__hydra_main import main as hydramain
 
@@ -121,6 +129,11 @@ try:
 except (ModuleNotFoundError, ImportError):
     torch = MagicMock()
 
+
+from . import models
+from . import data_buffers
+from .optimizable import *
+from . import critics
 
 mock = Mock()
 
@@ -203,6 +216,8 @@ def obtain(obj_repr):
             prefix = s[0]
             s = s[1:]
         try:
+            if s == "np":
+                s = "numpy"
             entity = _locate(s)
         except Exception:
             entity = eval(s)

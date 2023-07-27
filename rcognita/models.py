@@ -5,6 +5,8 @@ These can be used in system dynamics fitting, critic and other tasks.
 Updates to come.
 
 """
+from copy import deepcopy
+
 import numpy as np
 import os, sys
 
@@ -12,7 +14,7 @@ import rcognita.base
 
 
 
-from __utilities import rc, rej_sampling_rvs, torch_safe_log
+from .__utilities import rc, rej_sampling_rvs, torch_safe_log
 import numpy as np
 import warnings
 
@@ -28,6 +30,8 @@ except ModuleNotFoundError:
     nn = MagicMock()
     F = MagicMock()
     MultivariateNormal = MagicMock()
+
+from abc import ABC, abstractmethod
 
 
 def force_positive_def(func):

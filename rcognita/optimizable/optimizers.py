@@ -29,8 +29,6 @@ except ModuleNotFoundError:
     UpdatableSampler = MagicMock()
 
 from typing import Callable, List, Tuple, Optional, Union, Dict
-from types import GeneratorType
-from rcognita.callbacks import apply_callbacks
 
 from ..base import RcognitaBase
 from .core.configs import OptimizerConfig
@@ -47,8 +45,10 @@ from .core.hooks import requires_grad, detach, data_closure, metadata_closure
 class Optimizer:
     pass
 
+import rcognita.base
 
-class Optimizable:
+
+class Optimizable(rcognita.base.RcognitaBase):
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
@@ -629,7 +629,7 @@ class Optimizable:
 
 
 # TODO: WHTA IS THIS? NEEDED?
-class TorchDataloaderOptimizer:
+class TorchDataloaderOptimizer(rcognita.base.RcognitaBase):
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """

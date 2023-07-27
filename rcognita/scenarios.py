@@ -76,8 +76,6 @@ class OnlineScenario(Scenario):
         :param N_iterations: number of iterations in simulation
         :param speedup: number of frames to skip in order to speed up animation rendering
         """
-        if observation_target is None:
-            observation_target = []
         if observation_components_naming is None:
             observation_components_naming = []
 

@@ -15,8 +15,6 @@ import scipy as setpoint
 from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
-from .__w_plotting import plot_optimization_results
-from .callbacks import apply_callbacks, Callback
 from .base import RcognitaBase
 from .policies import Policy
 from .critics import Critic

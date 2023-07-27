@@ -32,7 +32,6 @@ from .optimizable.optimizers import Optimizer
 from .models import Model
 from .objectives import Objective
 from typing import Optional, Union
-from .callbacks import apply_callbacks
 from .data_buffers import EpisodicSampler, ForwardSampler
 
 
