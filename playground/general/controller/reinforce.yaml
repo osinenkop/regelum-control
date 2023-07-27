@@ -1,9 +1,9 @@
 defaults:
-  - policy: reinforce
+  - actor: reinforce
   - critic: trivial
   - data_buffer: data_buffer
 
-name%%: reinforce
+name%%: pg
 
 _target_: rcognita.controllers.PGController
 

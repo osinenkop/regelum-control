@@ -12,20 +12,24 @@ Remarks:
 
 
 import numpy as np
+import scipy as sp
+from functools import partial
 from abc import ABC, abstractmethod
 from typing import Union, Optional
 
 from .__utilities import rc
 
 from .predictors import Predictor
-from .models import ModelNN
+from .optimizable.optimizers import Optimizer
+from .critics import Critic
+from .models import Model, ModelNN
 from .systems import System, ComposedSystem
+from .objectives import RunningObjective
 from .optimizable.optimizers import Optimizable
-from .data_buffers.data_buffer import DataBuffer
-
 
 try:
     import torch
+    from torch.utils.data import Dataset, DataLoader
 except ImportError:
     from unittest.mock import MagicMock
 
@@ -58,7 +62,8 @@ class Policy(Optimizable):
         predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
         action_init=None,
-        optimizer_config=None,
+        opt_config=None,
+        objective=None,
         discount_factor: Optional[float] = 1.0,
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
@@ -101,11 +106,12 @@ class Policy(Optimizable):
         self.dim_action = self.system.dim_inputs
         self.dim_observation = self.system.dim_observation
 
+        self.objective = objective
         self.discount_factor = discount_factor if discount_factor is not None else 1.0
         self.epsilon_random = epsilon_random
         self.epsilon_random_parameter = epsilon_random_parameter
 
-        super().__init__(optimizer_config=optimizer_config)
+        super().__init__(opt_config)
         (
             self.action_bounds,
             self.action_initial_guess,
@@ -114,11 +120,8 @@ class Policy(Optimizable):
         ) = self.handle_bounds(
             action_bounds, self.dim_action, tile_parameter=self.prediction_horizon
         )
-        self.action_variable = self.create_variable(
-            system.dim_inputs, name="action", is_constant=True
-        )
-        self.register_bounds(self.action_variable, self.action_bounds)
-        self.action_old = self.action_init = (
+        self.register_bounds(self.action_bounds)
+        self.action_old = (
             self.action_initial_guess[: self.dim_action]
             if action_init is None
             else action_init
@@ -264,209 +267,136 @@ class Policy(Optimizable):
         self.action = self.action_initial_guess[: self.dim_action]
 
 
-class PolicyGradient(Policy, ABC):
+class PolicyGradient(Policy):
     def __init__(
         self,
-        batch_keys,
+        is_use_derivative,
+        N_episodes,
+        N_iterations,
         device="cpu",
-        batch_size=None,
-        critic=None,
         *args,
         **kwargs,
     ):
-        Policy.__init__(self, *args, **kwargs)
-        self.objective_inputs = [
-            self.create_variable(name=variable_name, is_constant=True)
-            for variable_name in batch_keys
-        ]
+        super().__init__(*args, **kwargs)
+        self.is_use_derivative = is_use_derivative
+        self.derivative = self.system.compute_state_dynamics
         self.device = torch.device(device)
-        self.batch_keys = batch_keys
-        self.batch_size = batch_size
-        self.critic = critic
+        self.dataset_size = 0
+        self.N_episodes = N_episodes
+        self.N_iterations = N_iterations
 
-        self.N_episodes: int
-
-    @abstractmethod
-    def update_action(self, observation):
-        pass
-
-    def update_data_buffer(self, data_buffer: DataBuffer):
-        pass
-
-    def optimize_weights_after_iteration(self, data_buffer: DataBuffer):
+    def optimize_weights_after_iteration(self, dataset):
         # Send to device before optimization
-        if self.critic is not None:
+        if isinstance(self.critic.model, ModelNN):
             self.critic.model = self.critic.model.to(self.device)
         self.model = self.model.to(self.device)
-        self.N_episodes = len(np.unique(data_buffer.data["episode_id"]))
-        self.update_data_buffer(data_buffer)
+        self.dataset_size = len(dataset)
 
-        self.optimize(
-            dataloader=data_buffer.iter_batches(
-                batch_size=len(data_buffer)
-                if self.batch_size is None
-                else self.batch_size,
-                dtype=torch.FloatTensor,
-                keys=self.batch_keys,
-            ),
-        )
+        self.optimizer.optimize(self.objective, dataset)
 
         # Send back to cpu after optimization
-        if self.critic is not None:
+        if hasattr(self.critic.model, "to"):
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
 
+    @abstractmethod
+    def objective(self, batch):
+        """
+        The problem for PG is stated as follows
+
+        :math:`L = \\mathbb{E}\\left[\\sum_{k=1}^T r_k \\right] \\rightarrow \\min`
+
+        The Monte-Carlo approximation of the gradient of :math `L` is following
+
+        :math `\\frac{1}{N_episodes}\\sum_{j=1}^{N_episodes} \\sum_{k=0} ^ T \\nabla_{\\theta} \\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
+
+        where :math `\\mathcal{C}^j` can be one of
+            1. :math `Qfunction(s_k^j, a_k^j)`
+            2. :math `ValueFunction(s_k^j, a_k^j)`
+            3. :math `AdvantageFunction(s_k^j, a_k^j)`
+            4. :math `\\sum_{k=0}\\gamma ^ {k}r^j_k`
+            5. :math `\\sum_{k'=k}\\gamma ^ {k'}r^j_{k'}`
+
+        We use batches from the set :math \\{(a_k^j, y_k^{j}, \\mathcal{C}_k^j)\\}_{k,j} with further calculation of
+        :math `\\log \\pro^{\\theta}(a_k^j | y_k^{j}) \\mathcal{C}_k^j`
+        and making the gradient steps
+        """
+
+        pass
+
+    @abstractmethod
+    def update_action(self):
+        pass
+
 
 class Reinforce(PolicyGradient):
-    def __init__(
-        self,
-        *args,
-        is_with_baseline=True,
-        is_do_not_let_the_past_distract_you=False,
-        **kwargs,
-    ):
-        PolicyGradient.__init__(self, *args, **kwargs)
-        self.is_with_baseline = is_with_baseline
-        self.is_do_not_let_the_past_distract_you = is_do_not_let_the_past_distract_you
-        self.next_baseline = 0.0
-
-        self.initialize_optimization_procedure()
-
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
-        )
-        self.register_objective(
-            self.reinforce_objective, variables=self.objective_inputs
-        )
-
-    def update_action(self, observation):
+    def update_action(self, observation=None):
+        if self.is_use_derivative:
+            derivative = self.derivative(None, observation, self.action)
+            observation = torch.cat(
+                [torch.tensor(observation), torch.tensor(derivative)]
+            ).float()
         self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
-            )
+        if observation is None:
+            observation = self.observation
 
-    def update_data_buffer(self, data_buffer: DataBuffer):
-        data_buffer.update(
-            {
-                "total_objective": self.calculate_last_total_objectives(data_buffer),
-            }
+        self.action = (
+            self.model.sample(torch.tensor(observation).float()).detach().cpu().numpy()
         )
-        data_buffer.update(
-            {"tail_total_objective": self.calculate_tail_total_objectives(data_buffer)}
-        )
-        data_buffer.update({"baseline": self.calculate_baseline(data_buffer)})
 
-    def calculate_last_total_objectives(self, data_buffer: DataBuffer):
-        data = data_buffer.to_pandas(keys=["episode_id", "current_total_objective"])
+    def objective(self, batch):
+        observations_actions_for_policy = batch["observations_actions_for_policy"].to(
+            self.device
+        )
+        objectives_acc_stats = batch["objective_acc_stats"].to(self.device)
         return (
-            data.groupby("episode_id")["current_total_objective"]
-            .last()
-            .loc[data["episode_id"]]
-            .values.reshape(-1)
+            self.dataset_size
+            * (
+                self.model(observations_actions_for_policy.float())
+                * objectives_acc_stats
+                / self.N_episodes
+            ).mean()
         )
-
-    def calculate_tail_total_objectives(
-        self,
-        data_buffer: DataBuffer,
-    ):
-        """Calculate tail total costs and baseline.
-        Returns:
-            Tuple[np.array, float, float]: tuple of 3 elements tail_total_objectives, baseline, gradent_normalization_constant
-        """
-        groupby_episode_total_objectives = data_buffer.to_pandas(
-            keys=["episode_id", "current_total_objective"]
-        ).groupby(["episode_id"])["current_total_objective"]
-        return (
-            groupby_episode_total_objectives.last()
-            - groupby_episode_total_objectives.shift(periods=1, fill_value=0.0)
-        ).values.reshape(-1)
-
-    def calculate_baseline(self, data_buffer: DataBuffer):
-        baseline = self.next_baseline
-        self.next_baseline = np.mean(data_buffer.to_pandas(keys=["total_objective"]))
-        return np.full(shape=len(data_buffer), fill_value=baseline)
-
-    def reinforce_objective(
-        self, observation, action, tail_total_objective, total_objective, baseline
-    ):
-        observations_actions = torch.cat([observation, action], dim=1).to(self.device)
-
-        log_pdfs = self.model.log_pdf(observations_actions)
-        if self.is_do_not_let_the_past_distract_you:
-            target_objectives = tail_total_objective.to(self.device)
-        else:
-            target_objectives = total_objective.to(self.device)
-        if self.is_with_baseline:
-            target_objectives -= baseline.to(self.device)
-
-        return (log_pdfs * target_objectives).sum() / self.N_episodes
 
 
 class SDPG(PolicyGradient):
-    def __init__(self, *args, **kwargs):
-        PolicyGradient.__init__(self, *args, **kwargs)
-        self.initialize_optimization_procedure()
-
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
+    @force_type_safety
+    def objective(self, batch):
+        observations_actions_for_policy = batch["observations_actions_for_policy"].to(
+            self.device
         )
-        self.register_objective(self.sdpg_objective, variables=self.objective_inputs)
-
-    def sdpg_objective(self, observation, action, timestamp):
-        observations_actions = torch.cat([observation, action], dim=1).to(self.device)
-        observations_zero_actions = torch.cat(
-            [observation, torch.zeros_like(action)],
-            dim=1,
-        ).to(self.device)
-
-        with torch.no_grad():
-            baseline = self.critic(observations_zero_actions)
-            discounts = self.discount_factor ** timestamp.to(self.device)
-            critic_value = discounts * (self.critic(observations_actions) - baseline)
-
-        log_pdfs = self.model.log_pdf(observations_actions)
-        return (log_pdfs * critic_value).sum() / self.N_episodes
-
-    def update_action(self, observation):
-        self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
-            )
+        observations_actions_for_critic = batch["observations_actions_for_critic"].to(
+            self.device
+        )
+        critic_value = self.critic(observations_actions_for_critic).detach()
+        return (
+            self.dataset_size
+            * (
+                self.model(observations_actions_for_policy.float())
+                * critic_value
+                / self.N_episodes
+            ).mean()
+        )
 
 
 class DDPG(PolicyGradient):
-    def __init__(self, *args, **kwargs):
-        PolicyGradient.__init__(self, *args, **kwargs)
-        self.initialize_optimization_procedure()
-
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
-        )
-        self.register_objective(self.ddpg_objective, variables=self.objective_inputs)
-
-    def ddpg_objective(self, observation):
-        observations = observation.to(self.device)
-        return (
-            # self.discount_factor ** batch["timestamp"].to(self.device)
-            self.critic.model(
-                torch.cat(
-                    [observations, self.model(observations)],
-                    dim=1,
-                )
+    @force_type_safety
+    def objective(self, batch):
+        observations_for_policy = batch["observations_for_policy"].to(self.device)
+        observations_for_critic = batch["observations_for_critic"].to(self.device)
+        return self.critic(
+            torch.cat(
+                [observations_for_critic, self.model(observations_for_policy)], dim=1
             )
-        ).mean()
+        ).sum()
 
-    def update_action(self, observation):
-        self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
+    def update_action(self, observation=None):
+        if self.is_use_derivative:
+            derivative = self.derivative([], observation, self.action)
+            observation = torch.cat(
+                [torch.tensor(observation), torch.tensor(derivative)]
             )
+        super().update_action(observation)
 
 
 class MPC(Policy):

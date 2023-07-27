@@ -21,14 +21,16 @@ class DataBuffer:
     def __init__(
         self,
         max_buffer_size: Optional[int] = None,
+        keys_for_indexing: Optional[List[str]] = None,
+        dtype_for_indexing: Optional[ArrayType] = None,
     ):
         self.max_buffer_size = max_buffer_size
+        self.keys_for_indexing = keys_for_indexing
+        self.dtype_for_indexing = dtype_for_indexing
         self.nullify_buffer()
 
     def nullify_buffer(self) -> None:
         self.data = defaultdict(lambda: FifoList(max_size=self.max_buffer_size))
-        self.keys_for_indexing = None
-        self.dtype_for_indexing = None
 
     def update(self, data_in_dict_format: dict[str, Array]) -> None:
         for key, data_for_key in data_in_dict_format.items():
@@ -59,7 +61,7 @@ class DataBuffer:
         keys: Optional[Union[List[str], np.array]] = None,
         dtype: Optional[ArrayType] = None,
     ) -> dict[str, Array]:
-        _keys = keys if keys is not None else self.data.keys()
+        _keys = keys if keys is not None else self.data.keys
         if (
             isinstance(idx, int)
             or isinstance(idx, slice)
