@@ -56,11 +56,12 @@ class Sampler(ABC):
 class ForwardSampler(Sampler):
     def __init__(
         self,
-        *args,
         batch_size: int,
-        **kwargs,
+        data_buffer=None,
+        keys: Optional[List[str]] = None,
+        dtype: ArrayType = np.array,
     ):
-        super().__init__(*args, **kwargs)
+        Sampler.__init__(self, data_buffer=data_buffer, keys=keys, dtype=dtype)
         self.batch_size = batch_size
         self.nullify_sampler()
 
@@ -78,12 +79,11 @@ class ForwardSampler(Sampler):
 class EpisodicSampler(Sampler):
     def __init__(
         self,
-        *args,
-        batch_size,
-        **kwargs,
+        data_buffer=None,
+        keys: Optional[List[str]] = None,
+        dtype: ArrayType = np.array,
     ):
-        super().__init__(*args, **kwargs)
-        self.batch_size = batch_size
+        Sampler.__init__(self, data_buffer=data_buffer, keys=keys, dtype=dtype)
         self.nullify_sampler()
 
     def nullify_sampler(self) -> None:

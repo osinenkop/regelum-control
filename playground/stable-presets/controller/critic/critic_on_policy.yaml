@@ -1,0 +1,28 @@
+_target_: rcognita.critics.CriticOnPolicy
+
+defaults:
+  - model: perceptron
+
+discount_factor: $ scenario.discount_factor
+sampling_time: $ controller.sampling_time
+td_n: 1
+device: cpu
+is_same_critic: False
+
+model:
+  dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+  dim_output: 1
+  dim_hidden: 16
+  n_hidden_layers: 2
+  is_force_infinitesimal: True
+  is_bias: True
+  force_positive_def: False
+
+optimizer_config: 
+  _target_: rcognita.OptimizerConfig
+  kind: tensor
+  opt_method: = torch.optim.Adam
+  opt_options: 
+    lr: 3.0E-4
+  config_options:
+    n_epochs: 1

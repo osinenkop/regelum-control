@@ -1,0 +1,19 @@
+_target_: rcognita.policies.Reinforce
+
+defaults:
+  - model: perceptron_with_normal_noise
+
+system: ~ system
+action_bounds: $ system_specific.action_bounds
+batch_keys: = ["observation", "action", "total_objective", "tail_total_objective", "baseline"]
+discount_factor: $ scenario.discount_factor
+device: cpu
+
+optimizer_config: 
+  _target_: rcognita.OptimizerConfig
+  kind: tensor
+  opt_method: = torch.optim.Adam
+  opt_options: 
+    lr: 0.1
+  config_options:
+    n_epochs: 1

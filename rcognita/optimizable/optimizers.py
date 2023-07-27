@@ -20,7 +20,7 @@ try:
     import torch
     from torch.utils.data import DataLoader
 
-    from rcognita.data_buffers import UpdatableSampler
+    # from rcognita.data_buffers import UpdatableSampler
 
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
@@ -599,6 +599,10 @@ class Optimizable(rcognita.base.RcognitaBase):
         )
         return opt_result if raw else opt_result.x
 
+    @apply_callbacks()
+    def post_epoch(self, epoch_idx, last_epoch_objective_value):
+        return epoch_idx, last_epoch_objective_value
+
     def optimize_tensor(self, **parameters):
         dataloader = parameters.get("dataloader")
         assert dataloader is not None, "Couldn't find dataloader"
@@ -616,13 +620,16 @@ class Optimizable(rcognita.base.RcognitaBase):
         assert len(self.functions.objectives) == 1, "Only one objective is supported"
         objective = self.functions.objectives[0]
         assert isinstance(objective, FunctionWithSignature), "Something went wrong..."
-        for _ in range(n_epochs):
+
+        for epoch_idx in range(n_epochs):
             for batch_sample in dataloader:
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
                 objective_value = objective(**batch_sample)
                 objective_value.backward()
                 self.optimizer.step()
+
+            self.post_epoch(epoch_idx, objective_value.item())
 
     def define_problem(self):
         self.__is_problem_defined = True
