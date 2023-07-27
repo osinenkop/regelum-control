@@ -82,7 +82,6 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -132,10 +131,20 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.controllers.</span></span><span class="sig-name descname"><span class="pre">ControllerCartPoleEnergyBasedAdaptive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
+<dd><p>Adaptive energy-based controller with adaptation block.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_block</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dd><p>Initialize an instance of energy-based controller with adaptive block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>args</strong> – positional arguments for energy-based controller</p></li>
+<li><p><strong>adaptation_block</strong> – an instance of AdaptationBlock</p></li>
+<li><p><strong>kwargs</strong> – keyword arguments for energy-based controllers</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -146,7 +155,7 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive.__init__" title="rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args[, adaptation_block])</p></td>
-<td><p>Initialize self.</p></td>
+<td><p>Initialize an instance of energy-based controller with adaptive block.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action</span></code>(*args, **kwargs)</p></td>
 <td><p></p></td>

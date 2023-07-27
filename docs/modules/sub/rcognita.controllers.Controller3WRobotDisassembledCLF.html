@@ -82,7 +82,6 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -197,7 +196,21 @@ via semiconcave function backstepping. In 2015 IEEE Conference on Control Applic
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.controllers.Controller3WRobotDisassembledCLF.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment_of_inertia</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">controller_gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_engine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'SciPy'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.Controller3WRobotDisassembledCLF.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<dd><p>Initialize an instance of Controller3WRobotDisassembledCLF.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m</strong> – mass of a robot</p></li>
+<li><p><strong>moment_of_inertia</strong> – inertia of a robot</p></li>
+<li><p><strong>controller_gain</strong> – control input multiplier</p></li>
+<li><p><strong>action_bounds</strong> – upper and lower bounds for action yielded from policy</p></li>
+<li><p><strong>time_start</strong> – time at which computations start</p></li>
+<li><p><strong>sampling_time</strong> – a period between two consecutive actions</p></li>
+<li><p><strong>max_iters</strong> – a maximal number of iterations of optimizer</p></li>
+<li><p><strong>optimizer_engine</strong> – optimizer backend. Can be set either CasADi or SciPy</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -208,7 +221,7 @@ via semiconcave function backstepping. In 2015 IEEE Conference on Control Applic
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.controllers.Controller3WRobotDisassembledCLF.__init__" title="rcognita.controllers.Controller3WRobotDisassembledCLF.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(m, moment_of_inertia[, …])</p></td>
-<td><p>Initialize self.</p></td>
+<td><p>Initialize an instance of Controller3WRobotDisassembledCLF.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_LF</span></code>(observation)</p></td>
 <td><p></p></td>

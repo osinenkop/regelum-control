@@ -53,7 +53,6 @@ rcognita.models.ModelDQNSimple
       ~ModelDQNSimple.restore_weights
       ~ModelDQNSimple.set_extra_state
       ~ModelDQNSimple.share_memory
-      ~ModelDQNSimple.soft_update
       ~ModelDQNSimple.state_dict
       ~ModelDQNSimple.to
       ~ModelDQNSimple.to_empty

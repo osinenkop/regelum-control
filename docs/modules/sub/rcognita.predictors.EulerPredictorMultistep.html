@@ -17,7 +17,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="rcognita.predictors.EulerPredictorPendulum" href="rcognita.predictors.EulerPredictorPendulum.html" />
+    <link rel="next" title="rcognita.predictors.Predictor" href="rcognita.predictors.Predictor.html" />
     <link rel="prev" title="rcognita.predictors.EulerPredictor" href="rcognita.predictors.EulerPredictor.html" /> 
 </head>
 
@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -70,7 +69,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.EulerPredictor.html">rcognita.predictors.EulerPredictor</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.predictors.EulerPredictorMultistep</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.EulerPredictorPendulum.html">rcognita.predictors.EulerPredictorPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.Predictor.html">rcognita.predictors.Predictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.RKPredictor.html">rcognita.predictors.RKPredictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.TrivialPredictor.html">rcognita.predictors.TrivialPredictor</a></li>
@@ -119,10 +117,11 @@
 <h1>rcognita.predictors.EulerPredictorMultistep<a class="headerlink" href="#rcognita-predictors-eulerpredictormultistep" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.predictors.EulerPredictorMultistep">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.predictors.</span></span><span class="sig-name descname"><span class="pre">EulerPredictorMultistep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictorMultistep" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.predictors.</span></span><span class="sig-name descname"><span class="pre">EulerPredictorMultistep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictorMultistep" title="Permalink to this definition"></a></dt>
+<dd><p>Applies several iterations of Euler estimation to predict a single step.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="rcognita.predictors.EulerPredictorMultistep.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictorMultistep.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictorMultistep.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
@@ -133,7 +132,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.predictors.EulerPredictorMultistep.__init__" title="rcognita.predictors.EulerPredictorMultistep.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args[, n_steps])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.predictors.EulerPredictorMultistep.__init__" title="rcognita.predictors.EulerPredictorMultistep.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code>(current_state_or_observation, action)</p></td>
@@ -153,7 +152,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="rcognita.predictors.EulerPredictor.html" class="btn btn-neutral float-left" title="rcognita.predictors.EulerPredictor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="rcognita.predictors.EulerPredictorPendulum.html" class="btn btn-neutral float-right" title="rcognita.predictors.EulerPredictorPendulum" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="rcognita.predictors.Predictor.html" class="btn btn-neutral float-right" title="rcognita.predictors.Predictor" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

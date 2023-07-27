@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -120,20 +119,12 @@
 <h1>rcognita.optimizers.BruteForceOptimizer<a class="headerlink" href="#rcognita-optimizers-bruteforceoptimizer" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.optimizers.BruteForceOptimizer">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.optimizers.</span></span><span class="sig-name descname"><span class="pre">BruteForceOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">possible_variants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_parallel_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.optimizers.BruteForceOptimizer" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.optimizers.</span></span><span class="sig-name descname"><span class="pre">BruteForceOptimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.optimizers.BruteForceOptimizer" title="Permalink to this definition"></a></dt>
 <dd><p>Optimizer that searches for the optimal solution by evaluating all possible variants in parallel.”.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.optimizers.BruteForceOptimizer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">possible_variants</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_parallel_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.optimizers.BruteForceOptimizer.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize an instance of BruteForceOptimizer.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>N_parallel_processes</strong> (<em>int</em>) – number of processes to use in parallel</p></li>
-<li><p><strong>possible_variants</strong> (<em>list</em>) – list of possible variants to evaluate</p></li>
-</ul>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.optimizers.BruteForceOptimizer.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -143,8 +134,8 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.optimizers.BruteForceOptimizer.__init__" title="rcognita.optimizers.BruteForceOptimizer.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(possible_variants[, …])</p></td>
-<td><p>Initialize an instance of BruteForceOptimizer.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.optimizers.BruteForceOptimizer.__init__" title="rcognita.optimizers.BruteForceOptimizer.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_wise_maximization</span></code>(x)</p></td>
 <td><p>Find the variant that maximizes the reward for a given element.</p></td>

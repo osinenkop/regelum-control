@@ -15,6 +15,7 @@ rcognita.callbacks.CalfCallback
    
       ~CalfCallback.__init__
       ~CalfCallback.add_datum
+      ~CalfCallback.attach
       ~CalfCallback.clear_recent_data
       ~CalfCallback.dump_and_clear_data
       ~CalfCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.CalfCallback
       ~CalfCallback.on_iteration_done
       ~CalfCallback.on_launch
       ~CalfCallback.on_termination
+      ~CalfCallback.on_trigger
       ~CalfCallback.perform
       ~CalfCallback.plot
       ~CalfCallback.plot_gui
       ~CalfCallback.ready
+      ~CalfCallback.register
       ~CalfCallback.save_plot
       ~CalfCallback.trigger_cooldown
    

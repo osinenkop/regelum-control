@@ -15,6 +15,7 @@ rcognita.callbacks.HistoricalObservationCallback
    
       ~HistoricalObservationCallback.__init__
       ~HistoricalObservationCallback.add_datum
+      ~HistoricalObservationCallback.attach
       ~HistoricalObservationCallback.clear_recent_data
       ~HistoricalObservationCallback.dump_and_clear_data
       ~HistoricalObservationCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.HistoricalObservationCallback
       ~HistoricalObservationCallback.on_iteration_done
       ~HistoricalObservationCallback.on_launch
       ~HistoricalObservationCallback.on_termination
+      ~HistoricalObservationCallback.on_trigger
       ~HistoricalObservationCallback.perform
       ~HistoricalObservationCallback.plot
       ~HistoricalObservationCallback.plot_gui
       ~HistoricalObservationCallback.ready
+      ~HistoricalObservationCallback.register
       ~HistoricalObservationCallback.save_plot
       ~HistoricalObservationCallback.trigger_cooldown
    

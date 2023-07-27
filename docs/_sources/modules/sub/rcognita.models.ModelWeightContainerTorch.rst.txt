@@ -53,7 +53,6 @@ rcognita.models.ModelWeightContainerTorch
       ~ModelWeightContainerTorch.restore_weights
       ~ModelWeightContainerTorch.set_extra_state
       ~ModelWeightContainerTorch.share_memory
-      ~ModelWeightContainerTorch.soft_update
       ~ModelWeightContainerTorch.state_dict
       ~ModelWeightContainerTorch.to
       ~ModelWeightContainerTorch.to_empty

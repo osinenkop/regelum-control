@@ -28,6 +28,9 @@
       :toctree: sub
    
       ComplementedConfig
+      ComplementedConfigDict
+      ComplementedConfigList
+      FancyModule
       main
    
    
@@ -58,7 +61,6 @@
    rcognita.controllers
    rcognita.critics
    rcognita.data_buffers
-   rcognita.loggers
    rcognita.models
    rcognita.objectives
    rcognita.observers

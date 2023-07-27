@@ -15,6 +15,7 @@ rcognita.callbacks.QFunctionCallback
    
       ~QFunctionCallback.__init__
       ~QFunctionCallback.add_datum
+      ~QFunctionCallback.attach
       ~QFunctionCallback.clear_recent_data
       ~QFunctionCallback.dump_and_clear_data
       ~QFunctionCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.QFunctionCallback
       ~QFunctionCallback.on_iteration_done
       ~QFunctionCallback.on_launch
       ~QFunctionCallback.on_termination
+      ~QFunctionCallback.on_trigger
       ~QFunctionCallback.perform
       ~QFunctionCallback.plot
       ~QFunctionCallback.plot_gui
       ~QFunctionCallback.ready
+      ~QFunctionCallback.register
       ~QFunctionCallback.save_plot
       ~QFunctionCallback.trigger_cooldown
    

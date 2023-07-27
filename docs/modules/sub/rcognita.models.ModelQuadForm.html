@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="rcognita.models.ModelQuadLin" href="rcognita.models.ModelQuadLin.html" />
-    <link rel="prev" title="rcognita.models.ModelPerceptronCalf" href="rcognita.models.ModelPerceptronCalf.html" /> 
+    <link rel="prev" title="rcognita.models.ModelNNElementWiseProduct" href="rcognita.models.ModelNNElementWiseProduct.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -62,10 +62,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.force_positive_def.html">rcognita.models.force_positive_def</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.GaussianElementWisePDFModel.html">rcognita.models.GaussianElementWisePDFModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.GaussianPDFModel.html">rcognita.models.GaussianPDFModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.LookupTable.html">rcognita.models.LookupTable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.Model.html">rcognita.models.Model</a></li>
@@ -76,10 +74,8 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelDQNSimple.html">rcognita.models.ModelDQNSimple</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelDeepObjective.html">rcognita.models.ModelDeepObjective</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelFc.html">rcognita.models.ModelFc</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelGaussianConditional.html">rcognita.models.ModelGaussianConditional</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelNN.html">rcognita.models.ModelNN</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelNNElementWiseProduct.html">rcognita.models.ModelNNElementWiseProduct</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelPerceptronCalf.html">rcognita.models.ModelPerceptronCalf</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.models.ModelQuadForm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadLin.html">rcognita.models.ModelQuadLin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadNoMix.html">rcognita.models.ModelQuadNoMix</a></li>
@@ -87,7 +83,6 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadNoMixTorch.html">rcognita.models.ModelQuadNoMixTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadratic.html">rcognita.models.ModelQuadratic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadraticSquared.html">rcognita.models.ModelQuadraticSquared</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelSS.html">rcognita.models.ModelSS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelWeightContainer.html">rcognita.models.ModelWeightContainer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelWeightContainerTorch.html">rcognita.models.ModelWeightContainerTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.WeightClipper.html">rcognita.models.WeightClipper</a></li>
@@ -140,11 +135,11 @@
 <h1>rcognita.models.ModelQuadForm<a class="headerlink" href="#rcognita-models-modelquadform" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.models.ModelQuadForm">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.models.</span></span><span class="sig-name descname"><span class="pre">ModelQuadForm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelQuadForm" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.models.</span></span><span class="sig-name descname"><span class="pre">ModelQuadForm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelQuadForm" title="Permalink to this definition"></a></dt>
 <dd><p>Quadratic form.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.models.ModelQuadForm.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelQuadForm.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelQuadForm.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
@@ -155,7 +150,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.models.ModelQuadForm.__init__" title="rcognita.models.ModelQuadForm.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([weights])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.models.ModelQuadForm.__init__" title="rcognita.models.ModelQuadForm.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cache_weights</span></code>([weights])</p></td>
@@ -195,7 +190,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="rcognita.models.ModelPerceptronCalf.html" class="btn btn-neutral float-left" title="rcognita.models.ModelPerceptronCalf" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rcognita.models.ModelNNElementWiseProduct.html" class="btn btn-neutral float-left" title="rcognita.models.ModelNNElementWiseProduct" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="rcognita.models.ModelQuadLin.html" class="btn btn-neutral float-right" title="rcognita.models.ModelQuadLin" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

@@ -14,7 +14,6 @@
         <script src="../../_static/jquery.js"></script>
         <script src="../../_static/underscore.js"></script>
         <script src="../../_static/doctools.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -63,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -130,44 +128,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.systems.LunarLander.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.systems.LunarLander.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize a system.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sys_type</strong> (<em>: string</em>) – <p>Type of system by description:</p>
-<div class="line-block">
-<div class="line"><code class="docutils literal notranslate"><span class="pre">diff_eqn</span></code> : differential equation <span class="math notranslate nohighlight">\(\mathcal D state = f(state, action, disturb)\)</span></div>
-<div class="line"><code class="docutils literal notranslate"><span class="pre">discr_fnc</span></code> : difference equation <span class="math notranslate nohighlight">\(state^+ = f(state, action, disturb)\)</span></div>
-<div class="line"><code class="docutils literal notranslate"><span class="pre">discr_prob</span></code> :  by probability distribution <span class="math notranslate nohighlight">\(X^+ \sim P_X(state^+| state, action, disturb)\)</span></div>
-</div>
-</p></li>
-<li><p><strong>where</strong> – <div class="line-block">
-<div class="line"><span class="math notranslate nohighlight">\(state\)</span> : state</div>
-<div class="line"><span class="math notranslate nohighlight">\(action\)</span> : input</div>
-<div class="line"><span class="math notranslate nohighlight">\(disturb\)</span> : disturbance</div>
-</div>
-</p></li>
-<li><p><strong>time variable time is commonly used by ODE solvers</strong> (<em>The</em>) – </p></li>
-<li><p><strong>you shouldn't have it explicitly referenced in the definition</strong> (<em>and</em>) – </p></li>
-<li><p><strong>your system is non-autonomous.</strong> (<em>unless</em>) – </p></li>
-<li><p><strong>the latter case</strong> (<em>For</em>) – </p></li>
-<li><p><strong>however</strong> – </p></li>
-<li><p><strong>already have the input and disturbance at your disposal.</strong> (<em>you</em>) – </p></li>
-<li><p><strong>of the system are contained in pars attribute.</strong> (<em>Parameters</em>) – </p></li>
-<li><p><strong>dim_state</strong> (<em>: integer</em>) – System dimensions</p></li>
-<li><p><strong>dim_input</strong> (<em>: integer</em>) – System dimensions</p></li>
-<li><p><strong>dim_output</strong> (<em>: integer</em>) – System dimensions</p></li>
-<li><p><strong>dim_disturb</strong> (<em>: integer</em>) – System dimensions</p></li>
-<li><p><strong>pars</strong> (<em>: list</em>) – List of fixed parameters of the system</p></li>
-<li><p><strong>action_bounds</strong> (: array of shape <code class="docutils literal notranslate"><span class="pre">[dim_input,</span> <span class="pre">2]</span></code>) – Box control constraints.
-First element in each row is the lower bound, the second - the upper bound.
-If empty, control is unconstrained (default)</p></li>
-<li><p><strong>is_dynamic_controller</strong> (<em>: 0</em><em> or </em><em>1</em>) – If 1, the controller (a.k.a. agent) is considered as a part of the full state vector</p></li>
-<li><p><strong>is_disturb</strong> (<em>: 0</em><em> or </em><em>1</em>) – If 0, no disturbance is fed into the system</p></li>
-<li><p><strong>pars_disturb</strong> (<em>: list</em>) – Parameters of the disturbance model</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -178,7 +139,7 @@ If empty, control is unconstrained (default)</p></li>
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.systems.LunarLander.__init__" title="rcognita.systems.LunarLander.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
-<td><p>Initialize a system.</p></td>
+<td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_closed_loop_rhs</span></code>(time, state_full)</p></td>
 <td><p>Right-hand side of the closed-loop system description.</p></td>

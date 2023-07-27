@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -125,25 +124,25 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.BruteForceOptimizer.html#rcognita.optimizers.BruteForceOptimizer" title="rcognita.optimizers.BruteForceOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BruteForceOptimizer</span></code></a>(possible_variants[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.BruteForceOptimizer.html#rcognita.optimizers.BruteForceOptimizer" title="rcognita.optimizers.BruteForceOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BruteForceOptimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Optimizer that searches for the optimal solution by evaluating all possible variants in parallel.”.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.optimizers.CasADiOptimizer.html#rcognita.optimizers.CasADiOptimizer" title="rcognita.optimizers.CasADiOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CasADiOptimizer</span></code></a>(opt_method, opt_options[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.optimizers.CasADiOptimizer.html#rcognita.optimizers.CasADiOptimizer" title="rcognita.optimizers.CasADiOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CasADiOptimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.Optimizer.html#rcognita.optimizers.Optimizer" title="rcognita.optimizers.Optimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Optimizer</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.Optimizer.html#rcognita.optimizers.Optimizer" title="rcognita.optimizers.Optimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Optimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Abstract base class for optimizers.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.optimizers.SciPyOptimizer.html#rcognita.optimizers.SciPyOptimizer" title="rcognita.optimizers.SciPyOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SciPyOptimizer</span></code></a>(opt_method, opt_options[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.optimizers.SciPyOptimizer.html#rcognita.optimizers.SciPyOptimizer" title="rcognita.optimizers.SciPyOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SciPyOptimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Optimizer class using the SciPy optimization library.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.TorchDataloaderOptimizer.html#rcognita.optimizers.TorchDataloaderOptimizer" title="rcognita.optimizers.TorchDataloaderOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchDataloaderOptimizer</span></code></a>(opt_options, model)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.TorchDataloaderOptimizer.html#rcognita.optimizers.TorchDataloaderOptimizer" title="rcognita.optimizers.TorchDataloaderOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchDataloaderOptimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Optimizer class that uses PyTorch as its optimization engine.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.optimizers.TorchOptimizer.html#rcognita.optimizers.TorchOptimizer" title="rcognita.optimizers.TorchOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchOptimizer</span></code></a>(opt_options, model[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.optimizers.TorchOptimizer.html#rcognita.optimizers.TorchOptimizer" title="rcognita.optimizers.TorchOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchOptimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Optimizer class that uses PyTorch as its optimization engine.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.TorchProjectiveOptimizer.html#rcognita.optimizers.TorchProjectiveOptimizer" title="rcognita.optimizers.TorchProjectiveOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchProjectiveOptimizer</span></code></a>(bounds, opt_options)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.optimizers.TorchProjectiveOptimizer.html#rcognita.optimizers.TorchProjectiveOptimizer" title="rcognita.optimizers.TorchProjectiveOptimizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TorchProjectiveOptimizer</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Optimizer class that uses PyTorch as its optimization engine.</p></td>
 </tr>
 </tbody>

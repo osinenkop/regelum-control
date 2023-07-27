@@ -26,7 +26,6 @@
    .. autosummary::
       :toctree: sub
    
-      GaussianElementWisePDFModel
       GaussianPDFModel
       LookupTable
       Model
@@ -37,10 +36,8 @@
       ModelDQNSimple
       ModelDeepObjective
       ModelFc
-      ModelGaussianConditional
       ModelNN
       ModelNNElementWiseProduct
-      ModelPerceptronCalf
       ModelQuadForm
       ModelQuadLin
       ModelQuadNoMix
@@ -48,7 +45,6 @@
       ModelQuadNoMixTorch
       ModelQuadratic
       ModelQuadraticSquared
-      ModelSS
       ModelWeightContainer
       ModelWeightContainerTorch
       WeightClipper

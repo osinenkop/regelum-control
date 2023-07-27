@@ -14,13 +14,16 @@ rcognita.callbacks.StateCallback
    .. autosummary::
    
       ~StateCallback.__init__
+      ~StateCallback.attach
       ~StateCallback.is_target_event
       ~StateCallback.on_episode_done
       ~StateCallback.on_iteration_done
       ~StateCallback.on_launch
       ~StateCallback.on_termination
+      ~StateCallback.on_trigger
       ~StateCallback.perform
       ~StateCallback.ready
+      ~StateCallback.register
       ~StateCallback.trigger_cooldown
    
    

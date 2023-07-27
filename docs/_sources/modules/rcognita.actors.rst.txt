@@ -34,8 +34,6 @@
       ActorMPCTerminal
       ActorPGBase
       ActorPID
-      ActorProbabilisticEpisodic
-      ActorProbabilisticEpisodicAC
       ActorREINFORCE
       ActorRPO
       ActorRQL

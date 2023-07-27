@@ -17,7 +17,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="rcognita.critics.CriticOfActionObservationOnPolicy" href="rcognita.critics.CriticOfActionObservationOnPolicy.html" />
+    <link rel="next" title="rcognita.critics.CriticOfObservation" href="rcognita.critics.CriticOfObservation.html" />
     <link rel="prev" title="rcognita.critics.Critic" href="rcognita.critics.Critic.html" /> 
 </head>
 
@@ -63,7 +63,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.Critic.html">rcognita.critics.Critic</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.critics.CriticCALF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfActionObservationOnPolicy.html">rcognita.critics.CriticOfActionObservationOnPolicy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfObservation.html">rcognita.critics.CriticOfObservation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyBehaviour.html">rcognita.critics.CriticOffPolicyBehaviour</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyGreedy.html">rcognita.critics.CriticOffPolicyGreedy</a></li>
@@ -73,7 +72,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -122,26 +120,11 @@
 <h1>rcognita.critics.CriticCALF<a class="headerlink" href="#rcognita-critics-criticcalf" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.critics.CriticCALF">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticCALF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_decay_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_dynamic_decay_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_controller</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_predictive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticCALF" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticCALF</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticCALF" title="Permalink to this definition"></a></dt>
 <dd><dl class="py method">
 <dt class="sig sig-object py" id="rcognita.critics.CriticCALF.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_decay_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_dynamic_decay_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">safe_controller</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_predictive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub_parameter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticCALF.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize a CriticCALF object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>args</strong> – Arguments to be passed to the base class <cite>CriticOfObservation</cite>.</p></li>
-<li><p><strong>safe_decay_param</strong> – Rate at which the safe set shrinks over time.</p></li>
-<li><p><strong>is_dynamic_decay_rate</strong> – Whether the decay rate should be dynamic or not.</p></li>
-<li><p><strong>predictor</strong> – A predictor object to be used to predict future observations.</p></li>
-<li><p><strong>observation_init</strong> – Initial observation to be used to initialize the safe set.</p></li>
-<li><p><strong>safe_controller</strong> – Safe controller object to be used to compute stabilizing actions.</p></li>
-<li><p><strong>penalty_param</strong> – Penalty parameter to be used in the CALF objective.</p></li>
-<li><p><strong>is_predictive</strong> – Whether the safe constraints should be computed based on predictions or not.</p></li>
-<li><p><strong>kwargs</strong> – Keyword arguments to be passed to the base class <cite>CriticOfObservation</cite>.</p></li>
-</ul>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticCALF.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -169,8 +152,8 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">CALF_decay_constraint_predicted_safe_policy</span></code>([…])</p></td>
 <td><p>Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticCALF.__init__" title="rcognita.critics.CriticCALF.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args[, safe_decay_param, …])</p></td>
-<td><p>Initialize a CriticCALF object.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticCALF.__init__" title="rcognita.critics.CriticCALF.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
 <td><p>Determine whether to accept or reject the given weights based on whether they violate the given constraints.</p></td>
@@ -237,7 +220,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="rcognita.critics.Critic.html" class="btn btn-neutral float-left" title="rcognita.critics.Critic" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="rcognita.critics.CriticOfActionObservationOnPolicy.html" class="btn btn-neutral float-right" title="rcognita.critics.CriticOfActionObservationOnPolicy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="rcognita.critics.CriticOfObservation.html" class="btn btn-neutral float-right" title="rcognita.critics.CriticOfObservation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -53,7 +53,6 @@ rcognita.models.ModelNN
       ~ModelNN.restore_weights
       ~ModelNN.set_extra_state
       ~ModelNN.share_memory
-      ~ModelNN.soft_update
       ~ModelNN.state_dict
       ~ModelNN.to
       ~ModelNN.to_empty

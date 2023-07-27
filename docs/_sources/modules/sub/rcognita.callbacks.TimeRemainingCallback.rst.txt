@@ -14,13 +14,16 @@ rcognita.callbacks.TimeRemainingCallback
    .. autosummary::
    
       ~TimeRemainingCallback.__init__
+      ~TimeRemainingCallback.attach
       ~TimeRemainingCallback.is_target_event
       ~TimeRemainingCallback.on_episode_done
       ~TimeRemainingCallback.on_iteration_done
       ~TimeRemainingCallback.on_launch
       ~TimeRemainingCallback.on_termination
+      ~TimeRemainingCallback.on_trigger
       ~TimeRemainingCallback.perform
       ~TimeRemainingCallback.ready
+      ~TimeRemainingCallback.register
       ~TimeRemainingCallback.trigger_cooldown
    
    

@@ -17,7 +17,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="rcognita.base.FreePort" href="sub/rcognita.base.FreePort.html" />
+    <link rel="next" title="rcognita.base.classproperty" href="sub/rcognita.base.classproperty.html" />
     <link rel="prev" title="rcognita.adaptation_blocks.AdaptationBlockCartpole" href="sub/rcognita.adaptation_blocks.AdaptationBlockCartpole.html" /> 
 </head>
 
@@ -58,12 +58,16 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.classproperty.html">rcognita.base.classproperty</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.ClassPropertyDescriptor.html">rcognita.base.ClassPropertyDescriptor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.FreePort.html">rcognita.base.FreePort</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.FreePublisher.html">rcognita.base.FreePublisher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.Node.html">rcognita.base.Node</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.Port.html">rcognita.base.Port</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.Publisher.html">rcognita.base.Publisher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.RcognitaBase.html">rcognita.base.RcognitaBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.RcognitaType.html">rcognita.base.RcognitaType</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.apply_callbacks.html">rcognita.base.apply_callbacks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.port.html">rcognita.base.port</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.base.publisher.html">rcognita.base.publisher</a></li>
 </ul>
@@ -72,7 +76,6 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -119,6 +122,18 @@
   <div class="section" id="module-rcognita.base">
 <span id="rcognita-base"></span><h1><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code><a class="headerlink" href="#module-rcognita.base" title="Permalink to this headline"></a></h1>
 <p>Base infrastructure of rcognita.</p>
+<p class="rubric">Functions</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.classproperty.html#rcognita.base.classproperty" title="rcognita.base.classproperty"><code class="xref py py-obj docutils literal notranslate"><span class="pre">classproperty</span></code></a>(func)</p></td>
+<td><p>Decorates a method in such a way that it becomes a class property.</p></td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Classes</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -126,28 +141,37 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.FreePort.html#rcognita.base.FreePort" title="rcognita.base.FreePort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreePort</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.ClassPropertyDescriptor.html#rcognita.base.ClassPropertyDescriptor" title="rcognita.base.ClassPropertyDescriptor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ClassPropertyDescriptor</span></code></a>(fget[, fset])</p></td>
+<td><p>Enables to declare class properties.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.FreePort.html#rcognita.base.FreePort" title="rcognita.base.FreePort"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreePort</span></code></a>()</p></td>
 <td><p>A Port that can accept messages of arbitrary type.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.FreePublisher.html#rcognita.base.FreePublisher" title="rcognita.base.FreePublisher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreePublisher</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.FreePublisher.html#rcognita.base.FreePublisher" title="rcognita.base.FreePublisher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FreePublisher</span></code></a>()</p></td>
 <td><p>A Publisher that can send messages of arbitrary type.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.Node.html#rcognita.base.Node" title="rcognita.base.Node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Node</span></code></a>(input_type)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.Node.html#rcognita.base.Node" title="rcognita.base.Node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Node</span></code></a>(input_type)</p></td>
 <td><p>A node is an object that is responsible for sending/receiving/rerouting/processing messages.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.Port.html#rcognita.base.Port" title="rcognita.base.Port"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Port</span></code></a>(input_type)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.Port.html#rcognita.base.Port" title="rcognita.base.Port"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Port</span></code></a>(input_type)</p></td>
 <td><p>A Port is a Node that accepts messages.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.Publisher.html#rcognita.base.Publisher" title="rcognita.base.Publisher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Publisher</span></code></a>(input_type)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.Publisher.html#rcognita.base.Publisher" title="rcognita.base.Publisher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Publisher</span></code></a>(input_type)</p></td>
 <td><p>A Publisher is a Node that sends messages.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.RcognitaBase.html#rcognita.base.RcognitaBase" title="rcognita.base.RcognitaBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RcognitaBase</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.RcognitaBase.html#rcognita.base.RcognitaBase" title="rcognita.base.RcognitaBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RcognitaBase</span></code></a>()</p></td>
 <td><p>Base class designed to act as an abstraction over all rcognita objects.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.port.html#rcognita.base.port" title="rcognita.base.port"><code class="xref py py-obj docutils literal notranslate"><span class="pre">port</span></code></a>([input_type, hooks])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.RcognitaType.html#rcognita.base.RcognitaType" title="rcognita.base.RcognitaType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RcognitaType</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Rcognita type that all classes in rcognita share.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.apply_callbacks.html#rcognita.base.apply_callbacks" title="rcognita.base.apply_callbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_callbacks</span></code></a>([callbacks])</p></td>
+<td><p>Decorator that applies a list of callbacks to a given method of an object.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.port.html#rcognita.base.port" title="rcognita.base.port"><code class="xref py py-obj docutils literal notranslate"><span class="pre">port</span></code></a>([input_type, hooks])</p></td>
 <td><p>Decorator factory that replaces a method with a Port in such a way that the initial definition of the method is interpreted as said Port’s handler.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.base.publisher.html#rcognita.base.publisher" title="rcognita.base.publisher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">publisher</span></code></a>([input_type, hooks])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.base.publisher.html#rcognita.base.publisher" title="rcognita.base.publisher"><code class="xref py py-obj docutils literal notranslate"><span class="pre">publisher</span></code></a>([input_type, hooks])</p></td>
 <td><p>Decorator factory that replaces a method with a Publisher in such a way that the initial definition of the method is interpreted as said Publisher’s hook.</p></td>
 </tr>
 </tbody>
@@ -171,7 +195,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="sub/rcognita.adaptation_blocks.AdaptationBlockCartpole.html" class="btn btn-neutral float-left" title="rcognita.adaptation_blocks.AdaptationBlockCartpole" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="sub/rcognita.base.FreePort.html" class="btn btn-neutral float-right" title="rcognita.base.FreePort" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sub/rcognita.base.classproperty.html" class="btn btn-neutral float-right" title="rcognita.base.classproperty" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

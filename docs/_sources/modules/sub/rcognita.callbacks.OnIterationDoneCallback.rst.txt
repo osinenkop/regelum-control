@@ -14,13 +14,16 @@ rcognita.callbacks.OnIterationDoneCallback
    .. autosummary::
    
       ~OnIterationDoneCallback.__init__
+      ~OnIterationDoneCallback.attach
       ~OnIterationDoneCallback.is_target_event
       ~OnIterationDoneCallback.on_episode_done
       ~OnIterationDoneCallback.on_iteration_done
       ~OnIterationDoneCallback.on_launch
       ~OnIterationDoneCallback.on_termination
+      ~OnIterationDoneCallback.on_trigger
       ~OnIterationDoneCallback.perform
       ~OnIterationDoneCallback.ready
+      ~OnIterationDoneCallback.register
       ~OnIterationDoneCallback.trigger_cooldown
    
    

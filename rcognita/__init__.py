@@ -14,6 +14,7 @@ import os
 import inspect
 import logging
 import traceback
+import types
 import warnings
 
 import random
@@ -867,3 +868,9 @@ warnings.filterwarnings("ignore", category=OptimizeWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 array = __utilities.rc.array
+
+class FancyModule(types.ModuleType):
+    def __call__(self, *args, **kwargs):
+        return main(*args, **kwargs)
+
+sys.modules[__name__].__class__ = FancyModule

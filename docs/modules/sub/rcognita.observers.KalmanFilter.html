@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a><ul class="current">
@@ -114,10 +113,11 @@
 <h1>rcognita.observers.KalmanFilter<a class="headerlink" href="#rcognita-observers-kalmanfilter" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.observers.KalmanFilter">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.observers.</span></span><span class="sig-name descname"><span class="pre">KalmanFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_sys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sys_noise_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observ_noise_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_est_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.observers.KalmanFilter" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.observers.</span></span><span class="sig-name descname"><span class="pre">KalmanFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.observers.KalmanFilter" title="Permalink to this definition"></a></dt>
+<dd><p>A class implementing Kalman filter.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="rcognita.observers.KalmanFilter.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_sys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sys_noise_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observ_noise_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_est_cov</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.observers.KalmanFilter.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.observers.KalmanFilter.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
@@ -128,7 +128,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.observers.KalmanFilter.__init__" title="rcognita.observers.KalmanFilter.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(t0, my_sys, sys_noise_cov, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.observers.KalmanFilter.__init__" title="rcognita.observers.KalmanFilter.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_estimate</span></code>(t, observation, action)</p></td>

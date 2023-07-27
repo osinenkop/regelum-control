@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -70,7 +69,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.predictors.EulerPredictor.html">rcognita.predictors.EulerPredictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.predictors.EulerPredictorMultistep.html">rcognita.predictors.EulerPredictorMultistep</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.predictors.EulerPredictorPendulum.html">rcognita.predictors.EulerPredictorPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.predictors.Predictor.html">rcognita.predictors.Predictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.predictors.RKPredictor.html">rcognita.predictors.RKPredictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.predictors.TrivialPredictor.html">rcognita.predictors.TrivialPredictor</a></li>
@@ -124,22 +122,19 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.predictors.EulerPredictor.html#rcognita.predictors.EulerPredictor" title="rcognita.predictors.EulerPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EulerPredictor</span></code></a>(pred_step_size, system, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.predictors.EulerPredictor.html#rcognita.predictors.EulerPredictor" title="rcognita.predictors.EulerPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EulerPredictor</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Euler predictor uses a simple Euler discretization scheme.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.predictors.EulerPredictorMultistep.html#rcognita.predictors.EulerPredictorMultistep" title="rcognita.predictors.EulerPredictorMultistep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EulerPredictorMultistep</span></code></a>(*args[, n_steps])</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.predictors.EulerPredictorMultistep.html#rcognita.predictors.EulerPredictorMultistep" title="rcognita.predictors.EulerPredictorMultistep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EulerPredictorMultistep</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Applies several iterations of Euler estimation to predict a single step.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.predictors.EulerPredictorPendulum.html#rcognita.predictors.EulerPredictorPendulum" title="rcognita.predictors.EulerPredictorPendulum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EulerPredictorPendulum</span></code></a>(pred_step_size, …)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.predictors.Predictor.html#rcognita.predictors.Predictor" title="rcognita.predictors.Predictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Predictor</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.predictors.Predictor.html#rcognita.predictors.Predictor" title="rcognita.predictors.Predictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Predictor</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Blueprint of a predictor.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.predictors.RKPredictor.html#rcognita.predictors.RKPredictor" title="rcognita.predictors.RKPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RKPredictor</span></code></a>(state_or_observation_init, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.predictors.RKPredictor.html#rcognita.predictors.RKPredictor" title="rcognita.predictors.RKPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RKPredictor</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Predictor that makes use o Runge-Kutta finite difference methods.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.predictors.TrivialPredictor.html#rcognita.predictors.TrivialPredictor" title="rcognita.predictors.TrivialPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TrivialPredictor</span></code></a>(system)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.predictors.TrivialPredictor.html#rcognita.predictors.TrivialPredictor" title="rcognita.predictors.TrivialPredictor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TrivialPredictor</span></code></a>(*args, **kwargs)</p></td>
 <td><p>A predictor that propagates the observation or state directly through the system dynamics law.</p></td>
 </tr>
 </tbody>

@@ -10,6 +10,13 @@
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      classproperty
+   
    
 
    
@@ -19,12 +26,15 @@
    .. autosummary::
       :toctree: sub
    
+      ClassPropertyDescriptor
       FreePort
       FreePublisher
       Node
       Port
       Publisher
       RcognitaBase
+      RcognitaType
+      apply_callbacks
       port
       publisher
    

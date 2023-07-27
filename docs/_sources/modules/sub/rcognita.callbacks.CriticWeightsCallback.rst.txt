@@ -15,6 +15,7 @@ rcognita.callbacks.CriticWeightsCallback
    
       ~CriticWeightsCallback.__init__
       ~CriticWeightsCallback.add_datum
+      ~CriticWeightsCallback.attach
       ~CriticWeightsCallback.clear_recent_data
       ~CriticWeightsCallback.dump_and_clear_data
       ~CriticWeightsCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.CriticWeightsCallback
       ~CriticWeightsCallback.on_iteration_done
       ~CriticWeightsCallback.on_launch
       ~CriticWeightsCallback.on_termination
+      ~CriticWeightsCallback.on_trigger
       ~CriticWeightsCallback.perform
       ~CriticWeightsCallback.plot
       ~CriticWeightsCallback.plot_gui
       ~CriticWeightsCallback.ready
+      ~CriticWeightsCallback.register
       ~CriticWeightsCallback.save_plot
       ~CriticWeightsCallback.trigger_cooldown
    

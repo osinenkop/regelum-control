@@ -15,6 +15,7 @@ rcognita.callbacks.HistoricalCallback
    
       ~HistoricalCallback.__init__
       ~HistoricalCallback.add_datum
+      ~HistoricalCallback.attach
       ~HistoricalCallback.clear_recent_data
       ~HistoricalCallback.dump_and_clear_data
       ~HistoricalCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.HistoricalCallback
       ~HistoricalCallback.on_iteration_done
       ~HistoricalCallback.on_launch
       ~HistoricalCallback.on_termination
+      ~HistoricalCallback.on_trigger
       ~HistoricalCallback.perform
       ~HistoricalCallback.plot
       ~HistoricalCallback.plot_gui
       ~HistoricalCallback.ready
+      ~HistoricalCallback.register
       ~HistoricalCallback.save_plot
       ~HistoricalCallback.trigger_cooldown
    

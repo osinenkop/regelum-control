@@ -63,7 +63,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.Critic.html">rcognita.critics.Critic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticCALF.html">rcognita.critics.CriticCALF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfActionObservationOnPolicy.html">rcognita.critics.CriticOfActionObservationOnPolicy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfObservation.html">rcognita.critics.CriticOfObservation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyBehaviour.html">rcognita.critics.CriticOffPolicyBehaviour</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyGreedy.html">rcognita.critics.CriticOffPolicyGreedy</a></li>
@@ -73,7 +72,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -122,29 +120,12 @@
 <h1>rcognita.critics.CriticTabularVI<a class="headerlink" href="#rcognita-critics-critictabularvi" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.critics.CriticTabularVI">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticTabularVI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_state_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">running_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actor_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discount_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_parallel_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTabularVI" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticTabularVI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTabularVI" title="Permalink to this definition"></a></dt>
 <dd><p>Critic for tabular agents.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.critics.CriticTabularVI.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_state_space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">running_objective</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">predictor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actor_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discount_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N_parallel_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">terminal_state</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTabularVI.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize a CriticTabularVI object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>dim_state_space</strong> (<em>tuple of int</em>) – The dimensions of the state space.</p></li>
-<li><p><strong>running_objective</strong> (<em>callable</em>) – The running objective function.</p></li>
-<li><p><strong>predictor</strong> (<em>any</em>) – The predictor object.</p></li>
-<li><p><strong>model</strong> (<a class="reference internal" href="rcognita.models.Model.html#rcognita.models.Model" title="rcognita.models.Model"><em>Model</em></a>) – The model object.</p></li>
-<li><p><strong>actor_model</strong> (<em>any</em>) – The actor model object.</p></li>
-<li><p><strong>discount_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – The discount factor for the temporal difference.</p></li>
-<li><p><strong>N_parallel_processes</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of parallel processes to use.</p></li>
-<li><p><strong>terminal_state</strong> (<em>optional</em><em>, </em><em>int</em><em> or </em><em>tuple of int</em>) – The terminal state, if applicable.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>None</p>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTabularVI.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -154,8 +135,8 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticTabularVI.__init__" title="rcognita.critics.CriticTabularVI.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(dim_state_space, running_objective, …)</p></td>
-<td><p>Initialize a CriticTabularVI object.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticTabularVI.__init__" title="rcognita.critics.CriticTabularVI.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
 <td><p>Determine whether to accept or reject the given weights based on whether they violate the given constraints.</p></td>

@@ -55,7 +55,6 @@ rcognita.models.GaussianPDFModel
       ~GaussianPDFModel.sample
       ~GaussianPDFModel.set_extra_state
       ~GaussianPDFModel.share_memory
-      ~GaussianPDFModel.soft_update
       ~GaussianPDFModel.state_dict
       ~GaussianPDFModel.to
       ~GaussianPDFModel.to_empty

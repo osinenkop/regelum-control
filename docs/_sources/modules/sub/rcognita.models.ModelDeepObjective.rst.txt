@@ -53,7 +53,6 @@ rcognita.models.ModelDeepObjective
       ~ModelDeepObjective.restore_weights
       ~ModelDeepObjective.set_extra_state
       ~ModelDeepObjective.share_memory
-      ~ModelDeepObjective.soft_update
       ~ModelDeepObjective.state_dict
       ~ModelDeepObjective.to
       ~ModelDeepObjective.to_empty

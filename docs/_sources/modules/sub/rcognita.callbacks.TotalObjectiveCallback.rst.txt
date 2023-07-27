@@ -15,6 +15,7 @@ rcognita.callbacks.TotalObjectiveCallback
    
       ~TotalObjectiveCallback.__init__
       ~TotalObjectiveCallback.add_datum
+      ~TotalObjectiveCallback.attach
       ~TotalObjectiveCallback.clear_recent_data
       ~TotalObjectiveCallback.dump_and_clear_data
       ~TotalObjectiveCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.TotalObjectiveCallback
       ~TotalObjectiveCallback.on_iteration_done
       ~TotalObjectiveCallback.on_launch
       ~TotalObjectiveCallback.on_termination
+      ~TotalObjectiveCallback.on_trigger
       ~TotalObjectiveCallback.perform
       ~TotalObjectiveCallback.plot
       ~TotalObjectiveCallback.plot_gui
       ~TotalObjectiveCallback.ready
+      ~TotalObjectiveCallback.register
       ~TotalObjectiveCallback.save_plot
       ~TotalObjectiveCallback.trigger_cooldown
    

@@ -14,15 +14,8 @@ rcognita.ComplementedConfig
    .. autosummary::
    
       ~ComplementedConfig.__init__
-      ~ComplementedConfig.clear
       ~ComplementedConfig.copy
-      ~ComplementedConfig.has_key
-      ~ComplementedConfig.items
-      ~ComplementedConfig.keys
       ~ComplementedConfig.refresh
-      ~ComplementedConfig.treemap
-      ~ComplementedConfig.update
-      ~ComplementedConfig.values
    
    
 

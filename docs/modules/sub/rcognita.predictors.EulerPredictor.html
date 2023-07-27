@@ -62,7 +62,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -70,7 +69,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.predictors.EulerPredictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.EulerPredictorMultistep.html">rcognita.predictors.EulerPredictorMultistep</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.EulerPredictorPendulum.html">rcognita.predictors.EulerPredictorPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.Predictor.html">rcognita.predictors.Predictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.RKPredictor.html">rcognita.predictors.RKPredictor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.predictors.TrivialPredictor.html">rcognita.predictors.TrivialPredictor</a></li>
@@ -119,12 +117,12 @@
 <h1>rcognita.predictors.EulerPredictor<a class="headerlink" href="#rcognita-predictors-eulerpredictor" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.predictors.EulerPredictor">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.predictors.</span></span><span class="sig-name descname"><span class="pre">EulerPredictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred_step_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="rcognita.systems.System.html#rcognita.systems.System" title="rcognita.systems.System"><span class="pre">rcognita.systems.System</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_input</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_horizon</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictor" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.predictors.</span></span><span class="sig-name descname"><span class="pre">EulerPredictor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictor" title="Permalink to this definition"></a></dt>
 <dd><p>Euler predictor uses a simple Euler discretization scheme.</p>
 <p>It does predictions by increments scaled by a sampling time times the velocity evaluated at each successive node.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.predictors.EulerPredictor.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred_step_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="rcognita.systems.System.html#rcognita.systems.System" title="rcognita.systems.System"><span class="pre">rcognita.systems.System</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_input</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prediction_horizon</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictor.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.predictors.EulerPredictor.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
@@ -135,7 +133,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.predictors.EulerPredictor.__init__" title="rcognita.predictors.EulerPredictor.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(pred_step_size, system, dim_input, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.predictors.EulerPredictor.__init__" title="rcognita.predictors.EulerPredictor.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code>(current_state, action)</p></td>

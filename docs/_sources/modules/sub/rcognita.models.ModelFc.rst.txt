@@ -53,7 +53,6 @@ rcognita.models.ModelFc
       ~ModelFc.restore_weights
       ~ModelFc.set_extra_state
       ~ModelFc.share_memory
-      ~ModelFc.soft_update
       ~ModelFc.state_dict
       ~ModelFc.to
       ~ModelFc.to_empty

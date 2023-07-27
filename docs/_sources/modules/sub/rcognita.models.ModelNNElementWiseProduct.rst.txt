@@ -53,7 +53,6 @@ rcognita.models.ModelNNElementWiseProduct
       ~ModelNNElementWiseProduct.restore_weights
       ~ModelNNElementWiseProduct.set_extra_state
       ~ModelNNElementWiseProduct.share_memory
-      ~ModelNNElementWiseProduct.soft_update
       ~ModelNNElementWiseProduct.state_dict
       ~ModelNNElementWiseProduct.to
       ~ModelNNElementWiseProduct.to_empty

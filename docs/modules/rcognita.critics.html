@@ -63,7 +63,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a><ul>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.critics.Critic.html">rcognita.critics.Critic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.critics.CriticCALF.html">rcognita.critics.CriticCALF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.critics.CriticOfActionObservationOnPolicy.html">rcognita.critics.CriticOfActionObservationOnPolicy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.critics.CriticOfObservation.html">rcognita.critics.CriticOfObservation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.critics.CriticOffPolicyBehaviour.html">rcognita.critics.CriticOffPolicyBehaviour</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.critics.CriticOffPolicyGreedy.html">rcognita.critics.CriticOffPolicyGreedy</a></li>
@@ -73,7 +72,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -133,31 +131,28 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.Critic.html#rcognita.critics.Critic" title="rcognita.critics.Critic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Critic</span></code></a>(system_dim_input, system_dim_output, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.Critic.html#rcognita.critics.Critic" title="rcognita.critics.Critic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Critic</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Critic base class.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticCALF.html#rcognita.critics.CriticCALF" title="rcognita.critics.CriticCALF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticCALF</span></code></a>(*args[, safe_decay_param, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticCALF.html#rcognita.critics.CriticCALF" title="rcognita.critics.CriticCALF"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticCALF</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOfActionObservationOnPolicy.html#rcognita.critics.CriticOfActionObservationOnPolicy" title="rcognita.critics.CriticOfActionObservationOnPolicy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOfActionObservationOnPolicy</span></code></a>(…)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOfObservation.html#rcognita.critics.CriticOfObservation" title="rcognita.critics.CriticOfObservation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOfObservation</span></code></a>(system_dim_input, …)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOfObservation.html#rcognita.critics.CriticOfObservation" title="rcognita.critics.CriticOfObservation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOfObservation</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Critic that is represented as a function of observation only.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOffPolicyBehaviour.html#rcognita.critics.CriticOffPolicyBehaviour" title="rcognita.critics.CriticOffPolicyBehaviour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOffPolicyBehaviour</span></code></a>(*args, batch_size, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOffPolicyBehaviour.html#rcognita.critics.CriticOffPolicyBehaviour" title="rcognita.critics.CriticOffPolicyBehaviour"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOffPolicyBehaviour</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Critic that is represented as functions of observation only.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOffPolicyGreedy.html#rcognita.critics.CriticOffPolicyGreedy" title="rcognita.critics.CriticOffPolicyGreedy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOffPolicyGreedy</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticOffPolicyGreedy.html#rcognita.critics.CriticOffPolicyGreedy" title="rcognita.critics.CriticOffPolicyGreedy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticOffPolicyGreedy</span></code></a>(*args, action_bounds, …)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticTabularPI.html#rcognita.critics.CriticTabularPI" title="rcognita.critics.CriticTabularPI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticTabularPI</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticTabularPI.html#rcognita.critics.CriticTabularPI" title="rcognita.critics.CriticTabularPI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticTabularPI</span></code></a>(*args[, tolerance, …])</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticTabularVI.html#rcognita.critics.CriticTabularVI" title="rcognita.critics.CriticTabularVI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticTabularVI</span></code></a>(dim_state_space, …[, …])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticTabularVI.html#rcognita.critics.CriticTabularVI" title="rcognita.critics.CriticTabularVI"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticTabularVI</span></code></a>(*args, **kwargs)</p></td>
 <td><p>Critic for tabular agents.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticTrivial.html#rcognita.critics.CriticTrivial" title="rcognita.critics.CriticTrivial"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticTrivial</span></code></a>(running_objective, *args[, …])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.critics.CriticTrivial.html#rcognita.critics.CriticTrivial" title="rcognita.critics.CriticTrivial"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticTrivial</span></code></a>(*args, **kwargs)</p></td>
 <td><p>A critic that provides a constant estimate of the prospective total objective.</p></td>
 </tr>
 </tbody>

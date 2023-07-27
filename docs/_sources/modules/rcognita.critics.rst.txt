@@ -21,7 +21,6 @@
    
       Critic
       CriticCALF
-      CriticOfActionObservationOnPolicy
       CriticOfObservation
       CriticOffPolicyBehaviour
       CriticOffPolicyGreedy

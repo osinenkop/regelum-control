@@ -63,7 +63,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.Critic.html">rcognita.critics.Critic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticCALF.html">rcognita.critics.CriticCALF</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfActionObservationOnPolicy.html">rcognita.critics.CriticOfActionObservationOnPolicy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOfObservation.html">rcognita.critics.CriticOfObservation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyBehaviour.html">rcognita.critics.CriticOffPolicyBehaviour</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.critics.CriticOffPolicyGreedy.html">rcognita.critics.CriticOffPolicyGreedy</a></li>
@@ -73,7 +72,6 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
@@ -122,22 +120,12 @@
 <h1>rcognita.critics.CriticTrivial<a class="headerlink" href="#rcognita-critics-critictrivial" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.critics.CriticTrivial">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticTrivial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">running_objective</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTrivial" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.critics.</span></span><span class="sig-name descname"><span class="pre">CriticTrivial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTrivial" title="Permalink to this definition"></a></dt>
 <dd><p>A critic that provides a constant estimate of the prospective total objective.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="rcognita.critics.CriticTrivial.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">running_objective</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTrivial.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize a trivial critic.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>running_objective</strong> (<em>function</em>) – Function object representing the running objective.</p></li>
-<li><p><strong>sampling_time</strong> (<em>float</em>) – Sampling time.</p></li>
-<li><p><strong>args</strong> – Additional arguments.</p></li>
-<li><p><strong>kwargs</strong> – Additional keyword arguments.</p></li>
-</ul>
-</dd>
-</dl>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.critics.CriticTrivial.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object from rcognita.</p>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -147,8 +135,8 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticTrivial.__init__" title="rcognita.critics.CriticTrivial.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(running_objective, *args[, …])</p></td>
-<td><p>Initialize a trivial critic.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.critics.CriticTrivial.__init__" title="rcognita.critics.CriticTrivial.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Initialize an object from rcognita.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">accept_or_reject_weights</span></code>(weights[, …])</p></td>
 <td><p>Determine whether to accept or reject the given weights based on whether they violate the given constraints.</p></td>

@@ -53,7 +53,6 @@ rcognita.models.ModelDDQNAdvantage
       ~ModelDDQNAdvantage.restore_weights
       ~ModelDDQNAdvantage.set_extra_state
       ~ModelDDQNAdvantage.share_memory
-      ~ModelDDQNAdvantage.soft_update
       ~ModelDDQNAdvantage.state_dict
       ~ModelDDQNAdvantage.to
       ~ModelDDQNAdvantage.to_empty

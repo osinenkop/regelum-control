@@ -6,7 +6,7 @@ parameters are meant to be set via hydra's override syntax.
 import rcognita as rc
 
 
-@rc.main(config_path="general", config_name="main")
+@rc(config_path="general", config_name="main")
 def launch(cfg):
     """
     General launch script for an arbitrary configuration specified via command line arguments.

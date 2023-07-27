@@ -15,6 +15,7 @@ rcognita.callbacks.PolicyGradientObjectiveSaverCallback
    
       ~PolicyGradientObjectiveSaverCallback.__init__
       ~PolicyGradientObjectiveSaverCallback.add_datum
+      ~PolicyGradientObjectiveSaverCallback.attach
       ~PolicyGradientObjectiveSaverCallback.clear_recent_data
       ~PolicyGradientObjectiveSaverCallback.dump_and_clear_data
       ~PolicyGradientObjectiveSaverCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.PolicyGradientObjectiveSaverCallback
       ~PolicyGradientObjectiveSaverCallback.on_iteration_done
       ~PolicyGradientObjectiveSaverCallback.on_launch
       ~PolicyGradientObjectiveSaverCallback.on_termination
+      ~PolicyGradientObjectiveSaverCallback.on_trigger
       ~PolicyGradientObjectiveSaverCallback.perform
       ~PolicyGradientObjectiveSaverCallback.plot
       ~PolicyGradientObjectiveSaverCallback.plot_gui
       ~PolicyGradientObjectiveSaverCallback.ready
+      ~PolicyGradientObjectiveSaverCallback.register
       ~PolicyGradientObjectiveSaverCallback.save_plot
       ~PolicyGradientObjectiveSaverCallback.trigger_cooldown
    

@@ -14,13 +14,16 @@ rcognita.callbacks.SaveProgressCallback
    .. autosummary::
    
       ~SaveProgressCallback.__init__
+      ~SaveProgressCallback.attach
       ~SaveProgressCallback.is_target_event
       ~SaveProgressCallback.on_episode_done
       ~SaveProgressCallback.on_iteration_done
       ~SaveProgressCallback.on_launch
       ~SaveProgressCallback.on_termination
+      ~SaveProgressCallback.on_trigger
       ~SaveProgressCallback.perform
       ~SaveProgressCallback.ready
+      ~SaveProgressCallback.register
       ~SaveProgressCallback.trigger_cooldown
    
    

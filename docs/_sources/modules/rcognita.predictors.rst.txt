@@ -21,7 +21,6 @@
    
       EulerPredictor
       EulerPredictorMultistep
-      EulerPredictorPendulum
       Predictor
       RKPredictor
       TrivialPredictor

@@ -14,13 +14,16 @@ rcognita.callbacks.ObjectiveCallback
    .. autosummary::
    
       ~ObjectiveCallback.__init__
+      ~ObjectiveCallback.attach
       ~ObjectiveCallback.is_target_event
       ~ObjectiveCallback.on_episode_done
       ~ObjectiveCallback.on_iteration_done
       ~ObjectiveCallback.on_launch
       ~ObjectiveCallback.on_termination
+      ~ObjectiveCallback.on_trigger
       ~ObjectiveCallback.perform
       ~ObjectiveCallback.ready
+      ~ObjectiveCallback.register
       ~ObjectiveCallback.trigger_cooldown
    
    

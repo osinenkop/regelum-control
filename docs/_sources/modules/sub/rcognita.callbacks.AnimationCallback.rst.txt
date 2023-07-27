@@ -14,20 +14,25 @@ rcognita.callbacks.AnimationCallback
    .. autosummary::
    
       ~AnimationCallback.__init__
-      ~AnimationCallback.add_frame_datum
+      ~AnimationCallback.add_frame
       ~AnimationCallback.animate
       ~AnimationCallback.animate_and_save
-      ~AnimationCallback.clear_frames
+      ~AnimationCallback.attach
+      ~AnimationCallback.construct_frame
       ~AnimationCallback.get_save_directory
       ~AnimationCallback.is_target_event
+      ~AnimationCallback.lim
       ~AnimationCallback.on_episode_done
       ~AnimationCallback.on_iteration_done
       ~AnimationCallback.on_launch
       ~AnimationCallback.on_termination
+      ~AnimationCallback.on_trigger
       ~AnimationCallback.perform
       ~AnimationCallback.ready
+      ~AnimationCallback.register
+      ~AnimationCallback.reset
+      ~AnimationCallback.setup
       ~AnimationCallback.trigger_cooldown
-      ~AnimationCallback.update_frame
    
    
 

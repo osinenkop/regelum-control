@@ -62,10 +62,8 @@
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.force_positive_def.html">rcognita.models.force_positive_def</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.GaussianElementWisePDFModel.html">rcognita.models.GaussianElementWisePDFModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.GaussianPDFModel.html">rcognita.models.GaussianPDFModel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.LookupTable.html">rcognita.models.LookupTable</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.Model.html">rcognita.models.Model</a></li>
@@ -76,10 +74,8 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.models.ModelDQNSimple</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelDeepObjective.html">rcognita.models.ModelDeepObjective</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelFc.html">rcognita.models.ModelFc</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelGaussianConditional.html">rcognita.models.ModelGaussianConditional</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelNN.html">rcognita.models.ModelNN</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelNNElementWiseProduct.html">rcognita.models.ModelNNElementWiseProduct</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelPerceptronCalf.html">rcognita.models.ModelPerceptronCalf</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadForm.html">rcognita.models.ModelQuadForm</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadLin.html">rcognita.models.ModelQuadLin</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadNoMix.html">rcognita.models.ModelQuadNoMix</a></li>
@@ -87,7 +83,6 @@
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadNoMixTorch.html">rcognita.models.ModelQuadNoMixTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadratic.html">rcognita.models.ModelQuadratic</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelQuadraticSquared.html">rcognita.models.ModelQuadraticSquared</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelSS.html">rcognita.models.ModelSS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelWeightContainer.html">rcognita.models.ModelWeightContainer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.ModelWeightContainerTorch.html">rcognita.models.ModelWeightContainerTorch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.models.WeightClipper.html">rcognita.models.WeightClipper</a></li>
@@ -140,11 +135,24 @@
 <h1>rcognita.models.ModelDQNSimple<a class="headerlink" href="#rcognita-models-modeldqnsimple" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.models.ModelDQNSimple">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.models.</span></span><span class="sig-name descname"><span class="pre">ModelDQNSimple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_observation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaky_relu_coef</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelDQNSimple" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.models.</span></span><span class="sig-name descname"><span class="pre">ModelDQNSimple</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_observation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaky_relu_coef</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelDQNSimple" title="Permalink to this definition"></a></dt>
+<dd><p>A simple Q network used in DQN algorithms.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="rcognita.models.ModelDQNSimple.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_observation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaky_relu_coef</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelDQNSimple.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dim_observation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_hidden</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_positive_def</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">leaky_relu_coef</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.models.ModelDQNSimple.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an instance of ModelDQNSimple.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dim_observation</strong> – observation dimensionality</p></li>
+<li><p><strong>dim_action</strong> – action dimensionality</p></li>
+<li><p><strong>dim_hidden</strong> – number of neurons in hidden layers</p></li>
+<li><p><strong>force_positive_def</strong> – whether force positive definiteness using soft_abs function</p></li>
+<li><p><strong>bias</strong> – whether include biases into neural network or not</p></li>
+<li><p><strong>leaky_relu_coef</strong> – coefficient of leaky ReLU</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -155,7 +163,7 @@
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.models.ModelDQNSimple.__init__" title="rcognita.models.ModelDQNSimple.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(dim_observation, dim_action[, …])</p></td>
-<td><p>Initializes internal Module state, shared by both nn.Module and ScriptModule.</p></td>
+<td><p>Initialize an instance of ModelDQNSimple.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(name, module)</p></td>
 <td><p>Adds a child module to the current module.</p></td>
@@ -274,37 +282,34 @@
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">share_memory</span></code>()</p></td>
 <td><p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">torch.Tensor.share_memory_()</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">soft_update</span></code>(tau)</p></td>
-<td><p>Soft update model parameters.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(*args[, destination, prefix, …])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(*args[, destination, prefix, …])</p></td>
 <td><p>Returns a dictionary containing references to the whole state of the module.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(*args, **kwargs)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(*args, **kwargs)</p></td>
 <td><p>Moves and/or casts the parameters and buffers.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_empty</span></code>(*, device)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_empty</span></code>(*, device)</p></td>
 <td><p>Moves the parameters and buffers to the specified device without copying storage.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>([mode])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>([mode])</p></td>
 <td><p>Sets the module in training mode.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(dst_type)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(dst_type)</p></td>
 <td><p>Casts all parameters and buffers to <code class="xref py py-attr docutils literal notranslate"><span class="pre">dst_type</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_cache_weights</span></code>([weights])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_and_cache_weights</span></code>([weights])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_weights</span></code>([whatever])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_weights</span></code>([whatever])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weights2dict</span></code>(weights_to_parse)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">weights2dict</span></code>(weights_to_parse)</p></td>
 <td><p>Transform weights as a numpy array into a dictionary compatible with pytorch.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">xpu</span></code>([device])</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">xpu</span></code>([device])</p></td>
 <td><p>Moves all model parameters and buffers to the XPU.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>([set_to_none])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>([set_to_none])</p></td>
 <td><p>Sets gradients of all model parameters to zero.</p></td>
 </tr>
 </tbody>

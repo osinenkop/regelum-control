@@ -14,13 +14,16 @@ rcognita.callbacks.OnEpisodeDoneCallback
    .. autosummary::
    
       ~OnEpisodeDoneCallback.__init__
+      ~OnEpisodeDoneCallback.attach
       ~OnEpisodeDoneCallback.is_target_event
       ~OnEpisodeDoneCallback.on_episode_done
       ~OnEpisodeDoneCallback.on_iteration_done
       ~OnEpisodeDoneCallback.on_launch
       ~OnEpisodeDoneCallback.on_termination
+      ~OnEpisodeDoneCallback.on_trigger
       ~OnEpisodeDoneCallback.perform
       ~OnEpisodeDoneCallback.ready
+      ~OnEpisodeDoneCallback.register
       ~OnEpisodeDoneCallback.trigger_cooldown
    
    

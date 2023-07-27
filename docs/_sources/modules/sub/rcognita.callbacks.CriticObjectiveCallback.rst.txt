@@ -15,6 +15,7 @@ rcognita.callbacks.CriticObjectiveCallback
    
       ~CriticObjectiveCallback.__init__
       ~CriticObjectiveCallback.add_datum
+      ~CriticObjectiveCallback.attach
       ~CriticObjectiveCallback.clear_recent_data
       ~CriticObjectiveCallback.dump_and_clear_data
       ~CriticObjectiveCallback.dump_data
@@ -26,10 +27,12 @@ rcognita.callbacks.CriticObjectiveCallback
       ~CriticObjectiveCallback.on_iteration_done
       ~CriticObjectiveCallback.on_launch
       ~CriticObjectiveCallback.on_termination
+      ~CriticObjectiveCallback.on_trigger
       ~CriticObjectiveCallback.perform
       ~CriticObjectiveCallback.plot
       ~CriticObjectiveCallback.plot_gui
       ~CriticObjectiveCallback.ready
+      ~CriticObjectiveCallback.register
       ~CriticObjectiveCallback.save_plot
       ~CriticObjectiveCallback.trigger_cooldown
    
