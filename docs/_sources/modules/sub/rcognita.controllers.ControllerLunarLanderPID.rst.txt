@@ -1,0 +1,25 @@
+rcognita.controllers.ControllerLunarLanderPID
+=============================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: ControllerLunarLanderPID
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControllerLunarLanderPID.__init__
+      ~ControllerLunarLanderPID.compute_action
+      ~ControllerLunarLanderPID.compute_action_sampled
+      ~ControllerLunarLanderPID.reset
+   
+   
+
+   
+   
+   

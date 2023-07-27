@@ -1,0 +1,43 @@
+rcognita.actors.ActorPID
+========================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorPID
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorPID.__init__
+      ~ActorPID.accept_or_reject_weights
+      ~ActorPID.cache_weights
+      ~ActorPID.create_observation_constraints
+      ~ActorPID.iteration_update
+      ~ActorPID.objective
+      ~ActorPID.optimize_weights
+      ~ActorPID.receive_observation
+      ~ActorPID.receive_state
+      ~ActorPID.reset
+      ~ActorPID.restore_weights
+      ~ActorPID.set_action
+      ~ActorPID.update_action
+      ~ActorPID.update_and_cache_weights
+      ~ActorPID.update_target
+      ~ActorPID.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorPID.weights
+   
+   

@@ -1,0 +1,50 @@
+rcognita.callbacks.HistoricalObservationCallback
+================================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: HistoricalObservationCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~HistoricalObservationCallback.__init__
+      ~HistoricalObservationCallback.add_datum
+      ~HistoricalObservationCallback.attach
+      ~HistoricalObservationCallback.clear_recent_data
+      ~HistoricalObservationCallback.dump_and_clear_data
+      ~HistoricalObservationCallback.dump_data
+      ~HistoricalObservationCallback.get_save_directory
+      ~HistoricalObservationCallback.insert_column_left
+      ~HistoricalObservationCallback.is_target_event
+      ~HistoricalObservationCallback.load_data
+      ~HistoricalObservationCallback.on_episode_done
+      ~HistoricalObservationCallback.on_iteration_done
+      ~HistoricalObservationCallback.on_launch
+      ~HistoricalObservationCallback.on_termination
+      ~HistoricalObservationCallback.on_trigger
+      ~HistoricalObservationCallback.perform
+      ~HistoricalObservationCallback.plot
+      ~HistoricalObservationCallback.plot_gui
+      ~HistoricalObservationCallback.ready
+      ~HistoricalObservationCallback.register
+      ~HistoricalObservationCallback.save_plot
+      ~HistoricalObservationCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~HistoricalObservationCallback.cooldown
+      ~HistoricalObservationCallback.data
+   
+   

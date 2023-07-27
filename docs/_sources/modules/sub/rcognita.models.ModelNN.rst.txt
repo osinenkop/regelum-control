@@ -53,14 +53,13 @@ rcognita.models.ModelNN
       ~ModelNN.restore_weights
       ~ModelNN.set_extra_state
       ~ModelNN.share_memory
-      ~ModelNN.soft_update
       ~ModelNN.state_dict
       ~ModelNN.to
       ~ModelNN.to_empty
       ~ModelNN.train
       ~ModelNN.type
-      ~ModelNN.update
       ~ModelNN.update_and_cache_weights
+      ~ModelNN.update_weights
       ~ModelNN.weights2dict
       ~ModelNN.xpu
       ~ModelNN.zero_grad
@@ -77,5 +76,6 @@ rcognita.models.ModelNN
       ~ModelNN.cache
       ~ModelNN.dump_patches
       ~ModelNN.model_name
+      ~ModelNN.weights
    
    

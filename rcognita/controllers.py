@@ -1,5 +1,4 @@
-"""
-This module contains high-level structures of controllers (agents).
+"""Contains high-level structures of controllers (agents).
 
 Remarks: 
 
@@ -13,7 +12,6 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import scipy as setpoint
-from numpy.random import rand
 from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
@@ -41,15 +39,19 @@ def apply_action_bounds(method):
 
 
 class Controller(RcognitaBase, ABC):
-    """
-    A blueprint of optimal controllers.
-    """
+    """A blueprint of optimal controllers."""
 
     def __init__(
         self,
         time_start: float = 0,
         sampling_time: float = 0.1,
     ):
+        """Initialize an instance of Controller.
+
+        :param time_start: time at which simulation started
+        :param sampling_time: time interval between two consecutive actions
+        :param is_fixed_critic_weights: ...
+        """
         super().__init__()
         self.controller_clock = time_start
         self.sampling_time = sampling_time
@@ -79,9 +81,9 @@ class Controller(RcognitaBase, ABC):
 
 # TODO: OBJECTIVE LEARNER?
 class RLController(Controller):
-    """
-    Reinforcement learning controller class.
-    Takes instances of `policy` and `critic` to operate.
+    """Reinforcement learning controller.
+
+    Takes instances of `actor` and `critic` to operate.
     Action computation is sampled, i.e., actions are computed at discrete, equi-distant moments in time.
     `critic` in turn is updated every `critic_period` units of time.
     """
@@ -96,6 +98,17 @@ class RLController(Controller):
         data_buffer=None,
         **kwargs,
     ):
+        """Initialize an instance of RLController.
+
+        :param args: positional arguments for base class
+        :param critic_period: time interval between consecutive critic updates
+        :param actor: an instance of policy
+        :param critic: an instance of objective learner
+        :param time_start: time at which computations start
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param episode_data_buffer: data buffer contains data obtained during episode
+        :param kwargs: keyword arguments for base class
+        """
         super().__init__(*args, **kwargs)
         self.policy = policy
         self.critic = critic
@@ -104,8 +117,8 @@ class RLController(Controller):
         self.critic_clock = time_start
 
     def reset(self):
-        """
-        Resets agent for use in multi-episode simulation.
+        """Reset agent for use in multi-episode simulation.
+
         Only internal clock and current actions are reset.
         All the learned parameters are retained.
 
@@ -170,7 +183,18 @@ class PGController(RLController):
 
 
 class CALFControllerExPost(RLController):
+    """CALF controller.
+
+    Implements CALF algorithm without predictive constraints.
+    """
+
     def __init__(self, *args, safe_only=False, **kwargs):
+        """Initialize an instance of CALFControllerExPost.
+
+        :param args: positional arguments for RLController
+        :param safe_only: when safe_only equals True, evaluates actions from safe policy only. Performs CALF updates otherwise.
+        :param kwargs: keyword arguments for RLController
+        """
         super().__init__(*args, **kwargs)
         if safe_only:
             self.compute_action = self.policy.safe_controller.compute_action
@@ -258,14 +282,17 @@ class CALFControllerExPost(RLController):
         self.critic.values.append(
             np.squeeze(self.critic.model(self.critic.current_observation))
         )
-        if self.critic.CALFs != []:
-            CALF_increased = current_CALF > self.critic.CALFs[-1]
 
         self.critic.CALFs.append(current_CALF)
 
 
 # TODO: DOCSTRING. CLEANUP: NO COMMENTED OUT CODE! NEED ALL DOCSTRINGS HERE
 class CALFControllerPredictive(CALFControllerExPost):
+    """Predictive CALF controller.
+
+    Implements CALF algorithm without predictive constraints.
+    """
+
     @apply_callbacks()
     def compute_action(
         self,
@@ -317,8 +344,7 @@ class CALFControllerPredictive(CALFControllerExPost):
 
 # TODO: DOCSTRING CLEANUP
 class Controller3WRobotDisassembledCLF:
-    """
-    This is a class of nominal controllers for 3-wheel robots used for benchmarking of other controllers.
+    """Nominal controller for 3-wheel robots used for benchmarking of other controllers.
 
     The controller is sampled.
 
@@ -327,7 +353,7 @@ class Controller3WRobotDisassembledCLF:
 
     Attributes
     ----------
-    m, I : : numbers
+    m, moment_of_inertia : : numbers
         Mass and moment of inertia around vertical axis of the robot.
     controller_gain : : number
         Controller gain.
@@ -351,7 +377,7 @@ class Controller3WRobotDisassembledCLF:
     def __init__(
         self,
         m,
-        I,
+        moment_of_inertia,
         controller_gain=10,
         action_bounds=None,
         time_start=0,
@@ -359,8 +385,19 @@ class Controller3WRobotDisassembledCLF:
         max_iters=200,
         optimizer_engine="SciPy",
     ):
+        """Initialize an instance of Controller3WRobotDisassembledCLF.
+
+        :param m: mass of a robot
+        :param moment_of_inertia: inertia of a robot
+        :param controller_gain: control input multiplier
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param time_start: time at which computations start
+        :param sampling_time: a period between two consecutive actions
+        :param max_iters: a maximal number of iterations of optimizer
+        :param optimizer_engine: optimizer backend. Can be set either CasADi or SciPy
+        """
         self.m = m
-        self.I = I
+        self.moment_of_inertia = moment_of_inertia
         self.controller_gain = controller_gain
         self.action_bounds = action_bounds
         self.controller_clock = time_start
@@ -384,18 +421,11 @@ class Controller3WRobotDisassembledCLF:
             )
 
     def reset(self):
-        """
-        Resets controller for use in multi-episode simulation.
-
-        """
+        """Reset controller for use in multi-episode simulation."""
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI, theta):
-        """
-        Generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators).
-
-        """
-
+        """Compute generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators)."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
@@ -424,11 +454,7 @@ class Controller3WRobotDisassembledCLF:
         return nablaF
 
     def _kappa(self, xNI, theta):
-        """
-        Stabilizing controller for NI-part.
-
-        """
-
+        """Stabilizing controller for NI-part."""
         G = rc.zeros([3, 2])
         G[:, 0] = [1, 0, xNI[1]]
         G[:, 1] = [0, 1, -xNI[0]]
@@ -447,11 +473,7 @@ class Controller3WRobotDisassembledCLF:
         return kappa_val
 
     def _Fc(self, xNI, eta, theta):
-        """
-        Marginal function for ENDI constructed by nonsmooth backstepping. See details in the literature mentioned in the class documentation.
-
-        """
-
+        """Marginal function for ENDI constructed by nonsmooth backstepping. See details in the literature mentioned in the class documentation."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + rc.sqrt(rc.abs(xNI[2]))
         )
@@ -465,7 +487,9 @@ class Controller3WRobotDisassembledCLF:
     def _minimizer_theta(self, xNI, eta):
         thetaInit = 0
 
-        objective_lambda = lambda theta: self._Fc(xNI, eta, theta)
+        def objective_lambda(theta):
+            return self._Fc(xNI, eta, theta)
+
         if self.optimizer_engine == "SciPy":
             bnds = setpoint.optimize.Bounds(-np.pi, np.pi, keep_feasible=False)
             options = {"maxiter": 50, "disetpoint": False}
@@ -497,11 +521,11 @@ class Controller3WRobotDisassembledCLF:
         return theta_val
 
     def _Cart2NH(self, coords_Cart):
-        """
-        Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
+        r"""Transform from Cartesian coordinates to non-holonomic (NH) coordinates.
+
         See Section VIII.A in [[1]_].
 
-        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
+        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\dot x_3 = x_2 u_1 - x_1 u_2`.
 
         References
         ----------
@@ -509,7 +533,6 @@ class Controller3WRobotDisassembledCLF:
                integrator model and invariant manifold theory. In 2010 IEEE/RSJ International Conference on Intelligent Robots and Systems (pp. 2862-2867)
 
         """
-
         xNI = rc.zeros(3)
         eta = rc.zeros(2)
 
@@ -531,11 +554,11 @@ class Controller3WRobotDisassembledCLF:
         return [xNI, eta]
 
     def _NH2ctrl_Cart(self, xNI, eta, uNI):
-        """
-        Get control for Cartesian NI from NH coordinates.
+        r"""Get control for Cartesian NI from NH coordinates.
+
         See Section VIII.A in [[1]_].
 
-        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\\dot x_3 = x_2 u_1 - x_1 u_2`.
+        The transformation is a bit different since the 3rd NI eqn reads for our case as: :math:`\dot x_3 = x_2 u_1 - x_1 u_2`.
 
         References
         ----------
@@ -544,7 +567,6 @@ class Controller3WRobotDisassembledCLF:
 
 
         """
-
         uCart = rc.zeros(2)
 
         uCart[0] = self.m * (
@@ -552,13 +574,12 @@ class Controller3WRobotDisassembledCLF:
             + xNI[1] * eta[0] ** 2
             + 1 / 2 * (xNI[0] * xNI[1] * uNI[0] + uNI[0] * xNI[2])
         )
-        uCart[1] = self.I * uNI[0]
+        uCart[1] = self.moment_of_inertia * uNI[0]
 
         return uCart
 
     def compute_action_sampled(self, state, time, observation):
-        """
-        See algorithm description in [[1]_], [[2]_].
+        """See algorithm description in [[1]_], [[2]_].
 
         **This algorithm needs full-state measurement of the robot**.
 
@@ -602,10 +623,7 @@ class Controller3WRobotDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
-        """
-        Same as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock.
-
-        """
+        """Perform the same computation as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock."""
 
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
@@ -627,6 +645,11 @@ class Controller3WRobotDisassembledCLF:
 
 # TODO: IF NEEDED, THEN DOCUMENT IT. MAKE UNIVERSAL, NOT JUST FOR 3W ROBOT
 class ControllerMemoryPID:
+    """A base class for PID controller.
+
+    This controller is able to use stored data in order to detect whether system is stabilized or not.
+    """
+
     def __init__(
         self,
         P,
@@ -637,6 +660,16 @@ class ControllerMemoryPID:
         initial_point=(-5, -5),
         buffer_length=30,
     ):
+        """Initialize an instance of ControllerMemoryPID.
+
+        :param P: proportional gain
+        :param I: integral gain
+        :param D: differential gain
+        :param setpoint: point using as target turing error evaluation
+        :param sampling_time: time interval between two consecutive actions
+        :param initial_point: point at which computations has begun
+        :param buffer_length: length of stored buffer
+        """
         self.P = P
         self.I = I
         self.D = D
@@ -724,6 +757,11 @@ class ControllerMemoryPID:
 
 # TODO: IF NEEDED, THEN DOCUMENT IT
 class Controller3WRobotMemoryPID:
+    """PID controller for a 3-wheeled robot.
+
+    Uses ControllerMemoryPID controllers wiring.
+    """
+
     def __init__(
         self,
         state_init,
@@ -732,6 +770,14 @@ class Controller3WRobotMemoryPID:
         sampling_time=0.01,
         action_bounds=None,
     ):
+        """Initialize an instance of Controller3WRobotMemoryPID.
+
+        :param state_init: state at which simulation starts
+        :param params: parameters of a 3-wheeled robot
+        :param time_start: time at which computations start
+        :param sampling_time: time interval between two consecutive computations
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        """
         if params is None:
             params = [10, 1]
 
@@ -877,10 +923,7 @@ class Controller3WRobotMemoryPID:
         return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)])
 
     def compute_action_sampled(self, state, time, observation):
-        """
-        Compute sampled action.
-
-        """
+        """Compute sampled action."""
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -916,6 +959,8 @@ class Controller3WRobotMemoryPID:
 
 # TODO: IF NEEDED, THEN DOCUMENT IT.
 class Controller3WRobotPID:
+    """Nominal stabilzing policy for 3wrobot inertial system."""
+
     def __init__(
         self,
         state_init,
@@ -923,15 +968,30 @@ class Controller3WRobotPID:
         time_start=0,
         sampling_time=0.01,
         action_bounds=None,
-        PID_arctg_params=[10, 0.0, 3],
-        PID_v_zero_params=[35, 0.0, 1.2],
-        PID_x_y_origin_params=[35, 0.0, 35],
-        PID_angle_origin_params=[30, 0.0, 10],
-        v_to_zero_bounds=[0.0, 0.05],
-        to_origin_bounds=[0.0, 0.1],
-        to_arctan_bounds=[0.01, 0.2],
-        v_to_zero_left_bound=0.0,
+        PID_arctg_params=(10, 0.0, 3),
+        PID_v_zero_params=(35, 0.0, 1.2),
+        PID_x_y_origin_params=(35, 0.0, 35),
+        PID_angle_origin_params=(30, 0.0, 10),
+        v_to_zero_bounds=(0.0, 0.05),
+        to_origin_bounds=(0.0, 0.1),
+        to_arctan_bounds=(0.01, 0.2),
     ):
+        """Initialize Controller3WRobotPID.
+
+        :param state_init: initial state of 3wrobot
+        :param params: mass and moment of inertia `(M, I)`
+        :type params: tuple
+        :param time_start: time start
+        :param sampling_time: sampling time
+        :param action_bounds: bounds that actions should not exceed `[[lower_bound, upper_bound], ...]`
+        :param PID_arctg_params: coefficients for PD controller which sets the direction of robot to origin
+        :param PID_v_zero_params: coefficients for PD controller which forces speed to zero as robot moves to origin
+        :param PID_x_y_origin_params: coefficients for PD controller which moves robot to origin
+        :param PID_angle_origin_params: coefficients for PD controller which sets angle to zero near origin
+        :param v_to_zero_bounds: bounds for enabling controller which decelerates
+        :param to_origin_bounds: bounds for enabling controller which moves robot to origin
+        :param to_arctan_bounds: bounds for enabling controller which direct robot to origin
+        """
         if params is None:
             params = [10, 1]
 
@@ -1084,21 +1144,39 @@ class Controller3WRobotPID:
         pass
 
 
-# TODO: IF NEEDED, THEN DOCUMENT IT.
 class ControllerCartPolePID:
+    """A PID controller for Cartpole system."""
+
     def __init__(
         self,
         action_bounds,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
         system=None,
-        upright_gain=rc.array([1, 1, 1, 1]),
+        upright_gain=None,
         swingup_gain=10,
         pid_loc_thr=0.35,
         pid_scale_thr=10.0,
-        clip_bounds=[-1, 1],
+        clip_bounds=(-1, 1),
     ):
+        """Initialize an instance of ControllerCartPolePID.
+
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param time_start: time at which computations start
+        :param state_init: state at which simulation has begun
+        :param sampling_time: time interval between two consecutive actions
+        :param system: an instance of Cartpole system
+        :param upright_gain: gain for PID responsible for stabilization from the upright pole position
+        :param swingup_gain: gain for PID responsible for pole swing up
+        :param pid_loc_thr: offset of the pole angle responsible for adjusting a moment at which controller is switching from swing up to upright PID controller
+        :param pid_scale_thr: multiplier of the pole angle responsible for adjusting a moment at which controller is switching from swing up to upright PID controller
+        :param clip_bounds: bounds for clipping observation before passing into PID controller
+        """
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
+        if upright_gain is None:
+            upright_gain = rc.array([1, 1, 1, 1])
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1172,15 +1250,28 @@ class ControllerCartPolePID:
 
 
 class ControllerCartPoleEnergyBased:
+    """An energy-based controller for cartpole."""
+
     def __init__(
         self,
         action_bounds,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
         controller_gain=10,
         system=None,
     ):
+        """Initialize an instance of ControllerCartPoleEnergyBased.
+
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param time_start: time at which computations start
+        :param state_init: state at which simulation has begun
+        :param sampling_time: time interval between two consecutive actions
+        :param controller_gain: controller gain
+        :param system: an instance of Cartpole system
+        """
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1241,15 +1332,22 @@ class ControllerCartPoleEnergyBased:
         pass
 
 
-# TODO: IF NEEDED, THEN DOCUMENT IT.
 class ControllerCartPoleEnergyBasedAdaptive(ControllerCartPoleEnergyBased):
+    """Adaptive energy-based controller with adaptation block."""
+
     def __init__(self, *args, adaptation_block=None, **kwargs):
+        """Initialize an instance of energy-based controller with adaptive block.
+
+        :param args: positional arguments for energy-based controller
+        :param adaptation_block: an instance of AdaptationBlock
+        :param kwargs: keyword arguments for energy-based controllers
+        """
         super().__init__(*args, **kwargs)
         self.adaptation_block = adaptation_block
 
     @apply_action_bounds
     def compute_action(self, state, observation, **kwargs):
-        theta, x, theta_dot, x_dot = (
+        _, _, _, x_dot = (
             observation[0],
             observation[1],
             observation[2],
@@ -1264,18 +1362,37 @@ class ControllerCartPoleEnergyBasedAdaptive(ControllerCartPoleEnergyBased):
         return self.action
 
 
-# TODO: IF NEEDED, THEN DOCUMENT IT.
 class ControllerLunarLanderPID:
+    """Nominal PID controller for lunar lander."""
+
     def __init__(
         self,
         action_bounds,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
-        PID_angle_parameters=[1, 0, 0],
-        PID_height_parameters=[10, 0, 0],
-        PID_x_parameters=[10, 0, 0],
+        PID_angle_parameters=None,
+        PID_height_parameters=None,
+        PID_x_parameters=None,
     ):
+        """Initialize an instance of PID controller for lunar lander.
+
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param time_start: time at which computations start
+        :param state_init: state at which simulation has begun
+        :param sampling_time: time interval between two consecutive actions
+        :param PID_angle_parameters: parameters for PID controller stabilizing angle of lander
+        :param PID_height_parameters: parameters for PID controller stabilizing y-coordinate of lander
+        :param PID_x_parameters: parameters for PID controller stabilizing x-coordinate of lander
+        """
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
+        if PID_angle_parameters is None:
+            PID_angle_parameters = [1, 0, 0]
+        if PID_height_parameters is None:
+            PID_height_parameters = [10, 0, 0]
+        if PID_x_parameters is None:
+            PID_x_parameters = [10, 0, 0]
         self.action_bounds = action_bounds
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1304,10 +1421,7 @@ class ControllerLunarLanderPID:
         pass
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
+        """Compute sampled action."""
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1354,17 +1468,34 @@ class ControllerLunarLanderPID:
 
 # TODO: IF NEEDED, THEN DOCUMENT IT.
 class Controller2TankPID:
+    """PID controller for double tank system."""
+
     def __init__(
         self,
         action_bounds,
         params=None,
         time_start: float = 0,
-        state_init=rc.array([np.pi, 0, 0, 0]),
+        state_init=None,
         sampling_time: float = 0.01,
         PID_2tank_parameters_x1=[1, 0, 0],
         PID_2tank_parameters_x2=[1, 0, 0],
         swing_up_tol=0.1,
     ):
+        """Initialize an instance of Controller2TankPID.
+
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param params: parameters of double tank system
+        :param time_start: time at which computations start
+        :param state_init: state at which simulation has begun
+        :param sampling_time: time interval between two consecutive actions
+        :param PID_2tank_parameters_x1: parameters for PID controller stabilizing first component of system's state
+        :param PID_2tank_parameters_x2: parameters for PID controller stabilizing second component of system's state
+        :param observation_target: ...
+        """
+        if state_init is None:
+            state_init = rc.array([np.pi, 0, 0, 0])
+        if observation_target is None:
+            observation_target = [0.4, 0.4]
         self.tau1 = 18.4
         self.tau2 = 24.4
         self.K1 = 1.3
@@ -1394,10 +1525,7 @@ class Controller2TankPID:
         pass
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
+        """Compute sampled action."""
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1440,16 +1568,19 @@ class Controller2TankPID:
         return self.action
 
 
-# TODO: IF NEEDED, THEN DOCUMENT IT. FIX TYPOSE
 class Controller3WRobotNIDisassembledCLF:
-    """
-    Nominal parking controller for NI using disassembled supper_bound_constraintradients.
-
-    """
+    """Nominal parking controller for NI using disassembled control Lyapunov function."""
 
     def __init__(
         self, controller_gain=10, action_bounds=None, time_start=0, sampling_time=0.1
     ):
+        """Initialize an instance of disassembled-clf controller.
+
+        :param controller_gain: gain of controller
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param time_start: time at which computations start
+        :param sampling_time: time interval between two consecutive actions
+        """
         self.controller_gain = controller_gain
         self.action_bounds = action_bounds
         self.controller_clock = time_start
@@ -1461,19 +1592,12 @@ class Controller3WRobotNIDisassembledCLF:
         self.clock = Clock(period=sampling_time, time_start=time_start)
 
     def reset(self):
-        """
-        Resets controller for use in multi-episode simulation.
-
-        """
+        """Reset controller for use in multi-episode simulation."""
         self.controller_clock = self.time_start
         self.action_old = rc.zeros(2)
 
     def _zeta(self, xNI):
-        """
-        Analytic disassembled supper_bound_constraintradient, without finding minimizer theta.
-
-        """
-
+        """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
 
         nablaL = rc.zeros(3)
@@ -1531,10 +1655,7 @@ class Controller3WRobotNIDisassembledCLF:
             return nablaL
 
     def _kappa(self, xNI):
-        """
-        Stabilizing controller for NI-part.
-
-        """
+        """Stabilizing controller for NI-part."""
         kappa_val = rc.zeros(2)
 
         G = rc.zeros([3, 2])
@@ -1553,11 +1674,7 @@ class Controller3WRobotNIDisassembledCLF:
         return kappa_val
 
     def _F(self, xNI, eta, theta):
-        """
-        Marginal function for NI.
-
-        """
-
+        """Marginal function for NI."""
         sigma_tilde = (
             xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
         )
@@ -1569,11 +1686,7 @@ class Controller3WRobotNIDisassembledCLF:
         return F + 1 / 2 * rc.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
-        """
-        Transformation from Cartesian coordinates to non-holonomic (NH) coordinates.
-
-        """
-
+        """Transform from Cartesian coordinates to non-holonomic (NH) coordinates."""
         xNI = rc.zeros(3)
 
         xc = coords_Cart[0]
@@ -1589,11 +1702,7 @@ class Controller3WRobotNIDisassembledCLF:
         return xNI
 
     def _NH2ctrl_Cart(self, xNI, uNI):
-        """
-        Get control for Cartesian NI from NH coordinates.
-
-        """
-
+        """Get control for Cartesian NI from NH coordinates."""
         uCart = rc.zeros(2)
 
         uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
@@ -1602,10 +1711,7 @@ class Controller3WRobotNIDisassembledCLF:
         return uCart
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
+        """Compute sampled action."""
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1632,10 +1738,7 @@ class Controller3WRobotNIDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
-        """
-        Same as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock.
-
-        """
+        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock."""
 
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
@@ -1658,8 +1761,9 @@ class Controller3WRobotNIDisassembledCLF:
         return LF_value
 
 
-# TODO: DOCUMENT IT
 class NominalControllerInvertedPendulum:
+    """A nominal controller for inverted pendulum representing a PD controller."""
+
     def __init__(
         self,
         action_bounds,
@@ -1667,6 +1771,13 @@ class NominalControllerInvertedPendulum:
         time_start: float = 0,
         sampling_time: float = 0.1,
     ):
+        """Initialize an instance of nominal PD controller.
+
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        :param controller_gain: gain of controller
+        :param time_start: time at which computations start
+        :param sampling_time: time interval between two consecutive actions
+        """
         self.action_bounds = action_bounds
         self.controller_gain = controller_gain
         self.observation = np.array([np.pi, 0])
@@ -1696,9 +1807,17 @@ class NominalControllerInvertedPendulum:
         self.clock.reset()
 
 
-# TODO: DOCUMENT IT
 class Controller3WRobotNIMotionPrimitive:
+    """Controller for non-inertial three-wheeled robot composed of three PID controllers."""
+
     def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
+        """Initialize an instance of controller.
+
+        :param K: gain of controller
+        :param time_start: time at which computations start
+        :param sampling_time: time interval between two consecutive actions
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        """
         if action_bounds is None:
             action_bounds = []
 
@@ -1746,10 +1865,7 @@ class Controller3WRobotNIMotionPrimitive:
         return rc.array([v, omega])
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
+        """Compute sampled action."""
 
         is_time_for_new_sample = self.clock.check_time(time)
 
@@ -1774,9 +1890,17 @@ class Controller3WRobotNIMotionPrimitive:
         pass
 
 
-# TODO: DOCUMENT IT. SPECIFY ITS NAME. PID ALSO?
 class ControllerKinPoint:
+    """A nominal controller stabilizing kinematic point (omni-wheel)."""
+
     def __init__(self, gain, time_start=0, sampling_time=0.01, action_bounds=None):
+        """Initialize an instance of kinematic point nominal controller.
+
+        :param gain: gain of controller
+        :param time_start: time at which computations start
+        :param sampling_time: time interval between two consecutive actions
+        :param action_bounds: upper and lower bounds for action yielded from policy
+        """
         if action_bounds is None:
             action_bounds = []
 
@@ -1795,10 +1919,7 @@ class ControllerKinPoint:
         return -self.gain * observation
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
+        """Compute sampled action."""
 
         is_time_for_new_sample = self.clock.check_time(time)
 

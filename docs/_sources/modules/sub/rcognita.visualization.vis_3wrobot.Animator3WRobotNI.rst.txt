@@ -15,13 +15,15 @@ rcognita.visualization.vis\_3wrobot.Animator3WRobotNI
    
       ~Animator3WRobotNI.__init__
       ~Animator3WRobotNI.animate
+      ~Animator3WRobotNI.animate_live
       ~Animator3WRobotNI.collect_dashboards
-      ~Animator3WRobotNI.get_anm
+      ~Animator3WRobotNI.connect_events
       ~Animator3WRobotNI.get_index
       ~Animator3WRobotNI.init_anim
+      ~Animator3WRobotNI.play_live
       ~Animator3WRobotNI.playback
+      ~Animator3WRobotNI.save_animation
       ~Animator3WRobotNI.set_sim_data
-      ~Animator3WRobotNI.stop_anm
       ~Animator3WRobotNI.update_dashboards
    
    

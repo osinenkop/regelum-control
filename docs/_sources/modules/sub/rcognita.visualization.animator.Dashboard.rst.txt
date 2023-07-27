@@ -14,10 +14,8 @@ rcognita.visualization.animator.Dashboard
    .. autosummary::
    
       ~Dashboard.__init__
-      ~Dashboard.init_dashboard
       ~Dashboard.perform_episodic_update
       ~Dashboard.perform_iterative_update
-      ~Dashboard.perform_step_update
       ~Dashboard.update
    
    

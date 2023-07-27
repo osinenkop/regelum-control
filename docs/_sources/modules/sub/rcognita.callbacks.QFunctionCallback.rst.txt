@@ -1,0 +1,50 @@
+rcognita.callbacks.QFunctionCallback
+====================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: QFunctionCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~QFunctionCallback.__init__
+      ~QFunctionCallback.add_datum
+      ~QFunctionCallback.attach
+      ~QFunctionCallback.clear_recent_data
+      ~QFunctionCallback.dump_and_clear_data
+      ~QFunctionCallback.dump_data
+      ~QFunctionCallback.get_save_directory
+      ~QFunctionCallback.insert_column_left
+      ~QFunctionCallback.is_target_event
+      ~QFunctionCallback.load_data
+      ~QFunctionCallback.on_episode_done
+      ~QFunctionCallback.on_iteration_done
+      ~QFunctionCallback.on_launch
+      ~QFunctionCallback.on_termination
+      ~QFunctionCallback.on_trigger
+      ~QFunctionCallback.perform
+      ~QFunctionCallback.plot
+      ~QFunctionCallback.plot_gui
+      ~QFunctionCallback.ready
+      ~QFunctionCallback.register
+      ~QFunctionCallback.save_plot
+      ~QFunctionCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~QFunctionCallback.cooldown
+      ~QFunctionCallback.data
+   
+   

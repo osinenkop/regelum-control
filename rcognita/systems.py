@@ -1,5 +1,4 @@
-"""
-This module contains a generic interface for systems (environments) as well as concrete systems as realizations of the former
+"""Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
 Remarks: 
 
@@ -11,7 +10,7 @@ Remarks:
 
 import numpy as np
 
-import rcognita
+
 import rcognita.base
 from abc import ABC, abstractmethod
 from .__utilities import rc
@@ -234,8 +233,8 @@ class ComposedSystem(rcognita.base.RcognitaBase):
 
 
 class System(rcognita.base.RcognitaBase, ABC):
-    """
-     Interface class of dynamical systems a.k.a. environments.
+    r"""Interface class of dynamical systems a.k.a. environments.
+
      Concrete systems should be built upon this class.
      To design a concrete system: inherit this class, override:
          | :func:`~systems.system.compute_state_dynamics` :
@@ -297,7 +296,8 @@ class System(rcognita.base.RcognitaBase, ABC):
         state_init=None,
         inputs_init=None,
     ):
-        """
+        r"""Initialize a system.
+
         Parameters
         ----------
         system_type : : string
@@ -407,7 +407,7 @@ class System(rcognita.base.RcognitaBase, ABC):
         This is commonly associated with signals that are measured in the system.
         Normally, output depends only on state ``state`` since no physical processes transmit input to output instantly.
 
-        See also
+        See Also
         --------
         :func:`~systems.system.compute_state_dynamics`
 
@@ -548,28 +548,28 @@ class ThreeWheeledRobot(System):
     Three-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended non-holonomic double integrator) [[1]_]
 
     .. math::
-        \\begin{array}{ll}
-                        \dot x_с & = v \cos \\angle \\newline
-                        \dot y_с & = v \sin \\angle \\newline
-                        \dot \\angle & = \\omega \\newline
-                        \dot v & = \\left( \\frac 1 m F + q_1 \\right) \\newline
-                        \dot \\omega & = \\left( \\frac 1 I M + q_2 \\right)
-        \\end{array}
+        \begin{array}{ll}
+                        \dot x_с & = v \cos \angle \newline
+                        \dot y_с & = v \sin \angle \newline
+                        \dot \angle & = \omega \newline
+                        \dot v & = \left( \frac 1 m F + q_1 \right) \newline
+                        \dot \omega & = \left( \frac 1 I M + q_2 \right)
+        \end{array}
 
     **Variables**
 
     | :math:`x_с` : state-coordinate [m]
     | :math:`y_с` : observation-coordinate [m]
-    | :math:`\\angle` : turning angle [rad]
+    | :math:`\angle` : turning angle [rad]
     | :math:`v` : speed [m/s]
-    | :math:`\\omega` : revolution speed [rad/s]
+    | :math:`\omega` : revolution speed [rad/s]
     | :math:`F` : pushing force [N]
     | :math:`M` : steering torque [Nm]
     | :math:`m` : robot mass [kg]
     | :math:`I` : robot moment of inertia around vertical axis [kg m\ :sup:`2`]
     | :math:`disturb` : actuator disturbance (see :func:`~RLframe.system.disturbDyn`). Is zero if ``is_disturb = 0``
 
-    :math:`state = [x_c, y_c, \\angle, v, \\omega]`
+    :math:`state = [x_c, y_c, \angle, v, \omega]`
 
     :math:`inputs = [F, M]`
 
@@ -689,6 +689,13 @@ class GridWorld(System):
     """
 
     def __init__(self, dims, terminal_state):
+        """Initialize an instance of GridWorld.
+
+        :param dims: grid dimensions (height, width)
+        :type dims: tuple
+        :param terminal_state: coordinates of goal cell
+        :type terminal_state: list
+        """
         self.dims = dims
         self.terminal_state = terminal_state
 
@@ -711,11 +718,7 @@ class GridWorld(System):
 
 
 class CartPole(System):
-    """
-    Cart pole system without friction. link:
-    https://coneural.org/florian/papers/05_cart_pole.pdf
-
-    """
+    """Cart pole system without friction."""
 
     _name = "cartpole"
     _system_type = "diff_eqn"
@@ -798,10 +801,9 @@ class CartPole(System):
 
 
 class LunarLander(System):
-    """
-    Lunar lander system. link:
-    https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf
+    """Lunar lander system.
 
+    link: https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf.
     """
 
     _name = "lander"

@@ -21,8 +21,9 @@
    
       Critic
       CriticCALF
-      CriticOfActionObservation
       CriticOfObservation
+      CriticOffPolicyBehaviour
+      CriticOffPolicyGreedy
       CriticTabularPI
       CriticTabularVI
       CriticTrivial

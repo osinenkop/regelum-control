@@ -1,0 +1,32 @@
+``rcognita.adaptation_blocks`` 
+==============================
+
+
+.. automodule:: rcognita.adaptation_blocks
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      AdaptationBlock
+      AdaptationBlockCartpole
+   
+   
+
+   
+   
+   
+
+
+

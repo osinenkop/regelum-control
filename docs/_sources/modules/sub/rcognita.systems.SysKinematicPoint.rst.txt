@@ -1,0 +1,28 @@
+rcognita.systems.SysKinematicPoint
+==================================
+
+.. currentmodule:: rcognita.systems
+
+.. autoclass:: SysKinematicPoint
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SysKinematicPoint.__init__
+      ~SysKinematicPoint.compute_closed_loop_rhs
+      ~SysKinematicPoint.compute_dynamics
+      ~SysKinematicPoint.get_state
+      ~SysKinematicPoint.out
+      ~SysKinematicPoint.receive_action
+      ~SysKinematicPoint.reset
+   
+   
+
+   
+   
+   

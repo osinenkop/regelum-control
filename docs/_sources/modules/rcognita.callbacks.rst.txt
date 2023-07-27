@@ -15,8 +15,9 @@
    .. autosummary::
       :toctree: sub
    
-      apply_callbacks
+      is_in_debug_mode
       method_callback
+      passdown
    
    
 
@@ -27,10 +28,35 @@
    .. autosummary::
       :toctree: sub
    
+      AnimationCallback
+      BarAnimation
+      CALFWeightsCallback
+      CalfCallback
       Callback
+      ComposedAnimationCallback
+      ConfigDiagramCallback
+      CriticObjectiveCallback
+      CriticWeightsCallback
+      DirectionalPlanarMotionAnimation
+      HistoricalCallback
+      HistoricalObjectiveCallback
+      HistoricalObservationCallback
       ObjectiveCallback
+      OnEpisodeDoneCallback
+      OnIterationDoneCallback
+      PendulumAnimation
+      PlanarMotionAnimation
+      PointAnimation
+      PolicyGradientObjectiveSaverCallback
+      QFunctionCallback
+      QFunctionModelSaverCallback
+      SaveProgressCallback
       StateCallback
-      introduce_callbacks
+      StateTracker
+      TimeCallback
+      TimeRemainingCallback
+      TotalObjectiveCallback
+      TriangleAnimation
    
    
 

@@ -1,7 +1,4 @@
-"""
-This module contains auxiliary tools.
-
-"""
+"""Contains auxiliary tools."""
 
 # TODO: THIS DESCRIPTION IS TOO SHORT. EXTEND IT
 
@@ -39,8 +36,8 @@ except ModuleNotFoundError:
 
 # TODO: MISSING ENTRANCE SENTENCE: this class is bla-bla, it is needed to do bla-bla
 class RCType(IntEnum):
-    """
-    Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
+    """Type inference proceeds by priority: `Torch` type has priority 3, `CasADi` type has priority 2, `NumPy` type has priority 1.
+
     That is, if, for instance, a function of two arguments gets an argument of a `NumPy` type and an argument of a `CasAdi` type,
     then the function's output type is inferred as a `CasADi` type.
     Mixture of CasADi types will raise a `TypeError` exception.
@@ -95,7 +92,7 @@ def decorateAll(decorator):
         def __new__(cls, classname, supers, classdict):
             for name, elem in classdict.items():
                 if (
-                    type(elem) is types.FunctionType
+                    isinstance(elem, types.FunctionType)
                     and (name != "__init__")
                     and not isinstance(elem, staticmethod)
                 ):
@@ -801,8 +798,7 @@ def simulation_progress(bar_length=10, print_level=100):
 
 # TODO: REMOVE THESE?
 def rej_sampling_rvs(dim, pdf, M):
-    """
-    Random variable (pseudo)-realizations via rejection sampling.
+    r"""Random variable (pseudo)-realizations via rejection sampling.
 
     Parameters
     ----------
@@ -811,7 +807,7 @@ def rej_sampling_rvs(dim, pdf, M):
     pdf : : function
         desired probability density function
     M : : number greater than 1
-        it must hold that :math:`\\text{pdf}_{\\text{desired}} \le M \\text{pdf}_{\\text{proposal}}`.
+        it must hold that :math:`\text{pdf}_{\text{desired}} \le M \text{pdf}_{\text{proposal}}`.
         This function uses a normal pdf with zero mean and identity covariance matrix as a proposal distribution.
         The smaller `M` is, the fewer iterations to produce a sample are expected.
 
@@ -820,7 +816,6 @@ def rej_sampling_rvs(dim, pdf, M):
     A single realization (in general, as a vector) of the random variable with the desired probability density.
 
     """
-
     # Use normal pdf with zero mean and identity covariance matrix as a proposal distribution
     normal_RV = st.multivariate_normal(cov=np.eye(dim))
 
@@ -843,10 +838,7 @@ def push_vec(matrix, vec):
 
 
 class ZOH:
-    """
-    Zero-order hold.
-
-    """
+    """Zero-order hold."""
 
     def __init__(self, init_time=0, init_val=0, sample_time=1):
         self.time_step = init_time
@@ -863,10 +855,7 @@ class ZOH:
 
 
 class DFilter:
-    """
-    Real-time digital filter.
-
-    """
+    """Real-time digital filter."""
 
     def __init__(
         self,
@@ -907,9 +896,7 @@ class DFilter:
 
 
 def dss_sim(A, B, C, D, uSqn, initial_guess, y0):
-    """
-    Simulate output response of a discrete-time state-space model.
-    """
+    """Simulate output response of a discrete-time state-space model."""
     if uSqn.ndim == 1:
         return y0, initial_guess
     else:
@@ -949,10 +936,7 @@ def update_patch(patchHandle, new_color):
 
 
 def on_key_press(event, anm):
-    """
-    Key press event handler for a ``FuncAnimation`` animation object.
-
-    """
+    """Key press event handler for a ``FuncAnimation`` animation object."""
     if event.key == " ":
         if anm.running:
             anm.event_source.stop()
@@ -976,12 +960,3 @@ def on_close(event):
 
 log = None
 
-
-# TODO: ADD DOCSTRING?
-def apply_callbacks(method):
-    def new_method(self, *args, **kwargs):
-        res = method(self, *args, **kwargs)
-        for callback in self.callbacks:
-            callback(obj=self, method=method.__name__, output=res)
-
-    return new_method

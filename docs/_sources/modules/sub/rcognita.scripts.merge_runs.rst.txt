@@ -1,0 +1,6 @@
+rcognita.scripts.merge\_runs
+============================
+
+.. currentmodule:: rcognita.scripts
+
+.. autofunction:: merge_runs

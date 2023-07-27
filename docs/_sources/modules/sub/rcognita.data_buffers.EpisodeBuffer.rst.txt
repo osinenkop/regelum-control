@@ -1,0 +1,27 @@
+rcognita.data\_buffers.EpisodeBuffer
+====================================
+
+.. currentmodule:: rcognita.data_buffers
+
+.. autoclass:: EpisodeBuffer
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodeBuffer.__init__
+      ~EpisodeBuffer.add_step_data
+      ~EpisodeBuffer.get_episodes_lengths
+      ~EpisodeBuffer.nullify_buffer
+      ~EpisodeBuffer.set_total_objectives_of_episodes
+      ~EpisodeBuffer.transform_to_raw_idx
+   
+   
+
+   
+   
+   

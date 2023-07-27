@@ -3,6 +3,7 @@
 
 import copy
 import functools
+import sys
 from enum import Enum
 from textwrap import dedent
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
@@ -130,7 +131,7 @@ def _prepare_input_dict_or_list(d: Union[Dict[Any, Any], List[Any]]) -> Any:
                 v = _prepare_input_dict_or_list(v)
             res.append(v)
     else:
-        assert False
+        raise AssertionError()
     return res
 
 
@@ -155,7 +156,8 @@ def _resolve_target(
 
 
 def instantiate(config: Any, *args: Any, path=None, **kwargs: Any) -> Any:
-    """
+    """Instantiate an object described by the config.
+
     :param config: An config object describing what to call and what params to use.
                    In addition to the parameters, the config must contain:
                    _target_ : target class or callable name (str)
@@ -186,7 +188,6 @@ def instantiate(config: Any, *args: Any, path=None, **kwargs: Any) -> Any:
     :return: if _target_ is a class name: the instantiated object
              if _target_ is a callable: the return value of the call
     """
-
     # Return None if config is None
     if config is None:
         return None
@@ -335,11 +336,20 @@ def instantiate_node(
     # If OmegaConf list, create new list of instances if recursive
     if OmegaConf.is_list(node):
         # raise NotImplementedError("List configs are yet to become supported.")
-        items = [
-            instantiate_node(item, convert=convert, recursive=recursive, path=None)
-            for item in node._iter_ex(resolve=True)
-        ]
-
+        #items = [
+        #    instantiate_node(item,
+        #                     convert=convert,
+        #                     recursive=recursive,
+        #                     path=None)
+        #    for item in node._iter_ex(resolve=True)
+        #]
+        items = []
+        for i, item in enumerate([item for item in node._iter_ex(resolve=True)]):
+            new_path = path + f"[{i}]" if path is not None else None
+            items.append(instantiate_node(item,
+                             convert=convert,
+                             recursive=recursive,
+                             path=new_path))
         if convert in (ConvertMode.ALL, ConvertMode.PARTIAL, ConvertMode.OBJECT):
             # If ALL or PARTIAL or OBJECT, use plain list as container
             return items
@@ -352,7 +362,6 @@ def instantiate_node(
     elif OmegaConf.is_dict(node):
         exclude_keys = set({"_target_", "_convert_", "_recursive_", "_partial_"})
         if _is_target(node):
-            _target_ = _resolve_target(node.get(_Keys.TARGET), full_key)
             kwargs = {}
             is_partial = node.get("_partial_", False) or partial
             for key in node.keys():
@@ -369,6 +378,44 @@ def instantiate_node(
                             value, convert=convert, recursive=recursive, path=new_path
                         )
                     kwargs[key] = _convert_node(value, convert)
+            if "inline__IGNORE__" in kwargs:
+                class Inline:
+                    exec(kwargs["inline__IGNORE__"])
+                sys.modules["inline"] = Inline
+                name = node.get(_Keys.TARGET)
+                if '.' not in name:
+                    new_name = "inline." + name
+                    try:
+                        _target_ = _resolve_target(new_name,
+                                                   full_key)
+                    except NameError:
+                        _target_ = _resolve_target(name,
+                                                   full_key)
+                else:
+                    _target_ = _resolve_target(name,
+                                               full_key)
+            else:
+                _target_ = _resolve_target(node.get(_Keys.TARGET),
+                                           full_key)
+            if "callbacks__IGNORE__" in kwargs:
+                for callback in kwargs["callbacks__IGNORE__"]:
+                    if "." not in callback:
+                        try:
+                            _target_ = _locate("rcognita.callbacks." + callback).attach(_target_)
+                        except NameError:
+                            _target_ = _locate("inline." + callback).attach(_target_)
+                    else:
+                        _target_ = _locate(callback).attach(_target_)
+            if "animations__IGNORE__" in kwargs:
+                animation = kwargs["animations__IGNORE__"][0]
+                if "." not in animation:
+                    animation = "rcognita.callbacks." + animation
+                animation_sum = _locate(animation)
+                for animation in kwargs["animations__IGNORE__"][1:]:
+                    if "." not in animation:
+                        animation = "rcognita.callbacks." + animation
+                    animation_sum = animation_sum + _locate(animation)
+                _target_ = animation_sum.attach(_target_)
 
             res = _call_target(_target_, partial, args, kwargs, full_key)
             if path:
@@ -384,16 +431,24 @@ def instantiate_node(
                 dict_items = {}
                 for key, value in node.items():
                     # list items inherits recursive flag from the containing dict.
+                    if path is not None:
+                        new_path = key if not path else path + "." + key
+                    else:
+                        new_path = None
                     dict_items[key] = instantiate_node(
-                        value, convert=convert, recursive=recursive
+                        value, convert=convert, recursive=recursive, path=new_path
                     )
                 return dict_items
             else:
                 # Otherwise use DictConfig and resolve interpolations lazily.
                 cfg = OmegaConf.create({}, flags={"allow_objects": True})
                 for key, value in node.items():
+                    if path is not None:
+                        new_path = key if not path else path + "." + key
+                    else:
+                        new_path = None
                     cfg[key] = instantiate_node(
-                        value, convert=convert, recursive=recursive
+                        value, convert=convert, recursive=recursive, path=new_path
                     )
                 cfg._set_parent(node)
                 cfg._metadata.object_type = node._metadata.object_type
@@ -402,4 +457,4 @@ def instantiate_node(
                 return cfg
 
     else:
-        assert False, f"Unexpected config type : {type(node).__name__}"
+        raise AssertionError(f"Unexpected config type : {type(node).__name__}")

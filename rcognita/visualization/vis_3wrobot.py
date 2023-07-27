@@ -3,14 +3,10 @@ import numpy.linalg as la
 from .animator import (
     update_line,
     update_text,
-    reset_line,
     Animator,
     RobotMarker,
     Dashboard,
-    init_data_cursor,
 )
-from mpldatacursor import datacursor
-from collections import namedtuple
 from ..__utilities import rc
 import matplotlib.pyplot as plt
 
@@ -30,7 +26,7 @@ class RobotTrackingDasboard(Dashboard):
         self.yCoord0 = yCoord0
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_3wrobot = plt.gca()
 
         self.axes_3wrobot.set_xlim(self.xMin, self.xMax)
@@ -70,7 +66,7 @@ class RobotTrackingDasboard(Dashboard):
             self.xCoord0, self.yCoord0, marker=self.robot_marker.marker, s=400, c="b"
         )
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         state = self.scenario.state_full
         time = self.scenario.time
 
@@ -115,7 +111,7 @@ class SolutionDashboard(Dashboard):
         self.angle0 = angle0
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_solution = plt.gca()
 
         self.axes_solution.autoscale(False)
@@ -147,7 +143,7 @@ class SolutionDashboard(Dashboard):
             observation,
         )
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         state = self.scenario.state_full
         time = self.scenario.time
 
@@ -167,7 +163,7 @@ class CostDashboard(Dashboard):
         self.running_objective_init = running_objective_init
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_cost = plt.gca()
 
         self.axes_cost.set_xlim(self.time_start, self.time_final)
@@ -206,7 +202,7 @@ class CostDashboard(Dashboard):
         self.artists.append(self.line_outcome)
         self.axes_cost.legend(fancybox=True, loc="upper right")
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         time = self.scenario.time
         running_objective_value = np.squeeze(self.scenario.running_objective_value)
         outcome = 1
@@ -232,7 +228,7 @@ class ControlDashboard(Dashboard):
         self.M_max = M_max
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axis_action = plt.gca()
 
         self.axis_action.set_xlim(self.time_start, self.time_final)
@@ -258,7 +254,7 @@ class ControlDashboard(Dashboard):
         )
         self.artists.extend(self.lines_action)
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         # Control
         action = np.squeeze(self.scenario.action)
         time = self.scenario.time
@@ -281,7 +277,7 @@ class ControlDashboardNI(Dashboard):
         self.omega_max = omega_max
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axis_action = plt.gca()
 
         self.axis_action.set_xlim(self.time_start, self.time_final)
@@ -307,7 +303,7 @@ class ControlDashboardNI(Dashboard):
         )
         self.artists.extend(self.lines_action)
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         # Control
         action = self.scenario.action
         time = self.scenario.time
@@ -317,10 +313,7 @@ class ControlDashboardNI(Dashboard):
 
 
 class Animator3WRobot(Animator):
-    """
-    Animator class for a 3-wheel robot with dynamic actuators.
-
-    """
+    """Animator class for a 3-wheel robot with dynamic actuators."""
 
     def __init__(
         self,
@@ -434,10 +427,7 @@ class Animator3WRobot(Animator):
 
 
 class Animator3WRobotNI(Animator):
-    """
-    Animator class for a 3-wheel robot with static actuators.
-
-    """
+    """Animator class for a 3-wheel robot with static actuators."""
 
     def __init__(
         self,

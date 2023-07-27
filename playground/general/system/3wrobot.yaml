@@ -1,5 +1,10 @@
 _target_: rcognita.systems.ThreeWheeledRobot
 
+
+animations%%:
+  - DirectionalPlanarMotionAnimation
+  - BarAnimation
+
 ###---Constructor arguments---###
 
 system_parameters_init: 

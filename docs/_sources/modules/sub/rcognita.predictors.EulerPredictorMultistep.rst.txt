@@ -1,0 +1,24 @@
+rcognita.predictors.EulerPredictorMultistep
+===========================================
+
+.. currentmodule:: rcognita.predictors
+
+.. autoclass:: EulerPredictorMultistep
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EulerPredictorMultistep.__init__
+      ~EulerPredictorMultistep.predict
+      ~EulerPredictorMultistep.predict_sequence
+   
+   
+
+   
+   
+   

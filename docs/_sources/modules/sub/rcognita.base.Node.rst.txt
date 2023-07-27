@@ -1,0 +1,33 @@
+rcognita.base.Node
+==================
+
+.. currentmodule:: rcognita.base
+
+.. autoclass:: Node
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Node.__init__
+      ~Node.connect
+      ~Node.connected
+      ~Node.disconnect
+      ~Node.hook
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Node.subscribees
+      ~Node.subscribers
+   
+   

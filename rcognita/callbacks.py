@@ -1,6 +1,5 @@
-# TODO: REVIEW THIS DOCSTRING
-"""
-This module contains callbacks.
+"""Contains callbacks.
+
 Callbacks are lightweight event handlers, used mainly for logging.
 
 To make a method of a class trigger callbacks, one needs to
@@ -18,26 +17,26 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 import logging
 import typing
 from abc import ABC, abstractmethod
+from copy import copy
+from unittest.mock import Mock
 
 import matplotlib.animation
+import matplotx.styles
 import mlflow
+import torch
 
-try:
-    import torch
-except:
-    from unittest.mock import MagicMock
-
-    torch = MagicMock()
 import rcognita
 import pandas as pd
-import numpy as np
-import time, datetime
-import dill, os, git, shutil
 
-import omegaconf, json
+import time
+import datetime
+import dill
+import os
+import git
+import shutil
+
 
 import matplotlib.pyplot as plt
-import re
 
 import pkg_resources
 
@@ -45,60 +44,74 @@ from pathlib import Path
 
 import sys
 import filelock
-import gc
 
+import rcognita.base
+
+from matplotlib.backends.backend_qt5agg import (
+    FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.figure import Figure
+import numpy as np
+from matplotlib.backends import backend_qt5agg  # e.g.
+
+from svgpathtools import svg2paths
+from svgpath2mpl import parse_path
 
 def is_in_debug_mode():
-    return not sys.gettrace() is None
+    return sys.gettrace() is not None
 
+def passdown(CallbackClass):
+    """Decorate a callback class in such a way that its event handling is inherited by derived classes.
 
-# TODO: WHAT IS MISSING IN DOCSTRINGS IN THIS MODULE IS EXAMPLES?
-class apply_callbacks:
+    :param CallbackClass:
+    :type CallbackClass: type
+    :return: altered class that passes down its handlers to derived classes (regardless of whether handling methods are overriden)
     """
-    Decorator that applies a list of callbacks to a given method of an object.
-    If the object has no list of callbacks specified, the default callbacks are used.
+    class PassdownCallback(CallbackClass):
+        def __call_passdown(self, obj, method, output):
+            if True:  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
+                try:
+                    if PassdownCallback.is_target_event(self, obj, method, output):
+                        PassdownCallback.perform(self, obj, method, output)
+                        self.on_trigger(PassdownCallback)
+                        #self.trigger_cooldown(t)
+                except rcognita.RcognitaExitException as e:
+                    raise e
+                except Exception as e:
+                    self.log(f"Callback {self.__class__.__name__} failed, when executing routines passed down from {CallbackClass.__name__}.")
+                    self.exception(e)
+    PassdownCallback.__name__ = CallbackClass.__name__
+    return PassdownCallback
 
-    :param method: The method to which the callbacks should be applied.
+
+class Callback(rcognita.base.RcognitaBase, ABC):
+    """Base class for callbacks.
+
+    Callback objects are used to perform in response to some method being called.
     """
 
-    def __init__(self, callbacks=None):
-        self.callbacks = callbacks
-
-    def __call__(self, method):
-        def new_method(self2, *args, **kwargs):
-            res = method(self2, *args, **kwargs)
-            if self.callbacks is None:
-                callbacks = (
-                    rcognita.main.callbacks
-                    if rcognita.main.callbacks is not None
-                    else []
-                )
-            for callback in callbacks:
-                callback(obj=self2, method=method.__name__, output=res)
-            return res
-
-        return new_method
-
-
-class Callback(ABC):
     cooldown = None
-    """
-    This is the base class for a callback object. Callback objects are used to perform some action or computation after a method has been called.
-    """
-
-    def __init__(self, log_level="info"):
-        """
-        Initialize a callback object.
+    def __init__(self, log_level="info", attachee=None):
+        """Initialize a callback object.
 
         :param logger: A logging object that will be used to log messages.
         :type logger: logging.Logger
         :param log_level: The level at which messages should be logged.
         :type log_level: str
         """
-        rcognita.main.logger.setLevel(logging.INFO)
-        self.log = rcognita.main.logger.__getattribute__("info")
+        super().__init__()
+        self.attachee = attachee
+        self.log = rcognita.main.logger.__getattribute__(log_level)
         self.exception = rcognita.main.logger.exception
-        self.last_trigger = 0.0
+        self.__last_trigger = 0.0
+
+    @classmethod
+    def register(cls, *args, launch=False, **kwargs):
+        existing_callbacks = [type(callback) for callback in cls._metadata["main"].callbacks]
+        if cls not in existing_callbacks:
+            callback_instance = cls(*args, **kwargs)
+            if launch:
+                callback_instance.on_launch()
+            cls._metadata["main"].callbacks = [callback_instance] + rcognita.main.callbacks
 
     @abstractmethod
     def is_target_event(self, obj, method, output):
@@ -114,6 +127,9 @@ class Callback(ABC):
     ):
         pass
 
+    def on_trigger(self, caller):
+        pass
+
     def on_iteration_done(
         self,
         scenario,
@@ -127,13 +143,13 @@ class Callback(ABC):
     def ready(self, t):
         if not self.cooldown:
             return True
-        if t - self.last_trigger > self.cooldown:
+        if t - self.__last_trigger > self.cooldown:
             return True
         else:
             return False
 
     def trigger_cooldown(self, t):
-        self.last_trigger = t
+        self.__last_trigger = t
 
     def on_launch(self):
         pass
@@ -148,19 +164,52 @@ class Callback(ABC):
             try:
                 if self.is_target_event(obj, method, output):
                     self.perform(obj, method, output)
+                    self.on_trigger(self.__class__)
                     self.trigger_cooldown(t)
             except rcognita.RcognitaExitException as e:
                 raise e
             except Exception as e:
                 self.log(f"Callback {self.__class__.__name__} failed.")
                 self.exception(e)
+        for base in self.__class__.__bases__:
+            if hasattr(base, f"_{base.__name__}__call_passdown"):
+                base.__getattribute__(f"_{base.__name__}__call_passdown")(self, obj, method, output)
+
+    @classmethod
+    def attach(cls, other):
+        if hasattr(other, "_attached"):
+            attached = other._attached + [cls]
+        else:
+            attached = [cls]
+        class Attachee(other):
+            _real_name = other.__name__
+            _attached = attached
+        return Attachee
+
+    """
+    @classmethod
+    def detach(cls, other):
+        if hasattr(other, "_attached"):
+            attached = other._attached.copy()
+            if cls not in attached:
+                raise ValueError(f"Attempted to detach {cls.__name__}, but it was not attached.")
+            attached.pop(attached.index(cls))
+        else:
+            raise ValueError(f"Attempted to detach {cls.__name__}, but it was not attached.")
+        class Detachee(other):
+            _real_name = other.__name__
+            _attached = attached
+        Detachee.__name__ = other.__name__
+        return Detachee
+    """
 
     def on_termination(self, res):
         pass
 
 
-# TODO: DOCSTRING
 class TimeCallback(Callback):
+    """Callback responsible for keeping track of simulation time."""
+
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
 
@@ -171,9 +220,11 @@ class TimeCallback(Callback):
         rcognita.main.metadata["time"] = obj.time
 
 
-# TODO: DOCSTRING
-class OnEpisodeDoneCallerCallback(Callback):
+class OnEpisodeDoneCallback(Callback):
+    """Callback responsible for logging and recording relevant data when an episode ends."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an OnEpisodeDoneCallback instance."""
         super().__init__(*args, **kwargs)
         self.episode_counter = 0
         self.iteration_counter = 1
@@ -199,9 +250,11 @@ class OnEpisodeDoneCallerCallback(Callback):
             self.iteration_counter += 1
 
 
-# TODO: DOCSTRING
-class OnIterationDoneCallerCallback(Callback):
+class OnIterationDoneCallback(Callback):
+    """Callback responsible for logging and recording relevant data when an iteration ends."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of OnIterationDoneCallback."""
         super().__init__(*args, **kwargs)
         self.iteration_counter = 0
 
@@ -223,13 +276,62 @@ class OnIterationDoneCallerCallback(Callback):
                 )
 
 
-# TODO: DOCSTRING
 class ConfigDiagramCallback(Callback):
+    """Callback responsible for constructing SUMMARY.html and relevant data, including the config diagram."""
+
     def perform(self, *args, **kwargs):
         pass
 
     def is_target_event(self, obj, method, output):
         return False
+
+    @staticmethod
+    def __monitor_git():
+        try:
+            forbidden = False
+            with filelock.FileLock(rcognita.main.metadata["common_dir"] + "/diff.lock"):
+                repo = git.Repo(path=rcognita.main.metadata["initial_working_directory"], search_parent_directories=True)
+                commit_hash = repo.head.object.hexsha
+                if repo.is_dirty(untracked_files=True):
+                    commit_hash += (
+                        ' <font color="red">(uncommitted/unstaged changes)</font>'
+                    )
+                    forbidden = (
+                        "disallow_uncommitted" in rcognita.main.config
+                        and rcognita.main.config.disallow_uncommitted
+                        and not is_in_debug_mode()
+                    )
+                    untracked = repo.untracked_files
+                    if not os.path.exists(rcognita.main.metadata["common_dir"] + "/changes.diff"):
+                        repo.git.add(all=True)
+                        with open(rcognita.main.metadata["common_dir"] + "/changes.diff", "w") as f:
+                            diff = repo.git.diff(repo.head.commit.tree)
+                            if untracked:
+                                repo.index.remove(untracked, cached=True)
+                            f.write(diff + "\n")
+                        with open(".summary/changes.diff", "w") as f:
+                            f.write(diff + "\n")
+                    else:
+                        shutil.copy(
+                            rcognita.main.metadata["common_dir"] + "/changes.diff",
+                            ".summary/changes.diff",
+                        )
+            if forbidden:
+                raise Exception(
+                    "Running experiments without committing is disallowed. Please, commit your changes."
+                )
+        except git.exc.InvalidGitRepositoryError as err:
+            commit_hash = None
+            repo = None
+            if (
+                "disallow_uncommitted" in rcognita.main.cfg
+                and rcognita.main.cfg.disallow_uncommitted
+                and not is_in_debug_mode()
+            ):
+                raise Exception(
+                    "Running experiments without committing is disallowed. Please, commit your changes."
+                ) from err
+        return repo, commit_hash
 
     def on_launch(self):
         cfg = rcognita.main.config
@@ -241,49 +343,7 @@ class ConfigDiagramCallback(Callback):
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
             html = f.read()
-        try:
-            forbidden = False
-            with filelock.FileLock(metadata["common_dir"] + "/diff.lock"):
-                repo = git.Repo(search_parent_directories=True)
-                commit_hash = repo.head.object.hexsha
-                if repo.is_dirty(untracked_files=True):
-                    commit_hash += (
-                        ' <font color="red">(uncommitted/unstaged changes)</font>'
-                    )
-                    forbidden = (
-                        "disallow_uncommitted" in cfg
-                        and cfg.disallow_uncommitted
-                        and not is_in_debug_mode()
-                    )
-                    untracked = repo.untracked_files
-                    if not os.path.exists(metadata["common_dir"] + "/changes.diff"):
-                        repo.git.add(all=True)
-                        with open(metadata["common_dir"] + "/changes.diff", "w") as f:
-                            diff = repo.git.diff(repo.head.commit.tree)
-                            if untracked:
-                                repo.index.remove(untracked, cached=True)
-                            f.write(diff + "\n")
-                        with open(".summary/changes.diff", "w") as f:
-                            f.write(diff + "\n")
-                    else:
-                        shutil.copy(
-                            metadata["common_dir"] + "/changes.diff",
-                            ".summary/changes.diff",
-                        )
-            if forbidden:
-                raise Exception(
-                    "Running experiments without committing is disallowed. Please, commit your changes."
-                )
-        except git.exc.InvalidGitRepositoryError:
-            commit_hash = None
-            if (
-                "disallow_uncommitted" in cfg
-                and cfg.disallow_uncommitted
-                and not is_in_debug_mode()
-            ):
-                raise Exception(
-                    "Running experiments without committing is disallowed. Please, commit your changes."
-                )
+        repo, commit_hash = self.__monitor_git() if not rcognita.main.metadata["no_git"] else (None, None)
         cfg_hash = hex(hash(cfg))
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
         overrides_table = ""
@@ -445,6 +505,12 @@ class ConfigDiagramCallback(Callback):
                              </body>
             """,
         )
+        git_fragment = (
+            f"""git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}"""
+            + chr(10)
+            if commit_hash
+            else ""
+        )
         html = html.replace(
             "</body>",
             f"""
@@ -456,18 +522,17 @@ class ConfigDiagramCallback(Callback):
 os.chdir("{metadata["initial_working_directory"]}")
 sys.path[:0] = {metadata["initial_pythonpath"].split(":")}
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
-    callbacks = dill.load(f)</code></pre>
+    callbacks = dill.load(f)</code></pre>""" + (f"""
               <p>Reproduce experiment:</p>
               <pre><code class="language-bash">cd {repo.working_tree_dir}
 git reset
 git restore .
 git clean -f
-{f'''git checkout {commit_hash.replace(' <font color="red">(uncommitted/unstaged changes)</font>',  chr(10) + f'patch -p1 < {os.path.abspath(".summary/changes.diff")}')}''' + chr(10) if commit_hash else ""}cd {metadata["initial_working_directory"]}
+{git_fragment}cd {metadata["initial_working_directory"]}
 export PYTHONPATH="{metadata["initial_pythonpath"]}"
-python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and not "multirun" in x, sys.argv)))} </code></pre>
-            </main>
-            """
-            + """
+python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and "multirun" not in x, sys.argv)))} </code></pre>
+            """ if repo is not None else "")
+            + """</main>
                 <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
             
               <script src='https://cdnjs.cloudflare.com/ajax/libs/prism/1.26.0/prism.min.js'></script>
@@ -548,32 +613,99 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
 
 plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
+plt.style.use(matplotx.styles.dracula)
 
-# TODO: DOCSTRING
 class AnimationCallback(Callback, ABC):
-    def __init__(self):
+    """Callback (base) responsible for rendering animated visualizations of the experiment."""
+
+    _frames = 100
+
+    @classmethod
+    def _compose(cls_left, cls_right):
+        animations = []
+        for cls in [cls_left, cls_right]:
+            if issubclass(cls, ComposedAnimationCallback):
+                assert cls is not ComposedAnimationCallback, "Adding a composed animation in this way is ambiguous."
+                animations += cls._animations
+            else:
+                animations.append(cls)
+        class Composed(ComposedAnimationCallback):
+            _animations = animations
+            def __init__(self, **kwargs):
+                super().__init__(*self._animations, **kwargs)
+        return Composed
+
+    def __init__(self, *args, interactive=None, **kwargs):
+        """Initialize an instance of AnimationCallback."""
+        super().__init__(*args, **kwargs)
+        assert self.attachee is not None, "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
         self.frame_data = []
-        self.fig = plt.figure()
-        self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
+        #matplotlib.use('Qt5Agg', force=True)
+
+        self.interactive_mode = self._metadata["argv"].interactive if interactive is None else interactive
+        if self.interactive_mode:
+            self.fig = Figure(figsize=(10, 10))
+            canvas = FigureCanvas(self.fig)
+            self.ax = canvas.figure.add_subplot(111)
+            self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+            self.setup()
+        else:
+            self.mng = None
+            self.fig, self.ax = None, None
+        self.save_directory = Path(f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}").resolve()
         self.saved_counter = 0
 
-    def get_save_directory(self):
-        return self.save_directory
-
-    def on_launch(self):
-        os.mkdir(self.get_save_directory())
-
-    def add_frame_datum(self, frame_datum):
-        self.frame_data.append(frame_datum)
-
-    def clear_frames(self):
-        self.frame_data = []
-
     @abstractmethod
-    def update_frame(self, **frame_datum):
+    def setup(self):
         pass
 
-    def animate(self, frames="all"):
+
+    def get_save_directory(self):
+        return str(self.save_directory)
+
+
+    def add_frame(self, **frame_datum):
+        self.frame_data.append(frame_datum)
+        if hasattr(self, "interactive_status"):
+            self.interactive_status["frame"] = frame_datum
+
+        if self.interactive_mode:
+            self.lim()
+            self.construct_frame(**frame_datum)
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            self.fig.show()
+
+    def __getstate__(self):
+        state = copy(self.__dict__)
+        del state["mng"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.mng = Mock()
+
+    def reset(self):
+        self.frame_data = []
+        if self.interactive_mode:
+            self.mng.window.close()
+            self.ax.clear()
+            self.setup()
+        #self.__init__(attachee=self.attachee, interactive=self.interactive_mode)
+
+    @abstractmethod
+    def construct_frame(self, **frame_datum):
+        pass
+
+    def animate(self, frames=None):
+        temp_fig, temp_ax = self.fig, self.ax
+        plt.ioff()
+        self.fig = Figure(figsize=(10, 10))
+        canvas = FigureCanvas(self.fig)
+        self.ax = canvas.figure.add_subplot(111)
+        self.setup()
+        if frames is None:
+            frames = self.__class__._frames
         if frames == "all":
             frames = len(self.frame_data)
         elif isinstance(frames, int):
@@ -587,14 +719,21 @@ class AnimationCallback(Callback, ABC):
 
         def animation_update(i):
             j = int((i / frames) * len(self.frame_data) + 0.5)
-            return self.update_frame(**self.frame_data[j])
-
+            return self.construct_frame(**self.frame_data[j])
+        self.lim()
         anim = matplotlib.animation.FuncAnimation(
-            self.fig, animation_update, frames=frames, interval=1, blit=True
+            self.fig, animation_update, frames=frames, interval=30, blit=True, repeat=False
         )
-        return anim.to_jshtml()
+        res = anim.to_jshtml()
+        plt.close(self.fig)
+        self.fig, self.ax = temp_fig, temp_ax
+        return res
 
-    def animate_and_save(self, frames="all", name=None):
+    def on_launch(self):
+        os.mkdir(self.get_save_directory())
+
+
+    def animate_and_save(self, frames=None, name=None):
         if name is None:
             name = str(self.saved_counter)
             self.saved_counter += 1
@@ -605,9 +744,258 @@ class AnimationCallback(Callback, ABC):
                 f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
             )
 
+    def lim(self, width=None, height=None, center=None, extra_margin=0.):
+        if width is not None or height is not None:
+            if center is None:
+                center = [0., 0.]
+            if width is None:
+                width = height
+            if height is None:
+                height = width
+            self.ax.set_xlim(center[0] - width / 2 - extra_margin,
+                             center[0] + width / 2 + extra_margin)
+            self.ax.set_ylim(center[1] - height / 2 - extra_margin,
+                             center[1] - height / 2 + extra_margin)
+        else:
+            raise ValueError("No axis limits known for animation.")
+
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        self.animate_and_save(name=str(episode_number))
+        self.reset()
+
+class ComposedAnimationCallback(AnimationCallback):
+    """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
+
+    def __init__(self, *animations, **kwargs):
+        """Initialize an instance of ComposedAnimationCallback.
+
+        :param animations: animation classes to be composed
+        :param kwargs: keyword arguments to be passed to __init__ of said animations and the base class
+        """
+        Callback.__init__(self, **kwargs)
+        self.animations = [Animation(interactive=False, **kwargs) for Animation in animations]
+        self.fig = Figure(figsize=(10, 10))
+        canvas = FigureCanvas(self.fig)
+        width = int(len(self.animations) ** 0.5 + 0.5)
+        height = width - (width ** 2 - len(self.animations)) // width
+        for i, animation in enumerate(self.animations):
+            animation.fig = self.fig
+            animation.ax = canvas.figure.add_subplot(width, height, 1 + i)
+            animation.ax.set_aspect('equal', 'box')
+        self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+        for animation in self.animations:
+            animation.mng = self.mng
+            animation.interactive_mode = self._metadata["argv"].interactive
+            animation.setup()
+
+    def perform(self, obj, method, output):
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `perform` method called.")
+
+    def construct_frame(self, **frame_datum):
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `construct_frame` method called.")
+
+    def setup(self):
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `setup` method called.")
+
+    def is_target_event(self, obj, method, output):
+        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `is_target_event` method called.")
+
+    def on_launch(self):
+        for animation in self.animations:
+            animation.on_launch()
+
+    def on_episode_done(
+        self,
+        *args,
+        **kwargs
+    ):
+        for animation in self.animations:
+            animation.on_episode_done(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        for animation in self.animations:
+            animation(*args, **kwargs)
+
+
+class PointAnimation(AnimationCallback, ABC):
+    """Animation that sets the location of a planar point at each frame."""
+
+    def setup(self):
+        self.point, = self.ax.plot(0, 1, marker="o", label="location")
+
+    def construct_frame(self, x, y):
+        self.point.set_data([x], [y])
+        return self.point,
+
+    def lim(self, *args, extra_margin=0.01, **kwargs):
+        try:
+            super().lim(*args, extra_margin=extra_margin, **kwargs)
+            return
+        except ValueError:
+            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T
+            x_min, x_max = x.min(), x.max()
+            y_min, y_max = y.min(), y.max()
+            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+            self.ax.set_xlim(x_min - extra_margin,
+                             x_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+            self.ax.set_ylim(y_min - extra_margin,
+                             y_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+
+
+
+@passdown
+class StateTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, rcognita.simulator.Simulator)
+            and method == "get_sim_step_data"
+        )
+
+    def perform(self, obj, method, output):
+        self.system_state = obj.state
+
+
+class PlanarMotionAnimation(PointAnimation, StateTracker):
+    """Animates dynamics of systems that can be viewed as a point moving on a plane."""
+
+    def on_trigger(self, _):
+        self.add_frame(x=self.system_state[0],
+                       y=self.system_state[1])
+
+
+class TriangleAnimation(AnimationCallback, ABC):
+    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
+
+    _pic = None # must be an svg located in rcognita/img
+
+    def setup(self):
+        if self._pic is None:
+            return self.setup_points()
+        else:
+            return self.setup_pic()
+
+    def setup_points(self):
+        point1, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        point2, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        point3, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        self.points = (point1, point2, point3)
+        self.ax.grid()
+
+    def setup_pic(self):
+        self.path = rcognita.__file__.replace("__init__.py", f"img/{self._pic}")
+        self.pic_data, self.attributes = svg2paths(self.path)
+        parsed = parse_path(self.attributes[0]['d'])
+        parsed.vertices -= parsed.vertices.mean(axis=0)
+        self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
+        self.triangle, = self.ax.plot(0, 1, marker=self.marker, ms=30)
+
+
+    def lim(self, *args, extra_margin=0.11, **kwargs):
+        try:
+            super().lim(*args, extra_margin=extra_margin, **kwargs)
+            return
+        except ValueError:
+            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+            x_min, x_max = x.min(), x.max()
+            y_min, y_max = y.min(), y.max()
+            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+            self.ax.set_xlim(x_min - extra_margin,
+                             x_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+            self.ax.set_ylim(y_min - extra_margin,
+                             y_min + max(x_max-x_min, y_max-y_min) + extra_margin)
+
+
+    def construct_frame(self, x, y, theta):
+        if self._pic is None:
+            return self.construct_frame_points(x, y, theta)
+        else:
+            return self.construct_frame_pic(x, y, theta)
+
+    def construct_frame_points(self, x, y, theta):
+        offsets = np.array([[np.cos(theta + i * 2 * np.pi / 3),
+                             np.sin(theta + i * 2 * np.pi / 3)] for i in range(3)]) / 10
+        location = np.array([x, y])
+        for point, offset in zip(self.points, offsets):
+            x, y = location + offset
+            point.set_data([x], [y])
+        return self.points
+
+    def construct_frame_pic(self, x, y, theta):
+        self.triangle.set_data([x], [y])
+        self.marker._transform = self.marker.get_transform().rotate_deg(180 * theta / np.pi)
+        return self.triangle,
+
+
+
+class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
+    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
+
+    def on_trigger(self, _):
+        self.add_frame(x=self.system_state[0],
+                       y=self.system_state[1],
+                       theta=self.system_state[2])
+
+
+class PendulumAnimation(PlanarMotionAnimation):
+    """Animates the head of a swinging pendulum.
+
+    Interprets the first state coordinate as the angle of the pendulum with respect to the topmost position.
+    """
+
+    def on_trigger(self, _):
+        self.add_frame(x=np.cos(self.system_state[0] - np.pi / 2), y = np.sin(self.system_state[0] - np.pi / 2))
+
+    def lim(self):
+        self.ax.set_xlim(-1.1, 1.1)
+        self.ax.set_ylim(-1.1, 1.1)
+
+
+class BarAnimation(AnimationCallback, StateTracker):
+    """Animates the state of a system as a collection of vertical bars."""
+
+    def setup(self):
+        self.bar = None
+
+    def construct_frame(self, state):
+        if self.bar is None:
+            self.bar = self.ax.bar(range(len(state)), state)
+        else:
+            for rect, h in zip(self.bar, state):
+                rect.set_height(h)
+        return self.bar
+
+    def on_trigger(self, _):
+        self.add_frame(state=self.system_state)
+
+    def lim(self):
+        pass
+
 
 class HistoricalCallback(Callback, ABC):
+    """Callback (base) responsible for recording various temporal data."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of HistoricalCallback."""
         super().__init__(*args, **kwargs)
         self.xlabel = "Time"
         self.ylabel = "Value"
@@ -648,7 +1036,7 @@ class HistoricalCallback(Callback, ABC):
             else:
                 if idx == "last":
                     idx = len(dirs)
-                assert idx >= 1, f"Indices should be no smaller than 1."
+                assert idx >= 1, "Indices should be no smaller than 1."
                 assert idx <= len(dirs), f"Only {len(dirs)} files were stored."
                 return pd.read_hdf(dirs[idx - 1])
         else:
@@ -697,8 +1085,7 @@ class HistoricalCallback(Callback, ABC):
 
 
 def method_callback(method_name, class_name=None, log_level="debug"):
-    """
-    Creates a callback class that logs the output of a specific method of a class or any class.
+    """Create a callback class that logs the output of a specific method of a class or any class.
 
     :param method_name: Name of the method to log output for.
     :type method_name: str
@@ -714,8 +1101,8 @@ def method_callback(method_name, class_name=None, log_level="debug"):
         )
 
     class MethodCallback(Callback):
-        def __init__(self, log, log_level=log_level):
-            super().__init__(log, log_level=log_level)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
         def is_target_event(self, obj, method, output):
             return method == method_name and class_name in [
@@ -732,16 +1119,17 @@ def method_callback(method_name, class_name=None, log_level="debug"):
 
 
 class StateCallback(Callback):
-    """
-    StateCallback is a subclass of the Callback class that logs the state of a system object when the compute_closed_loop_rhs method of the System class is called.
+    """StateCallback is a subclass of the Callback class that logs the state of a system object when the compute_closed_loop_rhs method of the System class is called.
 
-    Attributes:
+    Attributes
+    ----------
     log (function): A function that logs a message at a specified log level.
     """
 
     def is_target_event(self, obj, method, output):
+        attachee = self.attachee if self.attachee is not None else rcognita.systems.System
         return (
-            isinstance(obj, rcognita.systems.System)
+            isinstance(obj, attachee)
             and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
         )
 
@@ -750,16 +1138,16 @@ class StateCallback(Callback):
 
 
 class ObjectiveCallback(Callback):
-    cooldown = 8.0
-    """
-    A Callback class that logs the current objective value of an Policy instance.
+    """A Callback class that logs the current objective value of an Actor instance.
 
-    This callback is triggered whenever the Policy.objective method is called.
+    This callback is triggered whenever the Actor.objective method is called.
 
-    Attributes:
+    Attributes
+    ----------
     log (function): A logger function with the specified log level.
     """
 
+    cooldown = 8.0
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.policies.Policy) and method == "objective"
 
@@ -768,12 +1156,10 @@ class ObjectiveCallback(Callback):
 
 
 class HistoricalObjectiveCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of HistoricalObjectiveCallback."""
         super().__init__(*args, **kwargs)
 
         self.timeline = []
@@ -831,8 +1217,9 @@ class HistoricalObjectiveCallback(HistoricalCallback):
 
 
 class SaveProgressCallback(Callback):
-    once_in = 1
+    """Callback responsible for regularly saving data collected by other callbacks to the hard-drive."""
 
+    once_in = 1
     def on_launch(self):
         with rcognita.main.metadata["report"]() as r:
             r["episode_current"] = 0
@@ -854,7 +1241,7 @@ class SaveProgressCallback(Callback):
         start = time.time()
         if episode_number % self.once_in:
             return
-        filename = f"callbacks.dill"
+        filename = "callbacks.dill"
         with open(filename, "wb") as f:
             dill.dump(rcognita.main.callbacks, f)
         self.log(
@@ -872,26 +1259,11 @@ class SaveProgressCallback(Callback):
             self.on_episode_done(None, 0, None, None, None)
 
 
-class InspectReferrersCallback(Callback):
-    object_to_trace = "observation"
-
-    def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.OnlineScenario) and method == "step"
-
-    def perform(self, obj, method, output):
-        if hasattr(obj, self.object_to_trace):
-            refs = gc.get_referrers(getattr(obj, self.object_to_trace))
-            refs = [x for x in refs[1] if "__" not in x]
-            self.log(f"{self.object_to_trace} referrers: {refs}")
-
-
 class HistoricalObservationCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of HistoricalObservationCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -949,12 +1321,10 @@ class HistoricalObservationCallback(HistoricalCallback):
 
 
 class ObjectiveLearningSaver(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of PolicyGradientObjectiveSaverCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -988,13 +1358,16 @@ class ObjectiveLearningSaver(HistoricalCallback):
         iterations_total,
     ):
         self.dump_and_clear_data(
-            f"policy_objective_on_iteration_{str(iteration_number).zfill(5)}"
+            f"critic_objective_on_iteration_{str(iteration_number).zfill(5)}"
         )
         self.iteration_number = iteration_number + 1
 
 
 class TotalObjectiveCallback(HistoricalCallback):
+    """Callback that regularly logs total objective."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of TotalObjectiveCallback."""
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
         self.xlabel = "Episode"
@@ -1012,17 +1385,17 @@ class TotalObjectiveCallback(HistoricalCallback):
         iterations_total,
     ):
         mlflow.log_metric(
-            "A. Iteration stats avg total objectives",
+            "A. Avg total objectives",
             np.mean(scenario.recent_total_objectives_of_episodes),
             step=iteration_number,
         )
         mlflow.log_metric(
-            "A. Iteration stats med total objectives",
+            "A. Med total objectives",
             np.median(scenario.recent_total_objectives_of_episodes),
             step=iteration_number,
         )
         mlflow.log_metric(
-            "A. Iteration stats std total objectives",
+            "A. Std total objectives",
             np.std(scenario.recent_total_objectives_of_episodes),
             step=iteration_number,
         )
@@ -1084,12 +1457,10 @@ class TotalObjectiveCallback(HistoricalCallback):
 
 
 class QFunctionModelSaverCallback(HistoricalCallback):
-    """
-    A callback which allows to store desired data
-    collected among different runs inside multirun execution runtime
-    """
+    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of QFunctionModelSaverCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -1128,7 +1499,10 @@ class QFunctionModelSaverCallback(HistoricalCallback):
 
 
 class QFunctionCallback(HistoricalCallback):
+    """Callback that logs various data that concerns Q-critics."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of QFunctionCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 0.0
@@ -1168,7 +1542,10 @@ class QFunctionCallback(HistoricalCallback):
 
 
 class TimeRemainingCallback(Callback):
+    """Callback that logs an estimate of the time that remains till the end of the simulation."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of TimeRemainingCallback."""
         super().__init__(*args, **kwargs)
         self.time_episode = []
 
@@ -1211,7 +1588,10 @@ class TimeRemainingCallback(Callback):
 
 
 class CriticObjectiveCallback(HistoricalCallback):
+    """Callback that records the temporal difference loss of the critic."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CriticObjectiveCallback."""
         super().__init__(*args, **kwargs)
 
         self.cooldown = 1.0
@@ -1242,7 +1622,10 @@ class CriticObjectiveCallback(HistoricalCallback):
 
 
 class CriticWeightsCallback(HistoricalCallback):
+    """Callback that records the critic's weights."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CriticWeightsCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 0.0
         self.time = 0.0
@@ -1297,8 +1680,11 @@ class CriticWeightsCallback(HistoricalCallback):
             return res[0].figure
 
 
-class CalfWeightsCallback(HistoricalCallback):
+class CALFWeightsCallback(HistoricalCallback):
+    """Callback that records the relevant model weights for CALF-based methods."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CALFWeightsCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 0.0
         self.time = 0.0
@@ -1351,7 +1737,10 @@ class CalfWeightsCallback(HistoricalCallback):
 
 
 class CalfCallback(HistoricalCallback):
+    """Callback that records various diagnostic data during experiments with CALF-based methods."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of CalfCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 1.0
         self.time = 0.0

@@ -1,0 +1,25 @@
+rcognita.adaptation\_blocks.AdaptationBlockCartpole
+===================================================
+
+.. currentmodule:: rcognita.adaptation_blocks
+
+.. autoclass:: AdaptationBlockCartpole
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AdaptationBlockCartpole.__init__
+      ~AdaptationBlockCartpole.euler_step
+      ~AdaptationBlockCartpole.get_parameter_estimation
+      ~AdaptationBlockCartpole.parameter_estimation_derivative
+   
+   
+
+   
+   
+   

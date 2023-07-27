@@ -19,11 +19,14 @@
    .. autosummary::
       :toctree: sub
    
+      CartPole
       GridWorld
+      LunarLander
       Sys3WRobot
       Sys3WRobotNI
       SysInvertedPendulum
       SysInvertedPendulumPD
+      SysKinematicPoint
       System
       System2Tank
    

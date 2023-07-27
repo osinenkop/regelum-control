@@ -1,0 +1,22 @@
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: Auto-formatting (black)
+        entry: black --check
+        language: python
+        types: [ python ]
+        additional_dependencies: [ 'black' ]
+      - id: ruff
+        name: Linter (Ruff)
+        entry: bash -c "ruff check ./rcognita --ignore-noqa"
+        language: system
+        types: [ python ]
+        require_serial: true
+      - id: pytest-check
+        name: Integration testing (MPC, All environments)
+        entry: pytest -n 7
+        language: system
+        pass_filenames: false
+        always_run: true
+

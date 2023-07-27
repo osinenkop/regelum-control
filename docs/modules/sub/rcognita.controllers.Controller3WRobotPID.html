@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.controllers.Controller3WRobotPID &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.controllers.Controller3WRobotPID &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -17,7 +17,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="rcognita.controllers.ControllerMemoryPID" href="rcognita.controllers.ControllerMemoryPID.html" />
+    <link rel="next" title="rcognita.controllers.ControllerCartPoleEnergyBased" href="rcognita.controllers.ControllerCartPoleEnergyBased.html" />
     <link rel="prev" title="rcognita.controllers.Controller3WRobotNIMotionPrimitive" href="rcognita.controllers.Controller3WRobotNIMotionPrimitive.html" /> 
 </head>
 
@@ -56,38 +56,50 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.callbacks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.apply_action_bounds.html">rcognita.controllers.apply_action_bounds</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.CALFControllerExPost.html">rcognita.controllers.CALFControllerExPost</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.CALFControllerPredictive.html">rcognita.controllers.CALFControllerPredictive</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller.html">rcognita.controllers.Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller2TankPID.html">rcognita.controllers.Controller2TankPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotDisassembledCLF.html">rcognita.controllers.Controller3WRobotDisassembledCLF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotMemoryPID.html">rcognita.controllers.Controller3WRobotMemoryPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotNIDisassembledCLF.html">rcognita.controllers.Controller3WRobotNIDisassembledCLF</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.Controller3WRobotNIMotionPrimitive.html">rcognita.controllers.Controller3WRobotNIMotionPrimitive</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">rcognita.controllers.Controller3WRobotPID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerCartPoleEnergyBased.html">rcognita.controllers.ControllerCartPoleEnergyBased</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive.html">rcognita.controllers.ControllerCartPoleEnergyBasedAdaptive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerCartPolePID.html">rcognita.controllers.ControllerCartPolePID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerKinPoint.html">rcognita.controllers.ControllerKinPoint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerLunarLanderPID.html">rcognita.controllers.ControllerLunarLanderPID</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerMemoryPID.html">rcognita.controllers.ControllerMemoryPID</a></li>
-<li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.ControllerStabilizing.html">rcognita.controllers.ControllerStabilizing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.NominalControllerInvertedPendulum.html">rcognita.controllers.NominalControllerInvertedPendulum</a></li>
 <li class="toctree-l2"><a class="reference internal" href="rcognita.controllers.RLController.html">rcognita.controllers.RLController</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -118,11 +130,30 @@
 <h1>rcognita.controllers.Controller3WRobotPID<a class="headerlink" href="#rcognita-controllers-controller3wrobotpid" title="Permalink to this headline"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="rcognita.controllers.Controller3WRobotPID">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.controllers.</span></span><span class="sig-name descname"><span class="pre">Controller3WRobotPID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.Controller3WRobotPID" title="Permalink to this definition"></a></dt>
-<dd><dl class="py method">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">rcognita.controllers.</span></span><span class="sig-name descname"><span class="pre">Controller3WRobotPID</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_arctg_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">0.0,</span> <span class="pre">3)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_v_zero_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(35,</span> <span class="pre">0.0,</span> <span class="pre">1.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_x_y_origin_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(35,</span> <span class="pre">0.0,</span> <span class="pre">35)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_angle_origin_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(30,</span> <span class="pre">0.0,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_to_zero_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.05)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_origin_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_arctan_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.01,</span> <span class="pre">0.2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.Controller3WRobotPID" title="Permalink to this definition"></a></dt>
+<dd><p>Nominal stabilzing policy for 3wrobot inertial system.</p>
+<dl class="py method">
 <dt class="sig sig-object py" id="rcognita.controllers.Controller3WRobotPID.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.Controller3WRobotPID.__init__" title="Permalink to this definition"></a></dt>
-<dd><p>Initialize self.  See help(type(self)) for accurate signature.</p>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_init</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_arctg_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">0.0,</span> <span class="pre">3)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_v_zero_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(35,</span> <span class="pre">0.0,</span> <span class="pre">1.2)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_x_y_origin_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(35,</span> <span class="pre">0.0,</span> <span class="pre">35)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">PID_angle_origin_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(30,</span> <span class="pre">0.0,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_to_zero_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.05)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_origin_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">0.1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_arctan_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.01,</span> <span class="pre">0.2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rcognita.controllers.Controller3WRobotPID.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize Controller3WRobotPID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state_init</strong> – initial state of 3wrobot</p></li>
+<li><p><strong>params</strong> (<em>tuple</em>) – mass and moment of inertia <cite>(M, I)</cite></p></li>
+<li><p><strong>time_start</strong> – time start</p></li>
+<li><p><strong>sampling_time</strong> – sampling time</p></li>
+<li><p><strong>action_bounds</strong> – bounds that actions should not exceed <cite>[[lower_bound, upper_bound], …]</cite></p></li>
+<li><p><strong>PID_arctg_params</strong> – coefficients for PD controller which sets the direction of robot to origin</p></li>
+<li><p><strong>PID_v_zero_params</strong> – coefficients for PD controller which forces speed to zero as robot moves to origin</p></li>
+<li><p><strong>PID_x_y_origin_params</strong> – coefficients for PD controller which moves robot to origin</p></li>
+<li><p><strong>PID_angle_origin_params</strong> – coefficients for PD controller which sets angle to zero near origin</p></li>
+<li><p><strong>v_to_zero_bounds</strong> – bounds for enabling controller which decelerates</p></li>
+<li><p><strong>to_origin_bounds</strong> – bounds for enabling controller which moves robot to origin</p></li>
+<li><p><strong>to_arctan_bounds</strong> – bounds for enabling controller which direct robot to origin</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <p class="rubric">Methods</p>
@@ -132,28 +163,28 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#rcognita.controllers.Controller3WRobotPID.__init__" title="rcognita.controllers.Controller3WRobotPID.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(state_init[, params, time_start, …])</p></td>
-<td><p>Initialize self.</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">F_error_derivative</span></code>(x, y, angle, v[, eps])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#rcognita.controllers.Controller3WRobotPID.__init__" title="rcognita.controllers.Controller3WRobotPID.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(state_init[, params, time_start, …])</p></td>
+<td><p>Initialize Controller3WRobotPID.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cdf_uniform</span></code>(x, a, b)</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_LF</span></code>(observation)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action</span></code>(observation)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action</span></code>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action_sampled</span></code>(time, observation)</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action_sampled</span></code>(time, state, observation)</p></td>
 <td><p>Compute sampled action.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_square_of_norm</span></code>(x, y)</p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_setpoint_for_PID_angle_arctan</span></code>(x, y[, eps])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_SP_for_PID_angle_arctan</span></code>(x, y)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>([time_start])</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_all_PID_controllers</span></code>()</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -167,7 +198,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="rcognita.controllers.Controller3WRobotNIMotionPrimitive.html" class="btn btn-neutral float-left" title="rcognita.controllers.Controller3WRobotNIMotionPrimitive" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="rcognita.controllers.ControllerMemoryPID.html" class="btn btn-neutral float-right" title="rcognita.controllers.ControllerMemoryPID" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="rcognita.controllers.ControllerCartPoleEnergyBased.html" class="btn btn-neutral float-right" title="rcognita.controllers.ControllerCartPoleEnergyBased" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -1,5 +1,7 @@
-"""
-This module contains one single class that simulates controller-system (agent-environment) loops.
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Contains one single class that simulates controller-system (agent-environment) loops.
+
 The system can be of three types:
     
 - discrete-time deterministic
@@ -15,7 +17,6 @@ Remarks:
 """
 
 import numpy as np
-import scipy as sp
 
 import rcognita.base
 from .__utilities import rc
@@ -45,6 +46,48 @@ class Simulator(rcognita.base.RcognitaBase, ABC):
         atol: Optional[float] = 1e-5,
         rtol: Optional[float] = 1e-3,
     ):
+        r"""Initialize a simulator.
+
+        Parameters
+        ----------
+        sys_type : : string
+            Type of system by description:
+
+            | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, u, q)`
+            | ``discr_fnc`` : difference equation :math:`state^+ = f(state, u, q)`
+            | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, u, q)`
+
+        where:
+
+            | :math:`state` : state
+            | :math:`u` : input
+            | :math:`q` : disturbance
+
+        compute_closed_loop_rhs : : function
+            Right-hand side description of the closed-loop system.
+            Say, if you instantiated a concrete system (i.e., as an instance of a subclass of ``System`` class with concrete ``compute_closed_loop_rhs`` method) as ``system``,
+            this could be just ``system.compute_closed_loop_rhs``.
+
+        sys_out : : function
+            System output function.
+            Same as above, this could be, say, ``system.out``.
+
+        is_dynamic_controller : : 0 or 1
+            If 1, the controller (a.k.a. agent) is considered as a part of the full state vector.
+
+        state_init, disturb_init, action_init : : vectors
+            Initial values of the (open-loop) system state, disturbance and input.
+
+        time_start, time_final, sampling_time : : numbers
+            Initial, final times and time step size
+
+        max_step, first_step, atol, rtol : : numbers
+            Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
+
+        system : : `System`
+            System to be simulated.
+
+        """
         self.system = system
         assert hasattr(
             self.system, "system_type"
@@ -90,10 +133,7 @@ class Simulator(rcognita.base.RcognitaBase, ABC):
         return self.system.get_observation(time, state, inputs)
 
     def do_sim_step(self):
-        """
-        Do one simulation step and update current simulation data (time, system state and output).
-
-        """
+        """Do one simulation step and update current simulation data (time, system state and output)."""
 
         if self.system.system_type == "diff_eqn":
             try:
@@ -110,6 +150,7 @@ class Simulator(rcognita.base.RcognitaBase, ABC):
         else:
             raise ValueError("Invalid system description")
 
+    @apply_callbacks()
     def get_sim_step_data(self):
         return self.time, self.state, self.observation
 

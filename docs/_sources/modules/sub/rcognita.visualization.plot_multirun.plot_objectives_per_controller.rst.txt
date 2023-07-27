@@ -1,0 +1,6 @@
+rcognita.visualization.plot\_multirun.plot\_objectives\_per\_controller
+=======================================================================
+
+.. currentmodule:: rcognita.visualization.plot_multirun
+
+.. autofunction:: plot_objectives_per_controller

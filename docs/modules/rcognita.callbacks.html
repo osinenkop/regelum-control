@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rcognita.callbacks &mdash; rcognita 0.2.0 documentation</title>
+  <title>rcognita.callbacks &mdash; rcognita 0.2.1 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -17,8 +17,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="rcognita.callbacks.apply_callbacks" href="sub/rcognita.callbacks.apply_callbacks.html" />
-    <link rel="prev" title="rcognita.actors.ActorTabular" href="sub/rcognita.actors.ActorTabular.html" /> 
+    <link rel="next" title="rcognita.callbacks.is_in_debug_mode" href="sub/rcognita.callbacks.is_in_debug_mode.html" />
+    <link rel="prev" title="rcognita.base.publisher" href="sub/rcognita.base.publisher.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -56,33 +56,64 @@
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="rcognita.actors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.actors</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.adaptation_blocks.html"><code class="docutils literal notranslate"><span class="pre">rcognita.adaptation_blocks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.base.html"><code class="docutils literal notranslate"><span class="pre">rcognita.base</span></code></a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.apply_callbacks.html">rcognita.callbacks.apply_callbacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.is_in_debug_mode.html">rcognita.callbacks.is_in_debug_mode</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.method_callback.html">rcognita.callbacks.method_callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.passdown.html">rcognita.callbacks.passdown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.AnimationCallback.html">rcognita.callbacks.AnimationCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.BarAnimation.html">rcognita.callbacks.BarAnimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.CALFWeightsCallback.html">rcognita.callbacks.CALFWeightsCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.CalfCallback.html">rcognita.callbacks.CalfCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.Callback.html">rcognita.callbacks.Callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.ComposedAnimationCallback.html">rcognita.callbacks.ComposedAnimationCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.ConfigDiagramCallback.html">rcognita.callbacks.ConfigDiagramCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.CriticObjectiveCallback.html">rcognita.callbacks.CriticObjectiveCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.CriticWeightsCallback.html">rcognita.callbacks.CriticWeightsCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.DirectionalPlanarMotionAnimation.html">rcognita.callbacks.DirectionalPlanarMotionAnimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.HistoricalCallback.html">rcognita.callbacks.HistoricalCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.HistoricalObjectiveCallback.html">rcognita.callbacks.HistoricalObjectiveCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.HistoricalObservationCallback.html">rcognita.callbacks.HistoricalObservationCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.ObjectiveCallback.html">rcognita.callbacks.ObjectiveCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.OnEpisodeDoneCallback.html">rcognita.callbacks.OnEpisodeDoneCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.OnIterationDoneCallback.html">rcognita.callbacks.OnIterationDoneCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.PendulumAnimation.html">rcognita.callbacks.PendulumAnimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.PlanarMotionAnimation.html">rcognita.callbacks.PlanarMotionAnimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.PointAnimation.html">rcognita.callbacks.PointAnimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.PolicyGradientObjectiveSaverCallback.html">rcognita.callbacks.PolicyGradientObjectiveSaverCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.QFunctionCallback.html">rcognita.callbacks.QFunctionCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.QFunctionModelSaverCallback.html">rcognita.callbacks.QFunctionModelSaverCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.SaveProgressCallback.html">rcognita.callbacks.SaveProgressCallback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.StateCallback.html">rcognita.callbacks.StateCallback</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.introduce_callbacks.html">rcognita.callbacks.introduce_callbacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.StateTracker.html">rcognita.callbacks.StateTracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.TimeCallback.html">rcognita.callbacks.TimeCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.TimeRemainingCallback.html">rcognita.callbacks.TimeRemainingCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.TotalObjectiveCallback.html">rcognita.callbacks.TotalObjectiveCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/rcognita.callbacks.TriangleAnimation.html">rcognita.callbacks.TriangleAnimation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.controllers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.controllers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.critics.html"><code class="docutils literal notranslate"><span class="pre">rcognita.critics</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="rcognita.loggers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.loggers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.data_buffers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.models.html"><code class="docutils literal notranslate"><span class="pre">rcognita.models</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.objectives.html"><code class="docutils literal notranslate"><span class="pre">rcognita.objectives</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.observers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.observers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.optimizers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.predictors.html"><code class="docutils literal notranslate"><span class="pre">rcognita.predictors</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.scenarios.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scenarios</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.scripts.html"><code class="docutils literal notranslate"><span class="pre">rcognita.scripts</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.simulator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.solvers.html"><code class="docutils literal notranslate"><span class="pre">rcognita.solvers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.systems.html"><code class="docutils literal notranslate"><span class="pre">rcognita.systems</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.animator.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.animator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.plot_multirun.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.plot_multirun</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_2tank.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_2tank</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_3wrobot.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_3wrobot</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_grid_world.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_grid_world</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_inverted_pendulum.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_inverted_pendulum</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="rcognita.visualization.vis_lunar_lander.html"><code class="docutils literal notranslate"><span class="pre">rcognita.visualization.vis_lunar_lander</span></code></a></li>
 </ul>
 
         </div>
@@ -110,8 +141,8 @@
              
   <div class="section" id="module-rcognita.callbacks">
 <span id="rcognita-callbacks"></span><h1><code class="docutils literal notranslate"><span class="pre">rcognita.callbacks</span></code><a class="headerlink" href="#module-rcognita.callbacks" title="Permalink to this headline"></a></h1>
-<p>This module contains callbacks.
-Callbacks are lightweight event handlers, used mainly for logging.</p>
+<p>Contains callbacks.</p>
+<p>Callbacks are lightweight event handlers, used mainly for logging.</p>
 <p>To make a method of a class trigger callbacks, one needs to
 decorate the class (or its base class) with <code class="docutils literal notranslate"><span class="pre">&#64;introduce_callbacks()</span></code> and then
 also decorate the method with <code class="docutils literal notranslate"><span class="pre">&#64;apply_callbacks</span></code>.</p>
@@ -128,11 +159,14 @@ also decorate the method with <code class="docutils literal notranslate"><span c
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.apply_callbacks.html#rcognita.callbacks.apply_callbacks" title="rcognita.callbacks.apply_callbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_callbacks</span></code></a>(method)</p></td>
-<td><p>Decorator that applies a list of callbacks to a given method of an object.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.is_in_debug_mode.html#rcognita.callbacks.is_in_debug_mode" title="rcognita.callbacks.is_in_debug_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_in_debug_mode</span></code></a>()</p></td>
+<td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.method_callback.html#rcognita.callbacks.method_callback" title="rcognita.callbacks.method_callback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">method_callback</span></code></a>(method_name[, class_name, …])</p></td>
-<td><p>Creates a callback class that logs the output of a specific method of a class or any class.</p></td>
+<td><p>Create a callback class that logs the output of a specific method of a class or any class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.passdown.html#rcognita.callbacks.passdown" title="rcognita.callbacks.passdown"><code class="xref py py-obj docutils literal notranslate"><span class="pre">passdown</span></code></a>(CallbackClass)</p></td>
+<td><p>Decorate a callback class in such a way that its event handling is inherited by derived classes.</p></td>
 </tr>
 </tbody>
 </table>
@@ -143,17 +177,92 @@ also decorate the method with <code class="docutils literal notranslate"><span c
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.Callback.html#rcognita.callbacks.Callback" title="rcognita.callbacks.Callback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Callback</span></code></a>(logger[, log_level])</p></td>
-<td><p>This is the base class for a callback object.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.AnimationCallback.html#rcognita.callbacks.AnimationCallback" title="rcognita.callbacks.AnimationCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AnimationCallback</span></code></a>(*args[, interactive])</p></td>
+<td><p>Callback (base) responsible for rendering animated visualizations of the experiment.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.ObjectiveCallback.html#rcognita.callbacks.ObjectiveCallback" title="rcognita.callbacks.ObjectiveCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ObjectiveCallback</span></code></a>(logger[, log_level])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.BarAnimation.html#rcognita.callbacks.BarAnimation" title="rcognita.callbacks.BarAnimation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BarAnimation</span></code></a>(*args[, interactive])</p></td>
+<td><p>Animates the state of a system as a collection of vertical bars.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.CALFWeightsCallback.html#rcognita.callbacks.CALFWeightsCallback" title="rcognita.callbacks.CALFWeightsCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CALFWeightsCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that records the relevant model weights for CALF-based methods.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.CalfCallback.html#rcognita.callbacks.CalfCallback" title="rcognita.callbacks.CalfCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CalfCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that records various diagnostic data during experiments with CALF-based methods.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.Callback.html#rcognita.callbacks.Callback" title="rcognita.callbacks.Callback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Callback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Base class for callbacks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.ComposedAnimationCallback.html#rcognita.callbacks.ComposedAnimationCallback" title="rcognita.callbacks.ComposedAnimationCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ComposedAnimationCallback</span></code></a>(*animations, **kwargs)</p></td>
+<td><p>An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.ConfigDiagramCallback.html#rcognita.callbacks.ConfigDiagramCallback" title="rcognita.callbacks.ConfigDiagramCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigDiagramCallback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Callback responsible for constructing SUMMARY.html and relevant data, including the config diagram.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.CriticObjectiveCallback.html#rcognita.callbacks.CriticObjectiveCallback" title="rcognita.callbacks.CriticObjectiveCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticObjectiveCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that records the temporal difference loss of the critic.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.CriticWeightsCallback.html#rcognita.callbacks.CriticWeightsCallback" title="rcognita.callbacks.CriticWeightsCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticWeightsCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that records the critic’s weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.DirectionalPlanarMotionAnimation.html#rcognita.callbacks.DirectionalPlanarMotionAnimation" title="rcognita.callbacks.DirectionalPlanarMotionAnimation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DirectionalPlanarMotionAnimation</span></code></a>(*args[, …])</p></td>
+<td><p>Animates dynamics of systems that can be viewed as a triangle moving on a plane.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.HistoricalCallback.html#rcognita.callbacks.HistoricalCallback" title="rcognita.callbacks.HistoricalCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoricalCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback (base) responsible for recording various temporal data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.HistoricalObjectiveCallback.html#rcognita.callbacks.HistoricalObjectiveCallback" title="rcognita.callbacks.HistoricalObjectiveCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoricalObjectiveCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store desired data collected among different runs inside multirun execution runtime.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.HistoricalObservationCallback.html#rcognita.callbacks.HistoricalObservationCallback" title="rcognita.callbacks.HistoricalObservationCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoricalObservationCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store desired data collected among different runs inside multirun execution runtime.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.ObjectiveCallback.html#rcognita.callbacks.ObjectiveCallback" title="rcognita.callbacks.ObjectiveCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ObjectiveCallback</span></code></a>([log_level, attachee])</p></td>
 <td><p>A Callback class that logs the current objective value of an Actor instance.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.StateCallback.html#rcognita.callbacks.StateCallback" title="rcognita.callbacks.StateCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StateCallback</span></code></a>(logger[, log_level])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.OnEpisodeDoneCallback.html#rcognita.callbacks.OnEpisodeDoneCallback" title="rcognita.callbacks.OnEpisodeDoneCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnEpisodeDoneCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback responsible for logging and recording relevant data when an episode ends.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.OnIterationDoneCallback.html#rcognita.callbacks.OnIterationDoneCallback" title="rcognita.callbacks.OnIterationDoneCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnIterationDoneCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback responsible for logging and recording relevant data when an iteration ends.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.PendulumAnimation.html#rcognita.callbacks.PendulumAnimation" title="rcognita.callbacks.PendulumAnimation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PendulumAnimation</span></code></a>(*args[, interactive])</p></td>
+<td><p>Animates the head of a swinging pendulum.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.PlanarMotionAnimation.html#rcognita.callbacks.PlanarMotionAnimation" title="rcognita.callbacks.PlanarMotionAnimation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PlanarMotionAnimation</span></code></a>(*args[, interactive])</p></td>
+<td><p>Animates dynamics of systems that can be viewed as a point moving on a plane.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.PointAnimation.html#rcognita.callbacks.PointAnimation" title="rcognita.callbacks.PointAnimation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PointAnimation</span></code></a>(*args[, interactive])</p></td>
+<td><p>Animation that sets the location of a planar point at each frame.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.PolicyGradientObjectiveSaverCallback.html#rcognita.callbacks.PolicyGradientObjectiveSaverCallback" title="rcognita.callbacks.PolicyGradientObjectiveSaverCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PolicyGradientObjectiveSaverCallback</span></code></a>(*args, …)</p></td>
+<td><p>A callback which allows to store desired data collected among different runs inside multirun execution runtime.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.QFunctionCallback.html#rcognita.callbacks.QFunctionCallback" title="rcognita.callbacks.QFunctionCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QFunctionCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that logs various data that concerns Q-critics.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.QFunctionModelSaverCallback.html#rcognita.callbacks.QFunctionModelSaverCallback" title="rcognita.callbacks.QFunctionModelSaverCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QFunctionModelSaverCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store desired data collected among different runs inside multirun execution runtime.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.SaveProgressCallback.html#rcognita.callbacks.SaveProgressCallback" title="rcognita.callbacks.SaveProgressCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SaveProgressCallback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Callback responsible for regularly saving data collected by other callbacks to the hard-drive.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.StateCallback.html#rcognita.callbacks.StateCallback" title="rcognita.callbacks.StateCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StateCallback</span></code></a>([log_level, attachee])</p></td>
 <td><p>StateCallback is a subclass of the Callback class that logs the state of a system object when the compute_closed_loop_rhs method of the System class is called.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.introduce_callbacks.html#rcognita.callbacks.introduce_callbacks" title="rcognita.callbacks.introduce_callbacks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">introduce_callbacks</span></code></a>([default_callbacks])</p></td>
-<td><p>A class decorator that introduces a <cite>callbacks</cite> attribute to the decorated class.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.StateTracker.html#rcognita.callbacks.StateTracker" title="rcognita.callbacks.StateTracker"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StateTracker</span></code></a>([log_level, attachee])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.TimeCallback.html#rcognita.callbacks.TimeCallback" title="rcognita.callbacks.TimeCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimeCallback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Callback responsible for keeping track of simulation time.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.TimeRemainingCallback.html#rcognita.callbacks.TimeRemainingCallback" title="rcognita.callbacks.TimeRemainingCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimeRemainingCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that logs an estimate of the time that remains till the end of the simulation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/rcognita.callbacks.TotalObjectiveCallback.html#rcognita.callbacks.TotalObjectiveCallback" title="rcognita.callbacks.TotalObjectiveCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TotalObjectiveCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that regularly logs total objective.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/rcognita.callbacks.TriangleAnimation.html#rcognita.callbacks.TriangleAnimation" title="rcognita.callbacks.TriangleAnimation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TriangleAnimation</span></code></a>(*args[, interactive])</p></td>
+<td><p>Animation that sets the location and rotation of a planar equilateral triangle at each frame.</p></td>
 </tr>
 </tbody>
 </table>
@@ -163,8 +272,8 @@ also decorate the method with <code class="docutils literal notranslate"><span c
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="sub/rcognita.actors.ActorTabular.html" class="btn btn-neutral float-left" title="rcognita.actors.ActorTabular" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="sub/rcognita.callbacks.apply_callbacks.html" class="btn btn-neutral float-right" title="rcognita.callbacks.apply_callbacks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sub/rcognita.base.publisher.html" class="btn btn-neutral float-left" title="rcognita.base.publisher" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sub/rcognita.callbacks.is_in_debug_mode.html" class="btn btn-neutral float-right" title="rcognita.callbacks.is_in_debug_mode" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

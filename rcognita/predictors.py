@@ -1,7 +1,4 @@
-"""
-Contains state or observation (depending on the context) predictors.
-
-"""
+"""Module that contains state or observation (depending on the context) predictors."""
 
 from abc import ABC, abstractmethod
 
@@ -11,10 +8,7 @@ from .systems import System
 
 
 class Predictor(rcognita.base.RcognitaBase, ABC):
-    """
-    Blueprint of a predictor.
-
-    """
+    """Blueprint of a predictor."""
 
     def __init__(
         self,
@@ -36,8 +30,8 @@ class Predictor(rcognita.base.RcognitaBase, ABC):
 
 
 class EulerPredictor(Predictor):
-    """
-    Euler predictor uses a simple Euler discretization scheme.
+    """Euler predictor uses a simple Euler discretization scheme.
+
     It does predictions by increments scaled by a sampling time times the velocity evaluated at each successive node.
 
     """
@@ -71,7 +65,15 @@ class EulerPredictor(Predictor):
 
 
 class EulerPredictorMultistep(EulerPredictor):
+    """Applies several iterations of Euler estimation to predict a single step."""
+
     def __init__(self, *args, n_steps=5, **kwargs):
+        """Initialize an instance of EulerPredictorMultistep.
+
+        :param args: positional arguments for EulerPredictor
+        :param n_steps: number of estimations to predict a single step
+        :param kwargs: keyword arguments for EulerPredictor
+        """
         super().__init__(*args, **kwargs)
         self.n_steps = n_steps
         self.pred_step_size /= self.n_steps
@@ -84,12 +86,8 @@ class EulerPredictorMultistep(EulerPredictor):
             )
         return next_state_or_observation
 
-
 class RKPredictor(EulerPredictor):
-    """
-    Predictor that makes use o Runge-Kutta finite difference methods.
-    
-    """
+    """Predictor that makes use o Runge-Kutta finite difference methods."""
 
     def __init__(
         self,
@@ -130,21 +128,19 @@ class RKPredictor(EulerPredictor):
 
     def predict(self, current_state_or_observation, action):
         state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
-        try:
-            state_new = rc.squeeze(state_new.full().T)
-        except:
-            pass
+        state_new = rc.squeeze(state_new.full().T)
 
         return state_new
 
 
 class TrivialPredictor(Predictor):
-    """
-    This predictor propagates the observation or state directly through the system dynamics law.
-
-    """
+    """A predictor that propagates the observation or state directly through the system dynamics law."""
 
     def __init__(self, system):
+        """Initialize an instance of TrivialPredictor.
+
+        :param system: an instance of a discrete system
+        """
         self.system = system
 
     def predict(self, time, state, action):

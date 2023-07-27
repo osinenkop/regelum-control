@@ -17,8 +17,9 @@ rcognita.controllers.CALFControllerPredictive
       ~CALFControllerPredictive.collect_critic_stats
       ~CALFControllerPredictive.compute_action
       ~CALFControllerPredictive.compute_action_sampled
-      ~CALFControllerPredictive.compute_weights_displacement
+      ~CALFControllerPredictive.compute_weights_disetpointlacement
       ~CALFControllerPredictive.invoke_safe_action
+      ~CALFControllerPredictive.pre_compute_action
       ~CALFControllerPredictive.reset
    
    

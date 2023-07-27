@@ -1,10 +1,9 @@
-# TODO: CHECK IF WE NEED THIS. IF YES, DESCRIBE
-
-import os, sys, shelve, time
-import signal
+import os
+import sys
+import shelve
+import time
 
 import dill
-import matplotlib.pyplot as plt
 
 import rcognita
 
@@ -37,7 +36,6 @@ class Stopper:
 if __name__ == "__main__":
     try:
         import streamlit as st
-        import pandas as pd
 
         containers = {}
         os.chdir(sys.argv[1])
@@ -46,7 +44,7 @@ if __name__ == "__main__":
             time.sleep(1)
             counter += 1
             reports = get_reports()
-            for num_report, report in enumerate(reports):
+            for _, report in enumerate(reports):
                 if report not in containers:
                     st.title(report.split("_")[1])
                     containers[report] = {"body": st.container()}
@@ -64,9 +62,7 @@ if __name__ == "__main__":
                             st.write("Current episode:")
                             containers[report]["episode_progress"] = st.progress(0.0)
                             pid = r["pid"]
-                            containers[report]["plots_container"] = st.expander(
-                                f"Plots"
-                            )
+                            containers[report]["plots_container"] = st.expander("Plots")
                             with containers[report]["plots_container"]:
                                 containers[report]["plots"] = st.empty()
                             containers[report]["button_block"] = st.empty()

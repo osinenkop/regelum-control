@@ -1,12 +1,11 @@
-"""
-This module contains various simulation scenarios.
+"""Contains various simulation scenarios.
+
 For instance, an online scenario is when the controller and system interact with each other live via exchange of observations and actions, successively in time steps.
 
 """
 
 
 from abc import ABC, abstractmethod
-import matplotlib.pyplot as plt
 from itertools import islice, cycle
 import numpy as np
 from typing import Optional
@@ -19,7 +18,6 @@ from .critics import Critic, CriticTrivial
 from .simulator import Simulator
 from .controllers import Controller, RLController
 from .objectives import RunningObjective
-from .callbacks import apply_callbacks
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 
 try:
@@ -28,9 +26,11 @@ except ImportError:
     torch = MagicMock()
 
 
-# TODO: DOCSTRING
 class Scenario(rcognita.base.RcognitaBase, ABC):
+    """A base scenario class."""
+
     def __init__(self):
+        """Initialize an instance of Scenario."""
         pass
 
     @abstractmethod
@@ -44,15 +44,7 @@ class Scenario(rcognita.base.RcognitaBase, ABC):
 
 # TODO: DOCSTRING
 class OnlineScenario(Scenario):
-
-    """
-    TODO:
-        1. get init state from simulator
-        2. get init action from controller in main loop first
-        3. access to system from simulator
-        4. access to policy and objective learner from controller
-        5. implement planner for system compositions
-    """
+    """Basic scenario for simulation and online learning."""
 
     cache = dict()
 
@@ -69,6 +61,26 @@ class OnlineScenario(Scenario):
         total_objective_threshold=np.inf,
         discount_factor=1.0,
     ):
+        """Initialize an instance of OnlineScenario.
+
+        This scenario is designed to run a simulation that involves an online learner.
+        :param simulator: simulator in charge of said simulation
+        :param controller: a controller that computes an action on each simulation step
+        :param running_objective: an objective to be computed at each simulation step
+        :param howanim: specifies animation mode
+        :param state_init: initial state
+        :param action_init: initial action
+        :param time_start: time at which simulation starts
+        :param observation_components_naming: names of each component of observation
+        :param N_episodes: number of episodes in one iteration
+        :param N_iterations: number of iterations in simulation
+        :param speedup: number of frames to skip in order to speed up animation rendering
+        """
+        if observation_target is None:
+            observation_target = []
+        if observation_components_naming is None:
+            observation_components_naming = []
+
         self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -116,9 +128,8 @@ class OnlineScenario(Scenario):
         return len(self.cache)
 
     def update_total_objective(self, observation, action, delta):
-        """
-        Sample-to-sample accumulated (summed up or integrated) stage objective.
-        This can be handy to evaluate the performance of the agent.
+        """Sample-to-sample accumulated (summed up or integrated) stage objective. This can be handy to evaluate the performance of the agent.
+
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
 
@@ -194,11 +205,10 @@ class OnlineScenario(Scenario):
             self.cached_timeline
         )
 
-    # TODO: BETTER REMOVE AND RECONSIDER
     def memorize(step_method):
-        """
-        This is a decorator for a simulator step method.
-        It containes a ``cache`` field that in turn comprises of ``keys`` and ``values``.
+        """Memorize the output of decorated method.
+
+        It containes a ``cache`` field that in turn comprises ``keys`` and ``values``.
         The ``cache`` dictionary method `keys` returns a triple:
 
         - ``time``: the current time in an episode
@@ -275,6 +285,8 @@ class OnlineScenario(Scenario):
                                         current_scenario_status_idx
                                     ] = self.cache[key_i][current_scenario_status_idx]
 
+                    # generator self.cached_timeline is needed for playback.
+                    # self.cached_timeline skips frames depending on self.speedup using islice.
                     self.cached_timeline = islice(
                         cycle(iter(self.cache)), 0, None, self.speedup
                     )
@@ -387,6 +399,8 @@ class OnlineScenario(Scenario):
 
 
 class MonteCarloScenario(OnlineScenario):
+    """A Monte-Carlo scenario which is used for Monte-Carlo learning."""
+
     def reset_iteration(self):
         if self.current_scenario_status != "simulation_ended":
             self.controller.critic.optimize_weights_after_iteration(

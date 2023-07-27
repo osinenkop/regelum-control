@@ -1,7 +1,6 @@
 import numpy as np
 from .animator import update_line, Animator
 import matplotlib.patheffects as PathEffects
-from ..__utilities import rc
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.cm as cm

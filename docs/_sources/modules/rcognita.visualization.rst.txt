@@ -30,8 +30,10 @@
    :recursive:
 
    rcognita.visualization.animator
+   rcognita.visualization.plot_multirun
    rcognita.visualization.vis_2tank
    rcognita.visualization.vis_3wrobot
    rcognita.visualization.vis_grid_world
    rcognita.visualization.vis_inverted_pendulum
+   rcognita.visualization.vis_lunar_lander
 

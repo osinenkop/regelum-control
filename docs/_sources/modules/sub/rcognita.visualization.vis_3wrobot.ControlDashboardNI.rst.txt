@@ -14,10 +14,8 @@ rcognita.visualization.vis\_3wrobot.ControlDashboardNI
    .. autosummary::
    
       ~ControlDashboardNI.__init__
-      ~ControlDashboardNI.init_dashboard
       ~ControlDashboardNI.perform_episodic_update
       ~ControlDashboardNI.perform_iterative_update
-      ~ControlDashboardNI.perform_step_update
       ~ControlDashboardNI.update
    
    

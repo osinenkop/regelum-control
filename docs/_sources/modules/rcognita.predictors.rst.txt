@@ -20,7 +20,7 @@
       :toctree: sub
    
       EulerPredictor
-      EulerPredictorPendulum
+      EulerPredictorMultistep
       Predictor
       RKPredictor
       TrivialPredictor

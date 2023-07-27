@@ -1,0 +1,26 @@
+rcognita.controllers.ControllerKinPoint
+=======================================
+
+.. currentmodule:: rcognita.controllers
+
+.. autoclass:: ControllerKinPoint
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControllerKinPoint.__init__
+      ~ControllerKinPoint.compute_LF
+      ~ControllerKinPoint.compute_action
+      ~ControllerKinPoint.compute_action_sampled
+      ~ControllerKinPoint.reset
+   
+   
+
+   
+   
+   

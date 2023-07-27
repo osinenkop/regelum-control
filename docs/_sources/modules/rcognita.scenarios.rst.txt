@@ -19,9 +19,7 @@
    .. autosummary::
       :toctree: sub
    
-      OnlineScenario
-      OnlineScenarioAsyncAC
-      OnlineScenarioREINFORCE
+      MonteCarloScenario
       OnlineScenario
       Scenario
       TabularScenarioVI

@@ -12,7 +12,7 @@ class InvPendulumTrackingDashboard(Dashboard):
         self.state_init = state_init
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_rotating_pendulum = plt.gca()
 
         x_from = -self.rod_length - 0.2
@@ -67,7 +67,7 @@ class InvPendulumTrackingDashboard(Dashboard):
         self.artists.append(self.text_time_handle)
         self.artists.append(self.line_rod)
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         state_full = self.scenario.observation
         angle = state_full[0]
 
@@ -95,7 +95,7 @@ class EpisodicTrajectoryDashboard(Dashboard):
         self.N_episodes = scenario.N_episodes
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axs_sol = plt.gca()
         self.axs_sol.plot(
             autoscale_on=False,
@@ -127,7 +127,7 @@ class EpisodicTrajectoryDashboard(Dashboard):
 
         self.artists.append(self.line_angle)
 
-    def perform_step_update(self):
+    def __perform_step_update(self):
         state_full = self.scenario.observation
         angle = state_full[0]
         time = self.scenario.time
@@ -157,7 +157,7 @@ class MeanEpisodicOutcomesDashboard(Dashboard):
         self.time_final = time_final
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axes_cost = plt.gca()
 
         self.axes_cost.set_xlim(self.time_start, self.time_final)
@@ -191,7 +191,7 @@ class WeightsEpisodicDashboard(Dashboard):
         self.weights_init = weights_init
         self.scenario = scenario
 
-    def init_dashboard(self):
+    def __init_dashboard(self):
         self.axs_action_params = plt.gca()
 
         self.axs_action_params.set_xlim(0, self.N_iterations)
@@ -223,11 +223,13 @@ class AnimatorInvertedPendulum(Animator):
     def __init__(
         self,
         scenario,
-        subplot_grid_size=[2, 2],
+        subplot_grid_size=None,
         fps=10,
         max_video_length=60,
         animation_max_size_mb=200,
     ):
+        if subplot_grid_size is None:
+            subplot_grid_size = [2, 2]
         super().__init__(
             subplot_grid_size=subplot_grid_size,
             max_video_length=max_video_length,

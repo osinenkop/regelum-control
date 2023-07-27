@@ -10,7 +10,6 @@ from hydra.plugins.config_source import ConfigLoadError, ConfigResult, ConfigSou
 from io import StringIO
 import re
 import rcognita
-from functools import partial
 
 
 def sub_map(pattern, f, s):
@@ -247,6 +246,19 @@ def pre_parse(content):
     return content
 
 
+def process_full_inline(content):
+    if "\n----------" in content:
+        content = sub_map(r"\n-----------*", lambda x: "\ninline%%: |", content)
+        i = content.find("\ninline%%:") + 1
+        post_content = content[i:].replace("\n", "\n    ")
+        post_content = post_content + "\n"
+        content = content[:i]
+        post_content = double_percent_sugar_for_ignored_fields(post_content)
+    else:
+        post_content = ""
+    return content, post_content
+
+
 class FileConfigSource(ConfigSource):
     def __init__(self, provider: str, path: str) -> None:
         if path.find("://") == -1:
@@ -263,7 +275,9 @@ class FileConfigSource(ConfigSource):
         if not os.path.exists(full_path):
             raise ConfigLoadError(f"Config not found : {full_path}")
         with open(full_path, encoding="utf-8") as f:  ## RCOGNITA CODE HERE
-            content = pre_parse(f.read())
+            content = f.read()
+            content, post_content = process_full_inline(content)
+            content = pre_parse(content) + post_content
         with StringIO(content) as f:
             header_text = f.read(512)
             header = ConfigSource._get_header_dict(header_text)

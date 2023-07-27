@@ -19,18 +19,27 @@ rcognita.actors.ActorCLF
       ~ActorCLF.accept_or_reject_weights
       ~ActorCLF.cache_weights
       ~ActorCLF.create_observation_constraints
+      ~ActorCLF.iteration_update
       ~ActorCLF.objective
       ~ActorCLF.optimize_weights
       ~ActorCLF.receive_observation
+      ~ActorCLF.receive_state
       ~ActorCLF.reset
       ~ActorCLF.restore_weights
       ~ActorCLF.set_action
       ~ActorCLF.update_action
       ~ActorCLF.update_and_cache_weights
+      ~ActorCLF.update_target
       ~ActorCLF.update_weights
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorCLF.weights
    
    

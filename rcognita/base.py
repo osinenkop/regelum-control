@@ -1,40 +1,162 @@
-# TODO: DOCSTRING. NEED DOCSTRINGS EVERYWHERE
+"""Base infrastructure of rcognita."""
 
 import abc
-import inspect
-from .callbacks import Callback
+
+from . import callbacks as cb
 import rcognita
 import weakref
+from types import MappingProxyType
 
 
-# TODO: DOCSTRING
-class RcognitaBase(abc.ABC):
-    def __init__(self):
-        callbacks = [
-            getattr(self.__class__, d)
-            for d in dir(self.__class__)
-            if inspect.isclass(getattr(self.__class__, d))
-            and issubclass(getattr(self.__class__, d), Callback)
-        ]
-        existing_callbacks = []
-        try:
-            existing_callbacks = [
-                type(callback) for callback in rcognita.main.callbacks
-            ]
+class apply_callbacks:
+    """Decorator that applies a list of callbacks to a given method of an object.
+
+    If the object has no list of callbacks specified, the default callbacks are used.
+
+    :param method: The method to which the callbacks should be applied.
+    """
+
+    def __init__(self, callbacks=None):
+        """Initialize a decorator that applies callbacks.
+
+        :param callbacks: list of callbacks to apply (applies all default callbacks if omitted)
+        """
+        self.callbacks = callbacks
+
+    def __call__(self, method):
+        def new_method(self2, *args, **kwargs):
+            res = method(self2, *args, **kwargs)
+            if self.callbacks is None:
+                callbacks = rcognita.main.callbacks
             for callback in callbacks:
-                if callback not in existing_callbacks:
-                    callback_instance = callback()
-                    callback_instance.on_launch()
-                    rcognita.main.callbacks = [
-                        callback_instance
-                    ] + rcognita.main.callbacks
-        except:
-            pass
+                callback(obj=self2, method=method.__name__, output=res)
+            return res
+
+        return new_method
+
+class RcognitaType(abc.ABCMeta):
+    """Rcognita type that all classes in rcognita share.
+
+    Used for certain infrastructural and syntactic sugar features.
+    """
+
+    @classmethod
+    def __register_callback(cls, callback):
+        pass
+
+    @classmethod
+    def __prepare__(metacls, *args):
+        return {"apply_callbacks": apply_callbacks} | super().__prepare__(*args)
+
+    def __add__(self, other):
+        assert hasattr(self, "_compose")
+        return self._compose(other)
+
+    def __new__(cls, *args, **kwargs):
+        x = super().__new__(cls, *args, **kwargs)
+        if x.__name__ == "RcognitaBase" or x.__name__ == "Callback" or issubclass(x, cb.Callback):
+            return x
+        if hasattr(x, "_real_name"):
+            x.__name__ = x._real_name
+            del x._real_name
+        callbacks = x._attached if hasattr(x, "_attached") else []
+        if callbacks:
+            del x._attached
+        old_init = x.__init__
+        def new_init(self, *args, **kwargs):
+            for callback in callbacks:
+                callback.register(attachee=x, launch=True)
+            return old_init(self, *args, **kwargs)
+        x.__init__ = new_init
+        return x
+
+
+
+class ClassPropertyDescriptor(object):
+    """Enables to declare class properties."""
+
+    def __init__(self, fget, fset=None):
+        """Initialize an instance of ClassPropertyDescriptor
+
+        :param fget: class getter
+        :param fset: class setter
+        """
+        self.fget = fget
+        self.fset = fset
+
+    def __get__(self, obj, cls=None):
+        if cls is None:
+            cls = type(obj)
+        return self.fget.__get__(obj, cls)()
+
+    def __set__(self, obj, value):
+        if not self.fset:
+            raise AttributeError("can't set attribute")
+        type_ = type(obj)
+        return self.fset.__get__(obj, type_)(value)
+
+    def setter(self, func):
+        if not isinstance(func, (classmethod, staticmethod)):
+            func = classmethod(func)
+        self.fset = func
+        return self
+
+def classproperty(func):
+    """Decorates a method in such a way that it becomes a class property.
+
+    :param func: method to decorate
+    :return:
+    """
+    if not isinstance(func, (classmethod, staticmethod)):
+        func = classmethod(func)
+
+    return ClassPropertyDescriptor(func)
+
+class RcognitaBase(metaclass=RcognitaType):
+    """Base class designed to act as an abstraction over all rcognita objects."""
+
+    @classproperty
+    def _metadata(self):
+        return RcognitaBase.__metadata
+
+    @_metadata.setter
+    def _metadata(self, metadata):
+        if not hasattr(RcognitaBase, f"_{RcognitaBase.__name__}__metadata"):
+            RcognitaBase.__metadata = MappingProxyType(metadata)
+        else:
+            raise ValueError("Metadata has already been set, yet an attempt to set it again was made.")
+
+    def __init__(self):
+        """Initialize an object from rcognita."""
+        #if hasattr(self.__class__, "_attached"):
+        #    existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        #    for callback in self._attached:
+        #        if callback not in existing_callbacks:
+        #            callback_instance = callback(attachee=self.__class__)  ## Might want to move it to the metaclass
+        #            callback_instance.on_launch()  # I must change this
+        #            rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+
+        #callbacks = self.__class__._attached if hasattr(self.__class__, "_attached") else []
+        #existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        #for callback in callbacks:
+        #    if callback not in existing_callbacks:
+        #        callback_instance = callback(attachee=self.__class__) ## Might want to move it to the metaclass
+        #        callback_instance.on_launch()
+        #        rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+
+
 
 
 # TODO: DOCSTRING
 class Node(abc.ABC):
+    """A node is an object that is responsible for sending/receiving/rerouting/processing messages."""
+
     def __init__(self, input_type):
+        """Initialize a node.
+
+        :param input_type: type of messages sent/received by the node
+        :type input_type: type
+        """
         self.__subscribers = []
         self.__subscribees = []
         self.hooks = []
@@ -42,7 +164,11 @@ class Node(abc.ABC):
 
     # TODO: DOCSTRING
     def hook(self, hook_function):
-        self.hooks.append(hook_function)
+        def new_hook_function(input_):
+            res = hook_function(input_)
+            assert isinstance(res, self.type), f"Values returned by hooks should match the type of their node (port/publisher). An object of type {type(res)} was returned, which does not match the node's type {self.type}."
+            return res
+        self.hooks.append(new_hook_function)
 
     # TODO: DOCSTRING
     def __forget(self, other):
@@ -133,12 +259,24 @@ class Node(abc.ABC):
 
 # TODO: DOCSTRING
 class EmptyInboxException(Exception):
+    """Raised when trying to receive a message from a Port, to which no messages were yet sent."""
+
     pass
 
 
 # TODO: DOCSTRING
 class port:
-    def __init__(self, input_type=object, hooks=[]):
+    """Decorator factory that replaces a method with a Port in such a way that the initial definition of the method is interpreted as said Port's handler."""
+
+    def __init__(self, input_type=object, hooks=None):
+        """Initialize a decorator that transforms methods into handled ports.
+
+        :param input_type: type of messages accepted by the resulting port
+        :type input_type: type
+        :param hooks: hooks to add in addition to the handler obtained from the decorated method
+        """
+        if hooks is None:
+            hooks = []
         self.input_type = input_type
         self.hooks = hooks
 
@@ -151,7 +289,17 @@ class port:
 
 
 class publisher:
-    def __init__(self, input_type=object, hooks=[]):
+    """Decorator factory that replaces a method with a Publisher in such a way that the initial definition of the method is interpreted as said Publisher's hook."""
+
+    def __init__(self, input_type=object, hooks=None):
+        """Initialize a decorator that transforms methods into hooked publishers.
+
+        :param input_type: type of messages sent by the resulting publisher
+        :type input_type: type
+        :param hooks: hooks to add in addition to the hook obtained from the decorated method
+        """
+        if hooks is None:
+            hooks = []
         self.input_type = input_type
         self.hooks = hooks
 
@@ -164,7 +312,14 @@ class publisher:
 
 
 class Port(Node):
+    """A Port is a Node that accepts messages."""
+
     def __init__(self, input_type):
+        """Initialize a Port.
+
+        :param input_type: type of messages received by the port.
+        :type input_type: type
+        """
         super().__init__(input_type)
         self.__inbox = []
         self.__handler = None
@@ -193,8 +348,11 @@ class Port(Node):
             )
 
 
+
 # TODO: DOCSTRING
 class Publisher(Node):
+    """A Publisher is a Node that sends messages."""
+
     def connect(self, other):
         self.__issue_subscription(other)
 
@@ -204,12 +362,18 @@ class Publisher(Node):
 
 
 class FreePort(Port):
+    """A Port that can accept messages of arbitrary type."""
+
     def __init__(self):
+        """Initialize a free port."""
         super().__init__(object)
 
 
 class FreePublisher(Publisher):
+    """A Publisher that can send messages of arbitrary type."""
+
     def __init__(self):
+        """Initialize a free publisher."""
         super().__init__(object)
 
 

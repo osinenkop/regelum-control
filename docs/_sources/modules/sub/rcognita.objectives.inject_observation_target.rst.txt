@@ -1,0 +1,6 @@
+rcognita.objectives.inject\_observation\_target
+===============================================
+
+.. currentmodule:: rcognita.objectives
+
+.. autofunction:: inject_observation_target

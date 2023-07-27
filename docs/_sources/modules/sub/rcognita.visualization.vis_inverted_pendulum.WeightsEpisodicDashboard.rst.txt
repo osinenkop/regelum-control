@@ -14,10 +14,8 @@ rcognita.visualization.vis\_inverted\_pendulum.WeightsEpisodicDashboard
    .. autosummary::
    
       ~WeightsEpisodicDashboard.__init__
-      ~WeightsEpisodicDashboard.init_dashboard
       ~WeightsEpisodicDashboard.perform_episodic_update
       ~WeightsEpisodicDashboard.perform_iterative_update
-      ~WeightsEpisodicDashboard.perform_step_update
       ~WeightsEpisodicDashboard.update
    
    

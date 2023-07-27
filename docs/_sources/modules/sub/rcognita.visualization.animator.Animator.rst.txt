@@ -15,13 +15,15 @@ rcognita.visualization.animator.Animator
    
       ~Animator.__init__
       ~Animator.animate
+      ~Animator.animate_live
       ~Animator.collect_dashboards
-      ~Animator.get_anm
+      ~Animator.connect_events
       ~Animator.get_index
       ~Animator.init_anim
+      ~Animator.play_live
       ~Animator.playback
+      ~Animator.save_animation
       ~Animator.set_sim_data
-      ~Animator.stop_anm
       ~Animator.update_dashboards
    
    

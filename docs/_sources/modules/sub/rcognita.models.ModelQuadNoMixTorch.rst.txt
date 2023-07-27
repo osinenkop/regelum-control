@@ -53,14 +53,13 @@ rcognita.models.ModelQuadNoMixTorch
       ~ModelQuadNoMixTorch.restore_weights
       ~ModelQuadNoMixTorch.set_extra_state
       ~ModelQuadNoMixTorch.share_memory
-      ~ModelQuadNoMixTorch.soft_update
       ~ModelQuadNoMixTorch.state_dict
       ~ModelQuadNoMixTorch.to
       ~ModelQuadNoMixTorch.to_empty
       ~ModelQuadNoMixTorch.train
       ~ModelQuadNoMixTorch.type
-      ~ModelQuadNoMixTorch.update
       ~ModelQuadNoMixTorch.update_and_cache_weights
+      ~ModelQuadNoMixTorch.update_weights
       ~ModelQuadNoMixTorch.weights2dict
       ~ModelQuadNoMixTorch.xpu
       ~ModelQuadNoMixTorch.zero_grad
@@ -77,5 +76,6 @@ rcognita.models.ModelQuadNoMixTorch
       ~ModelQuadNoMixTorch.cache
       ~ModelQuadNoMixTorch.dump_patches
       ~ModelQuadNoMixTorch.model_name
+      ~ModelQuadNoMixTorch.weights
    
    

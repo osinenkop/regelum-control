@@ -14,10 +14,8 @@ rcognita.visualization.vis\_3wrobot.CostDashboard
    .. autosummary::
    
       ~CostDashboard.__init__
-      ~CostDashboard.init_dashboard
       ~CostDashboard.perform_episodic_update
       ~CostDashboard.perform_iterative_update
-      ~CostDashboard.perform_step_update
       ~CostDashboard.update
    
    

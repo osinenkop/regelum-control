@@ -1,0 +1,6 @@
+rcognita.scripts.get\_seed
+==========================
+
+.. currentmodule:: rcognita.scripts
+
+.. autofunction:: get_seed

@@ -1,0 +1,25 @@
+rcognita.visualization.vis\_lunar\_lander.LanderTrackingDashboard
+=================================================================
+
+.. currentmodule:: rcognita.visualization.vis_lunar_lander
+
+.. autoclass:: LanderTrackingDashboard
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LanderTrackingDashboard.__init__
+      ~LanderTrackingDashboard.perform_episodic_update
+      ~LanderTrackingDashboard.perform_iterative_update
+      ~LanderTrackingDashboard.update
+   
+   
+
+   
+   
+   

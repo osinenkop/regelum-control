@@ -17,18 +17,27 @@ rcognita.actors.ActorSQL
       ~ActorSQL.accept_or_reject_weights
       ~ActorSQL.cache_weights
       ~ActorSQL.create_observation_constraints
+      ~ActorSQL.iteration_update
       ~ActorSQL.objective
       ~ActorSQL.optimize_weights
       ~ActorSQL.receive_observation
+      ~ActorSQL.receive_state
       ~ActorSQL.reset
       ~ActorSQL.restore_weights
       ~ActorSQL.set_action
       ~ActorSQL.update_action
       ~ActorSQL.update_and_cache_weights
+      ~ActorSQL.update_target
       ~ActorSQL.update_weights
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorSQL.weights
    
    

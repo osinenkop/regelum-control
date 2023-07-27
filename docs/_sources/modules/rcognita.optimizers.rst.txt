@@ -21,10 +21,11 @@
    
       BruteForceOptimizer
       CasADiOptimizer
-      GradientOptimizer
       Optimizer
       SciPyOptimizer
+      TorchDataloaderOptimizer
       TorchOptimizer
+      TorchProjectiveOptimizer
    
    
 

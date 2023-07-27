@@ -1,0 +1,6 @@
+rcognita.scripts.copy\_runs
+===========================
+
+.. currentmodule:: rcognita.scripts
+
+.. autofunction:: copy_runs

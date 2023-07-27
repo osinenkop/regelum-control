@@ -9,6 +9,7 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any, Callable, List, Optional
 
+import dill
 from omegaconf import DictConfig, open_dict, read_write
 
 from hydra import version
@@ -19,21 +20,21 @@ from hydra.core.utils import _flush_loggers, configure_log
 from hydra.types import TaskFunction
 import pandas as pd
 
-import os, pickle
+import os
 
 _UNSPECIFIED_: Any = object()
 
 
 def _get_rerun_conf(file_path: str, overrides: List[str]) -> DictConfig:
     msg = "Experimental rerun CLI option, other command line args are ignored."
-    warnings.warn(msg, UserWarning)
+    warnings.warn(msg, UserWarning, stacklevel=1)
     file = Path(file_path)
     if not file.exists():
         raise ValueError(f"File {file} does not exist!")
 
     if len(overrides) > 0:
         msg = "Config overrides are not supported as of now."
-        warnings.warn(msg, UserWarning)
+        warnings.warn(msg, UserWarning, stacklevel=1)
 
     with open(str(file), "rb") as input:
         config = pickle.load(input)  # nosec
@@ -69,12 +70,10 @@ def main(
     config_name: Optional[str] = None,
     version_base: Optional[str] = _UNSPECIFIED_,
 ) -> Callable[[TaskFunction], Any]:
-    """
-    :param config_path: The config path, a directory relative to the declaring python file.
+    """:param config_path: The config path, a directory relative to the declaring python file.
                         If config_path is None no directory is added to the Config search path.
     :param config_name: The name of the config (usually the file name without the .yaml extension)
     """
-
     version.setbase(version_base)
 
     if config_path is _UNSPECIFIED_:
@@ -120,10 +119,10 @@ def main(
                         res = to_dataframe(res[0])
                         path = (
                             os.path.abspath(res["directory"][0] + "/..")
-                            + "/output.pickle"
+                            + "/output.dill"
                         )
                         with open(path, "wb") as f:
-                            pickle.dump(res, f)
+                            dill.dump(res, f)
                         return res
                     else:
                         return NotImplemented

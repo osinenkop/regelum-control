@@ -1,0 +1,6 @@
+rcognita.scripts.parse\_datetime
+================================
+
+.. currentmodule:: rcognita.scripts
+
+.. autofunction:: parse_datetime

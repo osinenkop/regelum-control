@@ -10,6 +10,14 @@
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      hash_string
+      obtain
+   
    
 
    
@@ -20,11 +28,20 @@
       :toctree: sub
    
       ComplementedConfig
+      ComplementedConfigDict
+      ComplementedConfigList
+      FancyModule
       main
    
    
 
    
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      RcognitaExitException
    
    
 
@@ -37,18 +54,20 @@
    :toctree:
    :recursive:
 
-   rcognita.ROS_harnesses
    rcognita.actors
+   rcognita.adaptation_blocks
+   rcognita.base
    rcognita.callbacks
    rcognita.controllers
    rcognita.critics
-   rcognita.loggers
+   rcognita.data_buffers
    rcognita.models
    rcognita.objectives
    rcognita.observers
    rcognita.optimizers
    rcognita.predictors
    rcognita.scenarios
+   rcognita.scripts
    rcognita.simulator
    rcognita.solvers
    rcognita.systems

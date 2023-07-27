@@ -1,0 +1,22 @@
+rcognita.base.publisher
+=======================
+
+.. currentmodule:: rcognita.base
+
+.. autoclass:: publisher
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~publisher.__init__
+   
+   
+
+   
+   
+   

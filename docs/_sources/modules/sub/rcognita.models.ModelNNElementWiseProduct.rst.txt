@@ -1,0 +1,81 @@
+rcognita.models.ModelNNElementWiseProduct
+=========================================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelNNElementWiseProduct
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelNNElementWiseProduct.__init__
+      ~ModelNNElementWiseProduct.add_module
+      ~ModelNNElementWiseProduct.apply
+      ~ModelNNElementWiseProduct.bfloat16
+      ~ModelNNElementWiseProduct.buffers
+      ~ModelNNElementWiseProduct.cache_weights
+      ~ModelNNElementWiseProduct.children
+      ~ModelNNElementWiseProduct.cpu
+      ~ModelNNElementWiseProduct.cuda
+      ~ModelNNElementWiseProduct.detach_weights
+      ~ModelNNElementWiseProduct.double
+      ~ModelNNElementWiseProduct.eval
+      ~ModelNNElementWiseProduct.extra_repr
+      ~ModelNNElementWiseProduct.float
+      ~ModelNNElementWiseProduct.forward
+      ~ModelNNElementWiseProduct.get_buffer
+      ~ModelNNElementWiseProduct.get_extra_state
+      ~ModelNNElementWiseProduct.get_parameter
+      ~ModelNNElementWiseProduct.get_submodule
+      ~ModelNNElementWiseProduct.half
+      ~ModelNNElementWiseProduct.ipu
+      ~ModelNNElementWiseProduct.load_state_dict
+      ~ModelNNElementWiseProduct.modules
+      ~ModelNNElementWiseProduct.named_buffers
+      ~ModelNNElementWiseProduct.named_children
+      ~ModelNNElementWiseProduct.named_modules
+      ~ModelNNElementWiseProduct.named_parameters
+      ~ModelNNElementWiseProduct.parameters
+      ~ModelNNElementWiseProduct.register_backward_hook
+      ~ModelNNElementWiseProduct.register_buffer
+      ~ModelNNElementWiseProduct.register_forward_hook
+      ~ModelNNElementWiseProduct.register_forward_pre_hook
+      ~ModelNNElementWiseProduct.register_full_backward_hook
+      ~ModelNNElementWiseProduct.register_load_state_dict_post_hook
+      ~ModelNNElementWiseProduct.register_module
+      ~ModelNNElementWiseProduct.register_parameter
+      ~ModelNNElementWiseProduct.requires_grad_
+      ~ModelNNElementWiseProduct.restore_weights
+      ~ModelNNElementWiseProduct.set_extra_state
+      ~ModelNNElementWiseProduct.share_memory
+      ~ModelNNElementWiseProduct.state_dict
+      ~ModelNNElementWiseProduct.to
+      ~ModelNNElementWiseProduct.to_empty
+      ~ModelNNElementWiseProduct.train
+      ~ModelNNElementWiseProduct.type
+      ~ModelNNElementWiseProduct.update_and_cache_weights
+      ~ModelNNElementWiseProduct.update_weights
+      ~ModelNNElementWiseProduct.weights2dict
+      ~ModelNNElementWiseProduct.xpu
+      ~ModelNNElementWiseProduct.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelNNElementWiseProduct.T_destination
+      ~ModelNNElementWiseProduct.cache
+      ~ModelNNElementWiseProduct.dump_patches
+      ~ModelNNElementWiseProduct.model_name
+      ~ModelNNElementWiseProduct.weights
+   
+   

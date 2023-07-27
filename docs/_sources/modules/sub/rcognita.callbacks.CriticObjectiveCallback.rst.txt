@@ -1,0 +1,50 @@
+rcognita.callbacks.CriticObjectiveCallback
+==========================================
+
+.. currentmodule:: rcognita.callbacks
+
+.. autoclass:: CriticObjectiveCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticObjectiveCallback.__init__
+      ~CriticObjectiveCallback.add_datum
+      ~CriticObjectiveCallback.attach
+      ~CriticObjectiveCallback.clear_recent_data
+      ~CriticObjectiveCallback.dump_and_clear_data
+      ~CriticObjectiveCallback.dump_data
+      ~CriticObjectiveCallback.get_save_directory
+      ~CriticObjectiveCallback.insert_column_left
+      ~CriticObjectiveCallback.is_target_event
+      ~CriticObjectiveCallback.load_data
+      ~CriticObjectiveCallback.on_episode_done
+      ~CriticObjectiveCallback.on_iteration_done
+      ~CriticObjectiveCallback.on_launch
+      ~CriticObjectiveCallback.on_termination
+      ~CriticObjectiveCallback.on_trigger
+      ~CriticObjectiveCallback.perform
+      ~CriticObjectiveCallback.plot
+      ~CriticObjectiveCallback.plot_gui
+      ~CriticObjectiveCallback.ready
+      ~CriticObjectiveCallback.register
+      ~CriticObjectiveCallback.save_plot
+      ~CriticObjectiveCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticObjectiveCallback.cooldown
+      ~CriticObjectiveCallback.data
+   
+   

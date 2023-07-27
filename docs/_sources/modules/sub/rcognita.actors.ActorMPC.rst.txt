@@ -17,18 +17,27 @@ rcognita.actors.ActorMPC
       ~ActorMPC.accept_or_reject_weights
       ~ActorMPC.cache_weights
       ~ActorMPC.create_observation_constraints
+      ~ActorMPC.iteration_update
       ~ActorMPC.objective
       ~ActorMPC.optimize_weights
       ~ActorMPC.receive_observation
+      ~ActorMPC.receive_state
       ~ActorMPC.reset
       ~ActorMPC.restore_weights
       ~ActorMPC.set_action
       ~ActorMPC.update_action
       ~ActorMPC.update_and_cache_weights
+      ~ActorMPC.update_target
       ~ActorMPC.update_weights
    
    
 
    
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorMPC.weights
    
    

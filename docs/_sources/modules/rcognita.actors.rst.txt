@@ -10,6 +10,13 @@
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      force_type_safety
+   
    
 
    
@@ -22,11 +29,15 @@
       Actor
       ActorCALF
       ActorCLF
+      ActorDDPG
       ActorMPC
-      ActorProbabilisticEpisodic
-      ActorProbabilisticEpisodicAC
+      ActorMPCTerminal
+      ActorPGBase
+      ActorPID
+      ActorREINFORCE
       ActorRPO
       ActorRQL
+      ActorSDPG
       ActorSQL
       ActorTabular
    

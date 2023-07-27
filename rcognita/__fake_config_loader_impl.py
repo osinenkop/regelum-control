@@ -36,9 +36,7 @@ from hydra.types import RunMode
 
 
 class ConfigLoaderImpl(ConfigLoader):
-    """
-    Configuration loader
-    """
+    """Configuration loader."""
 
     def __init__(
         self,
@@ -82,7 +80,7 @@ class ConfigLoaderImpl(ConfigLoader):
                             f"Sweep parameters '{x.input_line}' requires --multirun"
                         )
                 else:
-                    assert False
+                    raise AssertionError()
 
     def _missing_config_error(
         self, config_name: Optional[str], msg: str, with_search_path: bool
@@ -219,6 +217,7 @@ class ConfigLoaderImpl(ConfigLoader):
                         f"provider={source.provider}, path={source.path} is not"
                         " available."
                     ),
+                    stacklevel=1,
                 )
 
     def _parse_overrides_and_create_caching_repo(
@@ -400,7 +399,7 @@ class ConfigLoaderImpl(ConfigLoader):
                     raise ConfigCompositionException(
                         f"Error merging override {override.input_line}"
                     ).with_traceback(sys.exc_info()[2]) from ex
-            except:
+            except Exception:
                 key = key + "__IGNORE__"  ## RCOGNITA CODE HERE
                 try:
                     if override.is_delete():
@@ -595,7 +594,7 @@ class ConfigLoaderImpl(ConfigLoader):
                     raise ConfigCompositionException(
                         f"In '{default.config_path}': {type(e).__name__} raised while"
                         f" composing config:\n{e}"
-                    ).with_traceback(sys.exc_info()[2])
+                    ).with_traceback(sys.exc_info()[2]) from e
 
         # # remove remaining defaults lists from all nodes.
         def strip_defaults(cfg: Any) -> None:

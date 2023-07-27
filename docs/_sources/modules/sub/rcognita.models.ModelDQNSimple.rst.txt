@@ -1,0 +1,81 @@
+rcognita.models.ModelDQNSimple
+==============================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelDQNSimple
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelDQNSimple.__init__
+      ~ModelDQNSimple.add_module
+      ~ModelDQNSimple.apply
+      ~ModelDQNSimple.bfloat16
+      ~ModelDQNSimple.buffers
+      ~ModelDQNSimple.cache_weights
+      ~ModelDQNSimple.children
+      ~ModelDQNSimple.cpu
+      ~ModelDQNSimple.cuda
+      ~ModelDQNSimple.detach_weights
+      ~ModelDQNSimple.double
+      ~ModelDQNSimple.eval
+      ~ModelDQNSimple.extra_repr
+      ~ModelDQNSimple.float
+      ~ModelDQNSimple.forward
+      ~ModelDQNSimple.get_buffer
+      ~ModelDQNSimple.get_extra_state
+      ~ModelDQNSimple.get_parameter
+      ~ModelDQNSimple.get_submodule
+      ~ModelDQNSimple.half
+      ~ModelDQNSimple.ipu
+      ~ModelDQNSimple.load_state_dict
+      ~ModelDQNSimple.modules
+      ~ModelDQNSimple.named_buffers
+      ~ModelDQNSimple.named_children
+      ~ModelDQNSimple.named_modules
+      ~ModelDQNSimple.named_parameters
+      ~ModelDQNSimple.parameters
+      ~ModelDQNSimple.register_backward_hook
+      ~ModelDQNSimple.register_buffer
+      ~ModelDQNSimple.register_forward_hook
+      ~ModelDQNSimple.register_forward_pre_hook
+      ~ModelDQNSimple.register_full_backward_hook
+      ~ModelDQNSimple.register_load_state_dict_post_hook
+      ~ModelDQNSimple.register_module
+      ~ModelDQNSimple.register_parameter
+      ~ModelDQNSimple.requires_grad_
+      ~ModelDQNSimple.restore_weights
+      ~ModelDQNSimple.set_extra_state
+      ~ModelDQNSimple.share_memory
+      ~ModelDQNSimple.state_dict
+      ~ModelDQNSimple.to
+      ~ModelDQNSimple.to_empty
+      ~ModelDQNSimple.train
+      ~ModelDQNSimple.type
+      ~ModelDQNSimple.update_and_cache_weights
+      ~ModelDQNSimple.update_weights
+      ~ModelDQNSimple.weights2dict
+      ~ModelDQNSimple.xpu
+      ~ModelDQNSimple.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelDQNSimple.T_destination
+      ~ModelDQNSimple.cache
+      ~ModelDQNSimple.dump_patches
+      ~ModelDQNSimple.model_name
+      ~ModelDQNSimple.weights
+   
+   

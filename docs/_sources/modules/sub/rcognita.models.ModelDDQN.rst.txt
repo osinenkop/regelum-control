@@ -1,0 +1,81 @@
+rcognita.models.ModelDDQN
+=========================
+
+.. currentmodule:: rcognita.models
+
+.. autoclass:: ModelDDQN
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelDDQN.__init__
+      ~ModelDDQN.add_module
+      ~ModelDDQN.apply
+      ~ModelDDQN.bfloat16
+      ~ModelDDQN.buffers
+      ~ModelDDQN.cache_weights
+      ~ModelDDQN.children
+      ~ModelDDQN.cpu
+      ~ModelDDQN.cuda
+      ~ModelDDQN.detach_weights
+      ~ModelDDQN.double
+      ~ModelDDQN.eval
+      ~ModelDDQN.extra_repr
+      ~ModelDDQN.float
+      ~ModelDDQN.forward
+      ~ModelDDQN.get_buffer
+      ~ModelDDQN.get_extra_state
+      ~ModelDDQN.get_parameter
+      ~ModelDDQN.get_submodule
+      ~ModelDDQN.half
+      ~ModelDDQN.ipu
+      ~ModelDDQN.load_state_dict
+      ~ModelDDQN.modules
+      ~ModelDDQN.named_buffers
+      ~ModelDDQN.named_children
+      ~ModelDDQN.named_modules
+      ~ModelDDQN.named_parameters
+      ~ModelDDQN.parameters
+      ~ModelDDQN.register_backward_hook
+      ~ModelDDQN.register_buffer
+      ~ModelDDQN.register_forward_hook
+      ~ModelDDQN.register_forward_pre_hook
+      ~ModelDDQN.register_full_backward_hook
+      ~ModelDDQN.register_load_state_dict_post_hook
+      ~ModelDDQN.register_module
+      ~ModelDDQN.register_parameter
+      ~ModelDDQN.requires_grad_
+      ~ModelDDQN.restore_weights
+      ~ModelDDQN.set_extra_state
+      ~ModelDDQN.share_memory
+      ~ModelDDQN.state_dict
+      ~ModelDDQN.to
+      ~ModelDDQN.to_empty
+      ~ModelDDQN.train
+      ~ModelDDQN.type
+      ~ModelDDQN.update_and_cache_weights
+      ~ModelDDQN.update_weights
+      ~ModelDDQN.weights2dict
+      ~ModelDDQN.xpu
+      ~ModelDDQN.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelDDQN.T_destination
+      ~ModelDDQN.cache
+      ~ModelDDQN.dump_patches
+      ~ModelDDQN.model_name
+      ~ModelDDQN.weights
+   
+   

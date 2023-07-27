@@ -1,0 +1,6 @@
+rcognita.actors.force\_type\_safety
+===================================
+
+.. currentmodule:: rcognita.actors
+
+.. autofunction:: force_type_safety

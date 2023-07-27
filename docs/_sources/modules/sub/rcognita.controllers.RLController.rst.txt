@@ -16,6 +16,7 @@ rcognita.controllers.RLController
       ~RLController.__init__
       ~RLController.compute_action
       ~RLController.compute_action_sampled
+      ~RLController.pre_compute_action
       ~RLController.reset
    
    

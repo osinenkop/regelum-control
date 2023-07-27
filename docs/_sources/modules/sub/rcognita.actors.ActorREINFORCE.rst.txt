@@ -1,0 +1,44 @@
+rcognita.actors.ActorREINFORCE
+==============================
+
+.. currentmodule:: rcognita.actors
+
+.. autoclass:: ActorREINFORCE
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ActorREINFORCE.__init__
+      ~ActorREINFORCE.accept_or_reject_weights
+      ~ActorREINFORCE.cache_weights
+      ~ActorREINFORCE.create_observation_constraints
+      ~ActorREINFORCE.iteration_update
+      ~ActorREINFORCE.objective
+      ~ActorREINFORCE.optimize_weights
+      ~ActorREINFORCE.optimize_weights_after_iteration
+      ~ActorREINFORCE.receive_observation
+      ~ActorREINFORCE.receive_state
+      ~ActorREINFORCE.reset
+      ~ActorREINFORCE.restore_weights
+      ~ActorREINFORCE.set_action
+      ~ActorREINFORCE.update_action
+      ~ActorREINFORCE.update_and_cache_weights
+      ~ActorREINFORCE.update_target
+      ~ActorREINFORCE.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ActorREINFORCE.weights
+   
+   
