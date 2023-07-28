@@ -1,4 +1,4 @@
-_target_: rcognita.predictors.trivial
+_target_: rcognita.predictor.trivial
 
 ###---Constructor arguments---###
 

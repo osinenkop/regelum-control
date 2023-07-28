@@ -1,4 +1,4 @@
-_target_: rcognita.controllers.ControllerKinPoint
+_target_: rcognita.controller.ControllerKinPoint
 
 ###---Constructor arguments---###
 

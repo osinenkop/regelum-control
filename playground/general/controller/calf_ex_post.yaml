@@ -7,7 +7,7 @@ defaults:
 
 name%%: calf_ex_post
 
-_target_: rcognita.controllers.CALFControllerExPost
+_target_: rcognita.controller.CALFControllerExPost
 
 ###---Constructor arguments---###
 

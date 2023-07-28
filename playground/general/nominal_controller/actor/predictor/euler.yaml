@@ -1,4 +1,4 @@
-_target_: rcognita.predictors.EulerPredictor
+_target_: rcognita.predictor.EulerPredictor
 
 ###---Constructor arguments---###
 

@@ -1,5 +1,5 @@
 system:
-  _target_: rcognita.systems.SysInvertedPendulum
+  _target_: rcognita.system.SysInvertedPendulum
   dim_input: 1
   dim_output: 2
   sys_type: diff_eqn
@@ -13,7 +13,7 @@ system:
   M_max__IGNORE__: 20.0
   action_bounds__IGNORE__: ${get:numpy.array\(\[\[${.M_min__IGNORE__}\, ${.M_max__IGNORE__}\]\]\)}
 scenario:
-  _target_: rcognita.scenarios.MonteCarloScenario
+  _target_: rcognita.scenario.MonteCarloScenario
   running_objective: ${same:running_objective}
   simulator: ${same:simulator}
   is_log: false
@@ -43,7 +43,7 @@ simulator:
   rtol: 0.001
   ode_backend: CASADI
 nominal_controller:
-  _target_: rcognita.controllers.NominalControllerInvertedPendulum
+  _target_: rcognita.controller.NominalControllerInvertedPendulum
   time_start: ${simulator.time_start}
   sampling_time: 0.01
   action_bounds: ${system.action_bounds__IGNORE__}
@@ -51,7 +51,7 @@ nominal_controller:
 controller:
   actor:
     model:
-      _target_: rcognita.models.GaussianPDFModel
+      _target_: rcognita.model.GaussianPDFModel
       dim_observation: ${controller.actor.dim_input}
       dim_action: ${controller.actor.dim_output}
       use_derivative: ${controller.actor.is_use_derivative}
@@ -85,7 +85,7 @@ controller:
     device: cuda:0
     is_use_derivative: ${system_specific.is_use_derivative}
   critic:
-    _target_: rcognita.critics.CriticTrivial
+    _target_: rcognita.critic.CriticTrivial
     running_objective: ${same:running_objective}
     optimizer:
       opt_options:
@@ -100,7 +100,7 @@ controller:
     is_cat_action: true
     is_tail_sum_running_objectives: false
   name__IGNORE__: pg
-  _target_: rcognita.controllers.RLController
+  _target_: rcognita.controller.RLController
   time_start: ${simulator.time_start}
   sampling_time: ${system_specific.sampling_time}
   is_fixed_critic_weights: false
@@ -109,10 +109,10 @@ controller:
   critic_period_multiplier__IGNORE__: 1
 running_objective:
   model:
-    _target_: rcognita.models.ModelQuadForm
+    _target_: rcognita.model.ModelQuadForm
     weights: ${get:numpy.diag\(${.R1_diag__IGNORE__}\)}
     R1_diag__IGNORE__: ${get:\[10.\, 3.\, 0.\]}
-  _target_: rcognita.objectives.RunningObjective
+  _target_: rcognita.objective.RunningObjective
 initial_conditions:
   state_init: ${get:numpy.array\(\[numpy.pi\, 0.\]\) + numpy.array\(\[${.x1}\, 0.\]\)}
   action_init: ${get:numpy.ones\(${system.dim_input}\)}
@@ -152,15 +152,15 @@ animator:
   max_video_length: 60
   animation_max_size_mb: 200
 callbacks:
-- rcognita.callbacks.HistoricalObjectiveCallback
-- rcognita.callbacks.TotalObjectiveCallback
-- rcognita.callbacks.CriticObjectiveCallback
-- rcognita.callbacks.CalfCallback
-- rcognita.callbacks.HistoricalObservationCallback
-- rcognita.callbacks.QFunctionModelSaverCallback
-- rcognita.callbacks.CALFWeightsCallback
-- rcognita.callbacks.CriticWeightsCallback
-- rcognita.callbacks.InspectReferrersCallback
-- rcognita.callbacks.PolicyGradientObjectiveSaverCallback
+- rcognita.callback.HistoricalObjectiveCallback
+- rcognita.callback.TotalObjectiveCallback
+- rcognita.callback.CriticObjectiveCallback
+- rcognita.callback.CalfCallback
+- rcognita.callback.HistoricalObservationCallback
+- rcognita.callback.QFunctionModelSaverCallback
+- rcognita.callback.CALFWeightsCallback
+- rcognita.callback.CriticWeightsCallback
+- rcognita.callback.InspectReferrersCallback
+- rcognita.callback.PolicyGradientObjectiveSaverCallback
 disallow_uncommitted__IGNORE__: false
 seed: 1

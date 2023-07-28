@@ -1,4 +1,4 @@
-_target_: rcognita.controllers.Controller3WRobotNIMotionPrimitive
+_target_: rcognita.controller.Controller3WRobotNIMotionPrimitive
 
 ###---Constructor arguments---###
 

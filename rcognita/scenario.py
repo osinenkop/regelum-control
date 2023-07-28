@@ -13,11 +13,11 @@ from unittest.mock import Mock, MagicMock
 
 import rcognita.base
 from .__utilities import rc
-from .policies import Policy
-from .critics import Critic, CriticTrivial
+from .policy import Policy
+from .critic import Critic, CriticTrivial
 from .simulator import Simulator
-from .controllers import Controller, RLController
-from .objectives import RunningObjective
+from .controller import Controller, RLController
+from .objective import RunningObjective
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 
 try:

@@ -17,9 +17,9 @@ from typing import Union, Optional
 
 from .__utilities import rc
 
-from .predictors import Predictor
-from .models import ModelNN
-from .systems import System, ComposedSystem
+from .predictor import Predictor
+from .model import ModelNN
+from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable
 from .data_buffers.data_buffer import DataBuffer
 

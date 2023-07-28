@@ -4,7 +4,7 @@ defaults:
 
 name%%: mpc
 
-_target_: rcognita.controllers.RLController
+_target_: rcognita.controller.RLController
 
 ###---Constructor arguments---###
 

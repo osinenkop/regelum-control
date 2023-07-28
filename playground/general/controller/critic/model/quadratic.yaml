@@ -1,4 +1,4 @@
-_target_: rcognita.models.ModelQuadratic
+_target_: rcognita.model.ModelQuadratic
 dim_input: $ controller.actor.dim_observation
 single_weight_min: 1.0E-6
 single_weight_max: 1.0E+2

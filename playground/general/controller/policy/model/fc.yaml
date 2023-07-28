@@ -1,4 +1,4 @@
-_target_: rcognita.models.ModelFc
+_target_: rcognita.model.ModelFc
 
 dim_output: $ controller.actor.dim_action
 dim_input: $ controller.actor.dim_observation

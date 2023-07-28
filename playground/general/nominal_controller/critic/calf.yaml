@@ -1,7 +1,7 @@
 defaults:
   - observation
 
-_target_: rcognita.critics.CriticCALF
+_target_: rcognita.critic.CriticCALF
 
 safe_controller: ~ controller.actor.safe_controller
 

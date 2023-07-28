@@ -1,4 +1,4 @@
-_target_: rcognita.systems.ThreeWheeledRobot
+_target_: rcognita.system.ThreeWheeledRobot
 
 
 animations%%:

@@ -20,7 +20,7 @@ import numpy as np
 
 import rcognita.base
 from .__utilities import rc
-from .systems import System, ComposedSystem
+from .system import System, ComposedSystem
 from typing import Union, Optional
 from abc import ABC
 

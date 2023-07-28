@@ -113,7 +113,7 @@ from unittest.mock import MagicMock
 
 from .__hydra_main import main as hydramain
 
-from .callbacks import (
+from .callback import (
     OnEpisodeDoneCallback,
     OnIterationDoneCallback,
     TimeCallback,
@@ -130,10 +130,10 @@ except (ModuleNotFoundError, ImportError):
     torch = MagicMock()
 
 
-from . import models
+from . import model
 from . import data_buffers
 from .optimizable import *
-from . import critics
+from . import critic
 
 mock = Mock()
 

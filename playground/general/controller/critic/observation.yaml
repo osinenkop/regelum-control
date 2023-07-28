@@ -2,7 +2,7 @@ defaults:
   - model: quad_no_mix
   - optimizer: casadi 
 
-_target_: rcognita.critics.CriticOfObservation
+_target_: rcognita.critic.CriticOfObservation
 
 ###---Constructor arguments---###
 

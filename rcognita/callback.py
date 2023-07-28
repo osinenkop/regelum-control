@@ -211,7 +211,7 @@ class TimeCallback(Callback):
     """Callback responsible for keeping track of simulation time."""
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and method == "post_step"
+        return isinstance(obj, rcognita.scenario.Scenario) and method == "post_step"
 
     def on_launch(self):
         rcognita.main.metadata["time"] = 0.0
@@ -230,7 +230,7 @@ class OnEpisodeDoneCallback(Callback):
         self.iteration_counter = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and (
+        return isinstance(obj, rcognita.scenario.Scenario) and (
             method == "reload_pipeline"
         )
 
@@ -259,7 +259,7 @@ class OnIterationDoneCallback(Callback):
         self.iteration_counter = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and (
+        return isinstance(obj, rcognita.scenario.Scenario) and (
             method == "reset_iteration"
         )
 
@@ -1127,10 +1127,10 @@ class StateCallback(Callback):
     """
 
     def is_target_event(self, obj, method, output):
-        attachee = self.attachee if self.attachee is not None else rcognita.systems.System
+        attachee = self.attachee if self.attachee is not None else rcognita.system.System
         return (
             isinstance(obj, attachee)
-            and method == rcognita.systems.System.compute_closed_loop_rhs.__name__
+            and method == rcognita.system.System.compute_closed_loop_rhs.__name__
         )
 
     def perform(self, obj, method, output):
@@ -1173,7 +1173,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
             r["elapsed_relative"] = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenarios.Scenario) and (method == "post_step")
+        return isinstance(obj, rcognita.scenario.Scenario) and (method == "post_step")
 
     def perform(self, obj, method, output):
         self.counter += 1
@@ -1273,7 +1273,7 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.time_threshold = 10
 
     def is_target_event(self, obj, method, output):
-        if isinstance(obj, rcognita.scenarios.Scenario) and (method == "post_step"):
+        if isinstance(obj, rcognita.scenario.Scenario) and (method == "post_step"):
             self.dt_simulator_counter += 1
             return not self.dt_simulator_counter % self.time_threshold
 
@@ -1331,7 +1331,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         self.iteration_number = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.critics.CriticOnPolicy) and (
+        return isinstance(obj, rcognita.critic.CriticOnPolicy) and (
             method == "post_epoch"
         )
 
@@ -1509,7 +1509,7 @@ class QFunctionCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.scenarios.Scenario)
+            isinstance(obj, rcognita.scenario.Scenario)
             and method == "post_step"
             and "CriticOffPolicy" in obj.critic.__class__.__name__
         )
@@ -1598,7 +1598,7 @@ class CriticObjectiveCallback(HistoricalCallback):
         self.time = 0.0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.critics.Critic) and method == "objective"
+        return isinstance(obj, rcognita.critic.Critic) and method == "objective"
 
     def perform(self, obj, method, output):
         self.log(f"Current TD value: {output}")
@@ -1632,7 +1632,7 @@ class CriticWeightsCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.controllers.Controller)
+            isinstance(obj, rcognita.controller.Controller)
             and method == "pre_compute_action"
         )
 
@@ -1691,7 +1691,7 @@ class CALFWeightsCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.controllers.Controller)
+            isinstance(obj, rcognita.controller.Controller)
             and method == "compute_action"
             and "calf" in obj.critic.__class__.__name__.lower()
         )
@@ -1747,7 +1747,7 @@ class CalfCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.controllers.Controller)
+            isinstance(obj, rcognita.controller.Controller)
             and method == "compute_action"
             and "calf" in obj.critic.__class__.__name__.lower()
         )

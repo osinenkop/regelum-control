@@ -5,7 +5,7 @@ defaults:
 
 name%%: reinforce
 
-_target_: rcognita.controllers.PGController
+_target_: rcognita.controller.PGController
 
 ###---Constructor arguments---###
 

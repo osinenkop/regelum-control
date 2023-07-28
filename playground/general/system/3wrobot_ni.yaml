@@ -1,4 +1,4 @@
-_target_: rcognita.systems.ThreeWheeledRobotNI
+_target_: rcognita.system.ThreeWheeledRobotNI
 
 ###---Constructor arguments---###
 

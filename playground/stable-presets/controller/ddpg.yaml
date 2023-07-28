@@ -1,4 +1,4 @@
-_target_: rcognita.controllers.PGController
+_target_: rcognita.controller.PGController
 
 name%%:  ddpg
 

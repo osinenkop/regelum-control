@@ -1,6 +1,6 @@
 # TODO: DOCSTRING. RENAME/REMOVE? PART OF SYSTEMS? DOCUMENT PROPERLY
 
-from .systems import System
+from .system import System
 from .__utilities import rc
 from abc import ABC, abstractmethod
 

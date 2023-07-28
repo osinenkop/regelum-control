@@ -3,7 +3,7 @@ defaults:
 
 ###---Constructor arguments---###
 
-_target_: rcognita.objectives.RunningObjective
+_target_: rcognita.objective.RunningObjective
 
 model:
   R1_diag%%: = [10, 3, 0.05, 0.05, 0]

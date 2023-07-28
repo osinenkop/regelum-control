@@ -16,8 +16,8 @@ from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
 from .base import RcognitaBase
-from .policies import Policy
-from .critics import Critic
+from .policy import Policy
+from .critic import Critic
 
 
 def apply_action_bounds(method):

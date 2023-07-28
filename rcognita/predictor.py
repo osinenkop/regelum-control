@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import rcognita.base
 from .__utilities import rc
-from .systems import System
+from .system import System
 
 
 class Predictor(rcognita.base.RcognitaBase, ABC):

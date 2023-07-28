@@ -1,4 +1,4 @@
-_target_: rcognita.models.GaussianElementWisePDFModel
+_target_: rcognita.model.GaussianElementWisePDFModel
 
 dim_input: $ controller.actor.dim_observation
 use_derivative: $ controller.actor.is_use_derivative

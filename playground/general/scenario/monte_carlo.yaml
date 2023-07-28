@@ -1,4 +1,4 @@
-_target_: rcognita.scenarios.MonteCarloScenario
+_target_: rcognita.scenario.MonteCarloScenario
 
 ###---Constructor arguments---###
 

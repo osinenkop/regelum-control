@@ -7,7 +7,7 @@ For instance, a running objective can be used commonly by a generic optimal cont
 from abc import ABC, abstractmethod
 
 import rcognita.base
-from .models import Model
+from .model import Model
 from typing import Optional
 
 

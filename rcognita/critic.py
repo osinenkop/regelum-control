@@ -27,10 +27,10 @@ except (ModuleNotFoundError, ImportError):
     torch = MagicMock()
 
 from copy import deepcopy
-from .models import ModelWeightContainer
+from .model import ModelWeightContainer
 from .optimizable.optimizers import Optimizer
-from .models import Model
-from .objectives import Objective
+from .model import Model
+from .objective import Objective
 from typing import Optional, Union
 from .data_buffers import EpisodicSampler, ForwardSampler
 

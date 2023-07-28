@@ -1,2 +1,2 @@
-_target_: rcognita.models.ModelWeightContainerTorch
+_target_: rcognita.model.ModelWeightContainerTorch
 action_init: $ scenario.action_init

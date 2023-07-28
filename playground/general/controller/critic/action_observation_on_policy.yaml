@@ -2,7 +2,7 @@ defaults:
   - model: dqn_simple
   - optimizer: torch
 
-_target_: rcognita.critics.CriticOfActionObservationOnPolicy
+_target_: rcognita.critic.CriticOfActionObservationOnPolicy
 
 ###---Constructor arguments---###
 
