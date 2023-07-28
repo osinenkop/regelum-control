@@ -9,12 +9,10 @@ from abc import ABC, abstractmethod
 from itertools import islice, cycle
 import numpy as np
 from typing import Optional
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock
 
-import rcognita.base
+import rcognita
 from .__utilities import rc
-from .policy import Policy
-from .critic import Critic, CriticTrivial
 from .simulator import Simulator
 from .controller import Controller, RLController
 from .objective import RunningObjective
@@ -26,7 +24,7 @@ except ImportError:
     torch = MagicMock()
 
 
-class Scenario(rcognita.base.RcognitaBase, ABC):
+class Scenario(rcognita.RcognitaBase, ABC):
     """A base scenario class."""
 
     def __init__(self):

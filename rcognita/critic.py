@@ -8,13 +8,13 @@ Remarks:
 
 """
 
-import rcognita.base
+import rcognita
 
 
 
 import numpy as np
 from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
-from abc import ABC, abstractmethod
+from abc import ABC
 import scipy as sp
 import random
 from .optimizable import Optimizable
@@ -31,11 +31,11 @@ from .model import ModelWeightContainer
 from .optimizable.optimizers import Optimizer
 from .model import Model
 from .objective import Objective
-from typing import Optional, Union
-from .data_buffers import EpisodicSampler, ForwardSampler
+from typing import Optional
+from .data_buffers import EpisodicSampler
 
 
-class Critic(rcognita.base.RcognitaBase, ABC):
+class Critic(rcognita.RcognitaBase, ABC):
     """Critic base class.
 
     A critic is an object that estimates or provides the value of a given action or state in a reinforcement learning problem.

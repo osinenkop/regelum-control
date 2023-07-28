@@ -2,7 +2,7 @@
 
 import abc
 
-from . import callback as cb
+from rcognita import callback as cb
 import rcognita
 import weakref
 from types import MappingProxyType

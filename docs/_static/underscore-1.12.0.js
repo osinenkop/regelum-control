@@ -205,7 +205,7 @@
     };
   }
 
-  // Common internal logic for `isArrayLike` and `isBufferLike`.
+  // Common __internal logic for `isArrayLike` and `isBufferLike`.
   function createSizePropertyCheck(getSizeProperty) {
     return function(collection) {
       var sizeProperty = getSizeProperty(collection);
@@ -571,7 +571,7 @@
     return names.sort();
   }
 
-  // An internal function for creating assigner functions.
+  // An __internal function for creating assigner functions.
   function createAssigner(keysFunc, defaults) {
     return function(obj) {
       var length = arguments.length;
@@ -606,7 +606,7 @@
     return function(){};
   }
 
-  // An internal function for creating a new object that inherits from another.
+  // An __internal function for creating a new object that inherits from another.
   function baseCreate(prototype) {
     if (!isObject(prototype)) return {};
     if (nativeCreate) return nativeCreate(prototype);
@@ -673,7 +673,7 @@
   }
 
   // Shortcut function for checking if an object has a given property directly on
-  // itself (in other words, not on a prototype). Unlike the internal `has`
+  // itself (in other words, not on a prototype). Unlike the __internal `has`
   // function, this public version can also traverse nested properties.
   function has$1(obj, path) {
     path = toPath$1(path);
@@ -731,7 +731,7 @@
     };
   }
 
-  // An internal function to generate callbacks that can be applied to each
+  // An __internal function to generate callbacks that can be applied to each
   // element in a collection, returning the desired result — either `_.identity`,
   // an arbitrary callback, a property matcher, or a property accessor.
   function baseIteratee(value, context, argCount) {
@@ -743,7 +743,7 @@
 
   // External wrapper for our callback generator. Users may customize
   // `_.iteratee` if they want additional predicate/iteratee shorthand styles.
-  // This abstraction hides the internal-only `argCount` argument.
+  // This abstraction hides the __internal-only `argCount` argument.
   function iteratee(value, context) {
     return baseIteratee(value, context, Infinity);
   }
@@ -1501,7 +1501,7 @@
   // Sample **n** random values from a collection using the modern version of the
   // [Fisher-Yates shuffle](https://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
   // If **n** is not specified, returns a single random element.
-  // The internal `guard` argument allows it to work with `_.map`.
+  // The __internal `guard` argument allows it to work with `_.map`.
   function sample(obj, n, guard) {
     if (n == null || guard) {
       if (!isArrayLike(obj)) obj = values(obj);
@@ -1546,7 +1546,7 @@
     }), 'value');
   }
 
-  // An internal function used for aggregate "group by" operations.
+  // An __internal function used for aggregate "group by" operations.
   function group(behavior, partition) {
     return function(obj, iteratee, context) {
       var result = partition ? [[], []] : {};

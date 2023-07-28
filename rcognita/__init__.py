@@ -57,37 +57,20 @@ from . import __utilities
 #from .optimizable import *
 #from .optimizable.core import *
 #from .visualization import *
-import mlflow
-from unittest.mock import Mock, MagicMock
 from hydra._internal.utils import _locate
 
 import hydra.core.plugins
 import hydra._internal.config_loader_impl
 from scipy.optimize import OptimizeWarning
-from . import _Plugins__fake_file_config_source
-from . import __fake_plugins
-from . import __fake_config_loader_impl
-from .__gui_server import __file__ as gui_script_file
-
-from . import __instantiate as inst
-
-
-import plotly.graph_objects as go
-import json
-
-import tempfile
-
-from multiprocessing import Process
-import numpy
-
-
-
+from .__internal import __fake_config_loader_impl, __fake_plugins, __instantiate as inst, \
+    _Plugins__fake_file_config_source
+from rcognita.__internal.__gui_server import __file__ as gui_script_file
 
 import mlflow
 from unittest.mock import Mock
 from hydra._internal.utils import _locate
 
-from . import __instantiate as inst
+from .__internal import __instantiate as inst
 
 import plotly.graph_objects as go
 import json
@@ -111,7 +94,9 @@ from unittest.mock import MagicMock
 #from .visualization import *
 #from . import policies
 
-from .__hydra_main import main as hydramain
+from rcognita.__internal.__hydra_main import main as hydramain
+from . import callback
+from rcognita.__internal.base import RcognitaBase
 
 from .callback import (
     OnEpisodeDoneCallback,
@@ -233,7 +218,7 @@ OmegaConf.register_new_resolver(name="get", resolver=obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 # TODO: PLEASE ALL IMPORT INTO THE HEADER
-from .__hydra_main import main as hydramain
+from rcognita.__internal.__hydra_main import main as hydramain
 
 
 # TODO: DESCRIBE WHY THIS IS CALLED COMPLEMENTED. EXPLAIN THE IDEA BEHIND

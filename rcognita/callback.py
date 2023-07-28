@@ -15,7 +15,6 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 
 """
 import logging
-import typing
 from abc import ABC, abstractmethod
 from copy import copy
 from unittest.mock import Mock
@@ -44,8 +43,8 @@ from pathlib import Path
 
 import sys
 import filelock
-
-import rcognita.base
+import rcognita as rc
+import rcognita.__internal.base
 
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas)
@@ -83,7 +82,7 @@ def passdown(CallbackClass):
     return PassdownCallback
 
 
-class Callback(rcognita.base.RcognitaBase, ABC):
+class Callback(rcognita.__internal.base.RcognitaBase, ABC):
     """Base class for callbacks.
 
     Callback objects are used to perform in response to some method being called.

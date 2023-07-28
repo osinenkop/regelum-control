@@ -11,10 +11,10 @@ Remarks:
 import numpy as np
 
 
-import rcognita.base
+import rcognita
 from abc import ABC, abstractmethod
 from .__utilities import rc
-from typing import Optional, Union
+from typing import Optional
 from functools import reduce
 
 
@@ -26,7 +26,7 @@ class SystemComposer:
 
 
 # TODO: DOCSTRING
-class ComposedSystem(rcognita.base.RcognitaBase):
+class ComposedSystem(rcognita.RcognitaBase):
     def __init__(
         self,
         sys_left,
@@ -232,7 +232,7 @@ class ComposedSystem(rcognita.base.RcognitaBase):
         return self.compose(sys_right)
 
 
-class System(rcognita.base.RcognitaBase, ABC):
+class System(rcognita.RcognitaBase, ABC):
     r"""Interface class of dynamical systems a.k.a. environments.
 
      Concrete systems should be built upon this class.

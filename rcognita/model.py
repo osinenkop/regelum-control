@@ -7,16 +7,11 @@ Updates to come.
 """
 from copy import deepcopy
 
-import numpy as np
-import os, sys
-
-import rcognita.base
+import rcognita
 
 
 
-from .__utilities import rc, rej_sampling_rvs, torch_safe_log
-import numpy as np
-import warnings
+from .__utilities import rc
 
 try:
     import torch
@@ -44,7 +39,7 @@ def force_positive_def(func):
     return positive_def_wrapper
 
 
-class Model(rcognita.base.RcognitaBase, ABC):
+class Model(rcognita.RcognitaBase, ABC):
     """Blueprint of a model."""
 
     def __call__(self, *args, weights=None, use_stored_weights=False):

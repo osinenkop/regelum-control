@@ -15,7 +15,7 @@ import scipy as setpoint
 from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
-from .base import RcognitaBase
+from rcognita import RcognitaBase
 from .policy import Policy
 from .critic import Critic
 
@@ -117,7 +117,7 @@ class RLController(Controller):
     def reset(self):
         """Reset agent for use in multi-episode simulation.
 
-        Only internal clock and current actions are reset.
+        Only __internal clock and current actions are reset.
         All the learned parameters are retained.
 
         """
@@ -356,7 +356,7 @@ class Controller3WRobotDisassembledCLF:
     controller_gain : : number
         Controller gain.
     time_start : : number
-        Initial value of the controller's internal clock.
+        Initial value of the controller's __internal clock.
     sampling_time : : number
         Controller's sampling time (in seconds).
 
@@ -621,7 +621,7 @@ class Controller3WRobotDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
-        """Perform the same computation as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the internal clock."""
+        """Perform the same computation as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the __internal clock."""
 
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
@@ -926,7 +926,7 @@ class Controller3WRobotMemoryPID:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(observation)
@@ -1121,7 +1121,7 @@ class Controller3WRobotPID:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)
@@ -1206,7 +1206,7 @@ class ControllerCartPolePID:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)
@@ -1293,7 +1293,7 @@ class ControllerCartPoleEnergyBased:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)
@@ -1424,7 +1424,7 @@ class ControllerLunarLanderPID:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)
@@ -1528,7 +1528,7 @@ class Controller2TankPID:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)
@@ -1736,7 +1736,7 @@ class Controller3WRobotNIDisassembledCLF:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
-        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the internal clock."""
+        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
 
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
@@ -1868,7 +1868,7 @@ class Controller3WRobotNIMotionPrimitive:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)
@@ -1922,7 +1922,7 @@ class ControllerKinPoint:
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
-            # Update internal clock
+            # Update __internal clock
             self.controller_clock = time
 
             action = self.compute_action(state, observation)

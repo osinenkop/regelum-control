@@ -6,12 +6,12 @@ For instance, a running objective can be used commonly by a generic optimal cont
 
 from abc import ABC, abstractmethod
 
-import rcognita.base
+import rcognita
 from .model import Model
 from typing import Optional
 
 
-class Objective(rcognita.base.RcognitaBase, ABC):
+class Objective(rcognita.RcognitaBase, ABC):
     """A base class for objective implementations."""
 
     def __init__(self):

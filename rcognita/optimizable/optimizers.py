@@ -30,7 +30,6 @@ except ModuleNotFoundError:
 
 from typing import Callable, List, Tuple, Optional, Union, Dict
 
-from ..base import RcognitaBase
 from .core.configs import OptimizerConfig
 from .core.entities import (
     FunctionWithSignature,
@@ -45,10 +44,10 @@ from .core.hooks import requires_grad, detach, data_closure, metadata_closure
 class Optimizer:
     pass
 
-import rcognita.base
+import rcognita
 
 
-class Optimizable(rcognita.base.RcognitaBase):
+class Optimizable(rcognita.RcognitaBase):
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
@@ -636,7 +635,7 @@ class Optimizable(rcognita.base.RcognitaBase):
 
 
 # TODO: WHTA IS THIS? NEEDED?
-class TorchDataloaderOptimizer(rcognita.base.RcognitaBase):
+class TorchDataloaderOptimizer(rcognita.RcognitaBase):
     """
     Optimizer class that uses PyTorch as its optimization engine.
     """

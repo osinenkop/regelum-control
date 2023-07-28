@@ -18,7 +18,7 @@ Remarks:
 
 import numpy as np
 
-import rcognita.base
+import rcognita
 from .__utilities import rc
 from .system import System, ComposedSystem
 from typing import Union, Optional
@@ -33,7 +33,7 @@ except ModuleNotFoundError:
 
 
 # TODO: DOCSTRING
-class Simulator(rcognita.base.RcognitaBase, ABC):
+class Simulator(rcognita.RcognitaBase, ABC):
     def __init__(
         self,
         system: Union[System, ComposedSystem],
