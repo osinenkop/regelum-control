@@ -11,7 +11,7 @@ class TestSetup:
 
     @property
     def config_path_default(self):
-        return os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../../playground/general")
+        return os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../../presets/general")
 
     @property
     def config_name_default(self):

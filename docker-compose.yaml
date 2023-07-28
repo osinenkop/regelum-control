@@ -11,4 +11,4 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./playground/mlruns-sql-database:/var/lib/postgresql/data
+      - ./presets/mlruns-sql-database:/var/lib/postgresql/data
