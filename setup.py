@@ -37,7 +37,7 @@ setup(
         "hydra-joblib-launcher>=1.2.0",
         "pandas==1.4.0",
         "casadi>=3.5.5",
-        "dill==0.3.6",
+        "dill==0.3.7",
         "plotly==5.13.0",
         "gitpython==3.1.30",
         "filelock==3.0.12",

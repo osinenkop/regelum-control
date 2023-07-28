@@ -23,5 +23,5 @@ critic:
     config_options:
       n_epochs: 50
 
-actor:
+policy:
   device: $ controller.device%%

@@ -962,7 +962,7 @@ class PendulumAnimation(PlanarMotionAnimation):
     """
 
     def on_trigger(self, _):
-        self.add_frame(x=np.cos(self.system_state[0] - np.pi / 2), y = np.sin(self.system_state[0] - np.pi / 2))
+        self.add_frame(x=np.sin(self.system_state[0]), y = np.cos(self.system_state[0]))
 
     def lim(self):
         self.ax.set_xlim(-1.1, 1.1)

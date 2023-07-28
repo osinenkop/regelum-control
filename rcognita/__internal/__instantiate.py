@@ -401,7 +401,7 @@ def instantiate_node(
                 for callback in kwargs["callbacks__IGNORE__"]:
                     if "." not in callback:
                         try:
-                            _target_ = _locate("rcognita.callbacks." + callback).attach(_target_)
+                            _target_ = _locate("rcognita.callback." + callback).attach(_target_)
                         except NameError:
                             _target_ = _locate("inline." + callback).attach(_target_)
                     else:
@@ -409,11 +409,11 @@ def instantiate_node(
             if "animations__IGNORE__" in kwargs:
                 animation = kwargs["animations__IGNORE__"][0]
                 if "." not in animation:
-                    animation = "rcognita.callbacks." + animation
+                    animation = "rcognita.callback." + animation
                 animation_sum = _locate(animation)
                 for animation in kwargs["animations__IGNORE__"][1:]:
                     if "." not in animation:
-                        animation = "rcognita.callbacks." + animation
+                        animation = "rcognita.callback." + animation
                     animation_sum = animation_sum + _locate(animation)
                 _target_ = animation_sum.attach(_target_)
 

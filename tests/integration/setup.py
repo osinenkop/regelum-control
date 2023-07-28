@@ -6,12 +6,14 @@ import sys, os
 class TestSetup:
     def __init__(self, config_path=None, config_name=None, **params):
         self.config_path = config_path if config_path is not None else self.config_path_default
+        self.config_path = os.path.abspath(os.path.dirname(os.path.realpath(__file__))) + f"/../../presets/{self.config_path}"
         self.config_name = config_name if config_name is not None else self.config_name_default
         self.params = params
 
     @property
     def config_path_default(self):
-        return os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../../presets/general")
+        return "stable-presets"
+        # return os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/../../presets/general")
 
     @property
     def config_name_default(self):
@@ -26,6 +28,7 @@ class TestSetup:
         sys.argv.insert(1, "simulator.time_final=1")
         sys.argv.insert(1, "controller.sampling_time=0.5")
         sys.argv.insert(1, "scenario.N_episodes=2")
+        sys.argv.insert(1, "scenario.N_iterations=1")
 
     def __call__(self):
         self._pre_setup()
@@ -45,6 +48,11 @@ class MPCTest(TestSetup):
 #######################################################################################################################
 #######################################################################################################################
 
+basic = [TestSetup(system="inv_pendulum", controller="sdpg"),
+         TestSetup(system="inv_pendulum", controller="ddpg"),
+         TestSetup(system="inv_pendulum", controller="reinforce")]
+
+"""
 basic = [MPCTest(system="2tank"),
          TestSetup(system="3wrobot", controller="rpo"),
          TestSetup(system="3wrobot_ni", controller="rpo"),
@@ -56,3 +64,4 @@ basic = [MPCTest(system="2tank"),
 extended = basic + \
            [TestSetup(system="kin_point", controller="ddpg"),
             TestSetup(system="kin_point", controller="sarsa")]
+"""
