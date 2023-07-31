@@ -1,3 +1,4 @@
+"""Contains base classes of entities constitute the skeleton of the optimization procedure."""
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Tuple, Union, Optional, Dict
@@ -10,6 +11,8 @@ from .hooks import get_data_hook
 
 @dataclass
 class OptimizationVariable:
+    """Base class for all optimization variables."""
+
     name: str
     dims: tuple
     data: Any = None
@@ -56,8 +59,7 @@ class OptimizationVariable:
             )
 
     def with_metadata(self, new_metadata, inplace=True):
-        """
-        Constructs a new OptimizationVariable object with the given metadata.
+        """Construct a new OptimizationVariable object with the given metadata.
 
         :param metadata: The metadata to associate with the variable.
         :type metadata: dict
@@ -141,7 +143,7 @@ class OptimizationVariable:
                 self.hooks.remove_hook(hook_to_delete)
                 self.register_hook(hook, first=True)
             else:
-                warnings.warn(f"Hook {hook.name} already registered.")
+                warnings.warn(f"Hook {hook.name} already registered.", stacklevel=1)
         else:
             self.hooks.register_hook(hook, first=first)
 
@@ -166,6 +168,8 @@ class OptimizationVariable:
 
 @dataclass
 class VarContainer(Mapping):
+    """Container for optimization variables."""
+
     _variables: Union[
         list[OptimizationVariable],
         Tuple[OptimizationVariable],
@@ -291,8 +295,8 @@ class VarContainer(Mapping):
         variables_to_fix: list[str],
         hook: Optional[Hook] = None,
     ) -> None:
-        """
-        Hooks passed into this function are intended to be used here for torch grad setup.
+        """Hooks passed into this function are intended to be used here for torch grad setup.
+
         Hook setting grad is named requires_grad.
         Hook unset grad is named detach
         """
@@ -334,6 +338,8 @@ class VarContainer(Mapping):
 
 @dataclass
 class FunctionWithSignature:
+    """Wrapper class for functions, that parses a signature and ensures correctness of optimization procedure in the runtime."""
+
     func: Callable
     variables: VarContainer = field(default_factory=lambda: VarContainer([]))
     is_objective: bool = False
@@ -362,8 +368,8 @@ class FunctionWithSignature:
     def __call__(
         self, *args, with_metadata: bool = False, raw_eval: bool = False, **kwargs
     ):
-        """
-        Call the function with the given keyword arguments.
+        """Call the function with the given keyword arguments.
+
         Only keyword arguments that are set will be passed to the function.
 
         :param kwargs: The keyword arguments to be passed to the function.
@@ -411,17 +417,16 @@ class FunctionWithSignature:
 
     @property
     def free_placeholders(self) -> tuple:
-        """
-        Returns a list of free variables of the current function.
+        """Returns a list of free variables of the current function.
+
         Free variables are the arguments that
         are not defaulted and do not have a corresponding value.
         This method uses the signature of the function
         and the default parameters keys to determine the free variables.
 
         :return: A list of free variables of the current function.
-        :rtype: list
+        :rtype: tuple
         """
-
         signature_set = set(self.__signature)
         # default_keys = {
         #     name: data
@@ -511,6 +516,8 @@ class FunctionWithSignature:
 
 @dataclass
 class FuncContainer(Mapping):
+    """A container for functions with signature."""
+
     _functions: Union[
         Tuple[FunctionWithSignature, FunctionWithSignature],
         Tuple[FunctionWithSignature],
@@ -588,11 +595,19 @@ class FuncContainer(Mapping):
 
 @dataclass
 class Hook(FunctionWithSignature):
+    """Base class for all hooks.
+
+    Hooks are to be used with `OptimizationVariable` objects in order to modify `FunctionWithSignature` calling.
+    """
+
     act_on: str = "all"
 
 
 class ChainedHook:
+    """A container for hooks."""
+
     def __init__(self, hooks: List[Hook]) -> None:
+        """Initialize a chained hook object."""
         self.hooks = hooks
         self.hooks_container = sum(self.hooks) if len(hooks) > 0 else FuncContainer([])
         self.enabled_hashmap = {hook.name: True for hook in hooks}

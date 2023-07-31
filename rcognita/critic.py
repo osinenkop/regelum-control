@@ -11,7 +11,6 @@ Remarks:
 import rcognita
 
 
-
 import numpy as np
 from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
 from abc import ABC
@@ -28,7 +27,6 @@ except (ModuleNotFoundError, ImportError):
 
 from copy import deepcopy
 from .model import ModelWeightContainer
-from .optimizable.optimizers import Optimizer
 from .model import Model
 from .objective import Objective
 from typing import Optional
@@ -67,7 +65,6 @@ class Critic(rcognita.RcognitaBase, ABC):
         :param critic_regularization_param: Regularization parameter for the critic
         :type critic_regularization_param: float
         """
-
         if model:
             self.model = model
         else:
@@ -236,7 +233,6 @@ class Critic(rcognita.RcognitaBase, ABC):
 
         return self.weights_acceptance_status
 
-    # TODO: THIS GOES AWAY, RIGHT?
     def update_buffers(self, observation, action):
         """Update the buffers of the critic with the given observation and action.
 
@@ -274,7 +270,6 @@ class Critic(rcognita.RcognitaBase, ABC):
         self.total_objective = 0
         self.current_critic_loss = 0
 
-    # TODO: REMOVE?
     def _SciPy_update(self, intrinsic_constraints=None):
         weights_init = self.model.cache.weights
 
@@ -305,7 +300,6 @@ class Critic(rcognita.RcognitaBase, ABC):
         )
         return optimized_weights
 
-    # TODO: REMOVE?
     def _CasADi_update(self, intrinsic_constraints=None):
         weights_init = rc.DM(self.model.cache.weights)
         symbolic_var = rc.array_symb(tup=rc.shape(weights_init), prototype=weights_init)
@@ -345,7 +339,6 @@ class Critic(rcognita.RcognitaBase, ABC):
 
         return optimized_weights
 
-    # TODO: REMOVE?
     def _Torch_update(self):
         data_buffer = {
             "observation_buffer": self.observation_buffer,

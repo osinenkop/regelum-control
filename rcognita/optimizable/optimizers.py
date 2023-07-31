@@ -1,8 +1,6 @@
-# TODO: EXTEND DOCSTRING
-"""
-This module contains optimization routines 
-to be used in optimal controllers, policies, critics etc.
-
+"""Contains main `Optimizable` class.
+ 
+`Optimizable` class is to be used normally as a parent class for all objects that need to be optimized.
 """
 import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
@@ -41,14 +39,14 @@ from .core.entities import (
 from .core.hooks import requires_grad, detach, data_closure, metadata_closure
 
 
-class Optimizer:
-    pass
-
 import rcognita
 
 
 class Optimizable(rcognita.RcognitaBase):
+    """Base class for all optimizable objects."""
+
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
+        """Initialize an optimizable object."""
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
         self.__is_problem_defined = False
@@ -350,11 +348,7 @@ class Optimizable(rcognita.RcognitaBase):
         dim_variable: int,
         tile_parameter: int = 0,
     ) -> Tuple:
-        """
-        Given bounds for each dimension of a variable, this function returns a tuple of
-        the following arrays: the bounds of each action,
-        the initial guess for a variable,
-        the minimum value of each variable, and the maximum value of each variable.
+        """Given bounds for each dimension of a variable, this function returns a tuple of the following arrays: the bounds of each action,the initial guess for a variable, the minimum value of each variable, and the maximum value of each variable.
 
         :param bounds: A list, numpy array, or None that represents the bounds for each
         dimension of a variable. If None is given,
@@ -634,100 +628,8 @@ class Optimizable(rcognita.RcognitaBase):
         self.__is_problem_defined = True
 
 
-# TODO: WHTA IS THIS? NEEDED?
-class TorchDataloaderOptimizer(rcognita.RcognitaBase):
-    """
-    Optimizer class that uses PyTorch as its optimization engine.
-    """
-
-    engine = "Torch"
-
-    def __init__(
-        self,
-        opt_options,
-        model,
-        shuffle=True,
-        opt_method=None,
-        batch_size=None,
-        sheduler_method=None,
-        sheduler_options=None,
-        batch_sampler=None,
-        verbose=False,
-    ):
-        """
-        Initialize an instance of TorchOptimizer.
-
-        :param opt_options: Options for the PyTorch optimizer.
-        :type opt_options: dict
-        :param iterations: Number of iterations to optimize the model.
-        :type iterations: int
-        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
-        :type opt_method: torch.optim.Optimizer
-        :param verbose: Whether to print optimization progress.
-        :type verbose: bool
-        """
-        if opt_method is None:
-            opt_method = torch.optim.Adam
-
-        self.opt_method = opt_method
-        self.opt_options = opt_options
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.verbose = verbose
-        self.model = model
-        self.optimizer = self.opt_method(self.model.parameters(), **self.opt_options)
-        self.sheduler_method = sheduler_method
-        self.sheduler_options = sheduler_options
-        self.sheduler = (
-            self.sheduler_method(self.optimizer, **self.sheduler_options)
-            if self.sheduler_method is not None
-            else None
-        )
-
-        if isinstance(batch_sampler, UpdatableSampler):
-            self.batch_sampler = batch_sampler
-        else:
-            self.batch_sampler = None
-
-    @apply_callbacks()
-    def post_epoch(self, idx_epoch, last_epoch_objective):
-        return idx_epoch, last_epoch_objective
-
-    def optimize(self, objective, dataset):  # remove model and add parameters instead
-        """
-        Optimize the model with the given objective.
-
-        :param objective: Objective function to optimize.
-        :type objective: callable
-        :param model: Model to optimize.
-        :type model: torch.nn.Module
-        :param model_input: Inputs to the model.
-        :type model_input: torch.Tensor
-        """
-
-        dataloader = DataLoader(
-            dataset=dataset,
-            shuffle=self.shuffle,
-            batch_size=self.batch_size if self.batch_size is not None else len(dataset),
-        )
-
-        batch_sample = next(iter(dataloader))
-        self.optimizer.zero_grad()
-        objective_value = objective(batch_sample)
-        last_epoch_objective = objective_value.item()
-        objective_value.backward()
-        self.optimizer.step()
-        if self.sheduler:
-            self.sheduler.step()
-
-        self.post_epoch(1, last_epoch_objective)
-
-
-# TODO: REMOVE
 class TorchProjectiveOptimizer:
-    """
-    Optimizer class that uses PyTorch as its optimization engine.
-    """
+    """Optimizer class that uses PyTorch as its optimization engine."""
 
     engine = "Torch"
 
@@ -740,8 +642,7 @@ class TorchProjectiveOptimizer:
         opt_method=None,
         verbose=False,
     ):
-        """
-        Initialize an instance of TorchOptimizer.
+        """Initialize an instance of TorchOptimizer.
 
         :param opt_options: Options for the PyTorch optimizer.
         :type opt_options: dict
@@ -766,8 +667,7 @@ class TorchProjectiveOptimizer:
         )
 
     def optimize(self, *model_input, objective, model):
-        """
-        Optimize the model with the given objective.
+        """Optimize the model with the given objective.
 
         :param objective: Objective function to optimize.
         :type objective: callable
@@ -801,17 +701,13 @@ class TorchProjectiveOptimizer:
         return model_input[0]
 
 
-# TODO: REMOVE?
 class BruteForceOptimizer:
-    """
-    Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."
-    """
+    """Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."""
 
     engine = "bruteforce"
 
     def __init__(self, possible_variants, N_parallel_processes=0):
-        """
-        Initialize an instance of BruteForceOptimizer.
+        """Initialize an instance of BruteForceOptimizer.
 
         :param N_parallel_processes: number of processes to use in parallel
         :type N_parallel_processes: int
@@ -822,8 +718,7 @@ class BruteForceOptimizer:
         self.possible_variants = possible_variants
 
     def element_wise_maximization(self, x):
-        """
-        Find the variant that maximizes the reward for a given element.
+        """Find the variant that maximizes the reward for a given element.
 
         :param x: element to optimize
         :type x: tuple
@@ -839,8 +734,7 @@ class BruteForceOptimizer:
         return self.possible_variants[np.argmax(values)]
 
     def optimize(self, objective, weights):
-        """
-        Maximize the objective function over the possible variants.
+        """Maximize the objective function over the possible variants.
 
         :param objective: The objective function to maximize.
         :type objective: Callable
@@ -858,10 +752,3 @@ class BruteForceOptimizer:
             self.weights[x] = self.element_wise_maximization(x)
 
         return self.weights
-
-        # with Pool(self.n_pools) as p:
-        #     result_weights = p.map(
-        #         self.element_wise_maximization,
-        #         np.nditer(self.weights, flags=["external_loop"]),
-        #     )[0]
-        # return result_weights
