@@ -11,4 +11,4 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./presets/mlruns-sql-database:/var/lib/postgresql/data
+      - ${MLFLOW_POSTGRES_DATA}:/var/lib/postgresql/data

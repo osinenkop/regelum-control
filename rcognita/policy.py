@@ -1,6 +1,4 @@
-"""
-This module contains policies, i.e., entities that directly calculate actions.
-Policys are inegrated into controllers (agents).
+"""Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into controllers (agents).
 
 Remarks: 
 
@@ -19,10 +17,12 @@ from .__utilities import rc
 
 from .predictor import Predictor
 from .model import ModelNN
+from .critic import Critic
 from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable
 from .data_buffers.data_buffer import DataBuffer
-
+from .objective import reinforce_objective, sdpg_objective, ddpg_objective
+from typing import List
 
 try:
     import torch
@@ -32,24 +32,11 @@ except ImportError:
     torch = MagicMock()
 
 
-# TODO: WHY NOT IN UTILITIES? REMOVE?
-def force_type_safety(method):
-    def wrapper(self, *args, **kwargs):
-        result = method(self, *args, **kwargs)
-        if self.optimizer.engine != "Torch" and self.critic.optimizer.engine == "Torch":
-            return result.detach().numpy()
-        else:
-            return result
-
-    return wrapper
-
-
 class Policy(Optimizable):
-    """
-    Class of policies.
+    """Class of policies.
     These are to be passed to a `controller`.
     An `objective` (a loss) as well as an `optimizer` are passed to an `policy` externally.
-    """
+    """  # noqa: D205
 
     def __init__(
         self,
@@ -63,8 +50,7 @@ class Policy(Optimizable):
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
     ):
-        """
-        Initialize an policy.
+        """Initialize an policy.
 
         :param prediction_horizon: Number of time steps to look into the future.
         :type prediction_horizon: int
@@ -134,30 +120,28 @@ class Policy(Optimizable):
 
     @property
     def weights(self):
-        """
-        Get the weights of the policy model.
-        """
+        """Get the weights of the policy model."""
         return self.model.weights
 
     def receive_observation(self, observation):
-        """
-        Update the current observation of thepolicy.
+        """Update the current observation of the policy.
+
         :param observation: The current observation.
-        :type observation: numpy array
+        :type observation: numpy array.
         """
         self.observation = observation
 
     def receive_state(self, state):
-        """
-        Update the current observation of thepolicy.
+        """Update the current observation of the policy.
+
         :param observation: The current observation.
         :type observation: numpy array
         """
         self.state = state
 
     def set_action(self, action):
-        """
-        Set the current action of thepolicy.
+        """Set the current action of the policy.
+
         :param action: The current action.
         :type action: numpy array
         """
@@ -165,8 +149,8 @@ class Policy(Optimizable):
         self.action = action
 
     def update_action(self, observation=None):
-        """
-        Update the current action of thepolicy.
+        """Update the current action of the policy.
+
         :param observation: The current observation. If not provided, the previously received observation will be used.
         :type observation: numpy array, optional
         """
@@ -208,8 +192,8 @@ class Policy(Optimizable):
         return action
 
     def update_weights(self, weights=None):
-        """
-        Update the weights of the model of the policy.
+        """Update the weights of the model of the policy.
+
         :param weights: The weights to update the model with. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -219,8 +203,8 @@ class Policy(Optimizable):
             self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
-        """
-        Cache the current weights of the model of the policy.
+        """Cache the current weights of the model of the policy.
+
         :param weights: The weights to cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -232,8 +216,8 @@ class Policy(Optimizable):
             raise ValueError("Nothing to cache")
 
     def update_and_cache_weights(self, weights=None):
-        """
-        Update and cache the weights of the model of the policy.
+        """Update and cache the weights of the model of the policy.
+
         :param weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
@@ -241,9 +225,7 @@ class Policy(Optimizable):
         self.cache_weights(weights)
 
     def restore_weights(self):
-        """
-        Restore the previously cached weights of the model of thepolicy.
-        """
+        """Restore the previously cached weights of the model of thepolicy."""
         self.model.restore_weights()
         self.set_action(self.action_old)
 
@@ -257,23 +239,34 @@ class Policy(Optimizable):
         return action_sequence
 
     def reset(self):
-        """
-        Reset the policy to its initial state.
-        """
+        """Reset the policy to its initial state."""
         self.action_old = self.action_initial_guess[: self.dim_action]
         self.action = self.action_initial_guess[: self.dim_action]
 
 
 class PolicyGradient(Policy, ABC):
+    """Base Class for policy gradient methods."""
+
     def __init__(
         self,
-        batch_keys,
-        device="cpu",
-        batch_size=None,
-        critic=None,
+        batch_keys: List[str],
+        device: str = "cpu",
+        batch_size: int = None,
+        critic: Critic = None,
         *args,
         **kwargs,
     ):
+        """Instantiate PolicyGradient class.
+
+        :param batch_keys: Arguments for optimization procedure.
+        :type batch_keys: List[str]
+        :param device: device for gradient descent optimization, defaults to "cpu"
+        :type device: str, optional
+        :param batch_size: Bathch size, defaults to None
+        :type batch_size: int, optional
+        :param critic: Critic class to use, defaults to None
+        :type critic: Critic, optional
+        """
         Policy.__init__(self, *args, **kwargs)
         self.objective_inputs = [
             self.create_variable(name=variable_name, is_constant=True)
@@ -316,8 +309,22 @@ class PolicyGradient(Policy, ABC):
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
 
+    def initialize_optimization_procedure(self):
+        self.policy_weights = self.create_variable(
+            name="policy_weights", like=self.model.named_parameters
+        )
+        self.register_objective(
+            self.objective_function, variables=self.objective_inputs
+        )
+
+    @abstractmethod
+    def objective_function(self, **kwargs):
+        pass
+
 
 class Reinforce(PolicyGradient):
+    """The Reinforce class extends the PolicyGradient class and implements the REINFORCE algorithm."""
+
     def __init__(
         self,
         *args,
@@ -325,20 +332,19 @@ class Reinforce(PolicyGradient):
         is_do_not_let_the_past_distract_you=False,
         **kwargs,
     ):
+        """Instantiate Reinforce class.
+
+        :param is_with_baseline: Whether to use baseline (total objectives from the previous iterations), defaults to True
+        :type is_with_baseline: bool, optional
+        :param is_do_not_let_the_past_distract_you: Where to use tail total objectives, defaults to False
+        :type is_do_not_let_the_past_distract_you: bool, optional
+        """
         PolicyGradient.__init__(self, *args, **kwargs)
         self.is_with_baseline = is_with_baseline
         self.is_do_not_let_the_past_distract_you = is_do_not_let_the_past_distract_you
         self.next_baseline = 0.0
 
         self.initialize_optimization_procedure()
-
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
-        )
-        self.register_objective(
-            self.reinforce_objective, variables=self.objective_inputs
-        )
 
     def update_action(self, observation):
         self.action_old = self.action
@@ -371,10 +377,6 @@ class Reinforce(PolicyGradient):
         self,
         data_buffer: DataBuffer,
     ):
-        """Calculate tail total costs and baseline.
-        Returns:
-            Tuple[np.array, float, float]: tuple of 3 elements tail_total_objectives, baseline, gradent_normalization_constant
-        """
         groupby_episode_total_objectives = data_buffer.to_pandas(
             keys=["episode_id", "current_total_objective"]
         ).groupby(["episode_id"])["current_total_objective"]
@@ -388,24 +390,28 @@ class Reinforce(PolicyGradient):
         self.next_baseline = np.mean(data_buffer.to_pandas(keys=["total_objective"]))
         return np.full(shape=len(data_buffer), fill_value=baseline)
 
-    def reinforce_objective(
+    def objective_function(
         self, observation, action, tail_total_objective, total_objective, baseline
     ):
-        observations_actions = torch.cat([observation, action], dim=1).to(self.device)
-
-        log_pdfs = self.model.log_pdf(observations_actions)
-        if self.is_do_not_let_the_past_distract_you:
-            target_objectives = tail_total_objective.to(self.device)
-        else:
-            target_objectives = total_objective.to(self.device)
-        if self.is_with_baseline:
-            target_objectives -= baseline.to(self.device)
-
-        return (log_pdfs * target_objectives).sum() / self.N_episodes
+        return reinforce_objective(
+            policy_model=self.model,
+            observations=observation,
+            actions=action,
+            tail_total_objectives=tail_total_objective,
+            total_objectives=total_objective,
+            baselines=baseline,
+            is_with_baseline=self.is_with_baseline,
+            is_do_not_let_the_past_distract_you=self.is_do_not_let_the_past_distract_you,
+            device=self.device,
+            N_episodes=self.N_episodes,
+        )
 
 
 class SDPG(PolicyGradient):
+    """Policy for Stochastic Deep Policy Gradient (SDPG)."""
+
     def __init__(self, *args, **kwargs):
+        """Instantiate SDPG class."""
         PolicyGradient.__init__(self, *args, **kwargs)
         self.initialize_optimization_procedure()
 
@@ -413,22 +419,21 @@ class SDPG(PolicyGradient):
         self.policy_weights = self.create_variable(
             name="policy_weights", like=self.model.named_parameters
         )
-        self.register_objective(self.sdpg_objective, variables=self.objective_inputs)
+        self.register_objective(
+            self.objective_function, variables=self.objective_inputs
+        )
 
-    def sdpg_objective(self, observation, action, timestamp):
-        observations_actions = torch.cat([observation, action], dim=1).to(self.device)
-        observations_zero_actions = torch.cat(
-            [observation, torch.zeros_like(action)],
-            dim=1,
-        ).to(self.device)
-
-        with torch.no_grad():
-            baseline = self.critic(observations_zero_actions)
-            discounts = self.discount_factor ** timestamp.to(self.device)
-            critic_value = discounts * (self.critic(observations_actions) - baseline)
-
-        log_pdfs = self.model.log_pdf(observations_actions)
-        return (log_pdfs * critic_value).sum() / self.N_episodes
+    def objective_function(self, observation, action, timestamp):
+        return sdpg_objective(
+            policy_model=self.model,
+            critic_model=self.critic.model,
+            observations=observation,
+            actions=action,
+            timestamps=timestamp,
+            device=self.device,
+            discount_factor=self.discount_factor,
+            N_episodes=self.N_episodes,
+        )
 
     def update_action(self, observation):
         self.action_old = self.action
@@ -439,27 +444,20 @@ class SDPG(PolicyGradient):
 
 
 class DDPG(PolicyGradient):
+    """Policy for Deterministic Deep Policy Gradient (DDPG)."""
+
     def __init__(self, *args, **kwargs):
+        """Instantiate DDPG class."""
         PolicyGradient.__init__(self, *args, **kwargs)
         self.initialize_optimization_procedure()
 
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
+    def objective_function(self, observation):
+        return ddpg_objective(
+            policy_model=self.model,
+            critic_model=self.critic.model,
+            observations=observation,
+            device=self.device,
         )
-        self.register_objective(self.ddpg_objective, variables=self.objective_inputs)
-
-    def ddpg_objective(self, observation):
-        observations = observation.to(self.device)
-        return (
-            # self.discount_factor ** batch["timestamp"].to(self.device)
-            self.critic.model(
-                torch.cat(
-                    [observations, self.model(observations)],
-                    dim=1,
-                )
-            )
-        ).mean()
 
     def update_action(self, observation):
         self.action_old = self.action
@@ -470,10 +468,10 @@ class DDPG(PolicyGradient):
 
 
 class MPC(Policy):
-    """
-    Model-predictive control (MPC)policy.
+    r"""Model-predictive control (MPC)policy.
+
     Optimizes the followingpolicy objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
+    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
 
     Notation:
 
@@ -491,8 +489,7 @@ class MPC(Policy):
         action_sequence,
         observation,
     ):
-        """
-        Calculates thepolicy objective for the given action sequence and observation using Model Predictive Control (MPC).
+        """Calculate thepolicy objective for the given action sequence and observation using Model Predictive Control (MPC).
 
         :param action_sequence: sequence of actions to be evaluated in the objective function
         :type action_sequence: numpy.ndarray
@@ -523,8 +520,8 @@ class MPC(Policy):
 
 
 class MPCTerminal(Policy):
-    """
-    Model-predictive control (MPC)policy.
+    r"""Model-predictive control (MPC)policy.
+
     Optimizes the followingpolicy objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
 
@@ -544,8 +541,7 @@ class MPCTerminal(Policy):
         action_sequence,
         observation,
     ):
-        """
-        Calculates thepolicy objective for the given action sequence and observation using Model Predictive Control (MPC).
+        r"""Calculate the policy objective for the given action sequence and observation using Model Predictive Control (MPC).
 
         :param action_sequence: sequence of actions to be evaluated in the objective function
         :type action_sequence: numpy.ndarray
@@ -576,8 +572,8 @@ class MPCTerminal(Policy):
 
 
 class SQL(Policy):
-    """
-    Staked Q-learning (SQL)policy.
+    r"""Staked Q-learning (SQL)policy.
+
     Optimizes the followingpolicy objective:
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`
 
@@ -598,8 +594,7 @@ class SQL(Policy):
         action_sequence,
         observation,
     ):
-        """
-        Calculates thepolicy objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
+        """Calculate the policy objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
@@ -608,7 +603,6 @@ class SQL(Policy):
         :return:policy objective for the given action sequence and observation
         :rtype: float
         """
-
         action_sequence_reshaped = rc.reshape(
             action_sequence, [self.prediction_horizon + 1, self.dim_output]
         ).T
@@ -640,8 +634,8 @@ class SQL(Policy):
 
 
 class RQL(Policy):
-    """
-    Rollout Q-learning (RQL)policy.
+    r"""Rollout Q-learning (RQL)policy.
+
     Optimizes the followingpolicy objective:
 
     :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
@@ -663,8 +657,7 @@ class RQL(Policy):
         action_sequence,
         observation,
     ):
-        """
-        Calculates thepolicy objective for the given action sequence and observation using Rollout Q-learning (RQL).
+        """Calculate the policy objective for the given action sequence and observation using Rollout Q-learning (RQL).
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
@@ -707,8 +700,8 @@ class RQL(Policy):
 
 
 class RPO(Policy):
-    """
-    Running (objective) Plus Optimal (objective)policy.
+    r"""Running (objective) Plus Optimal (objective)policy.
+
     Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the followingpolicy objective:
@@ -724,14 +717,12 @@ class RPO(Policy):
     * :math:`J^*`: optimal objective function (or its estimate)
     """
 
-    @force_type_safety
     def objective(
         self,
         action_sequence,
         observation,
     ):
-        """
-        Calculates thepolicy objective for the given action sequence and observation using Running Plus Optimal (RPO).
+        """Calculate the policy objective for the given action sequence and observation using Running Plus Optimal (RPO).
 
         :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
         :type action_sequence: numpy.ndarray
@@ -760,7 +751,18 @@ class RPO(Policy):
 
 
 class RPOWithRobustigyingTerm(RPO):
+    """Class for RPO with robustigying term."""
+
     def __init__(self, *args, A=10, K=10, **kwargs):
+        """Instatiate the class for RPO with robustigying term.
+
+        TODO: add link to paper
+
+        :param A: Robustifiend parameter 1, defaults to 10
+        :type A: int, optional
+        :param K: Robustifiend parameter 2, defaults to 10
+        :type K: int, optional
+        """
         super().__init__(*args, **kwargs)
         self.A = A
         self.K = K
@@ -786,8 +788,7 @@ class CALF(RPO):
         policy_regularization_param=0,
         **kwargs,
     ):
-        """
-        Initialize thepolicy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
+        """Initialize thepolicy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
 
         :param safe_controller: controller used to compute a safe action in case the optimization is rejected
         :type safe_controller: Controller
@@ -818,10 +819,8 @@ class CALF(RPO):
         self.action_init = self.action = safe_action
         self.model.update_and_cache_weights(safe_action)
 
-    @force_type_safety
     def CALF_decay_constraint_for_policy(self, weights=None):
-        """
-        Constraint for thepolicy optimization, ensuring that the critic value will not decrease by less than the required decay rate.
+        """Constraint for thepolicy optimization, ensuring that the critic value will not decrease by less than the required decay rate.
 
         :param weights:policy weights to be evaluated
         :type weights: numpy.ndarray
@@ -848,10 +847,8 @@ class CALF(RPO):
 
         return self.predictive_constraint_violation
 
-    @force_type_safety
     def CALF_decay_constraint_for_policy_same_critic(self, weights=None):
-        """
-        Calculate the predictive constraint violation for the CALF.
+        """Calculate the predictive constraint violation for the CALF.
 
         This function calculates the violation of the "CALF decay constraint" which is used to ensure that the critic's value function
         (as a Lyapunov function) decreases over time. This helps to guarantee that the system remains stable.
@@ -876,26 +873,23 @@ class CALF(RPO):
 
 
 class CLF(CALF):
-    """
-    PolicyCLF is anpolicy class that aims to optimize the decay of a Control-Lyapunov function (CLF).
-    """
+    """PolicyCLF is anpolicy class that aims to optimize the decay of a Control-Lyapunov function (CLF)."""
 
     def __init__(self, *args, **kwargs):
-        """
+        """Initialize the policy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
+
         :param safe_controller: object of class SafeController that provides a safe action if the current action would violate the safe set.
         :type safe_controller: SafeController
         """
         super().__init__(*args, **kwargs)
         self.intrinsic_constraints = []
 
-    @force_type_safety
     def objective(
         self,
         action,
         observation,
     ):
-        """
-        Computes the anticipated decay of the CLF.
+        """Compute the anticipated decay of the CLF.
 
         :param action: Action taken by thepolicy.
         :type action: ndarray
@@ -904,7 +898,6 @@ class CLF(CALF):
         :return: Policy objective
         :rtype: float
         """
-
         observation_predicted = self.predictor.predict(observation, action)
 
         policy_objective = 0
@@ -915,8 +908,8 @@ class CLF(CALF):
 
 
 class Tabular(RPO):
-    """
-    Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+    r"""Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+
     May be suitable for value iteration and policy iteration agents.
     Specifically, it optimizes the followingpolicy objective:
 
@@ -945,8 +938,7 @@ class Tabular(RPO):
         discount_factor=1,
         terminal_state=None,
     ):
-        """
-        Initializes anpolicyTabular object.
+        """Initialize anpolicyTabular object.
 
         :param dim_world: The dimensions of the world (i.e. the dimensions of the state space).
         :type dim_world: int
@@ -980,10 +972,7 @@ class Tabular(RPO):
         self.gradients = []
 
     def update(self):
-        """
-        Updates the action table using the optimizer.
-        """
-
+        """Update the action table using the optimizer."""
         new_action_table = self.optimizer.optimize(self.objective, self.model.weights)
 
         self.model.update_and_cache_weights(new_action_table)
@@ -993,15 +982,15 @@ class Tabular(RPO):
         action,
         observation,
     ):
-        """
-        Calculates thepolicy objective for a given action and observation.
-        Thepolicy objective is defined as the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
+        """Calculate the policy objective for a given action and observation.
+
+        The policy objective is defined as the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
 
         :param action: The action for which thepolicy objective is to be calculated.
         :type action: np.ndarray
         :param observation: The observation for which thepolicy objective is to be calculated.
         :type observation: np.ndarray
-        :return: Thepolicy objective.
+        :return: the policy objective.
         :rtype: float
         """
         if tuple(observation) == tuple(self.terminal_state):

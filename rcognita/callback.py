@@ -46,8 +46,7 @@ import filelock
 import rcognita as rc
 import rcognita.__internal.base
 
-from matplotlib.backends.backend_qt5agg import (
-    FigureCanvasQTAgg as FigureCanvas)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import numpy as np
 from matplotlib.backends import backend_qt5agg  # e.g.
@@ -55,8 +54,10 @@ from matplotlib.backends import backend_qt5agg  # e.g.
 from svgpathtools import svg2paths
 from svgpath2mpl import parse_path
 
+
 def is_in_debug_mode():
     return sys.gettrace() is not None
+
 
 def passdown(CallbackClass):
     """Decorate a callback class in such a way that its event handling is inherited by derived classes.
@@ -65,19 +66,25 @@ def passdown(CallbackClass):
     :type CallbackClass: type
     :return: altered class that passes down its handlers to derived classes (regardless of whether handling methods are overriden)
     """
+
     class PassdownCallback(CallbackClass):
         def __call_passdown(self, obj, method, output):
-            if True:  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
+            if (
+                True
+            ):  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
                 try:
                     if PassdownCallback.is_target_event(self, obj, method, output):
                         PassdownCallback.perform(self, obj, method, output)
                         self.on_trigger(PassdownCallback)
-                        #self.trigger_cooldown(t)
+                        # self.trigger_cooldown(t)
                 except rcognita.RcognitaExitException as e:
                     raise e
                 except Exception as e:
-                    self.log(f"Callback {self.__class__.__name__} failed, when executing routines passed down from {CallbackClass.__name__}.")
+                    self.log(
+                        f"Callback {self.__class__.__name__} failed, when executing routines passed down from {CallbackClass.__name__}."
+                    )
                     self.exception(e)
+
     PassdownCallback.__name__ = CallbackClass.__name__
     return PassdownCallback
 
@@ -89,6 +96,7 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
     """
 
     cooldown = None
+
     def __init__(self, log_level="info", attachee=None):
         """Initialize a callback object.
 
@@ -100,17 +108,24 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
         super().__init__()
         self.attachee = attachee
         self.log = rcognita.main.logger.__getattribute__(log_level)
+        # TODO: FIX THIS. Setting the level is needed due to the fact that mlflow sql backend reinstantiates logger
+        # Moreover, rubbish mlflow backend logs are generated. They are not needed for a common user
+        rcognita.main.logger.setLevel(logging.INFO)
         self.exception = rcognita.main.logger.exception
         self.__last_trigger = 0.0
 
     @classmethod
     def register(cls, *args, launch=False, **kwargs):
-        existing_callbacks = [type(callback) for callback in cls._metadata["main"].callbacks]
+        existing_callbacks = [
+            type(callback) for callback in cls._metadata["main"].callbacks
+        ]
         if cls not in existing_callbacks:
             callback_instance = cls(*args, **kwargs)
             if launch:
                 callback_instance.on_launch()
-            cls._metadata["main"].callbacks = [callback_instance] + rcognita.main.callbacks
+            cls._metadata["main"].callbacks = [
+                callback_instance
+            ] + rcognita.main.callbacks
 
     @abstractmethod
     def is_target_event(self, obj, method, output):
@@ -172,7 +187,9 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
                 self.exception(e)
         for base in self.__class__.__bases__:
             if hasattr(base, f"_{base.__name__}__call_passdown"):
-                base.__getattribute__(f"_{base.__name__}__call_passdown")(self, obj, method, output)
+                base.__getattribute__(f"_{base.__name__}__call_passdown")(
+                    self, obj, method, output
+                )
 
     @classmethod
     def attach(cls, other):
@@ -180,9 +197,11 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
             attached = other._attached + [cls]
         else:
             attached = [cls]
+
         class Attachee(other):
             _real_name = other.__name__
             _attached = attached
+
         return Attachee
 
     """
@@ -289,7 +308,10 @@ class ConfigDiagramCallback(Callback):
         try:
             forbidden = False
             with filelock.FileLock(rcognita.main.metadata["common_dir"] + "/diff.lock"):
-                repo = git.Repo(path=rcognita.main.metadata["initial_working_directory"], search_parent_directories=True)
+                repo = git.Repo(
+                    path=rcognita.main.metadata["initial_working_directory"],
+                    search_parent_directories=True,
+                )
                 commit_hash = repo.head.object.hexsha
                 if repo.is_dirty(untracked_files=True):
                     commit_hash += (
@@ -301,9 +323,13 @@ class ConfigDiagramCallback(Callback):
                         and not is_in_debug_mode()
                     )
                     untracked = repo.untracked_files
-                    if not os.path.exists(rcognita.main.metadata["common_dir"] + "/changes.diff"):
+                    if not os.path.exists(
+                        rcognita.main.metadata["common_dir"] + "/changes.diff"
+                    ):
                         repo.git.add(all=True)
-                        with open(rcognita.main.metadata["common_dir"] + "/changes.diff", "w") as f:
+                        with open(
+                            rcognita.main.metadata["common_dir"] + "/changes.diff", "w"
+                        ) as f:
                             diff = repo.git.diff(repo.head.commit.tree)
                             if untracked:
                                 repo.index.remove(untracked, cached=True)
@@ -342,7 +368,11 @@ class ConfigDiagramCallback(Callback):
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
             html = f.read()
-        repo, commit_hash = self.__monitor_git() if not rcognita.main.metadata["no_git"] else (None, None)
+        repo, commit_hash = (
+            self.__monitor_git()
+            if not rcognita.main.metadata["no_git"]
+            else (None, None)
+        )
         cfg_hash = hex(hash(cfg))
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
         overrides_table = ""
@@ -521,7 +551,9 @@ class ConfigDiagramCallback(Callback):
 os.chdir("{metadata["initial_working_directory"]}")
 sys.path[:0] = {metadata["initial_pythonpath"].split(":")}
 with open("{os.path.abspath(".")}/callbacks.dill", "rb") as f:
-    callbacks = dill.load(f)</code></pre>""" + (f"""
+    callbacks = dill.load(f)</code></pre>"""
+            + (
+                f"""
               <p>Reproduce experiment:</p>
               <pre><code class="language-bash">cd {repo.working_tree_dir}
 git reset
@@ -530,7 +562,10 @@ git clean -f
 {git_fragment}cd {metadata["initial_working_directory"]}
 export PYTHONPATH="{metadata["initial_pythonpath"]}"
 python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [])} {" ".join(list(filter(lambda x: "--" in x and "multirun" not in x, sys.argv)))} </code></pre>
-            """ if repo is not None else "")
+            """
+                if repo is not None
+                else ""
+            )
             + """</main>
                 <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
             
@@ -614,6 +649,7 @@ plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
 plt.style.use(matplotx.styles.dracula)
 
+
 class AnimationCallback(Callback, ABC):
     """Callback (base) responsible for rendering animated visualizations of the experiment."""
 
@@ -624,24 +660,33 @@ class AnimationCallback(Callback, ABC):
         animations = []
         for cls in [cls_left, cls_right]:
             if issubclass(cls, ComposedAnimationCallback):
-                assert cls is not ComposedAnimationCallback, "Adding a composed animation in this way is ambiguous."
+                assert (
+                    cls is not ComposedAnimationCallback
+                ), "Adding a composed animation in this way is ambiguous."
                 animations += cls._animations
             else:
                 animations.append(cls)
+
         class Composed(ComposedAnimationCallback):
             _animations = animations
+
             def __init__(self, **kwargs):
                 super().__init__(*self._animations, **kwargs)
+
         return Composed
 
     def __init__(self, *args, interactive=None, **kwargs):
         """Initialize an instance of AnimationCallback."""
         super().__init__(*args, **kwargs)
-        assert self.attachee is not None, "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
+        assert (
+            self.attachee is not None
+        ), "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
         self.frame_data = []
-        #matplotlib.use('Qt5Agg', force=True)
+        # matplotlib.use('Qt5Agg', force=True)
 
-        self.interactive_mode = self._metadata["argv"].interactive if interactive is None else interactive
+        self.interactive_mode = (
+            self._metadata["argv"].interactive if interactive is None else interactive
+        )
         if self.interactive_mode:
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
@@ -651,17 +696,17 @@ class AnimationCallback(Callback, ABC):
         else:
             self.mng = None
             self.fig, self.ax = None, None
-        self.save_directory = Path(f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}").resolve()
+        self.save_directory = Path(
+            f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}"
+        ).resolve()
         self.saved_counter = 0
 
     @abstractmethod
     def setup(self):
         pass
 
-
     def get_save_directory(self):
         return str(self.save_directory)
-
 
     def add_frame(self, **frame_datum):
         self.frame_data.append(frame_datum)
@@ -690,7 +735,7 @@ class AnimationCallback(Callback, ABC):
             self.mng.window.close()
             self.ax.clear()
             self.setup()
-        #self.__init__(attachee=self.attachee, interactive=self.interactive_mode)
+        # self.__init__(attachee=self.attachee, interactive=self.interactive_mode)
 
     @abstractmethod
     def construct_frame(self, **frame_datum):
@@ -719,9 +764,15 @@ class AnimationCallback(Callback, ABC):
         def animation_update(i):
             j = int((i / frames) * len(self.frame_data) + 0.5)
             return self.construct_frame(**self.frame_data[j])
+
         self.lim()
         anim = matplotlib.animation.FuncAnimation(
-            self.fig, animation_update, frames=frames, interval=30, blit=True, repeat=False
+            self.fig,
+            animation_update,
+            frames=frames,
+            interval=30,
+            blit=True,
+            repeat=False,
         )
         res = anim.to_jshtml()
         plt.close(self.fig)
@@ -730,7 +781,6 @@ class AnimationCallback(Callback, ABC):
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
-
 
     def animate_and_save(self, frames=None, name=None):
         if name is None:
@@ -743,18 +793,22 @@ class AnimationCallback(Callback, ABC):
                 f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
             )
 
-    def lim(self, width=None, height=None, center=None, extra_margin=0.):
+    def lim(self, width=None, height=None, center=None, extra_margin=0.0):
         if width is not None or height is not None:
             if center is None:
-                center = [0., 0.]
+                center = [0.0, 0.0]
             if width is None:
                 width = height
             if height is None:
                 height = width
-            self.ax.set_xlim(center[0] - width / 2 - extra_margin,
-                             center[0] + width / 2 + extra_margin)
-            self.ax.set_ylim(center[1] - height / 2 - extra_margin,
-                             center[1] - height / 2 + extra_margin)
+            self.ax.set_xlim(
+                center[0] - width / 2 - extra_margin,
+                center[0] + width / 2 + extra_margin,
+            )
+            self.ax.set_ylim(
+                center[1] - height / 2 - extra_margin,
+                center[1] - height / 2 + extra_margin,
+            )
         else:
             raise ValueError("No axis limits known for animation.")
 
@@ -769,6 +823,7 @@ class AnimationCallback(Callback, ABC):
         self.animate_and_save(name=str(episode_number))
         self.reset()
 
+
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
 
@@ -779,15 +834,17 @@ class ComposedAnimationCallback(AnimationCallback):
         :param kwargs: keyword arguments to be passed to __init__ of said animations and the base class
         """
         Callback.__init__(self, **kwargs)
-        self.animations = [Animation(interactive=False, **kwargs) for Animation in animations]
+        self.animations = [
+            Animation(interactive=False, **kwargs) for Animation in animations
+        ]
         self.fig = Figure(figsize=(10, 10))
         canvas = FigureCanvas(self.fig)
         width = int(len(self.animations) ** 0.5 + 0.5)
-        height = width - (width ** 2 - len(self.animations)) // width
+        height = width - (width**2 - len(self.animations)) // width
         for i, animation in enumerate(self.animations):
             animation.fig = self.fig
             animation.ax = canvas.figure.add_subplot(width, height, 1 + i)
-            animation.ax.set_aspect('equal', 'box')
+            animation.ax.set_aspect("equal", "box")
         self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
         for animation in self.animations:
             animation.mng = self.mng
@@ -795,26 +852,30 @@ class ComposedAnimationCallback(AnimationCallback):
             animation.setup()
 
     def perform(self, obj, method, output):
-        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `perform` method called.")
+        raise AssertionError(
+            f"A {self.__class__.__name__} object is not meant to have its `perform` method called."
+        )
 
     def construct_frame(self, **frame_datum):
-        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `construct_frame` method called.")
+        raise AssertionError(
+            f"A {self.__class__.__name__} object is not meant to have its `construct_frame` method called."
+        )
 
     def setup(self):
-        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `setup` method called.")
+        raise AssertionError(
+            f"A {self.__class__.__name__} object is not meant to have its `setup` method called."
+        )
 
     def is_target_event(self, obj, method, output):
-        raise AssertionError(f"A {self.__class__.__name__} object is not meant to have its `is_target_event` method called.")
+        raise AssertionError(
+            f"A {self.__class__.__name__} object is not meant to have its `is_target_event` method called."
+        )
 
     def on_launch(self):
         for animation in self.animations:
             animation.on_launch()
 
-    def on_episode_done(
-        self,
-        *args,
-        **kwargs
-    ):
+    def on_episode_done(self, *args, **kwargs):
         for animation in self.animations:
             animation.on_episode_done(*args, **kwargs)
 
@@ -827,11 +888,11 @@ class PointAnimation(AnimationCallback, ABC):
     """Animation that sets the location of a planar point at each frame."""
 
     def setup(self):
-        self.point, = self.ax.plot(0, 1, marker="o", label="location")
+        (self.point,) = self.ax.plot(0, 1, marker="o", label="location")
 
     def construct_frame(self, x, y):
         self.point.set_data([x], [y])
-        return self.point,
+        return (self.point,)
 
     def lim(self, *args, extra_margin=0.01, **kwargs):
         try:
@@ -843,11 +904,14 @@ class PointAnimation(AnimationCallback, ABC):
             y_min, y_max = y.min(), y.max()
             x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
             y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-            self.ax.set_xlim(x_min - extra_margin,
-                             x_min + max(x_max-x_min, y_max-y_min) + extra_margin)
-            self.ax.set_ylim(y_min - extra_margin,
-                             y_min + max(x_max-x_min, y_max-y_min) + extra_margin)
-
+            self.ax.set_xlim(
+                x_min - extra_margin,
+                x_min + max(x_max - x_min, y_max - y_min) + extra_margin,
+            )
+            self.ax.set_ylim(
+                y_min - extra_margin,
+                y_min + max(x_max - x_min, y_max - y_min) + extra_margin,
+            )
 
 
 @passdown
@@ -871,14 +935,13 @@ class PlanarMotionAnimation(PointAnimation, StateTracker):
     """Animates dynamics of systems that can be viewed as a point moving on a plane."""
 
     def on_trigger(self, _):
-        self.add_frame(x=self.system_state[0],
-                       y=self.system_state[1])
+        self.add_frame(x=self.system_state[0], y=self.system_state[1])
 
 
 class TriangleAnimation(AnimationCallback, ABC):
     """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
 
-    _pic = None # must be an svg located in rcognita/img
+    _pic = None  # must be an svg located in rcognita/img
 
     def setup(self):
         if self._pic is None:
@@ -887,20 +950,19 @@ class TriangleAnimation(AnimationCallback, ABC):
             return self.setup_pic()
 
     def setup_points(self):
-        point1, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        point2, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        point3, = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        (point1,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        (point2,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        (point3,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
         self.points = (point1, point2, point3)
         self.ax.grid()
 
     def setup_pic(self):
         self.path = rcognita.__file__.replace("__init__.py", f"img/{self._pic}")
         self.pic_data, self.attributes = svg2paths(self.path)
-        parsed = parse_path(self.attributes[0]['d'])
+        parsed = parse_path(self.attributes[0]["d"])
         parsed.vertices -= parsed.vertices.mean(axis=0)
         self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
-        self.triangle, = self.ax.plot(0, 1, marker=self.marker, ms=30)
-
+        (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=30)
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
         try:
@@ -912,11 +974,14 @@ class TriangleAnimation(AnimationCallback, ABC):
             y_min, y_max = y.min(), y.max()
             x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
             y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-            self.ax.set_xlim(x_min - extra_margin,
-                             x_min + max(x_max-x_min, y_max-y_min) + extra_margin)
-            self.ax.set_ylim(y_min - extra_margin,
-                             y_min + max(x_max-x_min, y_max-y_min) + extra_margin)
-
+            self.ax.set_xlim(
+                x_min - extra_margin,
+                x_min + max(x_max - x_min, y_max - y_min) + extra_margin,
+            )
+            self.ax.set_ylim(
+                y_min - extra_margin,
+                y_min + max(x_max - x_min, y_max - y_min) + extra_margin,
+            )
 
     def construct_frame(self, x, y, theta):
         if self._pic is None:
@@ -925,8 +990,18 @@ class TriangleAnimation(AnimationCallback, ABC):
             return self.construct_frame_pic(x, y, theta)
 
     def construct_frame_points(self, x, y, theta):
-        offsets = np.array([[np.cos(theta + i * 2 * np.pi / 3),
-                             np.sin(theta + i * 2 * np.pi / 3)] for i in range(3)]) / 10
+        offsets = (
+            np.array(
+                [
+                    [
+                        np.cos(theta + i * 2 * np.pi / 3),
+                        np.sin(theta + i * 2 * np.pi / 3),
+                    ]
+                    for i in range(3)
+                ]
+            )
+            / 10
+        )
         location = np.array([x, y])
         for point, offset in zip(self.points, offsets):
             x, y = location + offset
@@ -935,9 +1010,10 @@ class TriangleAnimation(AnimationCallback, ABC):
 
     def construct_frame_pic(self, x, y, theta):
         self.triangle.set_data([x], [y])
-        self.marker._transform = self.marker.get_transform().rotate_deg(180 * theta / np.pi)
-        return self.triangle,
-
+        self.marker._transform = self.marker.get_transform().rotate_deg(
+            180 * theta / np.pi
+        )
+        return (self.triangle,)
 
 
 class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
@@ -950,9 +1026,9 @@ class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
         self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
 
     def on_trigger(self, _):
-        self.add_frame(x=self.system_state[0],
-                       y=self.system_state[1],
-                       theta=self.system_state[2])
+        self.add_frame(
+            x=self.system_state[0], y=self.system_state[1], theta=self.system_state[2]
+        )
 
 
 class PendulumAnimation(PlanarMotionAnimation):
@@ -962,7 +1038,7 @@ class PendulumAnimation(PlanarMotionAnimation):
     """
 
     def on_trigger(self, _):
-        self.add_frame(x=np.sin(self.system_state[0]), y = np.cos(self.system_state[0]))
+        self.add_frame(x=np.sin(self.system_state[0]), y=np.cos(self.system_state[0]))
 
     def lim(self):
         self.ax.set_xlim(-1.1, 1.1)
@@ -1126,7 +1202,9 @@ class StateCallback(Callback):
     """
 
     def is_target_event(self, obj, method, output):
-        attachee = self.attachee if self.attachee is not None else rcognita.system.System
+        attachee = (
+            self.attachee if self.attachee is not None else rcognita.system.System
+        )
         return (
             isinstance(obj, attachee)
             and method == rcognita.system.System.compute_closed_loop_rhs.__name__
@@ -1147,6 +1225,7 @@ class ObjectiveCallback(Callback):
     """
 
     cooldown = 8.0
+
     def is_target_event(self, obj, method, output):
         return isinstance(obj, rcognita.policies.Policy) and method == "objective"
 
@@ -1219,6 +1298,7 @@ class SaveProgressCallback(Callback):
     """Callback responsible for regularly saving data collected by other callbacks to the hard-drive."""
 
     once_in = 1
+
     def on_launch(self):
         with rcognita.main.metadata["report"]() as r:
             r["episode_current"] = 0

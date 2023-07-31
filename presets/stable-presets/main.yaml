@@ -30,4 +30,4 @@ mlflow_artifacts_location%%: ${oc.env:RCOGNITA_MLFLOW_ARTIFACTS_LOCATION}
 
 hydra:
   sweep:
-    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}
+    dir: ${oc.env:RCOGNITA_MULTIRUN_DIR}/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}
