@@ -65,9 +65,16 @@ def reinforce_objective(
     device: Union[str, torch.device],
     N_episodes: int,
 ) -> torch.FloatTensor:
-    """Calculate the surrogate objective for REINFORCE algorithm.
+    r"""Calculate the surrogate objective for REINFORCE algorithm.
 
-    TODO: add link to papers + latex code for objective function
+    Сalculates the following surrogate objective:
+    :math:`\\frac{1}{M}\\sum_{j=1}^M \\sum_{k=0}^N \\log \\rho_{\\theta}(y_{k|j}, u_{k|j} \\left(\\sum_{k'=f_k}^N \\gamma^{k'} r(y_{k|j}, u_{k|j}) - B_k\\right),`
+    where :math:`y_{k|j}` is the observation at time :math:`k` in episode :math:`j`, :math:`u_{k|j}` is the action at time :math:`k` in episode :math:`j`,
+    :math:`\\rho_{\\theta}(u \\mid y)` is the probability density function of the policy model, :math:`f_k` is equal to :math:`k` if
+    `is_do_not_let_the_past_distract_you` is `True`, and :math:`f_k` is equal to 0 if `is_do_not_let_the_past_distract_you` is `False`,
+    :math: `B_k` is the baseline, which equals 0 if `is_with_baseline` is `False` and the total objective from previous iteration if `is_with_baseline` is `True`,
+    :math: `M` is the number of episodes, :math:`N` is the number of actions.
+
 
     :param policy_model: The policy model used to calculate the log probabilities.
     :type policy_model: GaussianPDFModel
@@ -183,3 +190,46 @@ def ddpg_objective(
             dim=1,
         )
     ).mean()
+
+
+def temporal_difference_objective(
+    critic_model,
+    observation,
+    action,
+    running_objective,
+    td_n,
+    discount_factor,
+    device,
+    sampling_time,
+    is_use_same_critic,
+):
+    first_tdn_observations_actions = torch.cat(
+        [observation[:-td_n], action[:-td_n]],
+        dim=1,
+    ).to(device)
+    last_tdn_observations_actions = torch.cat(
+        [observation[td_n:], action[td_n:]],
+        dim=1,
+    ).to(device)
+    discount_factors = torch.DoubleTensor([discount_factor**i for i in range(td_n)])
+    batch_size = len(running_objective)
+    discounted_tdn_sum_of_running_objectives = torch.DoubleTensor(
+        [
+            (sampling_time * running_objective[i : i + td_n] * discount_factors).sum()
+            for i in range(batch_size - td_n)
+        ]
+    ).to(device)
+
+    temporal_difference = (
+        (
+            critic_model(first_tdn_observations_actions)
+            - discounted_tdn_sum_of_running_objectives
+            - discount_factor**td_n
+            * critic_model(
+                last_tdn_observations_actions,
+                use_stored_weights=not is_use_same_critic,
+            )
+        )
+        ** 2
+    ).mean()
+    return temporal_difference

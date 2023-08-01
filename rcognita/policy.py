@@ -16,10 +16,10 @@ from typing import Union, Optional
 from .__utilities import rc
 
 from .predictor import Predictor
-from .model import ModelNN
+from .model import ModelNN, Model
 from .critic import Critic
 from .system import System, ComposedSystem
-from .optimizable.optimizers import Optimizable
+from .optimizable.optimizers import Optimizable, OptimizerConfig
 from .data_buffers.data_buffer import DataBuffer
 from .objective import reinforce_objective, sdpg_objective, ddpg_objective
 from typing import List
@@ -45,7 +45,7 @@ class Policy(Optimizable):
         predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
         action_init=None,
-        optimizer_config=None,
+        optimizer_config: Optional[OptimizerConfig] = None,
         discount_factor: Optional[float] = 1.0,
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
@@ -249,32 +249,44 @@ class PolicyGradient(Policy, ABC):
 
     def __init__(
         self,
+        model: ModelNN,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
         batch_keys: List[str],
+        discount_factor: float = 1.0,
         device: str = "cpu",
-        batch_size: int = None,
         critic: Critic = None,
-        *args,
-        **kwargs,
     ):
-        """Instantiate PolicyGradient class.
+        """Instantiate PolicyGradient base class.
 
-        :param batch_keys: Arguments for optimization procedure.
+        :param model: Policy model object.
+        :type model: ModelNN
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Action bounds.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: Configuration of the optimizing procedure.
+        :type optimizer_config: OptimizerConfig
+        :param batch_keys: Keys for objective function.
         :type batch_keys: List[str]
-        :param device: device for gradient descent optimization, defaults to "cpu"
+        :param discount_factor: Discount factor for future running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Device to proceed the optimization on, defaults to "cpu"
         :type device: str, optional
-        :param batch_size: Bathch size, defaults to None
-        :type batch_size: int, optional
-        :param critic: Critic class to use, defaults to None
+        :param critic: Critic object, defaults to None
         :type critic: Critic, optional
         """
-        Policy.__init__(self, *args, **kwargs)
-        self.objective_inputs = [
-            self.create_variable(name=variable_name, is_constant=True)
-            for variable_name in batch_keys
-        ]
+        Policy.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            discount_factor=discount_factor,
+            optimizer_config=optimizer_config,
+        )
         self.device = torch.device(device)
         self.batch_keys = batch_keys
-        self.batch_size = batch_size
         self.critic = critic
 
         self.N_episodes: int
@@ -286,7 +298,7 @@ class PolicyGradient(Policy, ABC):
     def update_data_buffer(self, data_buffer: DataBuffer):
         pass
 
-    def optimize_weights_after_iteration(self, data_buffer: DataBuffer):
+    def optimize_callback(self, data_buffer: DataBuffer):
         # Send to device before optimization
         if self.critic is not None:
             self.critic.model = self.critic.model.to(self.device)
@@ -296,9 +308,7 @@ class PolicyGradient(Policy, ABC):
 
         self.optimize(
             dataloader=data_buffer.iter_batches(
-                batch_size=len(data_buffer)
-                if self.batch_size is None
-                else self.batch_size,
+                batch_size=len(data_buffer),
                 dtype=torch.FloatTensor,
                 keys=self.batch_keys,
             ),
@@ -308,8 +318,18 @@ class PolicyGradient(Policy, ABC):
         if self.critic is not None:
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
+        data_buffer.nullify_buffer()
+
+    def optimize_on_event(self, event: str, data_buffer: DataBuffer):
+        super().optimize_on_event(event, data_buffer)
+        if event == "reset_iteration":
+            data_buffer.nullify_buffer()
 
     def initialize_optimization_procedure(self):
+        self.objective_inputs = [
+            self.create_variable(name=variable_name, is_constant=True)
+            for variable_name in self.batch_keys
+        ]
         self.policy_weights = self.create_variable(
             name="policy_weights", like=self.model.named_parameters
         )
@@ -327,19 +347,48 @@ class Reinforce(PolicyGradient):
 
     def __init__(
         self,
-        *args,
-        is_with_baseline=True,
-        is_do_not_let_the_past_distract_you=False,
-        **kwargs,
+        model: ModelNN,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+        is_with_baseline: bool = True,
+        is_do_not_let_the_past_distract_you: bool = False,
     ):
         """Instantiate Reinforce class.
 
-        :param is_with_baseline: Whether to use baseline (total objectives from the previous iterations), defaults to True
+        :param model: Policy model.
+        :type model: ModelNN
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Action bounds for the Agent.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param discount_factor: Discount factor for discounting future running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Device for gradient step optimization, defaults to "cpu"
+        :type device: str, optional
+        :param is_with_baseline: Whether to use baseline in surrogate objective. Baseline is taken as total objective from the last iteration, defaults to True
         :type is_with_baseline: bool, optional
-        :param is_do_not_let_the_past_distract_you: Where to use tail total objectives, defaults to False
+        :param is_do_not_let_the_past_distract_you: Whether to use tail total objectives in surrogate objective or not, defaults to False
         :type is_do_not_let_the_past_distract_you: bool, optional
         """
-        PolicyGradient.__init__(self, *args, **kwargs)
+        PolicyGradient.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            batch_keys=[
+                "observation",
+                "action",
+                "total_objective",
+                "tail_total_objective",
+                "baseline",
+            ],
+            optimizer_config=optimizer_config,
+            discount_factor=discount_factor,
+            device=device,
+        )
         self.is_with_baseline = is_with_baseline
         self.is_do_not_let_the_past_distract_you = is_do_not_let_the_past_distract_you
         self.next_baseline = 0.0
@@ -410,18 +459,45 @@ class Reinforce(PolicyGradient):
 class SDPG(PolicyGradient):
     """Policy for Stochastic Deep Policy Gradient (SDPG)."""
 
-    def __init__(self, *args, **kwargs):
-        """Instantiate SDPG class."""
-        PolicyGradient.__init__(self, *args, **kwargs)
-        self.initialize_optimization_procedure()
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+    ):
+        """Instantiate SDPG class.
 
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
+        :param model: Policy Model.
+        :type model: ModelNN
+        :param critic: Critic object that is optmized via temporal difference objective.
+        :type critic: Critic
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Action bounds for the Agent.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: Configuration of the optimization procedure.
+        :type optimizer_config: OptimizerConfig
+        :param discount_factor: Discount factor for discounting future running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Device to proceed the optimization process, defaults to "cpu"
+        :type device: str, optional
+        """
+        PolicyGradient.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            batch_keys=["observation", "action", "timestamp"],
+            discount_factor=discount_factor,
+            device=device,
+            critic=critic,
+            optimizer_config=optimizer_config,
         )
-        self.register_objective(
-            self.objective_function, variables=self.objective_inputs
-        )
+        self.initialize_optimization_procedure()
 
     def objective_function(self, observation, action, timestamp):
         return sdpg_objective(
@@ -446,9 +522,27 @@ class SDPG(PolicyGradient):
 class DDPG(PolicyGradient):
     """Policy for Deterministic Deep Policy Gradient (DDPG)."""
 
-    def __init__(self, *args, **kwargs):
-        """Instantiate DDPG class."""
-        PolicyGradient.__init__(self, *args, **kwargs)
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+    ):
+        PolicyGradient.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            batch_keys=["observation"],
+            discount_factor=discount_factor,
+            device=device,
+            critic=critic,
+            optimizer_config=optimizer_config,
+        )
         self.initialize_optimization_procedure()
 
     def objective_function(self, observation):

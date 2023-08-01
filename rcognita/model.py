@@ -10,7 +10,6 @@ from copy import deepcopy
 import rcognita
 
 
-
 from .__utilities import rc
 
 try:
@@ -137,10 +136,7 @@ class ModelQuadLin(Model):
 
 
 class ModelQuadLinQuad(Model):
-    """
-    Quadratic-linear model.
-
-    """
+    """Quadratic-linear model."""
 
     model_name = "quad-lin"
 
@@ -489,6 +485,7 @@ class ModelNN(nn.Module):
 
         return result
 
+
 class WeightClipper:
     """Weight clipper for pytorch layers."""
 
@@ -507,7 +504,6 @@ class WeightClipper:
             w = module.weight.data
             w = w.clamp(self.weight_min, self.weight_max)
             module.weight.data = w
-
 
 
 # TODO: WHY IS THIS CALLED QUAD MIX BLA-BLA IF IT'S JUST ONE LAYER? FIX
@@ -610,8 +606,6 @@ class ModelPerceptron(ModelNN):
         return self._forward(input_tensor)
 
 
-
-
 class ModelWeightContainerTorch(ModelNN):
     """Pytorch weight container for actor."""
 
@@ -662,8 +656,6 @@ class LookupTable(Model):
             ).astype(int)
         )
         return self.weights[indices]
-
-
 
 
 class ModelWithScaledAction(ModelNN):

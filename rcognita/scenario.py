@@ -180,10 +180,16 @@ class OnlineScenario(Scenario):
         self.recent_total_objectives_of_episodes = self.total_objectives_of_episodes
         self.total_objectives_of_episodes = []
 
+        if self.current_scenario_status != "simulation_ended":
+            self.controller.update_weights(event="reset_iteration")
+
     def reset_episode(self):
         self.total_objectives_of_episodes.append(self.total_objective)
         self.episode_counter += 1
         self.is_episode_ended = False
+        if self.current_scenario_status != "simulation_ended":
+            self.controller.update_weights(event="reset_episode")
+
         return self.total_objective
 
     def reset_simulation(self):
@@ -392,20 +398,3 @@ class OnlineScenario(Scenario):
                     return "iteration_ended"
             else:
                 return "episode_ended"
-
-
-class MonteCarloScenario(OnlineScenario):
-    """A Monte-Carlo scenario which is used for Monte-Carlo learning."""
-
-    def reset_iteration(self):
-        if self.current_scenario_status != "simulation_ended":
-            self.controller.critic.optimize_weights_after_iteration(
-                self.controller.data_buffer
-            )
-            self.controller.policy.optimize_weights_after_iteration(
-                self.controller.data_buffer
-            )
-            self.controller.data_buffer.nullify_buffer()
-
-        super().reset_episode()
-        super().reset_iteration()

@@ -6,7 +6,6 @@ defaults:
 system: ~ system
 critic: ~ controller.critic
 action_bounds: $ system_specific.action_bounds
-batch_keys: = ["observation", "action", "timestamp"]
 discount_factor: $ scenario.discount_factor
 device: cpu
 

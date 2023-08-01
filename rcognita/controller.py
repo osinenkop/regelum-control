@@ -18,6 +18,7 @@ from .__utilities import rc, Clock
 from rcognita import RcognitaBase
 from .policy import Policy
 from .critic import Critic
+from .optimizable import Optimizable
 
 
 def apply_action_bounds(method):
@@ -74,6 +75,9 @@ class Controller(RcognitaBase, ABC):
     @abstractmethod
     @apply_callbacks()
     def compute_action(self, time, state, observation):
+        pass
+
+    def update_weights(self, event):
         pass
 
 
@@ -178,6 +182,11 @@ class PGController(RLController):
         self.policy.update_action(observation)
 
         return self.policy.action
+
+    def update_weights(self, event):
+        if isinstance(self.critic, Optimizable):
+            self.critic.optimize_on_event(event, self.data_buffer)
+        self.policy.optimize_on_event(event, self.data_buffer)
 
 
 class CALFControllerExPost(RLController):

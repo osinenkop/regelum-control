@@ -1,6 +1,6 @@
 defaults:
   - system: inv_pendulum 
-  - scenario: monte_carlo
+  - scenario: online 
   - simulator: casadi
   # - optional nominal_controller: nominal_${system}
   - controller: reinforce

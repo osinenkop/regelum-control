@@ -51,7 +51,10 @@ class DataBuffer:
         return pd.DataFrame(self.data)
 
     def __len__(self):
-        return max([len(self.data[k]) for k in self.data.keys()])
+        if len(self.data.keys()) == 0:
+            return 0
+        else:
+            return max([len(self.data[k]) for k in self.data.keys()])
 
     def getitem(
         self,

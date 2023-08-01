@@ -38,7 +38,6 @@ from .core.entities import (
 )
 from .core.hooks import requires_grad, detach, data_closure, metadata_closure
 
-
 import rcognita
 
 
@@ -49,6 +48,7 @@ class Optimizable(rcognita.RcognitaBase):
         """Initialize an optimizable object."""
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
+        self.__callback_target_events = optimizer_config.callback_target_events
         self.__is_problem_defined = False
         self.__variables: VarContainer = VarContainer([])
         self.__functions: FuncContainer = FuncContainer(tuple())
@@ -516,6 +516,21 @@ class Optimizable(rcognita.RcognitaBase):
                     if k in function.variables.constants.names
                 }
             )
+
+    def is_target_event(self, event):
+        if self.__callback_target_events is None:
+            return False
+
+        return event in self.__callback_target_events
+
+    def optimize_on_event(
+        self, event: str, *optimize_callback_args, **optimize_callback_kwargs
+    ):
+        if self.is_target_event(event):
+            self.optimize_callback(*optimize_callback_args, **optimize_callback_kwargs)
+
+    def optimize_callback(self, *optimize_callback_args, **optimize_callback_kwargs):
+        raise NotImplementedError("optimize_callback is not implemented")
 
     def optimize(self, raw=False, **parameters):
         if not self.__is_problem_defined:

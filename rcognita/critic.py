@@ -17,6 +17,7 @@ from abc import ABC
 import scipy as sp
 import random
 from .optimizable import Optimizable
+from .objective import temporal_difference_objective
 
 try:
     import torch
@@ -451,54 +452,19 @@ class CriticOnPolicy(Critic, Optimizable):
 
     # @apply_callbacks()
     def temporal_difference_objective(self, observation, action, running_objective):
-        """
-        Compute the objective function of the critic, which is typically a squared temporal difference.
-        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
-        :type data_buffer: dict, optional
-        :param weights: the weights of the critic model, if different from the stored weights.
-        :type weights: numpy.ndarray, optional
-        :return: the value of the objective function
-        :rtype: float
-        """
-
-        first_tdn_observations_actions = torch.cat(
-            [observation[: -self.td_n], action[: -self.td_n]],
-            dim=1,
-        ).to(self.device)
-        last_tdn_observations_actions = torch.cat(
-            [observation[self.td_n :], action[self.td_n :]],
-            dim=1,
-        ).to(self.device)
-        discount_factors = torch.DoubleTensor(
-            [self.discount_factor**i for i in range(self.td_n)]
+        return temporal_difference_objective(
+            critic_model=self.model,
+            observation=observation,
+            action=action,
+            running_objective=running_objective,
+            td_n=self.td_n,
+            discount_factor=self.discount_factor,
+            device=self.device,
+            sampling_time=self.sampling_time,
+            is_use_same_critic=self.is_same_critic,
         )
-        batch_size = len(running_objective)
-        discounted_tdn_sum_of_running_objectives = torch.DoubleTensor(
-            [
-                (
-                    self.sampling_time
-                    * running_objective[i : i + self.td_n]
-                    * discount_factors
-                ).sum()
-                for i in range(batch_size - self.td_n)
-            ]
-        ).to(self.device)
 
-        temporal_difference = (
-            (
-                self.model(first_tdn_observations_actions)
-                - discounted_tdn_sum_of_running_objectives
-                - self.discount_factor**self.td_n
-                * self.model(
-                    last_tdn_observations_actions,
-                    use_stored_weights=not self.is_same_critic,
-                )
-            )
-            ** 2
-        ).mean()
-        return temporal_difference
-
-    def optimize_weights_after_iteration(self, data_buffer):
+    def optimize_callback(self, data_buffer):
         self.model.to(self.device)
         self.model.cache.to(self.device)
 

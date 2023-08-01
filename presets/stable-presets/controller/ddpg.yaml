@@ -16,6 +16,8 @@ critic:
   device: $ controller.device%%
   optimizer_config: 
     _target_: rcognita.OptimizerConfig
+    callback_target_events:
+      - reset_iteration
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
