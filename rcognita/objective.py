@@ -192,17 +192,40 @@ def ddpg_objective(
     ).mean()
 
 
-def temporal_difference_objective(
-    critic_model,
-    observation,
-    action,
-    running_objective,
-    td_n,
-    discount_factor,
-    device,
-    sampling_time,
-    is_use_same_critic,
-):
+def temporal_difference_objective_on_policy(
+    critic_model: ModelNN,
+    observation: torch.FloatTensor,
+    action: torch.FloatTensor,
+    running_objective: torch.FloatTensor,
+    td_n: int,
+    discount_factor: float,
+    device: Union[str, torch.device],
+    sampling_time: float,
+    is_use_same_critic: bool,
+) -> torch.FloatTensor:
+    """Calculate temporal difference objective.
+
+    :param critic_model: Q function model.
+    :type critic_model: ModelNN
+    :param observation: Batch of observations.
+    :type observation: torch.FloatTensor
+    :param action: Batch of actions.
+    :type action: torch.FloatTensor
+    :param running_objective: Batch of running objectives.
+    :type running_objective: torch.FloatTensor
+    :param td_n: Number of temporal difference steps.
+    :type td_n: int
+    :param discount_factor: Discount factor for future running objectives.
+    :type discount_factor: float
+    :param device: Device to proceed computations on.
+    :type device: Union[str, torch.device]
+    :param sampling_time: Sampling time for discounting.
+    :type sampling_time: float
+    :param is_use_same_critic: Whether to use the critic model from the previous iteration or not (`True` for not using, `False` for using).
+    :type is_use_same_critic: bool
+    :return: objective value
+    :rtype: torch.FloatTensor
+    """
     first_tdn_observations_actions = torch.cat(
         [observation[:-td_n], action[:-td_n]],
         dim=1,

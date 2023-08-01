@@ -17,7 +17,7 @@ from abc import ABC
 import scipy as sp
 import random
 from .optimizable import Optimizable
-from .objective import temporal_difference_objective
+from .objective import temporal_difference_objective_on_policy
 
 try:
     import torch
@@ -435,7 +435,7 @@ class CriticOnPolicy(Critic, Optimizable):
         )
 
         self.register_objective(
-            func=self.temporal_difference_objective,
+            func=self.objective_function,
             variables=[
                 self.var_observation,
                 self.var_action,
@@ -451,8 +451,8 @@ class CriticOnPolicy(Critic, Optimizable):
         self.optimizer = None
 
     # @apply_callbacks()
-    def temporal_difference_objective(self, observation, action, running_objective):
-        return temporal_difference_objective(
+    def objective_function(self, observation, action, running_objective):
+        return temporal_difference_objective_on_policy(
             critic_model=self.model,
             observation=observation,
             action=action,
