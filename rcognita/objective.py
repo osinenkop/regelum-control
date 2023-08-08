@@ -7,7 +7,7 @@ For instance, a running objective can be used commonly by a generic optimal cont
 from abc import ABC, abstractmethod
 
 import rcognita
-from .model import Model, GaussianPDFModel, ModelNN
+from .model import Model, PerceptronWithNormalNoise, ModelNN
 from typing import Optional, Union
 import torch
 
@@ -54,7 +54,7 @@ class RunningObjective(Objective):
 
 
 def reinforce_objective(
-    policy_model: GaussianPDFModel,
+    policy_model: PerceptronWithNormalNoise,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
     tail_total_objectives: torch.FloatTensor,
@@ -100,8 +100,7 @@ def reinforce_objective(
     :return: surrogate objective value.
     :rtype: torch.FloatTensor
     """
-    observations_actions = torch.cat([observations, actions], dim=1).to(device)
-    log_pdfs = policy_model.log_pdf(observations_actions)
+    log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
     if is_do_not_let_the_past_distract_you:
         target_objectives = tail_total_objectives.to(device)
     else:
@@ -113,7 +112,7 @@ def reinforce_objective(
 
 
 def sdpg_objective(
-    policy_model: GaussianPDFModel,
+    policy_model: PerceptronWithNormalNoise,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
@@ -127,7 +126,7 @@ def sdpg_objective(
     TODO: add link to papers + latex code for objective function
 
     :param policy_model: The policy model that represents the probability density function (PDF) of the action given the observation.
-    :type policy_model: GaussianPDFModel
+    :type policy_model: PerceptronWithNormalNoise
     :param critic_model: The critic model that estimates the Q-function for a given observation-action pair.
     :type critic_model: ModelNN
     :param observations: The tensor containing the observations.
@@ -157,12 +156,12 @@ def sdpg_objective(
         discounts = discount_factor ** timestamps.to(device)
         critic_value = discounts * (critic_model(observations_actions) - baseline)
 
-    log_pdfs = policy_model.log_pdf(observations_actions)
+    log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
     return (log_pdfs * critic_value).sum() / N_episodes
 
 
 def ddpg_objective(
-    policy_model: GaussianPDFModel,
+    policy_model: ModelNN,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     device: Union[str, torch.device],
@@ -192,16 +191,17 @@ def ddpg_objective(
     ).mean()
 
 
-def temporal_difference_objective_on_policy(
+def temporal_difference_objective(
     critic_model: ModelNN,
     observation: torch.FloatTensor,
-    action: torch.FloatTensor,
     running_objective: torch.FloatTensor,
     td_n: int,
     discount_factor: float,
     device: Union[str, torch.device],
     sampling_time: float,
     is_use_same_critic: bool,
+    action: Optional[torch.FloatTensor] = None,
+    critic_targets: Optional[torch.FloatTensor] = None,
 ) -> torch.FloatTensor:
     """Calculate temporal difference objective.
 
@@ -226,32 +226,42 @@ def temporal_difference_objective_on_policy(
     :return: objective value
     :rtype: torch.FloatTensor
     """
-    first_tdn_observations_actions = torch.cat(
-        [observation[:-td_n], action[:-td_n]],
-        dim=1,
-    ).to(device)
-    last_tdn_observations_actions = torch.cat(
-        [observation[td_n:], action[td_n:]],
-        dim=1,
-    ).to(device)
-    discount_factors = torch.DoubleTensor([discount_factor**i for i in range(td_n)])
     batch_size = len(running_objective)
-    discounted_tdn_sum_of_running_objectives = torch.DoubleTensor(
+    assert batch_size > td_n, f"batch size {batch_size} too small for such td_n {td_n}"
+
+    discount_factors = torch.FloatTensor(
+        [discount_factor ** (sampling_time * i) for i in range(td_n)]
+    )
+    discounted_tdn_sum_of_running_objectives = torch.FloatTensor(
         [
-            (sampling_time * running_objective[i : i + td_n] * discount_factors).sum()
+            [(running_objective[i : i + td_n] * discount_factors).sum()]
             for i in range(batch_size - td_n)
         ]
     ).to(device)
 
+    if action is not None:
+        first_tdn_inputs = torch.cat([observation[:-td_n], action[:-td_n]], dim=1).to(
+            device
+        )
+        last_tdn_inputs = torch.cat([observation[td_n:], action[td_n:]], dim=1).to(
+            device
+        )
+    else:
+        first_tdn_inputs = observation[:-td_n].to(device)
+        last_tdn_inputs = observation[td_n:].to(device)
+
+    if critic_targets is None:
+        critic_targets = critic_model(
+            last_tdn_inputs, use_stored_weights=not is_use_same_critic
+        )
+    else:
+        critic_targets = critic_targets[-len(first_tdn_inputs) :].to(device)
+
     temporal_difference = (
         (
-            critic_model(first_tdn_observations_actions)
+            critic_model(first_tdn_inputs)
             - discounted_tdn_sum_of_running_objectives
-            - discount_factor**td_n
-            * critic_model(
-                last_tdn_observations_actions,
-                use_stored_weights=not is_use_same_critic,
-            )
+            - discount_factor ** (td_n * sampling_time) * critic_targets
         )
         ** 2
     ).mean()

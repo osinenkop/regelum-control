@@ -14,11 +14,16 @@ import numpy as np
 import scipy as setpoint
 from scipy.optimize import minimize
 
+from rcognita.critic import Critic
+from rcognita.policy import Policy
+
 from .__utilities import rc, Clock
 from rcognita import RcognitaBase
 from .policy import Policy
 from .critic import Critic
 from .optimizable import Optimizable
+from typing import Union, Optional
+from .data_buffers import DataBuffer
 
 
 def apply_action_bounds(method):
@@ -77,46 +82,128 @@ class Controller(RcognitaBase, ABC):
     def compute_action(self, time, state, observation):
         pass
 
-    def update_weights(self, event):
+    def optimize_on_event(self, event):
         pass
 
 
-# TODO: OBJECTIVE LEARNER?
 class RLController(Controller):
-    """Reinforcement learning controller.
-
-    Takes instances of `actor` and `critic` to operate.
-    Action computation is sampled, i.e., actions are computed at discrete, equi-distant moments in time.
-    `critic` in turn is updated every `critic_period` units of time.
-    """
+    """Controller for policy and value iteration updates."""
 
     def __init__(
         self,
-        *args,
         policy: Policy,
         critic: Critic,
-        time_start=0,
+        running_objective,
+        critic_optimization_event: str,
+        policy_optimization_event: str,
+        data_buffer_nullify_event: str,
+        discount_factor=1.0,
+        is_critic_first=False,
         action_bounds=None,
-        data_buffer=None,
-        **kwargs,
+        max_data_buffer_size: Optional[int] = None,
+        time_start: float = 0,
+        sampling_time: float = 0.1,
     ):
-        """Initialize an instance of RLController.
+        Controller.__init__(self, time_start=time_start, sampling_time=sampling_time)
 
-        :param args: positional arguments for base class
-        :param critic_period: time interval between consecutive critic updates
-        :param actor: an instance of policy
-        :param critic: an instance of objective learner
-        :param time_start: time at which computations start
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        :param episode_data_buffer: data buffer contains data obtained during episode
-        :param kwargs: keyword arguments for base class
-        """
-        super().__init__(*args, **kwargs)
+        self.critic_optimization_event = critic_optimization_event
+        self.policy_optimization_event = policy_optimization_event
+        self.data_buffer_nullify_event = data_buffer_nullify_event
+        self.data_buffer = DataBuffer(max_data_buffer_size)
+        self.running_objective = running_objective
+        self.discount_factor = discount_factor
+        self.iteration_counter: int = 0
+        self.episode_counter: int = 0
+        self.step_counter: int = 0
+        self.total_objective: float = 0.0
         self.policy = policy
         self.critic = critic
         self.action_bounds = action_bounds
-        self.data_buffer = data_buffer
-        self.critic_clock = time_start
+        self.is_first_compute_action_call = True
+        self.is_critic_first = is_critic_first
+
+    def policy_update(self, observation, event, time):
+        if self.policy_optimization_event == event:
+            self.policy.optimize_on_event(self.data_buffer)
+        if event == "compute_action":
+            self.policy.update_action(observation)
+            running_objective = self.running_objective(observation, self.policy.action)
+            self.data_buffer.push_to_end(
+                action=self.policy.action,
+                running_objective=running_objective,
+                current_total_objective=self.update_total_objective(
+                    running_objective, time
+                ),
+            )
+
+    def critic_update(self):
+        if self.critic_optimization_event == "compute_action":
+            self.critic.optimize_on_event(self.data_buffer)
+
+    @apply_action_bounds
+    def compute_action(
+        self,
+        state,
+        observation,
+        time=0,
+    ):
+        self.critic.receive_state(state)
+        self.policy.receive_state(state)
+        self.policy.receive_observation(observation)
+
+        self.data_buffer.push_to_end(
+            observation=observation,
+            timestamp=time,
+            episode_id=self.episode_counter,
+            iteration_id=self.iteration_counter,
+            step_counter=self.step_counter,
+        )
+
+        if self.is_first_compute_action_call:
+            self.policy_update(observation, "compute_action", time)
+            self.is_first_compute_action_call = False
+            self.step_counter += 1
+            return self.policy.action
+
+        if self.is_critic_first:
+            self.critic_update()
+            self.policy_update(observation, "compute_action", time)
+        else:
+            self.policy_update(observation, "compute_action", time)
+            self.critic_update()
+
+        self.step_counter += 1
+        return self.policy.action
+
+    def update_total_objective(self, running_objective, time):
+        self.total_objective += (
+            running_objective * self.discount_factor**time * self.sampling_time
+        )
+        return self.total_objective
+
+    def optimize_on_event(self, event):
+        if event == "reset_iteration":
+            self.iteration_counter += 1
+            self.step_counter = 0
+            self.is_first_compute_action_call = True
+        if event == "reset_episode":
+            self.episode_counter += 1
+            self.step_counter = 0
+            self.is_first_compute_action_call = True
+
+        if self.is_critic_first:
+            if event == self.critic_optimization_event:
+                self.critic.optimize_on_event(self.data_buffer)
+            if event == self.policy_optimization_event:
+                self.policy.optimize_on_event(self.data_buffer)
+        else:
+            if event == self.policy_optimization_event:
+                self.policy.optimize_on_event(self.data_buffer)
+            if event == self.critic_optimization_event:
+                self.critic.optimize_on_event(self.data_buffer)
+
+        if event == self.data_buffer_nullify_event:
+            self.data_buffer.nullify_buffer()
 
     def reset(self):
         """Reset agent for use in multi-episode simulation.
@@ -126,67 +213,7 @@ class RLController(Controller):
 
         """
         self.clock.reset()
-        self.critic.clock.reset()
         self.policy.action_old = self.policy.action_init
-
-    @apply_callbacks()
-    def pre_compute_action(self):
-        return None
-
-    # TODO: DOCSTRING. FORMAT COMMENTS CORRECTLY
-    @apply_action_bounds
-    def compute_action(self, time, state, observation):
-        ### This method is called to generate an event in order for callbacks to fire.
-        ### Namely, we want to save the critic weights, for instance, and other stuff.
-        self.pre_compute_action()
-
-        ### Store current action and observation in critic's data buffer
-
-        self.critic.update_buffers(observation, self.policy.action)
-        self.critic.receive_state(state)
-
-        ### Store current observation in policy
-        self.policy.receive_observation(observation)
-        self.policy.receive_state(state)
-
-        ### Optimize critic's model weights
-        self.critic.optimize_weights(time=time)
-        ### Substitute and cache critic's model optimized weights
-        self.critic.update_and_cache_weights()
-
-        ### Optimize policy's model weights based on current observation
-        self.policy.optimize_weights()
-
-        ### Substitute and cache weights in the policy's model
-        self.policy.update_and_cache_weights()
-        self.policy.update_action(observation)
-
-        return self.policy.action
-
-
-class PGController(RLController):
-    @apply_action_bounds
-    def compute_action(
-        self,
-        state,
-        observation,
-        is_critic_update=True,
-        time=0,
-    ):
-        self.critic.receive_state(state)
-
-        ### Store current observation in policy
-        self.policy.receive_observation(observation)
-        self.policy.receive_state(state)
-
-        self.policy.update_action(observation)
-
-        return self.policy.action
-
-    def update_weights(self, event):
-        if isinstance(self.critic, Optimizable):
-            self.critic.optimize_on_event(event, self.data_buffer)
-        self.policy.optimize_on_event(event, self.data_buffer)
 
 
 class CALFControllerExPost(RLController):
@@ -229,7 +256,7 @@ class CALFControllerExPost(RLController):
 
     # TODO: DOCSTRING
     @apply_callbacks()
-    def compute_action(self, state, observation, is_critic_update=False, time=0):
+    def compute_action(self, state, observation, time=0):
         # Update data buffers
         self.critic.update_buffers(
             observation, self.policy.action
@@ -305,7 +332,6 @@ class CALFControllerPredictive(CALFControllerExPost):
         self,
         state,
         observation,
-        is_critic_update=False,
         time=0,
     ):
         # Update data buffers

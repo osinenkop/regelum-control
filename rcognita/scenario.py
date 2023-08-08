@@ -181,14 +181,14 @@ class OnlineScenario(Scenario):
         self.total_objectives_of_episodes = []
 
         if self.current_scenario_status != "simulation_ended":
-            self.controller.update_weights(event="reset_iteration")
+            self.controller.optimize_on_event(event="reset_iteration")
 
     def reset_episode(self):
         self.total_objectives_of_episodes.append(self.total_objective)
         self.episode_counter += 1
         self.is_episode_ended = False
         if self.current_scenario_status != "simulation_ended":
-            self.controller.update_weights(event="reset_episode")
+            self.controller.optimize_on_event(event="reset_episode")
 
         return self.total_objective
 
@@ -366,20 +366,6 @@ class OnlineScenario(Scenario):
             self.simulator.receive_action(self.action)
             self.is_episode_ended = self.simulator.do_sim_step() == -1
             self.post_step()
-
-            if (
-                self.controller.is_time_for_new_sample
-                and self.controller.data_buffer is not None
-            ):
-                self.controller.data_buffer.push_to_end(
-                    observation=self.observation,
-                    action=self.action,
-                    timestamp=self.time,
-                    running_objective=self.running_objective_value,
-                    current_total_objective=self.total_objective,
-                    episode_id=self.episode_counter,
-                    iteration_id=self.iteration_counter,
-                )
             return "episode_continues"
         else:
             self.reset_episode()

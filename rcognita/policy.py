@@ -298,7 +298,7 @@ class PolicyGradient(Policy, ABC):
     def update_data_buffer(self, data_buffer: DataBuffer):
         pass
 
-    def optimize_callback(self, data_buffer: DataBuffer):
+    def optimize_on_event(self, data_buffer: DataBuffer):
         # Send to device before optimization
         if self.critic is not None:
             self.critic.model = self.critic.model.to(self.device)
@@ -311,6 +311,8 @@ class PolicyGradient(Policy, ABC):
                 batch_size=len(data_buffer),
                 dtype=torch.FloatTensor,
                 keys=self.batch_keys,
+                mode="forward",
+                n_batches=1,
             ),
         )
 
@@ -318,12 +320,6 @@ class PolicyGradient(Policy, ABC):
         if self.critic is not None:
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
-        data_buffer.nullify_buffer()
-
-    def optimize_on_event(self, event: str, data_buffer: DataBuffer):
-        super().optimize_on_event(event, data_buffer)
-        if event == "reset_iteration":
-            data_buffer.nullify_buffer()
 
     def initialize_optimization_procedure(self):
         self.objective_inputs = [
@@ -559,6 +555,125 @@ class DDPG(PolicyGradient):
             self.action = (
                 self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
             )
+
+
+class RLPolicy(Policy):
+    def __init__(
+        self,
+        model: ModelNN,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        critic: Critic,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+        epsilon_random: bool = False,
+        epsilon_random_parameter: float = 0.0,
+    ):
+        Policy.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            optimizer_config=optimizer_config,
+            discount_factor=discount_factor,
+        )
+        self.critic = critic
+        self.device = device
+        self.epsilon_random = epsilon_random
+        self.epsilon_random_parameter = epsilon_random_parameter
+        self.initialize_optimization_procedure()
+
+    def initialize_optimization_procedure(self):
+        self.policy_weights = self.create_variable(
+            name="policy_weights",
+            is_constant=False,
+            like=self.model.named_parameters,
+        )
+        self.policy_model_output = self.create_variable(
+            name="policy_model_output", is_constant=True
+        )
+        self.observation = self.create_variable(name="observation", is_constant=True)
+        self.connect_source(
+            self.policy_model_output, func=self.model, source=self.observation
+        )
+        self.register_objective(
+            self.objective_function,
+            variables=[self.observation, self.policy_model_output],
+        )
+
+    def update_action(self, observation=None):
+        self.action_old = self.action
+        if self.epsilon_random:
+            toss = np.random.choice(
+                2,
+                1,
+                p=[
+                    1 - self.epsilon_random_parameter,
+                    self.epsilon_random_parameter,
+                ],
+            )
+            is_exploration = bool(toss)
+
+            if is_exploration:
+                self.action = np.random.uniform(
+                    self.action_bounds[:, 0], self.action_bounds[:, 1]
+                )
+            else:
+                self.action = self.get_action(observation)
+        else:
+            self.action = self.get_action(observation)
+
+        return self.action
+
+    def objective_function(self, observation, policy_model_output):
+        return self.critic.model(observation, policy_model_output).mean()
+
+    def optimize_on_event(self, data_buffer: DataBuffer):
+        self.optimize(
+            dataloader=data_buffer.iter_batches(
+                **self.optimizer_config.config_options.iter_batches_config
+            )
+        )
+
+
+class RPOPolicy(RLPolicy):
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        predictor,
+        running_objective,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+        epsilon_random: bool = False,
+        epsilon_random_parameter: float = 0.0,
+    ):
+        RLPolicy.__init__(
+            self,
+            model=model,
+            critic=critic,
+            system=system,
+            action_bounds=action_bounds,
+            optimizer_config=optimizer_config,
+            discount_factor=discount_factor,
+            device=device,
+            epsilon_random=epsilon_random,
+            epsilon_random_parameter=epsilon_random_parameter,
+        )
+        self.predictor = predictor
+        self.running_objective = running_objective
+
+    def objective_function(self, observation, policy_model_output):
+        observation_next = self.predictor.predict(
+            observation[-1], policy_model_output[-1]
+        )
+        return self.running_objective(
+            observation[-1], policy_model_output[-1]
+        ) + self.critic.model(observation_next)
 
 
 class MPC(Policy):

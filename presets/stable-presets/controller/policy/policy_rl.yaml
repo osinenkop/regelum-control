@@ -1,9 +1,10 @@
-_target_: rcognita.policy.Reinforce
+_target_: rcognita.policy.RLPolicy
 
 defaults:
-  - model: perceptron_with_normal_noise
+  - model: weight_container_torch
 
 system: ~ system
+critic: ~ controller.critic
 action_bounds: $ system_specific.action_bounds
 discount_factor: $ scenario.discount_factor
 device: cpu
@@ -15,4 +16,4 @@ optimizer_config:
   opt_options: 
     lr: 0.1
   config_options:
-    n_epochs: 1
+    n_epochs: 10

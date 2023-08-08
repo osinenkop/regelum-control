@@ -17,7 +17,7 @@ from abc import ABC
 import scipy as sp
 import random
 from .optimizable import Optimizable
-from .objective import temporal_difference_objective_on_policy
+from .objective import temporal_difference_objective
 
 try:
     import torch
@@ -26,15 +26,15 @@ except (ModuleNotFoundError, ImportError):
 
     torch = MagicMock()
 
-from copy import deepcopy
 from .model import ModelWeightContainer
 from .model import Model
 from .objective import Objective
-from typing import Optional
-from .data_buffers import EpisodicSampler
+from typing import Optional, Union, List
+from .optimizable import OptimizerConfig
+from .data_buffers import DataBuffer
 
 
-class Critic(rcognita.RcognitaBase, ABC):
+class Critic(Optimizable, ABC):
     """Critic base class.
 
     A critic is an object that estimates or provides the value of a given action or state in a reinforcement learning problem.
@@ -44,12 +44,18 @@ class Critic(rcognita.RcognitaBase, ABC):
 
     def __init__(
         self,
-        state_init: np.ndarray = None,
         model: Optional[Model] = None,
         running_objective: Optional[Objective] = None,
+        td_n: int = 1,
+        device: Union[str, torch.device] = "cpu",
+        is_same_critic: bool = False,
+        is_value_function: bool = False,
+        is_on_policy: bool = False,
+        optimizer_config: Optional[OptimizerConfig] = None,
+        action_bounds: Optional[Union[List, np.array]] = None,
+        size_mesh: Optional[int] = None,
         discount_factor: float = 1.0,
         sampling_time: float = 0.01,
-        critic_regularization_param: float = 0.0,
     ):
         """Initialize a critic object.
 
@@ -66,6 +72,7 @@ class Critic(rcognita.RcognitaBase, ABC):
         :param critic_regularization_param: Regularization parameter for the critic
         :type critic_regularization_param: float
         """
+        Optimizable.__init__(self, optimizer_config=optimizer_config)
         if model:
             self.model = model
         else:
@@ -77,31 +84,20 @@ class Critic(rcognita.RcognitaBase, ABC):
         self.current_critic_loss = 0
         self.total_objective = 0
         self.sampling_time = sampling_time
-        self.clock = Clock(sampling_time)
-        self.intrinsic_constraints = []
-        self.penalty_param = 0
-        self.critic_regularization_param = critic_regularization_param
-        self.state_init = state_init
+        self.td_n = td_n
+        self.device = device
+        self.is_same_critic = is_same_critic
+        self.is_value_function = is_value_function
+        self.is_on_policy = is_on_policy
+        self.action_bounds = (
+            np.array(action_bounds) if action_bounds is not None else None
+        )
+        self.size_mesh = size_mesh
+
+        self.initialize_optimize_procedure()
 
     def receive_state(self, state):
         self.state = state
-
-    def optimize_weights_after_iteration(self, data_buffer):
-        pass
-
-    @property
-    def optimizer_engine(self):
-        """Returns the engine used by the optimizer.
-
-        :return: A string representing the engine used by the optimizer.
-            Can be one of 'Torch', 'CasADi', or 'Numpy'.
-        """
-        if self.optimizer.engine == "Torch":
-            return TORCH
-        elif self.optimizer.engine == "CasADi":
-            return CASADI
-        else:
-            return NUMPY
 
     def __call__(self, *args, use_stored_weights=False):
         """Compute the value of the critic function for a given observation and/or action.
@@ -113,11 +109,7 @@ class Critic(rcognita.RcognitaBase, ABC):
         :return: value of the critic function
         :rtype: float
         """
-        if len(args) == 2:
-            chi = rc.concatenate(tuple(args))
-        else:
-            chi = args[0]
-        return self.model(chi, use_stored_weights=use_stored_weights)
+        return self.model(*args, use_stored_weights=use_stored_weights)
 
     @property
     def weights(self):
@@ -197,63 +189,6 @@ class Critic(rcognita.RcognitaBase, ABC):
         else:
             return "rejected"
 
-    def optimize_weights(
-        self,
-        time=None,
-    ):
-        """Compute optimized critic weights, possibly subject to constraints.
-
-        If weights satisfying constraints are found, the method returns the status `accepted`.
-        Otherwise, it returns the status `rejected`.
-
-        :param time: optional time parameter for use in CasADi and SciPy optimization.
-        :type time: float, optional
-        :return: acceptance status of the optimized weights, either `accepted` or `rejected`.
-        :rtype: str
-        """
-        if self.optimizer.engine == "CasADi":
-            self.optimized_weights = self._CasADi_update(self.intrinsic_constraints)
-
-        elif self.optimizer.engine == "SciPy":
-            self.optimized_weights = self._SciPy_update(self.intrinsic_constraints)
-
-        elif self.optimizer.engine == "Torch":
-            self._Torch_update()
-            self.optimized_weights = self.model.parameters()
-
-        if self.intrinsic_constraints != []:
-            # print("with constraint functions")
-            self.weights_acceptance_status = self.accept_or_reject_weights(
-                self.optimized_weights,
-                optimizer_engine=self.optimizer.engine,
-                constraint_functions=self.intrinsic_constraints,
-            )
-        else:
-            # print("without constraint functions")
-            self.weights_acceptance_status = "accepted"
-
-        return self.weights_acceptance_status
-
-    def update_buffers(self, observation, action):
-        """Update the buffers of the critic with the given observation and action.
-
-        :param observation: the current observation of the system.
-        :type observation: np.ndarray
-        :param action: the current action taken by the policy.
-        :type action: np.ndarray
-        """
-        self.action_buffer = rc.push_vec(
-            self.action_buffer, rc.array(action, prototype=self.action_buffer)
-        )
-        self.observation_buffer = rc.push_vec(
-            self.observation_buffer,
-            rc.array(observation, prototype=self.observation_buffer),
-        )
-        self.update_total_objective(observation, action)
-
-        self.current_observation = observation
-        self.current_action = action
-
     def update_total_objective(self, observation, action):
         """Update the outcome variable based on the running objective and the current observation and action.
 
@@ -271,188 +206,36 @@ class Critic(rcognita.RcognitaBase, ABC):
         self.total_objective = 0
         self.current_critic_loss = 0
 
-    def _SciPy_update(self, intrinsic_constraints=None):
-        weights_init = self.model.cache.weights
-
-        constraints = ()
-        weight_bounds = [self.model.weight_min, self.model.weight_max]
-        data_buffer = {
-            "observation_buffer": self.observation_buffer,
-            "action_buffer": self.action_buffer,
-        }
-
-        def cost_function(weights):
-            return self.objective(data_buffer, weights=weights)
-
-        is_penalty = int(self.penalty_param > 0)
-        if intrinsic_constraints:
-            constraints = tuple(
-                [
-                    sp.optimize.NonlinearConstraint(constraint, -np.inf, 0.0)
-                    for constraint in intrinsic_constraints[is_penalty:]
-                ]
-            )
-
-        optimized_weights = self.optimizer.optimize(
-            cost_function,
-            weights_init,
-            weight_bounds,
-            constraints=constraints,
-        )
-        return optimized_weights
-
-    def _CasADi_update(self, intrinsic_constraints=None):
-        weights_init = rc.DM(self.model.cache.weights)
-        symbolic_var = rc.array_symb(tup=rc.shape(weights_init), prototype=weights_init)
-
-        constraints = ()
-        weight_bounds = [self.model.weight_min, self.model.weight_max]
-        data_buffer = {
-            "observation_buffer": self.observation_buffer,
-            "action_buffer": self.action_buffer,
-        }
-
-        def cost_function(weights):
-            return self.objective(data_buffer, weights=weights)
-
-        cost_function = rc.lambda2symb(cost_function, symbolic_var)
-
-        is_penalty = int(self.penalty_param > 0)
-
-        if intrinsic_constraints:
-            constraints = [
-                rc.lambda2symb(constraint, symbolic_var)
-                for constraint in intrinsic_constraints[is_penalty:]
-            ]
-
-        optimized_weights = self.optimizer.optimize(
-            cost_function,
-            weights_init,
-            weight_bounds,
-            constraints=constraints,
-            decision_variable_symbolic=symbolic_var,
-        )
-
-        self.cost_function = cost_function
-        self.constraint = constraints
-        self.weights_init = weights_init
-        self.symbolic_var = symbolic_var
-
-        return optimized_weights
-
-    def _Torch_update(self):
-        data_buffer = {
-            "observation_buffer": self.observation_buffer,
-            "action_buffer": self.action_buffer,
-        }
-
-        self.optimizer.optimize(
-            objective=self.objective,
-            model_input=data_buffer,
-        )
-
-        self.current_critic_loss = self.objective(data_buffer).detach().numpy()
-
-
-class CriticOfObservation(Critic):
-    """Critic that is represented as a function of observation only."""
-
-    def objective(self, data_buffer=None, weights=None):
-        """Objective of the critic, say, a squared temporal difference."""
-        if data_buffer is None:
-            observation_buffer = self.observation_buffer
-            action_buffer = self.action_buffer
-        else:
-            observation_buffer = data_buffer["observation_buffer"]
-            action_buffer = data_buffer["action_buffer"]
-
-        critic_objective = 0
-
-        for k in range(self.data_buffer_size - 1, 0, -1):
-            observation_old = observation_buffer[:, k - 1]
-            observation_next = observation_buffer[:, k]
-            action_old = action_buffer[:, k - 1]
-
-            # TODO: PROPERLY COMMENT. ACTUALLY, ADD MORE COMMENTS ON WHAT IS GOING ON HERE
-            # Temporal difference
-
-            critic_old = self.model(observation_old, weights=weights)
-            critic_next = self.model(observation_next, use_stored_weights=True)
-
-            weights_current = weights
-            weights_last_good = self.model.cache.weights
-            if self.critic_regularization_param > 0:
-                regularization_term = (
-                    rc.sum_2(weights_current - weights_last_good)
-                    * self.critic_regularization_param
-                )
-            else:
-                regularization_term = 0
-
-            temporal_difference = (
-                critic_old
-                - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_old)
-            )
-
-            critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
-
-        if self.intrinsic_constraints != [] and self.penalty_param > 0:
-            for constraint in self.intrinsic_constraints:
-                critic_objective += self.penalty_param * rc.penalty_function(constraint)
-
-        return critic_objective
-
-
-class CriticOnPolicy(Critic, Optimizable):
-    def __init__(
-        self,
-        *args,
-        td_n,
-        device,
-        is_same_critic,
-        optimizer_config,
-        **kwargs,
-    ):
-        Critic.__init__(self, *args, **kwargs)
-        Optimizable.__init__(self, optimizer_config=optimizer_config)
-        self.td_n = td_n
-        self.device = device
-        self.is_same_critic = is_same_critic
-        self.initialize_optimize_procedure()
-
     def initialize_optimize_procedure(self):
         self.var_observation = self.create_variable(
             name="observation", is_constant=True
         )
-        self.var_action = self.create_variable(name="action", is_constant=True)
         self.var_running_objective = self.create_variable(
             name="running_objective", is_constant=True
         )
-
+        self.var_action = self.create_variable(name="action", is_constant=True)
         self.var_critic_weights = self.create_variable(
             name="critic_weights", is_constant=False, like=self.model.named_parameters
         )
+        if self.is_value_function:
+            variables = [self.var_observation, self.var_running_objective]
+        else:
+            variables = [
+                self.var_observation,
+                self.var_running_objective,
+                self.var_action,
+            ]
 
         self.register_objective(
             func=self.objective_function,
-            variables=[
-                self.var_observation,
-                self.var_action,
-                self.var_running_objective,
-            ],
+            variables=variables,
         )
 
-    def optimize_tensor(self, **parameters):
-        # Call method from parent class
-        Optimizable.optimize_tensor(self, **parameters)
-
-        # Force to recreate torch.optim.Optimizer object before every optimization
-        self.optimizer = None
-
     # @apply_callbacks()
-    def objective_function(self, observation, action, running_objective):
-        return temporal_difference_objective_on_policy(
+    def objective_function(
+        self, observation, running_objective, action=None, critic_targets=None
+    ):
+        return temporal_difference_objective(
             critic_model=self.model,
             observation=observation,
             action=action,
@@ -462,313 +245,77 @@ class CriticOnPolicy(Critic, Optimizable):
             device=self.device,
             sampling_time=self.sampling_time,
             is_use_same_critic=self.is_same_critic,
+            critic_targets=critic_targets,
         )
 
-    def optimize_callback(self, data_buffer):
+    def update_data_buffer_with_optimal_policy_targets(self, data_buffer: DataBuffer):
+        assert self.size_mesh is not None, "Specify size_mesh for off-policy critic"
+        data_buffer_size = len(data_buffer)
+        if data_buffer_size == 0:
+            return
+        observations = data_buffer.getitem(
+            slice(0, data_buffer_size), keys=["observation"], dtype=np.array
+        )["observation"]
+        actions = np.random.uniform(
+            self.action_bounds[:, 0],
+            self.action_bounds[:, 1],
+            size=(data_buffer_size, self.size_mesh, len(self.action_bounds)),
+        )
+        tiled_observations = np.vstack(
+            [
+                [np.tile(observation, (self.size_mesh, 1))]
+                for observation in observations
+            ]
+        )
+        model_inputs = torch.FloatTensor(
+            np.concatenate((tiled_observations, actions), axis=2)
+        ).to(self.device)
+
+        values = self.model(model_inputs, use_stored_weights=True)
+        data_buffer.update({"critic_targets": torch.min(values, axis=1).values.numpy()})
+
+    def delete_critic_targets(self, data_buffer: DataBuffer):
+        if "critic_targets" in data_buffer.keys():
+            data_buffer.delete_key("critic_targets")
+
+    def optimize_on_event(self, data_buffer):
         self.model.to(self.device)
         self.model.cache.to(self.device)
 
+        if not self.is_on_policy:
+            self.update_data_buffer_with_optimal_policy_targets(data_buffer)
+
         self.optimize(
             dataloader=data_buffer.iter_batches(
-                sampler=EpisodicSampler,
-                keys=[
-                    "observation",
-                    "action",
-                    "running_objective",
-                ],
-                dtype=torch.FloatTensor,
+                **self.optimizer_config.config_options.iter_batches_config
             ),
         )
-
         self.model.update_and_cache_weights()
 
-
-class CriticOfActionObservationOnPolicy(Critic):
-    @apply_callbacks()
-    def objective(self, data_buffer=None, weights=None):
-        """
-        Compute the objective function of the critic, which is typically a squared temporal difference.
-
-        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
-        :type data_buffer: dict, optional
-        :param weights: the weights of the critic model, if different from the stored weights.
-        :type weights: numpy.ndarray, optional
-        :return: the value of the objective function
-        :rtype: float
-        """
-        if data_buffer is None:
-            observation_buffer = self.observation_buffer
-            action_buffer = self.action_buffer
-        else:
-            observation_buffer = data_buffer["observation_buffer"]
-            action_buffer = data_buffer["action_buffer"]
-
-        critic_objective = 0
-
-        for k in range(self.data_buffer_size - 2, 0, -1):
-            observation_old = observation_buffer[:, k - 1]
-            observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k]
-            action_next_next = action_buffer[:, k + 1]  ##
-
-            # Temporal difference
-
-            critic_old = self.model(observation_old, action_next, weights=weights)
-            critic_next = self.model(
-                observation_next,
-                action_next_next,
-                use_stored_weights=True,
-            )
-
-            temporal_difference = (
-                critic_old
-                - self.discount_factor * critic_next
-                - self.running_objective(observation_old, action_next)
-            )
-
-            critic_objective += 1 / 2 * temporal_difference**2
-
-        if self.intrinsic_constraints != [] and self.penalty_param > 0:
-            for constraint in self.intrinsic_constraints:
-                critic_objective += self.penalty_param * rc.penalty_function(constraint)
-
-        return critic_objective
+        if not self.is_on_policy:
+            self.delete_critic_targets(data_buffer)
 
 
-# TODO: DOCSTRING. REMOVE?
-class CriticOffPolicyBehaviour(Critic):
-    """Critic that is represented as functions of observation only."""
+class CriticTrivial(Critic):
+    """A mocked Critic object."""
 
-    def __init__(self, *args, batch_size, td_n, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.batch_size = batch_size
-        self.td_n = td_n
+    def __init__(self):
+        pass
 
-        self.n_buffer_updates = 0
+    def optimize_on_event(self, *args, **kwargs):
+        pass
 
-    def reset(self):
-        super().reset()
-        self.n_buffer_updates = 0
+    def update_weights(self, *args, **kwargs):
+        pass
 
-    def update_buffers(self, observation, action):
-        super().update_buffers(observation, action)
-        self.n_buffer_updates += 1
+    def cache_weights(self, *args, **kwargs):
+        pass
 
-    def update_and_cache_weights(self, weights=None):
-        if self.is_enough_valid_elements_in_buffer():
-            super().update_and_cache_weights(weights)
-
-    def optimize_weights(self, time=None):
-        if self.is_enough_valid_elements_in_buffer():
-            super().optimize_weights(time)
-
-    def get_first_valid_idx_in_buffer(self):
-        return max(self.data_buffer_size - self.n_buffer_updates, 0)
-
-    def is_enough_valid_elements_in_buffer(self):
-        return (
-            self.data_buffer_size - self.get_first_valid_idx_in_buffer()
-            >= self.td_n + self.batch_size + 1
-        )
-
-    def get_batch_ids(self):
-        if not self.is_enough_valid_elements_in_buffer():
-            raise Exception(
-                "Not enough valid elements in buffer for critic objective call"
-            )
-
-        buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 2
-        if self.batch_size == 1:
-            batch_ids = np.array([buffer_idx_for_latest_td_term])
-        elif (
-            buffer_idx_for_latest_td_term - self.get_first_valid_idx_in_buffer()
-            == self.batch_size - 1
-        ):
-            batch_ids = np.arange(
-                self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term + 1
-            )
-        else:
-            sampled_ids = random.sample(
-                range(
-                    self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term
-                ),
-                self.batch_size - 1,
-            )
-            batch_ids = np.hstack([sampled_ids, buffer_idx_for_latest_td_term])
-
-        return batch_ids
-
-    @apply_callbacks()
-    def objective(self, data_buffer=None, weights=None):
-        """Compute the objective function of the critic, which is typically a squared temporal difference.
-
-        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
-        :type data_buffer: dict, optional
-        :param weights: the weights of the critic model, if different from the stored weights.
-        :type weights: numpy.ndarray, optional
-        :return: the value of the objective function
-        :rtype: float.
-        """
-        if data_buffer is None:
-            observation_buffer = self.observation_buffer
-            action_buffer = self.action_buffer
-        else:
-            observation_buffer = data_buffer["observation_buffer"]
-            action_buffer = data_buffer["action_buffer"]
-
-        batch_ids = self.get_batch_ids()
-
-        # Calculation of critic objective
-        critic_objective = 0
-        for buffer_idx in batch_ids:
-            temporal_difference = 0
-            temporal_difference += self.model(
-                observation_buffer[:, buffer_idx],
-                action_buffer[:, buffer_idx + 1],
-                weights=weights,
-            )
-
-            for td_n_idx in range(self.td_n):
-                temporal_difference -= (
-                    self.discount_factor**td_n_idx
-                    * self.running_objective(
-                        observation_buffer[:, buffer_idx + td_n_idx],
-                        action_buffer[:, buffer_idx + td_n_idx + 1],
-                    )
-                    * self.sampling_time
-                )
-
-            temporal_difference -= self.discount_factor**self.td_n * self.model(
-                observation_buffer[:, buffer_idx + self.td_n],
-                action_buffer[:, buffer_idx + self.td_n + 1],
-                use_stored_weights=True,
-            )
-
-            critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
-        return critic_objective
+    def __call__(self, *args, **kwargs):
+        pass
 
 
-class CriticOffPolicyGreedy(Critic):
-    def __init__(self, *args, action_bounds, batch_size, td_n, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.action_bounds = action_bounds
-        self.batch_size = batch_size
-        self.td_n = td_n
-
-        self.n_buffer_updates = 0
-
-    """This is the class of critics that are represented as functions of observation only."""
-
-    def reset(self):
-        super().reset()
-        self.n_buffer_updates = 0
-
-    def update_buffers(self, observation, action):
-        super().update_buffers(observation, action)
-        self.n_buffer_updates += 1
-
-    def update_and_cache_weights(self, weights=None):
-        if self.is_enough_valid_elements_in_buffer():
-            super().update_and_cache_weights(weights)
-
-    def optimize_weights(self, time=None):
-        if self.is_enough_valid_elements_in_buffer():
-            super().optimize_weights(time)
-
-    def get_first_valid_idx_in_buffer(self):
-        return max(self.data_buffer_size - self.n_buffer_updates, 0)
-
-    def is_enough_valid_elements_in_buffer(self):
-        return (
-            self.data_buffer_size - self.get_first_valid_idx_in_buffer()
-            >= self.td_n + self.batch_size
-        )
-
-    def get_batch_ids(self):
-        if not self.is_enough_valid_elements_in_buffer():
-            raise Exception(
-                "Not enough valid elements in buffer for critic objective call"
-            )
-
-        buffer_idx_for_latest_td_term = self.data_buffer_size - self.td_n - 1
-        if self.batch_size == 1:
-            batch_ids = np.array([buffer_idx_for_latest_td_term])
-        elif (
-            buffer_idx_for_latest_td_term - self.get_first_valid_idx_in_buffer()
-            == self.batch_size - 1
-        ):
-            batch_ids = np.arange(
-                self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term + 1
-            )
-        else:
-            sampled_ids = random.sample(
-                range(
-                    self.get_first_valid_idx_in_buffer(), buffer_idx_for_latest_td_term
-                ),
-                self.batch_size - 1,
-            )
-            batch_ids = np.hstack([sampled_ids, buffer_idx_for_latest_td_term])
-
-        return batch_ids
-
-    @apply_callbacks()
-    def objective(self, data_buffer=None, weights=None):
-        """Compute the objective function of the critic, which is typically a squared temporal difference.
-
-        :param data_buffer: a dictionary containing the action and observation buffers, if different from the class attributes.
-        :type data_buffer: dict, optional
-        :param weights: the weights of the critic model, if different from the stored weights.
-        :type weights: numpy.ndarray, optional
-        :return: the value of the objective function
-        :rtype: float.
-        """
-        if data_buffer is None:
-            observation_buffer = self.observation_buffer
-            action_buffer = self.action_buffer
-        else:
-            observation_buffer = data_buffer["observation_buffer"]
-            action_buffer = data_buffer["action_buffer"]
-
-        batch_ids = self.get_batch_ids()
-        # Calculation of critic objective
-        critic_objective = 0
-        for buffer_idx in batch_ids:
-            temporal_difference = 0
-            temporal_difference += self.model(
-                observation_buffer[:, buffer_idx],
-                action_buffer[:, buffer_idx + 1],
-                weights=weights,
-            )
-
-            for td_n_idx in range(self.td_n):
-                temporal_difference -= (
-                    self.discount_factor**td_n_idx
-                    * self.running_objective(
-                        observation_buffer[:, buffer_idx + td_n_idx],
-                        action_buffer[:, buffer_idx + td_n_idx + 1],
-                    )
-                )
-
-            temporal_difference -= (
-                self.discount_factor**self.td_n
-                * sp.optimize.minimize(
-                    lambda action, buffer_idx_=buffer_idx: self.model(
-                        observation_buffer[:, buffer_idx_ + self.td_n],
-                        torch.tensor(action).double(),
-                        use_stored_weights=True,
-                    ),
-                    x0=action_buffer[:, buffer_idx + self.td_n],
-                    method="SLSQP",
-                    tol=1e-2,
-                    bounds=self.action_bounds,
-                ).fun
-            )
-
-            critic_objective += 1 / 2 * temporal_difference**2 / self.batch_size
-        return critic_objective
-
-
-class CriticCALF(CriticOfObservation):
+class CriticCALF:
     def __init__(
         self,
         *args,
@@ -1051,229 +598,3 @@ class CriticCALF(CriticOfObservation):
                 )
 
         return critic_objective
-
-
-class CriticTrivial(Critic):
-    """A critic that provides a constant estimate of the prospective total objective."""
-
-    def __init__(self, running_objective, *args, sampling_time=0.01, **kwargs):
-        """Initialize a trivial critic.
-
-        :param running_objective: Function object representing the running objective.
-        :type running_objective: function
-        :param sampling_time: Sampling time.
-        :type sampling_time: float
-        :param args: Additional arguments.
-        :param kwargs: Additional keyword arguments.
-        """
-        self.running_objective = running_objective
-        self.sampling_time = sampling_time
-        self.total_objective = 0
-        self.model = ModelWeightContainer(1)
-        self.model.weights = None
-        self.clock = Clock(sampling_time)
-
-        class optimizer:
-            def __init__(self):
-                self.engine = None
-
-        self.optimizer = optimizer()
-        self.intrinsic_constraints = []
-        self.optimized_weights = []
-
-    def __call__(self, *args, **kwargs):
-        """Return the current estimate of the prospective total objective.
-
-        :return: estimated total objective.
-        :rtype: float
-        """
-        return self.total_objective
-
-    def objective(self, weights):
-        """Pretends to compute an objective.
-
-        :param weights: Weights.
-        :type weights: ndarray or list
-        """
-        pass
-
-    def get_optimized_weights(self, intrinsic_constraints=None, time=None):
-        """Pretends to compute optimized weights.
-
-        :param intrinsic_constraints: Constraints to be applied during optimization.
-        :type intrinsic_constraints: list of functions
-        :param time: Time.
-        :type time: float
-        :return: Optimized weights.
-        :rtype: ndarray or list
-        """
-        pass
-
-    def update_buffers(self, observation, action):
-        """Update the estimate of prospective total objective.
-
-        :param observation: Current observation.
-        :type observation: ndarray or list
-        :param action: Current action.
-        :type action: ndarray or list
-        """
-        self.update_total_objective(observation, action)
-
-    def update(self, intrinsic_constraints=None, observation=None, time=None):
-        """Pretends to update the critic.
-
-        :param intrinsic_constraints: Constraints to be applied during optimization.
-        :type intrinsic_constraints: list of functions
-        :param observation: Current observation.
-        :type observation: ndarray or list
-        :param time: Time.
-        :type time: float
-        """
-        pass
-
-    def update_total_objective(self, observation, action):
-        """Update the value of the outcome variable by adding the value of the running_objective function evaluated at the current observation and action, multiplied by the sampling time.
-
-        :param observation: The current observation.
-        :type observation: Any
-        :param action: The current action.
-        :type action: Any
-        """
-        self.total_objective += (
-            self.running_objective(observation, action) * self.sampling_time
-        )
-
-    def reset(self):
-        """Reset the outcome variable to zero."""
-        self.total_objective = 0
-
-
-class CriticTabularVI(Critic):
-    """Critic for tabular agents."""
-
-    def __init__(
-        self,
-        dim_state_space,
-        running_objective,
-        predictor,
-        model,
-        policy_model,
-        discount_factor=1,
-        N_parallel_processes=5,
-        terminal_state=None,
-    ):
-        """Initialize a CriticTabularVI object.
-
-        :param dim_state_space: The dimensions of the state space.
-        :type dim_state_space: tuple of int
-        :param running_objective: The running objective function.
-        :type running_objective: callable
-        :param predictor: The predictor object.
-        :type predictor: any
-        :param model: The model object.
-        :type model: Model
-        :param policy_model: The policy model object.
-        :type policy_model: any
-        :param discount_factor: The discount factor for the temporal difference.
-        :type discount_factor: float, optional
-        :param N_parallel_processes: The number of parallel processes to use.
-        :type N_parallel_processes: int, optional
-        :param terminal_state: The terminal state, if applicable.
-        :type terminal_state: optional, int or tuple of int
-        :return: None
-        """
-        self.objective_table = rc.zeros(dim_state_space)
-        self.action_table = rc.zeros(dim_state_space)
-        self.running_objective = running_objective
-        self.predictor = predictor
-        self.model = model
-        self.policy_model = policy_model
-        self.discount_factor = discount_factor
-        self.N_parallel_processes = N_parallel_processes
-        self.terminal_state = terminal_state
-
-    def update_single_cell(self, observation):
-        """Update the value function for a single state.
-
-        :param observation: current state
-        :type observation: tuple of int
-        :return: value of the state
-        :rtype: float
-        """
-        action = self.policy_model.weights[observation]
-        if tuple(self.terminal_state) == observation:
-            return self.running_objective(observation, action)
-
-        return self.objective(observation, action)
-
-    def update(self):
-        """Update the value function for all states."""
-        observation_table_indices = tuple(
-            [
-                (i, j)
-                for i in range(self.model.weights.shape[0])
-                for j in range(self.model.weights.shape[1])
-            ]
-        )
-        new_table = deepcopy(self.model.weights)
-        for observation in observation_table_indices:
-            new_table[observation] = self.update_single_cell(observation)
-        self.model.weights = new_table
-
-    def objective(self, observation, action):
-        """Calculate the value of a state given the action taken and the observation of the current state.
-
-        :param observation: current state
-        :type observation: tuple of int
-        :param action: action taken from the current state
-        :type action: int
-        :return: value of the state
-        :rtype: float
-        """
-        return (
-            self.running_objective(observation, action)
-            + self.discount_factor
-            * self.model.weights[self.predictor.predict(observation, action)]
-        )
-
-
-# TODO: SAME AS VI
-class CriticTabularPI(CriticTabularVI):
-    def __init__(self, *args, tolerance=1e-3, N_update_iters_max=50, **kwargs):
-        """Initialize a new instance of the `CriticTabularPI` class.
-
-        :param args: Positional arguments to pass to the superclass's `__init__` method.
-        :type args: tuple
-        :param tolerance: The tolerance value for the update loop.
-        :type tolerance: float
-        :param N_update_iters_max: The maximum number of iterations for the update loop.
-        :type N_update_iters_max: int
-        :param kwargs: Keyword arguments to pass to the superclass's `__init__` method.
-        :type kwargs: dict
-        """
-        super().__init__(*args, **kwargs)
-        self.tolerance = tolerance
-        self.N_update_iters_max = N_update_iters_max
-
-    def update(self):
-        """Update the value table."""
-        observation_table_indices = tuple(
-            [
-                (i, j)
-                for i in range(self.model.weights.shape[0])
-                for j in range(self.model.weights.shape[1])
-            ]
-        )
-        for observation in observation_table_indices:
-            difference = rc.abs(
-                self.model.weights[observation] - self.update_single_cell(observation)
-            )
-            for _ in range(self.N_update_iters_max):
-                new_value = self.update_single_cell(observation)
-                difference = self.model.weights[observation] - new_value
-                if difference < self.tolerance:
-                    self.model.weights[observation] = self.update_single_cell(
-                        observation
-                    )
-                else:
-                    break

@@ -336,20 +336,21 @@ def instantiate_node(
     # If OmegaConf list, create new list of instances if recursive
     if OmegaConf.is_list(node):
         # raise NotImplementedError("List configs are yet to become supported.")
-        #items = [
+        # items = [
         #    instantiate_node(item,
         #                     convert=convert,
         #                     recursive=recursive,
         #                     path=None)
         #    for item in node._iter_ex(resolve=True)
-        #]
+        # ]
         items = []
         for i, item in enumerate([item for item in node._iter_ex(resolve=True)]):
             new_path = path + f"[{i}]" if path is not None else None
-            items.append(instantiate_node(item,
-                             convert=convert,
-                             recursive=recursive,
-                             path=new_path))
+            items.append(
+                instantiate_node(
+                    item, convert=convert, recursive=recursive, path=new_path
+                )
+            )
         if convert in (ConvertMode.ALL, ConvertMode.PARTIAL, ConvertMode.OBJECT):
             # If ALL or PARTIAL or OBJECT, use plain list as container
             return items
@@ -379,29 +380,29 @@ def instantiate_node(
                         )
                     kwargs[key] = _convert_node(value, convert)
             if "inline__IGNORE__" in kwargs:
+
                 class Inline:
                     exec(kwargs["inline__IGNORE__"])
+
                 sys.modules["inline"] = Inline
                 name = node.get(_Keys.TARGET)
-                if '.' not in name:
+                if "." not in name:
                     new_name = "inline." + name
                     try:
-                        _target_ = _resolve_target(new_name,
-                                                   full_key)
+                        _target_ = _resolve_target(new_name, full_key)
                     except NameError:
-                        _target_ = _resolve_target(name,
-                                                   full_key)
+                        _target_ = _resolve_target(name, full_key)
                 else:
-                    _target_ = _resolve_target(name,
-                                               full_key)
+                    _target_ = _resolve_target(name, full_key)
             else:
-                _target_ = _resolve_target(node.get(_Keys.TARGET),
-                                           full_key)
+                _target_ = _resolve_target(node.get(_Keys.TARGET), full_key)
             if "callbacks__IGNORE__" in kwargs:
                 for callback in kwargs["callbacks__IGNORE__"]:
                     if "." not in callback:
                         try:
-                            _target_ = _locate("rcognita.callback." + callback).attach(_target_)
+                            _target_ = _locate("rcognita.callback." + callback).attach(
+                                _target_
+                            )
                         except NameError:
                             _target_ = _locate("inline." + callback).attach(_target_)
                     else:

@@ -1,29 +1,44 @@
-_target_: rcognita.controller.PGController
+_target_: rcognita.controller.RLController
 
 name%%:  ddpg
 
 defaults:
   - policy: policy_ddpg
-  - critic: critic_on_policy
+  - critic: critic
 
 action_bounds: $ system_specific.action_bounds
-data_buffer: = rcognita.data_buffers.DataBuffer()
 sampling_time: $ system_specific.sampling_time
+is_critic_first: True
+running_objective: ~ running_objective
+discount_factor: $ scenario.discount_factor
+critic_optimization_event: reset_iteration
+policy_optimization_event: reset_iteration
+data_buffer_nullify_event: reset_iteration
 
 device%%: cpu
 
+
 critic:
+  is_on_policy: True
+  is_same_critic: False
+  is_value_function: False
   device: $ controller.device%%
   optimizer_config: 
     _target_: rcognita.OptimizerConfig
-    callback_target_events:
-      - reset_iteration
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
       lr: 0.001
     config_options:
       n_epochs: 50
+      is_reinstantiate_optimizer: True
+      iter_batches_config:
+        sampler: = rcognita.data_buffers.samplers.EpisodicSampler
+        dtype: = torch.FloatTensor
+        keys: 
+          - observation
+          - action
+          - running_objective
 
 policy:
   device: $ controller.device%%

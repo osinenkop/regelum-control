@@ -48,7 +48,6 @@ class Optimizable(rcognita.RcognitaBase):
         """Initialize an optimizable object."""
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
-        self.__callback_target_events = optimizer_config.callback_target_events
         self.__is_problem_defined = False
         self.__variables: VarContainer = VarContainer([])
         self.__functions: FuncContainer = FuncContainer(tuple())
@@ -408,10 +407,10 @@ class Optimizable(rcognita.RcognitaBase):
             )
             sequence_min = rc.rep_mat(variable_min, 1, tile_parameter)
             sequence_max = rc.rep_mat(variable_max, 1, tile_parameter)
-            result_bounds = np.array([sequence_min, sequence_max])
+            result_bounds = np.hstack((sequence_min.T, sequence_max.T))
             variable_initial_guess = variable_sequence_initial_guess
         else:
-            result_bounds = np.array([variable_min, variable_max])
+            result_bounds = bounds
         return result_bounds, variable_initial_guess, variable_min, variable_max
 
     def register_bounds(
@@ -523,14 +522,8 @@ class Optimizable(rcognita.RcognitaBase):
 
         return event in self.__callback_target_events
 
-    def optimize_on_event(
-        self, event: str, *optimize_callback_args, **optimize_callback_kwargs
-    ):
-        if self.is_target_event(event):
-            self.optimize_callback(*optimize_callback_args, **optimize_callback_kwargs)
-
-    def optimize_callback(self, *optimize_callback_args, **optimize_callback_kwargs):
-        raise NotImplementedError("optimize_callback is not implemented")
+    def optimize_on_event(self, **parameters):
+        raise NotImplementedError("optimize_on_event is not implemented")
 
     def optimize(self, raw=False, **parameters):
         if not self.__is_problem_defined:
@@ -611,9 +604,7 @@ class Optimizable(rcognita.RcognitaBase):
     def post_epoch(self, epoch_idx, last_epoch_objective_value):
         return epoch_idx, last_epoch_objective_value
 
-    def optimize_tensor(self, **parameters):
-        dataloader = parameters.get("dataloader")
-        assert dataloader is not None, "Couldn't find dataloader"
+    def instantiate_configuration(self):
         options = self.optimizer_config.config_options
         if self.optimizer is None:
             assert self.opt_method is not None and callable(
@@ -629,15 +620,31 @@ class Optimizable(rcognita.RcognitaBase):
         objective = self.functions.objectives[0]
         assert isinstance(objective, FunctionWithSignature), "Something went wrong..."
 
+        return n_epochs, objective
+
+    def optimize_tensor(self, **parameters):
+        dataloader = parameters.get("dataloader")
+        assert dataloader is not None, "Couldn't find dataloader"
+        n_epochs, objective = self.instantiate_configuration()
+
         for epoch_idx in range(n_epochs):
+            objective_value = None
             for batch_sample in dataloader:
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
                 objective_value = objective(**batch_sample)
                 objective_value.backward()
                 self.optimizer.step()
+            if objective_value is not None:
+                self.post_epoch(epoch_idx, objective_value.item())
 
-            self.post_epoch(epoch_idx, objective_value.item())
+        if (
+            self.optimizer_config.config_options.get("is_reinstantiate_optimizer")
+            is not None
+        ):
+            # Force to recreate torch.optim.Optimizer object before every optimization
+            if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):
+                self.optimizer = None
 
     def define_problem(self):
         self.__is_problem_defined = True

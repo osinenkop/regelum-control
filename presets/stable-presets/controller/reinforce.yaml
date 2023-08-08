@@ -1,4 +1,4 @@
-_target_: rcognita.controller.PGController
+_target_: rcognita.controller.RLController
 
 name%%: reinforce
 
@@ -7,10 +7,14 @@ defaults:
   - critic: critic_trivial
 
 action_bounds: $ system_specific.action_bounds
-data_buffer: = rcognita.data_buffers.DataBuffer()
 sampling_time: $ system_specific.sampling_time
+is_critic_first: True
+running_objective: ~ running_objective
+discount_factor: $ scenario.discount_factor
+policy_optimization_event: reset_iteration
+data_buffer_nullify_event: reset_iteration
+critic_optimization_event: None
 
 device%%: cpu
-
 policy:
   device: $ controller.device%%

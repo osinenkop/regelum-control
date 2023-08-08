@@ -1,4 +1,4 @@
-_target_: rcognita.critic.CriticOnPolicy
+_target_: rcognita.critic.Critic
 
 defaults:
   - model: perceptron
@@ -8,6 +8,7 @@ sampling_time: $ controller.sampling_time
 td_n: 1
 device: cpu
 is_same_critic: False
+
 
 model:
   dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
@@ -25,4 +26,11 @@ optimizer_config:
   opt_options: 
     lr: 3.0E-4
   config_options:
-    n_epochs: 1
+    n_epochs: 1 
+    iter_batches_config:
+      sampler: = rcognita.data_buffers.samplers.EpisodicSampler
+      dtype: = torch.FloatTensor
+      keys: 
+        - observation
+        - action
+        - running_objective

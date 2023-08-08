@@ -1,8 +1,10 @@
-_target_: rcognita.model.GaussianPDFModel
+_target_: rcognita.model.PerceptronWithNormalNoise
 
-dim_observation: = ${system_specific.dim_observation}
-dim_action: = ${system_specific.dim_action}
+dim_input: $ system_specific.dim_observation
+dim_output: $ system_specific.dim_action
 dim_hidden: 4
-std: 0.1
-action_bounds: $ system_specific.action_bounds 
+n_hidden_layers: 2
+leaky_relu_coef: 0.2
+sigma: 0.1
+output_bounds: $ system_specific.action_bounds 
 normalize_output_coef: 800.

@@ -1,0 +1,70 @@
+_target_: rcognita.controller.RLController
+
+name%%: dqn
+
+defaults:
+  - policy: policy_rl
+  - critic: critic
+
+action_bounds: $ system_specific.action_bounds
+max_data_buffer_size: 100
+sampling_time: $ system_specific.sampling_time
+is_critic_first: True
+running_objective: ~ running_objective
+discount_factor: $ scenario.discount_factor
+critic_optimization_event: compute_action
+policy_optimization_event: compute_action
+data_buffer_nullify_event: reset_episode
+device%%: cpu
+
+critic:
+  is_on_policy: False
+  is_same_critic: False
+  is_value_function: False
+  action_bounds: $ system_specific.action_bounds
+  size_mesh : = 10 ** ${system_specific.dim_action}
+
+  device: $ controller.device%%
+  optimizer_config: 
+    _target_: rcognita.OptimizerConfig
+    kind: tensor
+    opt_method: = torch.optim.Adam
+    opt_options: 
+      lr: 0.001
+    config_options:
+      n_epochs: 1
+      is_reinstantiate_optimizer: False
+      iter_batches_config:
+        sampler: = rcognita.data_buffers.samplers.RollingSampler
+        dtype: = torch.FloatTensor
+        batch_size: 10
+        n_batches: 1
+        mode: backward
+        keys: 
+          - observation
+          - running_objective
+          - action
+          - critic_targets
+policy:
+  device: $ controller.device%%
+  epsilon_random: True
+  epsilon_random_parameter: 0.05
+
+  optimizer_config: 
+    _target_: rcognita.OptimizerConfig
+    kind: tensor
+    opt_method: = torch.optim.Adam
+    opt_options: 
+      lr: 0.001
+    config_options:
+      n_epochs: 100
+      is_reinstantiate_optimizer: True
+      iter_batches_config:
+        sampler: = rcognita.data_buffers.samplers.RollingSampler
+        dtype: = torch.FloatTensor
+        batch_size: 1
+        mode: backward
+        n_batches: 1
+        keys: 
+          - observation
+

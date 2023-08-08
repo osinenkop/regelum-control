@@ -1,0 +1,13 @@
+name: 3wrobot_ni
+target: rcognita.system.ThreeWheeledRobotNI
+dim_observation: = ${.target}().dim_observation
+dim_action: = ${.target}().dim_inputs
+
+time_final: 5.
+sampling_time: 0.01
+
+v_min: -25.
+v_max: 25.
+omega_min: -5.
+omega_max: 5.
+action_bounds: = numpy.array([[${.v_min}, ${.v_max}], [${.omega_min}, ${.omega_max}]])

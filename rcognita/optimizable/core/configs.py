@@ -1,6 +1,6 @@
 """Contains blueprint of config for all optimizable objects."""
 from dataclasses import dataclass, field
-from typing import Optional, Any, List
+from typing import Optional, Any
 
 
 @dataclass
@@ -8,7 +8,6 @@ class OptimizerConfig:
     """Base class for config of optimizable objects."""
 
     kind: str
-    callback_target_events: Optional[List[str]] = None
     opt_method: Optional[Any] = None
     opt_options: dict = field(default_factory=lambda: {})
     log_options: dict = field(default_factory=lambda: {})

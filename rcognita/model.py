@@ -26,6 +26,8 @@ except ModuleNotFoundError:
     MultivariateNormal = MagicMock()
 
 from abc import ABC, abstractmethod
+from typing import Optional, Union, List, Any, Tuple
+import numpy as np
 
 
 def force_positive_def(func):
@@ -354,7 +356,7 @@ class ModelQuadForm(Model):
         except:
             result = (
                 vec.T
-                @ torch.tensor(weights, requires_grad=False, device=device).double()
+                @ torch.tensor(weights, requires_grad=False, device=device).float()
                 @ vec
             )
 
@@ -468,10 +470,27 @@ class ModelNN(nn.Module):
         self.update_and_cache_weights(self.cache.state_dict())
 
     def __call__(self, *argin, weights=None, use_stored_weights=False):
-        if len(argin) > 1:
-            argin = rc.concatenate(argin)
-        else:
+        if len(argin) == 2:
+            left, right = argin
+            if len(left.shape) != len(right.shape):
+                raise ValueError(
+                    "In ModelNN.__call__ left and right arguments must have same number of dimensions!"
+                )
+
+            dim = len(left.shape)
+
+            if dim == 1:
+                argin = rc.concatenate(argin)
+            elif dim == 2:
+                argin = torch.cat(argin, dim=1)
+            else:
+                raise ValueError("Wrong number of dimensions in ModelNN.__call__")
+        elif len(argin) == 1:
             argin = argin[0]
+        else:
+            raise ValueError(
+                f"Wrong number of arguments in ModelNN.__call__. Can be either 1 or 2. Got: {len(argin)}"
+            )
 
         argin = argin if isinstance(argin, torch.Tensor) else torch.tensor(argin)
 
@@ -538,7 +557,9 @@ class ModelQuadNoMixTorch(ModelNN):
         self.cache_weights()
         self.force_positive_def = force_positive_def
 
-    def forward(self, input_tensor, weights=None):
+    def forward(
+        self, input_tensor: torch.FloatTensor, weights=None
+    ) -> torch.FloatTensor:
         if weights is not None:
             self.update(weights)
 
@@ -559,9 +580,12 @@ class ModelPerceptron(ModelNN):
         force_positive_def: bool = False,
         is_force_infinitesimal: bool = False,
         is_bias: bool = True,
+        weight_max: Optional[float] = None,
+        weight_min: Optional[float] = None,
         weights=None,
     ):
-        super().__init__()
+        ModelNN.__init__(self)
+        self.weight_clipper = WeightClipper(weight_min, weight_max)
         self.dim_input = dim_input
         self.dim_output = dim_output
         self.n_hidden_layers = n_hidden_layers
@@ -569,7 +593,6 @@ class ModelPerceptron(ModelNN):
         self.force_positive_def = force_positive_def
         self.is_force_infinitesimal = is_force_infinitesimal
         self.is_bias = is_bias
-
         self.input_layer = nn.Linear(dim_input, dim_hidden, bias=is_bias)
         self.hidden_layers = nn.ModuleList(
             [
@@ -584,17 +607,24 @@ class ModelPerceptron(ModelNN):
 
         self.cache_weights()
 
-    def _forward(self, x):
+    def _forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
+        self.input_layer.apply(self.weight_clipper)
         x = nn.functional.leaky_relu(
             self.input_layer(x), negative_slope=self.leaky_relu_coef
         )
-        for layer in self.hidden_layers:
-            x = nn.functional.leaky_relu(layer(x), negative_slope=self.leaky_relu_coef)
+        for hidden_layer in self.hidden_layers:
+            hidden_layer.apply(self.weight_clipper)
+            x = nn.functional.leaky_relu(
+                hidden_layer(x), negative_slope=self.leaky_relu_coef
+            )
         x = self.output_layer(x)
-        return torch.squeeze(x)
+
+        return x
 
     @force_positive_def
-    def forward(self, input_tensor, weights=None):
+    def forward(
+        self, input_tensor: torch.FloatTensor, weights=None
+    ) -> torch.FloatTensor:
         if weights is not None:
             self.update(weights)
 
@@ -607,23 +637,56 @@ class ModelPerceptron(ModelNN):
 
 
 class ModelWeightContainerTorch(ModelNN):
-    """Pytorch weight container for actor."""
+    """Pytorch model with forward that returns weights."""
 
-    def __init__(self, action_init):
-        """Initialize an instance of ModelWeightContainerTorch.
+    def __init__(
+        self,
+        dim_weights: int,
+        output_bounds: Optional[List[Any]] = None,
+    ):
+        """Instantiate ModelWeightContainerTorch.
 
-        :param action_init: initial action
+        :param dim_weights: Dimensionality of the weights
+        :type dim_weights: int
+        :param output_bounds: Bounds of the output. If `None` output is not bounded, defaults to None
+        :type output_bounds: Optional[List[Any]], optional
         """
-        super().__init__()
+        ModelNN.__init__(self)
+        self.bounder = (
+            NNOutputBounder(output_bounds) if output_bounds is not None else None
+        )
+        self.dim_weights = dim_weights
+        self.model_weights_parameter = (
+            torch.nn.Parameter(
+                torch.FloatTensor(torch.zeros(self.dim_weights)),
+                requires_grad=True,
+            ),
+        )
 
-        self.p = torch.nn.Parameter(torch.tensor(action_init, requires_grad=True))
+        self.register_parameter(
+            name="model_weights",
+            param=torch.nn.Parameter(
+                torch.FloatTensor(torch.zeros(self.dim_weights)),
+                requires_grad=True,
+            ),
+        )
 
-        self.double()
-        self.force_positive_def = False
-        self.cache_weights()
-
-    def forward(self, observation):
-        return self.weights
+    def forward(self, inputs):
+        if len(inputs.shape) == 2:
+            inputs_like = torch.tile(
+                self.get_parameter("model_weights"), (inputs.shape[0], 1)
+            )
+            if self.bounder is not None:
+                return self.bounder(inputs_like)
+            else:
+                return inputs_like
+        elif len(inputs.shape) == 1:
+            if self.bounder is not None:
+                return self.bounder(self.get_parameter("model_weights"))
+            else:
+                return self.get_parameter("model_weights")
+        else:
+            raise ValueError("Wrong inputs shape! Can be either 1 or 2")
 
 
 class LookupTable(Model):
@@ -658,156 +721,136 @@ class LookupTable(Model):
         return self.weights[indices]
 
 
-class ModelWithScaledAction(ModelNN):
-    def __init__(self, action_bounds):
-        super().__init__()
+class NNOutputBounder(ModelNN):
+    r"""Output layer for bounding the model's output. The formula is: math: `F^{-1}(\\tanh(x))`, where F is the linear transformation from `bounds` to [-1, 1]."""
+
+    def __init__(self, bounds: Union[List[Any], np.array]):
+        """Initialize an instance of NNOutputBounder.
+
+        :param bounds: Bounds for the output.
+        :type bounds: Union[List[Any], np.array]
+        """
+        ModelNN.__init__(self)
         self.register_parameter(
-            name="action_bounds",
+            name="bounds",
             param=torch.nn.Parameter(
-                torch.tensor(action_bounds).float(),
+                torch.FloatTensor(bounds),
                 requires_grad=False,
             ),
         )
 
-    def get_unscale_coefs_from_minus_one_one_to_action_bounds(self):
-        action_bounds = self.get_parameter("action_bounds")
+    def get_unscale_coefs_from_minus_one_one_to_bounds(
+        self,
+    ) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
+        bounds = self.get_parameter("bounds")
         unscale_bias, unscale_multiplier = (
-            action_bounds.mean(dim=1),
-            (action_bounds[:, 1] - self.action_bounds[:, 0]) / 2.0,
+            bounds.mean(dim=1),
+            (bounds[:, 1] - bounds[:, 0]) / 2.0,
         )
         return unscale_bias, unscale_multiplier
 
-    def unscale_from_minus_one_one_to_action_bounds(self, x):
+    def unscale_from_minus_one_one_to_bounds(
+        self, x: torch.FloatTensor
+    ) -> torch.FloatTensor:
         (
             unscale_bias,
             unscale_multiplier,
-        ) = self.get_unscale_coefs_from_minus_one_one_to_action_bounds()
+        ) = self.get_unscale_coefs_from_minus_one_one_to_bounds()
 
         return x * unscale_multiplier + unscale_bias
 
-    def scale_from_action_bounds_to_minus_one_one(self, y):
+    def scale_from_bounds_to_minus_one_one(self, y):
         (
             unscale_bias,
             unscale_multiplier,
-        ) = self.get_unscale_coefs_from_minus_one_one_to_action_bounds()
+        ) = self.get_unscale_coefs_from_minus_one_one_to_bounds()
 
         return (y - unscale_bias) / unscale_multiplier
 
-    def split_tensor_to_observations_actions(self, observations_actions_tensor):
-        if len(observations_actions_tensor.shape) == 1:
-            observation, action = (
-                observations_actions_tensor[: self.dim_observation],
-                observations_actions_tensor[self.dim_observation :],
-            )
-        elif len(observations_actions_tensor.shape) == 2:
-            observation, action = (
-                observations_actions_tensor[:, : self.dim_observation],
-                observations_actions_tensor[:, self.dim_observation :],
-            )
-        else:
-            raise ValueError("Input tensor has unexpected dims")
-
-        return observation, action
+    def forward(self, inputs):
+        return self.unscale_from_minus_one_one_to_bounds(torch.tanh(inputs))
 
 
-class DDPGActorModel(ModelWithScaledAction):
-    def __init__(
-        self,
-        dim_observation,
-        dim_action,
-        dim_hidden,
-        action_bounds,
-        leakyrelu_coef=0.2,
-        normalize_output_coef=400.0,
-    ):
-        super().__init__(action_bounds)
-        self.dim_observation = dim_observation
-        self.dim_action = dim_action
-        self.dim_hidden = dim_hidden
-        self.leakyrelu_coef = leakyrelu_coef
-        self.normalize_output_coef = normalize_output_coef
-
-        self.perceptron = nn.Sequential(
-            nn.Linear(self.dim_observation, self.dim_hidden, bias=True),
-            nn.LeakyReLU(self.leakyrelu_coef),
-            nn.Linear(self.dim_hidden, self.dim_hidden, bias=True),
-            nn.LeakyReLU(self.leakyrelu_coef),
-            nn.Linear(self.dim_hidden, dim_action, bias=True),
-        )
-
-    def forward(self, observation):
-        return self.unscale_from_minus_one_one_to_action_bounds(
-            torch.tanh(self.perceptron(observation) / self.normalize_output_coef)
-        )
-
-    def sample(self, observation):
-        return self.forward(observation)
-
-
-class GaussianPDFModel(ModelWithScaledAction):
-    r"""Model for REINFORCE Policy Gradient methods.
-
-    Markov kernel acts like :math:`u \mid x \sim \mathcal{N}\left( f_{\theta}(x), \sigma^2 \right)`.
-    :math:`f_{\theta}(x)` is the neural network with weights :math:`\theta`.
-    """
+class PerceptronWithNormalNoise(ModelNN):
+    r"""Sample from :math:`F^{-1}\\left(\\mathcal{N}(f_{\\theta}(x), \\sigma^2)\\right)`, where :math:`\\sigma` is the standard deviation of the noise, :math:`f_{\\theta}(x)` is perceptron with weights :math:`\\theta`, and :math:`F` is the linear transformation from `bounds` to [-1, 1]."""
 
     def __init__(
         self,
-        dim_observation,
-        dim_action,
-        dim_hidden,
-        std,
-        action_bounds,
-        leakyrelu_coef=0.2,
-        normalize_output_coef=800.0,
+        dim_input: int,
+        dim_output: int,
+        dim_hidden: int,
+        n_hidden_layers: int,
+        leaky_relu_coef: float,
+        output_bounds: Union[List[Any], np.array],
+        sigma: float,
+        normalize_output_coef: float,
+        weight_min: Optional[float] = None,
+        weight_max: Optional[float] = None,
     ):
-        super().__init__(action_bounds)
+        r"""Instantiate PerceptronWithNormalNoise.
 
-        self.dim_observation = dim_observation
-        self.dim_action = dim_action
-        self.dim_hidden = dim_hidden
-        self.leakyrelu_coef = leakyrelu_coef
-        self.std = std
+        :param dim_input: Dimensionality of input (x)
+        :type dim_input: int
+        :param dim_output: Dimensionality of output :math `f_{\\theta}(x)`
+        :type dim_output: int
+        :param dim_hidden: Dimensionality of hidden layers in perceptron :math `f_{\\theta}(x)`
+        :type dim_hidden: int
+        :param n_hidden_layers: Number of hidden layers in perceptron :math `f_{\\theta}(x)`
+        :type n_hidden_layers: int
+        :param leaky_relu_coef: Negative slope of the nn.LeakyReLU in perceptron.
+        :type leaky_relu_coef: float
+        :param output_bounds: Bounds for the output
+        :type output_bounds: Union[List[Any], np.array]
+        :param sigma: Standard deviation of normal distribution
+        :type sigma: float
+        :param normalize_output_coef: Coefficient :math `L` in latest activation function in perceptron :math `(1 - 3 \\sigma)\\tanh\\left(\\frac{\\cdot}{L}\\right)`. We use :math `3\\sigma` rule here to guarantee that sampled random variable is in [-1, 1] with good probability. Moreover, :math `L` is an hyperparameter that stabilizes the training in small times.
+        :type normalize_output_coef: float
+        :param weight_min: Minimum value for weight. If `None` the weights are not clipped, defaults to None
+        :type weight_min: Optional[float], optional
+        :param weight_max: Maximum value for weight. If `None` the weights are not clipped, defaults to None
+        :type weight_max: Optional[float], optional
+        """
+        super().__init__()
+        self.std = sigma
         self.normalize_output_coef = normalize_output_coef
 
-        self.perceptron = nn.Sequential(
-            nn.Linear(self.dim_observation, self.dim_hidden),
-            nn.LeakyReLU(self.leakyrelu_coef),
-            nn.Linear(self.dim_hidden, self.dim_hidden),
-            nn.LeakyReLU(self.leakyrelu_coef),
-            nn.Linear(self.dim_hidden, dim_action),
+        self.perceptron = ModelPerceptron(
+            dim_input=dim_input,
+            dim_output=dim_output,
+            dim_hidden=dim_hidden,
+            n_hidden_layers=n_hidden_layers,
+            leaky_relu_coef=leaky_relu_coef,
+            weight_min=weight_min,
+            weight_max=weight_max,
         )
+
+        self.bounder = NNOutputBounder(output_bounds)
 
         self.register_parameter(
             name="scale_tril_matrix",
             param=torch.nn.Parameter(
-                (self.std * torch.eye(dim_action)).float(),
+                (self.std * torch.eye(dim_output)).float(),
                 requires_grad=False,
             ),
         )
         self.cache_weights()
 
-    def get_means(self, observation):
+    def get_mean(self, observations):
         assert 1 - 3 * self.std > 0, "1 - 3 std should be greater than 0"
         # We should guarantee with good probability that sampled actions are within action bounds that are scaled to [-1, 1]
+        # That is why we use 3 sigma rule here
         return (1 - 3 * self.std) * torch.tanh(
-            self.perceptron(observation) / self.normalize_output_coef
+            self.perceptron(observations) / self.normalize_output_coef
         )
 
-    def forward(self, observation):
-        return self.unscale_from_minus_one_one_to_action_bounds(
-            self.get_means(observation)
+    def forward(self, observations):
+        return self.bounder.unscale_from_minus_one_one_to_bounds(
+            self.get_mean(observations)
         )
 
-    def log_pdf(self, observations_actions, weights=None):
-        if weights is not None:
-            self.update(weights)
-
-        observations, actions = self.split_tensor_to_observations_actions(
-            observations_actions
-        )
-        means = self.get_means(observations)
-        scaled_actions = self.scale_from_action_bounds_to_minus_one_one(actions)
+    def log_pdf(self, observations, actions):
+        means = self.get_mean(observations)
+        scaled_actions = self.bounder.scale_from_bounds_to_minus_one_one(actions)
 
         return MultivariateNormal(
             loc=means,
@@ -815,13 +858,13 @@ class GaussianPDFModel(ModelWithScaledAction):
         ).log_prob(scaled_actions)
 
     def sample(self, observation):
-        mean = self.get_means(observation)
+        mean = self.get_mean(observation)
         sampled_scaled_action = MultivariateNormal(
             loc=mean,
             scale_tril=self.get_parameter("scale_tril_matrix"),
         ).sample()
 
-        sampled_action = self.unscale_from_minus_one_one_to_action_bounds(
+        sampled_action = self.bounder.unscale_from_minus_one_one_to_bounds(
             sampled_scaled_action
         )
 

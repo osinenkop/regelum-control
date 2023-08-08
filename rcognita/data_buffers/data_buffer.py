@@ -12,7 +12,7 @@ import pandas as pd
 
 from typing import Optional, List, Union, Any, Type, Iterable
 from .types import Array, ArrayType
-from .samplers import ForwardSampler
+from .samplers import RollingSampler
 from .fifo_list import FifoList
 from collections import defaultdict
 
@@ -25,6 +25,12 @@ class DataBuffer:
         self.max_buffer_size = max_buffer_size
         self.nullify_buffer()
 
+    def delete_key(self, key) -> None:
+        self.data.pop(key)
+
+    def keys(self) -> List[str]:
+        return list(self.data.keys())
+
     def nullify_buffer(self) -> None:
         self.data = defaultdict(lambda: FifoList(max_size=self.max_buffer_size))
         self.keys_for_indexing = None
@@ -35,8 +41,34 @@ class DataBuffer:
             self.data[key] = data_for_key
 
     def push_to_end(self, **kwargs) -> None:
-        for key, data_item_for_key in kwargs.items():
-            self.data[key].append(data_item_for_key)
+        current_keys = set(self.data.keys())
+        kwarg_keys = set(kwargs.keys())
+
+        for _, data_item_for_key in kwargs.items():
+            if np.any(np.isnan(data_item_for_key)):
+                raise ValueError(
+                    f"{type(data_item_for_key)} nan values are not allowed for `push_to_end` in data buffer"
+                )
+        is_line_added = False
+        for key in current_keys.intersection(kwarg_keys):
+            if np.any(np.isnan(self.data[key][-1])):
+                self.data[key][-1] = kwargs[key]
+            else:
+                self.data[key].append(kwargs[key])
+                is_line_added = True
+
+        buffer_len = len(self)
+        for key in kwarg_keys.difference(current_keys):
+            for _ in range(buffer_len - 1):
+                self.data[key].append(np.full_like(kwargs[key], np.nan, dtype=float))
+            self.data[key].append(kwargs[key])
+
+        # if buffer len has changed fill all the rest keys with nan
+        if is_line_added:
+            for key in current_keys.difference(kwarg_keys):
+                self.data[key].append(
+                    np.full_like(self.data[key][-1], np.nan, dtype=float)
+                )
 
     def last(self) -> dict[str, Array]:
         return self[-1]
@@ -92,6 +124,6 @@ class DataBuffer:
         return self.getitem(idx, self.keys_for_indexing, self.dtype_for_indexing)
 
     def iter_batches(
-        self, sampler: Type[Sampler] = ForwardSampler, **sampler_kwargs
+        self, sampler: Type[Sampler] = RollingSampler, **sampler_kwargs
     ) -> Iterable[Array]:
         return sampler(data_buffer=self, **sampler_kwargs)

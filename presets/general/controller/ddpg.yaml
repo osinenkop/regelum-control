@@ -1,6 +1,6 @@
 defaults:
   - actor: ddpg
-  - critic: critic_on_policy 
+  - critic: critic 
   - data_buffer: data_buffer
 
 name%%: ddpg

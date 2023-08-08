@@ -2,6 +2,6 @@ _target_: rcognita.simulator.CasADi
 
 system: ~ system
 state_init: $ initial_conditions.state_init
-action_init: $ initial_conditions.action_init
+# action_init: $ initial_conditions.action_init
 time_final: $ system_specific.time_final
 max_step: = ${system_specific.sampling_time} / 10.

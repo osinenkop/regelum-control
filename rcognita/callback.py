@@ -1410,9 +1410,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         self.iteration_number = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.critic.CriticOnPolicy) and (
-            method == "post_epoch"
-        )
+        return isinstance(obj, rcognita.critic.Critic) and (method == "post_epoch")
 
     def perform(self, obj, method, output):
         epoch_idx, objective = output
