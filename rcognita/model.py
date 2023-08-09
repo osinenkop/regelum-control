@@ -424,7 +424,7 @@ class ModelNN(nn.Module):
                 deepcopy(self),
             )  ## this is needed to prevent cached_model's parameters to be parsed by model init hooks
 
-        self.cache.load_state_dict(self.weights)
+        self.cache.load_state_dict(self.state_dict())
         self.cache.detach_weights()
 
     @property
@@ -433,25 +433,6 @@ class ModelNN(nn.Module):
 
     def update_weights(self, whatever=None):
         pass
-
-    def weights2dict(self, weights_to_parse):
-        """Transform weights as a numpy array into a dictionary compatible with pytorch."""
-        weights_to_parse = torch.tensor(weights_to_parse)
-
-        new_state_dict = {}
-
-        length_old = 0
-
-        for param_tensor in self.state_dict():
-            weights_size = self.state_dict()[param_tensor].size()
-            weights_length = math.prod(self.state_dict()[param_tensor].size())
-            new_state_dict[param_tensor] = torch.reshape(
-                weights_to_parse[length_old : length_old + weights_length],
-                tuple(weights_size),
-            )
-            length_old = weights_length
-
-        return new_state_dict
 
     def update_and_cache_weights(self, weights=None):
         if weights is not None:
@@ -482,7 +463,7 @@ class ModelNN(nn.Module):
             if dim == 1:
                 argin = rc.concatenate(argin)
             elif dim == 2:
-                argin = torch.cat(argin, dim=1)
+                argin = rc.concatenate(argin, dim=1)
             else:
                 raise ValueError("Wrong number of dimensions in ModelNN.__call__")
         elif len(argin) == 1:
@@ -491,8 +472,6 @@ class ModelNN(nn.Module):
             raise ValueError(
                 f"Wrong number of arguments in ModelNN.__call__. Can be either 1 or 2. Got: {len(argin)}"
             )
-
-        argin = argin if isinstance(argin, torch.Tensor) else torch.tensor(argin)
 
         if use_stored_weights is False:
             if weights is not None:
@@ -667,8 +646,8 @@ class ModelWeightContainerTorch(ModelNN):
 
     def set_zero_weights(self):
         with torch.no_grad():
-            self.model_weights_parameter.fill_(0.)
-    
+            self.model_weights_parameter.fill_(0.0)
+
     def forward(self, inputs):
         if len(inputs.shape) == 2:
             inputs_like = torch.tile(

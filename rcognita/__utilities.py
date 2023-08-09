@@ -176,6 +176,18 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
                 self.concatenate([casadi.max(self.concatenate([x, l])), u])
             )
 
+    def diag(self, x, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            diag = np.diag(x)
+            if len(diag.shape) == 1:
+                return diag.reshape(-1, 1)
+        elif rc_type == TORCH:
+            diag = torch.diag(x)
+            if len(diag.shape) == 1:
+                return diag.reshape(-1, 1)
+        elif rc_type == CASADI:
+            return casadi.diag(x)
+
     def sin(self, x, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.sin(x)
@@ -959,4 +971,3 @@ def on_close(event):
 
 
 log = None
-

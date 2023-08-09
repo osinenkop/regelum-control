@@ -676,6 +676,45 @@ class RPOPolicy(RLPolicy):
         ) + self.critic.model(observation_next)
 
 
+class RPOPolicyCasadi(RLPolicy):
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        predictor,
+        running_objective,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+        epsilon_random: bool = False,
+        epsilon_random_parameter: float = 0.0,
+    ):
+        RLPolicy.__init__(
+            self,
+            model=model,
+            critic=critic,
+            system=system,
+            action_bounds=action_bounds,
+            optimizer_config=optimizer_config,
+            discount_factor=discount_factor,
+            device=device,
+            epsilon_random=epsilon_random,
+            epsilon_random_parameter=epsilon_random_parameter,
+        )
+        self.predictor = predictor
+        self.running_objective = running_objective
+
+    def objective_function(self, observation, policy_model_output):
+        observation_next = self.predictor.predict(
+            observation[-1], policy_model_output[-1]
+        )
+        return self.running_objective(
+            observation[-1], policy_model_output[-1]
+        ) + self.critic.model(observation_next)
+
+
 class MPC(Policy):
     r"""Model-predictive control (MPC)policy.
 

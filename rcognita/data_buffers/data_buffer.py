@@ -8,7 +8,7 @@ except ImportError:
 
 import numpy as np
 import pandas as pd
-
+import casadi as cs
 
 from typing import Optional, List, Union, Any, Type, Iterable
 from .types import Array, ArrayType
@@ -51,17 +51,19 @@ class DataBuffer:
                 )
         is_line_added = False
         for key in current_keys.intersection(kwarg_keys):
+            datum = np.array(kwargs[key])
             if np.any(np.isnan(self.data[key][-1])):
-                self.data[key][-1] = kwargs[key]
+                self.data[key][-1] = datum
             else:
-                self.data[key].append(kwargs[key])
+                self.data[key].append(datum)
                 is_line_added = True
 
         buffer_len = len(self)
         for key in kwarg_keys.difference(current_keys):
+            datum = np.array(kwargs[key])
             for _ in range(buffer_len - 1):
-                self.data[key].append(np.full_like(kwargs[key], np.nan, dtype=float))
-            self.data[key].append(kwargs[key])
+                self.data[key].append(np.full_like(datum, np.nan, dtype=float))
+            self.data[key].append(datum)
 
         # if buffer len has changed fill all the rest keys with nan
         if is_line_added:
@@ -111,6 +113,8 @@ class DataBuffer:
                 return {key: dtype(np.array(self.data[key]))[idx] for key in _keys}
             elif dtype == np.array:
                 return {key: np.array(self.data[key])[idx] for key in _keys}
+            elif dtype == cs.DM:
+                return {key: dtype(np.array(self.data[key])[idx]) for key in _keys}
 
     def set_indexing_rules(
         self,

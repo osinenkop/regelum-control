@@ -6,6 +6,7 @@ except ImportError:
     torch = MagicMock()
 
 import numpy as np
+import casadi as cs
 from .fifo_list import FifoList
 from typing import Union, Type
 
@@ -16,6 +17,7 @@ ArrayType = Union[
     Type[torch.FloatTensor],
     Type[torch.DoubleTensor],
     Type[torch.LongTensor],
+    Type[cs.DM],
 ]
 
 Array = Union[
@@ -25,4 +27,5 @@ Array = Union[
     torch.FloatTensor,
     torch.DoubleTensor,
     torch.LongTensor,
+    cs.DM,
 ]
