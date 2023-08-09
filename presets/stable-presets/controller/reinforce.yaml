@@ -13,7 +13,7 @@ running_objective: ~ running_objective
 discount_factor: $ scenario.discount_factor
 policy_optimization_event: reset_iteration
 data_buffer_nullify_event: reset_iteration
-critic_optimization_event: None
+critic_optimization_event: = None
 
 device%%: cpu
 policy:

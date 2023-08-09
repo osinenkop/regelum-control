@@ -52,7 +52,7 @@ policy:
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.001
+      lr: 0.01
     config_options:
       n_epochs: 100
       is_reinstantiate_optimizer: True

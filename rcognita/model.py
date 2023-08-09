@@ -656,21 +656,19 @@ class ModelWeightContainerTorch(ModelNN):
             NNOutputBounder(output_bounds) if output_bounds is not None else None
         )
         self.dim_weights = dim_weights
-        self.model_weights_parameter = (
-            torch.nn.Parameter(
-                torch.FloatTensor(torch.zeros(self.dim_weights)),
-                requires_grad=True,
-            ),
+        self.model_weights_parameter = torch.nn.Parameter(
+            torch.FloatTensor(torch.zeros(self.dim_weights)),
+            requires_grad=True,
         )
 
         self.register_parameter(
-            name="model_weights",
-            param=torch.nn.Parameter(
-                torch.FloatTensor(torch.zeros(self.dim_weights)),
-                requires_grad=True,
-            ),
+            name="model_weights", param=self.model_weights_parameter
         )
 
+    def set_zero_weights(self):
+        with torch.no_grad():
+            self.model_weights_parameter.fill_(0.)
+    
     def forward(self, inputs):
         if len(inputs.shape) == 2:
             inputs_like = torch.tile(
