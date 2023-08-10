@@ -35,6 +35,7 @@ class DataBuffer:
         self.data = defaultdict(lambda: FifoList(max_size=self.max_buffer_size))
         self.keys_for_indexing = None
         self.dtype_for_indexing = None
+        self.device_for_indexing = None
 
     def update(self, data_in_dict_format: dict[str, Array]) -> None:
         for key, data_for_key in data_in_dict_format.items():
@@ -95,6 +96,7 @@ class DataBuffer:
         idx: Union[int, slice, Any],
         keys: Optional[Union[List[str], np.array]] = None,
         dtype: Optional[ArrayType] = None,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> dict[str, Array]:
         _keys = keys if keys is not None else self.data.keys()
         if (
@@ -110,7 +112,13 @@ class DataBuffer:
                 or dtype == torch.DoubleTensor
                 or dtype == torch.LongTensor
             ):
-                return {key: dtype(np.array(self.data[key]))[idx] for key in _keys}
+                if device is not None:
+                    return {
+                        key: dtype(np.array(self.data[key]))[idx].to(device)
+                        for key in _keys
+                    }
+                else:
+                    return {key: dtype(np.array(self.data[key]))[idx] for key in _keys}
             elif dtype == np.array:
                 return {key: np.array(self.data[key])[idx] for key in _keys}
             elif dtype == cs.DM:
@@ -120,12 +128,19 @@ class DataBuffer:
         self,
         keys: List[str],
         dtype: ArrayType,
+        device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.keys_for_indexing = keys
         self.dtype_for_indexing = dtype
+        self.device_for_indexing = device
 
     def __getitem__(self, idx) -> dict[str, Array]:
-        return self.getitem(idx, self.keys_for_indexing, self.dtype_for_indexing)
+        return self.getitem(
+            idx,
+            keys=self.keys_for_indexing,
+            dtype=self.dtype_for_indexing,
+            device=self.device_for_indexing,
+        )
 
     def iter_batches(
         self, sampler: Type[Sampler] = RollingSampler, **sampler_kwargs

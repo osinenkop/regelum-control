@@ -41,9 +41,8 @@ critic:
         n_batches: 1
         mode: backward
         keys: 
-          - observation
+          - observation_action
           - running_objective
-          - action
           - critic_targets
 policy:
   device: $ controller.device%%

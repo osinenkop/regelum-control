@@ -411,6 +411,8 @@ class Reinforce(PolicyGradient):
 
     def calculate_last_total_objectives(self, data_buffer: DataBuffer):
         data = data_buffer.to_pandas(keys=["episode_id", "current_total_objective"])
+        data["episode_id"] = data["episode_id"].astype(int)
+        data["current_total_objective"] = data["current_total_objective"].astype(float)
         return (
             data.groupby("episode_id")["current_total_objective"]
             .last()
@@ -422,13 +424,24 @@ class Reinforce(PolicyGradient):
         self,
         data_buffer: DataBuffer,
     ):
-        groupby_episode_total_objectives = data_buffer.to_pandas(
-            keys=["episode_id", "current_total_objective"]
-        ).groupby(["episode_id"])["current_total_objective"]
-        return (
+        data = data_buffer.to_pandas(keys=["episode_id", "current_total_objective"])
+        data["episode_id"] = data["episode_id"].astype(int)
+        data["current_total_objective"] = data["current_total_objective"].astype(float)
+
+        groupby_episode_total_objectives = data.groupby(["episode_id"])[
+            "current_total_objective"
+        ]
+
+        last_total_objectives = (
             groupby_episode_total_objectives.last()
-            - groupby_episode_total_objectives.shift(periods=1, fill_value=0.0)
+            .loc[data["episode_id"]]
+            .values.reshape(-1)
+        )
+        current_total_objectives_shifted = groupby_episode_total_objectives.shift(
+            periods=1, fill_value=0.0
         ).values.reshape(-1)
+
+        return last_total_objectives - current_total_objectives_shifted
 
     def calculate_baseline(self, data_buffer: DataBuffer):
         baseline = self.next_baseline

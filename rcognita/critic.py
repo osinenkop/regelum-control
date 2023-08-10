@@ -210,6 +210,9 @@ class Critic(Optimizable, ABC):
         self.var_observation = self.create_variable(
             name="observation", is_constant=True
         )
+        self.var_observation_action = self.create_variable(
+            name="observation_action", is_constant=True
+        )
         self.var_running_objective = self.create_variable(
             name="running_objective", is_constant=True
         )
@@ -221,9 +224,8 @@ class Critic(Optimizable, ABC):
             variables = [self.var_observation, self.var_running_objective]
         else:
             variables = [
-                self.var_observation,
+                self.var_observation_action,
                 self.var_running_objective,
-                self.var_action,
             ]
 
         self.register_objective(
@@ -233,19 +235,22 @@ class Critic(Optimizable, ABC):
 
     # @apply_callbacks()
     def objective_function(
-        self, observation, running_objective, action=None, critic_targets=None
+        self,
+        running_objective,
+        observation=None,
+        observation_action=None,
+        critic_targets=None,
     ):
         return temporal_difference_objective(
             critic_model=self.model,
             observation=observation,
-            action=action,
             running_objective=running_objective,
             td_n=self.td_n,
             discount_factor=self.discount_factor,
-            device=self.device,
             sampling_time=self.sampling_time,
             is_use_same_critic=self.is_same_critic,
             critic_targets=critic_targets,
+            observation_action=observation_action,
         )
 
     def update_data_buffer_with_optimal_policy_targets(self, data_buffer: DataBuffer):

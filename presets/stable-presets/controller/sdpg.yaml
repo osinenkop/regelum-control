@@ -34,8 +34,7 @@ critic:
         sampler: = rcognita.data_buffers.samplers.EpisodicSampler
         dtype: = torch.FloatTensor
         keys: 
-          - observation
-          - action
+          - observation_action
           - running_objective
 
 policy:

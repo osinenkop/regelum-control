@@ -28,6 +28,7 @@ except ModuleNotFoundError:
 from abc import ABC, abstractmethod
 from typing import Optional, Union, List, Any, Tuple
 import numpy as np
+import casadi as cs
 
 
 def force_positive_def(func):
@@ -43,15 +44,38 @@ def force_positive_def(func):
 class Model(rcognita.RcognitaBase, ABC):
     """Blueprint of a model."""
 
-    def __call__(self, *args, weights=None, use_stored_weights=False):
-        super().__init__()
+    def __call__(self, *argin, weights=None, use_stored_weights=False):
+        if len(argin) == 2:
+            left, right = argin
+            if len(left.shape) != len(right.shape):
+                raise ValueError(
+                    "In Model.__call__ left and right arguments must have same number of dimensions!"
+                )
+
+            dim = len(left.shape)
+
+            if dim == 1:
+                argin = rc.concatenate(argin)
+            elif dim == 2:
+                argin = rc.concatenate(argin, dim=1)
+            else:
+                raise ValueError("Wrong number of dimensions in Model.__call__")
+        elif len(argin) == 1:
+            argin = argin[0]
+        else:
+            raise ValueError(
+                f"Wrong number of arguments in Model.__call__. Can be either 1 or 2. Got: {len(argin)}"
+            )
+
         if use_stored_weights is False:
             if weights is not None:
-                return self.forward(*args, weights=weights)
+                result = self.forward(argin, weights)
             else:
-                return self.forward(*args, weights=self.weights)
+                result = self.forward(argin)
         else:
-            return self.cache.forward(*args, weights=self.cache.weights)
+            result = self.cache.forward(argin)
+
+        return result
 
     @property
     def named_parameters(self):
@@ -97,44 +121,187 @@ class Model(rcognita.RcognitaBase, ABC):
 
 
 class ModelQuadLin(Model):
-    """Quadratic-linear model."""
-
-    model_name = "quad-lin"
+    model_name = "ModelQuadLin"
 
     def __init__(
         self,
-        dim_input,
-        single_weight_min=1e-6,
-        single_weight_max=1e2,
-        force_positive_def=True,
+        quad_matrix_type: str,
+        is_with_linear_terms=False,
+        dim_inputs=None,
+        weights=None,
+        weight_min=1.0e-6,
+        weight_max=1.0e3,
     ):
-        """Initialize an instance of a model with quadratic and linear terms.
+        assert (
+            dim_inputs is not None or weights is not None
+        ), "Need dim_inputs or weights"
 
-        :param dim_input: input dimension
-        :param single_weight_min: lower bound for every weight
-        :param single_weight_max: upper bound for every weight
-        :param force_positive_def: whether force positive definiteness using soft_abs function
-        """
-        self.dim_weights = int((dim_input + 1) * dim_input / 2 + dim_input)
-        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
-        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
-        self.weights_init = (self.weight_min + self.weight_max) / 20.0
-        self.weights = self.weights_init
-        self.force_positive_def = force_positive_def
+        self.quad_matrix_type = quad_matrix_type
+        self.is_with_linear_terms = is_with_linear_terms
+
+        if weights is None:
+            self._calculate_dims(dim_inputs)
+            self.weight_min = weight_min * np.ones(self.dim_weights)
+            self.weight_max = weight_max * np.ones(self.dim_weights)
+            self.weights = (self.weight_min + self.weight_max) / 20.0
+        else:
+            self._calculate_dims(self._calculate_dim_inputs(len(weights)))
+            assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
+            self.weights = np.array(weights)
+
         self.update_and_cache_weights(self.weights)
 
-    @force_positive_def
-    def forward(self, *argin, weights=None):
-        if len(argin) > 1:
-            vec = rc.concatenate(tuple(argin))
+    def _calculate_dim_inputs(self, dim_weights):
+        if self.quad_matrix_type == "diagonal":
+            if self.is_with_linear_terms:
+                return dim_weights // 2
+            else:
+                return dim_weights
+        elif self.quad_matrix_type == "full":
+            if self.is_with_linear_terms:
+                return round((np.sqrt(1 + 4 * dim_weights) - 1) / 2)
+            else:
+                return round(np.sqrt(dim_weights))
+        elif self.quad_matrix_type == "symmetric":
+            if self.is_with_linear_terms:
+                return round((np.sqrt(9 + 8 * dim_weights) - 1) / 2)
+            else:
+                return round((np.sqrt(1 + 8 * dim_weights) - 1) / 2)
+
+    def _calculate_dims(self, dim_inputs):
+        self.dim_inputs = dim_inputs
+        self.dim_linear = dim_inputs if self.is_with_linear_terms else 0
+        if self.quad_matrix_type == "diagonal":
+            self.dim_quad = dim_inputs
+        elif self.quad_matrix_type == "full":
+            self.dim_quad = dim_inputs * dim_inputs
+        elif self.quad_matrix_type == "symmetric":
+            self.dim_quad = dim_inputs * (dim_inputs + 1) // 2
+
+        self.dim_weights = self.dim_quad + self.dim_linear
+
+    def cast_to_inputs_type(self, value, inputs):
+        if isinstance(inputs, torch.Tensor):
+            device = inputs.device
+            if not isinstance(value, torch.Tensor):
+                return torch.FloatTensor(value).to(device)
+            elif device != value.device:
+                return value.to(device)
+
+        return value
+
+    def forward_symmetric(self, inputs, weights):
+        quad_matrix = ModelQuadLin.quad_matrix_from_flat_weights(
+            weights[: self.dim_quad]
+        )
+        linear_coefs = (
+            weights[None, self.dim_quad :] if self.is_with_linear_terms else None
+        )
+
+        return ModelQuadLin.quadratic_linear_form(
+            inputs,
+            self.cast_to_inputs_type(quad_matrix, inputs),
+            self.cast_to_inputs_type(linear_coefs, inputs),
+        )
+
+    def forward_diagonal(self, inputs, weights):
+        quad_matrix = np.diag(weights[: self.dim_quad])
+        linear_coefs = (
+            weights[None, self.dim_quad :] if self.is_with_linear_terms else None
+        )
+
+        return ModelQuadLin.quadratic_linear_form(
+            inputs,
+            self.cast_to_inputs_type(quad_matrix, inputs),
+            self.cast_to_inputs_type(linear_coefs, inputs),
+        )
+
+    def forward_full(self, inputs, weights):
+        quad_matrix = weights[: self.dim_quad].reshape(self.dim_inputs, self.dim_inputs)
+        linear_coefs = (
+            weights[None, self.dim_quad :] if self.is_with_linear_terms else None
+        )
+
+        return ModelQuadLin.quadratic_linear_form(
+            inputs,
+            self.cast_to_inputs_type(quad_matrix, inputs),
+            self.cast_to_inputs_type(linear_coefs, inputs),
+        )
+
+    def forward(self, inputs, weights=None):
+        if weights is None:
+            weights = self.weights
+        if self.quad_matrix_type == "symmetric":
+            return self.forward_symmetric(inputs, weights)
+        elif self.quad_matrix_type == "diagonal":
+            return self.forward_diagonal(inputs, weights)
+        elif self.quad_matrix_type == "full":
+            return self.forward_full(inputs, weights)
+
+    @staticmethod
+    def quad_matrix_from_flat_weights(
+        flat_weights: Union[np.array, cs.DM, torch.Tensor], tol=1e-7
+    ):
+        len_flat_weights = flat_weights.shape[0]
+        dim_quad_matrix_float = (np.sqrt(1 + 8 * len_flat_weights) - 1) / 2
+        dim_quad_matrix = round(dim_quad_matrix_float)
+        assert np.isclose(
+            dim_quad_matrix_float, dim_quad_matrix, tol
+        ), f"Can't build quad matrix with flat_weights of dim {len_flat_weights}"
+
+        quad_matrix = rc.zeros(
+            (dim_quad_matrix, dim_quad_matrix), prototype=flat_weights
+        )
+        left_ids, right_ids = np.triu_indices(dim_quad_matrix)
+        for weigth_idx, (i, j) in enumerate(zip(left_ids, right_ids)):
+            quad_matrix[i, j] = flat_weights[weigth_idx]
+
+        return quad_matrix
+
+    @staticmethod
+    def quadratic_linear_form(inputs, quad_matrix, linear_coefs=None):
+        initial_dim_inputs = len(inputs.shape)
+        assert (
+            initial_dim_inputs == 1 or initial_dim_inputs == 2
+        ), "Wrong shape of inputs can be 1d or 2d. Got {}".format(initial_dim_inputs)
+
+        if initial_dim_inputs == 1:
+            inputs = inputs.reshape(1, -1)
+        assert (
+            len(quad_matrix.shape) == 2
+        ), "Wrong shape of quad matrix. Should be 2d. Got{}".format(
+            len(quad_matrix.shape)
+        )
+        assert (
+            quad_matrix.shape[0] == quad_matrix.shape[1]
+        ), "Quad matrix should be square"
+        assert (
+            quad_matrix.shape[0] == inputs.shape[1]
+        ), "Quad matrix should have same number of rows as inputs"
+
+        quadratic_term = inputs @ quad_matrix @ inputs.T
+        if len(quadratic_term.shape) > 0:
+            quadratic_term = rc.diag(quadratic_term)
+
+        if linear_coefs is not None:
+            assert (
+                len(linear_coefs.shape) == 2 and linear_coefs.shape[0] == 1
+            ), "Wrong shape of linear coefs. Should be (1,n). Got {}".format(
+                linear_coefs.shape
+            )
+
+            assert (
+                quad_matrix.shape[1] == linear_coefs.shape[1]
+            ), "Quad matrix should have same number of columns as linear coefs"
+
+            linear_term = inputs @ linear_coefs.T
+            output = quadratic_term + linear_term
         else:
-            vec = argin[0]
+            output = quadratic_term
 
-        polynom = rc.uptria2vec(rc.outer(vec, vec))
-        polynom = rc.concatenate([polynom, vec])
-        result = rc.dot(weights, polynom)
-
-        return result
+        if initial_dim_inputs == 1:
+            output = output.reshape(-1)
+        return output
 
 
 class ModelQuadLinQuad(Model):
@@ -174,144 +341,6 @@ class ModelQuadLinQuad(Model):
         return result
 
 
-class ModelQuadratic(Model):
-    """Quadratic model. May contain mixed terms."""
-
-    model_name = "quadratic"
-
-    def __init__(
-        self,
-        dim_input,
-        single_weight_min=1e-6,
-        single_weight_max=1e2,
-        force_positive_def=True,
-    ):
-        """Initialize an instance of a model with quadratic terms.
-
-        :param dim_input: input dimension
-        :param single_weight_min: lower bound for every weight
-        :param single_weight_max: upper bound for every weight
-        :param force_positive_def: whether force positive definiteness using soft_abs function
-        """
-        self.dim_weights = int((dim_input + 1) * dim_input / 2)
-        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
-        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
-        self.weights_init = (self.weight_min + self.weight_max) / 2.0
-        self.weights = self.weights_init
-        self.force_positive_def = force_positive_def
-        self.update_and_cache_weights(self.weights)
-
-    @force_positive_def
-    def forward(self, *argin, weights=None):
-        if len(argin) > 1:
-            vec = rc.concatenate(tuple(argin))
-        else:
-            vec = argin[0]
-
-        if isinstance(vec, tuple):
-            vec = vec[0]
-
-        polynom = rc.uptria2vec(rc.outer(vec, vec))
-        result = rc.dot(weights, polynom)
-
-        return result
-
-
-class ModelQuadraticSquared(ModelQuadratic):
-    """Quadratic model. May contain mixed terms."""
-
-    model_name = "quadratic-squared"
-
-    def forward(self, *argin, weights=None):
-        result = super().forward(*argin, weights=weights)
-
-        result = result**2 / 1e5
-
-        return result
-
-
-class ModelQuadNoMix(Model):
-    """Quadratic model (no mixed terms)."""
-
-    model_name = "quad-nomix"
-
-    def __init__(
-        self,
-        dim_input,
-        single_weight_min=1e-6,
-        single_weight_max=1e3,
-    ):
-        """Initialize an instance of a model with quadratic (non-mixed) terms.
-
-        :param dim_input: input dimension
-        :param single_weight_min: lower bound for every weight
-        :param single_weight_max: upper bound for every weight
-        """
-        self.dim_weights = dim_input
-        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
-        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
-        self.weights_init = (self.weight_min + self.weight_max) / 2.0
-        self.weights = self.weights_init
-        self.force_positive_def = force_positive_def
-        self.update_and_cache_weights(self.weights)
-
-    def forward(self, *argin, weights=None):
-        if len(argin) > 1:
-            vec = rc.concatenate(tuple(argin))
-        else:
-            vec = argin[0]
-
-        if isinstance(vec, tuple):
-            vec = vec[0]
-
-        polynom = vec * vec
-
-        result = rc.dot(weights, polynom)
-
-        return result
-
-
-class ModelQuadNoMix2D(Model):
-    """Quadratic model (no mixed terms)."""
-
-    model_name = "quad-nomix"
-
-    def __init__(
-        self,
-        dim_input,
-        single_weight_min=1e-6,
-        single_weight_max=1e2,
-    ):
-        """Initialize an instance of a model with quadratic (non-mixed) terms.
-
-        :param dim_input: input dimension
-        :param single_weight_min: lower bound for every weight
-        :param single_weight_max: upper bound for every weight
-        """
-        self.dim_weights = dim_input
-        self.weight_min = single_weight_min * rc.ones(self.dim_weights)[:2]
-        self.weight_max = single_weight_max * rc.ones(self.dim_weights)[:2]
-        self.weights_init = (self.weight_min + self.weight_max) / 2.0
-        self.weights = self.weights_init
-        self.force_positive_def = force_positive_def
-        self.update_and_cache_weights(self.weights)
-
-    def forward(self, *argin, weights=None):
-        if len(argin) > 1:
-            vec = rc.concatenate(tuple(argin))
-        else:
-            vec = argin[0]
-
-        if isinstance(vec, tuple):
-            vec = vec[0]
-
-        polynom = vec[:2] * vec[:2]
-
-        result = rc.dot(weights, polynom)
-
-        return result
-
-
 class ModelWeightContainer(Model):
     """Trivial model, which is typically used in actor in which actions are being optimized directly."""
 
@@ -331,63 +360,6 @@ class ModelWeightContainer(Model):
 
     def forward(self, *argin, weights=None):
         return weights[: self.dim_output]
-
-
-class ModelQuadForm(Model):
-    """Quadratic form."""
-
-    model_name = "quad_form"
-
-    def __init__(self, weights=None):
-        """Initialize an instance of model representing quadratic form.
-
-        :param weights: a numpy array representing matrix of quadratic form
-        """
-        self.weights = weights
-
-    def forward(self, *argin, weights=None, device="cpu"):
-        if len(argin) != 2:
-            raise ValueError("ModelQuadForm assumes two vector arguments!")
-
-        vec = rc.concatenate(tuple(argin))
-
-        try:
-            result = vec.T @ weights @ vec
-        except:
-            result = (
-                vec.T
-                @ torch.tensor(weights, requires_grad=False, device=device).float()
-                @ vec
-            )
-
-        result = rc.squeeze(result)
-
-        return result
-
-
-class ModelBiquadForm(Model):
-    """Bi-quadratic form."""
-
-    model_name = "biquad_form"
-
-    def __init__(self, weights):
-        """Initialize an instance of biquadratic form.
-
-        :param weights: a list of two numpy arrays representing matrices of biquadratic form
-        """
-        self.weights = weights
-
-    def forward(self, *argin, weights=None):
-        if len(argin) != 2:
-            raise ValueError("ModelBiquadForm assumes two vector arguments!")
-
-        vec = rc.concatenate(tuple(argin))
-
-        result = vec.T**2 @ weights[0] @ vec**2 + vec.T @ weights[1] @ vec
-
-        result = rc.squeeze(result)
-
-        return result
 
 
 class ModelNN(nn.Module):
@@ -502,50 +474,6 @@ class WeightClipper:
             w = module.weight.data
             w = w.clamp(self.weight_min, self.weight_max)
             module.weight.data = w
-
-
-# TODO: WHY IS THIS CALLED QUAD MIX BLA-BLA IF IT'S JUST ONE LAYER? FIX
-class ModelQuadNoMixTorch(ModelNN):
-    """pytorch equivalent to ModelQuadNoMix."""
-
-    def __init__(
-        self,
-        dim_observation,
-        dim_action,
-        dim_hidden=20,
-        weights=None,
-        force_positive_def=False,
-    ):
-        """Initialize an instance of ModelQuadNoMixTorch.
-
-        :param dim_observation: observation dimensionality
-        :param dim_action: action dimensionality
-        :param force_positive_def: whether force positive definiteness using soft_abs function
-        """
-        super().__init__()
-
-        # self.fc1 = nn.Linear(dim_observation + dim_action, 1, bias=False)
-        self.w1 = torch.nn.Parameter(
-            torch.ones(dim_observation + dim_action, requires_grad=True)
-        )
-
-        if weights is not None:
-            self.load_state_dict(weights)
-
-        self.double()
-        self.cache_weights()
-        self.force_positive_def = force_positive_def
-
-    def forward(
-        self, input_tensor: torch.FloatTensor, weights=None
-    ) -> torch.FloatTensor:
-        if weights is not None:
-            self.update(weights)
-
-        x = input_tensor**2
-        x = self.w1**2 @ x
-
-        return x
 
 
 class ModelPerceptron(ModelNN):

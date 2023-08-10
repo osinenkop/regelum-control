@@ -308,7 +308,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         if rc_type == NUMPY:
             self._array = np.array(array)
         elif rc_type == TORCH:
-            self._array = torch.tensor(array)
+            if hasattr(prototype, "device"):
+                device = prototype.device
+            elif hasattr(array, "device"):
+                device = array.device
+            else:
+                device = torch.device("cpu")
+
+            self._array = torch.tensor(array, device=device)
         elif rc_type == CASADI:
             casadi_constructor = type(prototype) if prototype is not None else casadi.DM
 
@@ -482,6 +489,22 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.sum(array**2)
         elif rc_type == CASADI:
             return casadi.sum1(array**2)
+
+    def sum(self, array, rc_type: RCType = NUMPY, axis=None):
+        if isinstance(array, (list, tuple)):
+            rc_type = type_inference(*array)
+
+        if rc_type == NUMPY:
+            return np.sum(array, axis=axis)
+        elif rc_type == TORCH:
+            return torch.sum(array, dim=axis)
+        elif rc_type == CASADI:
+            if axis is None:
+                return casadi.sum2(casadi.sum1(array))
+            if axis == 0:
+                return casadi.sum1(array)
+            if axis == 1:
+                return casadi.sum2(array)
 
     def mean(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):

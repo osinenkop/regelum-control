@@ -134,6 +134,7 @@ class RLController(Controller):
                 current_total_objective=self.update_total_objective(
                     running_objective, time
                 ),
+                observation_action=np.concatenate((observation, self.policy.action)),
             )
 
     def critic_update(self):

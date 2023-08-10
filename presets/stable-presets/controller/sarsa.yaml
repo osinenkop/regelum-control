@@ -38,8 +38,7 @@ critic:
         n_batches: 1
         mode: backward
         keys: 
-          - observation
-          - action
+          - observation_action
           - running_objective
 
 policy:

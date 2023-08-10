@@ -10,6 +10,8 @@ import rcognita
 from .model import Model, PerceptronWithNormalNoise, ModelNN
 from typing import Optional, Union
 import torch
+import numpy as np
+from .__utilities import rc
 
 
 class Objective(rcognita.RcognitaBase, ABC):
@@ -38,7 +40,7 @@ class RunningObjective(Objective):
         """
         self.model = (lambda observation, action: 0) if model is None else model
 
-    def __call__(self, observation, action):
+    def __call__(self, observation, action, is_save_batch_format=False):
         """Calculate the running objective for a given observation and action.
 
         :param observation: current observation.
@@ -49,6 +51,8 @@ class RunningObjective(Objective):
         :rtype: float
         """
         running_objective = self.model(observation, action)
+        if not is_save_batch_format and len(running_objective.shape) == 1:
+            return running_objective[0]
 
         return running_objective
 
@@ -193,14 +197,13 @@ def ddpg_objective(
 
 def temporal_difference_objective(
     critic_model: ModelNN,
-    observation: torch.FloatTensor,
     running_objective: torch.FloatTensor,
     td_n: int,
     discount_factor: float,
-    device: Union[str, torch.device],
     sampling_time: float,
     is_use_same_critic: bool,
-    action: Optional[torch.FloatTensor] = None,
+    observation: Optional[torch.FloatTensor] = None,
+    observation_action: Optional[torch.FloatTensor] = None,
     critic_targets: Optional[torch.FloatTensor] = None,
 ) -> torch.FloatTensor:
     """Calculate temporal difference objective.
@@ -226,36 +229,38 @@ def temporal_difference_objective(
     :return: objective value
     :rtype: torch.FloatTensor
     """
-    batch_size = len(running_objective)
+    batch_size = running_objective.shape[0]
     assert batch_size > td_n, f"batch size {batch_size} too small for such td_n {td_n}"
-
-    discount_factors = torch.FloatTensor(
-        [discount_factor ** (sampling_time * i) for i in range(td_n)]
+    assert (
+        observation_action is None or observation is None
+    ), "Only one of observation (for Value function temporal diffenence) and observation_action (for Q function temporal diffenence) should be provided"
+    discount_factors = rc.array(
+        [discount_factor ** (sampling_time * i) for i in range(td_n)],
+        prototype=running_objective,
     )
-    discounted_tdn_sum_of_running_objectives = torch.FloatTensor(
+    discounted_tdn_sum_of_running_objectives = rc.array(
         [
-            [(running_objective[i : i + td_n] * discount_factors).sum()]
+            [rc.sum(running_objective[i : i + td_n] * discount_factors)]
             for i in range(batch_size - td_n)
-        ]
-    ).to(device)
+        ],
+        prototype=running_objective,
+    )
 
-    if action is not None:
-        first_tdn_inputs = torch.cat([observation[:-td_n], action[:-td_n]], dim=1).to(
-            device
-        )
-        last_tdn_inputs = torch.cat([observation[td_n:], action[td_n:]], dim=1).to(
-            device
-        )
+    if observation_action is not None:
+        first_tdn_inputs = observation_action[:-td_n, :]
+        last_tdn_inputs = observation_action[td_n:, :]
+    elif observation is not None:
+        first_tdn_inputs = observation[:-td_n, :]
+        last_tdn_inputs = observation[td_n:, :]
     else:
-        first_tdn_inputs = observation[:-td_n].to(device)
-        last_tdn_inputs = observation[td_n:].to(device)
+        raise ValueError("Either observation or observation_action should be provided")
 
     if critic_targets is None:
         critic_targets = critic_model(
             last_tdn_inputs, use_stored_weights=not is_use_same_critic
         )
     else:
-        critic_targets = critic_targets[-len(first_tdn_inputs) :].to(device)
+        critic_targets = critic_targets[-first_tdn_inputs.shape[0] :, :]
 
     temporal_difference = (
         (
