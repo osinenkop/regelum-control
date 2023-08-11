@@ -62,5 +62,3 @@ policy:
         batch_size: 1
         mode: backward
         n_batches: 1
-        keys: 
-          - observation

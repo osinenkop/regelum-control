@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Union
-from .types import ArrayType, Array
+from .types import RgArrayType, RgArray
 import numpy as np
 import torch
 
 
-class Sampler(ABC):
+class BatchSampler(ABC):
     def __init__(
         self,
         data_buffer,
         keys: Optional[List[str]],
-        dtype: ArrayType = torch.FloatTensor,
+        dtype: RgArrayType = torch.FloatTensor,
         device: Optional[Union[str, torch.device]] = None,
     ):
         self.keys = keys
@@ -37,7 +37,7 @@ class Sampler(ABC):
         return self.next()
 
     @abstractmethod
-    def next(self) -> Dict[str, Array]:
+    def next(self) -> Dict[str, RgArray]:
         pass
 
     @abstractmethod
@@ -49,28 +49,32 @@ class Sampler(ABC):
         pass
 
 
-class RollingSampler(Sampler):
+class RollingBatchSampler(BatchSampler):
     def __init__(
         self,
-        batch_size: int,
         mode: str,
         data_buffer,
         keys: Optional[List[str]],
+        batch_size: Optional[int] = None,
         n_batches: Optional[int] = None,
-        dtype: ArrayType = torch.FloatTensor,
+        dtype: RgArrayType = torch.FloatTensor,
         device: Optional[Union[str, torch.device]] = None,
     ):
-        assert batch_size > 0, "Batch size should be > 0"
+        if batch_size is None and mode in ["uniform", "backward", "forward"]:
+            raise ValueError(
+                "batch_size should not be None for modes ['uniform', 'backward', 'forward']"
+            )
         assert mode in [
             "uniform",
             "backward",
             "forward",
-        ], "mode should be one of ['uniform', 'backward', 'forward']"
+            "full",
+        ], "mode should be one of ['uniform', 'backward', 'forward', 'full']"
         assert not (
-            n_batches is None and mode == "uniform"
-        ), "'uniform' mode is not avaliable for n_batches == None"
+            n_batches is None and (mode == "uniform" or mode == "full")
+        ), "'uniform' and 'full' mode are not avaliable for n_batches == None"
 
-        Sampler.__init__(
+        BatchSampler.__init__(
             self, data_buffer=data_buffer, keys=keys, dtype=dtype, device=device
         )
         self.mode = mode
@@ -94,12 +98,15 @@ class RollingSampler(Sampler):
                 low=0,
                 high=max(self.len_data_buffer - self.batch_size, 1),
             ) + np.arange(self.batch_size, dtype=int)
+        elif self.mode == "full":
+            self.batch_ids = np.arange(self.len_data_buffer, dtype=int)
         else:
             raise ValueError("mode should be one of ['uniform', 'backward', 'forward']")
 
     def stop_iteration_criterion(self) -> bool:
-        if self.len_data_buffer <= self.batch_size:
-            return True
+        if self.mode != "full":
+            if self.len_data_buffer <= self.batch_size:
+                return True
         if self.mode == "forward":
             return (
                 self.batch_ids[-1] >= len(self.data_buffer)
@@ -107,12 +114,14 @@ class RollingSampler(Sampler):
             )
         elif self.mode == "backward":
             return self.batch_ids[0] <= 0 or self.n_batches == self.n_batches_sampled
-        elif self.mode == "uniform":
+        elif self.mode == "uniform" or self.mode == "full":
             return self.n_batches == self.n_batches_sampled
         else:
-            raise ValueError("mode should be one of ['uniform', 'backward', 'forward']")
+            raise ValueError(
+                "mode should be one of ['uniform', 'backward', 'forward', 'full']"
+            )
 
-    def next(self) -> Dict[str, Array]:
+    def next(self) -> Dict[str, RgArray]:
         batch = self.data_buffer[self.batch_ids]
         if self.mode == "forward":
             self.batch_ids += 1
@@ -122,30 +131,33 @@ class RollingSampler(Sampler):
             self.batch_ids = np.random.randint(
                 low=0, high=self.len_data_buffer - self.batch_size
             ) + np.arange(self.batch_size, dtype=int)
-        else:
-            raise ValueError("mode should be one of ['uniform', 'backward', 'forward']")
+
+        # for self.mode == "full" we should not update batch_ids as they are constant for full mode
+        # i. e. self.batch_ids == np.arange(self.len_data_buffer, dtype=int)
 
         self.n_batches_sampled += 1
         return batch
 
 
-class EpisodicSampler(Sampler):
+class EpisodicSampler(BatchSampler):
     def __init__(
         self,
         data_buffer=None,
         keys: Optional[List[str]] = None,
-        dtype: ArrayType = np.array,
+        dtype: RgArrayType = np.array,
         device: Optional[Union[str, torch.device]] = None,
     ):
-        Sampler.__init__(
+        BatchSampler.__init__(
             self, data_buffer=data_buffer, keys=keys, dtype=dtype, device=device
         )
         self.nullify_sampler()
 
     def nullify_sampler(self) -> None:
-        self.episode_ids = self.data_buffer.to_pandas(
-            keys=["episode_id"]
-        ).values.reshape(-1)
+        self.episode_ids = (
+            self.data_buffer.to_pandas(keys=["episode_id"])
+            .astype(int)
+            .values.reshape(-1)
+        )
         self.max_episode_id = max(self.episode_ids)
         self.cur_episode_id = min(self.episode_ids) - 1
         self.idx_batch = -1
@@ -158,23 +170,7 @@ class EpisodicSampler(Sampler):
             self.episode_ids == episode_id
         ]
 
-    def next(self) -> Dict[str, Array]:
-        # self.idx_batch += 1
-        # batch_ids = self.get_episode_batch_ids(self.cur_episode_id)
-        # if self.idx_batch * self.batch_size >= len(batch_ids) - 1:
-        #     self.cur_episode_id += 1
-        #     self.idx_batch = 0
-        #     batch_ids = self.get_episode_batch_ids(self.cur_episode_id)
-
-        # return self.data_buffer.getitem(
-        #     batch_ids[
-        #         self.idx_batch
-        #         * self.batch_size : (self.idx_batch + 1)
-        #         * self.batch_size
-        #     ],
-        #     self.keys,
-        #     self.dtype,
-        # )
+    def next(self) -> Dict[str, RgArray]:
         self.cur_episode_id += 1
         batch_ids = self.get_episode_batch_ids(self.cur_episode_id)
         return self.data_buffer[batch_ids]

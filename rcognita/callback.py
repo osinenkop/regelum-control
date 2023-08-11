@@ -1256,7 +1256,7 @@ class HistoricalObjectiveCallback(HistoricalCallback):
     def perform(self, obj, method, output):
         self.counter += 1
         self.log(
-            f"Current objective: {output[0]}, observation: {output[1]}, action: {output[2]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}, iteration: {obj.iteration_counter + 1}/{obj.N_iterations}"
+            f"Current objective: {output[0]}, observation: {output[1][0]}, action: {output[2][0]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}, iteration: {obj.iteration_counter + 1}/{obj.N_iterations}"
         )
         if not self.counter % 3:
             do_exit = False
@@ -1274,8 +1274,8 @@ class HistoricalObjectiveCallback(HistoricalCallback):
             {
                 "time": round(output[3], 4),
                 "current objective": output[0],
-                "observation": output[1],
-                "action": output[2],
+                "observation": output[1][0],
+                "action": output[2][0],
                 "total_objective": round(output[3], 4),
                 "completed_percent": 100
                 * round(obj.time / obj.simulator.time_final, 1),
@@ -1361,9 +1361,9 @@ class HistoricalObservationCallback(HistoricalCallback):
             {
                 **{
                     "time": obj.time,
-                    "action": obj.action,
+                    "action": obj.action[0],
                 },
-                **dict(zip(obj.observation_components_naming, obj.observation)),
+                **dict(zip(obj.observation_components_naming, obj.observation[0])),
             }
         )
 
@@ -1575,49 +1575,6 @@ class QFunctionModelSaverCallback(HistoricalCallback):
             )
 
 
-class QFunctionCallback(HistoricalCallback):
-    """Callback that logs various data that concerns Q-critics."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of QFunctionCallback."""
-        super().__init__(*args, **kwargs)
-
-        self.cooldown = 0.0
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.scenario.Scenario)
-            and method == "post_step"
-            and "CriticOffPolicy" in obj.critic.__class__.__name__
-        )
-
-    def perform(self, obj, method, output):
-        self.add_datum(
-            {
-                **{
-                    "time": obj.time,
-                    "Q-Function-Value": obj.critic.model(obj.observation, obj.action)
-                    .detach()
-                    .cpu()
-                    .numpy(),
-                    "action": obj.action,
-                },
-                **dict(zip(obj.observation_components_naming, obj.observation)),
-            }
-        )
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        self.insert_column_left("episode", episode_number)
-        self.dump_and_clear_data(f"q_function_values_{str(episode_number).zfill(5)}")
-
-
 class TimeRemainingCallback(Callback):
     """Callback that logs an estimate of the time that remains till the end of the simulation."""
 
@@ -1662,99 +1619,6 @@ class TimeRemainingCallback(Callback):
             f"Completed episode {episode_number}/{episodes_total} ({100*episode_number/episodes_total:.1f}%). Iteration: {iteration_number}/{iterations_total}."
             + remaining
         )
-
-
-class CriticObjectiveCallback(HistoricalCallback):
-    """Callback that records the temporal difference loss of the critic."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of CriticObjectiveCallback."""
-        super().__init__(*args, **kwargs)
-
-        self.cooldown = 1.0
-        self.time = 0.0
-
-    def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.critic.Critic) and method == "objective"
-
-    def perform(self, obj, method, output):
-        self.log(f"Current TD value: {output}")
-        self.add_datum(
-            {
-                "time": rcognita.main.metadata["time"],
-                "TD value": output.detach().cpu().numpy(),
-            }
-        )
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        self.insert_column_left("episode", episode_number)
-        self.dump_and_clear_data(f"TD_values_{str(episode_number).zfill(5)}")
-
-
-class CriticWeightsCallback(HistoricalCallback):
-    """Callback that records the critic's weights."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of CriticWeightsCallback."""
-        super().__init__(*args, **kwargs)
-        self.cooldown = 0.0
-        self.time = 0.0
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, rcognita.controller.Controller)
-            and method == "pre_compute_action"
-        )
-
-    def perform(self, obj, method, output):
-        if (
-            hasattr(obj.critic.model, "weights")
-            and obj.critic.model.weights is not None
-        ):
-            datum = {
-                **{"time": rcognita.main.metadata["time"]},
-                **{
-                    f"weight_{i + 1}": weight
-                    for i, weight in enumerate(obj.critic.model.weights)
-                },
-            }
-
-        # print(datum["time"], obj.critic.model.weights)
-        # self.add_datum(datum)
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        identifier = f"weights_during_episode_{str(episode_number).zfill(5)}"
-        if not self.data.empty:
-            self.save_plot(identifier)
-            self.insert_column_left("episode", episode_number)
-            self.dump_and_clear_data(identifier)
-
-    def plot(self, name=None):
-        if not self.data.empty:
-            if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
-                plt.clf()
-                plt.cla()
-                plt.close()
-            if not name:
-                name = self.__class__.__name__
-            res = self.data.set_index("time").plot(
-                subplots=True, grid=True, xlabel="time", title=name
-            )
-            return res[0].figure
 
 
 class CALFWeightsCallback(HistoricalCallback):

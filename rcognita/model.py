@@ -55,9 +55,9 @@ class Model(rcognita.RcognitaBase, ABC):
             dim = len(left.shape)
 
             if dim == 1:
-                argin = rc.concatenate(argin)
+                argin = rc.concatenate(argin, axis=0)
             elif dim == 2:
-                argin = rc.concatenate(argin, dim=1)
+                argin = rc.concatenate(argin, axis=1)
             else:
                 raise ValueError("Wrong number of dimensions in Model.__call__")
         elif len(argin) == 1:
@@ -433,9 +433,9 @@ class ModelNN(nn.Module):
             dim = len(left.shape)
 
             if dim == 1:
-                argin = rc.concatenate(argin)
+                argin = rc.concatenate(argin, axis=0)
             elif dim == 2:
-                argin = rc.concatenate(argin, dim=1)
+                argin = rc.concatenate(argin, axis=1)
             else:
                 raise ValueError("Wrong number of dimensions in ModelNN.__call__")
         elif len(argin) == 1:
@@ -550,6 +550,7 @@ class ModelWeightContainerTorch(ModelNN):
         self,
         dim_weights: int,
         output_bounds: Optional[List[Any]] = None,
+        output_bounding_type: str = "clip",
     ):
         """Instantiate ModelWeightContainerTorch.
 
@@ -558,40 +559,48 @@ class ModelWeightContainerTorch(ModelNN):
         :param output_bounds: Bounds of the output. If `None` output is not bounded, defaults to None
         :type output_bounds: Optional[List[Any]], optional
         """
+        assert (
+            output_bounding_type == "clip" or output_bounding_type == "tanh"
+        ), "output_bounding_type must be 'clip' or 'tanh'"
+
         ModelNN.__init__(self)
-        self.bounder = (
-            NNOutputBounder(output_bounds) if output_bounds is not None else None
+        self.bounds_handler = (
+            BoundsHandler(output_bounds) if output_bounds is not None else None
         )
+        self.output_bounding_type = output_bounding_type
         self.dim_weights = dim_weights
         self.model_weights_parameter = torch.nn.Parameter(
             torch.FloatTensor(torch.zeros(self.dim_weights)),
             requires_grad=True,
         )
-
         self.register_parameter(
             name="model_weights", param=self.model_weights_parameter
         )
 
-    def set_zero_weights(self):
-        with torch.no_grad():
-            self.model_weights_parameter.fill_(0.0)
-
     def forward(self, inputs):
+        if self.bounds_handler is not None:
+            if self.output_bounding_type == "clip":
+                self.model_weights_parameter.clip(-1.0, 1.0)
+
         if len(inputs.shape) == 2:
-            inputs_like = torch.tile(
-                self.get_parameter("model_weights"), (inputs.shape[0], 1)
-            )
-            if self.bounder is not None:
-                return self.bounder(inputs_like)
-            else:
-                return inputs_like
+            inputs_like = torch.tile(self.model_weights_parameter, (inputs.shape[0], 1))
         elif len(inputs.shape) == 1:
-            if self.bounder is not None:
-                return self.bounder(self.get_parameter("model_weights"))
-            else:
-                return self.get_parameter("model_weights")
+            inputs_like = self.model_weights_parameter
         else:
             raise ValueError("Wrong inputs shape! Can be either 1 or 2")
+
+        if self.bounds_handler is not None:
+            if self.output_bounding_type == "clip":
+                # inputs_like are already clipped in the beggining of the function via WeightClipper
+                return self.bounds_handler.unscale_from_minus_one_one_to_bounds(
+                    inputs_like
+                )
+            elif self.output_bounding_type == "tanh":
+                return self.bounds_handler.unscale_from_minus_one_one_to_bounds(
+                    torch.tanh(inputs_like)
+                )
+        else:
+            return inputs_like
 
 
 class LookupTable(Model):
@@ -626,7 +635,7 @@ class LookupTable(Model):
         return self.weights[indices]
 
 
-class NNOutputBounder(ModelNN):
+class BoundsHandler(ModelNN):
     r"""Output layer for bounding the model's output. The formula is: math: `F^{-1}(\\tanh(x))`, where F is the linear transformation from `bounds` to [-1, 1]."""
 
     def __init__(self, bounds: Union[List[Any], np.array]):
@@ -648,6 +657,7 @@ class NNOutputBounder(ModelNN):
         self,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
         bounds = self.get_parameter("bounds")
+
         unscale_bias, unscale_multiplier = (
             bounds.mean(dim=1),
             (bounds[:, 1] - bounds[:, 0]) / 2.0,
@@ -671,9 +681,6 @@ class NNOutputBounder(ModelNN):
         ) = self.get_unscale_coefs_from_minus_one_one_to_bounds()
 
         return (y - unscale_bias) / unscale_multiplier
-
-    def forward(self, inputs):
-        return self.unscale_from_minus_one_one_to_bounds(torch.tanh(inputs))
 
 
 class PerceptronWithNormalNoise(ModelNN):
@@ -729,7 +736,7 @@ class PerceptronWithNormalNoise(ModelNN):
             weight_max=weight_max,
         )
 
-        self.bounder = NNOutputBounder(output_bounds)
+        self.bounds_handler = BoundsHandler(output_bounds)
 
         self.register_parameter(
             name="scale_tril_matrix",
@@ -749,13 +756,13 @@ class PerceptronWithNormalNoise(ModelNN):
         )
 
     def forward(self, observations):
-        return self.bounder.unscale_from_minus_one_one_to_bounds(
+        return self.bounds_handler.unscale_from_minus_one_one_to_bounds(
             self.get_mean(observations)
         )
 
     def log_pdf(self, observations, actions):
         means = self.get_mean(observations)
-        scaled_actions = self.bounder.scale_from_bounds_to_minus_one_one(actions)
+        scaled_actions = self.bounds_handler.scale_from_bounds_to_minus_one_one(actions)
 
         return MultivariateNormal(
             loc=means,
@@ -769,7 +776,7 @@ class PerceptronWithNormalNoise(ModelNN):
             scale_tril=self.get_parameter("scale_tril_matrix"),
         ).sample()
 
-        sampled_action = self.bounder.unscale_from_minus_one_one_to_bounds(
+        sampled_action = self.bounds_handler.unscale_from_minus_one_one_to_bounds(
             sampled_scaled_action
         )
 

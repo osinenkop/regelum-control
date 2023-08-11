@@ -34,16 +34,14 @@ critic:
     config_options:
       n_epochs: 1
       is_reinstantiate_optimizer: False
-      iter_batches_config:
-        sampler: = rcognita.data_buffers.samplers.RollingSampler
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs:
+        batch_sampler: = rcognita.data_buffers.batch_sampler.RollingBatchSampler
         dtype: = torch.FloatTensor
         batch_size: 10
         n_batches: 1
         mode: backward
-        keys: 
-          - observation_action
-          - running_objective
-          - critic_targets
+
 policy:
   device: $ controller.device%%
   epsilon_random: True
@@ -58,12 +56,11 @@ policy:
     config_options:
       n_epochs: 100
       is_reinstantiate_optimizer: True
-      iter_batches_config:
-        sampler: = rcognita.data_buffers.samplers.RollingSampler
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs:
+        batch_sampler: = rcognita.data_buffers.batch_sampler.RollingBatchSampler
         dtype: = torch.FloatTensor
         batch_size: 1
         mode: backward
         n_batches: 1
-        keys: 
-          - observation
 

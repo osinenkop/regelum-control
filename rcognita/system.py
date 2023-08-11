@@ -74,8 +74,8 @@ class ComposedSystem(rcognita.RcognitaBase):
             self.occupied_idx.astype(int),
         )
         self.output_mode = output_mode
-        self.forward_permutation = rc.ones(self.dim_observation).astype(int)
-        self.inverse_permutation = rc.ones(self.dim_observation).astype(int)
+        self.forward_permutation = np.arange(self.dim_observation).astype(int)
+        self.inverse_permutation = np.arange(self.dim_observation).astype(int)
 
     # TODO: DOCSTRING
     @staticmethod
@@ -104,7 +104,37 @@ class ComposedSystem(rcognita.RcognitaBase):
         rout_idx, occupied_idx = rc.array(io_mapping_extended).astype(int).T
         return rout_idx, occupied_idx
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def compute_state_dynamics(
+        self, time, state, inputs, _native_dim=False
+    ) -> np.ndarray:
+        if not _native_dim:
+            return rc.force_row(
+                self._compute_state_dynamics(
+                    time,
+                    rc.force_column(state),
+                    rc.force_column(inputs),
+                    _native_dim=_native_dim,
+                )
+            )
+        else:
+            return self._compute_state_dynamics(
+                time, state, inputs, _native_dim=_native_dim
+            )
+
+    def get_observation(self, time, state, inputs, _native_dim=False):
+        if not _native_dim:
+            return rc.force_row(
+                self._get_observation(
+                    time,
+                    rc.force_column(state),
+                    rc.force_column(inputs),
+                    _native_dim=_native_dim,
+                )
+            )
+        else:
+            return self._get_observation(time, state, inputs, _native_dim=_native_dim)
+
+    def _compute_state_dynamics(self, time, state, inputs, _native_dim):
         state = rc.array(state)
         inputs = rc.array(inputs)
         state = state[self.forward_permutation]
@@ -114,39 +144,52 @@ class ComposedSystem(rcognita.RcognitaBase):
             state[self.sys_left.dim_state :],
         )
         inputs_for_left = inputs[: self.sys_left.dim_inputs]
-        dstate_of_left = self.sys_left.compute_state_dynamics(
-            time=time,
-            state=state_for_left,
-            inputs=inputs_for_left,
+        dstate_of_left = rc.squeeze(
+            self.sys_left.compute_state_dynamics(
+                time=time,
+                state=state_for_left,
+                inputs=inputs_for_left,
+                _native_dim=_native_dim,
+            )
         )
-        outputs_of_left = self.sys_left.get_observation(
-            time=time,
-            state=state_for_left,
-            inputs=inputs_for_left,
+        outputs_of_left = rc.squeeze(
+            self.sys_left.get_observation(
+                time=time,
+                state=state_for_left,
+                inputs=inputs_for_left,
+                _native_dim=_native_dim,
+            )
         )
 
         inputs_for_right = rc.zeros(
-            self.sys_right.dim_inputs, prototype=(state, inputs)
+            self.sys_right.dim_inputs,
+            prototype=(state, inputs),
         )
         inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
-        inputs_for_right[self.free_right_input_indices] = inputs[
-            self.sys_left.dim_inputs :
-        ]
-
-        dstate_of_right = self.sys_right.compute_state_dynamics(
-            time=time,
-            state=state_for_right,
-            inputs=inputs_for_right,
+        inputs_for_right[self.free_right_input_indices] = rc.reshape(
+            inputs[self.sys_left.dim_inputs :],
+            rc.shape(inputs_for_right[self.free_right_input_indices]),
         )
-        final_dstate_vector = rc.concatenate((dstate_of_left, dstate_of_right))
+
+        dstate_of_right = rc.squeeze(
+            self.sys_right.compute_state_dynamics(
+                time=time,
+                state=state_for_right,
+                inputs=inputs_for_right,
+                _native_dim=_native_dim,
+            )
+        )
+        final_dstate_vector = rc.hstack((dstate_of_left.T, dstate_of_right.T)).T
 
         assert (
             final_dstate_vector is not None
         ), f"final dstate_vector of system {self.name} is None"
+        final_dstate_vector = final_dstate_vector[self.inverse_permutation]
+        if not _native_dim:
+            final_dstate_vector = rc.force_row(final_dstate_vector)
+        return final_dstate_vector
 
-        return final_dstate_vector[self.inverse_permutation]
-
-    def get_observation(self, time, state, inputs):
+    def _get_observation(self, time, state, inputs, _native_dim):
         state = rc.array(state)
         inputs = rc.array(inputs)
 
@@ -159,10 +202,14 @@ class ComposedSystem(rcognita.RcognitaBase):
             time=time,
             state=state_for_left,
             inputs=inputs_for_left,
+            _native_dim=_native_dim,
         )
 
         inputs_for_right = rc.zeros(
-            self.sys_right.dim_inputs, prototype=(state, inputs)
+            self.sys_right.dim_inputs
+            if _native_dim
+            else (1, self.sys_right.dim_inputs),
+            prototype=(state, inputs),
         )
         inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
         inputs_for_right[self.free_right_input_indices] = inputs[
@@ -172,6 +219,7 @@ class ComposedSystem(rcognita.RcognitaBase):
             time=time,
             state=state_for_right,
             inputs=inputs_for_right,
+            _native_dim=_native_dim,
         )
         if self.output_mode == "right":
             output = outputs_of_right
@@ -211,7 +259,7 @@ class ComposedSystem(rcognita.RcognitaBase):
 
     # TODO: WHAT IS THIS?
     def permute_state(self, permutation):
-        self.forward_permutation = permutation
+        self.forward_permutation = rc.array(permutation).astype(int)
         self.inverse_permutation = self.get_inverse_permutation(permutation)
         return self
 
@@ -391,29 +439,33 @@ class System(rcognita.RcognitaBase, ABC):
     def parameters(self):
         return self._parameters
 
-    @abstractmethod
-    def compute_state_dynamics(self, time, state, inputs) -> np.ndarray:
-        """
-        Description of the system internal dynamics.
-        Depending on the system type, may be either the right-hand side of the respective differential or difference equation, or a probability distribution.
-        As a probability disitribution, ``compute_state_dynamics`` should return a number in :math:`[0,1]`
+    def compute_state_dynamics(
+        self, time, state, inputs, _native_dim=False
+    ) -> np.ndarray:
+        if not _native_dim:
+            return rc.force_row(
+                self._compute_state_dynamics(
+                    time, rc.force_column(state), rc.force_column(inputs)
+                )
+            )
+        else:
+            return self._compute_state_dynamics(time, state, inputs)
 
-        """
+    @abstractmethod
+    def _compute_state_dynamics(time, state, inputs):
         pass
 
-    def get_observation(self, time, state, inputs):
-        """
-        System output.
-        This is commonly associated with signals that are measured in the system.
-        Normally, output depends only on state ``state`` since no physical processes transmit input to output instantly.
+    def get_observation(self, time, state, inputs, _native_dim=False):
+        if not _native_dim:
+            return rc.force_row(
+                self._get_observation(
+                    time, rc.force_column(state), rc.force_column(inputs)
+                )
+            )
+        else:
+            return self._get_observation(time, state, inputs)
 
-        See Also
-        --------
-        :func:`~systems.system.compute_state_dynamics`
-
-        """
-        # Trivial case: output identical to state
-
+    def _get_observation(self, time, state, inputs):
         return state
 
     def receive_action(self, action):
@@ -473,7 +525,7 @@ class KinematicPoint(System):
     _dim_inputs = 2
     _dim_observation = 2
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -504,7 +556,7 @@ class InvertedPendulumPID(System):
         self.time_old = 0
         self.integral_alpha = 0
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -521,7 +573,7 @@ class InvertedPendulumPID(System):
 
         return Dstate
 
-    def get_observation(self, time, state, inputs):
+    def _get_observation(self, time, state, inputs):
         delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
@@ -535,8 +587,8 @@ class InvertedPendulumPID(System):
 class InvertedPendulumPD(InvertedPendulumPID):
     _dim_observation = 2
 
-    def get_observation(self, time, state, inputs):
-        return rc.array([state[0], state[1]])
+    def _get_observation(self, time, state, inputs):
+        return rc.array([state[0], state[1]], prototype=state)
 
 
 class ThreeWheeledRobot(System):
@@ -589,7 +641,7 @@ class ThreeWheeledRobot(System):
     _dim_observation = 5
     _parameters = {"m": 10, "I": 1}
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -614,7 +666,7 @@ class Integrator(System):
     _dim_observation = 2
     _parameters = {"m": 10, "I": 1}
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -639,7 +691,7 @@ class ThreeWheeledRobotNI(System):
     _dim_inputs = 2
     _dim_observation = 3
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(self.dim_state, prototype=(state, inputs))
 
         Dstate[0] = inputs[0] * rc.cos(state[2])
@@ -662,7 +714,7 @@ class TwoTank(System):
     _dim_observation = 2
     _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
 
-    def compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(self, time, state, inputs):
         tau1, tau2, K1, K2, K3 = (
             self.parameters["tau1"],
             self.parameters["tau2"],
@@ -699,7 +751,7 @@ class GridWorld(System):
         self.dims = dims
         self.terminal_state = terminal_state
 
-    def compute_state_dynamics(self, current_state, inputs):
+    def _compute_state_dynamics(self, current_state, inputs):
         if tuple(self.terminal_state) == tuple(current_state):
             return current_state
         if inputs == 0:
@@ -730,7 +782,7 @@ class CartPole(System):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def compute_state_dynamics(self, time, state, inputs, disturb=None):
+    def _compute_state_dynamics(self, time, state, inputs, disturb=None):
         Dstate = rc.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -787,7 +839,7 @@ class CartPole(System):
 
         return Dstate
 
-    def get_observation(self, time, state, inputs):
+    def _get_observation(self, time, state, inputs):
         theta = state[0]
         x = state[1]
         theta_dot = state[2]
@@ -825,7 +877,7 @@ class LunarLander(System):
         self.state_cache = []
         self.is_landed = False
 
-    def compute_state_dynamics(self, time, state, inputs, disturb=None):
+    def _compute_state_dynamics(self, time, state, inputs, disturb=None):
         Dstate_before_landing = rc.zeros(
             self.dim_state,
             prototype=(state, inputs),

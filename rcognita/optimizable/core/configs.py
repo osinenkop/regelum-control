@@ -1,6 +1,7 @@
 """Contains blueprint of config for all optimizable objects."""
 from dataclasses import dataclass, field
 from typing import Optional, Any
+import torch
 
 
 @dataclass
@@ -20,7 +21,8 @@ class OptimizerConfig:
 torch_default_config = OptimizerConfig(
     kind="tensor",
     opt_options={"lr": 1e-3},
-    config_options={"batch_size": 500, "shuffle": False, "iterations": 30},
+    opt_method=torch.optim.Adam,
+    config_options={"n_epochs": 1},
 )
 casadi_default_config = OptimizerConfig(
     kind="symbolic",

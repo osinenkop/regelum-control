@@ -44,21 +44,20 @@ class EulerPredictor(Predictor):
                 time=None, state=current_state, inputs=action
             )
         )
+
         return next_state
 
     def predict_sequence(self, state, action_sequence):
         state_sequence = rc.zeros(
-            [self.system.dim_state, self.prediction_horizon], prototype=action_sequence
+            [self.prediction_horizon, self.system.dim_state], prototype=action_sequence
         )
         current_state = state
 
         for k in range(self.prediction_horizon):
-            current_action = action_sequence[:, k]
+            current_action = action_sequence[k, :]
             next_state = self.predict(current_state, current_action)
-            state_sequence[:, k] = rc.transpose(
-                self.system.get_observation(
-                    time=None, state=next_state, inputs=current_action
-                )
+            state_sequence[k, :] = self.system.get_observation(
+                time=None, state=next_state, inputs=current_action
             )
             current_state = next_state
         return state_sequence
@@ -85,6 +84,7 @@ class EulerPredictorMultistep(EulerPredictor):
                 next_state_or_observation, action
             )
         return next_state_or_observation
+
 
 class RKPredictor(EulerPredictor):
     """Predictor that makes use o Runge-Kutta finite difference methods."""

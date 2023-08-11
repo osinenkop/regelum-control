@@ -383,22 +383,20 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             return self._array
 
-    def concatenate(self, argin, rc_type: Union[RCType, bool] = NUMPY, **kwargs):
+    def concatenate(self, argin, rc_type: Union[RCType, bool] = NUMPY, axis=0):
         rc_type = type_inference(*safe_unpack(argin))
         if rc_type == NUMPY:
-            return np.concatenate(argin, **kwargs)
+            return np.concatenate(argin, axis=axis)
         elif rc_type == TORCH:
-            return torch.cat(argin, **kwargs)
+            return torch.cat(argin, dim=axis)
         elif rc_type == CASADI:
             if isinstance(argin, (list, tuple)):
-                if len(argin) > 1:
-                    argin = [rc.force_column(x) for x in argin]
+                if axis == 0:
+                    return casadi.horzcat(*argin)
+                elif axis == 1:
                     return casadi.vertcat(*argin)
                 else:
-                    raise NotImplementedError(
-                        f"Concatenation is not implemented for argument of type {type(argin)}."
-                        + "Possible types are: list, tuple"
-                    )
+                    raise ValueError("Not implemented value of axis for CasADi")
 
     def atleast_1d(self, dim, rc_type: RCType = NUMPY):
         return np.atleast_1d(dim)
@@ -519,37 +517,26 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return casadi.sum1(*safe_unpack(array)) / length
 
     def force_column(self, argin, rc_type: RCType = NUMPY):
-        argin_shape = self.shape(argin)
+        assert len(argin.shape) <= 2, "Only 1D and 2D arrays are supported."
 
-        if len(argin_shape) > 1:
-            if self.shape(argin)[0] < self.shape(argin)[1]:
+        if rc_type == CASADI:
+            if argin.shape[1] > argin.shape[0] and argin.shape[0] == 1:
                 return argin.T
             else:
                 return argin
         else:
-            if rc_type == NUMPY:
-                return np.reshape(argin, (argin.size, 1))
-            elif rc_type == TORCH:
-                return torch.reshape(argin, (argin.size()[0], 1))
+            return argin.reshape(-1, 1)
 
     def force_row(self, argin, rc_type: RCType = NUMPY):
-        argin_shape = self.shape(argin)
+        assert len(argin.shape) <= 2, "Only 1D and 2D arrays are supported."
 
         if rc_type == CASADI:
-            if len(argin_shape) > 1:
-                if (
-                    self.shape(argin)[0] > self.shape(argin)[1]
-                    and self.shape(argin)[1] == 1
-                ):
-                    return argin.T
-                else:
-                    return argin
+            if argin.shape[0] > argin.shape[1] and argin.shape[1] == 1:
+                return argin.T
+            else:
+                return argin
         else:
-            return argin
-            # if rc_type == NUMPY:
-            #     return np.reshape(argin, (1, argin.size))
-            # elif rc_type == TORCH:
-            #     return torch.reshape(argin, (1, argin.size()[0]))
+            return argin.reshape(1, -1)
 
     def cross(self, A, B, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
@@ -698,7 +685,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.squeeze(v)
         elif rc_type == CASADI:
-            return v
+            assert (
+                v.shape[0] == 1 or v.shape[1] == 1
+            ), "Only columns and rows are supported."
+            if v.shape[0] == 1 and v.shape[1] > 1:
+                return v.T
+            else:
+                return v
 
     def uptria2vec(self, mat, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:

@@ -27,10 +27,3 @@ optimizer_config:
     lr: 3.0E-4
   config_options:
     n_epochs: 1 
-    iter_batches_config:
-      sampler: = rcognita.data_buffers.samplers.EpisodicSampler
-      dtype: = torch.FloatTensor
-      keys: 
-        - observation
-        - action
-        - running_objective

@@ -1,0 +1,14 @@
+_target_: rcognita.OptimizerConfig
+
+kind: tensor
+opt_method: = torch.optim.Adam
+opt_options: 
+  lr: 0.1
+config_options:
+  n_epochs: 1
+  data_buffer_sampling_method: iter_batches
+  data_buffer_sampling_kwargs:
+    batch_sampler: = rcognita.data_buffers.batch_sampler.RollingBatchSampler
+    mode: full
+    dtype: = torch.FloatTensor
+    n_batches: 1

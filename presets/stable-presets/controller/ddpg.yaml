@@ -1,6 +1,6 @@
 _target_: rcognita.controller.RLController
 
-name%%:  ddpg
+name%%: ddpg
 
 defaults:
   - policy: policy_ddpg
@@ -23,6 +23,7 @@ critic:
   is_same_critic: False
   is_value_function: False
   device: $ controller.device%%
+  td_n: 1
   optimizer_config: 
     _target_: rcognita.OptimizerConfig
     kind: tensor
@@ -32,12 +33,10 @@ critic:
     config_options:
       n_epochs: 50
       is_reinstantiate_optimizer: True
-      iter_batches_config:
-        sampler: = rcognita.data_buffers.samplers.EpisodicSampler
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs: 
+        batch_sampler: = rcognita.data_buffers.batch_sampler.EpisodicSampler
         dtype: = torch.FloatTensor
-        keys: 
-          - observation_action
-          - running_objective
 
 policy:
   device: $ controller.device%%

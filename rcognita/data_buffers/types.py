@@ -11,21 +11,23 @@ from .fifo_list import FifoList
 from typing import Union, Type
 
 
-ArrayType = Union[
+RgArrayType = Union[
     Type[np.array],
-    Type[torch.tensor],
+    Type[torch.Tensor],
     Type[torch.FloatTensor],
     Type[torch.DoubleTensor],
     Type[torch.LongTensor],
     Type[cs.DM],
+    Type[cs.MX],
 ]
 
-Array = Union[
+RgArray = Union[
     FifoList,
     np.array,
-    torch.tensor,
+    torch.Tensor,
     torch.FloatTensor,
     torch.DoubleTensor,
     torch.LongTensor,
     cs.DM,
+    cs.MX,
 ]

@@ -134,7 +134,9 @@ class RLController(Controller):
                 current_total_objective=self.update_total_objective(
                     running_objective, time
                 ),
-                observation_action=np.concatenate((observation, self.policy.action)),
+                observation_action=np.concatenate(
+                    (observation, self.policy.action), axis=1
+                ),
             )
 
     def critic_update(self):
@@ -157,7 +159,7 @@ class RLController(Controller):
             timestamp=time,
             episode_id=self.episode_counter,
             iteration_id=self.iteration_counter,
-            step_counter=self.step_counter,
+            step_id=self.step_counter,
         )
 
         if self.is_first_compute_action_call:

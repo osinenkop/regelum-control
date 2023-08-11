@@ -21,7 +21,14 @@ from .critic import Critic
 from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
 from .data_buffers.data_buffer import DataBuffer
-from .objective import reinforce_objective, sdpg_objective, ddpg_objective
+from .objective import (
+    reinforce_objective,
+    sdpg_objective,
+    ddpg_objective,
+    mpc_objective,
+    rql_objective,
+    sql_objective,
+)
 from typing import List
 
 try:
@@ -32,7 +39,7 @@ except ImportError:
     torch = MagicMock()
 
 
-class Policy(Optimizable):
+class Policy(Optimizable, ABC):
     """Class of policies.
     These are to be passed to a `controller`.
     An `objective` (a loss) as well as an `optimizer` are passed to an `policy` externally.
@@ -100,10 +107,6 @@ class Policy(Optimizable):
         ) = self.handle_bounds(
             action_bounds, self.dim_action, tile_parameter=self.prediction_horizon
         )
-        self.action_variable = self.create_variable(
-            system.dim_inputs, name="action", is_constant=True
-        )
-        self.register_bounds(self.action_variable, self.action_bounds)
         self.action_old = self.action_init = (
             self.action_initial_guess[: self.dim_action]
             if action_init is None
@@ -117,6 +120,11 @@ class Policy(Optimizable):
 
     def __call__(self, observation):
         return self.get_action(observation)
+
+    @property
+    @abstractmethod
+    def data_buffer_objective_keys(self) -> List[str]:
+        pass
 
     @property
     def weights(self):
@@ -253,7 +261,6 @@ class PolicyGradient(Policy, ABC):
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
-        batch_keys: List[str],
         discount_factor: float = 1.0,
         device: str = "cpu",
         critic: Critic = None,
@@ -286,7 +293,6 @@ class PolicyGradient(Policy, ABC):
             optimizer_config=optimizer_config,
         )
         self.device = torch.device(device)
-        self.batch_keys = batch_keys
         self.critic = critic
 
         self.N_episodes: int
@@ -307,13 +313,10 @@ class PolicyGradient(Policy, ABC):
         self.update_data_buffer(data_buffer)
 
         self.optimize(
-            dataloader=data_buffer.iter_batches(
-                batch_size=len(data_buffer),
-                dtype=torch.FloatTensor,
-                keys=self.batch_keys,
-                mode="forward",
-                n_batches=1,
-            ),
+            **data_buffer.get_optimization_kwargs(
+                keys=self.data_buffer_objective_keys(),
+                optimizer_config=self.optimizer_config,
+            )
         )
 
         # Send back to cpu after optimization
@@ -324,7 +327,7 @@ class PolicyGradient(Policy, ABC):
     def initialize_optimization_procedure(self):
         self.objective_inputs = [
             self.create_variable(name=variable_name, is_constant=True)
-            for variable_name in self.batch_keys
+            for variable_name in self.data_buffer_objective_keys()
         ]
         self.policy_weights = self.create_variable(
             name="policy_weights", like=self.model.named_parameters
@@ -374,13 +377,6 @@ class Reinforce(PolicyGradient):
             model=model,
             system=system,
             action_bounds=action_bounds,
-            batch_keys=[
-                "observation",
-                "action",
-                "total_objective",
-                "tail_total_objective",
-                "baseline",
-            ],
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
             device=device,
@@ -448,6 +444,15 @@ class Reinforce(PolicyGradient):
         self.next_baseline = np.mean(data_buffer.to_pandas(keys=["total_objective"]))
         return np.full(shape=len(data_buffer), fill_value=baseline)
 
+    def data_buffer_objective_keys(self) -> List[str]:
+        return [
+            "observation",
+            "action",
+            "tail_total_objective",
+            "total_objective",
+            "baseline",
+        ]
+
     def objective_function(
         self, observation, action, tail_total_objective, total_objective, baseline
     ):
@@ -500,13 +505,15 @@ class SDPG(PolicyGradient):
             model=model,
             system=system,
             action_bounds=action_bounds,
-            batch_keys=["observation", "action", "timestamp"],
             discount_factor=discount_factor,
             device=device,
             critic=critic,
             optimizer_config=optimizer_config,
         )
         self.initialize_optimization_procedure()
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return ["observation", "action", "timestamp"]
 
     def objective_function(self, observation, action, timestamp):
         return sdpg_objective(
@@ -546,13 +553,15 @@ class DDPG(PolicyGradient):
             model=model,
             system=system,
             action_bounds=action_bounds,
-            batch_keys=["observation"],
             discount_factor=discount_factor,
             device=device,
             critic=critic,
             optimizer_config=optimizer_config,
         )
         self.initialize_optimization_procedure()
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return ["observation"]
 
     def objective_function(self, observation):
         return ddpg_objective(
@@ -631,7 +640,7 @@ class RLPolicy(Policy):
             if is_exploration:
                 self.action = np.random.uniform(
                     self.action_bounds[:, 0], self.action_bounds[:, 1]
-                )
+                )[None, :]
             else:
                 self.action = self.get_action(observation)
         else:
@@ -640,17 +649,21 @@ class RLPolicy(Policy):
         return self.action
 
     def objective_function(self, observation, policy_model_output):
-        return self.critic.model(observation, policy_model_output).mean()
+        return rc.mean(self.critic(observation, policy_model_output))
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return ["observation"]
 
     def optimize_on_event(self, data_buffer: DataBuffer):
         self.optimize(
-            dataloader=data_buffer.iter_batches(
-                **self.optimizer_config.config_options.iter_batches_config
+            **data_buffer.get_optimization_kwargs(
+                keys=self.data_buffer_objective_keys(),
+                optimizer_config=self.optimizer_config,
             )
         )
 
 
-class RPOPolicy(RLPolicy):
+class RLPolicyPredictive(RLPolicy):
     def __init__(
         self,
         model: ModelNN,
@@ -664,6 +677,7 @@ class RPOPolicy(RLPolicy):
         device: str = "cpu",
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
+        algorithm: str = "mpc",
     ):
         RLPolicy.__init__(
             self,
@@ -679,374 +693,73 @@ class RPOPolicy(RLPolicy):
         )
         self.predictor = predictor
         self.running_objective = running_objective
+        self.algorithm = algorithm
+
+    def initialize_optimization_procedure(self):
+        self.observation_variable = [
+            self.create_variable(name="observation", is_constant=True)
+        ]
+        self.policy_weights = self.create_variable(
+            name="policy_weights", like=self.model.named_parameters
+        )
+        self.policy_model_output = self.create_variable(
+            name="policy_model_output", is_constant=True
+        )
+        self.connect_source(
+            self.policy_model_output,
+            func=self.model,
+            source=self.observation_variable,
+        )
+        self.register_objective(
+            self.objective_function,
+            variables=[
+                self.observation_variable,
+            ],
+        )
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return ["observation"]
 
     def objective_function(self, observation, policy_model_output):
-        observation_next = self.predictor.predict(
-            observation[-1], policy_model_output[-1]
-        )
-        return self.running_objective(
-            observation[-1], policy_model_output[-1]
-        ) + self.critic.model(observation_next)
-
-
-class RPOPolicyCasadi(RLPolicy):
-    def __init__(
-        self,
-        model: ModelNN,
-        critic: Critic,
-        system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
-        optimizer_config: OptimizerConfig,
-        predictor,
-        running_objective,
-        discount_factor: float = 1.0,
-        device: str = "cpu",
-        epsilon_random: bool = False,
-        epsilon_random_parameter: float = 0.0,
-    ):
-        RLPolicy.__init__(
-            self,
-            model=model,
-            critic=critic,
-            system=system,
-            action_bounds=action_bounds,
-            optimizer_config=optimizer_config,
-            discount_factor=discount_factor,
-            device=device,
-            epsilon_random=epsilon_random,
-            epsilon_random_parameter=epsilon_random_parameter,
-        )
-        self.predictor = predictor
-        self.running_objective = running_objective
-
-    def objective_function(self, observation, policy_model_output):
-        observation_next = self.predictor.predict(
-            observation[-1], policy_model_output[-1]
-        )
-        return self.running_objective(
-            observation[-1], policy_model_output[-1]
-        ) + self.critic.model(observation_next)
-
-
-class MPC(Policy):
-    r"""Model-predictive control (MPC)policy.
-
-    Optimizes the followingpolicy objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`.
-
-    Notation:
-
-    * :math:`y`: observation
-    * :math:`u`: action
-    * :math:`N_a`: prediction horizon
-    * :math:`gamma`: discount factor
-    * :math:`r`: running objective function
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
-    """
-
-    def objective(
-        self,
-        action_sequence,
-        observation,
-    ):
-        """Calculate thepolicy objective for the given action sequence and observation using Model Predictive Control (MPC).
-
-        :param action_sequence: sequence of actions to be evaluated in the objective function
-        :type action_sequence: numpy.ndarray
-        :param observation: current observation
-        :type observation: numpy.ndarray
-        :return: thepolicy objective for the given action sequence
-        :rtype: float
-        """
-        action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_action]
-        ).T
-
-        observation_sequence = [observation]
-
-        observation_sequence_predicted = self.predictor.predict_sequence(
-            observation, action_sequence_reshaped
-        )
-
-        observation_sequence = rc.column_stack(
-            (observation, observation_sequence_predicted)
-        )
-        policy_objective = 0
-        for k in range(self.prediction_horizon + 1):
-            policy_objective += self.discount_factor**k * self.running_objective(
-                observation_sequence[:, k], action_sequence_reshaped[:, k]
+        if self.algorithm == "mpc":
+            return mpc_objective(
+                observation=observation,
+                actions=policy_model_output,
+                predictor=self.predictor,
+                running_objective=self.running_objective,
             )
-        return policy_objective
+        elif self.algorithm == "rql":
+            return rql_objective(
+                observation=observation,
+                actions=policy_model_output,
+                predictor=self.predictor,
+                running_objective=self.running_objective,
+                critic=self.critic,
+            )
+        elif self.algorithm == "sql":
+            return sql_objective(
+                observation=observation,
+                actions=policy_model_output,
+                predictor=self.predictor,
+                critic=self.critic,
+            )
 
-
-class MPCTerminal(Policy):
-    r"""Model-predictive control (MPC)policy.
-
-    Optimizes the followingpolicy objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i r(y_{i|k}, u_{i|k})`
-
-    Notation:
-
-    * :math:`y`: observation
-    * :math:`u`: action
-    * :math:`N_a`: prediction horizon
-    * :math:`gamma`: discount factor
-    * :math:`r`: running objective function
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
-    """
-
-    def objective(
-        self,
-        action_sequence,
-        observation,
-    ):
-        r"""Calculate the policy objective for the given action sequence and observation using Model Predictive Control (MPC).
-
-        :param action_sequence: sequence of actions to be evaluated in the objective function
-        :type action_sequence: numpy.ndarray
-        :param observation: current observation
-        :type observation: numpy.ndarray
-        :return: thepolicy objective for the given action sequence
-        :rtype: float
-        """
-        action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_output]
-        ).T
-
-        observation_sequence = [observation]
-
-        observation_sequence_predicted = self.predictor.predict_sequence(
-            observation, action_sequence_reshaped
-        )
-
-        observation_sequence = rc.column_stack(
-            (observation, observation_sequence_predicted)
-        )
-        policy_objective = 0
-
-        policy_objective += self.running_objective(
-            observation_sequence[:, -1], action_sequence_reshaped[:, -1]
-        )
-        return policy_objective
-
-
-class SQL(Policy):
-    r"""Staked Q-learning (SQL)policy.
-
-    Optimizes the followingpolicy objective:
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a} \\gamma^i Q(y_{i|k}, u_{i|k})`
-
-    Notation:
-
-    * :math:`y`: observation
-    * :math:`u`: action
-    * :math:`N_a`: prediction horizon
-    * :math:`gamma`: discount factor
-    * :math:`r`: running objective function
-    * :math:`Q`: action-objective function (or its estimate)
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
-    """
-
-    def objective(
-        self,
-        action_sequence,
-        observation,
-    ):
-        """Calculate the policy objective for the given action sequence and observation using the stacked Q-learning (SQL) algorithm.
-
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
-        :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_output,) representing the current observation
-        :type observation: numpy.ndarray
-        :return:policy objective for the given action sequence and observation
-        :rtype: float
-        """
-        action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_output]
-        ).T
-
-        observation_sequence = [observation]
-
-        observation_sequence_predicted = self.predictor.predict_sequence(
-            observation, action_sequence_reshaped
-        )
-
-        observation_sequence = rc.column_stack(
-            (
-                observation,
-                observation_sequence_predicted,
+    def optimize_on_event(self, data_buffer: DataBuffer):
+        self.optimize(
+            **data_buffer.get_optimization_kwargs(
+                keys=self.data_buffer_objective_keys(),
+                optimizer_config=self.optimizer_config,
             )
         )
 
-        policy_objective = 0
 
-        for k in range(self.prediction_horizon + 1):
-            action_objective = self.critic(
-                observation_sequence[:, k],
-                action_sequence_reshaped[:, k],
-                use_stored_weights=True,
-            )
-
-            policy_objective += action_objective
-        return policy_objective
-
-
-class RQL(Policy):
-    r"""Rollout Q-learning (RQL)policy.
-
-    Optimizes the followingpolicy objective:
-
-    :math:`J^a \\left( y_k| \\{u\\}_k^{N_a+1} \\right) = \\sum_{i=0}^{N_a-1} \\gamma^i r(y_{i|k}, u_{i|k}) + \\gamma^{N_a} Q(y_{N_a|k}, u_{N_a|k})`
-
-    Notation:
-
-    * :math:`y`: observation
-    * :math:`u`: action
-    * :math:`N_a`: prediction horizon
-    * :math:`gamma`: discount factor
-    * :math:`r`: running objective function
-    * :math:`Q`: action-objective function (or its estimate)
-    * :math:`\\{\\bullet\\}_k^N`: sequence from index :math:`k` to index :math:`k+N-1`
-    * :math:`\\bullet_{i|k}`: element in a sequence with index :math:`k+i-1`
-    """
-
-    def objective(
-        self,
-        action_sequence,
-        observation,
-    ):
-        """Calculate the policy objective for the given action sequence and observation using Rollout Q-learning (RQL).
-
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_output) representing the sequence of actions to optimize
-        :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_output,) representing the current observation
-        :type observation: numpy.ndarray
-        :return:policy objective for the given action sequence and observation
-        :rtype: float
-        """
-        action_sequence_reshaped = rc.reshape(
-            action_sequence, [self.prediction_horizon + 1, self.dim_output]
-        ).T
-
-        observation_sequence = [observation]
-
-        observation_sequence_predicted = self.predictor.predict_sequence(
-            observation, action_sequence_reshaped
-        )
-
-        observation_sequence = rc.column_stack(
-            (
-                observation,
-                observation_sequence_predicted,
-            )
-        )
-
-        policy_objective = 0
-
-        for k in range(self.prediction_horizon):
-            policy_objective += self.discount_factor**k * self.running_objective(
-                observation_sequence[:, k], action_sequence_reshaped[:, k]
-            )
-
-        policy_objective += self.critic(
-            observation_sequence[:, -1],
-            action_sequence_reshaped[:, -1],
-            use_stored_weights=True,
-        )
-
-        return policy_objective
-
-
-class RPO(Policy):
-    r"""Running (objective) Plus Optimal (objective)policy.
-
-    Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
-    May be suitable for value iteration and policy iteration agents.
-    Specifically, it optimizes the followingpolicy objective:
-
-    :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
-
-    Notation:
-
-    * :math:`y`: observation
-    * :math:`u`: action
-    * :math:`\\gamma`: discount factor
-    * :math:`r`: running objective function
-    * :math:`J^*`: optimal objective function (or its estimate)
-    """
-
-    def objective(
-        self,
-        action_sequence,
-        observation,
-    ):
-        """Calculate the policy objective for the given action sequence and observation using Running Plus Optimal (RPO).
-
-        :param action_sequence: numpy array of shape (prediction_horizon+1, dim_input) representing the sequence of actions to optimize
-        :type action_sequence: numpy.ndarray
-        :param observation: numpy array of shape (dim_input,) representing the current observation
-        :type observation: numpy.ndarray
-        :return:policy objective for the given action sequence and observation
-        :rtype: float
-        """
-        current_action = action_sequence[: self.dim_action]
-
-        observation_predicted = self.predictor.predict(observation, current_action)
-
-        running_objective_value = self.running_objective(observation, current_action)
-
-        critic_of_observation = self.critic(observation_predicted)
-
-        policy_objective = running_objective_value + critic_of_observation
-
-        if self.intrinsic_constraints != [] and self.penalty_param > 0:
-            for constraint in self.intrinsic_constraints:
-                policy_objective += self.penalty_param * rc.penalty_function(
-                    constraint(), penalty_coeff=1.0e-1
-                )
-
-        return policy_objective
-
-
-class RPOWithRobustigyingTerm(RPO):
-    """Class for RPO with robustigying term."""
-
-    def __init__(self, *args, A=10, K=10, **kwargs):
-        """Instatiate the class for RPO with robustigying term.
-
-        TODO: add link to paper
-
-        :param A: Robustifiend parameter 1, defaults to 10
-        :type A: int, optional
-        :param K: Robustifiend parameter 2, defaults to 10
-        :type K: int, optional
-        """
-        super().__init__(*args, **kwargs)
-        self.A = A
-        self.K = K
-
-    def update_action(self, observation=None):
-        super().update_action(observation)
-        self.action -= (
-            self.K
-            * rc.norm_2(observation) ** 2
-            / (self.A + rc.norm_2(observation) ** 2)
-        )
-
-
-class CALF(RPO):
+class CALF(RLPolicyPredictive):
     """Policy using Critic As a Lyapunov Function (CALF) to constrain the optimization."""
 
     def __init__(
         self,
         safe_controller,
         *args,
-        policy_constraints_on=True,
-        penalty_param=0,
-        policy_regularization_param=0,
         **kwargs,
     ):
         """Initialize thepolicy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
@@ -1164,103 +877,5 @@ class CLF(CALF):
         policy_objective = 0
 
         policy_objective += self.safe_controller.compute_LF(observation_predicted)
-
-        return policy_objective
-
-
-class Tabular(RPO):
-    r"""Policy minimizing the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
-
-    May be suitable for value iteration and policy iteration agents.
-    Specifically, it optimizes the followingpolicy objective:
-
-    :math:`J^a \\left( y_k| \\{u\\}_k \\right) =  r(y_{k}, u_{k}) + \\gamma J^*(y_{k})`
-
-    Notation:
-
-    * :math:`y`: observation
-    * :math:`u`: action
-    * :math:`\\gamma`: discount factor
-    * :math:`r`: running objective function
-    * :math:`J^*`: optimal objective function (or its estimate)
-
-    The action and state space are assumed discrete and finite.
-    """
-
-    def __init__(
-        self,
-        dim_world,
-        predictor=None,
-        optimizer=None,
-        running_objective=None,
-        model=None,
-        action_space=None,
-        critic=None,
-        discount_factor=1,
-        terminal_state=None,
-    ):
-        """Initialize anpolicyTabular object.
-
-        :param dim_world: The dimensions of the world (i.e. the dimensions of the state space).
-        :type dim_world: int
-        :param predictor: An object that predicts the next state given an action and the current state.
-        :type predictor: object
-        :param optimizer: An object that optimizes thepolicy's objective function.
-        :type optimizer: object
-        :param running_objective: A function that returns a scalar representing the running objective for a given state and action.
-        :type running_objective: function
-        :param model: An object that computes an action given an observation and some weights.
-        :type model: object
-        :param action_space: An array of the possible actions.
-        :type action_space: array
-        :param critic: An object that computes the optimal objective function.
-        :type critic: object
-        :param discount_factor: The discount factor for the optimal objective function.
-        :type discount_factor: float
-        :param terminal_state: The terminal state of the world.
-        :type terminal_state: object
-        """
-        self.dim_world = dim_world
-        self.predictor = predictor
-        self.critic = critic
-        self.model = model
-        self.running_objective = running_objective
-        self.optimizer = optimizer
-        self.action_space = action_space
-        self.action_table = rc.zeros(dim_world)
-        self.discount_factor = discount_factor
-        self.terminal_state = terminal_state
-        self.gradients = []
-
-    def update(self):
-        """Update the action table using the optimizer."""
-        new_action_table = self.optimizer.optimize(self.objective, self.model.weights)
-
-        self.model.update_and_cache_weights(new_action_table)
-
-    def objective(
-        self,
-        action,
-        observation,
-    ):
-        """Calculate the policy objective for a given action and observation.
-
-        The policy objective is defined as the sum of the running objective and the optimal (or estimate thereof) objective of the next step.
-
-        :param action: The action for which thepolicy objective is to be calculated.
-        :type action: np.ndarray
-        :param observation: The observation for which thepolicy objective is to be calculated.
-        :type observation: np.ndarray
-        :return: the policy objective.
-        :rtype: float
-        """
-        if tuple(observation) == tuple(self.terminal_state):
-            return 0
-
-        observation_predicted = self.predictor.predict_sequence(observation, action)
-
-        policy_objective = self.running_objective(
-            observation, action
-        ) + self.discount_factor * self.critic(observation_predicted)
 
         return policy_objective

@@ -16,7 +16,6 @@ except (ModuleNotFoundError, ImportError):
 
 try:
     import torch
-    from torch.utils.data import DataLoader
 
     # from rcognita.data_buffers import UpdatableSampler
 
@@ -623,13 +622,13 @@ class Optimizable(rcognita.RcognitaBase):
         return n_epochs, objective
 
     def optimize_tensor(self, **parameters):
-        dataloader = parameters.get("dataloader")
-        assert dataloader is not None, "Couldn't find dataloader"
+        batch_sampler = parameters.get("batch_sampler")
+        assert batch_sampler is not None, "Couldn't find batch_sampler"
         n_epochs, objective = self.instantiate_configuration()
 
         for epoch_idx in range(n_epochs):
             objective_value = None
-            for batch_sample in dataloader:
+            for batch_sample in batch_sampler:
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
                 objective_value = objective(**batch_sample)

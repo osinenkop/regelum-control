@@ -207,33 +207,31 @@ class Critic(Optimizable, ABC):
         self.current_critic_loss = 0
 
     def initialize_optimize_procedure(self):
-        self.var_observation = self.create_variable(
-            name="observation", is_constant=True
-        )
-        self.var_observation_action = self.create_variable(
-            name="observation_action", is_constant=True
-        )
-        self.var_running_objective = self.create_variable(
-            name="running_objective", is_constant=True
-        )
-        self.var_action = self.create_variable(name="action", is_constant=True)
+        self.objective_variables = [
+            self.create_variable(name=objective_key, is_constant=True)
+            for objective_key in self.data_buffer_objective_keys()
+        ]
+
         self.var_critic_weights = self.create_variable(
             name="critic_weights", is_constant=False, like=self.model.named_parameters
         )
-        if self.is_value_function:
-            variables = [self.var_observation, self.var_running_objective]
-        else:
-            variables = [
-                self.var_observation_action,
-                self.var_running_objective,
-            ]
 
         self.register_objective(
             func=self.objective_function,
-            variables=variables,
+            variables=self.objective_variables,
         )
 
-    # @apply_callbacks()
+    def data_buffer_objective_keys(self) -> List[str]:
+        if self.is_value_function:
+            keys = ["observation", "running_objective"]
+        else:
+            keys = ["observation_action", "running_objective"]
+
+        if not self.is_on_policy:
+            keys.append("critic_targets")
+
+        return keys
+
     def objective_function(
         self,
         running_objective,
@@ -291,10 +289,12 @@ class Critic(Optimizable, ABC):
             self.update_data_buffer_with_optimal_policy_targets(data_buffer)
 
         self.optimize(
-            dataloader=data_buffer.iter_batches(
-                **self.optimizer_config.config_options.iter_batches_config
-            ),
+            **data_buffer.get_optimization_kwargs(
+                keys=self.data_buffer_objective_keys(),
+                optimizer_config=self.optimizer_config,
+            )
         )
+
         self.model.update_and_cache_weights()
 
         if not self.is_on_policy:

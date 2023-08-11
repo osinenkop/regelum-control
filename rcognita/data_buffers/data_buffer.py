@@ -11,10 +11,11 @@ import pandas as pd
 import casadi as cs
 
 from typing import Optional, List, Union, Any, Type, Iterable
-from .types import Array, ArrayType
-from .samplers import RollingSampler
+from .types import RgArray, RgArrayType
+from .batch_sampler import RollingBatchSampler
 from .fifo_list import FifoList
 from collections import defaultdict
+from ..optimizable import OptimizerConfig
 
 
 class DataBuffer:
@@ -37,7 +38,7 @@ class DataBuffer:
         self.dtype_for_indexing = None
         self.device_for_indexing = None
 
-    def update(self, data_in_dict_format: dict[str, Array]) -> None:
+    def update(self, data_in_dict_format: dict[str, RgArray]) -> None:
         for key, data_for_key in data_in_dict_format.items():
             self.data[key] = data_for_key
 
@@ -73,7 +74,7 @@ class DataBuffer:
                     np.full_like(self.data[key][-1], np.nan, dtype=float)
                 )
 
-    def last(self) -> dict[str, Array]:
+    def last(self) -> dict[str, RgArray]:
         return self[-1]
 
     def to_dict(self):
@@ -95,17 +96,17 @@ class DataBuffer:
         self,
         idx: Union[int, slice, Any],
         keys: Optional[Union[List[str], np.array]] = None,
-        dtype: Optional[ArrayType] = None,
+        dtype: RgArrayType = np.array,
         device: Optional[Union[str, torch.device]] = None,
-    ) -> dict[str, Array]:
+    ) -> dict[str, RgArray]:
         _keys = keys if keys is not None else self.data.keys()
         if (
             isinstance(idx, int)
             or isinstance(idx, slice)
             or isinstance(idx, np.ndarray)
         ):
-            if dtype is None:
-                return {key: self.data[key][idx] for key in _keys}
+            if dtype == np.array:
+                return {key: np.vstack(self.data[key])[idx] for key in _keys}
             elif (
                 dtype == torch.tensor
                 or dtype == torch.FloatTensor
@@ -114,27 +115,27 @@ class DataBuffer:
             ):
                 if device is not None:
                     return {
-                        key: dtype(np.array(self.data[key]))[idx].to(device)
+                        key: dtype(np.vstack(self.data[key]))[idx].to(device)
                         for key in _keys
                     }
                 else:
-                    return {key: dtype(np.array(self.data[key]))[idx] for key in _keys}
-            elif dtype == np.array:
-                return {key: np.array(self.data[key])[idx] for key in _keys}
+                    return {key: dtype(np.vstack(self.data[key]))[idx] for key in _keys}
             elif dtype == cs.DM:
-                return {key: dtype(np.array(self.data[key])[idx]) for key in _keys}
+                return {key: dtype(np.vstack(self.data[key])[idx]) for key in _keys}
+            else:
+                raise ValueError(f"Unexpeted dtype in data_buffer.getitem: {dtype}")
 
     def set_indexing_rules(
         self,
         keys: List[str],
-        dtype: ArrayType,
+        dtype: RgArrayType,
         device: Optional[Union[str, torch.device]] = None,
     ) -> None:
         self.keys_for_indexing = keys
         self.dtype_for_indexing = dtype
         self.device_for_indexing = device
 
-    def __getitem__(self, idx) -> dict[str, Array]:
+    def __getitem__(self, idx) -> dict[str, RgArray]:
         return self.getitem(
             idx,
             keys=self.keys_for_indexing,
@@ -143,6 +144,33 @@ class DataBuffer:
         )
 
     def iter_batches(
-        self, sampler: Type[Sampler] = RollingSampler, **sampler_kwargs
-    ) -> Iterable[Array]:
-        return sampler(data_buffer=self, **sampler_kwargs)
+        self,
+        keys: List[str],
+        batch_sampler: Type[Sampler] = RollingBatchSampler,
+        **batch_sampler_kwargs,
+    ) -> Iterable[RgArray]:
+        return batch_sampler(data_buffer=self, keys=keys, **batch_sampler_kwargs)
+
+    def sample_last(self, keys: List[str], dtype: RgArrayType) -> dict[str, RgArray]:
+        return self.getitem(np.array([-1]), keys=keys, dtype=dtype)
+
+    def get_optimization_kwargs(
+        self, keys: List[str], optimizer_config: OptimizerConfig
+    ):
+        config_options = optimizer_config.config_options
+
+        method_name = config_options.get("data_buffer_sampling_method")
+        kwargs = config_options.get("data_buffer_sampling_kwargs")
+        assert (
+            method_name is not None
+        ), "Specify `data_buffer_sampling_method` in your optimizer_config"
+        assert (
+            kwargs is not None
+        ), "Specify `data_buffer_sampling_kwargs` in your optimizer_config"
+
+        if method_name == "iter_batches":
+            return {"batch_sampler": self.iter_batches(keys=keys, **kwargs)}
+        elif method_name == "sample_last":
+            return self.sample_last(keys=keys, dtype=kwargs["dtype"])
+        else:
+            raise ValueError("Unknown data_buffer_sampling_method")

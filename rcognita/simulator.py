@@ -173,7 +173,7 @@ class Simulator(rcognita.RcognitaBase, ABC):
         raise NotImplementedError("Not implemented ODE solver")
 
     def get_init_state_and_action(self):
-        return self.state_init, rc.zeros(self.system.dim_inputs)
+        return self.state_init, rc.zeros((1, self.system.dim_inputs))
 
     def initialize_init_state(self):
         raise NotImplementedError(
@@ -288,7 +288,9 @@ class CasADi(Simulator):
         action_symbolic = rc.array_symb(self.system.dim_inputs, literal="u")
         time = rc.array_symb((1, 1), literal="t")
 
-        ODE = system.compute_state_dynamics(time, state_symbolic, action_symbolic)
+        ODE = system.compute_state_dynamics(
+            time, state_symbolic, action_symbolic, _native_dim=True
+        )
         DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
         # options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
         options = {"tf": max_step}
