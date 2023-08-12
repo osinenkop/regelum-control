@@ -7,7 +7,7 @@ defaults:
   - critic: critic
 
 action_bounds: $ system_specific.action_bounds
-max_data_buffer_size: 100
+max_data_buffer_size: 10000
 sampling_time: $ system_specific.sampling_time
 is_critic_first: False
 running_objective: ~ running_objective
@@ -29,14 +29,14 @@ critic:
     opt_options: 
       lr: 0.001
     config_options:
-      n_epochs: 1
+      n_epochs: 2
       is_reinstantiate_optimizer: False
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs: 
         batch_sampler: = rcognita.data_buffers.batch_sampler.RollingBatchSampler
         dtype: = torch.FloatTensor
-        batch_size: 10
-        n_batches: 1
+        batch_size: 20
+        n_batches: 20
         mode: backward
 
 policy:
@@ -49,9 +49,9 @@ policy:
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.01
+      lr: 0.001
     config_options:
-      n_epochs: 100
+      n_epochs: 1000
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs: 

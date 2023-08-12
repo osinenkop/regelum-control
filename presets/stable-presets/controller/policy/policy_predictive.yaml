@@ -1,0 +1,18 @@
+_target_: rcognita.policy.RLPolicyPredictive
+
+defaults:
+  - model: weight_container
+  - predictor: euler 
+  - optimizer_config: symbolic
+
+system: ~ system
+critic: ~ controller.critic
+action_bounds: $ system_specific.action_bounds
+discount_factor: $ scenario.discount_factor
+running_objective: ~ running_objective
+device: cpu
+# algorithm: mpc
+
+
+
+

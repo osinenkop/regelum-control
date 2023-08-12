@@ -325,12 +325,26 @@ class Optimizable(rcognita.RcognitaBase):
         func: Callable,
         source: OptimizationVariable,
         act_on="data",
+        **source_kwargs,
     ):
         def source_hook(whatever):
-            return func(source())
+            return func(
+                source(), **{kwarg: var() for kwarg, var in source_kwargs.items()}
+            )
 
-        hook = Hook(source_hook, act_on=act_on)
-        connect_to.register_hook(hook, first=True)
+        def source_metadata_hook(whatever):
+            return func(
+                source(with_metadata=True),
+                **{
+                    kwarg: var(with_metadata=True)
+                    for kwarg, var in source_kwargs.items()
+                },
+            )
+
+        data_hook = Hook(source_hook, act_on="data")
+        metadata_hook = Hook(source_metadata_hook, act_on="metadata")
+        connect_to.register_hook(data_hook, first=True)
+        connect_to.register_hook(metadata_hook, first=True)
 
     def __register_symbolic_objective(
         self,
@@ -547,7 +561,9 @@ class Optimizable(rcognita.RcognitaBase):
 
     def optimize_symbolic(self, raw=False, **kwargs):
         if self.__opt_func is None or self.params_changed:
-            self.__opti.solver(self.opt_method, self.__log_options, self.__opt_options)
+            self.__opti.solver(
+                self.opt_method, dict(self.__log_options), dict(self.__opt_options)
+            )
             self.__opt_func = self.__opti.to_function(
                 "min_fun",
                 [variable(with_metadata=True) for variable in self.variables],

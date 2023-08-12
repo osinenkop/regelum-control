@@ -151,8 +151,10 @@ class DataBuffer:
     ) -> Iterable[RgArray]:
         return batch_sampler(data_buffer=self, keys=keys, **batch_sampler_kwargs)
 
-    def sample_last(self, keys: List[str], dtype: RgArrayType) -> dict[str, RgArray]:
-        return self.getitem(np.array([-1]), keys=keys, dtype=dtype)
+    def sample_last(
+        self, keys: List[str], dtype: RgArrayType, n_samples: int = 1
+    ) -> dict[str, RgArray]:
+        return self.getitem(np.arange(-n_samples, 0, dtype=int), keys=keys, dtype=dtype)
 
     def get_optimization_kwargs(
         self, keys: List[str], optimizer_config: OptimizerConfig

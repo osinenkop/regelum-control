@@ -26,8 +26,9 @@ from .objective import (
     sdpg_objective,
     ddpg_objective,
     mpc_objective,
-    rql_objective,
+    rpo_objective,
     sql_objective,
+    rql_objective,
 )
 from typing import List
 
@@ -179,18 +180,18 @@ class Policy(Optimizable, ABC):
             is_exploration = bool(toss)
 
             if is_exploration:
-                action = np.array(
+                self.action = np.array(
                     [
                         np.random.uniform(self.action_min[k], self.action_max[k])
                         for k in range(len(self.action))
                     ]
                 )
             else:
-                action = self.get_action(observation)
+                self.action = self.get_action(observation)
         else:
-            action = self.get_action(observation)
+            self.action = self.get_action(observation)
 
-        return action
+        return self.action
 
     def get_action(self, observation):
         if isinstance(self.model, ModelNN):
@@ -663,7 +664,7 @@ class RLPolicy(Policy):
         )
 
 
-class RLPolicyPredictive(RLPolicy):
+class RLPolicyPredictive(Policy):
     def __init__(
         self,
         model: ModelNN,
@@ -679,42 +680,35 @@ class RLPolicyPredictive(RLPolicy):
         epsilon_random_parameter: float = 0.0,
         algorithm: str = "mpc",
     ):
-        RLPolicy.__init__(
+        Policy.__init__(
             self,
             model=model,
-            critic=critic,
             system=system,
             action_bounds=action_bounds,
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
-            device=device,
-            epsilon_random=epsilon_random,
-            epsilon_random_parameter=epsilon_random_parameter,
         )
+        self.critic = critic
+        self.device = device
+        self.epsilon_random = epsilon_random
+        self.epsilon_random_parameter = epsilon_random_parameter
         self.predictor = predictor
         self.running_objective = running_objective
         self.algorithm = algorithm
+        self.initialize_optimization_procedure()
+        self.initial_guess = None
 
     def initialize_optimization_procedure(self):
-        self.observation_variable = [
-            self.create_variable(name="observation", is_constant=True)
-        ]
-        self.policy_weights = self.create_variable(
-            name="policy_weights", like=self.model.named_parameters
+        self.observation_variable = self.create_variable(
+            1, self.system.dim_observation, name="observation", is_constant=True
         )
+
         self.policy_model_output = self.create_variable(
-            name="policy_model_output", is_constant=True
-        )
-        self.connect_source(
-            self.policy_model_output,
-            func=self.model,
-            source=self.observation_variable,
+            name="policy_model_output", like=self.model.named_parameters
         )
         self.register_objective(
             self.objective_function,
-            variables=[
-                self.observation_variable,
-            ],
+            variables=[self.observation_variable, self.policy_model_output],
         )
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -728,8 +722,8 @@ class RLPolicyPredictive(RLPolicy):
                 predictor=self.predictor,
                 running_objective=self.running_objective,
             )
-        elif self.algorithm == "rql":
-            return rql_objective(
+        elif self.algorithm == "rpo":
+            return rpo_objective(
                 observation=observation,
                 actions=policy_model_output,
                 predictor=self.predictor,
@@ -743,14 +737,27 @@ class RLPolicyPredictive(RLPolicy):
                 predictor=self.predictor,
                 critic=self.critic,
             )
+        elif self.algorithm == "rql":
+            return rql_objective(
+                observation=observation,
+                actions=policy_model_output,
+                predictor=self.predictor,
+                running_objective=self.running_objective,
+                critic=self.critic,
+            )
 
     def optimize_on_event(self, data_buffer: DataBuffer):
-        self.optimize(
+        result = self.optimize(
             **data_buffer.get_optimization_kwargs(
                 keys=self.data_buffer_objective_keys(),
                 optimizer_config=self.optimizer_config,
-            )
+            ),
+            policy_model_output=self.get_initial_guess(),
         )
+        self.update_weights(result["policy_model_output"])
+
+    def get_initial_guess(self):
+        return self.model.weights
 
 
 class CALF(RLPolicyPredictive):

@@ -1,0 +1,20 @@
+_target_: rcognita.critic.Critic
+
+defaults:
+  - model: quad_no_mix
+  - optimizer_config: symbolic
+
+discount_factor: $ scenario.discount_factor
+sampling_time: $ controller.sampling_time
+td_n: 1
+device: cpu
+is_same_critic: False
+
+
+model:
+  dim_inputs: $ system_specific.dim_observation 
+
+optimizer_config:
+  config_options:
+    data_buffer_sampling_kwargs:
+      n_samples: 10 

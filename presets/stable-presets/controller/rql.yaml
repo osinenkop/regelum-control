@@ -1,9 +1,9 @@
 _target_: rcognita.controller.RLController
 
-name%%: rpo
+name%%: rql 
 
 defaults:
-  - policy: policy_rpo
+  - policy: policy_rql
   - critic: critic_polynom
 
 action_bounds: $ system_specific.action_bounds
@@ -20,4 +20,6 @@ policy:
     prediction_horizon: 2
 
 critic:
-  is_value_function: True
+  model:
+    dim_inputs: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+  is_value_function: False

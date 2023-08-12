@@ -2,4 +2,4 @@ defaults:
   - policy_predictive
 
 critic: ~ controller.critic
-algorithm: rpo
+algorithm: rql

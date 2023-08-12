@@ -69,7 +69,7 @@ class Model(rcognita.RcognitaBase, ABC):
 
         if use_stored_weights is False:
             if weights is not None:
-                result = self.forward(argin, weights)
+                result = self.forward(argin, weights=weights)
             else:
                 result = self.forward(argin)
         else:
@@ -143,7 +143,7 @@ class ModelQuadLin(Model):
             self._calculate_dims(dim_inputs)
             self.weight_min = weight_min * np.ones(self.dim_weights)
             self.weight_max = weight_max * np.ones(self.dim_weights)
-            self.weights = (self.weight_min + self.weight_max) / 20.0
+            self.weights = (self.weight_min + self.weight_max) / 2.0
         else:
             self._calculate_dims(self._calculate_dim_inputs(len(weights)))
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
@@ -359,7 +359,10 @@ class ModelWeightContainer(Model):
         self.update_and_cache_weights(self.weights)
 
     def forward(self, *argin, weights=None):
-        return weights[: self.dim_output]
+        if weights is not None:
+            return rc.force_row(weights[0, : self.dim_output])
+        else:
+            return rc.force_row(self.weights[0, : self.dim_output])
 
 
 class ModelNN(nn.Module):
@@ -580,7 +583,8 @@ class ModelWeightContainerTorch(ModelNN):
     def forward(self, inputs):
         if self.bounds_handler is not None:
             if self.output_bounding_type == "clip":
-                self.model_weights_parameter.clip(-1.0, 1.0)
+                with torch.no_grad():
+                    self.model_weights_parameter.clip_(-1.0, 1.0)
 
         if len(inputs.shape) == 2:
             inputs_like = torch.tile(self.model_weights_parameter, (inputs.shape[0], 1))

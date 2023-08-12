@@ -1,0 +1,4 @@
+defaults:
+  - policy_predictive
+
+algorithm: mpc

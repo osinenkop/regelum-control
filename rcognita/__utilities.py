@@ -297,10 +297,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return torch.reshape(array, dim_params)
 
     def array(
-        self,
-        array,
-        prototype=None,
-        rc_type: RCType = NUMPY,
+        self, array, prototype=None, rc_type: RCType = NUMPY, _force_numeric=False
     ):
         if isinstance(prototype, (list, tuple)):
             rc_type = type_inference(*prototype)
@@ -317,9 +314,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
             self._array = torch.tensor(array, device=device)
         elif rc_type == CASADI:
-            casadi_constructor = type(prototype) if prototype is not None else casadi.DM
+            if _force_numeric:
+                self._array = casadi.DM(array)
+            else:
+                casadi_constructor = (
+                    type(prototype) if prototype is not None else casadi.DM
+                )
 
-            self._array = casadi_constructor(array)
+                self._array = casadi_constructor(array)
 
         return self._array
 
@@ -392,9 +394,9 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             if isinstance(argin, (list, tuple)):
                 if axis == 0:
-                    return casadi.horzcat(*argin)
-                elif axis == 1:
                     return casadi.vertcat(*argin)
+                elif axis == 1:
+                    return casadi.horzcat(*argin)
                 else:
                     raise ValueError("Not implemented value of axis for CasADi")
 

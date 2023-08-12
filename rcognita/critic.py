@@ -207,8 +207,16 @@ class Critic(Optimizable, ABC):
         self.current_critic_loss = 0
 
     def initialize_optimize_procedure(self):
+        var_dims = {
+            "running_objective": (10, 1),
+            "observation": (10, 3),
+            "observation_action": (10, 5),
+            "critic_targets": (10, 1),
+        }
         self.objective_variables = [
-            self.create_variable(name=objective_key, is_constant=True)
+            self.create_variable(
+                *var_dims[objective_key], name=objective_key, is_constant=True
+            )
             for objective_key in self.data_buffer_objective_keys()
         ]
 
