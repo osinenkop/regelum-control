@@ -121,17 +121,28 @@ class Clock:
         self.period = period
         self.eps = eps
         self.time_start = time_start
-        self.time = time_start
+        self.reset()
 
     def check_time(self, time: float):
-        if time > self.time + self.period - self.eps:
-            self.time = time
-            return True
+        self.delta_time = time - self.current_time
+        self.current_time = time
+
+        if (
+            self.is_first_time_called
+            or self.current_time > self.last_sampled_time + self.period - self.eps
+        ):
+            self.last_sampled_time = time
+            result = True
         else:
-            return False
+            result = False
+
+        self.is_first_time_called = False
+        return result
 
     def reset(self):
-        self.time = self.time_start
+        self.last_sampled_time = self.current_time = self.time_start
+        self.is_first_time_called = True
+        self.delta_time = 0.0
 
 
 # TODO: ADD DOCSTRING

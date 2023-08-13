@@ -131,8 +131,8 @@ class RLController(Controller):
             self.data_buffer.push_to_end(
                 action=self.policy.action,
                 running_objective=running_objective,
-                current_total_objective=self.update_total_objective(
-                    running_objective, time
+                current_total_objective=self.calculate_total_objective(
+                    running_objective, is_to_update=False
                 ),
                 observation_action=np.concatenate(
                     (observation, self.policy.action), axis=1
@@ -178,11 +178,24 @@ class RLController(Controller):
         self.step_counter += 1
         return self.policy.action
 
-    def update_total_objective(self, running_objective, time):
-        self.total_objective += (
-            running_objective * self.discount_factor**time * self.sampling_time
+    def compute_action_sampled(self, time, state, observation):
+        action = super().compute_action_sampled(time, state, observation)
+        self.calculate_total_objective(
+            self.running_objective(observation, action), is_to_update=True
         )
-        return self.total_objective
+        return action
+
+    def calculate_total_objective(self, running_objective: float, is_to_update=True):
+        total_objective = (
+            self.total_objective
+            + running_objective
+            * self.discount_factor**self.clock.current_time
+            * self.clock.delta_time
+        )
+        if is_to_update:
+            self.total_objective = total_objective
+        else:
+            return total_objective
 
     def optimize_on_event(self, event):
         if event == "reset_iteration":
@@ -216,6 +229,7 @@ class RLController(Controller):
 
         """
         self.clock.reset()
+        self.total_objective = 0.0
         self.policy.action_old = self.policy.action_init
 
 

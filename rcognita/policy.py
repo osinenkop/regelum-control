@@ -442,7 +442,9 @@ class Reinforce(PolicyGradient):
 
     def calculate_baseline(self, data_buffer: DataBuffer):
         baseline = self.next_baseline
-        self.next_baseline = np.mean(data_buffer.to_pandas(keys=["total_objective"]))
+        self.next_baseline = np.mean(
+            data_buffer.to_pandas(keys=["total_objective"]).values
+        )
         return np.full(shape=len(data_buffer), fill_value=baseline)
 
     def data_buffer_objective_keys(self) -> List[str]:

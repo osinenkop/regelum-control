@@ -299,24 +299,6 @@ class OnlineScenario(Scenario):
 
     # TODO: DOCSTRING
     @apply_callbacks()
-    def pre_step(self):
-        self.running_objective_value = self.running_objective(
-            self.observation, self.action
-        )
-        self.update_total_objective(self.observation, self.action, self.delta_time)
-        pre_step_statistics = (
-            np.around(self.running_objective_value, decimals=2),
-            self.observation.round(decimals=2)
-            if self.observation is not None
-            else None,
-            self.action.round(2) if self.action is not None else None,
-            self.total_objective,
-        )
-
-        return pre_step_statistics
-
-    # TODO: DOCSTRING
-    @apply_callbacks()
     def post_step(self):
         self.running_objective_value = self.running_objective(
             self.observation, self.action
@@ -335,7 +317,6 @@ class OnlineScenario(Scenario):
     # TODO: DOCSTRING
     @memorize
     def step(self):
-        self.pre_step()
         # sim_status = self.simulator.do_sim_step()
         is_total_objective_termination_criteria_satisfied = (
             self.total_objective > self.total_objective_threshold
