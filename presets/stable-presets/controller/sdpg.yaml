@@ -37,4 +37,10 @@ critic:
         dtype: = torch.FloatTensor
 
 policy:
+  optimizer_config: 
+    opt_options:
+      lr: 0.001
+    config_options:
+      is_reinstantiate_optimizer: True
+      n_epochs: 100
   device: $ controller.device%%
