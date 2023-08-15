@@ -154,7 +154,10 @@ class DataBuffer:
     def sample_last(
         self, keys: List[str], dtype: RgArrayType, n_samples: int = 1
     ) -> dict[str, RgArray]:
-        return self.getitem(np.arange(-n_samples, 0, dtype=int), keys=keys, dtype=dtype)
+        if n_samples <= len(self):
+            return self.getitem(
+                np.arange(-n_samples, 0, dtype=int), keys=keys, dtype=dtype
+            )
 
     def get_optimization_kwargs(
         self, keys: List[str], optimizer_config: OptimizerConfig
@@ -173,6 +176,6 @@ class DataBuffer:
         if method_name == "iter_batches":
             return {"batch_sampler": self.iter_batches(keys=keys, **kwargs)}
         elif method_name == "sample_last":
-            return self.sample_last(keys=keys, dtype=kwargs["dtype"])
+            return self.sample_last(keys=keys, **kwargs)
         else:
             raise ValueError("Unknown data_buffer_sampling_method")

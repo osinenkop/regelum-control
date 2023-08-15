@@ -138,18 +138,24 @@ class ModelQuadLin(Model):
 
         self.quad_matrix_type = quad_matrix_type
         self.is_with_linear_terms = is_with_linear_terms
+        self.single_weight_min = weight_min
+        self.single_weight_max = weight_max
 
         if weights is None:
             self._calculate_dims(dim_inputs)
-            self.weight_min = weight_min * np.ones(self.dim_weights)
-            self.weight_max = weight_max * np.ones(self.dim_weights)
+            self.weight_min = weight_min * rc.ones(self.dim_weights)
+            self.weight_max = weight_max * rc.ones(self.dim_weights)
             self.weights = (self.weight_min + self.weight_max) / 2.0
         else:
             self._calculate_dims(self._calculate_dim_inputs(len(weights)))
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
-            self.weights = np.array(weights)
+            self.weights = rc.array(weights)
 
         self.update_and_cache_weights(self.weights)
+
+    @property
+    def weight_bounds(self):
+        return rc.array([[self.single_weight_min, self.single_weight_max]])
 
     def _calculate_dim_inputs(self, dim_weights):
         if self.quad_matrix_type == "diagonal":
@@ -187,7 +193,8 @@ class ModelQuadLin(Model):
                 return torch.FloatTensor(value).to(device)
             elif device != value.device:
                 return value.to(device)
-
+        if isinstance(inputs, cs.MX) and isinstance(value, np.ndarray):
+            value = rc.DM(value)
         return value
 
     def forward_symmetric(self, inputs, weights):
@@ -205,7 +212,7 @@ class ModelQuadLin(Model):
         )
 
     def forward_diagonal(self, inputs, weights):
-        quad_matrix = np.diag(weights[: self.dim_quad])
+        quad_matrix = rc.diag(weights[: self.dim_quad])
         linear_coefs = (
             weights[None, self.dim_quad :] if self.is_with_linear_terms else None
         )
@@ -217,7 +224,9 @@ class ModelQuadLin(Model):
         )
 
     def forward_full(self, inputs, weights):
-        quad_matrix = weights[: self.dim_quad].reshape(self.dim_inputs, self.dim_inputs)
+        quad_matrix = rc.reshape(
+            weights[: self.dim_quad], (self.dim_inputs, self.dim_inputs)
+        )
         linear_coefs = (
             weights[None, self.dim_quad :] if self.is_with_linear_terms else None
         )
@@ -535,9 +544,6 @@ class ModelPerceptron(ModelNN):
     def forward(
         self, input_tensor: torch.FloatTensor, weights=None
     ) -> torch.FloatTensor:
-        if weights is not None:
-            self.update(weights)
-
         if self.is_force_infinitesimal:
             return self._forward(input_tensor) - self._forward(
                 torch.zeros_like(input_tensor)

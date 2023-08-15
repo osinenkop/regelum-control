@@ -192,10 +192,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             diag = np.diag(x)
             if len(diag.shape) == 1:
                 return diag.reshape(-1, 1)
+            else:
+                return diag
         elif rc_type == TORCH:
             diag = torch.diag(x)
             if len(diag.shape) == 1:
                 return diag.reshape(-1, 1)
+            else:
+                return diag
         elif rc_type == CASADI:
             return casadi.diag(x)
 
@@ -419,6 +423,12 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             return A.mT if len(A.shape) > 1 else A.T
         else:
             return A.T
+
+    def vec(self, expr, rc_type: RCType = NUMPY):
+        if rc_type == CASADI:
+            return casadi.vec(expr)
+        else:
+            return expr
 
     def rep_mat(self, array, n, m, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:

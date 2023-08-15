@@ -27,7 +27,7 @@ except (ModuleNotFoundError, ImportError):
     torch = MagicMock()
 
 from .model import ModelWeightContainer
-from .model import Model
+from .model import Model, ModelNN
 from .objective import Objective
 from typing import Optional, Union, List
 from .optimizable import OptimizerConfig
@@ -44,6 +44,7 @@ class Critic(Optimizable, ABC):
 
     def __init__(
         self,
+        system,
         model: Optional[Model] = None,
         running_objective: Optional[Objective] = None,
         td_n: int = 1,
@@ -80,7 +81,7 @@ class Critic(Optimizable, ABC):
 
         self.discount_factor = discount_factor
         self.running_objective = running_objective
-
+        self.system = system
         self.current_critic_loss = 0
         self.total_objective = 0
         self.sampling_time = sampling_time
@@ -99,7 +100,7 @@ class Critic(Optimizable, ABC):
     def receive_state(self, state):
         self.state = state
 
-    def __call__(self, *args, use_stored_weights=False):
+    def __call__(self, *args, use_stored_weights=False, weights=None):
         """Compute the value of the critic function for a given observation and/or action.
 
         :param args: tuple of the form (observation, action) or (observation,)
@@ -109,7 +110,7 @@ class Critic(Optimizable, ABC):
         :return: value of the critic function
         :rtype: float
         """
-        return self.model(*args, use_stored_weights=use_stored_weights)
+        return self.model(*args, use_stored_weights=use_stored_weights, weights=weights)
 
     @property
     def weights(self):
@@ -207,26 +208,94 @@ class Critic(Optimizable, ABC):
         self.current_critic_loss = 0
 
     def initialize_optimize_procedure(self):
-        var_dims = {
-            "running_objective": (10, 1),
-            "observation": (10, 3),
-            "observation_action": (10, 5),
-            "critic_targets": (10, 1),
-        }
-        self.objective_variables = [
+        batch_size = self.get_data_buffer_batch_size()
+        (
+            self.running_objective_var,
+            self.observation_var,
+            self.observation_action_var,
+            self.critic_targets_var,
+            self.critic_model_output,
+            self.critic_weights_var,
+            self.critic_stored_weights_var,
+        ) = (
             self.create_variable(
-                *var_dims[objective_key], name=objective_key, is_constant=True
-            )
-            for objective_key in self.data_buffer_objective_keys()
-        ]
-
-        self.var_critic_weights = self.create_variable(
-            name="critic_weights", is_constant=False, like=self.model.named_parameters
+                batch_size,
+                1,
+                name="running_objective",
+                is_constant=True,
+            ),
+            self.create_variable(
+                batch_size,
+                self.system.dim_observation,
+                name="observation",
+                is_constant=True,
+            ),
+            self.create_variable(
+                batch_size,
+                self.system.dim_observation + self.system.dim_inputs,
+                name="observation_action",
+                is_constant=True,
+            ),
+            self.create_variable(
+                batch_size,
+                1,
+                name="critic_targets",
+                is_constant=True,
+            ),
+            self.create_variable(batch_size, 1, name="critic_model_output"),
+            self.create_variable(
+                name="critic_weights",
+                like=self.model.named_parameters,
+            ),
+            self.create_variable(
+                name="critic_stored_weights",
+                like=self.model.cache.weights,
+                is_constant=True,
+            ),
         )
+        if hasattr(self.model, "weight_bounds"):
+            self.register_bounds(self.critic_weights_var, self.model.weight_bounds)
+
+        if self.is_value_function:
+            self.connect_source(
+                connect_to=self.critic_model_output,
+                func=self.model,
+                source=self.observation_var,
+                weights=self.critic_weights_var,
+            )
+            if not self.is_same_critic:
+                self.connect_source(
+                    connect_to=self.critic_targets_var,
+                    func=self.model.cache,
+                    source=self.observation_var,
+                    weights=self.critic_stored_weights_var,
+                )
+        else:
+            self.connect_source(
+                connect_to=self.critic_model_output,
+                func=self.model,
+                source=self.observation_action_var,
+                weights=self.critic_weights_var,
+            )
+            if not self.is_same_critic:
+                self.connect_source(
+                    connect_to=self.critic_targets_var,
+                    func=self.model.cache,
+                    source=self.observation_action_var,
+                    weights=self.critic_stored_weights_var,
+                )
 
         self.register_objective(
             func=self.objective_function,
-            variables=self.objective_variables,
+            variables=[
+                self.running_objective_var,
+                self.critic_model_output,
+            ]
+            + (
+                [self.critic_targets_var]
+                if ((not self.is_same_critic) or (not self.is_on_policy))
+                else []
+            ),
         )
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -242,21 +311,17 @@ class Critic(Optimizable, ABC):
 
     def objective_function(
         self,
+        critic_model_output,
         running_objective,
-        observation=None,
-        observation_action=None,
         critic_targets=None,
     ):
         return temporal_difference_objective(
-            critic_model=self.model,
-            observation=observation,
+            critic_model_output=critic_model_output,
             running_objective=running_objective,
             td_n=self.td_n,
             discount_factor=self.discount_factor,
             sampling_time=self.sampling_time,
-            is_use_same_critic=self.is_same_critic,
             critic_targets=critic_targets,
-            observation_action=observation_action,
         )
 
     def update_data_buffer_with_optimal_policy_targets(self, data_buffer: DataBuffer):
@@ -285,25 +350,44 @@ class Critic(Optimizable, ABC):
         values = self.model(model_inputs, use_stored_weights=True)
         data_buffer.update({"critic_targets": torch.min(values, axis=1).values.numpy()})
 
+    def update_data_buffer_with_stored_weights_critic_output(
+        self, data_buffer: DataBuffer
+    ):
+        self.model(data_buffer, use_stored_weights=True)
+
     def delete_critic_targets(self, data_buffer: DataBuffer):
         if "critic_targets" in data_buffer.keys():
             data_buffer.delete_key("critic_targets")
 
     def optimize_on_event(self, data_buffer):
-        self.model.to(self.device)
-        self.model.cache.to(self.device)
+        if isinstance(self.model, ModelNN):
+            self.model.to(self.device)
+            self.model.cache.to(self.device)
 
         if not self.is_on_policy:
             self.update_data_buffer_with_optimal_policy_targets(data_buffer)
 
-        self.optimize(
-            **data_buffer.get_optimization_kwargs(
-                keys=self.data_buffer_objective_keys(),
-                optimizer_config=self.optimizer_config,
-            )
+        opt_kwargs = data_buffer.get_optimization_kwargs(
+            keys=self.data_buffer_objective_keys(),
+            optimizer_config=self.optimizer_config,
         )
 
-        self.model.update_and_cache_weights()
+        if opt_kwargs is not None:
+            if self.kind == "tensor":
+                weights = self.optimize(
+                    **opt_kwargs,
+                )
+            elif self.kind == "symbolic":
+                weights = self.optimize(
+                    **opt_kwargs,
+                    critic_weights=self.model.weights,
+                    critic_stored_weights=self.model.cache.weights,
+                )
+            if isinstance(weights, dict):
+                weights = weights["critic_weights"]
+                self.model.update_and_cache_weights(weights)
+            else:
+                self.model.update_and_cache_weights()
 
         if not self.is_on_policy:
             self.delete_critic_targets(data_buffer)
@@ -312,7 +396,7 @@ class Critic(Optimizable, ABC):
 class CriticTrivial(Critic):
     """A mocked Critic object."""
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         pass
 
     def optimize_on_event(self, *args, **kwargs):
@@ -326,6 +410,10 @@ class CriticTrivial(Critic):
 
     def __call__(self, *args, **kwargs):
         pass
+
+    @property
+    def weights(self):
+        return None
 
 
 class CriticCALF:

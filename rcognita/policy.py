@@ -106,7 +106,11 @@ class Policy(Optimizable, ABC):
             self.action_min,
             self.action_max,
         ) = self.handle_bounds(
-            action_bounds, self.dim_action, tile_parameter=self.prediction_horizon
+            action_bounds,
+            self.dim_action,
+            tile_parameter=self.prediction_horizon + 1
+            if self.predictor is not None
+            else 0,
         )
         self.action_old = self.action_init = (
             self.action_initial_guess[: self.dim_action]
@@ -689,34 +693,53 @@ class RLPolicyPredictive(Policy):
             action_bounds=action_bounds,
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
+            predictor=predictor,
         )
         self.critic = critic
         self.device = device
         self.epsilon_random = epsilon_random
         self.epsilon_random_parameter = epsilon_random_parameter
-        self.predictor = predictor
         self.running_objective = running_objective
         self.algorithm = algorithm
         self.initialize_optimization_procedure()
         self.initial_guess = None
 
     def initialize_optimization_procedure(self):
+        objective_variables = []
         self.observation_variable = self.create_variable(
             1, self.system.dim_observation, name="observation", is_constant=True
         )
+        objective_variables.append(self.observation_variable)
 
         self.policy_model_output = self.create_variable(
             name="policy_model_output", like=self.model.named_parameters
         )
+        self.register_bounds(
+            self.policy_model_output,
+            rc.array(
+                self.action_bounds,
+                prototype=self.policy_model_output(with_metadata=True),
+                _force_numeric=True,
+            ),
+        )
+        objective_variables.append(self.policy_model_output)
+        if self.critic is not None:
+            self.critic_weights = self.create_variable(
+                name="critic_weights",
+                like=self.critic.model.named_parameters,
+                is_constant=True,
+            )
+            objective_variables.append(self.critic_weights)
+
         self.register_objective(
             self.objective_function,
-            variables=[self.observation_variable, self.policy_model_output],
+            variables=objective_variables,
         )
 
     def data_buffer_objective_keys(self) -> List[str]:
         return ["observation"]
 
-    def objective_function(self, observation, policy_model_output):
+    def objective_function(self, observation, policy_model_output, critic_weights=None):
         if self.algorithm == "mpc":
             return mpc_objective(
                 observation=observation,
@@ -731,6 +754,7 @@ class RLPolicyPredictive(Policy):
                 predictor=self.predictor,
                 running_objective=self.running_objective,
                 critic=self.critic,
+                critic_weights=critic_weights,
             )
         elif self.algorithm == "sql":
             return sql_objective(
@@ -738,6 +762,7 @@ class RLPolicyPredictive(Policy):
                 actions=policy_model_output,
                 predictor=self.predictor,
                 critic=self.critic,
+                critic_weights=critic_weights,
             )
         elif self.algorithm == "rql":
             return rql_objective(
@@ -746,17 +771,29 @@ class RLPolicyPredictive(Policy):
                 predictor=self.predictor,
                 running_objective=self.running_objective,
                 critic=self.critic,
+                critic_weights=critic_weights,
             )
 
     def optimize_on_event(self, data_buffer: DataBuffer):
-        result = self.optimize(
-            **data_buffer.get_optimization_kwargs(
-                keys=self.data_buffer_objective_keys(),
-                optimizer_config=self.optimizer_config,
-            ),
-            policy_model_output=self.get_initial_guess(),
+        opt_kwargs = data_buffer.get_optimization_kwargs(
+            keys=self.data_buffer_objective_keys(),
+            optimizer_config=self.optimizer_config,
         )
-        self.update_weights(result["policy_model_output"])
+
+        if opt_kwargs is not None:
+            result = (
+                self.optimize(
+                    **opt_kwargs,
+                    policy_model_output=self.get_initial_guess(),
+                )
+                if self.critic.weights is None
+                else self.optimize(
+                    **opt_kwargs,
+                    policy_model_output=self.get_initial_guess(),
+                    critic_weights=self.critic.weights,
+                )
+            )
+            self.update_weights(result["policy_model_output"])
 
     def get_initial_guess(self):
         return self.model.weights

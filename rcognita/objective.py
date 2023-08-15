@@ -196,14 +196,11 @@ def ddpg_objective(
 
 
 def temporal_difference_objective(
-    critic_model: ModelNN,
+    critic_model_output: ModelNN,
     running_objective: torch.FloatTensor,
     td_n: int,
     discount_factor: float,
     sampling_time: float,
-    is_use_same_critic: bool,
-    observation: Optional[torch.FloatTensor] = None,
-    observation_action: Optional[torch.FloatTensor] = None,
     critic_targets: Optional[torch.FloatTensor] = None,
 ) -> torch.FloatTensor:
     """Calculate temporal difference objective.
@@ -231,9 +228,6 @@ def temporal_difference_objective(
     """
     batch_size = running_objective.shape[0]
     assert batch_size > td_n, f"batch size {batch_size} too small for such td_n {td_n}"
-    assert (
-        observation_action is None or observation is None
-    ), "Only one of observation (for Value function temporal diffenence) and observation_action (for Q function temporal diffenence) should be provided"
     discount_factors = rc.array(
         [[discount_factor ** (sampling_time * i)] for i in range(td_n)],
         prototype=running_objective,
@@ -246,25 +240,14 @@ def temporal_difference_objective(
         ]
     )
 
-    if observation_action is not None:
-        first_tdn_inputs = observation_action[:-td_n, :]
-        last_tdn_inputs = observation_action[td_n:, :]
-    elif observation is not None:
-        first_tdn_inputs = observation[:-td_n, :]
-        last_tdn_inputs = observation[td_n:, :]
-    else:
-        raise ValueError("Either observation or observation_action should be provided")
-
     if critic_targets is None:
-        critic_targets = critic_model(
-            last_tdn_inputs, use_stored_weights=not is_use_same_critic
-        )
+        critic_targets = critic_model_output[td_n:, :]
     else:
-        critic_targets = critic_targets[-first_tdn_inputs.shape[0] :, :]
+        critic_targets = critic_targets[td_n:, :]
 
     temporal_difference = rc.mean(
         (
-            critic_model(first_tdn_inputs)
+            critic_model_output[:-td_n, :]
             - discounted_tdn_sum_of_running_objectives
             - discount_factor ** (td_n * sampling_time) * critic_targets
         )
@@ -292,7 +275,9 @@ def mpc_objective(
     return mpc_objective_value
 
 
-def rpo_objective(observation, actions, predictor, running_objective, critic):
+def rpo_objective(
+    observation, actions, predictor, running_objective, critic, critic_weights
+):
     rpo_objective_value = 0
     observation_sequence_predicted = predictor.predict_sequence(
         observation, actions[: predictor.prediction_horizon, :]
@@ -307,12 +292,14 @@ def rpo_objective(observation, actions, predictor, running_objective, critic):
     )
 
     observation_last = observation_sequence_predicted[-1:, :]
-    rpo_objective_value += rc.sum(critic(observation_last))
+    rpo_objective_value += rc.sum(critic(observation_last, weights=critic_weights))
 
     return rpo_objective_value
 
 
-def rql_objective(observation, actions, predictor, running_objective, critic):
+def rql_objective(
+    observation, actions, predictor, running_objective, critic, critic_weights
+):
     rql_objective_value = 0
     observation_sequence_predicted = predictor.predict_sequence(
         observation, actions[: predictor.prediction_horizon, :]
@@ -327,18 +314,22 @@ def rql_objective(observation, actions, predictor, running_objective, critic):
     )
 
     observation_last = observation_sequence_predicted[-1:, :]
-    rql_objective_value += rc.sum(critic(observation_last, actions[-1, :]))
+    rql_objective_value += rc.sum(
+        critic(observation_last, actions[-1, :], weights=critic_weights)
+    )
 
     return rql_objective_value
 
 
-def sql_objective(observation, actions, predictor, critic):
+def sql_objective(observation, actions, predictor, critic, critic_weights=None):
     observation_sequence_predicted = predictor.predict_sequence(
         observation, actions[: predictor.prediction_horizon, :]
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted)
     )
-    sql_objective_value = rc.sum(rc.sum(critic(observation_sequence, actions)))
+    sql_objective_value = rc.sum(
+        rc.sum(critic(observation_sequence, actions, weights=critic_weights))
+    )
 
     return sql_objective_value

@@ -324,7 +324,7 @@ class Optimizable(rcognita.RcognitaBase):
         connect_to: OptimizationVariable,
         func: Callable,
         source: OptimizationVariable,
-        act_on="data",
+        act_on="all",
         **source_kwargs,
     ):
         def source_hook(whatever):
@@ -343,8 +343,10 @@ class Optimizable(rcognita.RcognitaBase):
 
         data_hook = Hook(source_hook, act_on="data")
         metadata_hook = Hook(source_metadata_hook, act_on="metadata")
-        connect_to.register_hook(data_hook, first=True)
-        connect_to.register_hook(metadata_hook, first=True)
+        if act_on in ["all", "data"]:
+            connect_to.register_hook(data_hook, first=True)
+        if act_on in ["all", "metadata"]:
+            connect_to.register_hook(metadata_hook, first=True)
 
     def __register_symbolic_objective(
         self,
@@ -418,9 +420,9 @@ class Optimizable(rcognita.RcognitaBase):
             variable_sequence_initial_guess = rc.rep_mat(
                 variable_initial_guess, 1, tile_parameter
             )
-            sequence_min = rc.rep_mat(variable_min, 1, tile_parameter)
-            sequence_max = rc.rep_mat(variable_max, 1, tile_parameter)
-            result_bounds = np.hstack((sequence_min.T, sequence_max.T))
+            sequence_min = rc.rep_mat(variable_min, tile_parameter, 1)
+            sequence_max = rc.rep_mat(variable_max, tile_parameter, 1)
+            result_bounds = np.hstack((sequence_min, sequence_max))
             variable_initial_guess = variable_sequence_initial_guess
         else:
             result_bounds = bounds
@@ -449,10 +451,10 @@ class Optimizable(rcognita.RcognitaBase):
         self.__bounds = bounds
 
         def lb_constr(var):
-            return bounds[:, 0] - var
+            return bounds[:, : var.shape[1]] - var
 
         def ub_constr(var):
-            return var - bounds[:, 1]
+            return var - bounds[:, var.shape[1] :]
 
         var = variable_to_bound.renamed("var", inplace=False)
         var.data = variable_to_bound
@@ -498,7 +500,7 @@ class Optimizable(rcognita.RcognitaBase):
         self, func: FunctionWithSignature, variables: VarContainer
     ):
         func = self.__infer_and_register_symbolic_prototype(func, variables)
-        constr = func.metadata <= 0
+        constr = rc.vec(func.metadata) < 0
         self.__opti.subject_to(constr)
 
     def __register_numeric_constraint(
@@ -520,14 +522,21 @@ class Optimizable(rcognita.RcognitaBase):
         return self.__variables.decision_variables
 
     def substitute_parameters(self, **parameters):
-        for function in self.functions:
-            function.set_parameters(
-                **{
-                    k: v
-                    for k, v in parameters.items()
-                    if k in function.variables.constants.names
-                }
-            )
+        if self.kind == "tensor":
+            self.variables.substitute_data(**parameters)
+        elif self.kind == "symbolic":
+            params_to_delete = []
+            for k, v in parameters.items():
+                if k in self.variables:
+                    if self.variables[k].is_constant:
+                        self.__opti.set_value(self.variables[k](with_metadata=True), v)
+                    else:
+                        self.__opti.set_initial(
+                            self.variables[k](with_metadata=True), v
+                        )
+                        params_to_delete.append(k)
+            for k in params_to_delete:
+                del parameters[k]
 
     def is_target_event(self, event):
         if self.__callback_target_events is None:
@@ -559,35 +568,50 @@ class Optimizable(rcognita.RcognitaBase):
     def opt_func(self):
         return self.__opt_func
 
-    def optimize_symbolic(self, raw=False, **kwargs):
+    def optimize_symbolic(self, raw=True, **kwargs):
         if self.__opt_func is None or self.params_changed:
             self.__opti.solver(
                 self.opt_method, dict(self.__log_options), dict(self.__opt_options)
             )
+            self.var_for_opti = VarContainer(
+                [
+                    variable
+                    for variable in self.variables
+                    if all(
+                        [
+                            "source" not in hook_name
+                            for hook_name in variable.hooks.hooks_container.names
+                        ]
+                    )
+                ]
+            )
             self.__opt_func = self.__opti.to_function(
                 "min_fun",
-                [variable(with_metadata=True) for variable in self.variables],
+                [
+                    variable(with_metadata=True)
+                    for variable in self.var_for_opti.constants
+                ],
                 [
                     *[
                         variable(with_metadata=True)
-                        for variable in self.decision_variables
+                        for variable in self.var_for_opti.decision_variables
                     ],
                     self.objective.metadata,
                 ],
-                list(self.variables.names),
-                [*self.decision_variables.names, *self.objectives.names],
-                {"allow_duplicate_io_names": True},
+                list(self.var_for_opti.constants.names),
+                [*self.var_for_opti.decision_variables.names, self.objective.name],
             )
             self.params_changed = False
 
-        for k, v in kwargs.items():
-            if k in self.variables:
-                if self.variables[k].is_constant:
-                    self.__opti.set_value(self.variables[k](with_metadata=True), v)
-                else:
-                    self.__opti.set_initial(self.variables[k](with_metadata=True), v)
+        self.substitute_parameters(**kwargs)
 
-        result = self.__opt_func(**kwargs)
+        result = self.__opt_func(
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k in self.var_for_opti.constants.names
+            }
+        )
         return (
             result
             if raw
@@ -625,7 +649,20 @@ class Optimizable(rcognita.RcognitaBase):
             assert self.opt_method is not None and callable(
                 self.opt_method
             ), f"Wrong optimization method {self.opt_method}."
-            dvar = self.variables.decision_variables[0]
+            vars_to_opt = VarContainer(
+                [
+                    variable
+                    for variable in self.decision_variables
+                    if all(
+                        [
+                            "source" not in hook_name
+                            for hook_name in variable.hooks.hooks_container.names
+                        ]
+                    )
+                ]
+            )
+            assert len(vars_to_opt) == 1, "ambigous optimization variables"
+            dvar = vars_to_opt[0]
             assert dvar is not None, "Couldn't find decision variable"
             assert isinstance(dvar, OptimizationVariable), "Something went wrong..."
             self.optimizer = self.opt_method(dvar(), **self.__opt_options)
@@ -647,7 +684,7 @@ class Optimizable(rcognita.RcognitaBase):
             for batch_sample in batch_sampler:
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
-                objective_value = objective(**batch_sample)
+                objective_value = objective(**self.variables.to_data_dict())
                 objective_value.backward()
                 self.optimizer.step()
             if objective_value is not None:
@@ -663,6 +700,25 @@ class Optimizable(rcognita.RcognitaBase):
 
     def define_problem(self):
         self.__is_problem_defined = True
+
+    def get_data_buffer_batch_size(self):
+        config_options = self.optimizer_config.config_options
+
+        method_name = config_options.get("data_buffer_sampling_method")
+        kwargs = config_options.get("data_buffer_sampling_kwargs")
+        assert (
+            method_name is not None
+        ), "Specify `data_buffer_sampling_method` in your optimizer_config"
+        assert (
+            kwargs is not None
+        ), "Specify `data_buffer_sampling_kwargs` in your optimizer_config"
+
+        if method_name == "iter_batches":
+            return kwargs.get("batch_size")
+        elif method_name == "sample_last":
+            return kwargs.get("n_samples") if kwargs.get("n_samples") is not None else 1
+        else:
+            raise ValueError("Unknown data_buffer_sampling_method")
 
 
 class TorchProjectiveOptimizer:

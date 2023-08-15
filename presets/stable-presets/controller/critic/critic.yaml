@@ -8,6 +8,7 @@ sampling_time: $ controller.sampling_time
 td_n: 1
 device: cpu
 is_same_critic: False
+system: ~ system
 
 
 model:
