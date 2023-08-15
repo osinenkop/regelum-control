@@ -8,7 +8,7 @@ defaults:
 
 action_bounds: $ system_specific.action_bounds
 sampling_time: $ system_specific.sampling_time
-is_critic_first: False
+is_critic_first: True 
 running_objective: ~ running_objective
 discount_factor: $ scenario.discount_factor
 policy_optimization_event: compute_action
