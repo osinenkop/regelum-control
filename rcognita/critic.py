@@ -45,8 +45,7 @@ class Critic(Optimizable, ABC):
     def __init__(
         self,
         system,
-        model: Optional[Model] = None,
-        running_objective: Optional[Objective] = None,
+        model: Union[Model, ModelNN],
         td_n: int = 1,
         device: Union[str, torch.device] = "cpu",
         is_same_critic: bool = False,
@@ -74,16 +73,10 @@ class Critic(Optimizable, ABC):
         :type critic_regularization_param: float
         """
         Optimizable.__init__(self, optimizer_config=optimizer_config)
-        if model:
-            self.model = model
-        else:
-            raise ValueError("No model defined")
 
+        self.model = model
         self.discount_factor = discount_factor
-        self.running_objective = running_objective
         self.system = system
-        self.current_critic_loss = 0
-        self.total_objective = 0
         self.sampling_time = sampling_time
         self.td_n = td_n
         self.device = device
@@ -150,57 +143,6 @@ class Critic(Optimizable, ABC):
         """
         self.update_weights(weights)
         self.cache_weights(weights)
-
-    def accept_or_reject_weights(
-        self, weights, constraint_functions=None, optimizer_engine="SciPy", atol=1e-10
-    ):
-        """Determine whether to accept or reject the given weights based on whether they violate the given constraints.
-
-        Normally, this method takes weights and checks CALF constraints by plugging them into the critic model.
-        This works in a straightforward way with scipy and CASADi optimizers.
-        In case of Torch, the weights are stored in the model after the learning.
-        So, we can simply call CALF constraints directly on the trained Torch model.
-        But to keep the method signature the same, we formally take weights as an input argument.
-        See the optimizer checking condition in the code of this method.
-
-        :param weights: weights to evaluate
-        :type weights: numpy array
-        :param constraint_functions: functions that return the constraint violations for the given weights
-        :type constraint_functions: list of functions
-        :param optimizer_engine: optimizer engine used
-        :type optimizer_engine: str
-        :param atol: absolute tolerance for the constraints (default is 1e-10)
-        :type atol: float
-        :return: string indicating whether the weights were accepted or rejected
-        :rtype: str
-        """
-        if constraint_functions is None:
-            constraints_not_violated = True
-        else:
-            if self.optimizer_engine != rc.TORCH:
-                not_violated = [cond(weights) <= atol for cond in constraint_functions]
-                constraints_not_violated = all(not_violated)
-            else:
-                not_violated = [cond() <= atol for cond in constraint_functions]
-                constraints_not_violated = all(not_violated)
-            # print(not_violated)
-
-        if constraints_not_violated:
-            return "accepted"
-        else:
-            return "rejected"
-
-    def update_total_objective(self, observation, action):
-        """Update the outcome variable based on the running objective and the current observation and action.
-
-        :param observation: current observation
-        :type observation: np.ndarray
-        :param action: current action
-        :type action: np.ndarray.
-        """
-        self.total_objective += (
-            self.running_objective(observation, action) * self.sampling_time
-        )
 
     def reset(self):
         """Reset the outcome and current critic loss variables, and re-initialize the buffers."""
@@ -418,21 +360,27 @@ class CriticTrivial(Critic):
         return None
 
 
-class CriticCALF:
+class CriticCALF(Critic):
     def __init__(
         self,
-        *args,
+        system,
+        model: Union[Model, ModelNN],
+        td_n: int = 1,
+        device: Union[str, torch.device] = "cpu",
+        predictor: Optional[Model] = None,
+        is_same_critic: bool = False,
+        is_value_function: bool = False,
+        is_on_policy: bool = False,
+        optimizer_config: Optional[OptimizerConfig] = None,
+        size_mesh: Optional[int] = None,
+        discount_factor: float = 1.0,
+        sampling_time: float = 0.01,
+        ######
         safe_decay_param=1e-3,
         is_dynamic_decay_rate=True,
-        predictor=None,
-        state_init=None,
         safe_controller=None,
-        penalty_param=0,
-        is_predictive=True,
-        action_init=None,
         lb_parameter=1e-6,
         ub_parameter=1e3,
-        **kwargs,
     ):
         """Initialize a CriticCALF object.
 
@@ -446,7 +394,21 @@ class CriticCALF:
         :param is_predictive: Whether the safe constraints should be computed based on predictions or not.
         :param kwargs: Keyword arguments to be passed to the base class `CriticOfObservation`.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            system=system,
+            model=model,
+            td_n=td_n,
+            device=device,
+            is_same_critic=is_same_critic,
+            is_value_function=is_value_function,
+            is_on_policy=is_on_policy,
+            optimizer_config=optimizer_config,
+            size_mesh=size_mesh,
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+            action_bounds=None,
+        )
+        self.predictor = predictor
         self.safe_decay_param = safe_decay_param
         self.is_dynamic_decay_rate = is_dynamic_decay_rate
         if not self.is_dynamic_decay_rate:
@@ -455,106 +417,56 @@ class CriticCALF:
         self.lb_parameter = lb_parameter
         self.ub_parameter = ub_parameter
         self.safe_controller = safe_controller
-        self.predictor = predictor
-        self.observation_init = self.predictor.system.get_observation(
-            time=0, state=state_init, inputs=action_init
-        )
-        self.action_init = action_init
         self.observation_last_good = self.observation_init
-        self.r_prev_init = self.r_prev = self.running_objective(
-            self.observation_init, self.action_init
+
+        self.observation_last_good_var = self.create_variable(
+            1,
+            self.system.dim_observation,
+            name="observation_last_good",
+            is_constant=True,
+        )
+        self.prev_good_critic_var = self.create_variable(
+            1, 1, name="prev_good_critic", is_constant=True
+        )
+        self.connect_source(
+            connect_to=self.prev_good_critic_var,
+            func=self.model.cache,
+            source=self.observation_last_good_var,
+            weights=self.critic_stored_weights_var,
         )
 
-        self.lb_constraint_violations = []
-        self.ub_constraint_violations = []
-        self.stabilizing_constraint_violations = []
-        self.values = []
-        self.times = []
-        self.Ls = []
-        self.CALFs = []
-        self.penalty_param = penalty_param
-        self.expected_CALFs = []
-        self.stabilizing_constraint_violation = 0
-        self.CALF = 0
-        self.weights_acceptance_status = False
+        self.register_constraint(
+            self.CALF_decay_constraint_no_prediction,
+            variables=[
+                self.critic_model_output,
+                self.prev_good_critic_var,
+            ],
+        )
 
-        if is_predictive:
-            self.CALF_decay_constraint = (
-                self.CALF_decay_constraint_predicted_safe_policy
-            )
-            self.CALF_critic_lower_bound_constraint = (
-                self.CALF_critic_lower_bound_constraint_predictive
-            )
-            # self.CALF_decay_constraint = self.CALF_decay_constraint_predicted_on_policy
-        else:
-            self.CALF_decay_constraint = self.CALF_decay_constraint_no_prediction
-
-        self.intrinsic_constraints = [
-            self.CALF_decay_constraint,
-            # self.CALF_critic_lower_bound_constraint,
-        ]
+    def data_buffer_objective_keys(self) -> List[str]:
+        keys = super().data_buffer_objective_keys()
+        keys.append("observation_last_good")
+        return keys
 
     def reset(self):
         """Reset the critic to its initial state."""
         super().reset()
         self.observation_last_good = self.observation_init
-        self.r_prev = self.r_prev_init
 
         if hasattr(self.safe_controller, "reset_all_PID_controllers"):
             self.safe_controller.reset_all_PID_controllers()
 
-    def update_buffers(self, observation, action):
-        """Update data buffers and dynamic safe decay rate.
-
-        Updates the observation and action data buffers with the given observation and action.
-        Updates the outcome using the given observation and action.
-        Updates the current observation and action with the given observation and action.
-        If the flag is_dynamic_decay_rate is set to True, also updates the safe decay rate with the L2 norm of the given observation.
-
-        :param observation: The new observation to be added to the observation buffer.
-        :type observation: numpy.ndarray
-        :param action: The new action to be added to the action buffer.
-        :type action: numpy.ndarray
-        """
-        self.action_buffer = rc.push_vec(
-            self.action_buffer, rc.array(action, prototype=self.action_buffer)
+    def CALF_decay_constraint_no_prediction(
+        self,
+        critic_model_output,
+        prev_good_critic,
+    ):
+        stabilizing_constraint_violation = (
+            critic_model_output
+            - prev_good_critic
+            + self.sampling_time * self.safe_decay_rate
         )
-        self.observation_buffer = rc.push_vec(
-            self.observation_buffer,
-            rc.array(observation, prototype=self.observation_buffer),
-        )
-        self.update_total_objective(observation, action)
-
-        self.current_observation = observation
-        self.current_action = action
-
-        if self.is_dynamic_decay_rate:
-            # print(self.safe_decay_param)
-            self.safe_decay_rate = self.safe_decay_param * rc.norm_2(observation)
-            # self.safe_decay_param = self.safe_deay_rate_param * rc norm ...
-
-    def CALF_decay_constraint_no_prediction(self, weights=None):
-        """Constraint that ensures that the CALF value is decreasing by a certain rate.
-
-        The rate is determined by the `safe_decay_param` parameter. This constraint is used when there is no prediction of the next state.
-        :param weights: critic weights to be evaluated
-        :type weights: ndarray
-        :return: constraint violation
-        :rtype: float
-        """
-
-        critic_curr = self.model(self.current_observation, weights=weights)
-        critic_prev = self.model(
-            self.observation_last_good,
-            use_stored_weights=True,
-        )
-
-        self.stabilizing_constraint_violation = (
-            critic_curr
-            - critic_prev
-            + self.predictor.pred_step_size * self.safe_decay_rate
-        )
-        return self.stabilizing_constraint_violation
+        return stabilizing_constraint_violation
 
     def CALF_critic_lower_bound_constraint(self, weights=None):
         """Constraint that ensures that the value of the critic is above a certain lower bound.
@@ -655,49 +567,49 @@ class CriticCALF:
         )
         return self.stabilizing_constraint_violation
 
-    def objective(self, data_buffer=None, weights=None):
-        """Objective of the critic, say, a squared temporal difference."""
-        if data_buffer is None:
-            observation_buffer = self.observation_buffer
-            action_buffer = self.action_buffer
-        else:
-            observation_buffer = data_buffer["observation_buffer"]
-            action_buffer = data_buffer["action_buffer"]
+    # def objective(self, data_buffer=None, weights=None):
+    #     """Objective of the critic, say, a squared temporal difference."""
+    #     if data_buffer is None:
+    #         observation_buffer = self.observation_buffer
+    #         action_buffer = self.action_buffer
+    #     else:
+    #         observation_buffer = data_buffer["observation_buffer"]
+    #         action_buffer = data_buffer["action_buffer"]
 
-        critic_objective = 0
+    #     critic_objective = 0
 
-        for k in range(self.data_buffer_size - 1, 0, -1):
-            observation_old = observation_buffer[:, k - 1]
-            observation_next = observation_buffer[:, k]
-            action_next = action_buffer[:, k - 1]
+    #     for k in range(self.data_buffer_size - 1, 0, -1):
+    #         observation_old = observation_buffer[:, k - 1]
+    #         observation_next = observation_buffer[:, k]
+    #         action_next = action_buffer[:, k - 1]
 
-            # Temporal difference
+    #         # Temporal difference
 
-            critic_old = self.model(observation_old, weights=weights)
-            critic_next = self.model(observation_next, use_stored_weights=True)
+    #         critic_old = self.model(observation_old, weights=weights)
+    #         critic_next = self.model(observation_next, use_stored_weights=True)
 
-            if self.critic_regularization_param > 1e-9:
-                weights_current = weights
-                weights_last_good = self.model.cache.weights
-                regularization_term = (
-                    rc.sum_2(weights_current - weights_last_good)
-                    * self.critic_regularization_param
-                )
-            else:
-                regularization_term = 0
+    #         if self.critic_regularization_param > 1e-9:
+    #             weights_current = weights
+    #             weights_last_good = self.model.cache.weights
+    #             regularization_term = (
+    #                 rc.sum_2(weights_current - weights_last_good)
+    #                 * self.critic_regularization_param
+    #             )
+    #         else:
+    #             regularization_term = 0
 
-            temporal_difference = (
-                critic_old
-                - self.discount_factor * critic_next
-                - self.running_objective(observation_next, action_next)
-            )
+    #         temporal_difference = (
+    #             critic_old
+    #             - self.discount_factor * critic_next
+    #             - self.running_objective(observation_next, action_next)
+    #         )
 
-            critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
+    #         critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
 
-        if self.intrinsic_constraints != [] and self.penalty_param > 0:
-            for constraint in self.intrinsic_constraints:
-                critic_objective += self.penalty_param * rc.penalty_function(
-                    constraint(), penalty_coeff=1.0e-1
-                )
+    #     if self.intrinsic_constraints != [] and self.penalty_param > 0:
+    #         for constraint in self.intrinsic_constraints:
+    #             critic_objective += self.penalty_param * rc.penalty_function(
+    #                 constraint(), penalty_coeff=1.0e-1
+    #             )
 
-        return critic_objective
+    #     return critic_objective

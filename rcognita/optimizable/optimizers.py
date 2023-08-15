@@ -327,6 +327,7 @@ class Optimizable(rcognita.RcognitaBase):
         func: Callable,
         source: OptimizationVariable,
         act_on="all",
+        discard_prev_sources=True,
         **source_kwargs,
     ):
         def source_hook(whatever):
@@ -345,6 +346,12 @@ class Optimizable(rcognita.RcognitaBase):
 
         data_hook = Hook(source_hook, act_on="data")
         metadata_hook = Hook(source_metadata_hook, act_on="metadata")
+
+        if discard_prev_sources:
+            for hook in connect_to.hooks:
+                if "source" in hook.name:
+                    connect_to.discard_hook(hook, disable_only=False)
+
         if act_on in ["all", "data"]:
             connect_to.register_hook(data_hook, first=True)
         if act_on in ["all", "metadata"]:

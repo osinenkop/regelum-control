@@ -127,17 +127,20 @@ class RLController(Controller):
             self.policy.optimize_on_event(self.data_buffer)
         if event == "compute_action":
             self.policy.update_action(observation)
-            running_objective = self.running_objective(observation, self.policy.action)
-            self.data_buffer.push_to_end(
-                action=self.policy.action,
-                running_objective=running_objective,
-                current_total_objective=self.calculate_total_objective(
-                    running_objective, is_to_update=False
-                ),
-                observation_action=np.concatenate(
-                    (observation, self.policy.action), axis=1
-                ),
-            )
+            self.update_data_buffer_with_action_stats(observation)
+
+    def update_data_buffer_with_action_stats(self, observation):
+        running_objective = self.running_objective(observation, self.policy.action)
+        self.data_buffer.push_to_end(
+            action=self.policy.action,
+            running_objective=running_objective,
+            current_total_objective=self.calculate_total_objective(
+                running_objective, is_to_update=False
+            ),
+            observation_action=np.concatenate(
+                (observation, self.policy.action), axis=1
+            ),
+        )
 
     def critic_update(self):
         if self.critic_optimization_event == "compute_action":
@@ -234,6 +237,101 @@ class RLController(Controller):
 
 
 class CALFControllerExPost(RLController):
+    def __init__(
+        self,
+        policy: Policy,
+        critic: Critic,
+        safe_controller: Controller,
+        running_objective,
+        critic_optimization_event: str,
+        policy_optimization_event: str,
+        data_buffer_nullify_event: str,
+        discount_factor=1,
+        action_bounds=None,
+        max_data_buffer_size: Optional[int] = None,
+        time_start: float = 0,
+        sampling_time: float = 0.1,
+    ):
+        super().__init__(
+            policy=policy,
+            critic=critic,
+            running_objective=running_objective,
+            critic_optimization_event=critic_optimization_event,
+            policy_optimization_event=policy_optimization_event,
+            data_buffer_nullify_event=data_buffer_nullify_event,
+            discount_factor=discount_factor,
+            is_critic_first=True,
+            action_bounds=action_bounds,
+            max_data_buffer_size=max_data_buffer_size,
+            time_start=time_start,
+            sampling_time=sampling_time,
+        )
+        self.safe_controller = safe_controller
+
+    def invoke_safe_action(self, state, observation):
+        # self.policy.restore_weights()
+        self.critic.restore_weights()
+        action = self.safe_controller.compute_action(state, observation)
+        self.policy.set_action(action)
+        self.policy.model.update_and_cache_weights(action)
+        self.update_data_buffer_with_action_stats(observation)
+
+    def update_data_buffer_with_action_stats(self, observation):
+        super().update_data_buffer_with_action_stats(observation)
+        self.data_buffer.push_to_end(
+            observation_last_good=self.critic.observation_last_good
+        )
+
+    @apply_action_bounds
+    def compute_action(
+        self,
+        state,
+        observation,
+        time=0,
+    ):
+        self.critic.receive_state(state)
+        self.policy.receive_state(state)
+        self.policy.receive_observation(observation)
+
+        self.data_buffer.push_to_end(
+            observation=observation,
+            timestamp=time,
+            episode_id=self.episode_counter,
+            iteration_id=self.iteration_counter,
+            step_id=self.step_counter,
+        )
+
+        if self.is_first_compute_action_call:
+            self.invoke_safe_action(state, observation)
+            self.is_first_compute_action_call = False
+            self.step_counter += 1
+            return self.policy.action
+
+        self.critic.optimize_on_event()
+        critic_weights_accepted = self.critic.opt_status == "success"
+        if critic_weights_accepted:
+            self.critic.update_weights()
+
+            # self.invoke_safe_action(observation)
+
+            self.policy.optimize_on_event()
+            policy_weights_accepted = self.policy.opt_status == "success"
+            if policy_weights_accepted:
+                self.policy.update_and_cache_weights()
+                self.policy.update_action()
+                self.critic.observation_last_good = observation
+                self.update_data_buffer_with_action_stats(observation)
+                self.critic.cache_weights()
+            else:
+                self.invoke_safe_action(observation)
+        else:
+            self.invoke_safe_action(observation)
+
+        self.step_counter += 1
+        return self.policy.action
+
+
+class CALFControllerExPostLegacy(RLController):
     """CALF controller.
 
     Implements CALF algorithm without predictive constraints.
