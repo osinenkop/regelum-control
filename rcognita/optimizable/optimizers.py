@@ -568,6 +568,10 @@ class Optimizable(rcognita.RcognitaBase):
     def opt_func(self):
         return self.__opt_func
 
+    @property
+    def opti(self):
+        return self.__opti
+
     def optimize_symbolic(self, raw=True, **kwargs):
         if self.__opt_func is None or self.params_changed:
             self.__opti.solver(

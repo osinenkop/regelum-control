@@ -263,7 +263,7 @@ class Critic(Optimizable, ABC):
                 source=self.observation_var,
                 weights=self.critic_weights_var,
             )
-            if not self.is_same_critic:
+            if (not self.is_same_critic) and self.is_on_policy:
                 self.connect_source(
                     connect_to=self.critic_targets_var,
                     func=self.model.cache,
@@ -277,7 +277,7 @@ class Critic(Optimizable, ABC):
                 source=self.observation_action_var,
                 weights=self.critic_weights_var,
             )
-            if not self.is_same_critic:
+            if (not self.is_same_critic) and self.is_on_policy:
                 self.connect_source(
                     connect_to=self.critic_targets_var,
                     func=self.model.cache,
