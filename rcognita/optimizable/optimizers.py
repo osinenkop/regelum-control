@@ -51,6 +51,7 @@ class Optimizable(rcognita.RcognitaBase):
         self.__variables: VarContainer = VarContainer([])
         self.__functions: FuncContainer = FuncContainer(tuple())
         self.params_changed = False
+        self.is_check_status = True
 
         if self.kind == "symbolic":
             self.__opti_common = Opti()
@@ -74,6 +75,7 @@ class Optimizable(rcognita.RcognitaBase):
         self.opt_method = optimizer_config.opt_method
         self.__opt_options = optimizer_config.opt_options
         self.__log_options = optimizer_config.log_options
+        self.opt_status = "unknown"
 
     @property
     def opt_options(self):
@@ -500,7 +502,7 @@ class Optimizable(rcognita.RcognitaBase):
         self, func: FunctionWithSignature, variables: VarContainer
     ):
         func = self.__infer_and_register_symbolic_prototype(func, variables)
-        constr = rc.vec(func.metadata) < 0
+        constr = rc.vec(func.metadata) <= 0
         self.__opti.subject_to(constr)
 
     def __register_numeric_constraint(
@@ -572,7 +574,7 @@ class Optimizable(rcognita.RcognitaBase):
     def opti(self):
         return self.__opti
 
-    def optimize_symbolic(self, raw=True, **kwargs):
+    def optimize_symbolic(self, raw=True, tol=1e-8, **kwargs):
         if self.__opt_func is None or self.params_changed:
             self.__opti.solver(
                 self.opt_method, dict(self.__log_options), dict(self.__opt_options)
@@ -601,9 +603,14 @@ class Optimizable(rcognita.RcognitaBase):
                         for variable in self.var_for_opti.decision_variables
                     ],
                     self.objective.metadata,
+                    *[func.metadata for func in self.constraints],
                 ],
                 list(self.var_for_opti.constants.names),
-                [*self.var_for_opti.decision_variables.names, self.objective.name],
+                [
+                    *self.var_for_opti.decision_variables.names,
+                    self.objective.name,
+                    *[func.name for func in self.constraints],
+                ],
             )
             self.params_changed = False
 
@@ -616,6 +623,8 @@ class Optimizable(rcognita.RcognitaBase):
                 if k in self.var_for_opti.constants.names
             }
         )
+        if self.is_check_status:
+            self.update_status(result, tol=tol)
         return (
             result
             if raw
@@ -625,6 +634,13 @@ class Optimizable(rcognita.RcognitaBase):
                 if name in self.decision_variables.names
             }
         )
+
+    def update_status(self, result, tol=1e-8):
+        self.opt_status = "success"
+        for constr_name in self.constraints.names:
+            if rc.sum(rc.sum(result[constr_name])) > tol:
+                self.opt_status = "failed"
+                break
 
     def optimize_numeric(self, raw=False, **parameters):
         self.substitute_parameters(**parameters)

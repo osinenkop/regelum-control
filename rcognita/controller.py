@@ -256,16 +256,16 @@ class CALFControllerExPost(RLController):
         self.safe_only = safe_only
 
     # TODO: DOCSTRING. RENAME TO HUMAN LANGUAGE. DISPLACEMENT?
-    def compute_weights_disetpointlacement(self, agent):
+    def compute_weights_displacement(self, agent):
         self.weights_difference_norm = rc.norm_2(
             self.critic.model.cache.weights - self.critic.optimized_weights
         )
         self.weights_difference_norms.append(self.weights_difference_norm)
 
-    def invoke_safe_action(self, observation):
+    def invoke_safe_action(self, state, observation):
         # self.policy.restore_weights()
         self.critic.restore_weights()
-        action = self.policy.safe_controller.compute_action(None, observation)
+        action = self.policy.safe_controller.compute_action(None, state, observation)
 
         self.policy.set_action(action)
         self.policy.model.update_and_cache_weights(action)
@@ -285,7 +285,7 @@ class CALFControllerExPost(RLController):
         )  ### store current observation in policy
         self.policy.receive_state(state)
         self.critic.optimize_weights(time=time)
-        critic_weights_accepted = self.critic.weights_acceptance_status == "accepted"
+        critic_weights_accepted = self.critic.opt_status == "success"
 
         if critic_weights_accepted:
             self.critic.update_weights()
