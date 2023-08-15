@@ -432,7 +432,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
     def rep_mat(self, array, n, m, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
-            return np.squeeze(np.tile(array, (n, m)))
+            return np.tile(array, (n, m))
         elif rc_type == TORCH:
             return torch.tile(array, (n, m))
         elif rc_type == CASADI:

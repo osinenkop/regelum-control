@@ -588,7 +588,7 @@ class InvertedPendulumPD(InvertedPendulumPID):
     _dim_observation = 2
 
     def _get_observation(self, time, state, inputs):
-        return rc.array([state[0], state[1]], prototype=state)
+        return rc.hstack([state[0], state[1]])
 
 
 class ThreeWheeledRobot(System):

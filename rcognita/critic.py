@@ -397,7 +397,9 @@ class CriticTrivial(Critic):
     """A mocked Critic object."""
 
     def __init__(self, *args, **kwargs):
-        pass
+        from unittest.mock import MagicMock
+
+        self.model = MagicMock()
 
     def optimize_on_event(self, *args, **kwargs):
         pass

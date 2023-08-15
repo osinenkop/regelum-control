@@ -413,8 +413,8 @@ class Optimizable(rcognita.RcognitaBase):
                     + " than the upper bound of action "
                     + f"at index {i} ({row[0] > row[1]})"
                 )
-        variable_min = bounds[:, 0]
-        variable_max = bounds[:, 1]
+        variable_min = rc.force_row(bounds[:, 0])
+        variable_max = rc.force_row(bounds[:, 1])
         variable_initial_guess = (variable_min + variable_max) / 2
         if tile_parameter > 0:
             variable_sequence_initial_guess = rc.rep_mat(
@@ -422,7 +422,7 @@ class Optimizable(rcognita.RcognitaBase):
             )
             sequence_min = rc.rep_mat(variable_min, tile_parameter, 1)
             sequence_max = rc.rep_mat(variable_max, tile_parameter, 1)
-            result_bounds = np.hstack((sequence_min, sequence_max))
+            result_bounds = rc.hstack((sequence_min, sequence_max))
             variable_initial_guess = variable_sequence_initial_guess
         else:
             result_bounds = bounds

@@ -145,7 +145,7 @@ class ModelQuadLin(Model):
             self._calculate_dims(dim_inputs)
             self.weight_min = weight_min * rc.ones(self.dim_weights)
             self.weight_max = weight_max * rc.ones(self.dim_weights)
-            self.weights = (self.weight_min + self.weight_max) / 2.0
+            self.weights = (self.weight_min + self.weight_max) / 20.0
         else:
             self._calculate_dims(self._calculate_dim_inputs(len(weights)))
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
