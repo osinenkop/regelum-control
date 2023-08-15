@@ -12,12 +12,13 @@ class BatchSampler(ABC):
         keys: Optional[List[str]],
         dtype: RgArrayType = torch.FloatTensor,
         device: Optional[Union[str, torch.device]] = None,
+        fill_na: Optional[float] = 0.0,
     ):
         self.keys = keys
         self.dtype = dtype
         self.data_buffer = data_buffer
         self.data_buffer.set_indexing_rules(
-            keys=self.keys, dtype=self.dtype, device=device
+            keys=self.keys, dtype=self.dtype, device=device, fill_na=fill_na
         )
         self.len_data_buffer = len(self.data_buffer.data[self.keys[0]])
         self.device = device
@@ -59,6 +60,7 @@ class RollingBatchSampler(BatchSampler):
         n_batches: Optional[int] = None,
         dtype: RgArrayType = torch.FloatTensor,
         device: Optional[Union[str, torch.device]] = None,
+        fill_na: Optional[float] = 0.0,
     ):
         if batch_size is None and mode in ["uniform", "backward", "forward"]:
             raise ValueError(
@@ -75,7 +77,12 @@ class RollingBatchSampler(BatchSampler):
         ), "'uniform' and 'full' mode are not avaliable for n_batches == None"
 
         BatchSampler.__init__(
-            self, data_buffer=data_buffer, keys=keys, dtype=dtype, device=device
+            self,
+            data_buffer=data_buffer,
+            keys=keys,
+            dtype=dtype,
+            device=device,
+            fill_na=fill_na,
         )
         self.mode = mode
         self.batch_size = batch_size
@@ -146,9 +153,15 @@ class EpisodicSampler(BatchSampler):
         keys: Optional[List[str]] = None,
         dtype: RgArrayType = np.array,
         device: Optional[Union[str, torch.device]] = None,
+        fill_na: Optional[float] = 0.0,
     ):
         BatchSampler.__init__(
-            self, data_buffer=data_buffer, keys=keys, dtype=dtype, device=device
+            self,
+            data_buffer=data_buffer,
+            keys=keys,
+            dtype=dtype,
+            device=device,
+            fill_na=fill_na,
         )
         self.nullify_sampler()
 

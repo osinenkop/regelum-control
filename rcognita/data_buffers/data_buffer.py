@@ -37,6 +37,7 @@ class DataBuffer:
         self.keys_for_indexing = None
         self.dtype_for_indexing = None
         self.device_for_indexing = None
+        self.fill_na_for_indexing = None
 
     def update(self, data_in_dict_format: dict[str, RgArray]) -> None:
         for key, data_for_key in data_in_dict_format.items():
@@ -92,12 +93,20 @@ class DataBuffer:
         else:
             return max([len(self.data[k]) for k in self.data.keys()])
 
+    def _fill_na(self, arr: np.array, fill_na: Optional[float] = None) -> np.array:
+        if fill_na is None:
+            return arr
+        else:
+            np.nan_to_num(arr, copy=False, nan=fill_na)
+            return arr
+
     def getitem(
         self,
         idx: Union[int, slice, Any],
         keys: Optional[Union[List[str], np.array]] = None,
         dtype: RgArrayType = np.array,
         device: Optional[Union[str, torch.device]] = None,
+        fill_na: Optional[float] = 0.0,
     ) -> dict[str, RgArray]:
         _keys = keys if keys is not None else self.data.keys()
         if (
@@ -106,7 +115,10 @@ class DataBuffer:
             or isinstance(idx, np.ndarray)
         ):
             if dtype == np.array:
-                return {key: np.vstack(self.data[key])[idx] for key in _keys}
+                return {
+                    key: self._fill_na(np.vstack(self.data[key])[idx], fill_na=fill_na)
+                    for key in _keys
+                }
             elif (
                 dtype == torch.tensor
                 or dtype == torch.FloatTensor
@@ -115,13 +127,25 @@ class DataBuffer:
             ):
                 if device is not None:
                     return {
-                        key: dtype(np.vstack(self.data[key]))[idx].to(device)
+                        key: dtype(
+                            self._fill_na(np.vstack(self.data[key]), fill_na=fill_na)
+                        )[idx].to(device)
                         for key in _keys
                     }
                 else:
-                    return {key: dtype(np.vstack(self.data[key]))[idx] for key in _keys}
+                    return {
+                        key: dtype(
+                            self._fill_na(np.vstack(self.data[key]), fill_na=fill_na)
+                        )[idx]
+                        for key in _keys
+                    }
             elif dtype == cs.DM:
-                return {key: dtype(np.vstack(self.data[key])[idx]) for key in _keys}
+                return {
+                    key: dtype(
+                        self._fill_na(np.vstack(self.data[key]), fill_na=fill_na)[idx]
+                    )
+                    for key in _keys
+                }
             else:
                 raise ValueError(f"Unexpeted dtype in data_buffer.getitem: {dtype}")
 
@@ -130,10 +154,12 @@ class DataBuffer:
         keys: List[str],
         dtype: RgArrayType,
         device: Optional[Union[str, torch.device]] = None,
+        fill_na: Optional[float] = 0.0,
     ) -> None:
         self.keys_for_indexing = keys
         self.dtype_for_indexing = dtype
         self.device_for_indexing = device
+        self.fill_na_for_indexing = fill_na
 
     def __getitem__(self, idx) -> dict[str, RgArray]:
         return self.getitem(
@@ -141,6 +167,7 @@ class DataBuffer:
             keys=self.keys_for_indexing,
             dtype=self.dtype_for_indexing,
             device=self.device_for_indexing,
+            fill_na=self.fill_na_for_indexing,
         )
 
     def iter_batches(
