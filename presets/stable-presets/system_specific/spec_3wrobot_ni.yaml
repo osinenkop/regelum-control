@@ -1,5 +1,5 @@
 name: 3wrobot_ni
-target: rcognita.system.ThreeWheeledRobotNI
+target: regelum.system.ThreeWheeledRobotNI
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 

@@ -7,7 +7,7 @@ Updates to come.
 """
 from copy import deepcopy
 
-import rcognita
+import regelum
 
 
 from .__utilities import rc
@@ -41,7 +41,7 @@ def force_positive_def(func):
     return positive_def_wrapper
 
 
-class Model(rcognita.RcognitaBase, ABC):
+class Model(regelum.RegelumBase, ABC):
     """Blueprint of a model."""
 
     def __call__(self, *argin, weights=None, use_stored_weights=False):

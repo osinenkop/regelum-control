@@ -18,7 +18,7 @@ Remarks:
 
 import numpy as np
 
-import rcognita
+import regelum
 from .__utilities import rc
 from .system import System, ComposedSystem
 from typing import Union, Optional
@@ -32,7 +32,7 @@ except ModuleNotFoundError:
     casadi = MagicMock()
 
 
-class Simulator(rcognita.RcognitaBase, ABC):
+class Simulator(regelum.RegelumBase, ABC):
     """Base class of Simulator."""
 
     def __init__(

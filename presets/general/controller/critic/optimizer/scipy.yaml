@@ -8,4 +8,4 @@ opt_options:
 
 opt_method: SLSQP
 
-_target_: rcognita.optimizers.SciPyOptimizer
+_target_: regelum.optimizers.SciPyOptimizer

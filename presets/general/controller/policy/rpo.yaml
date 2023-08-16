@@ -3,7 +3,7 @@ defaults:
   - optimizer: casadi 
   - predictor: euler
 
-_target_: rcognita.actors.ActorRPO
+_target_: regelum.actors.ActorRPO
 
 ###---Constructor arguments---###
 system: ~ system

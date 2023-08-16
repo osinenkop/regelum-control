@@ -1,4 +1,4 @@
-_target_: rcognita.system.KinematicPoint
+_target_: regelum.system.KinematicPoint
 
 ###---Constructor arguments---###
 

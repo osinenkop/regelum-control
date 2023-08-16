@@ -2,7 +2,7 @@ defaults:
   - model: dqn_simple
   - optimizer: torch_with_data_buffer
 
-_target_: rcognita.critic.CriticOnPolicy
+_target_: regelum.critic.CriticOnPolicy
 
 system_dim_input: $ system.dim_input
 system_dim_output: $ system.dim_output

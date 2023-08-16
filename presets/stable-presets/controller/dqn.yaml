@@ -1,4 +1,4 @@
-_target_: rcognita.controller.RLController
+_target_: regelum.controller.RLController
 
 name%%: dqn
 
@@ -26,7 +26,7 @@ critic:
 
   device: $ controller.device%%
   optimizer_config: 
-    _target_: rcognita.OptimizerConfig
+    _target_: regelum.OptimizerConfig
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
@@ -36,7 +36,7 @@ critic:
       is_reinstantiate_optimizer: False
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs:
-        batch_sampler: = rcognita.data_buffers.batch_sampler.RollingBatchSampler
+        batch_sampler: = regelum.data_buffers.batch_sampler.RollingBatchSampler
         dtype: = torch.FloatTensor
         batch_size: 10
         n_batches: 1
@@ -48,7 +48,7 @@ policy:
   epsilon_random_parameter: 0.05
 
   optimizer_config: 
-    _target_: rcognita.OptimizerConfig
+    _target_: regelum.OptimizerConfig
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
@@ -58,7 +58,7 @@ policy:
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs:
-        batch_sampler: = rcognita.data_buffers.batch_sampler.RollingBatchSampler
+        batch_sampler: = regelum.data_buffers.batch_sampler.RollingBatchSampler
         dtype: = torch.FloatTensor
         batch_size: 1
         mode: backward

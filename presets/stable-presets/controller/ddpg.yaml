@@ -1,4 +1,4 @@
-_target_: rcognita.controller.RLController
+_target_: regelum.controller.RLController
 
 name%%: ddpg
 
@@ -25,7 +25,7 @@ critic:
   device: $ controller.device%%
   td_n: 1
   optimizer_config: 
-    _target_: rcognita.OptimizerConfig
+    _target_: regelum.OptimizerConfig
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
@@ -35,7 +35,7 @@ critic:
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs: 
-        batch_sampler: = rcognita.data_buffers.batch_sampler.EpisodicSampler
+        batch_sampler: = regelum.data_buffers.batch_sampler.EpisodicSampler
         dtype: = torch.FloatTensor
 
 policy:

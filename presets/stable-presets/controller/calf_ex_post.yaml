@@ -1,4 +1,4 @@
-_target_: rcognita.controller.CALFControllerExPost
+_target_: regelum.controller.CALFControllerExPost
 
 name%%: calf_ex_post
 

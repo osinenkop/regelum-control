@@ -1,4 +1,4 @@
-_target_: rcognita.model.ModelWeightContainerTorch
+_target_: regelum.model.ModelWeightContainerTorch
 
 dim_weights: $ system_specific.dim_action
 output_bounds: $ system_specific.action_bounds

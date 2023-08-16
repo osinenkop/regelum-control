@@ -1,4 +1,4 @@
-_target_: rcognita.critic.CriticCALF
+_target_: regelum.critic.CriticCALF
 
 defaults:
   - model: quad_no_mix

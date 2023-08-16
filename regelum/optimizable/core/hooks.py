@@ -1,6 +1,6 @@
 """Module contains a set of standard hooks for optimizable objects."""
 
-import rcognita
+import regelum
 from typing import Callable, List
 from types import GeneratorType
 
@@ -44,7 +44,7 @@ def mutate_metadata(self, new_metadata, tag="default"):
     def metadata_mutator(whatever):
         return new_metadata
 
-    hook = rcognita.Hook(metadata_mutator, metadata=tag, act_on="metadata")
+    hook = regelum.Hook(metadata_mutator, metadata=tag, act_on="metadata")
     return hook
 
 

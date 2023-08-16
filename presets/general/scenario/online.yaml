@@ -1,4 +1,4 @@
-_target_: rcognita.scenario.OnlineScenario
+_target_: regelum.scenario.OnlineScenario
 
 ###---Constructor arguments---###
 

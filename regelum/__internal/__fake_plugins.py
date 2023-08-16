@@ -24,7 +24,7 @@ from hydra.plugins.search_path_plugin import SearchPathPlugin
 from hydra.plugins.sweeper import Sweeper
 from hydra.types import HydraContext, TaskFunction
 from hydra.utils import instantiate
-import rcognita
+import regelum
 
 PLUGIN_TYPES: List[Type[Plugin]] = [
     Plugin,
@@ -192,7 +192,7 @@ class Plugins(metaclass=Singleton):
                             ):  ## RCOGNITA CODE HERE
                                 loaded_mod = m.load_module(modname)
                                 loaded_mod.FileConfigSource = (
-                                    rcognita.__fake_file_config_source.FileConfigSource
+                                    regelum.__fake_file_config_source.FileConfigSource
                                 )
                             else:
                                 loaded_mod = m.load_module(modname)

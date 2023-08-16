@@ -806,7 +806,7 @@ def simulation_progress(bar_length=10, print_level=100):
 # class CASADI_vector_convention:
 #     """
 #     A context manager for automatic transpose of vectors for vector_convention with the CASADI default vector dimension convention.
-#     rcognita treats vectors, just like numpy, as rows.
+#     regelum treats vectors, just like numpy, as rows.
 #     CASADI, on contrary, treats them as columns.
 #     We want to flatten everything to the desfault assumed standard which is row.
 #     But in order to process some code blocks so that they comply with CASADI, we use this context manager.

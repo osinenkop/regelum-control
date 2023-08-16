@@ -1,4 +1,4 @@
-_target_: rcognita.controller.RLController
+_target_: regelum.controller.RLController
 
 name%%: mpc
 

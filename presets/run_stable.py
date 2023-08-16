@@ -1,4 +1,4 @@
-import rcognita as rg
+import regelum as rg
 
 
 @rg.main(config_path="stable-presets", config_name="main")

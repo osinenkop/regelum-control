@@ -5,7 +5,7 @@ import time
 
 import dill
 
-import rcognita
+import regelum
 
 
 def get_reports():
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                         containers[report]["callbacks"] = dill.load(f)
                     with containers[report]["plots"].container():
                         for callback in containers[report]["callbacks"]:
-                            if isinstance(callback, rcognita.HistoricalCallback):
+                            if isinstance(callback, regelum.HistoricalCallback):
                                 fig = callback.plot_gui()
                                 if fig is not None:
                                     st.pyplot(fig)

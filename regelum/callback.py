@@ -9,7 +9,7 @@ also decorate the method with ``@apply_callbacks``.
 Callbacks can be registered by simply supplying them in the respective keyword argument:
 ::
 
-    @rcognita.main(callbacks=[...], ...)
+    @regelum.main(callbacks=[...], ...)
     def my_app(config):
         ...
 
@@ -24,7 +24,7 @@ import matplotx.styles
 import mlflow
 import torch
 
-import rcognita
+import regelum
 import pandas as pd
 
 import time
@@ -43,8 +43,8 @@ from pathlib import Path
 
 import sys
 import filelock
-import rcognita as rc
-import rcognita.__internal.base
+import regelum as rc
+import regelum.__internal.base
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -77,7 +77,7 @@ def passdown(CallbackClass):
                         PassdownCallback.perform(self, obj, method, output)
                         self.on_trigger(PassdownCallback)
                         # self.trigger_cooldown(t)
-                except rcognita.RcognitaExitException as e:
+                except regelum.RegelumExitException as e:
                     raise e
                 except Exception as e:
                     self.log(
@@ -89,7 +89,7 @@ def passdown(CallbackClass):
     return PassdownCallback
 
 
-class Callback(rcognita.__internal.base.RcognitaBase, ABC):
+class Callback(regelum.__internal.base.RegelumBase, ABC):
     """Base class for callbacks.
 
     Callback objects are used to perform in response to some method being called.
@@ -107,11 +107,11 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
         """
         super().__init__()
         self.attachee = attachee
-        self.log = rcognita.main.logger.__getattribute__(log_level)
+        self.log = regelum.main.logger.__getattribute__(log_level)
         # TODO: FIX THIS. Setting the level is needed due to the fact that mlflow sql backend reinstantiates logger
         # Moreover, rubbish mlflow backend logs are generated. They are not needed for a common user
-        rcognita.main.logger.setLevel(logging.INFO)
-        self.exception = rcognita.main.logger.exception
+        regelum.main.logger.setLevel(logging.INFO)
+        self.exception = regelum.main.logger.exception
         self.__last_trigger = 0.0
 
     @classmethod
@@ -125,7 +125,7 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
                 callback_instance.on_launch()
             cls._metadata["main"].callbacks = [
                 callback_instance
-            ] + rcognita.main.callbacks
+            ] + regelum.main.callbacks
 
     @abstractmethod
     def is_target_event(self, obj, method, output):
@@ -180,7 +180,7 @@ class Callback(rcognita.__internal.base.RcognitaBase, ABC):
                     self.perform(obj, method, output)
                     self.on_trigger(self.__class__)
                     self.trigger_cooldown(t)
-            except rcognita.RcognitaExitException as e:
+            except regelum.RegelumExitException as e:
                 raise e
             except Exception as e:
                 self.log(f"Callback {self.__class__.__name__} failed.")
@@ -229,13 +229,13 @@ class TimeCallback(Callback):
     """Callback responsible for keeping track of simulation time."""
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenario.Scenario) and method == "post_step"
+        return isinstance(obj, regelum.scenario.Scenario) and method == "post_step"
 
     def on_launch(self):
-        rcognita.main.metadata["time"] = 0.0
+        regelum.main.metadata["time"] = 0.0
 
     def perform(self, obj, method, output):
-        rcognita.main.metadata["time"] = obj.time
+        regelum.main.metadata["time"] = obj.time
 
 
 class OnEpisodeDoneCallback(Callback):
@@ -248,13 +248,13 @@ class OnEpisodeDoneCallback(Callback):
         self.iteration_counter = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenario.Scenario) and (
+        return isinstance(obj, regelum.scenario.Scenario) and (
             method == "reload_pipeline"
         )
 
     def perform(self, obj, method, output):
         self.episode_counter += 1
-        for callback in rcognita.main.callbacks:
+        for callback in regelum.main.callbacks:
             callback.on_episode_done(
                 obj,
                 self.episode_counter,
@@ -277,14 +277,14 @@ class OnIterationDoneCallback(Callback):
         self.iteration_counter = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenario.Scenario) and (
+        return isinstance(obj, regelum.scenario.Scenario) and (
             method == "reset_iteration"
         )
 
     def perform(self, obj, method, output):
         self.iteration_counter += 1
         if obj.N_iterations > 1 and self.iteration_counter <= obj.N_iterations:
-            for callback in rcognita.main.callbacks:
+            for callback in regelum.main.callbacks:
                 callback.on_iteration_done(
                     obj,
                     obj.N_episodes,
@@ -307,9 +307,9 @@ class ConfigDiagramCallback(Callback):
     def __monitor_git():
         try:
             forbidden = False
-            with filelock.FileLock(rcognita.main.metadata["common_dir"] + "/diff.lock"):
+            with filelock.FileLock(regelum.main.metadata["common_dir"] + "/diff.lock"):
                 repo = git.Repo(
-                    path=rcognita.main.metadata["initial_working_directory"],
+                    path=regelum.main.metadata["initial_working_directory"],
                     search_parent_directories=True,
                 )
                 commit_hash = repo.head.object.hexsha
@@ -318,17 +318,17 @@ class ConfigDiagramCallback(Callback):
                         ' <font color="red">(uncommitted/unstaged changes)</font>'
                     )
                     forbidden = (
-                        "disallow_uncommitted" in rcognita.main.config
-                        and rcognita.main.config.disallow_uncommitted
+                        "disallow_uncommitted" in regelum.main.config
+                        and regelum.main.config.disallow_uncommitted
                         and not is_in_debug_mode()
                     )
                     untracked = repo.untracked_files
                     if not os.path.exists(
-                        rcognita.main.metadata["common_dir"] + "/changes.diff"
+                        regelum.main.metadata["common_dir"] + "/changes.diff"
                     ):
                         repo.git.add(all=True)
                         with open(
-                            rcognita.main.metadata["common_dir"] + "/changes.diff", "w"
+                            regelum.main.metadata["common_dir"] + "/changes.diff", "w"
                         ) as f:
                             diff = repo.git.diff(repo.head.commit.tree)
                             if untracked:
@@ -338,7 +338,7 @@ class ConfigDiagramCallback(Callback):
                             f.write(diff + "\n")
                     else:
                         shutil.copy(
-                            rcognita.main.metadata["common_dir"] + "/changes.diff",
+                            regelum.main.metadata["common_dir"] + "/changes.diff",
                             ".summary/changes.diff",
                         )
             if forbidden:
@@ -349,8 +349,8 @@ class ConfigDiagramCallback(Callback):
             commit_hash = None
             repo = None
             if (
-                "disallow_uncommitted" in rcognita.main.cfg
-                and rcognita.main.cfg.disallow_uncommitted
+                "disallow_uncommitted" in regelum.main.cfg
+                and regelum.main.cfg.disallow_uncommitted
                 and not is_in_debug_mode()
             ):
                 raise Exception(
@@ -359,8 +359,8 @@ class ConfigDiagramCallback(Callback):
         return repo, commit_hash
 
     def on_launch(self):
-        cfg = rcognita.main.config
-        metadata = rcognita.main.metadata
+        cfg = regelum.main.config
+        metadata = regelum.main.metadata
         report = metadata["report"]
         start = time.time()
         os.mkdir(".summary")
@@ -370,7 +370,7 @@ class ConfigDiagramCallback(Callback):
             html = f.read()
         repo, commit_hash = (
             self.__monitor_git()
-            if not rcognita.main.metadata["no_git"]
+            if not regelum.main.metadata["no_git"]
             else (None, None)
         )
         cfg_hash = hex(hash(cfg))
@@ -506,7 +506,7 @@ class ConfigDiagramCallback(Callback):
                 "casadi",
                 "dill",
                 "plotly",
-                "rcognita",
+                "regelum",
             ]:
                 packages_table = [
                     f'<tr><td><font face="Courier New" color="red">{package}</font></td> <td><font face="Courier New" color="red"> == </font></td>  <td><font face="Courier New" color="red">{version}</font></td> </tr>\n'
@@ -923,7 +923,7 @@ class StateTracker(Callback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.simulator.Simulator)
+            isinstance(obj, regelum.simulator.Simulator)
             and method == "get_sim_step_data"
         )
 
@@ -941,7 +941,7 @@ class PlanarMotionAnimation(PointAnimation, StateTracker):
 class TriangleAnimation(AnimationCallback, ABC):
     """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
 
-    _pic = None  # must be an svg located in rcognita/img
+    _pic = None  # must be an svg located in regelum/img
 
     def setup(self):
         if self._pic is None:
@@ -957,7 +957,7 @@ class TriangleAnimation(AnimationCallback, ABC):
         self.ax.grid()
 
     def setup_pic(self):
-        self.path = rcognita.__file__.replace("__init__.py", f"img/{self._pic}")
+        self.path = regelum.__file__.replace("__init__.py", f"img/{self._pic}")
         self.pic_data, self.attributes = svg2paths(self.path)
         parsed = parse_path(self.attributes[0]["d"])
         parsed.vertices -= parsed.vertices.mean(axis=0)
@@ -1130,7 +1130,7 @@ class HistoricalCallback(Callback, ABC):
         return self.__data
 
     def plot(self, name=None):
-        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
             plt.clf()
             plt.cla()
             plt.close()
@@ -1202,12 +1202,10 @@ class StateCallback(Callback):
     """
 
     def is_target_event(self, obj, method, output):
-        attachee = (
-            self.attachee if self.attachee is not None else rcognita.system.System
-        )
+        attachee = self.attachee if self.attachee is not None else regelum.system.System
         return (
             isinstance(obj, attachee)
-            and method == rcognita.system.System.compute_closed_loop_rhs.__name__
+            and method == regelum.system.System.compute_closed_loop_rhs.__name__
         )
 
     def perform(self, obj, method, output):
@@ -1227,7 +1225,7 @@ class ObjectiveCallback(Callback):
     cooldown = 8.0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.policies.Policy) and method == "objective"
+        return isinstance(obj, regelum.policies.Policy) and method == "objective"
 
     def perform(self, obj, method, output):
         self.log(f"Current objective: {output}")
@@ -1247,11 +1245,11 @@ class HistoricalObjectiveCallback(HistoricalCallback):
 
     def on_launch(self):
         super().on_launch()
-        with rcognita.main.metadata["report"]() as r:
+        with regelum.main.metadata["report"]() as r:
             r["elapsed_relative"] = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.scenario.Scenario) and (method == "post_step")
+        return isinstance(obj, regelum.scenario.Scenario) and (method == "post_step")
 
     def perform(self, obj, method, output):
         self.counter += 1
@@ -1260,13 +1258,13 @@ class HistoricalObjectiveCallback(HistoricalCallback):
         )
         if not self.counter % 3:
             do_exit = False
-            with rcognita.main.metadata["report"]() as r:
+            with regelum.main.metadata["report"]() as r:
                 r["elapsed_relative"] = obj.time / obj.simulator.time_final
                 if "terminate" in r:
                     do_exit = True
             if do_exit:
                 self.log("Termination request issued from GUI.")
-                raise rcognita.RcognitaExitException(
+                raise regelum.RegelumExitException(
                     "Termination request issued from gui."
                 )
 
@@ -1300,7 +1298,7 @@ class SaveProgressCallback(Callback):
     once_in = 1
 
     def on_launch(self):
-        with rcognita.main.metadata["report"]() as r:
+        with regelum.main.metadata["report"]() as r:
             r["episode_current"] = 0
 
     def is_target_event(self, obj, method, output):
@@ -1322,12 +1320,12 @@ class SaveProgressCallback(Callback):
             return
         filename = "callbacks.dill"
         with open(filename, "wb") as f:
-            dill.dump(rcognita.main.callbacks, f)
+            dill.dump(regelum.main.callbacks, f)
         self.log(
             f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
         )
         if scenario is not None:
-            with rcognita.main.metadata["report"]() as r:
+            with regelum.main.metadata["report"]() as r:
                 r["episode_current"] = episode_number
                 if "episodes_total" not in r:
                     r["episode_total"] = episodes_total
@@ -1352,7 +1350,7 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.time_threshold = 10
 
     def is_target_event(self, obj, method, output):
-        if isinstance(obj, rcognita.scenario.Scenario) and (method == "post_step"):
+        if isinstance(obj, regelum.scenario.Scenario) and (method == "post_step"):
             self.dt_simulator_counter += 1
             return not self.dt_simulator_counter % self.time_threshold
 
@@ -1384,7 +1382,7 @@ class HistoricalObservationCallback(HistoricalCallback):
         self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
-        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
             plt.clf()
             plt.cla()
             plt.close()
@@ -1410,7 +1408,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
         self.iteration_number = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, rcognita.critic.Critic) and (method == "post_epoch")
+        return isinstance(obj, regelum.critic.Critic) and (method == "post_epoch")
 
     def perform(self, obj, method, output):
         epoch_idx, objective = output
@@ -1517,7 +1515,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         return super().load_data(idx=1)
 
     def plot(self, name=None):
-        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
             plt.clf()
             plt.cla()
             plt.close()
@@ -1632,14 +1630,14 @@ class CALFWeightsCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.controller.Controller)
+            isinstance(obj, regelum.controller.Controller)
             and method == "compute_action"
             and "calf" in obj.critic.__class__.__name__.lower()
         )
 
     def perform(self, obj, method, output):
         datum = {
-            **{"time": rcognita.main.metadata["time"]},
+            **{"time": regelum.main.metadata["time"]},
             **{
                 f"weight_{i + 1}": weight
                 for i, weight in enumerate(obj.critic.model.weights)
@@ -1665,7 +1663,7 @@ class CALFWeightsCallback(HistoricalCallback):
 
     def plot(self, name=None):
         if not self.data.empty:
-            if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+            if regelum.main.is_clear_matplotlib_cache_in_callbacks:
                 plt.clf()
                 plt.cla()
                 plt.close()
@@ -1688,7 +1686,7 @@ class CalfCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, rcognita.controller.Controller)
+            isinstance(obj, regelum.controller.Controller)
             and method == "compute_action"
             and "calf" in obj.critic.__class__.__name__.lower()
         )
@@ -1713,7 +1711,7 @@ class CalfCallback(HistoricalCallback):
         delta_CALF = prev_CALF - current_CALF
         self.add_datum(
             {
-                "time": rcognita.main.metadata["time"],
+                "time": regelum.main.metadata["time"],
                 "J_hat": current_CALF,
                 "is_CALF": is_calf,
                 "delta": delta_CALF,
@@ -1735,7 +1733,7 @@ class CalfCallback(HistoricalCallback):
             self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
-        if rcognita.main.is_clear_matplotlib_cache_in_callbacks:
+        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
             plt.clf()
             plt.cla()
             plt.close()

@@ -1,4 +1,4 @@
-_target_: rcognita.model.PerceptronWithNormalNoise
+_target_: regelum.model.PerceptronWithNormalNoise
 
 dim_input: $ system_specific.dim_observation
 dim_output: $ system_specific.dim_action

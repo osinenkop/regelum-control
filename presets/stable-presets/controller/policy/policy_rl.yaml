@@ -1,4 +1,4 @@
-_target_: rcognita.policy.RLPolicy
+_target_: regelum.policy.RLPolicy
 
 defaults:
   - model: weight_container_torch
@@ -10,7 +10,7 @@ discount_factor: $ scenario.discount_factor
 device: cpu
 
 optimizer_config: 
-  _target_: rcognita.OptimizerConfig
+  _target_: regelum.OptimizerConfig
   kind: tensor
   opt_method: = torch.optim.Adam
   opt_options: 

@@ -1,4 +1,4 @@
-_target_: rcognita.visualization.vis_3wrobot.Animator3WRobotNI
+_target_: regelum.visualization.vis_3wrobot.Animator3WRobotNI
 
 scenario: ~ scenario
 fps: ${system_specific.fps}

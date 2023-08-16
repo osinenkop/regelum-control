@@ -5,7 +5,7 @@ defaults:
 
 name%%: ddpg
 
-_target_: rcognita.controller.PGController
+_target_: regelum.controller.PGController
 
 ###---Constructor arguments---###
 

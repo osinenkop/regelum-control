@@ -3,7 +3,7 @@ defaults:
   - optimizer: casadi
   - predictor: rk_casadi
 
-_target_: rcognita.actors.ActorCALF
+_target_: regelum.actors.ActorCALF
 
 running_objective: $ running_objective
 

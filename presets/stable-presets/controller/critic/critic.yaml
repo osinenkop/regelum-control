@@ -1,4 +1,4 @@
-_target_: rcognita.critic.Critic
+_target_: regelum.critic.Critic
 
 defaults:
   - model: perceptron
@@ -21,7 +21,7 @@ model:
   force_positive_def: False
 
 optimizer_config: 
-  _target_: rcognita.OptimizerConfig
+  _target_: regelum.OptimizerConfig
   kind: tensor
   opt_method: = torch.optim.Adam
   opt_options: 

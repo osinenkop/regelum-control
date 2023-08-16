@@ -14,7 +14,7 @@ from omegaconf import DictConfig, open_dict, read_write
 
 from hydra import version
 from hydra._internal.deprecation_warning import deprecation_warning
-from rcognita.__internal.__internal_utils import _run_hydra, get_args_parser
+from regelum.__internal.__internal_utils import _run_hydra, get_args_parser
 from hydra.core.hydra_config import HydraConfig
 from hydra.core.utils import _flush_loggers, configure_log
 from hydra.types import TaskFunction

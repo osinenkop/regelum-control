@@ -6,7 +6,7 @@ defaults:
 
 name%%: rpo_deep
 
-_target_: rcognita.controller.RLController
+_target_: regelum.controller.RLController
 
 ###---Constructor arguments---###
 

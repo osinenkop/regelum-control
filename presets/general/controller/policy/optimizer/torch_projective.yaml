@@ -1,4 +1,4 @@
-_target_: rcognita.optimizers.TorchProjectiveOptimizer
+_target_: regelum.optimizers.TorchProjectiveOptimizer
 
 bounds: $ controller.action_bounds
 

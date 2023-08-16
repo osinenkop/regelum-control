@@ -1,4 +1,4 @@
-# _target_: rcognita.controller.ControllerCartPolePID
+# _target_: regelum.controller.ControllerCartPolePID
 
 # ###---Constructor arguments---###
 
@@ -16,7 +16,7 @@
 ############
 
 
-# _target_: rcognita.controller.ControllerCartPoleEnergyBased
+# _target_: regelum.controller.ControllerCartPoleEnergyBased
 
 # ###---Constructor arguments---###
 
@@ -29,7 +29,7 @@
 
 ###############
 
-_target_: rcognita.controller.ControllerCartPoleEnergyBasedAdaptive
+_target_: regelum.controller.ControllerCartPoleEnergyBasedAdaptive
 
 ###---Constructor arguments---###
 defaults:

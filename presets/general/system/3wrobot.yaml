@@ -1,4 +1,4 @@
-_target_: rcognita.system.ThreeWheeledRobot
+_target_: regelum.system.ThreeWheeledRobot
 
 
 animations%%:

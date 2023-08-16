@@ -1,4 +1,4 @@
-_target_: rcognita.policy.Reinforce
+_target_: regelum.policy.Reinforce
 
 defaults:
   - model: perceptron_with_normal_noise

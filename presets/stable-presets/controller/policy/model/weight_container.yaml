@@ -1,4 +1,4 @@
-_target_: rcognita.model.ModelWeightContainer
+_target_: regelum.model.ModelWeightContainer
 
 dim_output: $ system_specific.dim_action
 weights_init: = numpy.zeros((${controller.policy.predictor.prediction_horizon} + 1, ${.dim_output}))

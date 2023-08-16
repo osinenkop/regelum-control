@@ -2,7 +2,7 @@ defaults:
   - model: dqn_simple
   - optimizer: torch
 
-_target_: rcognita.critic.CriticOffPolicyGreedy
+_target_: regelum.critic.CriticOffPolicyGreedy
 
 system_dim_input: $ system.dim_action%%
 system_dim_output: $ system.dim_observation%%

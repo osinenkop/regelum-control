@@ -1,5 +1,5 @@
 system:
-  _target_: rcognita.system.SysInvertedPendulum
+  _target_: regelum.system.SysInvertedPendulum
   dim_input: 1
   dim_output: 2
   sys_type: diff_eqn
@@ -13,7 +13,7 @@ system:
   M_max__IGNORE__: 20.0
   action_bounds__IGNORE__: ${get:numpy.array\(\[\[${.M_min__IGNORE__}\, ${.M_max__IGNORE__}\]\]\)}
 scenario:
-  _target_: rcognita.scenario.MonteCarloScenario
+  _target_: regelum.scenario.MonteCarloScenario
   running_objective: ${same:running_objective}
   simulator: ${same:simulator}
   is_log: false
@@ -28,7 +28,7 @@ scenario:
   observation_components_naming: ${observation_naming.observation}
   total_objective_threshold: ${system_specific.total_objective_threshold}
 simulator:
-  _target_: rcognita.simulator.Simulator
+  _target_: regelum.simulator.Simulator
   system: ${same:system}
   sys_type: ${system.sys_type}
   state_init: ${initial_conditions.state_init}
@@ -43,7 +43,7 @@ simulator:
   rtol: 0.001
   ode_backend: CASADI
 nominal_controller:
-  _target_: rcognita.controller.NominalControllerInvertedPendulum
+  _target_: regelum.controller.NominalControllerInvertedPendulum
   time_start: ${simulator.time_start}
   sampling_time: 0.01
   action_bounds: ${system.action_bounds__IGNORE__}
@@ -51,7 +51,7 @@ nominal_controller:
 controller:
   actor:
     model:
-      _target_: rcognita.model.GaussianPDFModel
+      _target_: regelum.model.GaussianPDFModel
       dim_observation: ${controller.actor.dim_input}
       dim_action: ${controller.actor.dim_output}
       use_derivative: ${controller.actor.is_use_derivative}
@@ -60,7 +60,7 @@ controller:
       weight_min: -20.0
     optimizer:
       batch_sampler: {}
-      _target_: rcognita.optimizers.TorchDataloaderOptimizer
+      _target_: regelum.optimizers.TorchDataloaderOptimizer
       opt_options:
         lr: 5.0
       opt_method: ${get:torch.optim.Adam}
@@ -69,7 +69,7 @@ controller:
       sheduler_options:
         gamma: 0.25
         step_size: 5
-    _target_: rcognita.actors.ActorPG
+    _target_: regelum.actors.ActorPG
     system: ${same:system}
     N_episodes: ${scenario.N_episodes}
     N_iterations: ${scenario.N_iterations}
@@ -85,7 +85,7 @@ controller:
     device: cuda:0
     is_use_derivative: ${system_specific.is_use_derivative}
   critic:
-    _target_: rcognita.critic.CriticTrivial
+    _target_: regelum.critic.CriticTrivial
     running_objective: ${same:running_objective}
     optimizer:
       opt_options:
@@ -94,13 +94,13 @@ controller:
     batch_size: 50
     discount_factor: 0.94
   episode_data_buffer:
-    _target_: rcognita.data_buffers.ObservationActionObjectiveAccStatsDataset
+    _target_: regelum.data_buffers.ObservationActionObjectiveAccStatsDataset
     system: ${same:system}
     is_use_derivative: ${system_specific.is_use_derivative}
     is_cat_action: true
     is_tail_sum_running_objectives: false
   name__IGNORE__: pg
-  _target_: rcognita.controller.RLController
+  _target_: regelum.controller.RLController
   time_start: ${simulator.time_start}
   sampling_time: ${system_specific.sampling_time}
   is_fixed_critic_weights: false
@@ -109,10 +109,10 @@ controller:
   critic_period_multiplier__IGNORE__: 1
 running_objective:
   model:
-    _target_: rcognita.model.ModelQuadForm
+    _target_: regelum.model.ModelQuadForm
     weights: ${get:numpy.diag\(${.R1_diag__IGNORE__}\)}
     R1_diag__IGNORE__: ${get:\[10.\, 3.\, 0.\]}
-  _target_: rcognita.objective.RunningObjective
+  _target_: regelum.objective.RunningObjective
 initial_conditions:
   state_init: ${get:numpy.array\(\[numpy.pi\, 0.\]\) + numpy.array\(\[${.x1}\, 0.\]\)}
   action_init: ${get:numpy.ones\(${system.dim_input}\)}
@@ -146,21 +146,21 @@ system_specific:
   mpc_prediction_horizon: 10
   total_objective_threshold: 5000
 animator:
-  _target_: rcognita.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum
+  _target_: regelum.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum
   scenario: ${same:scenario}
   fps: ${system_specific.fps}
   max_video_length: 60
   animation_max_size_mb: 200
 callbacks:
-- rcognita.callback.HistoricalObjectiveCallback
-- rcognita.callback.TotalObjectiveCallback
-- rcognita.callback.CriticObjectiveCallback
-- rcognita.callback.CalfCallback
-- rcognita.callback.HistoricalObservationCallback
-- rcognita.callback.QFunctionModelSaverCallback
-- rcognita.callback.CALFWeightsCallback
-- rcognita.callback.CriticWeightsCallback
-- rcognita.callback.InspectReferrersCallback
-- rcognita.callback.PolicyGradientObjectiveSaverCallback
+- regelum.callback.HistoricalObjectiveCallback
+- regelum.callback.TotalObjectiveCallback
+- regelum.callback.CriticObjectiveCallback
+- regelum.callback.CalfCallback
+- regelum.callback.HistoricalObservationCallback
+- regelum.callback.QFunctionModelSaverCallback
+- regelum.callback.CALFWeightsCallback
+- regelum.callback.CriticWeightsCallback
+- regelum.callback.InspectReferrersCallback
+- regelum.callback.PolicyGradientObjectiveSaverCallback
 disallow_uncommitted__IGNORE__: false
 seed: 1

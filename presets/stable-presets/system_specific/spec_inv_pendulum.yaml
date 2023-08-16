@@ -1,5 +1,5 @@
 name: inv_pendulum
-target: rcognita.system.InvertedPendulumPD
+target: regelum.system.InvertedPendulumPD
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 

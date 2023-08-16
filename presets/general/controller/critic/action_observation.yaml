@@ -2,7 +2,7 @@ defaults:
   - model: quad_no_mix
   - optimizer: scipy
 
-_target_: rcognita.critic.CriticOfActionObservation
+_target_: regelum.critic.CriticOfActionObservation
 
 ###---Constructor arguments---###
 

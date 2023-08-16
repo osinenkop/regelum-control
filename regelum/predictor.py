@@ -2,12 +2,12 @@
 
 from abc import ABC, abstractmethod
 
-import rcognita
+import regelum
 from .__utilities import rc
 from .system import System
 
 
-class Predictor(rcognita.RcognitaBase, ABC):
+class Predictor(regelum.RegelumBase, ABC):
     """Blueprint of a predictor."""
 
     def __init__(

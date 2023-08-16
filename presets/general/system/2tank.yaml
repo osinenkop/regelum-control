@@ -1,4 +1,4 @@
-_target_: rcognita.system.TwoTank
+_target_: regelum.system.TwoTank
 
 ###---Constructor arguments---###
 

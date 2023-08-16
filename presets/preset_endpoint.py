@@ -3,7 +3,7 @@ This python script is used as a universal means of launching experiments. System
 parameters are meant to be set via hydra's override syntax.
 """
 
-import rcognita as rc
+import regelum as rc
 
 
 @rc(config_path="general", config_name="main")
@@ -17,7 +17,9 @@ def launch(cfg):
         try:
             animator = ~cfg.animator
         except Exception as exc:
-            raise NotImplementedError("Can't instantiate animator for your system") from exc
+            raise NotImplementedError(
+                "Can't instantiate animator for your system"
+            ) from exc
         if scenario.howanim == "live":
             animator.play_live()
         elif scenario.howanim in rc.ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK:

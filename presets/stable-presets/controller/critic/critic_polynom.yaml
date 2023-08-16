@@ -1,4 +1,4 @@
-_target_: rcognita.critic.Critic
+_target_: regelum.critic.Critic
 
 defaults:
   - model: quad_no_mix

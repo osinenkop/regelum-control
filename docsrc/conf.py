@@ -21,18 +21,20 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath(__file__ + "/../.."))
-sys.path.insert(0, os.path.abspath(__file__ + "/../../rcognita"))
-sys.path.insert(0, os.path.abspath(__file__ + "/../../rcognita"))
+sys.path.insert(0, os.path.abspath(__file__ + "/../../regelum"))
+sys.path.insert(0, os.path.abspath(__file__ + "/../../regelum"))
 
 # -- Project information -----------------------------------------------------
 try:
-    from rcognita import __version__
+    from regelum import __version__
 except ModuleNotFoundError as e:
-    print(f"This docs generating script is running from {sys.executable}. "
-          f"Make sure that the respective environment has rcognita's dependencies installed.")
+    print(
+        f"This docs generating script is running from {sys.executable}. "
+        f"Make sure that the respective environment has regelum's dependencies installed."
+    )
     raise e
 
-project = "rcognita"
+project = "regelum"
 copyright = "2021, AIDA Lab"
 author = "AIDA Lab"
 
@@ -54,10 +56,10 @@ autosummary_generate = True
 
 """
 autodoc_mock_imports = [
-    'rcognita.ROS_harnesses'
-    'rcognita.utilities',
-    'rcognita.t',
-    'rcognita.w_plotting',
+    'regelum.ROS_harnesses'
+    'regelum.utilities',
+    'regelum.t',
+    'regelum.w_plotting',
 ]
 """
 
@@ -81,5 +83,3 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
-

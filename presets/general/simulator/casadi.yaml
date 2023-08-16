@@ -1,4 +1,4 @@
-_target_: rcognita.simulator.Simulator
+_target_: regelum.simulator.Simulator
 
 ###---Constructor arguments---###
 

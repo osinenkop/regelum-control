@@ -154,18 +154,18 @@ hydra:
   runtime:
     version: 1.3.2
     version_base: '1.3'
-    cwd: /mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets
+    cwd: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets
     config_sources:
     - path: hydra.conf
       schema: pkg
       provider: hydra
-    - path: /mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/general
+    - path: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets/general
       schema: file
       provider: main
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /mnt/abolychev/rcognita-research-calf/rcognita-safe-controllers/presets/multirun/2023-05-18/19-01-00_pg_inv_pendulum/0
+    output_dir: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets/multirun/2023-05-18/19-01-00_pg_inv_pendulum/0
     choices:
       controller: pg
       controller/episode_data_buffer: observation_action

@@ -1,4 +1,4 @@
-_target_: rcognita.policy.SDPG
+_target_: regelum.policy.SDPG
 
 defaults:
   - model: perceptron_with_normal_noise

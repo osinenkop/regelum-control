@@ -3,7 +3,7 @@ defaults:
   - optimizer: scipy
   - predictor: euler
 
-_target_: rcognita.actors.ActorPID
+_target_: regelum.actors.ActorPID
 
 ###---Constructor arguments---###
 system: ~ system

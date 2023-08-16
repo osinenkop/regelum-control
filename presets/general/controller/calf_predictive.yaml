@@ -6,7 +6,7 @@ defaults:
 
 name%%: calf_predictive
 
-_target_: rcognita.controller.CALFControllerPredictive
+_target_: regelum.controller.CALFControllerPredictive
 
 ###---Constructor arguments---###
 

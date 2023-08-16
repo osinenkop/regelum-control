@@ -1,4 +1,4 @@
-_target_: rcognita.model.ModelDQNSimple
+_target_: regelum.model.ModelDQNSimple
 
 dim_observation: $ system.dim_observation%%
 dim_action: $ system.dim_action%%

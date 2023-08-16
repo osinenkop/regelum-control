@@ -1,4 +1,4 @@
-_target_: rcognita.model.ModelNNElementWiseProduct
+_target_: regelum.model.ModelNNElementWiseProduct
 
 dim_input: $ controller.actor.dim_observation
 use_derivative: $ controller.actor.is_use_derivative

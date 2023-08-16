@@ -1,4 +1,4 @@
-_target_: rcognita.critic.CriticTrivial
+_target_: regelum.critic.CriticTrivial
 
 ###---Constructor arguments---###
 

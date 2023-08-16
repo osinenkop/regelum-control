@@ -1,7 +1,7 @@
 """Contains adaptation blocks."""
 
 from abc import ABC, abstractmethod
-from rcognita.__utilities import rc
+from regelum.__utilities import rc
 
 
 class AdaptationBlock(ABC):

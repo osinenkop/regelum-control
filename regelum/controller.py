@@ -15,7 +15,7 @@ import scipy as setpoint
 from scipy.optimize import minimize
 
 from .__utilities import rc, Clock
-from rcognita import RcognitaBase
+from regelum import RegelumBase
 from .policy import Policy
 from .critic import Critic
 from typing import Optional, Union
@@ -39,7 +39,7 @@ def apply_action_bounds(method):
     return wrapper
 
 
-class Controller(RcognitaBase, ABC):
+class Controller(RegelumBase, ABC):
     """A blueprint of optimal controllers."""
 
     def __init__(

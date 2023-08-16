@@ -5,7 +5,7 @@
 import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 
-from rcognita.__utilities import rc
+from regelum.__utilities import rc
 
 try:
     from casadi import Opti
@@ -17,7 +17,7 @@ except (ModuleNotFoundError, ImportError):
 try:
     import torch
 
-    # from rcognita.data_buffers import UpdatableSampler
+    # from regelum.data_buffers import UpdatableSampler
 
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
@@ -37,10 +37,10 @@ from .core.entities import (
 )
 from .core.hooks import requires_grad, detach, data_closure, metadata_closure
 
-import rcognita
+import regelum
 
 
-class Optimizable(rcognita.RcognitaBase):
+class Optimizable(regelum.RegelumBase):
     """Base class for all optimizable objects.
 
     This class is to be used normally as a parent class for all objects that need to be optimized.

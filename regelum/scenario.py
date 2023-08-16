@@ -11,7 +11,7 @@ import numpy as np
 from typing import Optional
 from unittest.mock import MagicMock
 
-import rcognita
+import regelum
 from .__utilities import rc
 from .simulator import Simulator
 from .controller import Controller, RLController
@@ -24,7 +24,7 @@ except ImportError:
     torch = MagicMock()
 
 
-class Scenario(rcognita.RcognitaBase, ABC):
+class Scenario(regelum.RegelumBase, ABC):
     """A base scenario class."""
 
     def __init__(self):

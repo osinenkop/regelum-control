@@ -9,7 +9,7 @@ from hydra.core.object_type import ObjectType
 from hydra.plugins.config_source import ConfigLoadError, ConfigResult, ConfigSource
 from io import StringIO
 import re
-import rcognita
+import regelum
 
 
 def sub_map(pattern, f, s):
@@ -145,10 +145,10 @@ def write_rerouts_references(rerouts):
 def at_no_colon_on_match(match):
     forwarded_path = (match.group(3) + match.group(4)).replace("%%", "__IGNORE__")
     top_level_var = forwarded_path.split(".")[-1]
-    rcognita.main.post_assignment(
+    regelum.main.post_assignment(
         top_level_var, eval(f"lambda cfg: cfg.{forwarded_path}"), weak=True
     )
-    rcognita.main.post_assignment(
+    regelum.main.post_assignment(
         forwarded_path,
         f"${{{top_level_var}__IGNORE__}}".replace("__IGNORE__" * 2, "__IGNORE__"),
     )

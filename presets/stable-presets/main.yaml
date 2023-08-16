@@ -12,16 +12,16 @@ defaults:
   # - ${controller}_${system}
 
 callbacks:
-  - rcognita.callback.HistoricalObjectiveCallback
-  - rcognita.callback.TotalObjectiveCallback
-  # - rcognita.callback.CriticObjectiveCallback
-  - rcognita.callback.CalfCallback
-  - rcognita.callback.HistoricalObservationCallback
-  # - rcognita.callback.QFunctionModelSaverCallback
-  # - rcognita.callback.CalfWeightsCallback
-  # - rcognita.callback.CriticWeightsCallback
-  # - rcognita.callback.InspectReferrersCallback
-  - rcognita.callback.ObjectiveLearningSaver
+  - regelum.callback.HistoricalObjectiveCallback
+  - regelum.callback.TotalObjectiveCallback
+  # - regelum.callback.CriticObjectiveCallback
+  - regelum.callback.CalfCallback
+  - regelum.callback.HistoricalObservationCallback
+  # - regelum.callback.QFunctionModelSaverCallback
+  # - regelum.callback.CalfWeightsCallback
+  # - regelum.callback.CriticWeightsCallback
+  # - regelum.callback.InspectReferrersCallback
+  - regelum.callback.ObjectiveLearningSaver
 
 
 disallow_uncommitted%%: False

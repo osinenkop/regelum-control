@@ -1,9 +1,9 @@
-"""Base infrastructure of rcognita."""
+"""Base infrastructure of regelum."""
 
 import abc
 
-from rcognita import callback as cb
-import rcognita
+from regelum import callback as cb
+import regelum
 import weakref
 from types import MappingProxyType
 
@@ -27,15 +27,16 @@ class apply_callbacks:
         def new_method(self2, *args, **kwargs):
             res = method(self2, *args, **kwargs)
             if self.callbacks is None:
-                callbacks = rcognita.main.callbacks
+                callbacks = regelum.main.callbacks
             for callback in callbacks:
                 callback(obj=self2, method=method.__name__, output=res)
             return res
 
         return new_method
 
-class RcognitaType(abc.ABCMeta):
-    """Rcognita type that all classes in rcognita share.
+
+class RegelumType(abc.ABCMeta):
+    """Regelum type that all classes in regelum share.
 
     Used for certain infrastructural and syntactic sugar features.
     """
@@ -54,7 +55,11 @@ class RcognitaType(abc.ABCMeta):
 
     def __new__(cls, *args, **kwargs):
         x = super().__new__(cls, *args, **kwargs)
-        if x.__name__ == "RcognitaBase" or x.__name__ == "Callback" or issubclass(x, cb.Callback):
+        if (
+            x.__name__ == "RegelumBase"
+            or x.__name__ == "Callback"
+            or issubclass(x, cb.Callback)
+        ):
             return x
         if hasattr(x, "_real_name"):
             x.__name__ = x._real_name
@@ -63,13 +68,14 @@ class RcognitaType(abc.ABCMeta):
         if callbacks:
             del x._attached
         old_init = x.__init__
+
         def new_init(self, *args, **kwargs):
             for callback in callbacks:
                 callback.register(attachee=x, launch=True)
             return old_init(self, *args, **kwargs)
+
         x.__init__ = new_init
         return x
-
 
 
 class ClassPropertyDescriptor(object):
@@ -101,6 +107,7 @@ class ClassPropertyDescriptor(object):
         self.fset = func
         return self
 
+
 def classproperty(func):
     """Decorates a method in such a way that it becomes a class property.
 
@@ -112,39 +119,40 @@ def classproperty(func):
 
     return ClassPropertyDescriptor(func)
 
-class RcognitaBase(metaclass=RcognitaType):
-    """Base class designed to act as an abstraction over all rcognita objects."""
+
+class RegelumBase(metaclass=RegelumType):
+    """Base class designed to act as an abstraction over all regelum objects."""
 
     @classproperty
     def _metadata(self):
-        return RcognitaBase.__metadata
+        return RegelumBase.__metadata
 
     @_metadata.setter
     def _metadata(self, metadata):
-        if not hasattr(RcognitaBase, f"_{RcognitaBase.__name__}__metadata"):
-            RcognitaBase.__metadata = MappingProxyType(metadata)
+        if not hasattr(RegelumBase, f"_{RegelumBase.__name__}__metadata"):
+            RegelumBase.__metadata = MappingProxyType(metadata)
         else:
-            raise ValueError("Metadata has already been set, yet an attempt to set it again was made.")
+            raise ValueError(
+                "Metadata has already been set, yet an attempt to set it again was made."
+            )
 
     def __init__(self):
-        """Initialize an object from rcognita."""
-        #if hasattr(self.__class__, "_attached"):
-        #    existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
+        """Initialize an object from regelum."""
+        # if hasattr(self.__class__, "_attached"):
+        #    existing_callbacks = [type(callback) for callback in regelum.main.callbacks]
         #    for callback in self._attached:
         #        if callback not in existing_callbacks:
         #            callback_instance = callback(attachee=self.__class__)  ## Might want to move it to the metaclass
         #            callback_instance.on_launch()  # I must change this
-        #            rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
+        #            regelum.main.callbacks = [callback_instance] + regelum.main.callbacks
 
-        #callbacks = self.__class__._attached if hasattr(self.__class__, "_attached") else []
-        #existing_callbacks = [type(callback) for callback in rcognita.main.callbacks]
-        #for callback in callbacks:
+        # callbacks = self.__class__._attached if hasattr(self.__class__, "_attached") else []
+        # existing_callbacks = [type(callback) for callback in regelum.main.callbacks]
+        # for callback in callbacks:
         #    if callback not in existing_callbacks:
         #        callback_instance = callback(attachee=self.__class__) ## Might want to move it to the metaclass
         #        callback_instance.on_launch()
-        #        rcognita.main.callbacks = [callback_instance] + rcognita.main.callbacks
-
-
+        #        regelum.main.callbacks = [callback_instance] + regelum.main.callbacks
 
 
 # TODO: DOCSTRING
@@ -166,8 +174,11 @@ class Node(abc.ABC):
     def hook(self, hook_function):
         def new_hook_function(input_):
             res = hook_function(input_)
-            assert isinstance(res, self.type), f"Values returned by hooks should match the type of their node (port/publisher). An object of type {type(res)} was returned, which does not match the node's type {self.type}."
+            assert isinstance(
+                res, self.type
+            ), f"Values returned by hooks should match the type of their node (port/publisher). An object of type {type(res)} was returned, which does not match the node's type {self.type}."
             return res
+
         self.hooks.append(new_hook_function)
 
     # TODO: DOCSTRING
@@ -346,7 +357,6 @@ class Port(Node):
             raise EmptyInboxException(
                 "The port's inbox was empty at the time of calling ``receive``."
             )
-
 
 
 # TODO: DOCSTRING

@@ -2,10 +2,10 @@
 
 import numpy as np
 
-import rcognita
+import regelum
 
 
-class KalmanFilter(rcognita.RcognitaBase):
+class KalmanFilter(regelum.RegelumBase):
     """A class implementing Kalman filter."""
 
     def __init__(

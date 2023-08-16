@@ -1,4 +1,4 @@
-_target_: rcognita.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum
+_target_: regelum.visualization.vis_inverted_pendulum.AnimatorInvertedPendulum
 
 scenario: ~ scenario
 fps: ${system_specific.fps}

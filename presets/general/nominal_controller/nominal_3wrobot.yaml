@@ -1,4 +1,4 @@
-_target_: rcognita.controller.Controller3WRobotPID
+_target_: regelum.controller.Controller3WRobotPID
 
 ###---Constructor arguments---###
 

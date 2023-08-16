@@ -16,7 +16,7 @@ from hydra.errors import InstantiationException
 from hydra.types import ConvertMode, TargetConf
 
 
-import rcognita
+import regelum
 
 
 class _Keys(str, Enum):
@@ -302,8 +302,8 @@ def instantiate_node(
     partial: bool = False,
     path=None,
 ) -> Any:
-    if path in rcognita.main.objects_created:
-        return rcognita.main.objects_created[path]
+    if path in regelum.main.objects_created:
+        return regelum.main.objects_created[path]
     # Return None if config is None
     if node is None or (OmegaConf.is_config(node) and node._is_none()):
         return None
@@ -400,7 +400,7 @@ def instantiate_node(
                 for callback in kwargs["callbacks__IGNORE__"]:
                     if "." not in callback:
                         try:
-                            _target_ = _locate("rcognita.callback." + callback).attach(
+                            _target_ = _locate("regelum.callback." + callback).attach(
                                 _target_
                             )
                         except NameError:
@@ -410,17 +410,17 @@ def instantiate_node(
             if "animations__IGNORE__" in kwargs:
                 animation = kwargs["animations__IGNORE__"][0]
                 if "." not in animation:
-                    animation = "rcognita.callback." + animation
+                    animation = "regelum.callback." + animation
                 animation_sum = _locate(animation)
                 for animation in kwargs["animations__IGNORE__"][1:]:
                     if "." not in animation:
-                        animation = "rcognita.callback." + animation
+                        animation = "regelum.callback." + animation
                     animation_sum = animation_sum + _locate(animation)
                 _target_ = animation_sum.attach(_target_)
 
             res = _call_target(_target_, partial, args, kwargs, full_key)
             if path:
-                rcognita.main.objects_created[path] = res
+                regelum.main.objects_created[path] = res
             return res
         else:
             # If ALL or PARTIAL non structured or OBJECT non structured,

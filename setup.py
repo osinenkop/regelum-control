@@ -3,16 +3,16 @@ from os.path import join, dirname
 import sys, os
 
 sys.path.insert(0, os.path.abspath(__file__ + "/.."))
-with open(os.path.abspath(__file__ + "/../rcognita/__init__.py"), "r") as f:
+with open(os.path.abspath(__file__ + "/../regelum/__init__.py"), "r") as f:
     for line in f.readlines():
         if "__version__" in line:
             exec(line)
             break
 setup(
-    name="rcognita",
+    name="regelum",
     version=__version__,
     author="AIDynamicAction",
-    description="rcognita is a framework for hybrid agent-environment loop simulation, with a library of predictive and stabilizing reinforcement learning setups",
+    description="regelum is a framework for hybrid agent-environment loop simulation, with a library of predictive and stabilizing reinforcement learning setups",
     url="https://gitflic.ru/project/aidynamicaction/rcognita",
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -49,7 +49,6 @@ setup(
         "PyQt5==5.15.9",
     ],
     extras_require={
-        "SIPPY": ["sippy-rcognita == 0.2.1"],
         "CASADI": ["casadi>=3.5.5"],
         "TORCH": ["torch>=1.13.1", "gpytorch==1.8.0"],
     },

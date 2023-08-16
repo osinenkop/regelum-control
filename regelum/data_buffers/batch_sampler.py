@@ -185,7 +185,7 @@ class RollingBatchSampler(BatchSampler):
 
 
 class EpisodicSampler(BatchSampler):
-    """Samples whole episodes from DataBuffer."""
+    """Samples the whole episodes from DataBuffer."""
 
     def __init__(
         self,

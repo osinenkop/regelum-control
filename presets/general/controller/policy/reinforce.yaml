@@ -3,7 +3,7 @@ defaults:
   - optimizer: torch_dataloader
 
 
-_target_: rcognita.actors.ActorREINFORCE
+_target_: regelum.actors.ActorREINFORCE
 
 
 ###---Constructor arguments---###

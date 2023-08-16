@@ -1,4 +1,4 @@
-_target_: rcognita.scenario.MonteCarloScenario
+_target_: regelum.scenario.MonteCarloScenario
 
 ###---Constructor arguments---###
 

@@ -1,4 +1,4 @@
-_target_: rcognita.OptimizerConfig
+_target_: regelum.OptimizerConfig
 kind: symbolic
 opt_method: ipopt
 opt_options: 

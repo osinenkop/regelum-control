@@ -4,7 +4,7 @@ defaults:
 
 name%%: dqn
 
-_target_: rcognita.controller.RLController
+_target_: regelum.controller.RLController
 
 ###---Constructor arguments---###
 

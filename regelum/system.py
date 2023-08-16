@@ -11,14 +11,14 @@ from __future__ import annotations
 import numpy as np
 
 
-import rcognita
+import regelum
 from abc import ABC, abstractmethod
 from .__utilities import rc
 from typing import Optional, Union
 from typing_extensions import Self
 
 
-class ComposedSystem(rcognita.RcognitaBase):
+class ComposedSystem(regelum.RegelumBase):
     """Base class for composed systems.
 
     An instance of this class is being created automatically when applying a `@` operation on two systems.
@@ -291,7 +291,7 @@ class ComposedSystem(rcognita.RcognitaBase):
         return self.compose(sys_right)
 
 
-class System(rcognita.RcognitaBase, ABC):
+class System(regelum.RegelumBase, ABC):
     """Base class for controlled systems implementation."""
 
     _name: Optional[str] = None

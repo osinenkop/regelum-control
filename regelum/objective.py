@@ -6,7 +6,7 @@ For instance, a running objective can be used commonly by a generic optimal cont
 
 from abc import ABC, abstractmethod
 
-import rcognita
+import regelum
 from .model import Model, PerceptronWithNormalNoise, ModelNN
 from typing import Optional, Union
 import torch
@@ -14,7 +14,7 @@ import numpy as np
 from .__utilities import rc
 
 
-class Objective(rcognita.RcognitaBase, ABC):
+class Objective(regelum.RegelumBase, ABC):
     """A base class for objective implementations."""
 
     def __init__(self):

@@ -3,7 +3,7 @@ defaults:
   - optimizer: scipy
   - predictor: euler
 
-_target_: rcognita.actors.ActorRQL
+_target_: regelum.actors.ActorRQL
 
 ###---Constructor arguments---###
 system: ~ system
