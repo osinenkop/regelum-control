@@ -16,6 +16,15 @@ class Predictor(rcognita.RcognitaBase, ABC):
         pred_step_size: float,
         prediction_horizon: int,
     ):
+        """Initialize an instance of a predictor.
+
+        :param system: System of which states are predicted
+        :type system: System
+        :param pred_step_size: time interval between successive predictions
+        :type pred_step_size: float
+        :param prediction_horizon: number of predictions
+        :type prediction_horizon: int
+        """
         self.system = system
         self.pred_step_size = pred_step_size
         self.prediction_horizon = prediction_horizon
@@ -84,53 +93,6 @@ class EulerPredictorMultistep(EulerPredictor):
                 next_state_or_observation, action
             )
         return next_state_or_observation
-
-
-class RKPredictor(EulerPredictor):
-    """Predictor that makes use o Runge-Kutta finite difference methods."""
-
-    def __init__(
-        self,
-        state_or_observation_init,
-        action_init,
-        *args,
-        atol: float = 1e-5,
-        rtol: float = 1e-3,
-        **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        self.atol = atol
-        self.rtol = rtol
-        self.integrator = self.create_CasADi_integrator(
-            self.system,
-            self.pred_step_size,
-        )
-
-    def create_CasADi_integrator(self, system, max_step):
-        try:
-            import casadi
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                "Cannot use RKPredictor without casadi being installed"
-            )
-
-        state_symbolic = rc.array_symb(self.system.dim_state, literal="x")
-        action_symbolic = rc.array_symb(self.system.dim_inputs, literal="u")
-        time = rc.array_symb((1, 1), literal="t")
-
-        ODE = system.compute_state_dynamics(time, state_symbolic, action_symbolic)
-        DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
-        options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
-
-        integrator = casadi.integrator("intg", "rk", DAE, options)
-
-        return integrator
-
-    def predict(self, current_state_or_observation, action):
-        state_new = self.integrator(x0=current_state_or_observation, p=action)["xf"]
-        state_new = rc.squeeze(state_new.full().T)
-
-        return state_new
 
 
 class TrivialPredictor(Predictor):

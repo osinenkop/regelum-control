@@ -7,33 +7,41 @@ Remarks:
 - Buffers are updated from bottom to top
 
 """
-
+from __future__ import annotations
 import numpy as np
 
 
 import rcognita
 from abc import ABC, abstractmethod
 from .__utilities import rc
-from typing import Optional
-from functools import reduce
+from typing import Optional, Union
+from typing_extensions import Self
 
 
-# TODO: DOCSTRING
-class SystemComposer:
-    @staticmethod
-    def compose(systems: list):
-        return reduce(lambda x, y: x @ y, systems)
-
-
-# TODO: DOCSTRING
 class ComposedSystem(rcognita.RcognitaBase):
+    """Base class for composed systems.
+
+    An instance of this class is being created automatically when applying a `@` operation on two systems.
+    """
+
     def __init__(
         self,
-        sys_left,
-        sys_right,
+        sys_left: Union[System, Self],
+        sys_right: Union[System, Self],
         io_mapping: Optional[list] = None,
         output_mode="right",
     ):
+        """_summary_
+
+        :param sys_left: System outputs of which are to connected to the inputs of the right system
+        :type sys_left: Union[System, Self]
+        :param sys_right: Second system that can be connected to the inputs of the left system
+        :type sys_right: Union[System, Self]
+        :param io_mapping: Mapping of inputs of the right system to inputs of the left system, defaults to None
+        :type io_mapping: Optional[list], optional
+        :param output_mode: How to combine the result outputs, defaults to "right"
+        :type output_mode: str, optional
+        """
         if io_mapping is None:
             io_mapping = np.arange(min(sys_left.dim_state, sys_right.dim_inputs))
 
@@ -77,7 +85,6 @@ class ComposedSystem(rcognita.RcognitaBase):
         self.forward_permutation = np.arange(self.dim_observation).astype(int)
         self.inverse_permutation = np.arange(self.dim_observation).astype(int)
 
-    # TODO: DOCSTRING
     @staticmethod
     def __get_routing(io_mapping):
         io_mapping_extended = []
@@ -237,13 +244,12 @@ class ComposedSystem(rcognita.RcognitaBase):
     def receive_action(self, action):
         self.inputs = action
 
-    # TODO: NEED THIS? REVIEW THIS
     def update_system_parameters(self, inputs):
         assert isinstance(inputs, dict)
         self.sys_left.update_system_parameters(inputs)
         self.sys_right.update_system_parameters(inputs)
 
-    # TODO: NEED THIS?
+    # TODO: get rid of it
     def compute_closed_loop_rhs(self, time, state):
         action = self.inputs
 
@@ -257,16 +263,21 @@ class ComposedSystem(rcognita.RcognitaBase):
     def reset(self):
         pass
 
-    # TODO: WHAT IS THIS?
-    def permute_state(self, permutation):
+    def permute_state(self, permutation: Union[list, np.array]) -> Self:
+        """Permute an order at which the system outputs are returned.
+
+        :param permutation: Permutation represented as an array of indices
+        :type permutation: Union[list, np.array]
+        :return: link to self
+        :rtype: Self
+        """
         self.forward_permutation = rc.array(permutation).astype(int)
         self.inverse_permutation = self.get_inverse_permutation(permutation)
         return self
 
-    # TODO: WHAT IS THIS?
     def get_inverse_permutation(self, permutation):
         self.current_permutation = permutation
-        permutation = np.asanyarray(permutation)  # in case p is a tuple, etc.
+        permutation = np.asanyarray(permutation)
         inverse_permutation = np.empty_like(permutation)
         inverse_permutation[permutation] = np.arange(permutation.size)
         return inverse_permutation
@@ -281,55 +292,7 @@ class ComposedSystem(rcognita.RcognitaBase):
 
 
 class System(rcognita.RcognitaBase, ABC):
-    r"""Interface class of dynamical systems a.k.a. environments.
-
-     Concrete systems should be built upon this class.
-     To design a concrete system: inherit this class, override:
-         | :func:`~systems.system.compute_state_dynamics` :
-         | right-hand side of system description (required)
-         | :func:`~systems.system._dynamic_control` :
-         | right-hand side of controller dynamical model (if necessary)
-         | :func:`~systems.system.get_observation` :
-         | system out (if not overridden, output is identical to state)
-
-     Attributes
-     ----------
-     system_type : : string
-         Type of system by description:
-
-         | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, inputs, disturb)`
-         | ``discr_fnc`` : difference equation :math:`state^+ = f(state, inputs, disturb)`
-         | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, inputs, disturb)`
-
-     where:
-
-         | :math:`state` : state
-         | :math:`inputs` : input
-         | :math:`disturb` : disturbance
-
-     The time variable ``time`` is commonly used by ODE solvers, and you shouldn't have it explicitly referenced in the definition, unless your system is non-autonomous.
-     For the latter case, however, you already have the input and disturbance at your disposal.
-
-     Parameters of the system are contained in ``pars`` attribute.
-
-     dim_state, dim_input, dim_output, dim_disturb : : integer
-         System dimensions
-     pars : : list
-         List of fixed parameters of the system
-     action_bounds : : array of shape ``[dim_input, 2]``
-         Box control constraints.
-         First element in each row is the lower bound, the second - the upper bound.
-         If empty, control is unconstrained (default)
-     is_dynamic_controller : : 0 or 1
-         If 1, the controller (a.k.a. agent) is considered as a part of the full state vector
-     is_disturb : : 0 or 1
-         If 0, no disturbance is fed into the system
-     pars_disturb : : list
-         Parameters of the disturbance model
-
-    Each concrete system must realize ``System`` and define ``name`` attribute.
-
-    """
+    """Base class for controlled systems implementation."""
 
     _name: Optional[str] = None
     _system_type: Optional[str] = None
@@ -341,45 +304,17 @@ class System(rcognita.RcognitaBase, ABC):
     def __init__(
         self,
         system_parameters_init={},
-        state_init=None,
-        inputs_init=None,
+        state_init: Optional[np.ndarray] = None,
+        inputs_init: Optional[np.ndarray] = None,
     ):
-        r"""Initialize a system.
+        """Initialize an instance of a system.
 
-        Parameters
-        ----------
-        system_type : : string
-            Type of system by description:
-
-            | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, inputs, disturb)`
-            | ``discr_fnc`` : difference equation :math:`state^+ = f(state, inputs, disturb)`
-            | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, inputs, disturb)`
-
-        where:
-
-            | :math:`state` : state
-            | :math:`inputs` : input
-            | :math:`disturb` : disturbance
-
-        The time variable ``time`` is commonly used by ODE solvers, and you shouldn't have it explicitly referenced in the definition, unless your system is non-autonomous.
-        For the latter case, however, you already have the input and disturbance at your disposal.
-
-        Parameters of the system are contained in ``pars`` attribute.
-
-        dim_state, dim_input, dim_output, dim_disturb : : integer
-            System dimensions
-        pars : : list
-            List of fixed parameters of the system
-        action_bounds : : array of shape ``[dim_input, 2]``
-            Box control constraints.
-            First element in each row is the lower bound, the second - the upper bound.
-            If empty, control is unconstrained (default)
-        is_dynamic_controller : : 0 or 1
-            If 1, the controller (a.k.a. agent) is considered as a part of the full state vector
-        is_disturb : : 0 or 1
-            If 0, no disturbance is fed into the system
-        pars_disturb : : list
-            Parameters of the disturbance model
+        :param system_parameters_init: Set system parameters manually, defaults to {}
+        :type system_parameters_init: dict, optional
+        :param state_init: Set initial state manually, defaults to None
+        :type state_init: Optional[np.ndarray], optional
+        :param inputs_init: Set initial inputs manually, defaults to None
+        :type inputs_init: Optional[np.ndarray], optional
         """
         assert self.name is not None
         assert self.system_type is not None
@@ -469,16 +404,6 @@ class System(rcognita.RcognitaBase, ABC):
         return state
 
     def receive_action(self, action):
-        """
-        Receive exogeneous control inputs to be fed into the system.
-        This inputs is commonly computed by your controller (agent) using the system output :func:`~systems.system.get_observation`.
-
-        Parameters
-        ----------
-        inputs : : array of shape ``[dim_input, ]``
-            Action
-
-        """
         self.inputs = action
 
     def receive_state(self, state):
@@ -490,7 +415,8 @@ class System(rcognita.RcognitaBase, ABC):
         return self.parameters
 
     def compute_closed_loop_rhs(self, time, state):
-        """
+        """Legacy code.
+
         Right-hand side of the closed-loop system description.
         Combines everything into a single vector that corresponds to the right-hand side of the closed-loop system description for further use by simulators.
 
@@ -519,6 +445,8 @@ class System(rcognita.RcognitaBase, ABC):
 
 
 class KinematicPoint(System):
+    """System representing Kinematic Point (omnibot)."""
+
     _name = "kinematic-point"
     _system_type = "diff_eqn"
     _dim_state = 2
@@ -538,10 +466,7 @@ class KinematicPoint(System):
 
 
 class InvertedPendulumPID(System):
-    """
-    System class: mathematical pendulum
-
-    """
+    """System class: mathematical pendulum."""
 
     _name = "inverted-pendulum"
     _system_type = "diff_eqn"
@@ -551,6 +476,7 @@ class InvertedPendulumPID(System):
     _parameters = {"m": 1, "g": 9.8, "l": 1}
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID controller."""
         super().__init__(*args, **kwargs)
 
         self.time_old = 0
@@ -577,7 +503,7 @@ class InvertedPendulumPID(System):
         delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
-        return rc.array([state[0], self.integral_alpha, state[1]])
+        return rc.hstack([state[0], self.integral_alpha, state[1]])
 
     def reset(self):
         self.time_old = 0
@@ -585,6 +511,8 @@ class InvertedPendulumPID(System):
 
 
 class InvertedPendulumPD(InvertedPendulumPID):
+    """System class: ordinary mathematical pendulum."""
+
     _dim_observation = 2
 
     def _get_observation(self, time, state, inputs):
@@ -592,8 +520,7 @@ class InvertedPendulumPD(InvertedPendulumPID):
 
 
 class ThreeWheeledRobot(System):
-    """
-    System class: 3-wheeled robot with dynamical actuators.
+    r"""System class: 3-wheeled robot with dynamical actuators.
 
     Description
     -----------
@@ -659,6 +586,8 @@ class ThreeWheeledRobot(System):
 
 
 class Integrator(System):
+    """System yielding Non-holonomic double integrator when composed with kinematic thre-wheeled robot."""
+
     _name = "integral-parts"
     _system_type = "diff_eqn"
     _dim_state = 2
@@ -681,9 +610,7 @@ class Integrator(System):
 
 
 class ThreeWheeledRobotNI(System):
-    """
-    System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator).
-    """
+    """System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator)."""
 
     _name = "three-wheeled-robot-ni"
     _system_type = "diff_eqn"
@@ -702,10 +629,7 @@ class ThreeWheeledRobotNI(System):
 
 
 class TwoTank(System):
-    """
-    Two-tank system with nonlinearity.
-
-    """
+    """Two-tank system with nonlinearity."""
 
     _name = "two-tank"
     _system_type = "diff_eqn"
@@ -734,10 +658,9 @@ class TwoTank(System):
 
 
 class GridWorld(System):
-    """
-    A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
-    The inputs encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
+    """A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
 
+    The inputs encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
     """
 
     def __init__(self, dims, terminal_state):
@@ -778,9 +701,6 @@ class CartPole(System):
     _dim_inputs = 1
     _dim_observation = 4
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
         Dstate = rc.zeros(

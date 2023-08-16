@@ -32,8 +32,9 @@ except ModuleNotFoundError:
     casadi = MagicMock()
 
 
-# TODO: DOCSTRING
 class Simulator(rcognita.RcognitaBase, ABC):
+    """Base class of Simulator."""
+
     def __init__(
         self,
         system: Union[System, ComposedSystem],
@@ -46,47 +47,26 @@ class Simulator(rcognita.RcognitaBase, ABC):
         atol: Optional[float] = 1e-5,
         rtol: Optional[float] = 1e-3,
     ):
-        r"""Initialize a simulator.
+        """Initialize an instance of Simulator.
 
-        Parameters
-        ----------
-        sys_type : : string
-            Type of system by description:
-
-            | ``diff_eqn`` : differential equation :math:`\mathcal D state = f(state, u, q)`
-            | ``discr_fnc`` : difference equation :math:`state^+ = f(state, u, q)`
-            | ``discr_prob`` :  by probability distribution :math:`X^+ \sim P_X(state^+| state, u, q)`
-
-        where:
-
-            | :math:`state` : state
-            | :math:`u` : input
-            | :math:`q` : disturbance
-
-        compute_closed_loop_rhs : : function
-            Right-hand side description of the closed-loop system.
-            Say, if you instantiated a concrete system (i.e., as an instance of a subclass of ``System`` class with concrete ``compute_closed_loop_rhs`` method) as ``system``,
-            this could be just ``system.compute_closed_loop_rhs``.
-
-        sys_out : : function
-            System output function.
-            Same as above, this could be, say, ``system.out``.
-
-        is_dynamic_controller : : 0 or 1
-            If 1, the controller (a.k.a. agent) is considered as a part of the full state vector.
-
-        state_init, disturb_init, action_init : : vectors
-            Initial values of the (open-loop) system state, disturbance and input.
-
-        time_start, time_final, sampling_time : : numbers
-            Initial, final times and time step size
-
-        max_step, first_step, atol, rtol : : numbers
-            Parameters for an ODE solver (used if ``sys_type`` is ``diff_eqn``).
-
-        system : : `System`
-            System to be simulated.
-
+        :param system: A controlled system to be simulated
+        :type system: Union[System, ComposedSystem]
+        :param state_init: Set initial state manually, defaults to None
+        :type state_init: Optional[np.ndarray], optional
+        :param action_init: Set initial action manually, defaults to None
+        :type action_init: Optional[np.ndarray], optional
+        :param time_start: Time at which simulation starts, defaults to 0
+        :type time_start: Optional[float], optional
+        :param time_final: Time at which simulation ends, defaults to 1
+        :type time_final: Optional[float], optional
+        :param max_step: Total duration of one simulation step, defaults to 1e-3
+        :type max_step: Optional[float], optional
+        :param first_step: Used with integrators with changing simulation steps, defaults to 1e-6
+        :type first_step: Optional[float], optional
+        :param atol: Absolute tollerance of integrator, defaults to 1e-5
+        :type atol: Optional[float], optional
+        :param rtol: Relative tollerance of integrator, defaults to 1e-3
+        :type rtol: Optional[float], optional
         """
         self.system = system
         assert hasattr(
@@ -134,7 +114,6 @@ class Simulator(rcognita.RcognitaBase, ABC):
 
     def do_sim_step(self):
         """Do one simulation step and update current simulation data (time, system state and output)."""
-
         if self.system.system_type == "diff_eqn":
             try:
                 self.ODE_solver.step()
@@ -186,7 +165,11 @@ class Simulator(rcognita.RcognitaBase, ABC):
 
 
 class SciPy(Simulator):
+    """Class for SciPy integrators."""
+
     def initialize_ode_solver(self):
+        import scipy as sp
+
         ODE_solver = sp.integrate.RK45(
             self.system.compute_closed_loop_rhs,
             self.time_start,
@@ -201,7 +184,11 @@ class SciPy(Simulator):
 
 
 class CasADi(Simulator):
+    """Class for CasADi integrators."""
+
     class CasADiSolver:
+        """Nested class to wrap casadi integrator into a uniform API."""
+
         def __init__(
             self,
             integrator,
@@ -212,8 +199,7 @@ class CasADi(Simulator):
             action_init,
             system: Union[System, ComposedSystem],
         ):
-            """
-            Initialize a CasADiSolver object.
+            """Initialize a CasADiSolver object.
 
             :param integrator: A CasADi integrator object.
             :type integrator: casadi.integrator
@@ -243,9 +229,7 @@ class CasADi(Simulator):
             self.system = system
 
         def step(self):
-            """
-            Advance the solver by one step.
-            """
+            """Advance the solver by one step."""
             if self.time >= self.time_final:
                 raise RuntimeError("An attempt to step with a finished solver")
             state_new = np.squeeze(

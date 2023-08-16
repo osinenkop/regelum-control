@@ -14,15 +14,12 @@ import numpy as np
 import scipy as setpoint
 from scipy.optimize import minimize
 
-from rcognita.critic import Critic
-from rcognita.policy import Policy
-
 from .__utilities import rc, Clock
 from rcognita import RcognitaBase
 from .policy import Policy
 from .critic import Critic
-from .optimizable import Optimizable
-from typing import Union, Optional
+from typing import Optional, Union
+from .objective import RunningObjective
 from .data_buffers import DataBuffer
 
 
@@ -54,7 +51,6 @@ class Controller(RcognitaBase, ABC):
 
         :param time_start: time at which simulation started
         :param sampling_time: time interval between two consecutive actions
-        :param is_fixed_critic_weights: ...
         """
         super().__init__()
         self.controller_clock = time_start
@@ -93,17 +89,44 @@ class RLController(Controller):
         self,
         policy: Policy,
         critic: Critic,
-        running_objective,
+        running_objective: RunningObjective,
         critic_optimization_event: str,
         policy_optimization_event: str,
         data_buffer_nullify_event: str,
-        discount_factor=1.0,
-        is_critic_first=False,
-        action_bounds=None,
+        discount_factor: float = 1.0,
+        is_critic_first: bool = False,
+        action_bounds: Union[list, np.ndarray, None] = None,
         max_data_buffer_size: Optional[int] = None,
         time_start: float = 0,
         sampling_time: float = 0.1,
     ):
+        """Instantiate a RLController object.
+
+        :param policy: Policy object
+        :type policy: Policy
+        :param critic: Cricit
+        :type critic: Critic
+        :param running_objective: RunningObjective object
+        :type running_objective: RunningObjective
+        :param critic_optimization_event: moments when to optimize critic. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
+        :type critic_optimization_event: str
+        :param policy_optimization_event: moments when to optimize critic. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
+        :type policy_optimization_event: str
+        :param data_buffer_nullify_event: moments for DataBuffer nullifying. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
+        :type data_buffer_nullify_event: str
+        :param discount_factor: Discount factor. Used for computing total objective as discounted sum (or integral) of running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param is_critic_first: if is True then critic is optimized first then policy (can be usefull in DQN or Predictive Algorithms such as RPO, RQL, SQL). For `False` firstly is policy optimized then critic. defaults to False
+        :type is_critic_first: bool, optional
+        :param action_bounds: action bounds. Applied for every generated action as clip, defaults to None
+        :type action_bounds: Union[list, np.ndarray, None], optional
+        :param max_data_buffer_size: max size of DataBuffer, if is `None` the DataBuffer is unlimited. defaults to None
+        :type max_data_buffer_size: Optional[int], optional
+        :param time_start: time at which simulation started, defaults to 0
+        :type time_start: float, optional
+        :param sampling_time: time interval between two consecutive actions, defaults to 0.1
+        :type sampling_time: float, optional
+        """
         Controller.__init__(self, time_start=time_start, sampling_time=sampling_time)
 
         self.critic_optimization_event = critic_optimization_event
@@ -237,6 +260,8 @@ class RLController(Controller):
 
 
 class CALFControllerExPost(RLController):
+    """Controller for CALF algorithm."""
+
     def __init__(
         self,
         policy: Policy,
@@ -252,6 +277,33 @@ class CALFControllerExPost(RLController):
         time_start: float = 0,
         sampling_time: float = 0.1,
     ):
+        """Instantiate a CALFControllerExPost object. The docstring will be completed in the next release.
+
+        :param policy: Pol
+        :type policy: Policy
+        :param critic: _description_
+        :type critic: Critic
+        :param safe_controller: _description_
+        :type safe_controller: Controller
+        :param running_objective: _description_
+        :type running_objective: _type_
+        :param critic_optimization_event: _description_
+        :type critic_optimization_event: str
+        :param policy_optimization_event: _description_
+        :type policy_optimization_event: str
+        :param data_buffer_nullify_event: _description_
+        :type data_buffer_nullify_event: str
+        :param discount_factor: _description_, defaults to 1
+        :type discount_factor: int, optional
+        :param action_bounds: _description_, defaults to None
+        :type action_bounds: _type_, optional
+        :param max_data_buffer_size: _description_, defaults to None
+        :type max_data_buffer_size: Optional[int], optional
+        :param time_start: _description_, defaults to 0
+        :type time_start: float, optional
+        :param sampling_time: _description_, defaults to 0.1
+        :type sampling_time: float, optional
+        """
         super().__init__(
             policy=policy,
             critic=critic,
@@ -302,19 +354,20 @@ class CALFControllerExPost(RLController):
         )
 
         if self.is_first_compute_action_call:
+            self.critic.observation_last_good = observation
             self.invoke_safe_action(state, observation)
             self.is_first_compute_action_call = False
             self.step_counter += 1
             return self.policy.action
 
-        self.critic.optimize_on_event()
+        self.critic.optimize_on_event(self.data_buffer)
         critic_weights_accepted = self.critic.opt_status == "success"
         if critic_weights_accepted:
             self.critic.update_weights()
 
             # self.invoke_safe_action(observation)
 
-            self.policy.optimize_on_event()
+            self.policy.optimize_on_event(self.data_buffer)
             policy_weights_accepted = self.policy.opt_status == "success"
             if policy_weights_accepted:
                 self.policy.update_and_cache_weights()
@@ -323,9 +376,9 @@ class CALFControllerExPost(RLController):
                 self.update_data_buffer_with_action_stats(observation)
                 self.critic.cache_weights()
             else:
-                self.invoke_safe_action(observation)
+                self.invoke_safe_action(state, observation)
         else:
-            self.invoke_safe_action(observation)
+            self.invoke_safe_action(state, observation)
 
         self.step_counter += 1
         return self.policy.action
@@ -1435,11 +1488,7 @@ class ControllerCartPoleEnergyBased:
         self.system = system
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1570,7 +1619,6 @@ class ControllerLunarLanderPID:
 
     def compute_action_sampled(self, time, state, observation):
         """Compute sampled action."""
-
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1674,7 +1722,6 @@ class Controller2TankPID:
 
     def compute_action_sampled(self, time, state, observation):
         """Compute sampled action."""
-
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1860,7 +1907,6 @@ class Controller3WRobotNIDisassembledCLF:
 
     def compute_action_sampled(self, time, state, observation):
         """Compute sampled action."""
-
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1887,7 +1933,6 @@ class Controller3WRobotNIDisassembledCLF:
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
         """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
-
         xNI = self._Cart2NH(observation)
         kappa_val = self._kappa(xNI)
         uNI = self.controller_gain * kappa_val
@@ -1955,7 +2000,7 @@ class NominalControllerInvertedPendulum:
         self.clock.reset()
 
 
-class Controller3WRobotNIMotionPrimitive:
+class Controller3WRobotNIMotionPrimitive(Controller):
     """Controller for non-inertial three-wheeled robot composed of three PID controllers."""
 
     def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
@@ -1966,6 +2011,10 @@ class Controller3WRobotNIMotionPrimitive:
         :param sampling_time: time interval between two consecutive actions
         :param action_bounds: upper and lower bounds for action yielded from policy
         """
+        super().__init__(
+            sampling_time=sampling_time,
+            time_start=time_start,
+        )
         if action_bounds is None:
             action_bounds = []
 
@@ -1975,15 +2024,13 @@ class Controller3WRobotNIMotionPrimitive:
         self.sampling_time = sampling_time
         self.Ls = []
         self.times = []
-        self.action_old = rc.zeros(2)
-        self.clock = Clock(period=sampling_time, time_start=time_start)
         self.time_start = time_start
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
-        x = observation[0]
-        y = observation[1]
-        angle = observation[2]
+        x = observation[0, 0]
+        y = observation[0, 1]
+        angle = observation[0, 2]
 
         angle_cond = np.arctan2(y, x)
 
@@ -2000,7 +2047,7 @@ class Controller3WRobotNIMotionPrimitive:
             angle, angle_cond, atol=1e-03
         ):
             omega = 0
-            v = -self.K * rc.sqrt(rc.norm_2(rc.array([x, y])))
+            v = -self.K * rc.sqrt(rc.norm_2(rc.hstack([x, y])))
         elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
             angle, 0, atol=1e-03
         ):
@@ -2010,32 +2057,7 @@ class Controller3WRobotNIMotionPrimitive:
             omega = 0
             v = 0
 
-        return rc.array([v, omega])
-
-    def compute_action_sampled(self, time, state, observation):
-        """Compute sampled action."""
-
-        is_time_for_new_sample = self.clock.check_time(time)
-
-        if is_time_for_new_sample:  # New sample
-            # Update __internal clock
-            self.controller_clock = time
-
-            action = self.compute_action(state, observation)
-            self.times.append(time)
-            self.action_old = action
-            return action
-
-        else:
-            return self.action_old
-
-    def reset(self):
-        self.controller_clock = self.time_start
-        self.Ls = []
-        self.times = []
-
-    def compute_LF(self, observation):
-        pass
+        return rc.force_row(rc.hstack([v, omega]))
 
 
 class ControllerKinPoint:
@@ -2068,7 +2090,6 @@ class ControllerKinPoint:
 
     def compute_action_sampled(self, time, state, observation):
         """Compute sampled action."""
-
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample

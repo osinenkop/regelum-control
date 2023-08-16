@@ -1,3 +1,5 @@
+"""Contains DataBuffer class."""
+
 try:
     import torch
     from torch.utils.data import Sampler
@@ -19,10 +21,22 @@ from ..optimizable import OptimizerConfig
 
 
 class DataBuffer:
+    """DataBuffer class for storing run data.
+
+    DataBuffer is a container for storing run data: observations, actions,
+    running objectives, iteration ids, episode ids, step ids. It is designed to store any
+    data of numeric format.
+    """
+
     def __init__(
         self,
         max_buffer_size: Optional[int] = None,
     ):
+        """Instantiate a DataBuffer.
+
+        :param max_buffer_size: maximum size of the buffer. If None the DataBuffer is not limited in size, defaults to None
+        :type max_buffer_size: Optional[int], optional
+        """
         self.max_buffer_size = max_buffer_size
         self.nullify_buffer()
 

@@ -1,3 +1,5 @@
+"""Module contains a set of standard hooks for optimizable objects."""
+
 import rcognita
 from typing import Callable, List
 from types import GeneratorType

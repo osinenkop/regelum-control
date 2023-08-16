@@ -41,7 +41,11 @@ import rcognita
 
 
 class Optimizable(rcognita.RcognitaBase):
-    """Base class for all optimizable objects."""
+    """Base class for all optimizable objects.
+
+    This class is to be used normally as a parent class for all objects that need to be optimized.
+    However, you can also use it as a separate instance and use all methods outside of the `Optimizable` class.
+    """
 
     def __init__(self, optimizer_config: OptimizerConfig) -> None:
         """Initialize an optimizable object."""
@@ -746,129 +750,3 @@ class Optimizable(rcognita.RcognitaBase):
             return kwargs.get("n_samples") if kwargs.get("n_samples") is not None else 1
         else:
             raise ValueError("Unknown data_buffer_sampling_method")
-
-
-class TorchProjectiveOptimizer:
-    """Optimizer class that uses PyTorch as its optimization engine."""
-
-    engine = "Torch"
-
-    def __init__(
-        self,
-        bounds,
-        opt_options,
-        prediction_horizon=0,
-        iterations=1,
-        opt_method=None,
-        verbose=False,
-    ):
-        """Initialize an instance of TorchOptimizer.
-
-        :param opt_options: Options for the PyTorch optimizer.
-        :type opt_options: dict
-        :param iterations: Number of iterations to optimize the model.
-        :type iterations: int
-        :param opt_method: PyTorch optimizer class to use. If not provided, Adam is used.
-        :type opt_method: torch.optim.Optimizer
-        :param verbose: Whether to print optimization progress.
-        :type verbose: bool
-        """
-        self.bounds = bounds
-        if opt_method is None:
-            opt_method = torch.optim.Adam
-        self.opt_method = opt_method
-        self.opt_options = opt_options
-        self.iterations = iterations
-        self.verbose = verbose
-        self.loss_history = []
-        self.action_size = self.bounds[:, 1].shape[0]
-        self.upper_bound = torch.squeeze(
-            torch.tile(torch.tensor(self.bounds[:, 1]), (1, prediction_horizon + 1))
-        )
-
-    def optimize(self, *model_input, objective, model):
-        """Optimize the model with the given objective.
-
-        :param objective: Objective function to optimize.
-        :type objective: callable
-        :param model: Model to optimize.
-        :type model: torch.nn.Module
-        :param model_input: Inputs to the model.
-        :type model_input: torch.Tensor
-        """
-        optimizer = self.opt_method([model_input[0]], **self.opt_options)
-        # optimizer.zero_grad()
-
-        for _ in range(self.iterations):
-            optimizer.zero_grad()
-            loss = objective(*model_input)
-            # loss_before = loss.detach().numpy()
-            loss.backward()
-            optimizer.step()
-            for param in [model_input[0]]:
-                param.requires_grad = False
-                param /= self.upper_bound
-                param.clamp_(-1, 1)
-                param *= self.upper_bound
-                param.requires_grad = True
-            # optimizer.zero_grad()
-            # loss_after = objective(*model_input).detach().numpy()
-            # print(loss_before - loss_after)
-            if self.verbose:
-                print(objective(*model_input))
-        # self.loss_history.append([loss_before, loss_after])
-        model.weights = torch.nn.Parameter(model_input[0][: self.action_size])
-        return model_input[0]
-
-
-class BruteForceOptimizer:
-    """Optimizer that searches for the optimal solution by evaluating all possible variants in parallel."""
-
-    engine = "bruteforce"
-
-    def __init__(self, possible_variants, N_parallel_processes=0):
-        """Initialize an instance of BruteForceOptimizer.
-
-        :param N_parallel_processes: number of processes to use in parallel
-        :type N_parallel_processes: int
-        :param possible_variants: list of possible variants to evaluate
-        :type possible_variants: list
-        """
-        self.N_parallel_processes = N_parallel_processes
-        self.possible_variants = possible_variants
-
-    def element_wise_maximization(self, x):
-        """Find the variant that maximizes the reward for a given element.
-
-        :param x: element to optimize
-        :type x: tuple
-        :return: variant that maximizes the reward
-        :rtype: int
-        """
-
-        def reward_function(variant):
-            return self.objective(variant, x)
-
-        reward_function = np.vectorize(reward_function)
-        values = reward_function(self.possible_variants)
-        return self.possible_variants[np.argmax(values)]
-
-    def optimize(self, objective, weights):
-        """Maximize the objective function over the possible variants.
-
-        :param objective: The objective function to maximize.
-        :type objective: Callable
-        :param weights: The weights to optimize.
-        :type weights: np.ndarray
-        :return: The optimized weights.
-        :rtype: np.ndarray
-        """
-        self.weights = weights
-        self.objective = objective
-        indices = tuple(
-            [(i, j) for i in range(weights.shape[0]) for j in range(weights.shape[1])]
-        )
-        for x in indices:
-            self.weights[x] = self.element_wise_maximization(x)
-
-        return self.weights

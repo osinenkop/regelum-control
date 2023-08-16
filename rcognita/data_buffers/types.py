@@ -1,3 +1,6 @@
+"""Contains type prototyping for DataBuffers."""
+
+
 try:
     import torch
 except ImportError:

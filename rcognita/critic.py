@@ -8,30 +8,23 @@ Remarks:
 
 """
 
-import rcognita
-
-
+from unittest.mock import MagicMock
 import numpy as np
-from .__utilities import rc, NUMPY, CASADI, TORCH, Clock
+from .__utilities import rc
 from abc import ABC
-import scipy as sp
-import random
 from .optimizable import Optimizable
 from .objective import temporal_difference_objective
 
 try:
     import torch
 except (ModuleNotFoundError, ImportError):
-    from unittest.mock import MagicMock
-
     torch = MagicMock()
 
-from .model import ModelWeightContainer
 from .model import Model, ModelNN
-from .objective import Objective
 from typing import Optional, Union, List
 from .optimizable import OptimizerConfig
 from .data_buffers import DataBuffer
+from .system import System, ComposedSystem
 
 
 class Critic(Optimizable, ABC):
@@ -44,7 +37,7 @@ class Critic(Optimizable, ABC):
 
     def __init__(
         self,
-        system,
+        system: Union[System, ComposedSystem],
         model: Union[Model, ModelNN],
         td_n: int = 1,
         device: Union[str, torch.device] = "cpu",
@@ -59,18 +52,30 @@ class Critic(Optimizable, ABC):
     ):
         """Initialize a critic object.
 
-        :param optimizer: Optimizer to use for training the critic
-        :type optimizer: Optional[Optimizer]
+        :param system: system environmen that is used in RL problem. The system is mainly used for extraction of `dim_observation` and `dim_action`
+        :type system: Union[System, ComposedSystem]
         :param model: Model to use for the critic
-        :type model: Optional[Model]
-        :param running_objective: Objective function to use for the critic
-        :type running_objective: Optional[Objective]
-        :param discount_factor: Discount factor to use in the value calculation
-        :type discount_factor: float
-        :param sampling_time: Sampling time for the critic
-        :type sampling_time: float
-        :param critic_regularization_param: Regularization parameter for the critic
-        :type critic_regularization_param: float
+        :type model: Union[Model, ModelNN]
+        :param td_n: How many running_objective terms to use for temporal difference, defaults to 1
+        :type td_n: int, optional
+        :param device: Device to use for optimization, defaults to "cpu"
+        :type device: Union[str, torch.device], optional
+        :param is_same_critic: whether to use the undetached critic in temporal difference loss, defaults to False
+        :type is_same_critic: bool, optional
+        :param is_value_function: whether critis is Value function (i.e. depends on observation only) or Q-function (i.e. depends on observation and action). For `True` the critic is Value function. For `False` the critic is Q-function, defaults to False
+        :type is_value_function: bool, optional
+        :param is_on_policy: whether critic is on policy or off policy optimized, defaults to False
+        :type is_on_policy: bool, optional
+        :param optimizer_config: optimizer configuration, defaults to None
+        :type optimizer_config: Optional[OptimizerConfig], optional
+        :param action_bounds: action bounds. Needed for DQN algorithm for constraint optimization problem, defaults to None
+        :type action_bounds: Optional[Union[List, np.array]], optional
+        :param size_mesh: action grid mesh size, needed for DQN algorithm for constraint optimization problem, defaults to None
+        :type size_mesh: Optional[int], optional
+        :param discount_factor: discount factor to use in temporal difference loss, defaults to 1.0
+        :type discount_factor: float, optional
+        :param sampling_time: controller sampling time. Needed in temporal difference loos, defaults to 0.01
+        :type sampling_time: float, optional
         """
         Optimizable.__init__(self, optimizer_config=optimizer_config)
 
@@ -150,7 +155,7 @@ class Critic(Optimizable, ABC):
         self.current_critic_loss = 0
 
     def initialize_optimize_procedure(self):
-        batch_size = self.get_data_buffer_batch_size()
+        self.batch_size = self.get_data_buffer_batch_size()
         (
             self.running_objective_var,
             self.observation_var,
@@ -161,30 +166,30 @@ class Critic(Optimizable, ABC):
             self.critic_stored_weights_var,
         ) = (
             self.create_variable(
-                batch_size,
+                self.batch_size,
                 1,
                 name="running_objective",
                 is_constant=True,
             ),
             self.create_variable(
-                batch_size,
+                self.batch_size,
                 self.system.dim_observation,
                 name="observation",
                 is_constant=True,
             ),
             self.create_variable(
-                batch_size,
+                self.batch_size,
                 self.system.dim_observation + self.system.dim_inputs,
                 name="observation_action",
                 is_constant=True,
             ),
             self.create_variable(
-                batch_size,
+                self.batch_size,
                 1,
                 name="critic_targets",
                 is_constant=True,
             ),
-            self.create_variable(batch_size, 1, name="critic_model_output"),
+            self.create_variable(self.batch_size, 1, name="critic_model_output"),
             self.create_variable(
                 name="critic_weights",
                 like=self.model.named_parameters,
@@ -339,8 +344,7 @@ class CriticTrivial(Critic):
     """A mocked Critic object."""
 
     def __init__(self, *args, **kwargs):
-        from unittest.mock import MagicMock
-
+        """Instantiate a CriticTrivial object."""
         self.model = MagicMock()
 
     def optimize_on_event(self, *args, **kwargs):
@@ -361,6 +365,8 @@ class CriticTrivial(Critic):
 
 
 class CriticCALF(Critic):
+    """Critic for CALF algorithm."""
+
     def __init__(
         self,
         system,
@@ -372,7 +378,6 @@ class CriticCALF(Critic):
         is_value_function: bool = False,
         is_on_policy: bool = False,
         optimizer_config: Optional[OptimizerConfig] = None,
-        size_mesh: Optional[int] = None,
         discount_factor: float = 1.0,
         sampling_time: float = 0.01,
         ######
@@ -382,17 +387,40 @@ class CriticCALF(Critic):
         lb_parameter=1e-6,
         ub_parameter=1e3,
     ):
-        """Initialize a CriticCALF object.
+        """Instantiate a CriticCALF object. The docstring will be completed in the next release.
 
-        :param args: Arguments to be passed to the base class `CriticOfObservation`.
-        :param safe_decay_param: Rate at which the safe set shrinks over time.
-        :param is_dynamic_decay_rate: Whether the decay rate should be dynamic or not.
-        :param predictor: A predictor object to be used to predict future observations.
-        :param observation_init: Initial observation to be used to initialize the safe set.
-        :param safe_controller: Safe controller object to be used to compute stabilizing actions.
-        :param penalty_param: Penalty parameter to be used in the CALF objective.
-        :param is_predictive: Whether the safe constraints should be computed based on predictions or not.
-        :param kwargs: Keyword arguments to be passed to the base class `CriticOfObservation`.
+        :param system: _description_
+        :type system: _type_
+        :param model: _description_
+        :type model: Union[Model, ModelNN]
+        :param td_n: _description_, defaults to 1
+        :type td_n: int, optional
+        :param device: _description_, defaults to "cpu"
+        :type device: Union[str, torch.device], optional
+        :param predictor: _description_, defaults to None
+        :type predictor: Optional[Model], optional
+        :param is_same_critic: _description_, defaults to False
+        :type is_same_critic: bool, optional
+        :param is_value_function: _description_, defaults to False
+        :type is_value_function: bool, optional
+        :param is_on_policy: _description_, defaults to False
+        :type is_on_policy: bool, optional
+        :param optimizer_config: _description_, defaults to None
+        :type optimizer_config: Optional[OptimizerConfig], optional
+        :param discount_factor: _description_, defaults to 1.0
+        :type discount_factor: float, optional
+        :param sampling_time: _description_, defaults to 0.01
+        :type sampling_time: float, optional
+        :param safe_decay_param: _description_, defaults to 1e-3
+        :type safe_decay_param: _type_, optional
+        :param is_dynamic_decay_rate: _description_, defaults to True
+        :type is_dynamic_decay_rate: bool, optional
+        :param safe_controller: _description_, defaults to None
+        :type safe_controller: _type_, optional
+        :param lb_parameter: _description_, defaults to 1e-6
+        :type lb_parameter: _type_, optional
+        :param ub_parameter: _description_, defaults to 1e3
+        :type ub_parameter: _type_, optional
         """
         super().__init__(
             system=system,
@@ -403,7 +431,6 @@ class CriticCALF(Critic):
             is_value_function=is_value_function,
             is_on_policy=is_on_policy,
             optimizer_config=optimizer_config,
-            size_mesh=size_mesh,
             discount_factor=discount_factor,
             sampling_time=sampling_time,
             action_bounds=None,
@@ -417,10 +444,9 @@ class CriticCALF(Critic):
         self.lb_parameter = lb_parameter
         self.ub_parameter = ub_parameter
         self.safe_controller = safe_controller
-        self.observation_last_good = self.observation_init
 
         self.observation_last_good_var = self.create_variable(
-            1,
+            self.batch_size,
             self.system.dim_observation,
             name="observation_last_good",
             is_constant=True,

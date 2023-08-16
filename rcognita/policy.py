@@ -43,12 +43,11 @@ except ImportError:
 class Policy(Optimizable, ABC):
     """Class of policies.
     These are to be passed to a `controller`.
-    An `objective` (a loss) as well as an `optimizer` are passed to an `policy` externally.
     """  # noqa: D205
 
     def __init__(
         self,
-        model,
+        model: Union[Model, ModelNN],
         system: Union[System, ComposedSystem] = None,
         predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
@@ -58,31 +57,26 @@ class Policy(Optimizable, ABC):
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
     ):
-        """Initialize an policy.
+        """Initialize an instance of Policy class.
 
-        :param prediction_horizon: Number of time steps to look into the future.
-        :type prediction_horizon: int
-        :param dim_observation: Dimension of the observation.
-        :type dim_observation: int
-        :param dim_action: Dimension of the action.
-        :type dim_action: int
-        :param action_bounds: Bounds on the action.
-        :type action_bounds: list or ndarray, optional
-        :param predictor: Predictor object for generating predictions.
-        :type predictor: Predictor, optional
-        :param optimizer: Optimizer object for optimizing the action.
-        :type optimizer: Optimizer, optional
-        :param critic: Critic object for evaluating actions.
-        :type critic: Critic, optional
-        :param running_objective: Running objective object for recording
-        the running objective.
-        :type running_objective: RunningObjective, optional
-        :param model: Model object to be used as reference by the Predictor
-        and the Critic.
-        :type model: Model, optional
-        :param discount_factor: discount factor to be used in conjunction with
-        the critic.
-        :type discount_factor: float, optional
+        :param model: Policy model.
+        :type model: Union[Model, ModelNN]
+        :param system: Agent environment, defaults to None
+        :type system: Union[System, ComposedSystem], optional
+        :param predictor: _description_, defaults to None
+        :type predictor: Optional[Predictor], optional
+        :param action_bounds: Bounds for the action., defaults to None
+        :type action_bounds: Union[list, np.ndarray, None], optional
+        :param action_init: _description_, defaults to None
+        :type action_init: _type_, optional
+        :param optimizer_config: Configuration of the optimization procedure, defaults to None
+        :type optimizer_config: Optional[OptimizerConfig], optional
+        :param discount_factor: _description_, defaults to 1.0
+        :type discount_factor: Optional[float], optional
+        :param epsilon_random: _description_, defaults to False
+        :type epsilon_random: bool, optional
+        :param epsilon_random_parameter: _description_, defaults to 0.0
+        :type epsilon_random_parameter: float, optional
         """
         self.system = system
         self.model = model
@@ -502,7 +496,7 @@ class SDPG(PolicyGradient):
         :type action_bounds: Union[list, np.ndarray, None]
         :param optimizer_config: Configuration of the optimization procedure.
         :type optimizer_config: OptimizerConfig
-        :param discount_factor: Discount factor for discounting future running objectives, defaults to 1.0
+        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
         :type discount_factor: float, optional
         :param device: Device to proceed the optimization process, defaults to "cpu"
         :type device: str, optional
@@ -555,6 +549,23 @@ class DDPG(PolicyGradient):
         discount_factor: float = 1.0,
         device: str = "cpu",
     ):
+        """Instantiate DDPG class.
+
+        :param model: Policy Model.
+        :type model: ModelNN
+        :param critic: Critic object that is optmized via temporal difference objective.
+        :type critic: Critic
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Action bounds for the Agent.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: Configuration of the optimization procedure.
+        :type optimizer_config: OptimizerConfig
+        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Device to proceed the optimization process, defaults to "cpu"
+        :type device: str, optional
+        """
         PolicyGradient.__init__(
             self,
             model=model,
@@ -587,9 +598,11 @@ class DDPG(PolicyGradient):
 
 
 class RLPolicy(Policy):
+    """Base class for policies in online RL algorithms."""  # noqa: D205
+
     def __init__(
         self,
-        model: ModelNN,
+        model: Union[ModelNN, Model],
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
@@ -599,6 +612,27 @@ class RLPolicy(Policy):
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
     ):
+        """Initialize RLPolicy class.
+
+        :param model: Policy model.
+        :type model: Union[ModelNN, Model]
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Bounds for the action.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: Configuration of the optimization procedure.
+        :type optimizer_config: OptimizerConfig
+        :param critic: Critic object that is optmized via temporal difference objective in cases of value-based learning algorithms.
+        :type critic: Critic
+        :param discount_factor:  Discounting factor for control problems, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Keyword argument specifying the device for torch (tensor) optimization . Defaults to "cpu".
+        :type device: str, optional
+        :param epsilon_random: If set to True, policy becomes epsilon-greedy with probability epsilon_random_parameter. Defaults to False.
+        :type epsilon_random: bool, optional
+        :param epsilon_random_parameter: Probability of taking a random action during epsilon-greedy policy update phase. Defaults to 0.0.
+        :type epsilon_random_parameter: float, optional
+        """
         Policy.__init__(
             self,
             model=model,
@@ -671,9 +705,11 @@ class RLPolicy(Policy):
 
 
 class RLPolicyPredictive(Policy):
+    """Class for with Predictive Control algorithms."""
+
     def __init__(
         self,
-        model: ModelNN,
+        model: Union[ModelNN, Model],
         critic: Critic,
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
@@ -686,6 +722,33 @@ class RLPolicyPredictive(Policy):
         epsilon_random_parameter: float = 0.0,
         algorithm: str = "mpc",
     ):
+        """Initialize an instance of RLPolicyPredictive class.
+
+        :param model: Model for predictive policy
+        :type model: Union[ModelNN, Model]
+        :param critic: Critic for predictive policy (Can be used either Value or Action-Value critic variants)
+        :type critic: Critic
+        :param system:  a.k.a. environment. A class that represents the environment and contains dimensions of action and state space.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Bounds of actions represented by a list or numpy array, where first column is a minimal action and second column is a maximal action
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: A config for Optimizable
+        :type optimizer_config: OptimizerConfig
+        :param predictor: Predictor utilizing by policy to obtain a sequence of predictions.
+        :type predictor: Predictor
+        :param running_objective: Running objective of the control problem.
+        :type running_objective: Objective
+        :param discount_factor: Discounting factor for control problem. Defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Keyword argument specifying the device for torch (tensor) optimization. Defaults to "cpu"
+        :type device: str, optional
+        :param epsilon_random: If set to True, policy becomes epsilon-greedy with probability epsilon_random_parameter. Defaults to False
+        :type epsilon_random: bool, optional
+        :param epsilon_random_parameter: Probability of taking a random action during epsilon-greedy policy update phase. Defaults to 0.0
+        :type epsilon_random_parameter: float, optional
+        :param algorithm: Specifying the algorithm to which policy belongs and which objective function to optimize. Defaults to "mpc".
+        :type algorithm: str, optional
+        """
         Policy.__init__(
             self,
             model=model,
@@ -840,7 +903,7 @@ class CALF(RLPolicyPredictive):
         self.model.update_and_cache_weights(safe_action)
 
     def CALF_decay_constraint_for_policy(self, weights=None):
-        """Constraint for thepolicy optimization, ensuring that the critic value will not decrease by less than the required decay rate.
+        """Constraint for the policy optimization, ensuring that the critic value will not decrease by less than the required decay rate.
 
         :param weights:policy weights to be evaluated
         :type weights: numpy.ndarray

@@ -121,17 +121,37 @@ class Model(rcognita.RcognitaBase, ABC):
 
 
 class ModelQuadLin(Model):
+    """Base class for generic quadratic linear models.
+
+    Normally used for running objective specification (diagonal quadratic matrix without linear terms) and critic polynomial models.
+    """
+
     model_name = "ModelQuadLin"
 
     def __init__(
         self,
         quad_matrix_type: str,
-        is_with_linear_terms=False,
-        dim_inputs=None,
-        weights=None,
-        weight_min=1.0e-6,
-        weight_max=1.0e3,
+        is_with_linear_terms: bool = False,
+        dim_inputs: int = None,
+        weights: np.array = None,
+        weight_min: float = 1.0e-6,
+        weight_max: float = 1.0e3,
     ):
+        """Initialize an instance of quadratic-linear model.
+
+        :param quad_matrix_type: Type of quadratic matrix. Can be 'diagonal', 'full' or 'symmetric'.
+        :type quad_matrix_type: str
+        :param is_with_linear_terms: Whether include linear terms or not, defaults to False
+        :type is_with_linear_terms: bool, optional
+        :param dim_inputs: Dimension of system's (agent's) inputs, defaults to None
+        :type dim_inputs: int, optional
+        :param weights: Manual set of model weights, defaults to None
+        :type weights: _type_, optional
+        :param weight_min: Lower bound for weights, defaults to 1.0e-6
+        :type weight_min: float, optional
+        :param weight_max: Upper bound for weights, defaults to 1.0e3
+        :type weight_max: float, optional
+        """
         assert (
             dim_inputs is not None or weights is not None
         ), "Need dim_inputs or weights"
@@ -313,43 +333,6 @@ class ModelQuadLin(Model):
         return output
 
 
-class ModelQuadLinQuad(Model):
-    """Quadratic-linear model."""
-
-    model_name = "quad-lin"
-
-    def __init__(
-        self,
-        dim_input,
-        single_weight_min=1e-6,
-        single_weight_max=1e2,
-        force_positive_def=True,
-    ):
-        self.dim_weights = int((dim_input + 1) * dim_input / 2 + dim_input) + dim_input
-        self.dim_input = dim_input
-        self.weight_min = single_weight_min * rc.ones(self.dim_weights)
-        self.weight_max = single_weight_max * rc.ones(self.dim_weights)
-        self.weights_init = (self.weight_min + self.weight_max) / 20.0
-        self.weights = self.weights_init
-        self.force_positive_def = force_positive_def
-        self.update_and_cache_weights(self.weights)
-
-    @force_positive_def
-    def forward(self, *argin, weights=None):
-        if len(argin) > 1:
-            vec = rc.concatenate(tuple(argin))
-        else:
-            vec = argin[0]
-
-        polynom = rc.uptria2vec(rc.outer(vec, vec))
-        polynom = rc.concatenate([polynom, vec])
-        result = (rc.abs(rc.dot(weights[: -self.dim_input], polynom)) + 1) * rc.sqrt(
-            rc.dot(weights[-self.dim_input :], vec**2)
-        )
-
-        return result
-
-
 class ModelWeightContainer(Model):
     """Trivial model, which is typically used in actor in which actions are being optimized directly."""
 
@@ -489,6 +472,8 @@ class WeightClipper:
 
 
 class ModelPerceptron(ModelNN):
+    """Helper class to ease the creation of perceptron models."""
+
     def __init__(
         self,
         dim_input: int,
@@ -503,6 +488,31 @@ class ModelPerceptron(ModelNN):
         weight_min: Optional[float] = None,
         weights=None,
     ):
+        """Initialize an instance of a fully-connected model.
+
+        :param dim_input: dimension of model's input
+        :type dim_input: int
+        :param dim_output: dimension of model's output
+        :type dim_output: int
+        :param dim_hidden: number of neurons in hidden layers
+        :type dim_hidden: int
+        :param n_hidden_layers: number of hidden layers
+        :type n_hidden_layers: int
+        :param leaky_relu_coef: Leaky ReLU coefficient, defaults to 0.15
+        :type leaky_relu_coef: float, optional
+        :param force_positive_def: Whether to force positive definiteness of model through soft abs function, defaults to False
+        :type force_positive_def: bool, optional
+        :param is_force_infinitesimal: Make model equal to zero in the origin, defaults to False
+        :type is_force_infinitesimal: bool, optional
+        :param is_bias: Add bias, defaults to True
+        :type is_bias: bool, optional
+        :param weight_max: Upper bound for weights, defaults to None
+        :type weight_max: Optional[float], optional
+        :param weight_min: Lower bound for weights, defaults to None
+        :type weight_min: Optional[float], optional
+        :param weights: Pass weights manually with state_dict of torch module, defaults to None
+        :type weights: _type_, optional
+        """
         ModelNN.__init__(self)
         self.weight_clipper = WeightClipper(weight_min, weight_max)
         self.dim_input = dim_input
