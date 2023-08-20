@@ -22,6 +22,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Backup folder
+bak/
+
 # Distribution / packaging
 .Python
 devscripts/
