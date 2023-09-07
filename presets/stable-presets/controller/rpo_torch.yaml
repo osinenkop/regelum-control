@@ -1,0 +1,37 @@
+_target_: regelum.controller.RLController
+
+name%%: rpo_torch
+
+defaults:
+  - policy: policy_rpo_torch
+  - critic: critic
+
+action_bounds: $ system_specific.action_bounds
+sampling_time: $ system_specific.sampling_time
+is_critic_first: True 
+running_objective: ~ running_objective
+discount_factor: $ scenario.discount_factor
+policy_optimization_event: compute_action
+data_buffer_nullify_event: reset_episode
+critic_optimization_event: compute_action
+
+policy:
+  predictor:
+    prediction_horizon: 2
+
+critic:
+  is_on_policy: True
+  is_value_function: True
+  optimizer_config:
+    opt_options: 
+      lr: 3.0E-4
+    config_options:
+      n_epochs: 5
+      is_reinstantiate_optimizer: False
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs: 
+        batch_sampler: = regelum.data_buffers.batch_sampler.RollingBatchSampler
+        dtype: = torch.FloatTensor
+        batch_size: 20
+        n_batches: 1
+        mode: backward

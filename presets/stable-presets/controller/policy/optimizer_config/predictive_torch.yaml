@@ -1,0 +1,14 @@
+_target_: regelum.OptimizerConfig
+
+kind: tensor
+opt_method: = torch.optim.Adam
+opt_options: 
+  lr: 0.1
+config_options:
+  n_epochs: 10
+  data_buffer_sampling_method: iter_batches 
+  data_buffer_sampling_kwargs:
+    dtype: = torch.FloatTensor
+    batch_size: 1
+    n_batches: 1
+    mode: backward
