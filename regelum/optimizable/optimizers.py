@@ -147,10 +147,6 @@ class Optimizable(regelum.RegelumBase):
                 self.__opti.subject_to(metafunc <= 0)
 
     @property
-    def opti(self):
-        return self.__opti
-
-    @property
     def objective(self):
         assert len(self.objectives) == 1, "Ambiguous objective definition."
         return self.objectives[0]
