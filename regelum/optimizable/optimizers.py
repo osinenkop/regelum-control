@@ -280,7 +280,7 @@ class Optimizable(regelum.RegelumBase):
         if self.kind == "tensor":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
-                new_variable.register_hook(data_closure(like), act_on="data")
+                #new_variable.register_hook(data_closure(like), act_on="data")
                 new_variable.register_hook(metadata_closure(like), act_on="metadata")
 
         self.__variables = self.__variables + new_variable
@@ -692,7 +692,7 @@ class Optimizable(regelum.RegelumBase):
             dvar = vars_to_opt[0]
             assert dvar is not None, "Couldn't find decision variable"
             assert isinstance(dvar, OptimizationVariable), "Something went wrong..."
-            self.optimizer = self.opt_method(dvar(), **self.__opt_options)
+            self.optimizer = self.opt_method(dvar(with_metadata=True), **self.__opt_options)
         n_epochs = options.get("n_epochs") if options.get("n_epochs") is not None else 1
         assert isinstance(n_epochs, int), "n_epochs must be an integer"
         assert len(self.functions.objectives) == 1, "Only one objective is supported"

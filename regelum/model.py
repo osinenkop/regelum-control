@@ -207,6 +207,8 @@ class ModelQuadLin(Model):
         self.dim_weights = self.dim_quad + self.dim_linear
 
     def cast_to_inputs_type(self, value, inputs):
+        if value is None:
+            return None
         if isinstance(inputs, torch.Tensor):
             device = inputs.device
             if not isinstance(value, torch.Tensor):
@@ -567,7 +569,7 @@ class ModelWeightContainerTorch(ModelNN):
 
     def __init__(
         self,
-        dim_weights: int,
+        dim_weights: Union[int, Tuple[int, int]],
         output_bounds: Optional[List[Any]] = None,
         output_bounding_type: str = "clip",
     ):
@@ -587,7 +589,10 @@ class ModelWeightContainerTorch(ModelNN):
             BoundsHandler(output_bounds) if output_bounds is not None else None
         )
         self.output_bounding_type = output_bounding_type
-        self.dim_weights = dim_weights
+
+        self.dim_weights = (
+            (1, dim_weights) if isinstance(dim_weights, int) else dim_weights
+        )
         self.model_weights_parameter = torch.nn.Parameter(
             torch.FloatTensor(torch.zeros(self.dim_weights)),
             requires_grad=True,
@@ -602,10 +607,15 @@ class ModelWeightContainerTorch(ModelNN):
                 with torch.no_grad():
                     self.model_weights_parameter.clip_(-1.0, 1.0)
 
-        if len(inputs.shape) == 2:
-            inputs_like = torch.tile(self.model_weights_parameter, (inputs.shape[0], 1))
-        elif len(inputs.shape) == 1:
-            inputs_like = self.model_weights_parameter
+        if len(inputs.shape) == 1:
+            inputs_like = self.model_weights_parameter[0, :]
+        elif len(inputs.shape) == 2:
+            if inputs.shape[0] <= self.dim_weights[0]:
+                inputs_like = self.model_weights_parameter[: inputs.shape[0], :]
+            else:
+                raise ValueError(
+                    f"ModelWeightContainerTorch: Wrong inputs shape! inputs.shape[0] (Got: {inputs.shape[0]}) should be <= dim_weights[0] (Got: {self.dim_weights[0]})."
+                )
         else:
             raise ValueError("Wrong inputs shape! Can be either 1 or 2")
 

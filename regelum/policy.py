@@ -756,7 +756,19 @@ class RLPolicyPredictive(Policy):
         self.running_objective = running_objective
         self.algorithm = algorithm
         self.initialize_optimization_procedure()
+        # self.initialize_generic_optimization_procedure()
         self.initial_guess = None
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return ["observation"]
+
+    def initialize_generic_optimization_procedure(self):
+        pass
+
+    def generic_objective_function(
+        self, observation, policy_model_output, critic_weights=None
+    ):
+        pass
 
     def initialize_optimization_procedure(self):
         objective_variables = []
@@ -776,6 +788,16 @@ class RLPolicyPredictive(Policy):
                 _force_numeric=True,
             ),
         )
+        if self.kind == "tensor":
+            self.policy_model_output.register_hook(
+                lambda named_parameters: [
+                    el
+                    for el in named_parameters()
+                    if el[0] == "model_weights_parameter"
+                ][0][1],
+                act_on="data",
+                first=True,
+            )
         objective_variables.append(self.policy_model_output)
         if self.critic is not None:
             self.critic_weights = self.create_variable(
@@ -789,9 +811,6 @@ class RLPolicyPredictive(Policy):
             self.objective_function,
             variables=objective_variables,
         )
-
-    def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation"]
 
     def objective_function(self, observation, policy_model_output, critic_weights=None):
         if self.algorithm == "mpc":
@@ -835,21 +854,24 @@ class RLPolicyPredictive(Policy):
         )
 
         if opt_kwargs is not None:
-            result = (
-                self.optimize(
-                    **opt_kwargs,
-                    policy_model_output=self.get_initial_guess(),
-                    tol=1e-8,
+            if self.kind == "symbolic":
+                result = (
+                    self.optimize(
+                        **opt_kwargs,
+                        policy_model_output=self.get_initial_guess(),
+                        tol=1e-8,
+                    )
+                    if self.critic.weights is None
+                    else self.optimize(
+                        **opt_kwargs,
+                        policy_model_output=self.get_initial_guess(),
+                        critic_weights=self.critic.weights,
+                        tol=1e-8,
+                    )
                 )
-                if self.critic.weights is None
-                else self.optimize(
-                    **opt_kwargs,
-                    policy_model_output=self.get_initial_guess(),
-                    critic_weights=self.critic.weights,
-                    tol=1e-8,
-                )
-            )
-            self.update_weights(result["policy_model_output"])
+                self.update_weights(result["policy_model_output"])
+            elif self.kind == "tensor":
+                self.optimize(**opt_kwargs)
 
     def get_initial_guess(self):
         return self.model.weights

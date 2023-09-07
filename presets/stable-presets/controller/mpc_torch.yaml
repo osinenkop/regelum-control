@@ -1,0 +1,20 @@
+_target_: regelum.controller.RLController
+
+name%%: mpc_torch
+
+defaults:
+  - policy: policy_mpc_torch
+  - critic: critic_trivial
+
+action_bounds: $ system_specific.action_bounds
+sampling_time: $ system_specific.sampling_time
+is_critic_first: True 
+running_objective: ~ running_objective
+discount_factor: $ scenario.discount_factor
+policy_optimization_event: compute_action
+data_buffer_nullify_event: reset_episode
+critic_optimization_event: compute_action
+
+policy:
+  predictor:
+    prediction_horizon: 2
