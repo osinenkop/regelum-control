@@ -22,6 +22,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Backup folder
+bak/
+
 # Distribution / packaging
 .Python
 devscripts/
@@ -169,7 +172,5 @@ multirun
 *mlruns*
 *.h5
 *.json
-
-docsrc/*
 
 *.envrc

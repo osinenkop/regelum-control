@@ -1,0 +1,82 @@
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = *.hosting.reg.ru
+   i:C = BE, O = GlobalSign nv-sa, CN = AlphaSSL CA - SHA256 - G4
+   a:PKEY: rsaEncryption, 4096 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Jan 12 11:13:41 2023 GMT; NotAfter: Feb 13 11:13:40 2024 GMT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIHTzCCBjegAwIBAgIMFSLPYgYmEmUMPq3HMA0GCSqGSIb3DQEBCwUAMEwxCzAJ
+BgNVBAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMSIwIAYDVQQDExlB
+bHBoYVNTTCBDQSAtIFNIQTI1NiAtIEc0MB4XDTIzMDExMjExMTM0MVoXDTI0MDIx
+MzExMTM0MFowGzEZMBcGA1UEAwwQKi5ob3N0aW5nLnJlZy5ydTCCAiIwDQYJKoZI
+hvcNAQEBBQADggIPADCCAgoCggIBAMilaGx+T5Ln3Prcd58GM/IwbmFY+Qpt5BE+
+hwcNgizycrotpTil3Uets185zM2K+Gtd3NvgX14JMThN5Cgdi5CvYbjMsXRcvnIH
+n8eFAGHHcQsD7WOrkFKZWLn270lNaFnOF4GuLMcqVNC55HQEXyQNiWWWBJPu9DfO
+gB0of+UZgNmvo1DEOXOElMnCITzQaL490DrXhUGSATrNjLUFsK696Kvv3PhDKxJQ
+72JdljtsPcKP2SwYYNBYQTZbiWgl1VgyAiz4VibJkXGnXOQUmC9JKXv0XIfKW6gX
+UqfpHZ8UN+qgs/q6qXFUSSv4mSD8u6JQIX/hR/2Dqr0nZdWnghoM/bpOjfvItOkw
+Mu3iaSaM6EyAkwGKST7zwtngSes+D9eXQUZgNZ8/gmlLsbfnmJuP7XcEn4CfxRgw
+8ncHGtQdplyjnuSS9B29PAwsmsblaHkyODj4cKD+C1BQl+Mk8Teipil/d4Jsc42p
+ytD0tmBm/YHGxT11fFMRfFGuApfljUvYQvn0qyN92e7Wwt0n6ZEew7dxobL1sfHq
+NSr6L9yNc2QXy5fTBHB7EuHQAR59xl8v9GTtKy1hgVZRx4wFkQJsygPGHONA3jrN
+voyRTMtoQNysQkn7SWkpy4pIa1IvWwB1ln08lCbYL5gOUDMDzk5m7HL2Sb0e/V/D
+VyH3XfT7AgMBAAGjggNgMIIDXDAOBgNVHQ8BAf8EBAMCBaAwgZMGCCsGAQUFBwEB
+BIGGMIGDMEYGCCsGAQUFBzAChjpodHRwOi8vc2VjdXJlLmdsb2JhbHNpZ24uY29t
+L2NhY2VydC9hbHBoYXNzbGNhc2hhMjU2ZzQuY3J0MDkGCCsGAQUFBzABhi1odHRw
+Oi8vb2NzcC5nbG9iYWxzaWduLmNvbS9hbHBoYXNzbGNhc2hhMjU2ZzQwVwYDVR0g
+BFAwTjAIBgZngQwBAgEwQgYKKwYBBAGgMgoBAzA0MDIGCCsGAQUFBwIBFiZodHRw
+czovL3d3dy5nbG9iYWxzaWduLmNvbS9yZXBvc2l0b3J5LzAJBgNVHRMEAjAAMEEG
+A1UdHwQ6MDgwNqA0oDKGMGh0dHA6Ly9jcmwuZ2xvYmFsc2lnbi5jb20vYWxwaGFz
+c2xjYXNoYTI1Nmc0LmNybDArBgNVHREEJDAighAqLmhvc3RpbmcucmVnLnJ1gg5o
+b3N0aW5nLnJlZy5ydTAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHwYD
+VR0jBBgwFoAUT8usqMLvq92Db2u/zpg9XFgldhUwHQYDVR0OBBYEFKz0t4Zfhn8b
+oMGCtnYE41ugfzLEMIIBfwYKKwYBBAHWeQIEAgSCAW8EggFrAWkAdwBIsONr2qZH
+NA/lagL6nTDrHFIBy1bdLIHZu7+rOdiEcwAAAYWlr4iJAAAEAwBIMEYCIQDH4hGJ
+vBjW1/vxzOhs9pXdYT+f0z1eG0OykGSSPg8VEAIhAIJDHenzahHfnohsJI+f09Om
+OTdFNbBU2X7vhCS34eQcAHUAVYHUwhaQNgFK6gubVzxT8MDkOHhwJQgXL6OqHQcT
+0wwAAAGFpa+IlwAABAMARjBEAiB81G0NBDMx1+5gE9yolH88YwvguZDWFG+beQEU
+nvJ3ewIgRuMmQb9/ps/rSxkjFd0vbbbLg/NeuxfVaYgKTjp/krwAdwB2/4g/Crb7
+lVHCYcz1h7o0tKTNuyncaEIKn+ZnTFo6dAAAAYWlr4i0AAAEAwBIMEYCIQC2yeHs
+iIywz+zeWZKn56xrr5VvHfHSSO1HlMYOwms2IgIhAKd6+KK/x572uFdTn61BOLc5
+9auLzJIsp//ENRrCEOpyMA0GCSqGSIb3DQEBCwUAA4IBAQARk7QR6hOn0ZowJSSs
+/qScNu9kEP8UCG1mnk3azXktjWI7rhhYSiRoEwfcSvrI0UCQojNrGO8v9TN4xw8N
+JGqI/HLolViDjzWM+FRUSLggNygOdaa7y62nJKjuZMVtxzFTI4//DMG/Fvch+UE+
+dF0tGNZLHUY1KCtgEwecZRgUnPESyE9/2SEV/NZUbN7CT7s437wntMAn87j4ZXYv
+XWFkRwxO34hFMGpB+EQE/eQbfBna7XWK2e0re2CLtaxhd8EZ2YgPr/BuSO+DJUh6
+qa8tEVqj5+xjBMgKFWjAsOBV+53vGxxRRMyFq9Y2eqU61wXT9d8oLNFVro3nv/Lv
+ZNTw
+-----END CERTIFICATE-----
+subject=CN = *.hosting.reg.ru
+issuer=C = BE, O = GlobalSign nv-sa, CN = AlphaSSL CA - SHA256 - G4
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: RSA
+Server Temp Key: ECDH, prime256v1, 256 bits
+---
+SSL handshake has read 2686 bytes and written 458 bytes
+Verification error: unable to verify the first certificate
+---
+New, TLSv1.2, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Server public key is 4096 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+No ALPN negotiated
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : ECDHE-RSA-AES256-GCM-SHA384
+    Session-ID: 0A15A285BE553F9B468C7B5D3B60BF555C4E9F544C885FE92CECD790A6562BA7
+    Session-ID-ctx: 
+    Master-Key: 34FBF99657F0E9D15AB511344F6F2C5AD20511C71C370DC1FFCA99B48544EEE164F79BFF0F576C3BEFF1202F22E626FD
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    Start Time: 1691071484
+    Timeout   : 7200 (sec)
+    Verify return code: 21 (unable to verify the first certificate)
+    Extended master secret: no
+---
