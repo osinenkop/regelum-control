@@ -498,7 +498,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.max(array)
         elif rc_type == CASADI:
-            return casadi.fmax(*safe_unpack(array))
+            return casadi.mmax(*safe_unpack(array))
 
     def sum_2(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):

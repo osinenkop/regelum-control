@@ -17,7 +17,7 @@ from scipy.optimize import minimize
 from .__utilities import rc, Clock
 from regelum import RegelumBase
 from .policy import Policy
-from .critic import Critic
+from .critic import Critic, CriticCALF
 from typing import Optional, Union
 from .objective import RunningObjective
 from .data_buffers import DataBuffer
@@ -265,7 +265,7 @@ class CALFControllerExPost(RLController):
     def __init__(
         self,
         policy: Policy,
-        critic: Critic,
+        critic: CriticCALF,
         safe_controller: Controller,
         running_objective,
         critic_optimization_event: str,
@@ -325,7 +325,6 @@ class CALFControllerExPost(RLController):
         self.critic.restore_weights()
         action = self.safe_controller.compute_action(state, observation)
         self.policy.set_action(action)
-        self.policy.model.update_and_cache_weights(action)
         self.update_data_buffer_with_action_stats(observation)
 
     def update_data_buffer_with_action_stats(self, observation):
@@ -360,21 +359,19 @@ class CALFControllerExPost(RLController):
             self.step_counter += 1
             return self.policy.action
 
-        self.critic.optimize_on_event(self.data_buffer)
+        critic_weights = self.critic.optimize_on_event(
+            self.data_buffer, is_update_and_cache_weights=False
+        )
         critic_weights_accepted = self.critic.opt_status == "success"
         if critic_weights_accepted:
-            self.critic.update_weights()
-
-            # self.invoke_safe_action(observation)
-
+            self.critic.update_weights(critic_weights)
             self.policy.optimize_on_event(self.data_buffer)
             policy_weights_accepted = self.policy.opt_status == "success"
             if policy_weights_accepted:
-                self.policy.update_and_cache_weights()
-                self.policy.update_action()
+                self.policy.update_action(observation)
                 self.critic.observation_last_good = observation
                 self.update_data_buffer_with_action_stats(observation)
-                self.critic.cache_weights()
+                self.critic.cache_weights(critic_weights)
             else:
                 self.invoke_safe_action(state, observation)
         else:
@@ -1993,7 +1990,12 @@ class NominalControllerInvertedPendulum:
     def compute_action(self, state, observation, time=0):
         self.observation = observation
         return np.array(
-            [-((observation[0]) + 0.1 * (observation[1])) * self.controller_gain]
+            [
+                [
+                    -((observation[0, 0]) + 0.1 * (observation[0, 1]))
+                    * self.controller_gain
+                ]
+            ]
         )
 
     def reset(self):

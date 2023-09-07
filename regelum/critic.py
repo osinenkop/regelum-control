@@ -121,10 +121,8 @@ class Critic(Optimizable, ABC):
         :param weights: new weights to be used for the critic model, if not provided the optimized weights will be used
         :type weights: numpy array
         """
-        if weights is None:
-            self.model.update_weights(self.optimized_weights)
-        else:
-            self.model.update_weights(weights)
+
+        self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
         """Store a copy of the current model weights.
@@ -132,10 +130,7 @@ class Critic(Optimizable, ABC):
         :param weights: An optional ndarray of weights to store. If not provided, the current
             model weights are stored. Default is None.
         """
-        if weights is not None:
-            self.model.cache_weights(weights)
-        else:
-            self.model.cache_weights(self.optimized_weights)
+        self.model.cache_weights(weights)
 
     def restore_weights(self):
         """Restores the model weights to the cached weights."""
@@ -146,8 +141,7 @@ class Critic(Optimizable, ABC):
 
         :param weights: new weights for the model (optional)
         """
-        self.update_weights(weights)
-        self.cache_weights(weights)
+        self.update_and_cache_weights(weights)
 
     def reset(self):
         """Reset the outcome and current critic loss variables, and re-initialize the buffers."""
@@ -306,7 +300,7 @@ class Critic(Optimizable, ABC):
         if "critic_targets" in data_buffer.keys():
             data_buffer.delete_key("critic_targets")
 
-    def optimize_on_event(self, data_buffer):
+    def optimize_on_event(self, data_buffer, is_update_and_cache_weights=True):
         if isinstance(self.model, ModelNN):
             self.model.to(self.device)
             self.model.cache.to(self.device)
@@ -318,26 +312,27 @@ class Critic(Optimizable, ABC):
             keys=self.data_buffer_objective_keys(),
             optimizer_config=self.optimizer_config,
         )
-
+        weights = None
         if opt_kwargs is not None:
             if self.kind == "tensor":
-                weights = self.optimize(
+                self.optimize(
                     **opt_kwargs,
                 )
+                if is_update_and_cache_weights:
+                    self.model.update_and_cache_weights()
             elif self.kind == "symbolic":
                 weights = self.optimize(
                     **opt_kwargs,
                     critic_weights=self.model.weights,
                     critic_stored_weights=self.model.cache.weights,
-                )
-            if isinstance(weights, dict):
-                weights = weights["critic_weights"]
-                self.model.update_and_cache_weights(weights)
-            else:
-                self.model.update_and_cache_weights()
+                )["critic_weights"]
+                if is_update_and_cache_weights:
+                    self.model.update_and_cache_weights(weights)
 
         if not self.is_on_policy:
             self.delete_critic_targets(data_buffer)
+
+        return weights
 
 
 class CriticTrivial(Critic):
@@ -381,7 +376,7 @@ class CriticCALF(Critic):
         discount_factor: float = 1.0,
         sampling_time: float = 0.01,
         ######
-        safe_decay_param=1e-3,
+        safe_decay_param=1e-4,
         is_dynamic_decay_rate=True,
         safe_controller=None,
         lb_parameter=1e-6,
@@ -477,10 +472,6 @@ class CriticCALF(Critic):
     def reset(self):
         """Reset the critic to its initial state."""
         super().reset()
-        self.observation_last_good = self.observation_init
-
-        if hasattr(self.safe_controller, "reset_all_PID_controllers"):
-            self.safe_controller.reset_all_PID_controllers()
 
     def CALF_decay_constraint_no_prediction(
         self,
@@ -488,8 +479,8 @@ class CriticCALF(Critic):
         prev_good_critic,
     ):
         stabilizing_constraint_violation = (
-            critic_model_output
-            - prev_good_critic
+            critic_model_output[-1, :]
+            - prev_good_critic[-2, :]
             + self.sampling_time * self.safe_decay_rate
         )
         return stabilizing_constraint_violation

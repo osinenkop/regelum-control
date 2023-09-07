@@ -513,7 +513,7 @@ class Optimizable(regelum.RegelumBase):
         self, func: FunctionWithSignature, variables: VarContainer
     ):
         func = self.__infer_and_register_symbolic_prototype(func, variables)
-        constr = rc.vec(func.metadata) <= 0
+        constr = rc.vec(func.metadata) <= -1e-12
         self.__opti.subject_to(constr)
 
     def __register_numeric_constraint(
@@ -585,7 +585,7 @@ class Optimizable(regelum.RegelumBase):
     def opti(self):
         return self.__opti
 
-    def optimize_symbolic(self, raw=True, tol=1e-8, **kwargs):
+    def optimize_symbolic(self, raw=True, tol=1e-12, **kwargs):
         if self.__opt_func is None or self.params_changed:
             self.__opti.solver(
                 self.opt_method, dict(self.__log_options), dict(self.__opt_options)
@@ -646,10 +646,10 @@ class Optimizable(regelum.RegelumBase):
             }
         )
 
-    def update_status(self, result, tol=1e-8):
+    def update_status(self, result, tol=1e-12):
         self.opt_status = "success"
         for constr_name in self.constraints.names:
-            if rc.sum(rc.sum(result[constr_name])) > tol:
+            if rc.max(result[constr_name]) > tol:
                 self.opt_status = "failed"
                 break
 

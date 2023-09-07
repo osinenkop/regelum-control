@@ -204,10 +204,7 @@ class Policy(Optimizable, ABC):
         :param weights: The weights to update the model with. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
-        if weights is None:
-            self.model.update_weights(self.optimized_weights)
-        else:
-            self.model.update_weights(weights)
+        self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
         """Cache the current weights of the model of the policy.
@@ -215,12 +212,7 @@ class Policy(Optimizable, ABC):
         :param weights: The weights to cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
-        if weights is not None:
-            self.model.cache_weights(weights)
-        elif self.optimized_weights is not None:
-            self.model.cache_weights(self.optimized_weights)
-        else:
-            raise ValueError("Nothing to cache")
+        self.model.cache_weights(weights)
 
     def update_and_cache_weights(self, weights=None):
         """Update and cache the weights of the model of the policy.
@@ -228,8 +220,7 @@ class Policy(Optimizable, ABC):
         :param weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
         :type weights: numpy array, optional
         """
-        self.update_weights(weights)
-        self.cache_weights(weights)
+        self.model.update_and_cache_weights(weights)
 
     def restore_weights(self):
         """Restore the previously cached weights of the model of thepolicy."""
@@ -848,12 +839,14 @@ class RLPolicyPredictive(Policy):
                 self.optimize(
                     **opt_kwargs,
                     policy_model_output=self.get_initial_guess(),
+                    tol=1e-8,
                 )
                 if self.critic.weights is None
                 else self.optimize(
                     **opt_kwargs,
                     policy_model_output=self.get_initial_guess(),
                     critic_weights=self.critic.weights,
+                    tol=1e-8,
                 )
             )
             self.update_weights(result["policy_model_output"])

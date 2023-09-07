@@ -52,5 +52,5 @@ setup(
         "CASADI": ["casadi>=3.5.5"],
         "TORCH": ["torch>=1.13.1", "gpytorch==1.8.0"],
     },
-    python_requires=">=3.6",
+    python_requires=">=3.9.16, <3.10",
 )
