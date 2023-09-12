@@ -12,6 +12,7 @@ from typing import Optional, Union
 import torch
 import numpy as np
 from .__utilities import rc
+from .predictor import Predictor
 
 
 class Objective(regelum.RegelumBase, ABC):
@@ -258,78 +259,176 @@ def temporal_difference_objective(
 
 def mpc_objective(
     observation,
-    actions,
-    predictor,
+    policy_model_weights,
+    predictor: Predictor,
     running_objective,
+    model,
+    prediction_horizon,
+    discount_factor=1.0,
 ):
-    observation_sequence_predicted = predictor.predict_sequence(
-        observation, actions[: predictor.prediction_horizon, :]
-    )
-    observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted)
+    (
+        observation_sequence_predicted,
+        action_sequence_predicted,
+    ) = predictor.predict_state_sequence_from_model(
+        observation,
+        prediction_horizon=prediction_horizon,
+        model=model,
+        model_weights=policy_model_weights,
     )
 
-    mpc_objective_value = rc.sum(
-        running_objective(observation_sequence, actions, is_save_batch_format=True)
+    observation_sequence = rc.vstack(
+        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
     )
+
+    running_objectives = running_objective(
+        observation_sequence, action_sequence_predicted, is_save_batch_format=True
+    )
+
+    discount_factors = rc.array(
+        [
+            [discount_factor ** (predictor.pred_step_size * i)]
+            for i in range(prediction_horizon)
+        ],
+        prototype=observation,
+        _force_numeric=True,
+    )
+    mpc_objective_value = rc.sum(running_objectives * discount_factors)
+
     return mpc_objective_value
 
 
 def rpo_objective(
-    observation, actions, predictor, running_objective, critic, critic_weights
+    observation,
+    policy_model_weights,
+    predictor: Predictor,
+    running_objective,
+    model,
+    prediction_horizon,
+    discount_factor,
+    critic,
+    critic_weights,
 ):
     rpo_objective_value = 0
-    observation_sequence_predicted = predictor.predict_sequence(
-        observation, actions[: predictor.prediction_horizon, :]
+    (
+        observation_sequence_predicted,
+        action_sequence_predicted,
+    ) = predictor.predict_state_sequence_from_model(
+        observation,
+        prediction_horizon=prediction_horizon,
+        model=model,
+        model_weights=policy_model_weights,
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted[:-1, :])
     )
+
+    discount_factors = rc.array(
+        [
+            [discount_factor ** (predictor.pred_step_size * i)]
+            for i in range(prediction_horizon)
+        ],
+        prototype=observation,
+        _force_numeric=True,
+    )
+
     rpo_objective_value = rc.sum(
-        running_objective(
-            observation_sequence, actions[:-1, :], is_save_batch_format=True
+        discount_factors
+        * running_objective(
+            observation_sequence, action_sequence_predicted, is_save_batch_format=True
         )
     )
 
-    observation_last = observation_sequence_predicted[-1:, :]
-    rpo_objective_value += rc.sum(critic(observation_last, weights=critic_weights))
+    observation_last = observation_sequence_predicted[-1, :]
+    rpo_objective_value += rc.sum(
+        discount_factor ** (predictor.pred_step_size * prediction_horizon)
+        * critic(observation_last, weights=critic_weights)
+    )
 
     return rpo_objective_value
 
 
 def rql_objective(
-    observation, actions, predictor, running_objective, critic, critic_weights
+    observation,
+    policy_model_weights,
+    predictor: Predictor,
+    running_objective,
+    model,
+    prediction_horizon,
+    discount_factor,
+    critic,
+    critic_weights,
 ):
+    assert prediction_horizon >= 2, "rql only works for prediction_horizon >= 2"
     rql_objective_value = 0
-    observation_sequence_predicted = predictor.predict_sequence(
-        observation, actions[: predictor.prediction_horizon, :]
+    (
+        observation_sequence_predicted,
+        action_sequence_predicted,
+    ) = predictor.predict_state_sequence_from_model(
+        observation,
+        prediction_horizon=prediction_horizon,
+        model=model,
+        model_weights=policy_model_weights,
     )
     observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
+        (rc.force_row(observation), observation_sequence_predicted[:-2, :])
+    )
+    discount_factors = rc.array(
+        [
+            [discount_factor ** (predictor.pred_step_size * i)]
+            for i in range(prediction_horizon - 1)
+        ],
+        prototype=observation,
+        _force_numeric=True,
     )
     rql_objective_value = rc.sum(
-        running_objective(
-            observation_sequence, actions[:-1, :], is_save_batch_format=True
+        discount_factors
+        * running_objective(
+            observation_sequence,
+            action_sequence_predicted[:-1, :],
+            is_save_batch_format=True,
         )
     )
 
-    observation_last = observation_sequence_predicted[-1:, :]
+    observation_last = observation_sequence_predicted[-2, :]
     rql_objective_value += rc.sum(
-        critic(observation_last, actions[-1, :], weights=critic_weights)
+        discount_factor ** (predictor.pred_step_size * (prediction_horizon - 1))
+        * critic(
+            observation_last, action_sequence_predicted[-1, :], weights=critic_weights
+        )
     )
 
     return rql_objective_value
 
 
-def sql_objective(observation, actions, predictor, critic, critic_weights=None):
-    observation_sequence_predicted = predictor.predict_sequence(
-        observation, actions[: predictor.prediction_horizon, :]
+def sql_objective(
+    observation,
+    policy_model_weights,
+    predictor: Predictor,
+    model,
+    prediction_horizon,
+    critic,
+    critic_weights=None,
+):
+    (
+        observation_sequence_predicted,
+        action_sequence_predicted,
+    ) = predictor.predict_state_sequence_from_model(
+        observation,
+        prediction_horizon=prediction_horizon,
+        model=model,
+        model_weights=policy_model_weights,
     )
+
     observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted)
+        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
     )
+
     sql_objective_value = rc.sum(
-        rc.sum(critic(observation_sequence, actions, weights=critic_weights))
+        rc.sum(
+            critic(
+                observation_sequence, action_sequence_predicted, weights=critic_weights
+            )
+        )
     )
 
     return sql_objective_value

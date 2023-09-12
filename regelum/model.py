@@ -78,8 +78,12 @@ class Model(regelum.RegelumBase, ABC):
         return result
 
     @property
+    def weights(self):
+        return self._weights
+
+    @property
     def named_parameters(self):
-        return self.weights
+        return self._weights
 
     @property
     @abstractmethod
@@ -96,14 +100,14 @@ class Model(regelum.RegelumBase, ABC):
         pass
 
     def update_weights(self, weights):
-        self.weights = weights
+        self._weights = weights
 
     def cache_weights(self, weights=None):
         if "cache" not in self.__dict__.keys():
             self.cache = deepcopy(self)
 
         if weights is None:
-            self.cache.update_weights(self.weights)
+            self.cache.update_weights(self._weights)
         else:
             self.cache.update_weights(weights)
 
@@ -165,13 +169,13 @@ class ModelQuadLin(Model):
             self._calculate_dims(dim_inputs)
             self.weight_min = weight_min * rc.ones(self.dim_weights)
             self.weight_max = weight_max * rc.ones(self.dim_weights)
-            self.weights = (self.weight_min + self.weight_max) / 20.0
+            self._weights = (self.weight_min + self.weight_max) / 20.0
         else:
             self._calculate_dims(self._calculate_dim_inputs(len(weights)))
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
-            self.weights = rc.array(weights)
+            self._weights = rc.array(weights)
 
-        self.update_and_cache_weights(self.weights)
+        self.update_and_cache_weights(self._weights)
 
     @property
     def weight_bounds(self):
@@ -261,7 +265,7 @@ class ModelQuadLin(Model):
 
     def forward(self, inputs, weights=None):
         if weights is None:
-            weights = self.weights
+            weights = self._weights
         if self.quad_matrix_type == "symmetric":
             return self.forward_symmetric(inputs, weights)
         elif self.quad_matrix_type == "diagonal":
@@ -348,15 +352,15 @@ class ModelWeightContainer(Model):
         :param single_weight_max: upper bound for every weight
         """
         self.dim_output = dim_output
-        self.weights = weights_init
+        self._weights = weights_init
         self.weights_init = weights_init
-        self.update_and_cache_weights(self.weights)
+        self.update_and_cache_weights(self._weights)
 
     def forward(self, *argin, weights=None):
         if weights is not None:
             return rc.force_row(weights[0, : self.dim_output])
         else:
-            return rc.force_row(self.weights[0, : self.dim_output])
+            return rc.force_row(self._weights[0, : self.dim_output])
 
 
 class ModelNN(nn.Module):
@@ -408,7 +412,6 @@ class ModelNN(nn.Module):
             for item in weights:
                 weights[item].requires_grad_()
             weights = self.load_state_dict(weights)
-        # self.load_state_dict(self.weights2dict(weights))
         self.cache_weights()
 
     def restore_weights(self):
@@ -593,25 +596,22 @@ class ModelWeightContainerTorch(ModelNN):
         self.dim_weights = (
             (1, dim_weights) if isinstance(dim_weights, int) else dim_weights
         )
-        self.model_weights_parameter = torch.nn.Parameter(
+        self._weights = torch.nn.Parameter(
             torch.FloatTensor(torch.zeros(self.dim_weights)),
             requires_grad=True,
-        )
-        self.register_parameter(
-            name="model_weights", param=self.model_weights_parameter
         )
 
     def forward(self, inputs):
         if self.bounds_handler is not None:
             if self.output_bounding_type == "clip":
                 with torch.no_grad():
-                    self.model_weights_parameter.clip_(-1.0, 1.0)
+                    self._weights.clip_(-1.0, 1.0)
 
         if len(inputs.shape) == 1:
-            inputs_like = self.model_weights_parameter[0, :]
+            inputs_like = self._weights[0, :]
         elif len(inputs.shape) == 2:
             if inputs.shape[0] <= self.dim_weights[0]:
-                inputs_like = self.model_weights_parameter[: inputs.shape[0], :]
+                inputs_like = self._weights[: inputs.shape[0], :]
             else:
                 raise ValueError(
                     f"ModelWeightContainerTorch: Wrong inputs shape! inputs.shape[0] (Got: {inputs.shape[0]}) should be <= dim_weights[0] (Got: {self.dim_weights[0]})."
@@ -633,38 +633,6 @@ class ModelWeightContainerTorch(ModelNN):
             return inputs_like
 
 
-class LookupTable(Model):
-    """A tabular model for gridworlds."""
-
-    model_name = "lookup-table"
-
-    def __init__(self, *dims):
-        """Initialize an instance of LookupTable.
-
-        :param dims: grid dimensionality
-        """
-        dims = tuple(
-            rc.concatenate(tuple([rc.atleast_1d(dim) for dim in dims])).astype(int)
-        )
-        self.weights = rc.zeros(dims)
-        self.update_and_cache_weights(self.weights)
-
-    def __call__(self, *argin, use_stored_weights=False):
-        if use_stored_weights is False:
-            result = self.forward(*argin)
-        else:
-            result = self.cache.forward(*argin)
-        return result
-
-    def forward(self, *argin, weights=None):
-        indices = tuple(
-            rc.squeeze(
-                rc.concatenate(tuple([rc.atleast_1d(rc.array(ind)) for ind in argin]))
-            ).astype(int)
-        )
-        return self.weights[indices]
-
-
 class BoundsHandler(ModelNN):
     r"""Output layer for bounding the model's output. The formula is: math: `F^{-1}(\\tanh(x))`, where F is the linear transformation from `bounds` to [-1, 1]."""
 
@@ -676,7 +644,7 @@ class BoundsHandler(ModelNN):
         """
         ModelNN.__init__(self)
         self.register_parameter(
-            name="bounds",
+            name="__bounds",
             param=torch.nn.Parameter(
                 torch.FloatTensor(bounds),
                 requires_grad=False,
@@ -686,7 +654,7 @@ class BoundsHandler(ModelNN):
     def get_unscale_coefs_from_minus_one_one_to_bounds(
         self,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
-        bounds = self.get_parameter("bounds")
+        bounds = self.get_parameter("__bounds")
 
         unscale_bias, unscale_multiplier = (
             bounds.mean(dim=1),
@@ -769,7 +737,7 @@ class PerceptronWithNormalNoise(ModelNN):
         self.bounds_handler = BoundsHandler(output_bounds)
 
         self.register_parameter(
-            name="scale_tril_matrix",
+            name="__scale_tril_matrix",
             param=torch.nn.Parameter(
                 (self.std * torch.eye(dim_output)).float(),
                 requires_grad=False,
@@ -796,14 +764,14 @@ class PerceptronWithNormalNoise(ModelNN):
 
         return MultivariateNormal(
             loc=means,
-            scale_tril=self.get_parameter("scale_tril_matrix"),
+            scale_tril=self.get_parameter("__scale_tril_matrix"),
         ).log_prob(scaled_actions)
 
     def sample(self, observation):
         mean = self.get_mean(observation)
         sampled_scaled_action = MultivariateNormal(
             loc=mean,
-            scale_tril=self.get_parameter("scale_tril_matrix"),
+            scale_tril=self.get_parameter("__scale_tril_matrix"),
         ).sample()
 
         sampled_action = self.bounds_handler.unscale_from_minus_one_one_to_bounds(

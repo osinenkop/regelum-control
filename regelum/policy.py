@@ -16,7 +16,7 @@ from typing import Union, Optional
 from .__utilities import rc
 
 from .predictor import Predictor
-from .model import ModelNN, Model
+from .model import ModelNN, Model, ModelWeightContainer, ModelWeightContainerTorch
 from .critic import Critic
 from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
@@ -49,7 +49,6 @@ class Policy(Optimizable, ABC):
         self,
         model: Union[Model, ModelNN],
         system: Union[System, ComposedSystem] = None,
-        predictor: Optional[Predictor] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
         action_init=None,
         optimizer_config: Optional[OptimizerConfig] = None,
@@ -80,11 +79,6 @@ class Policy(Optimizable, ABC):
         """
         self.system = system
         self.model = model
-        self.predictor = predictor
-        if self.predictor is not None:
-            self.prediction_horizon = self.predictor.prediction_horizon
-        else:
-            self.prediction_horizon = 0
 
         self.dim_action = self.system.dim_inputs
         self.dim_observation = self.system.dim_observation
@@ -99,13 +93,7 @@ class Policy(Optimizable, ABC):
             self.action_initial_guess,
             self.action_min,
             self.action_max,
-        ) = self.handle_bounds(
-            action_bounds,
-            self.dim_action,
-            tile_parameter=self.prediction_horizon + 1
-            if self.predictor is not None
-            else 0,
-        )
+        ) = self.handle_bounds(action_bounds, self.dim_action, 0)
         self.action_old = self.action_init = (
             self.action_initial_guess[: self.dim_action]
             if action_init is None
@@ -226,15 +214,6 @@ class Policy(Optimizable, ABC):
         """Restore the previously cached weights of the model of thepolicy."""
         self.model.restore_weights()
         self.set_action(self.action_old)
-
-    def get_initial_guess(self, guess_from):
-        final_count_of_actions = self.prediction_horizon + 1
-        action_sequence = rc.rep_mat(guess_from, 1, final_count_of_actions)
-        action_sequence = rc.reshape(
-            action_sequence,
-            [final_count_of_actions * self.dim_action],
-        )
-        return action_sequence
 
     def reset(self):
         """Reset the policy to its initial state."""
@@ -705,7 +684,8 @@ class RLPolicyPredictive(Policy):
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
-        predictor,
+        predictor: Predictor,
+        prediction_horizon: int,
         running_objective,
         discount_factor: float = 1.0,
         device: str = "cpu",
@@ -747,8 +727,18 @@ class RLPolicyPredictive(Policy):
             action_bounds=action_bounds,
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
-            predictor=predictor,
         )
+        (
+            self.action_bounds,
+            self.action_initial_guess,
+            self.action_min,
+            self.action_max,
+        ) = self.handle_bounds(
+            action_bounds, self.dim_action, tile_parameter=prediction_horizon + 1
+        )
+
+        self.predictor = predictor
+        self.prediction_horizon = prediction_horizon
         self.critic = critic
         self.device = device
         self.epsilon_random = epsilon_random
@@ -762,14 +752,6 @@ class RLPolicyPredictive(Policy):
     def data_buffer_objective_keys(self) -> List[str]:
         return ["observation"]
 
-    def initialize_generic_optimization_procedure(self):
-        pass
-
-    def generic_objective_function(
-        self, observation, policy_model_output, critic_weights=None
-    ):
-        pass
-
     def initialize_optimization_procedure(self):
         objective_variables = []
         self.observation_variable = self.create_variable(
@@ -777,28 +759,13 @@ class RLPolicyPredictive(Policy):
         )
         objective_variables.append(self.observation_variable)
 
-        self.policy_model_output = self.create_variable(
-            name="policy_model_output", like=self.model.named_parameters
+        self.policy_model_weights = self.create_variable(
+            name="policy_model_weights", like=self.model.named_parameters
         )
-        self.register_bounds(
-            self.policy_model_output,
-            rc.array(
-                self.action_bounds,
-                prototype=self.policy_model_output(with_metadata=True),
-                _force_numeric=True,
-            ),
-        )
-        if self.kind == "tensor":
-            self.policy_model_output.register_hook(
-                lambda named_parameters: [
-                    el
-                    for el in named_parameters()
-                    if el[0] == "model_weights_parameter"
-                ][0][1],
-                act_on="data",
-                first=True,
-            )
-        objective_variables.append(self.policy_model_output)
+        if hasattr(self.model, "weight_bounds"):
+            self.register_bounds(self.policy_model_weights, self.model.weight_bounds)
+
+        objective_variables.append(self.policy_model_weights)
         if self.critic is not None:
             self.critic_weights = self.create_variable(
                 name="critic_weights",
@@ -812,40 +779,57 @@ class RLPolicyPredictive(Policy):
             variables=objective_variables,
         )
 
-    def objective_function(self, observation, policy_model_output, critic_weights=None):
+    def objective_function(
+        self, observation, policy_model_weights, critic_weights=None
+    ):
         if self.algorithm == "mpc":
             return mpc_objective(
                 observation=observation,
-                actions=policy_model_output,
+                policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
                 running_objective=self.running_objective,
+                model=self.model,
+                prediction_horizon=self.prediction_horizon,
+                discount_factor=self.discount_factor,
             )
         elif self.algorithm == "rpo":
             return rpo_objective(
                 observation=observation,
-                actions=policy_model_output,
+                policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
                 running_objective=self.running_objective,
+                model=self.model,
+                prediction_horizon=self.prediction_horizon,
+                discount_factor=self.discount_factor,
                 critic=self.critic,
                 critic_weights=critic_weights,
             )
         elif self.algorithm == "sql":
             return sql_objective(
                 observation=observation,
-                actions=policy_model_output,
+                policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
+                model=self.model,
+                prediction_horizon=self.prediction_horizon,
                 critic=self.critic,
                 critic_weights=critic_weights,
             )
         elif self.algorithm == "rql":
             return rql_objective(
                 observation=observation,
-                actions=policy_model_output,
+                policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
                 running_objective=self.running_objective,
+                model=self.model,
+                prediction_horizon=self.prediction_horizon,
                 critic=self.critic,
                 critic_weights=critic_weights,
+                discount_factor=self.discount_factor,
             )
+
+    def get_sequential_output(self, observation):
+        if isinstance(self.model, (ModelWeightContainerTorch, ModelWeightContainer)):
+            pass
 
     def optimize_on_event(self, data_buffer: DataBuffer):
         opt_kwargs = data_buffer.get_optimization_kwargs(
@@ -858,18 +842,18 @@ class RLPolicyPredictive(Policy):
                 result = (
                     self.optimize(
                         **opt_kwargs,
-                        policy_model_output=self.get_initial_guess(),
+                        policy_model_weights=self.get_initial_guess(),
                         tol=1e-8,
                     )
                     if self.critic.weights is None
                     else self.optimize(
                         **opt_kwargs,
-                        policy_model_output=self.get_initial_guess(),
+                        policy_model_weights=self.get_initial_guess(),
                         critic_weights=self.critic.weights,
                         tol=1e-8,
                     )
                 )
-                self.update_weights(result["policy_model_output"])
+                self.update_weights(result["policy_model_weights"])
             elif self.kind == "tensor":
                 self.optimize(**opt_kwargs)
 

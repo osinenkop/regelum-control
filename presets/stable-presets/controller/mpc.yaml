@@ -17,5 +17,4 @@ critic_optimization_event: = None
 
 
 policy:
-  predictor:
-    prediction_horizon: 10
+  prediction_horizon: 2

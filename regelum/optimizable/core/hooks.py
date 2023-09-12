@@ -52,7 +52,7 @@ def data_closure(gen_method):
     def hook_data(whatever):
         gen_tmp = gen_method()
         for x in gen_tmp:
-            yield x
+            yield x[1]
 
     return hook_data
 
@@ -61,6 +61,6 @@ def metadata_closure(gen_method):
     def hook_metadata(whatever):
         gen_tmp = gen_method()
         for x in gen_tmp:
-            yield x[1]
+            yield x
 
     return hook_metadata

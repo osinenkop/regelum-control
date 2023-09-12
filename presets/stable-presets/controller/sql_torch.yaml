@@ -1,9 +1,9 @@
 _target_: regelum.controller.RLController
 
-name%%: rpo_torch
+name%%: sql_torch
 
 defaults:
-  - policy: policy_rpo_torch
+  - policy: policy_sql_torch
   - critic: critic
 
 action_bounds: $ system_specific.action_bounds
@@ -20,9 +20,9 @@ policy:
 
 critic:
   model:
-    dim_input: $ system_specific.dim_observation 
+    dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
   is_on_policy: True
-  is_value_function: True
+  is_value_function: False
   optimizer_config:
     opt_options: 
       lr: 3.0E-4

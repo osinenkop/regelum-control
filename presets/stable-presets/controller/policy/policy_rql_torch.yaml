@@ -1,0 +1,5 @@
+defaults:
+  - policy_predictive_torch
+
+critic: ~ controller.critic
+algorithm: rql

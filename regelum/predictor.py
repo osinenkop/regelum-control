@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 import regelum
 from .__utilities import rc
 from .system import System
+from .model import Model, ModelWeightContainer, ModelWeightContainerTorch
+import torch
 
 
 class Predictor(regelum.RegelumBase, ABC):
@@ -14,7 +16,6 @@ class Predictor(regelum.RegelumBase, ABC):
         self,
         system: System,
         pred_step_size: float,
-        prediction_horizon: int,
     ):
         """Initialize an instance of a predictor.
 
@@ -22,20 +23,81 @@ class Predictor(regelum.RegelumBase, ABC):
         :type system: System
         :param pred_step_size: time interval between successive predictions
         :type pred_step_size: float
-        :param prediction_horizon: number of predictions
-        :type prediction_horizon: int
         """
         self.system = system
         self.pred_step_size = pred_step_size
-        self.prediction_horizon = prediction_horizon
 
     @abstractmethod
     def predict(self):
         pass
 
-    @abstractmethod
-    def predict_sequence(self):
-        pass
+    def predict_state_sequence_from_action_sequence(self, state, action_sequence):
+        len_action_sequence = action_sequence.shape[0]
+        predicted_state_sequence = rc.zeros(
+            [len_action_sequence, self.system.dim_state],
+            prototype=action_sequence,
+        )
+        current_state = state
+        for k in range(len_action_sequence):
+            current_action = action_sequence[k, :]
+            next_state = self.predict(current_state, current_action)
+            predicted_state_sequence[k, :] = self.system.get_observation(
+                time=None, state=next_state, inputs=current_action
+            )
+            current_state = next_state
+        return predicted_state_sequence, action_sequence
+
+    def predict_state_sequence_from_model(
+        self,
+        state,
+        prediction_horizon,
+        model,
+        model_weights=None,
+    ):
+        if isinstance(model, ModelWeightContainer):
+            if model_weights is not None:
+                assert (
+                    model_weights.shape[0] == prediction_horizon
+                ), "prediction_horizon must be equal to weights.shape[0] for ModelWeightContainer"
+                return self.predict_state_sequence_from_action_sequence(
+                    state, action_sequence=model_weights
+                )
+            else:
+                assert (
+                    model._weights.shape[0] == prediction_horizon
+                ), "prediction_horizon must be equal to weights.shape[0] for ModelWeightContainer"
+                return self.predict_state_sequence_from_action_sequence(
+                    state, action_sequence=model._weights
+                )
+        elif isinstance(model, ModelWeightContainerTorch):
+            assert (
+                model._weights.shape[0] == prediction_horizon
+            ), "prediction_horizon must be equal to weights.shape[0] for ModelWeightContainerTorch"
+            dummy_input = torch.zeros(
+                [prediction_horizon, self.system.dim_observation],
+            )
+            return self.predict_state_sequence_from_action_sequence(
+                state, action_sequence=model(dummy_input)
+            )
+
+        predicted_state_sequence = rc.zeros(
+            [prediction_horizon, self.system.dim_state],
+            prototype=state,
+        )
+        action_sequence = rc.zeros(
+            [prediction_horizon, self.system.dim_state],
+            prototype=state,
+        )
+        current_state = state
+        for k in range(prediction_horizon):
+            action_sequence[k, :] = model(current_state, model_weights)
+            next_state = self.predict(current_state, action_sequence[k, :])
+            predicted_state_sequence[k, :] = self.system.get_observation(
+                time=None, state=next_state, inputs=action_sequence[k, :]
+            )
+
+            current_state = next_state
+        return predicted_state_sequence, action_sequence
 
 
 class EulerPredictor(Predictor):
@@ -55,21 +117,6 @@ class EulerPredictor(Predictor):
         )
 
         return next_state
-
-    def predict_sequence(self, state, action_sequence):
-        state_sequence = rc.zeros(
-            [self.prediction_horizon, self.system.dim_state], prototype=action_sequence
-        )
-        current_state = state
-
-        for k in range(self.prediction_horizon):
-            current_action = action_sequence[k, :]
-            next_state = self.predict(current_state, current_action)
-            state_sequence[k, :] = self.system.get_observation(
-                time=None, state=next_state, inputs=current_action
-            )
-            current_state = next_state
-        return state_sequence
 
 
 class EulerPredictorMultistep(EulerPredictor):
@@ -107,6 +154,3 @@ class TrivialPredictor(Predictor):
 
     def predict(self, time, state, action):
         return self.system.compute_state_dynamics(time, state, action)
-
-    def predict_sequence(self, time, state, action):
-        return self.predict(time, state, action)

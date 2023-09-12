@@ -16,8 +16,7 @@ data_buffer_nullify_event: reset_episode
 critic_optimization_event: compute_action
 
 policy:
-  predictor:
-    prediction_horizon: 2
+  prediction_horizon: 2
 
 critic:
   is_on_policy: True

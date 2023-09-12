@@ -2,4 +2,3 @@ _target_: regelum.predictor.EulerPredictor
 
 system: ~ system
 pred_step_size: $ system_specific.sampling_time
-prediction_horizon: 1
