@@ -16,8 +16,7 @@ critic_optimization_event: compute_action
 safe_controller: ~ nominal_controller
 
 policy:
-  predictor:
-    prediction_horizon: 2
+  prediction_horizon: 2
 
 critic:
   is_on_policy: True
