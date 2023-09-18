@@ -100,6 +100,7 @@ from unittest.mock import MagicMock
 from regelum.__internal.__hydra_main import main as hydramain
 from . import callback
 from regelum.__internal.base import RegelumBase
+from .__internal.metadata import Metadata
 
 from .callback import (
     OnEpisodeDoneCallback,
@@ -223,6 +224,7 @@ OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 # TODO: PLEASE ALL IMPORT INTO THE HEADER
 from regelum.__internal.__hydra_main import main as hydramain
 
+# from regelum.__internal.base import Metadata
 
 # TODO: DESCRIBE WHY THIS IS CALLED COMPLEMENTED. EXPLAIN THE IDEA BEHIND
 
@@ -769,7 +771,6 @@ class main:
             "." if "config_path" not in kwargs else kwargs["config_path"]
         )
         self.__class__.logger = logger
-        self.__class__.callbacks = [callback() for callback in self.callbacks_]
 
     # TODO: DESCRIBE WHAT THIS DOES
     def __call__(self, old_app):
@@ -790,12 +791,12 @@ class main:
 
             def app(
                 cfg,
-                callbacks=self.__class__.callbacks,
                 argv=argv,
                 logger=self.__class__.logger,
                 is_clear_matplotlib_cache_in_callbacks=self.__class__.is_clear_matplotlib_cache_in_callbacks,
             ):
                 # args = self.parser.parse_args()
+                self.callbacks = [callback() for callback in self.callbacks_]
                 self.__class__.is_clear_matplotlib_cache_in_callbacks = (
                     is_clear_matplotlib_cache_in_callbacks
                 )
@@ -856,112 +857,111 @@ class main:
                         ),
                         "pid": os.getpid(),
                         "argv": argv,
-                        "main": main,
+                        "main": self,
                     }
-                    callbacks[0]._metadata = self.__class__.metadata
-                    ccfg = ComplementedConfigDict(cfg)
-                    self.apply_assignments(ccfg)
-                    if "callbacks" in cfg and not argv.disable_callbacks:
-                        for callback in cfg.callbacks:
-                            callback = (
-                                obtain(callback)
-                                if isinstance(callback, str)
-                                else callback
-                            )
-                            callbacks.insert(-1, callback())
-                        delattr(cfg, "callbacks")
-                    elif "callbacks" in cfg:
-                        delattr(cfg, "callbacks")
-                    self.callbacks = callbacks
-                    self.__class__.config = ccfg
+                    with Metadata(self.__class__.metadata):
+                        ccfg = ComplementedConfigDict(cfg)
+                        self.apply_assignments(ccfg)
+                        if "callbacks" in cfg and not argv.disable_callbacks:
+                            for callback in cfg.callbacks:
+                                callback = (
+                                    obtain(callback)
+                                    if isinstance(callback, str)
+                                    else callback
+                                )
+                                self.callbacks.insert(-1, callback())
+                            delattr(cfg, "callbacks")
+                        elif "callbacks" in cfg:
+                            delattr(cfg, "callbacks")
+                        self.__class__.config = ccfg
 
-                    try:
-                        for callback in self.callbacks:
-                            if callback.cooldown:
-                                callback.cooldown *= argv.cooldown_factor
-                            callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
-                        with self.__class__.metadata["report"]() as r:
-                            r["path"] = os.getcwd()
-                            r["pid"] = os.getpid()
-                        self.tags.update({"run_path": os.getcwd()})
-
-                        if mlflow.get_experiment_by_name(self.experiment_name) is None:
-                            experiment_id = mlflow.create_experiment(
-                                name=self.experiment_name,
-                                artifact_location=self.mlflow_artifacts_location,
-                            )
-                        else:
-                            experiment_id = mlflow.set_experiment(
-                                self.experiment_name
-                            ).experiment_id
-
-                        with mlflow.start_run(
-                            experiment_id=experiment_id,
-                            tags=self.tags,
-                            run_name=" ".join(os.getcwd().split("/")[-3:]),
-                        ):
-                            overrides = {
-                                line.split("=")[0]
-                                .replace("+", "")
-                                .replace("/", "-"): line.split("=")[1]
-                                for line in OmegaConf.load(".hydra/overrides.yaml")
-                            }
-                            mlflow.log_params(overrides)
-                            mlflow.log_artifact("SUMMARY.html")
-                            mlflow.log_artifact(".summary")
-                            mlflow.log_artifact(".hydra")
-                            res = old_app(ccfg)
-                            mlflow.log_artifact(".callbacks")
-                            try:
-                                mlflow.log_artifact("__init__.log")
-                            except FileNotFoundError:
-                                mlflow.log_artifact(
-                                    "conftest.log"
-                                )  ## TO DO: Find a better way to handle this
-                            if os.path.exists("callbacks.dill"):
-                                mlflow.log_artifact("callbacks.dill")
-
-                        self.__class__.callbacks[0].log(
-                            "Script terminated successfully."
-                        )
-                    except RegelumExitException as e:
-                        res = e
-                    except InterpolationResolutionError as e:
-                        with self.__class__.metadata["report"]() as r:
-                            r["traceback"] = traceback.format_exc()
-                        res = e
-                        self.__class__.callbacks[0].log(
-                            "Script terminated with error. This error occurred when trying to instantiate something from the config."
-                        )
-                        self.__class__.callbacks[0].exception(e)
-                    except Exception as e:
-                        with self.__class__.metadata["report"]() as r:
-                            r["traceback"] = traceback.format_exc()
-                        res = e
-                        self.__class__.callbacks[0].log("Script terminated with error.")
-                        self.__class__.callbacks[0].exception(e)
-                    for callback in self.__class__.callbacks:
                         try:
-                            callback.on_termination(res)
-                        except Exception as e:
-                            callback.log(
-                                f"Termination procedure for {callback.__class__.__name__} failed."
+                            for callback in self.callbacks:
+                                if callback.cooldown:
+                                    callback.cooldown *= argv.cooldown_factor
+                                callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
+                            with self.__class__.metadata["report"]() as r:
+                                r["path"] = os.getcwd()
+                                r["pid"] = os.getpid()
+                            self.tags.update({"run_path": os.getcwd()})
+
+                            if mlflow.get_experiment_by_name(self.experiment_name) is None:
+                                experiment_id = mlflow.create_experiment(
+                                    name=self.experiment_name,
+                                    artifact_location=self.mlflow_artifacts_location,
+                                )
+                            else:
+                                experiment_id = mlflow.set_experiment(
+                                    self.experiment_name
+                                ).experiment_id
+
+                            with mlflow.start_run(
+                                experiment_id=experiment_id,
+                                tags=self.tags,
+                                run_name=" ".join(os.getcwd().split("/")[-3:]),
+                            ):
+                                overrides = {
+                                    line.split("=")[0]
+                                    .replace("+", "")
+                                    .replace("/", "-"): line.split("=")[1]
+                                    for line in OmegaConf.load(".hydra/overrides.yaml")
+                                }
+                                mlflow.log_params(overrides)
+                                mlflow.log_artifact("SUMMARY.html")
+                                mlflow.log_artifact(".summary")
+                                mlflow.log_artifact(".hydra")
+                                res = old_app(ccfg)
+                                mlflow.log_artifact(".callbacks")
+                                try:
+                                    mlflow.log_artifact("__init__.log")
+                                except FileNotFoundError:
+                                    mlflow.log_artifact(
+                                        "conftest.log"
+                                    )  ## TO DO: Find a better way to handle this
+                                if os.path.exists("callbacks.dill"):
+                                    mlflow.log_artifact("callbacks.dill")
+
+                            self.callbacks[0].log(
+                                "Script terminated successfully."
                             )
-                            callback.exception(e)
-                    with shelve.open(".report") as f:
-                        f["termination"] = (
-                            "successful"
-                            if not isinstance(res, Exception)
-                            else "".join(traceback.format_tb(res.__traceback__))
-                        )
-                        f["finished"] = datetime.datetime.now()
-                    ccfg.refresh()
+                        except RegelumExitException as e:
+                            res = e
+                        except InterpolationResolutionError as e:
+                            with self.__class__.metadata["report"]() as r:
+                                r["traceback"] = traceback.format_exc()
+                            res = e
+                            self.callbacks[0].log(
+                                "Script terminated with error. This error occurred when trying to instantiate something from the config."
+                            )
+                            self.callbacks[0].exception(e)
+                        except Exception as e:
+                            with self.__class__.metadata["report"]() as r:
+                                r["traceback"] = traceback.format_exc()
+                            res = e
+                            self.callbacks[0].log("Script terminated with error.")
+                            self.callbacks[0].exception(e)
+                        for callback in self.callbacks:
+                            try:
+                                callback.on_termination(res)
+                            except Exception as e:
+                                callback.log(
+                                    f"Termination procedure for {callback.__class__.__name__} failed."
+                                )
+                                callback.exception(e)
+                        with shelve.open(".report") as f:
+                            f["termination"] = (
+                                "successful"
+                                if not isinstance(res, Exception)
+                                else "".join(traceback.format_tb(res.__traceback__))
+                            )
+                            f["finished"] = datetime.datetime.now()
+                        ccfg.refresh()
                     if argv.sweep:
                         return res
                     else:
                         return {
                             "result": res,
-                            "callbacks": self.__class__.callbacks,
+                            "callbacks": self.callbacks,
                             "directory": os.getcwd(),
                         }
 

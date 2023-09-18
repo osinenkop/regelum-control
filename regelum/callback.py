@@ -125,7 +125,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
                 callback_instance.on_launch()
             cls._metadata["main"].callbacks = [
                 callback_instance
-            ] + regelum.main.callbacks
+            ] + cls._metadata["main"].callbacks
 
     @abstractmethod
     def is_target_event(self, obj, method, output):
@@ -254,7 +254,7 @@ class OnEpisodeDoneCallback(Callback):
 
     def perform(self, obj, method, output):
         self.episode_counter += 1
-        for callback in regelum.main.callbacks:
+        for callback in self._metadata["main"].callbacks:
             callback.on_episode_done(
                 obj,
                 self.episode_counter,
@@ -284,7 +284,7 @@ class OnIterationDoneCallback(Callback):
     def perform(self, obj, method, output):
         self.iteration_counter += 1
         if obj.N_iterations > 1 and self.iteration_counter <= obj.N_iterations:
-            for callback in regelum.main.callbacks:
+            for callback in self._metadata["main"].callbacks:
                 callback.on_iteration_done(
                     obj,
                     obj.N_episodes,

@@ -27,7 +27,7 @@ class apply_callbacks:
         def new_method(self2, *args, **kwargs):
             res = method(self2, *args, **kwargs)
             if self.callbacks is None:
-                callbacks = regelum.main.callbacks
+                callbacks = RegelumBase._metadata["main"].callbacks
             for callback in callbacks:
                 callback(obj=self2, method=method.__name__, output=res)
             return res
@@ -120,6 +120,9 @@ def classproperty(func):
     return ClassPropertyDescriptor(func)
 
 
+
+
+
 class RegelumBase(metaclass=RegelumType):
     """Base class designed to act as an abstraction over all regelum objects."""
 
@@ -130,7 +133,7 @@ class RegelumBase(metaclass=RegelumType):
     @_metadata.setter
     def _metadata(self, metadata):
         if not hasattr(RegelumBase, f"_{RegelumBase.__name__}__metadata"):
-            RegelumBase.__metadata = MappingProxyType(metadata)
+            RegelumBase.__metadata = metadata
         else:
             raise ValueError(
                 "Metadata has already been set, yet an attempt to set it again was made."
@@ -153,6 +156,11 @@ class RegelumBase(metaclass=RegelumType):
         #        callback_instance = callback(attachee=self.__class__) ## Might want to move it to the metaclass
         #        callback_instance.on_launch()
         #        regelum.main.callbacks = [callback_instance] + regelum.main.callbacks
+
+
+
+
+
 
 
 # TODO: DOCSTRING
