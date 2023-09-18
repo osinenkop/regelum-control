@@ -270,10 +270,14 @@ class Optimizable(regelum.RegelumBase):
             metadata = like
         return metadata
 
-    def create_variable(self, *dims, name: str, is_constant=False, like=None):
-        metadata = self.create_variable_metadata(
-            *dims, is_constant=is_constant, like=like
-        )
+    def create_variable(
+        self, *dims, name: str, is_constant=False, like=None, is_nested_function=False
+    ):
+        metadata = None
+        if not is_nested_function:
+            metadata = self.create_variable_metadata(
+                *dims, is_constant=is_constant, like=like
+            )
         new_variable = OptimizationVariable(
             name=name, dims=dims, metadata=metadata, is_constant=is_constant
         )
@@ -533,6 +537,7 @@ class Optimizable(regelum.RegelumBase):
     def substitute_parameters(self, **parameters):
         if self.kind == "tensor":
             self.variables.substitute_data(**parameters)
+            self.variables.substitute_metadata(**parameters)
         elif self.kind == "symbolic":
             params_to_delete = []
             for k, v in parameters.items():

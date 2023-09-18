@@ -601,7 +601,7 @@ class ModelWeightContainerTorch(ModelNN):
             requires_grad=True,
         )
 
-    def forward(self, inputs):
+    def forward(self, inputs, weights=None):
         if self.bounds_handler is not None:
             if self.output_bounding_type == "clip":
                 with torch.no_grad():
