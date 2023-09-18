@@ -280,8 +280,8 @@ class Optimizable(regelum.RegelumBase):
         if self.kind == "tensor":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
-                new_variable.register_hook(data_closure(like), act_on="data")
-                new_variable.register_hook(metadata_closure(like), act_on="metadata")
+                # new_variable.register_hook(data_closure(like), act_on="data")
+                # new_variable.register_hook(metadata_closure(like), act_on="metadata")
 
         self.__variables = self.__variables + new_variable
         return new_variable
@@ -693,7 +693,7 @@ class Optimizable(regelum.RegelumBase):
             assert dvar is not None, "Couldn't find decision variable"
             assert isinstance(dvar, OptimizationVariable), "Something went wrong..."
             self.optimizer = self.opt_method(
-                dvar(with_metadata=False), **self.__opt_options
+                data_closure(dvar(with_metadata=False))(True), **self.__opt_options
             )
         n_epochs = options.get("n_epochs") if options.get("n_epochs") is not None else 1
         assert isinstance(n_epochs, int), "n_epochs must be an integer"
@@ -703,11 +703,7 @@ class Optimizable(regelum.RegelumBase):
 
         return n_epochs, objective
 
-    def optimize_tensor(self, **parameters):
-        batch_sampler = parameters.get("batch_sampler")
-        assert batch_sampler is not None, "Couldn't find batch_sampler"
-        n_epochs, objective = self.instantiate_configuration()
-
+    def optimize_tensor_batch_sampler(self, batch_sampler, n_epochs, objective):
         for epoch_idx in range(n_epochs):
             objective_value = None
             for batch_sample in batch_sampler:
@@ -724,6 +720,23 @@ class Optimizable(regelum.RegelumBase):
             is not None
         ):
             # Force to recreate torch.optim.Optimizer object before every optimization
+            if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):
+                self.optimizer = None
+
+    def optimize_tensor(self, **parameters):
+        n_epochs, objective = self.instantiate_configuration()
+        batch_sampler = parameters.get("batch_sampler")
+        if batch_sampler is not None:
+            self.optimize_tensor_batch_sampler(
+                batch_sampler=batch_sampler, n_epochs=n_epochs, objective=objective
+            )
+        else:
+            for _ in range(n_epochs):
+                self.optimizer.zero_grad()
+                self.substitute_parameters(**parameters)
+                objective_value = objective(**self.variables.to_data_dict())
+                objective_value.backward()
+                self.optimizer.step()
             if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):
                 self.optimizer = None
 

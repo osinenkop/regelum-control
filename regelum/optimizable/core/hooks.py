@@ -50,9 +50,12 @@ def mutate_metadata(self, new_metadata, tag="default"):
 
 def data_closure(gen_method):
     def hook_data(whatever):
-        gen_tmp = gen_method()
-        for x in gen_tmp:
-            yield x[1]
+        if callable(gen_method):
+            gen_tmp = gen_method()
+            for x in gen_tmp:
+                yield x[1]
+        else:
+            yield gen_method
 
     return hook_data
 
