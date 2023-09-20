@@ -140,6 +140,11 @@ ANIMATION_TYPES_REQUIRING_ANIMATOR = [
 ANIMATION_TYPES = ANIMATION_TYPES_NONE + ANIMATION_TYPES_REQUIRING_ANIMATOR
 
 
+if not "RCOGNITA_MULTIRUN_DIR" in os.environ:
+    os.environ["RCOGNITA_MULTIRUN_DIR"] = sys.path[0]
+
+
+
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
 

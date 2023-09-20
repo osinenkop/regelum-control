@@ -28,6 +28,9 @@ disallow_uncommitted%%: False
 # mlflow_tracking_uri%%: ${oc.env:RCOGNITA_MLFLOW_TRACKING_URI}
 # mlflow_artifacts_location%%: ${oc.env:RCOGNITA_MLFLOW_ARTIFACTS_LOCATION}
 
+
+suffix%%: ${controller.name%%}_${system_specific.name}
+
 hydra:
   sweep:
-    dir: ${oc.env:RCOGNITA_MULTIRUN_DIR}/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}
+    dir: ${oc.env:RCOGNITA_MULTIRUN_DIR}/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
