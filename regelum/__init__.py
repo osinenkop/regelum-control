@@ -73,7 +73,6 @@ import mlflow
 from unittest.mock import Mock
 
 
-
 import plotly.graph_objects as go
 import json
 
@@ -228,7 +227,6 @@ OmegaConf.register_new_resolver(name="get", resolver=obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 # TODO: PLEASE ALL IMPORT INTO THE HEADER
-
 
 
 # TODO: DESCRIBE WHY THIS IS CALLED COMPLEMENTED. EXPLAIN THE IDEA BEHIND
@@ -885,13 +883,17 @@ class main:
                             for callback_ in self.callbacks:
                                 if callback_.cooldown:
                                     callback_.cooldown *= argv.cooldown_factor
-                                callback_.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
+                                callback_.on_launch()  # make sure this line is adequate to mlflow functionality
                             with self.__class__.metadata["report"]() as r:
                                 r["path"] = os.getcwd()
                                 r["pid"] = os.getpid()
                             self.tags.update({"run_path": os.getcwd()})
 
-                            if mlflow.get_experiment_by_name(self.experiment_name) is None and not mlflow.get_tracking_uri().startswith("file:"):
+                            if mlflow.get_experiment_by_name(
+                                self.experiment_name
+                            ) is None and not mlflow.get_tracking_uri().startswith(
+                                "file:"
+                            ):
                                 experiment_id = mlflow.create_experiment(
                                     name=self.experiment_name,
                                     artifact_location=self.mlflow_artifacts_location,
@@ -927,9 +929,7 @@ class main:
                                 if os.path.exists("callbacks.dill"):
                                     mlflow.log_artifact("callbacks.dill")
 
-                            self.callbacks[0].log(
-                                "Script terminated successfully."
-                            )
+                            self.callbacks[0].log("Script terminated successfully.")
                         except RegelumExitException as e:
                             res = e
                         except InterpolationResolutionError as e:

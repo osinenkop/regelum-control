@@ -7,7 +7,6 @@ from regelum import callback as cb
 import weakref
 
 
-
 class apply_callbacks:
     """Decorator that applies a list of callbacks to a given method of an object.
 
@@ -120,9 +119,6 @@ def classproperty(func):
     return ClassPropertyDescriptor(func)
 
 
-
-
-
 class RegelumBase(metaclass=RegelumType):
     """Base class designed to act as an abstraction over all regelum objects."""
 
@@ -156,11 +152,6 @@ class RegelumBase(metaclass=RegelumType):
         #        callback_instance = callback(attachee=self.__class__) ## Might want to move it to the metaclass
         #        callback_instance.on_launch()
         #        regelum.main.callbacks = [callback_instance] + regelum.main.callbacks
-
-
-
-
-
 
 
 # TODO: DOCSTRING
