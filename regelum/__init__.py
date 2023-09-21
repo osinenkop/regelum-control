@@ -140,9 +140,10 @@ ANIMATION_TYPES_REQUIRING_ANIMATOR = [
 ANIMATION_TYPES = ANIMATION_TYPES_NONE + ANIMATION_TYPES_REQUIRING_ANIMATOR
 
 
-if not "RCOGNITA_MULTIRUN_DIR" in os.environ:
-    os.environ["RCOGNITA_MULTIRUN_DIR"] = sys.path[0]
-
+if not "REGELUM_DATA_DIR" in os.environ:
+    os.environ["REGELUM_DATA_DIR"] = os.path.abspath(sys.path[0]) + "/regelum_data"
+else:
+    os.environ["REGELUM_DATA_DIR"] = os.path.abspath(os.environ["REGELUM_DATA_DIR"])
 
 
 def hash_string(s):
@@ -756,7 +757,8 @@ class main:
 
         self.parser.add_argument("--experiment", trigger=experiment)
 
-        self.mlflow_tracking_uri = f"file://{os.getcwd()}/mlruns"
+        self.mlflow_tracking_uri = f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
+        # raise ValueError(str(self.mlflow_tracking_uri) + "\n" +  str(os.environ["RCOGNITA_MULTIRUN_DIR"]))
         self.mlflow_artifacts_location = self.mlflow_tracking_uri + "/artifacts"
 
         self.tags = {}
@@ -890,7 +892,7 @@ class main:
                                 r["pid"] = os.getpid()
                             self.tags.update({"run_path": os.getcwd()})
 
-                            if mlflow.get_experiment_by_name(self.experiment_name) is None:
+                            if mlflow.get_experiment_by_name(self.experiment_name) is None and not mlflow.get_tracking_uri().startswith("file:"):
                                 experiment_id = mlflow.create_experiment(
                                     name=self.experiment_name,
                                     artifact_location=self.mlflow_artifacts_location,

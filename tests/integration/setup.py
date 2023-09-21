@@ -29,7 +29,6 @@ class TestSetup:
 
     def _pre_setup(self):
         os.environ["HYDRA_FULL_ERROR"] = "1"
-        sys.argv = [sys.argv[0]]
         sys.argv.insert(1, "--single-thread")
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
@@ -40,10 +39,16 @@ class TestSetup:
         sys.argv.insert(1, "--experiment=TESTS")
 
     def __call__(self):
-        self._pre_setup()
+        sys.argv = [sys.argv[0]]
         for param in self.params:
             sys.argv.insert(1, f"{param}={self.params[param]}")
+        self._pre_setup()
+        os.environ['REGELUM_RECENT_TEST_INFO'] = \
+            f"Command line arguments: {' '.join(sys.argv[1:])}\nConfig: {os.path.abspath(self.config_path)}/{self.config_name}.yaml"
         return {"config_path": self.config_path, "config_name": self.config_name}
+
+    def __str__(self):
+        return f"{self.params['system']}_{self.params['controller']}"
 
 
 class MPCTest(TestSetup):
@@ -59,7 +64,7 @@ class MPCTest(TestSetup):
 #######################################################################################################################
 
 basic = [
-    TestSetup(system="inv_pendulum", controller="sdpg"),
+    TestSetup(system="inv_pendulum", controller="sdpg", **{"simulator.time_final" : 3.0}),
     TestSetup(system="inv_pendulum", controller="ddpg"),
     TestSetup(system="inv_pendulum", controller="reinforce"),
 ]

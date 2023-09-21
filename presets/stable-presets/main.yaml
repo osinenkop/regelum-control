@@ -33,4 +33,4 @@ suffix%%: ${controller.name%%}_${system_specific.name}
 
 hydra:
   sweep:
-    dir: ${oc.env:RCOGNITA_MULTIRUN_DIR}/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
+    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
