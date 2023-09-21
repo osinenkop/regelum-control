@@ -121,7 +121,6 @@ class Critic(Optimizable, ABC):
         :param weights: new weights to be used for the critic model, if not provided the optimized weights will be used
         :type weights: numpy array
         """
-
         self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import regelum
 from .__utilities import rc
 from .system import System
-from .model import Model, ModelWeightContainer, ModelWeightContainerTorch
+from .model import ModelWeightContainer, ModelWeightContainerTorch
 import torch
 
 

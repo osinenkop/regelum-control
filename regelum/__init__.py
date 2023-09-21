@@ -71,9 +71,8 @@ from regelum.__internal.__gui_server import __file__ as gui_script_file
 
 import mlflow
 from unittest.mock import Mock
-from hydra._internal.utils import _locate
 
-from .__internal import __instantiate as inst
+
 
 import plotly.graph_objects as go
 import json
@@ -124,6 +123,7 @@ from . import data_buffers
 from .optimizable import *
 from . import critic
 
+
 mock = Mock()
 
 monkey_patch(__fake_plugins, hydra.core.plugins)
@@ -140,7 +140,7 @@ ANIMATION_TYPES_REQUIRING_ANIMATOR = [
 ANIMATION_TYPES = ANIMATION_TYPES_NONE + ANIMATION_TYPES_REQUIRING_ANIMATOR
 
 
-if not "REGELUM_DATA_DIR" in os.environ:
+if "REGELUM_DATA_DIR" not in os.environ:
     os.environ["REGELUM_DATA_DIR"] = os.path.abspath(sys.path[0]) + "/regelum_data"
 else:
     os.environ["REGELUM_DATA_DIR"] = os.path.abspath(os.environ["REGELUM_DATA_DIR"])
@@ -228,9 +228,8 @@ OmegaConf.register_new_resolver(name="get", resolver=obtain)
 OmegaConf.register_new_resolver(name="mock", resolver=lambda: mock)
 
 # TODO: PLEASE ALL IMPORT INTO THE HEADER
-from regelum.__internal.__hydra_main import main as hydramain
 
-# from regelum.__internal.base import Metadata
+
 
 # TODO: DESCRIBE WHY THIS IS CALLED COMPLEMENTED. EXPLAIN THE IDEA BEHIND
 
@@ -803,7 +802,7 @@ class main:
                 is_clear_matplotlib_cache_in_callbacks=self.__class__.is_clear_matplotlib_cache_in_callbacks,
             ):
                 # args = self.parser.parse_args()
-                self.callbacks = [callback() for callback in self.callbacks_]
+                self.callbacks = [callback_() for callback_ in self.callbacks_]
                 self.__class__.is_clear_matplotlib_cache_in_callbacks = (
                     is_clear_matplotlib_cache_in_callbacks
                 )
@@ -818,7 +817,7 @@ class main:
                 if "mlflow_tracking_uri__IGNORE__" in cfg:
                     try:
                         mlflow_tracking_uri = cfg.mlflow_tracking_uri__IGNORE__
-                    except:  # noqa: E722
+                    except BaseException:
                         mlflow_tracking_uri = self.mlflow_tracking_uri
                     delattr(cfg, "mlflow_tracking_uri__IGNORE__")
                     self.mlflow_tracking_uri = mlflow_tracking_uri
@@ -828,7 +827,7 @@ class main:
                 if "mlflow_artifacts_location__IGNORE__" in cfg:
                     try:
                         artifacts_location = cfg.mlflow_artifacts_location__IGNORE__
-                    except:  # noqa: E722
+                    except BaseException:
                         artifacts_location = self.mlflow_artifacts_location
                     delattr(cfg, "mlflow_artifacts_location__IGNORE__")
                     self.mlflow_artifacts_location = artifacts_location
@@ -870,23 +869,23 @@ class main:
                         ccfg = ComplementedConfigDict(cfg)
                         self.apply_assignments(ccfg)
                         if "callbacks" in cfg and not argv.disable_callbacks:
-                            for callback in cfg.callbacks:
-                                callback = (
-                                    obtain(callback)
-                                    if isinstance(callback, str)
-                                    else callback
+                            for callback_ in cfg.callbacks:
+                                callback_ = (
+                                    obtain(callback_)
+                                    if isinstance(callback_, str)
+                                    else callback_
                                 )
-                                self.callbacks.insert(-1, callback())
+                                self.callbacks.insert(-1, callback_())
                             delattr(cfg, "callbacks")
                         elif "callbacks" in cfg:
                             delattr(cfg, "callbacks")
                         self.__class__.config = ccfg
 
                         try:
-                            for callback in self.callbacks:
-                                if callback.cooldown:
-                                    callback.cooldown *= argv.cooldown_factor
-                                callback.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
+                            for callback_ in self.callbacks:
+                                if callback_.cooldown:
+                                    callback_.cooldown *= argv.cooldown_factor
+                                callback_.on_launch()  # TODO: make sure this line is adequate to mlflow functionality
                             with self.__class__.metadata["report"]() as r:
                                 r["path"] = os.getcwd()
                                 r["pid"] = os.getpid()
@@ -947,14 +946,14 @@ class main:
                             res = e
                             self.callbacks[0].log("Script terminated with error.")
                             self.callbacks[0].exception(e)
-                        for callback in self.callbacks:
+                        for callback_ in self.callbacks:
                             try:
-                                callback.on_termination(res)
+                                callback_.on_termination(res)
                             except Exception as e:
-                                callback.log(
-                                    f"Termination procedure for {callback.__class__.__name__} failed."
+                                callback_.log(
+                                    f"Termination procedure for {callback_.__class__.__name__} failed."
                                 )
-                                callback.exception(e)
+                                callback_.exception(e)
                         with shelve.open(".report") as f:
                             f["termination"] = (
                                 "successful"
@@ -1005,9 +1004,9 @@ array = __utilities.rc.array
 rc = __utilities.rc
 
 
-class FancyModule(types.ModuleType):
+class _FancyModule(types.ModuleType):
     def __call__(self, *args, **kwargs):
         return main(*args, **kwargs)
 
 
-sys.modules[__name__].__class__ = FancyModule
+sys.modules[__name__].__class__ = _FancyModule

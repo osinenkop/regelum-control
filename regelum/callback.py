@@ -43,7 +43,6 @@ from pathlib import Path
 
 import sys
 import filelock
-import regelum as rc
 import regelum.__internal.base
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas

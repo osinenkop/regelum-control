@@ -10,7 +10,6 @@ import regelum
 from .model import Model, PerceptronWithNormalNoise, ModelNN
 from typing import Optional, Union
 import torch
-import numpy as np
 from .__utilities import rc
 from .predictor import Predictor
 

@@ -3,9 +3,9 @@
 import abc
 
 from regelum import callback as cb
-import regelum
+
 import weakref
-from types import MappingProxyType
+
 
 
 class apply_callbacks:
@@ -82,7 +82,7 @@ class ClassPropertyDescriptor(object):
     """Enables to declare class properties."""
 
     def __init__(self, fget, fset=None):
-        """Initialize an instance of ClassPropertyDescriptor
+        """Initialize an instance of ClassPropertyDescriptor.
 
         :param fget: class getter
         :param fset: class setter
@@ -109,7 +109,7 @@ class ClassPropertyDescriptor(object):
 
 
 def classproperty(func):
-    """Decorates a method in such a way that it becomes a class property.
+    """Decorate a method in such a way that it becomes a class property.
 
     :param func: method to decorate
     :return:

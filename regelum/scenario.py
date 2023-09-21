@@ -52,7 +52,7 @@ class OnlineScenario(Scenario):
         controller: Controller,
         running_objective: RunningObjective,
         howanim: Optional[str] = None,
-        observation_components_naming=[],
+        observation_components_naming=None,
         N_episodes=1,
         N_iterations=1,
         speedup=1,
@@ -128,9 +128,7 @@ class OnlineScenario(Scenario):
 
         If the agent succeeded to stabilize the system, ``outcome`` would converge to a finite value which is the performance mark.
         The smaller, the better (depends on the problem specification of course - you might want to maximize objective instead).
-
         """
-
         self.total_objective += (
             np.exp(self.time * np.log(self.discount_factor))
             * self.running_objective(observation, action)
@@ -157,8 +155,8 @@ class OnlineScenario(Scenario):
 
     def run(self):
         ### We use values `iteration_counter` and `episode_counter` only for debug purposes
-        for iteration_counter in range(self.N_iterations):
-            for episode_counter in range(self.N_episodes):
+        for _ in range(self.N_iterations):
+            for _ in range(self.N_episodes):
                 while self.sim_status not in [
                     "episode_ended",
                     "simulation_ended",
