@@ -42,8 +42,9 @@ except ImportError:
 
 class Policy(Optimizable, ABC):
     """Class of policies.
+
     These are to be passed to a `controller`.
-    """  # noqa: D205
+    """
 
     def __init__(
         self,
