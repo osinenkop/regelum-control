@@ -647,12 +647,13 @@ class Optimizable(regelum.RegelumBase):
             }
         )
 
-    def update_status(self, result, tol=1e-12):
+    def update_status(self, result=None, tol=1e-12):
         self.opt_status = "success"
-        for constr_name in self.constraints.names:
-            if rc.max(result[constr_name]) > tol:
-                self.opt_status = "failed"
-                break
+        if self.kind == "symbolic":
+            for constr_name in self.constraints.names:
+                if rc.max(result[constr_name]) > tol:
+                    self.opt_status = "failed"
+                    break
 
     def optimize_numeric(self, raw=False, **parameters):
         self.substitute_parameters(**parameters)
@@ -708,10 +709,56 @@ class Optimizable(regelum.RegelumBase):
 
         return n_epochs, objective
 
+    def eval_contraints(self):
+        return sum(
+            [
+                rc.penalty_function(
+                    func(**self.variables.to_data_dict()),
+                    penalty_coeff=5,
+                    delta=-3,
+                )
+                for func in self.constraints
+            ]
+        )
+
+    def opt_constraints_tensor(self, **parameters):
+        n_epochs_per_constraint = 1
+        if self.optimizer_config.config_options["constrained_optimization_policy"][
+            "is_activated"
+        ]:
+            n_epochs_per_constraint = self.optimizer_config.config_options[
+                "constrained_optimization_policy"
+            ]["defaults"]["n_epochs_per_constraint"]
+        for _ in range(n_epochs_per_constraint):
+            self.optimizer.zero_grad()
+            self.substitute_parameters(**parameters)
+            constr_value = self.eval_contraints()
+            if (
+                max(
+                    [func(**self.variables.to_data_dict()) for func in self.constraints]
+                ).item()
+                < 0
+            ):
+                break
+            constr_value.backward()
+            self.optimizer.step()
+
+        if (
+            max(
+                [func(**self.variables.to_data_dict()) for func in self.constraints]
+            ).item()
+            > 0
+        ):
+            self.opt_status = "failed"
+        else:
+            self.opt_status = "success"
+
     def optimize_tensor_batch_sampler(self, batch_sampler, n_epochs, objective):
         for epoch_idx in range(n_epochs):
             objective_value = None
             for batch_sample in batch_sampler:
+                if len(self.constraints) > 0:
+                    self.opt_constraints_tensor(**batch_sample)
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
                 objective_value = objective(**self.variables.to_data_dict())
@@ -737,9 +784,13 @@ class Optimizable(regelum.RegelumBase):
             )
         else:
             for _ in range(n_epochs):
+                if len(self.constraints) > 0:
+                    self.opt_constraints_tensor(**parameters)
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**parameters)
-                objective_value = objective(**self.variables.to_data_dict())
+                objective_value = (
+                    objective(**self.variables.to_data_dict()) + self.eval_contraints()
+                )
                 objective_value.backward()
                 self.optimizer.step()
             if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):

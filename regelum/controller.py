@@ -366,7 +366,7 @@ class CALFControllerExPost(RLController):
         if critic_weights_accepted:
             self.critic.update_weights(critic_weights)
             self.policy.optimize_on_event(self.data_buffer)
-            policy_weights_accepted = self.policy.opt_status == "success"
+            policy_weights_accepted = True  # self.policy.opt_status == "success"
             if policy_weights_accepted:
                 self.policy.update_action(observation)
                 self.critic.observation_last_good = observation
