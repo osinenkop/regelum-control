@@ -106,11 +106,11 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
         """
         super().__init__()
         self.attachee = attachee
-        self.log = regelum.main.logger.__getattribute__(log_level)
+        self.log = self._metadata["logger"].__getattribute__(log_level)
         # TODO: FIX THIS. Setting the level is needed due to the fact that mlflow sql backend reinstantiates logger
         # Moreover, rubbish mlflow backend logs are generated. They are not needed for a common user
-        regelum.main.logger.setLevel(logging.INFO)
-        self.exception = regelum.main.logger.exception
+        self._metadata["logger"].setLevel(logging.INFO)
+        self.exception = self._metadata["logger"].exception
         self.__last_trigger = 0.0
 
     @classmethod

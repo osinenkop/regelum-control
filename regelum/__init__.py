@@ -800,12 +800,6 @@ class main:
                 is_clear_matplotlib_cache_in_callbacks=self.__class__.is_clear_matplotlib_cache_in_callbacks,
             ):
                 # args = self.parser.parse_args()
-                self.callbacks = [callback_() for callback_ in self.callbacks_]
-                self.__class__.is_clear_matplotlib_cache_in_callbacks = (
-                    is_clear_matplotlib_cache_in_callbacks
-                )
-                self.__class__.logger = logger
-
                 if "seed" in cfg:
                     seed = cfg["seed"]
                     delattr(cfg, "seed")
@@ -848,6 +842,7 @@ class main:
                 with omegaconf.flag_override(cfg, "allow_objects", True):
                     self.__class__.metadata = {
                         "no_git": no_git,
+                        "logger": logger,
                         "script_path": script_path,
                         "config_path": path + f"/{self.kwargs['config_name']}.yaml",
                         "initial_working_directory": initial_working_directory,
@@ -864,6 +859,11 @@ class main:
                         "main": self,
                     }
                     with Metadata(self.__class__.metadata):
+                        self.callbacks = [callback_() for callback_ in self.callbacks_]
+                        self.__class__.is_clear_matplotlib_cache_in_callbacks = (
+                            is_clear_matplotlib_cache_in_callbacks
+                        )
+                        self.__class__.logger = logger
                         ccfg = ComplementedConfigDict(cfg)
                         self.apply_assignments(ccfg)
                         if "callbacks" in cfg and not argv.disable_callbacks:
