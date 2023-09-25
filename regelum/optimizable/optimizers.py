@@ -35,7 +35,7 @@ from .core.entities import (
     VarContainer,
     FuncContainer,
 )
-from .core.hooks import requires_grad, detach, data_closure, metadata_closure
+from .core.hooks import requires_grad, detach, data_closure
 
 import regelum
 

@@ -822,7 +822,6 @@ class Controller3WRobotDisassembledCLF:
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
         """Perform the same computation as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the __internal clock."""
-
         xNI, eta = self._Cart2NH(observation)
         theta_star = self._minimizer_theta(xNI, eta)
         kappa_val = self._kappa(xNI, theta_star)
@@ -1122,7 +1121,6 @@ class Controller3WRobotMemoryPID:
 
     def compute_action_sampled(self, state, time, observation):
         """Compute sampled action."""
-
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1313,11 +1311,7 @@ class Controller3WRobotPID:
         return action
 
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1398,11 +1392,7 @@ class ControllerCartPolePID:
 
     # TODO: DO YOU NEED THIS COMMENT?
     def compute_action_sampled(self, time, state, observation):
-        """
-        Compute sampled action.
-
-        """
-
+        """Compute sampled action."""
         is_time_for_new_sample = self.clock.check_time(time)
 
         if is_time_for_new_sample:  # New sample
@@ -1508,7 +1498,7 @@ class ControllerCartPoleEnergyBased:
 
     @apply_action_bounds
     def compute_action(self, state, observation, time=0):
-        theta, x, theta_dot, x_dot = (
+        theta, _, theta_dot, _ = (
             observation[0],
             observation[1],
             observation[2],
@@ -1670,8 +1660,8 @@ class Controller2TankPID:
         time_start: float = 0,
         state_init=None,
         sampling_time: float = 0.01,
-        PID_2tank_parameters_x1=[1, 0, 0],
-        PID_2tank_parameters_x2=[1, 0, 0],
+        PID_2tank_parameters_x1=(1, 0, 0),
+        PID_2tank_parameters_x2=(1, 0, 0),
         swing_up_tol=0.1,
     ):
         """Initialize an instance of Controller2TankPID.
@@ -1687,8 +1677,6 @@ class Controller2TankPID:
         """
         if state_init is None:
             state_init = rc.array([np.pi, 0, 0, 0])
-        if observation_target is None:
-            observation_target = [0.4, 0.4]
         self.tau1 = 18.4
         self.tau2 = 24.4
         self.K1 = 1.3

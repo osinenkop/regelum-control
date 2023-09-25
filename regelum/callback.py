@@ -43,7 +43,6 @@ from pathlib import Path
 
 import sys
 import filelock
-import regelum as rc
 import regelum.__internal.base
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -123,9 +122,9 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
             callback_instance = cls(*args, **kwargs)
             if launch:
                 callback_instance.on_launch()
-            cls._metadata["main"].callbacks = [
-                callback_instance
-            ] + cls._metadata["main"].callbacks
+            cls._metadata["main"].callbacks = [callback_instance] + cls._metadata[
+                "main"
+            ].callbacks
 
     @abstractmethod
     def is_target_event(self, obj, method, output):

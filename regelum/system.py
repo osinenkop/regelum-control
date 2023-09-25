@@ -31,7 +31,7 @@ class ComposedSystem(regelum.RegelumBase):
         io_mapping: Optional[list] = None,
         output_mode="right",
     ):
-        """_summary_
+        """Initialize a composed system by specifying systems to compose.
 
         :param sys_left: System outputs of which are to connected to the inputs of the right system
         :type sys_left: Union[System, Self]
@@ -303,7 +303,7 @@ class System(regelum.RegelumBase, ABC):
 
     def __init__(
         self,
-        system_parameters_init={},
+        system_parameters_init=None,
         state_init: Optional[np.ndarray] = None,
         inputs_init: Optional[np.ndarray] = None,
     ):
@@ -316,6 +316,8 @@ class System(regelum.RegelumBase, ABC):
         :param inputs_init: Set initial inputs manually, defaults to None
         :type inputs_init: Optional[np.ndarray], optional
         """
+        if system_parameters_init is None:
+            system_parameters_init = {}
         assert self.name is not None
         assert self.system_type is not None
         assert self.dim_state is not None
@@ -786,6 +788,7 @@ class LunarLander(System):
     _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1, "r": 0.5, "sigma": 0.1}
 
     def __init__(self, *args, **kwargs):
+        """Initialize an instance of LunarLander by specifying relevant physical parameters."""
         super().__init__(*args, **kwargs)
 
         self.name = "lander"
@@ -809,10 +812,6 @@ class LunarLander(System):
             self.parameters["g"],
         )
 
-        F_g = m * g * rc.array([0, 1], prototype=Dstate_before_landing)
-
-        x = state[0]
-        y = state[1]
         theta = state[2]
         x_dot = state[3]
         y_dot = state[4]
@@ -827,10 +826,6 @@ class LunarLander(System):
 
         F_l = inputs[0] * (1 - self.is_landed)
         F_t = inputs[1] * (1 - self.is_landed)
-
-        N_left, N_right = self.compute_reaction(
-            state[:2], left_support
-        ), self.compute_reaction(state[:2], right_support)
 
         self.is_landed_left = rc.if_else(left_support[1] <= 0, 1, 0)
         self.is_landed_right = rc.if_else(right_support[1] <= 0, 1, 0)

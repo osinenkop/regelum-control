@@ -6,6 +6,7 @@ rcognita.egg-info/
 build/
 dist/
 
+
 build_script.sh
 test/
 data/
@@ -169,6 +170,7 @@ multirun
 
 *.ipynb
 *mlruns/
+regelum_data/
 *mlruns*
 *.h5
 *.json

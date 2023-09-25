@@ -6,7 +6,9 @@ import regelum as rc
 def pytest_generate_tests(metafunc):
     mode = metafunc.config.getoption("mode")
     try:
-        metafunc.parametrize("setup", eval(mode), indirect=True)
+        setups = eval(mode)
+        ids = list(map(str, setups))
+        metafunc.parametrize("setup", setups, indirect=True, ids=ids)
     except NameError:
         raise ValueError(
             f'Invalid testing mode "{mode}". See tests/integration/setup.py for declared testing modes.'
