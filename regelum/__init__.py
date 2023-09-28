@@ -636,7 +636,7 @@ class main:
             self._registered_args = []
 
             sys.argv.insert(1, "--multirun")
-            sys.argv.insert(-1, "hydra.job.chdir=True")
+            sys.argv.append("hydra.job.chdir=True")
 
             return res
 
@@ -701,7 +701,7 @@ class main:
 
         def disable_logging(flag):
             if flag:
-                sys.argv.insert(-1, "hydra/job_logging=disabled")
+                sys.argv.append("hydra/job_logging=disabled")
 
         self.parser.add_argument(
             "--disable-logging", action="store_true", trigger=disable_logging
@@ -724,7 +724,7 @@ class main:
 
         def single_thread(flag):
             if not flag:
-                sys.argv.insert(-1, "hydra/launcher=joblib")
+                sys.argv.append("hydra/launcher=joblib")
 
         self.parser.add_argument(
             "--single-thread", action="store_true", trigger=single_thread
@@ -732,7 +732,7 @@ class main:
 
         def sweep(flag):
             if flag:
-                sys.argv.insert(-1, "hydra/sweeper=ax")
+                sys.argv.append("hydra/sweeper=ax")
                 self.is_sweep = True
             else:
                 self.is_sweep = False
@@ -866,7 +866,7 @@ class main:
                                     if isinstance(callback_, str)
                                     else callback_
                                 )
-                                self.callbacks.insert(-1, callback_())
+                                self.callbacks.append(callback_())
                             delattr(cfg, "callbacks")
                         elif "callbacks" in cfg:
                             delattr(cfg, "callbacks")
