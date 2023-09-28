@@ -971,24 +971,9 @@ class main:
                             "directory": os.getcwd(),
                         }
 
-            # TODO: DOCSTRING
-            def gui_server():
-                import streamlit.web.bootstrap
-                from streamlit import config as _config
-
-                _config.set_option("server.headless", True)
-                args = [common_dir.name]
-
-                # streamlit.cli.main_run(filename, args)
-                streamlit.web.bootstrap.run(gui_script_file, "", args, flag_options={})
-
-            gui = Process(target=gui_server) if argv.enable_streamlit else Mock()
-            gui.start()
             app.__module__ = old_app.__module__
             res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
             common_dir.cleanup()
-            time.sleep(2.0)
-            gui.terminate()
             self.parser.restore_args()
             return res
 
