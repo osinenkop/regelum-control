@@ -756,7 +756,7 @@ class main:
 
         self.mlflow_tracking_uri = f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
         # raise ValueError(str(self.mlflow_tracking_uri) + "\n" +  str(os.environ["RCOGNITA_MULTIRUN_DIR"]))
-        self.mlflow_artifacts_location = self.mlflow_tracking_uri + "/artifacts"
+        # self.mlflow_artifacts_location = self.mlflow_tracking_uri + "/artifacts"
 
         self.tags = {}
         self.experiment_name = "Default"
@@ -816,13 +816,6 @@ class main:
 
                 mlflow.set_tracking_uri(self.mlflow_tracking_uri)
 
-                if "mlflow_artifacts_location__IGNORE__" in cfg:
-                    try:
-                        artifacts_location = cfg.mlflow_artifacts_location__IGNORE__
-                    except BaseException:
-                        artifacts_location = self.mlflow_artifacts_location
-                    delattr(cfg, "mlflow_artifacts_location__IGNORE__")
-                    self.mlflow_artifacts_location = artifacts_location
                 numpy.random.seed(seed)
                 torch.manual_seed(seed)
                 random.seed(seed)
@@ -889,19 +882,9 @@ class main:
                                 r["pid"] = os.getpid()
                             self.tags.update({"run_path": os.getcwd()})
 
-                            if mlflow.get_experiment_by_name(
+                            experiment_id = mlflow.set_experiment(
                                 self.experiment_name
-                            ) is None and not mlflow.get_tracking_uri().startswith(
-                                "file:"
-                            ):
-                                experiment_id = mlflow.create_experiment(
-                                    name=self.experiment_name,
-                                    artifact_location=self.mlflow_artifacts_location,
-                                )
-                            else:
-                                experiment_id = mlflow.set_experiment(
-                                    self.experiment_name
-                                ).experiment_id
+                            ).experiment_id
 
                             with mlflow.start_run(
                                 experiment_id=experiment_id,
