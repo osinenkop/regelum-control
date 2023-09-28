@@ -22,7 +22,13 @@ torch_default_config = OptimizerConfig(
     kind="tensor",
     opt_options={"lr": 1e-3},
     opt_method=torch.optim.Adam,
-    config_options={"n_epochs": 1},
+    config_options={
+        "n_epochs": 1,
+        "constrained_optimization_policy": {
+            "is_activated": True,
+            "defaults": {"n_epochs_per_constraint": 2},
+        },
+    },
 )
 casadi_default_config = OptimizerConfig(
     kind="symbolic",
