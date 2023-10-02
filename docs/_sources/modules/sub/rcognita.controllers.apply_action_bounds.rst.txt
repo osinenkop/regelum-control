@@ -1,6 +1,0 @@
-rcognita.controllers.apply\_action\_bounds
-==========================================
-
-.. currentmodule:: rcognita.controllers
-
-.. autofunction:: apply_action_bounds

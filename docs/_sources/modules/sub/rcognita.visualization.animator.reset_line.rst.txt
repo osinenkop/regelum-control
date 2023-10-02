@@ -1,6 +1,0 @@
-rcognita.visualization.animator.reset\_line
-===========================================
-
-.. currentmodule:: rcognita.visualization.animator
-
-.. autofunction:: reset_line

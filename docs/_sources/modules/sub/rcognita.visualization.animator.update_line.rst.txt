@@ -1,6 +1,0 @@
-rcognita.visualization.animator.update\_line
-============================================
-
-.. currentmodule:: rcognita.visualization.animator
-
-.. autofunction:: update_line

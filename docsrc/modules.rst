@@ -4,4 +4,4 @@
    :toctree: modules
    :recursive:
 
-   rcognita
+   regelum

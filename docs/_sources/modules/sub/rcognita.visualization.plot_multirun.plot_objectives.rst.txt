@@ -1,6 +1,0 @@
-rcognita.visualization.plot\_multirun.plot\_objectives
-======================================================
-
-.. currentmodule:: rcognita.visualization.plot_multirun
-
-.. autofunction:: plot_objectives

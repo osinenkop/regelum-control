@@ -1,6 +1,0 @@
-rcognita.callbacks.method\_callback
-===================================
-
-.. currentmodule:: rcognita.callbacks
-
-.. autofunction:: method_callback

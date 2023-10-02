@@ -1,6 +1,0 @@
-rcognita.scripts.group\_runs
-============================
-
-.. currentmodule:: rcognita.scripts
-
-.. autofunction:: group_runs

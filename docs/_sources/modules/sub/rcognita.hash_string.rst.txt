@@ -1,6 +1,0 @@
-rcognita.hash\_string
-=====================
-
-.. currentmodule:: rcognita
-
-.. autofunction:: hash_string

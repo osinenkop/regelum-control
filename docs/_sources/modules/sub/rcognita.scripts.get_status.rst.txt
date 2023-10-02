@@ -1,6 +1,0 @@
-rcognita.scripts.get\_status
-============================
-
-.. currentmodule:: rcognita.scripts
-
-.. autofunction:: get_status

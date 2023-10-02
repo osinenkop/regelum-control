@@ -785,7 +785,7 @@ class main:
             initial_pythonpath = (
                 os.environ["PYTHONPATH"] if "PYTHONPATH" in os.environ else ""
             )
-            script_path = inspect.getfile(old_app)
+            script_path = inspect.getsourcefile(old_app)
             no_git = argv.no_git
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])
