@@ -38,6 +38,7 @@ github:
 	@rm -f ./README.rst
 	@rm -f ../README.md
 	@mv ./README.md ../README.md
+	@python3 ./replace_colors.py
 
 
 help:

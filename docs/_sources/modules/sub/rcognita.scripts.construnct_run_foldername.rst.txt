@@ -1,6 +1,0 @@
-rcognita.scripts.construnct\_run\_foldername
-============================================
-
-.. currentmodule:: rcognita.scripts
-
-.. autofunction:: construnct_run_foldername

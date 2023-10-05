@@ -636,7 +636,7 @@ class main:
             self._registered_args = []
 
             sys.argv.insert(1, "--multirun")
-            sys.argv.insert(-1, "hydra.job.chdir=True")
+            sys.argv.append("hydra.job.chdir=True")
 
             return res
 
@@ -701,7 +701,7 @@ class main:
 
         def disable_logging(flag):
             if flag:
-                sys.argv.insert(-1, "hydra/job_logging=disabled")
+                sys.argv.append("hydra/job_logging=disabled")
 
         self.parser.add_argument(
             "--disable-logging", action="store_true", trigger=disable_logging
@@ -724,7 +724,7 @@ class main:
 
         def single_thread(flag):
             if not flag:
-                sys.argv.insert(-1, "hydra/launcher=joblib")
+                sys.argv.append("hydra/launcher=joblib")
 
         self.parser.add_argument(
             "--single-thread", action="store_true", trigger=single_thread
@@ -732,7 +732,7 @@ class main:
 
         def sweep(flag):
             if flag:
-                sys.argv.insert(-1, "hydra/sweeper=ax")
+                sys.argv.append("hydra/sweeper=ax")
                 self.is_sweep = True
             else:
                 self.is_sweep = False
@@ -785,7 +785,7 @@ class main:
             initial_pythonpath = (
                 os.environ["PYTHONPATH"] if "PYTHONPATH" in os.environ else ""
             )
-            script_path = inspect.getfile(old_app)
+            script_path = inspect.getsourcefile(old_app)
             no_git = argv.no_git
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])
@@ -866,7 +866,7 @@ class main:
                                     if isinstance(callback_, str)
                                     else callback_
                                 )
-                                self.callbacks.insert(-1, callback_())
+                                self.callbacks.append(callback_())
                             delattr(cfg, "callbacks")
                         elif "callbacks" in cfg:
                             delattr(cfg, "callbacks")
@@ -954,24 +954,9 @@ class main:
                             "directory": os.getcwd(),
                         }
 
-            # TODO: DOCSTRING
-            def gui_server():
-                import streamlit.web.bootstrap
-                from streamlit import config as _config
-
-                _config.set_option("server.headless", True)
-                args = [common_dir.name]
-
-                # streamlit.cli.main_run(filename, args)
-                streamlit.web.bootstrap.run(gui_script_file, "", args, flag_options={})
-
-            gui = Process(target=gui_server) if argv.enable_streamlit else Mock()
-            gui.start()
             app.__module__ = old_app.__module__
             res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
             common_dir.cleanup()
-            time.sleep(2.0)
-            gui.terminate()
             self.parser.restore_args()
             return res
 

@@ -1,6 +1,0 @@
-rcognita.callbacks.is\_in\_debug\_mode
-======================================
-
-.. currentmodule:: rcognita.callbacks
-
-.. autofunction:: is_in_debug_mode

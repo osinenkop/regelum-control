@@ -30,8 +30,8 @@ you'd like to browse releases or fork the repository.
    :maxdepth: 5
    :glob:
 
-   modules/rcognita.*
+   modules/regelum.*
 
 
-.. include:: modules/rcognita.rst
+.. include:: modules/regelum.rst
     

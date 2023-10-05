@@ -1,6 +1,0 @@
-rcognita.scripts.get\_copy\_to\_path\_of\_run
-=============================================
-
-.. currentmodule:: rcognita.scripts
-
-.. autofunction:: get_copy_to_path_of_run

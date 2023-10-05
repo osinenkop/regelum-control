@@ -56,3 +56,10 @@ For instance `TestSetup(simulator="x")` would change the simulator configuration
 
 All other classes that you see instantiated inside these lists (like `MPCTest`) are merely derived from `TestSetup` for convenience.
 
+# FAQ
+
+## Why did the tests start failing after I renamed my project?
+
+Delete `__pycache__` and `.pytest_cache` from everywhere, including `.`, `./tests`, `./tests/integration`, `./regelum`.
+
+

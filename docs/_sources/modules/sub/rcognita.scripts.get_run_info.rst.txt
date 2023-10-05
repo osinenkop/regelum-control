@@ -1,6 +1,0 @@
-rcognita.scripts.get\_run\_info
-===============================
-
-.. currentmodule:: rcognita.scripts
-
-.. autofunction:: get_run_info

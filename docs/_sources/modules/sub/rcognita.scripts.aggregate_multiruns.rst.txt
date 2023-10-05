@@ -1,6 +1,0 @@
-rcognita.scripts.aggregate\_multiruns
-=====================================
-
-.. currentmodule:: rcognita.scripts
-
-.. autofunction:: aggregate_multiruns
