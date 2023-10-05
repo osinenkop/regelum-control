@@ -98,7 +98,7 @@ Consider the following files in your hypothetical project.
         my_app()
 
 The above example project is the equivalent to the first example in section
-"What is ``rcognita``?". Here instead of providing args for
+"What is ``regelum``?". Here instead of providing args for
 MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in ``my_config.yaml``.
 

@@ -142,8 +142,8 @@ class ComposedSystem(regelum.RegelumBase):
             return self._get_observation(time, state, inputs, _native_dim=_native_dim)
 
     def _compute_state_dynamics(self, time, state, inputs, _native_dim):
-        state = rc.array(state)
-        inputs = rc.array(inputs)
+        state = rc.array(state, prototype=state)
+        inputs = rc.array(inputs, prototype=state)
         state = state[self.forward_permutation]
 
         state_for_left, state_for_right = (
@@ -197,31 +197,32 @@ class ComposedSystem(regelum.RegelumBase):
         return final_dstate_vector
 
     def _get_observation(self, time, state, inputs, _native_dim):
-        state = rc.array(state)
-        inputs = rc.array(inputs)
+        state = rc.array(state, prototype=state)
+        inputs = rc.array(inputs, prototype=state)
 
         inputs_for_left = inputs[: self.sys_left.dim_inputs]
         state_for_left, state_for_right = (
             state[: self.sys_left.dim_state],
             state[self.sys_left.dim_state :],
         )
-        outputs_of_left = self.sys_left.get_observation(
-            time=time,
-            state=state_for_left,
-            inputs=inputs_for_left,
-            _native_dim=_native_dim,
+        outputs_of_left = rc.squeeze(
+            self.sys_left.get_observation(
+                time=time,
+                state=state_for_left,
+                inputs=inputs_for_left,
+                _native_dim=_native_dim,
+            )
         )
 
         inputs_for_right = rc.zeros(
-            self.sys_right.dim_inputs
-            if _native_dim
-            else (1, self.sys_right.dim_inputs),
+            self.sys_right.dim_inputs,
             prototype=(state, inputs),
         )
         inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
-        inputs_for_right[self.free_right_input_indices] = inputs[
-            self.sys_left.dim_inputs :
-        ]
+        inputs_for_right[self.free_right_input_indices] = rc.reshape(
+            inputs[self.sys_left.dim_inputs :],
+            rc.shape(inputs_for_right[self.free_right_input_indices]),
+        )
         outputs_of_right = self.sys_right.get_observation(
             time=time,
             state=state_for_right,
