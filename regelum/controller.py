@@ -359,10 +359,15 @@ class CALFControllerExPost(RLController):
             self.step_counter += 1
             return self.policy.action
 
-        critic_weights = self.critic.optimize_on_event(
-            self.data_buffer, is_update_and_cache_weights=False
-        )
-        critic_weights_accepted = self.critic.opt_status == "success"
+        if rc.norm_2(observation) > 0.01:
+            critic_weights = self.critic.optimize_on_event(
+                self.data_buffer, is_update_and_cache_weights=False
+            )
+            critic_weights_accepted = self.critic.opt_status == "success"
+        else:
+            critic_weights = self.critic.model.weights
+            critic_weights_accepted = False
+
         if critic_weights_accepted:
             self.critic.update_weights(critic_weights)
             self.policy.optimize_on_event(self.data_buffer)

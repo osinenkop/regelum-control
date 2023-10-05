@@ -9,9 +9,9 @@ td_n: 1
 device: cpu
 is_same_critic: False
 system: ~ system
-safe_decay_param: 0.001
+safe_decay_param: 0.00001
 is_dynamic_decay_rate: False
-lb_parameter: 1.0E-6
+lb_parameter: 1.0E-5
 ub_parameter: 1.0E+3
 
 
@@ -21,12 +21,13 @@ model:
 optimizer_config: 
   _target_: regelum.OptimizerConfig
   kind: tensor
-  opt_method: = torch.optim.Adam
+  opt_method: = torch.optim.SGD
   opt_options: 
-    lr: 3.0E-4
+    lr: 3.0E-8
+    momentum: 0.9
   config_options:
     n_epochs: 1 
     constrained_optimization_policy:
       is_activated: True
       defaults:
-        n_epochs_per_constraint: 10
+        n_epochs_per_constraint: 20

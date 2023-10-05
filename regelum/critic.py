@@ -462,6 +462,10 @@ class CriticCALF(Critic):
                 self.prev_good_critic_var,
             ],
         )
+        self.register_constraint(
+            self.CALF_critic_lower_bound_constraint,
+            variables=[self.critic_model_output, self.observation_var],
+        )
 
     def data_buffer_objective_keys(self) -> List[str]:
         keys = super().data_buffer_objective_keys()
@@ -484,7 +488,7 @@ class CriticCALF(Critic):
         )
         return stabilizing_constraint_violation
 
-    def CALF_critic_lower_bound_constraint(self, weights=None):
+    def CALF_critic_lower_bound_constraint(self, critic_model_output, observation):
         """Constraint that ensures that the value of the critic is above a certain lower bound.
 
         The lower bound is determined by the `current_observation` and a certain constant.
@@ -493,9 +497,10 @@ class CriticCALF(Critic):
         :return: constraint violation
         :rtype: float
         """
-        self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
-            self.current_observation
-        ) - self.model(self.current_observation, weights=weights)
+        self.lb_constraint_violation = (
+            self.lb_parameter * rc.norm_2(observation[:-1, :])
+            - critic_model_output[-1, :]
+        )
         return self.lb_constraint_violation
 
     def CALF_critic_lower_bound_constraint_predictive(self, weights=None):
