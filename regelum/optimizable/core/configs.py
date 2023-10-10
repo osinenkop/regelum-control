@@ -26,7 +26,7 @@ torch_default_config = OptimizerConfig(
         "n_epochs": 1,
         "constrained_optimization_policy": {
             "is_activated": True,
-            "defaults": {"n_epochs_per_constraint": 20},
+            "defaults": {"n_epochs_per_constraint": 10},
         },
     },
 )

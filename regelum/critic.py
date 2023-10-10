@@ -299,7 +299,9 @@ class Critic(Optimizable, ABC):
         if "critic_targets" in data_buffer.keys():
             data_buffer.delete_key("critic_targets")
 
-    def optimize_on_event(self, data_buffer, is_update_and_cache_weights=True):
+    def optimize_on_event(
+        self, data_buffer, is_update_and_cache_weights=True, is_constrained=True
+    ):
         if isinstance(self.model, ModelNN):
             self.model.to(self.device)
             self.model.cache.to(self.device)
@@ -322,6 +324,7 @@ class Critic(Optimizable, ABC):
             elif self.kind == "symbolic":
                 weights = self.optimize(
                     **opt_kwargs,
+                    is_constrained=is_constrained,
                     critic_weights=self.model.weights,
                     critic_stored_weights=self.model.cache.weights,
                 )["critic_weights"]

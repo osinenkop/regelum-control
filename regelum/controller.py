@@ -257,6 +257,8 @@ class RLController(Controller):
         self.clock.reset()
         self.total_objective = 0.0
         self.policy.action_old = self.policy.action_init
+        self.policy.action = self.policy.action_init
+        self.is_first_compute_action_call = True
 
 
 class CALFControllerExPost(RLController):
@@ -359,7 +361,7 @@ class CALFControllerExPost(RLController):
             self.step_counter += 1
             return self.policy.action
 
-        if rc.norm_2(observation) > 0.01:
+        if rc.norm_2(observation) > 1.0:
             critic_weights = self.critic.optimize_on_event(
                 self.data_buffer, is_update_and_cache_weights=False
             )
@@ -381,6 +383,127 @@ class CALFControllerExPost(RLController):
                 self.invoke_safe_action(state, observation)
         else:
             self.invoke_safe_action(state, observation)
+
+        self.step_counter += 1
+        return self.policy.action
+
+
+class CALFControllerExPostExperimental(RLController):
+    """Controller for CALF algorithm."""
+
+    def __init__(
+        self,
+        policy: Policy,
+        critic: CriticCALF,
+        safe_controller: Controller,
+        running_objective,
+        critic_optimization_event: str,
+        policy_optimization_event: str,
+        data_buffer_nullify_event: str,
+        discount_factor=1,
+        action_bounds=None,
+        max_data_buffer_size: Optional[int] = None,
+        time_start: float = 0,
+        sampling_time: float = 0.1,
+    ):
+        """Instantiate a CALFControllerExPost object. The docstring will be completed in the next release.
+
+        :param policy: Pol
+        :type policy: Policy
+        :param critic: _description_
+        :type critic: Critic
+        :param safe_controller: _description_
+        :type safe_controller: Controller
+        :param running_objective: _description_
+        :type running_objective: _type_
+        :param critic_optimization_event: _description_
+        :type critic_optimization_event: str
+        :param policy_optimization_event: _description_
+        :type policy_optimization_event: str
+        :param data_buffer_nullify_event: _description_
+        :type data_buffer_nullify_event: str
+        :param discount_factor: _description_, defaults to 1
+        :type discount_factor: int, optional
+        :param action_bounds: _description_, defaults to None
+        :type action_bounds: _type_, optional
+        :param max_data_buffer_size: _description_, defaults to None
+        :type max_data_buffer_size: Optional[int], optional
+        :param time_start: _description_, defaults to 0
+        :type time_start: float, optional
+        :param sampling_time: _description_, defaults to 0.1
+        :type sampling_time: float, optional
+        """
+        super().__init__(
+            policy=policy,
+            critic=critic,
+            running_objective=running_objective,
+            critic_optimization_event=critic_optimization_event,
+            policy_optimization_event=policy_optimization_event,
+            data_buffer_nullify_event=data_buffer_nullify_event,
+            discount_factor=discount_factor,
+            is_critic_first=True,
+            action_bounds=action_bounds,
+            max_data_buffer_size=max_data_buffer_size,
+            time_start=time_start,
+            sampling_time=sampling_time,
+        )
+        self.safe_controller = safe_controller
+
+    def update_data_buffer_with_action_stats(self, observation):
+        super().update_data_buffer_with_action_stats(observation)
+        self.data_buffer.push_to_end(
+            observation_last_good=self.critic.observation_last_good
+        )
+
+    @apply_action_bounds
+    def compute_action(
+        self,
+        state,
+        observation,
+        time=0,
+    ):
+        self.critic.receive_state(state)
+        self.policy.receive_state(state)
+        self.policy.receive_observation(observation)
+
+        self.data_buffer.push_to_end(
+            observation=observation,
+            timestamp=time,
+            episode_id=self.episode_counter,
+            iteration_id=self.iteration_counter,
+            step_id=self.step_counter,
+        )
+
+        # if self.is_first_compute_action_call:
+        if self.is_first_compute_action_call:
+            self.critic.observation_last_good = observation
+            self.update_data_buffer_with_action_stats(observation)
+            self.is_first_compute_action_call = False
+
+        if rc.norm_2(observation) > 1.0:
+            critic_weights = self.critic.optimize_on_event(
+                self.data_buffer,
+                is_update_and_cache_weights=False,
+                is_constrained=rc.norm_2(observation) > 2,
+            )
+            # critic_weights_accepted = self.critic.opt_status == "success"
+        else:
+            critic_weights = self.critic.model.weights
+            # critic_weights_accepted = False
+
+        # №if critic_weights_accepted:
+        self.critic.update_weights(critic_weights)
+        self.policy.optimize_on_event(self.data_buffer)
+        # policy_weights_accepted = True  # self.policy.opt_status == "success"
+        # if policy_weights_accepted:
+        self.policy.update_action(observation)
+        self.critic.observation_last_good = observation
+        self.update_data_buffer_with_action_stats(observation)
+        self.critic.cache_weights(critic_weights)
+        #     else:
+        #         self.invoke_safe_action(state, observation)
+        # else:
+        #     self.invoke_safe_action(state, observation)
 
         self.step_counter += 1
         return self.policy.action
