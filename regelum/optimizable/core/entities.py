@@ -11,7 +11,13 @@ from .hooks import get_data_hook
 
 @dataclass
 class OptimizationVariable:
-    """Base class for all optimization variables."""
+    """Base class for all optimization variables.
+
+    This is an object that represents a variable in the optimization procedure.
+    It is a container for the data and metadata associated with the variable.
+    Set the is_constant flag to True if the variable represents a constant.
+
+    """
 
     name: str
     dims: tuple

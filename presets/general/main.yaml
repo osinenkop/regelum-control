@@ -28,6 +28,21 @@ disallow_uncommitted%%: False
 mlflow_tracking_uri%%: ${oc.env:RCOGNITA_MLFLOW_TRACKING_URI}
 mlflow_artifacts_location%%: ${oc.env:RCOGNITA_MLFLOW_ARTIFACTS_LOCATION}
 
+
+
 hydra:
+  launcher:
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 10
+    backend: null
+    prefer: processes
+    require: null
+    verbose: 0
+    timeout: null
+    pre_dispatch: 2*n_jobs
+    batch_size: auto
+    temp_folder: null
+    max_nbytes: null
+    mmap_mode: r
   sweep:
     dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}
