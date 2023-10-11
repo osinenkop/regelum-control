@@ -1,15 +1,22 @@
-.. rcognita documentation master file, created by
+.. regelum documentation master file, created by
    sphinx-quickstart on Fri Sep  3 14:00:58 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Rcognita: A framework for DP and RL algorithm development, testing, and simulation
+.. image:: logo.png
+
+.. role:: raw-html(raw)
+    :format: html
+
+:raw-html:`<br />`
+
+Regelum: simulate, control, reinforce!
 ==================================================================================
 
-Welocme to ``rcognita``'s documentation! 
+Welocme to ``regelum``'s documentation!
 This wiki contains all the nescessary information to get started with usage 
-or development. Follow the `installation instructions <introduction.html#installation>`__ to get rcognita or check
-out `rcognita's gitflic page <https://gitflic.ru/project/aidynamicaction/rcognita>`__ if
+or development. Follow the `installation instructions <introduction.html#installation>`__ to get regelum or check
+out `regelum's gitflic page <https://gitflic.ru/project/aidynamicaction/rcognita>`__ if
 you'd like to browse releases or fork the repository.
 
 .. toctree::

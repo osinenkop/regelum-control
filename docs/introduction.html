@@ -22,8 +22,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Configs and basic rcognita applications" href="tutorials.html" />
-    <link rel="prev" title="Rcognita: A framework for DP and RL algorithm development, testing, and simulation" href="index.html" /> 
+    <link rel="next" title="Configs and basic regelum applications" href="tutorials.html" />
+    <link rel="prev" title="Regelum: simulate, control, reinforce!" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -31,8 +31,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> regelum
-            <img src="_static/logo_with_background.png" class="logo" alt="Logo"/>
+            <a href="index.html" class="icon icon-home" style="color: #8cc770;"> regelum
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -53,8 +52,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#with-casadi-for-nonlinear-optimization">With CasADi for nonlinear optimization</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#what-is-rcognita">What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#rcognita-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="#what-is-regelum">What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#regelum-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s config pipeline</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example-1">Example 1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-2">Example 2</a></li>
 </ul>
@@ -68,13 +67,12 @@
 <li class="toctree-l1"><a class="reference internal" href="#for-developers">For developers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#building-docs">Building docs</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#contributing">Contributing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#forking">Forking</a></li>
 </ul>
 </li>
 </ul>
 <p class="caption"><span class="caption-text">Tutorials</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
 </ul>
@@ -118,7 +116,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li><a href="index.html" class="icon icon-home" style="color: #8cc770;"></a></li>
       <li class="breadcrumb-item active">About</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -130,7 +128,7 @@
              
   <section id="about">
 <h1>About<a class="headerlink" href="#about" title="Permalink to this headline"></a></h1>
-<p><code class="docutils literal notranslate"><span class="pre">rcognita</span></code> is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
+<p><code class="docutils literal notranslate"><span class="pre">regelum</span></code> is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
 reinforcement learning controllers. It is made for researchers and engineers in reinforcement learning and control theory.
 A detailed documentation is available <a class="reference external" href="https://aidynamicaction.github.io/rcognita/">here</a>.</p>
 <section id="example-run-with-a-mobile-robot-simulation">
@@ -143,14 +141,14 @@ A detailed documentation is available <a class="reference external" href="https:
 <section id="basic">
 <h2>Basic<a class="headerlink" href="#basic" title="Permalink to this headline"></a></h2>
 <p>Run in terminal:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">rcognita</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">regelum</span>
 </pre></div>
 </div>
 <p>Alternatively, one can install the package direcly form the master
 branch. The following instruction is for Unix-based systems, assuming a
 terminal and Python3 interpreter.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitflic</span><span class="o">.</span><span class="n">ru</span><span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">aidynamicaction</span><span class="o">/</span><span class="n">rcognita</span><span class="o">.</span><span class="n">git</span>
-<span class="n">cd</span> <span class="n">rcognita</span>
+<span class="n">cd</span> <span class="n">regelum</span>
 <span class="n">pip3</span> <span class="n">install</span> <span class="o">.</span>
 </pre></div>
 </div>
@@ -160,15 +158,15 @@ for instance, just <code class="docutils literal notranslate"><span class="pre">
 <section id="with-pytorch-for-neural-networks">
 <h2>With PyTorch for neural networks<a class="headerlink" href="#with-pytorch-for-neural-networks" title="Permalink to this headline"></a></h2>
 <p>It is common for deep reinforcement learning software to make use of
-advanced frameworks for building and training neural networks. <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>
+advanced frameworks for building and training neural networks. <code class="docutils literal notranslate"><span class="pre">regelum</span></code>
 supports integration with PyTorch, a powerful Python interface for deep learning.</p>
-<p>Here is how to install <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> together with PyTorch.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">rcognita</span><span class="p">[</span><span class="n">TORCH</span><span class="p">]</span>
+<p>Here is how to install <code class="docutils literal notranslate"><span class="pre">regelum</span></code> together with PyTorch.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">regelum</span><span class="p">[</span><span class="n">TORCH</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>or</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitflic</span><span class="o">.</span><span class="n">ru</span><span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">aidynamicaction</span><span class="o">/</span><span class="n">rcognita</span><span class="o">.</span><span class="n">git</span>
-<span class="n">cd</span> <span class="n">rcognita</span>
+<span class="n">cd</span> <span class="n">regelum</span>
 <span class="n">pip3</span> <span class="n">install</span> <span class="o">.</span><span class="p">[</span><span class="n">TORCH</span><span class="p">]</span>
 </pre></div>
 </div>
@@ -176,36 +174,36 @@ supports integration with PyTorch, a powerful Python interface for deep learning
 <section id="with-casadi-for-nonlinear-optimization">
 <h2>With CasADi for nonlinear optimization<a class="headerlink" href="#with-casadi-for-nonlinear-optimization" title="Permalink to this headline"></a></h2>
 <p>In model predictive control it is important that one can time-efficiently optimize over numerically integrated
-ODEs. <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> interfaces with CasADi, a python package that offers an efficient and convenient
+ODEs. <code class="docutils literal notranslate"><span class="pre">regelum</span></code> interfaces with CasADi, a python package that offers an efficient and convenient
 toolset for optimization tasks of this kind.</p>
-<p>Here is how to install <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> together with CasADi.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">rcognita</span><span class="p">[</span><span class="n">CASADI</span><span class="p">]</span>
+<p>Here is how to install <code class="docutils literal notranslate"><span class="pre">regelum</span></code> together with CasADi.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">regelum</span><span class="p">[</span><span class="n">CASADI</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>or</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">gitflic</span><span class="o">.</span><span class="n">ru</span><span class="o">/</span><span class="n">project</span><span class="o">/</span><span class="n">aidynamicaction</span><span class="o">/</span><span class="n">rcognita</span><span class="o">.</span><span class="n">git</span>
-<span class="n">cd</span> <span class="n">rcognita</span>
+<span class="n">cd</span> <span class="n">regelum</span>
 <span class="n">pip3</span> <span class="n">install</span> <span class="o">.</span><span class="p">[</span><span class="n">CASADI</span><span class="p">]</span>
 </pre></div>
 </div>
 <p><strong>You can use both CasADi and PyTorch. They are not mutually exclusive.</strong></p>
 </section>
 </section>
-<section id="what-is-rcognita">
-<h1>What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?<a class="headerlink" href="#what-is-rcognita" title="Permalink to this headline"></a></h1>
-<img alt="https://gitflic.ru/project/aidynamicaction/rcognita/blob/raw?file=gfx%2Fflowchart.png&amp;commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d" src="https://gitflic.ru/project/aidynamicaction/rcognita/blob/raw?file=gfx%2Fflowchart.png&amp;commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d" />
-<p><code class="docutils literal notranslate"><span class="pre">rcognita</span></code> Python package is designed for hybrid simulation of agents
-and environments (i.e. controllers and control-systems). <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> allows one to
+<section id="what-is-regelum">
+<h1>What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?<a class="headerlink" href="#what-is-regelum" title="Permalink to this headline"></a></h1>
+<img alt="https://gitflic.ru/project/aidynamicaction/regelum/blob/raw?file=gfx%2Fflowchart.png&amp;commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d" src="https://gitflic.ru/project/aidynamicaction/regelum/blob/raw?file=gfx%2Fflowchart.png&amp;commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d" />
+<p><code class="docutils literal notranslate"><span class="pre">regelum</span></code> Python package is designed for hybrid simulation of agents
+and environments (i.e. controllers and control-systems). <code class="docutils literal notranslate"><span class="pre">regelum</span></code> allows one to
 simulate either discrete-time systems (environments) or continuous-time systems (environments)
 with sampled feedback (agents that react to their observations at a finite frequency).</p>
-<p>For instance, if you have a model of a robot and an agent of some kind, <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> would allow
+<p>For instance, if you have a model of a robot and an agent of some kind, <code class="docutils literal notranslate"><span class="pre">regelum</span></code> would allow
 you to see how the robot would behave if this agent controlled the robot by
 issuing its actions at a given rate.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
-<span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
-<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
+<span class="kn">from</span> <span class="nn">regelum.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">regelum.scenario</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="o">...</span>  <span class="c1">## Define the robot</span>
@@ -223,16 +221,16 @@ issuing its actions at a given rate.</p>
 <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Not only can you use <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> to simulate things, but you can also
+<p>Not only can you use <code class="docutils literal notranslate"><span class="pre">regelum</span></code> to simulate things, but you can also
 use it to run your training and tuning. <code class="docutils literal notranslate"><span class="pre">Scenario</span></code> objects are also meant to
 manage your training pipeline for RL (if needed):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
-<span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">RLController</span>
-<span class="kn">from</span> <span class="nn">rcognita.actors</span> <span class="kn">import</span> <span class="n">Actor</span>
-<span class="kn">from</span> <span class="nn">rcognita.critics</span> <span class="kn">import</span> <span class="n">Critic</span>
-<span class="kn">from</span> <span class="nn">scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
+<span class="kn">from</span> <span class="nn">regelum.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">regelum.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controllers</span> <span class="kn">import</span> <span class="n">RLController</span>
+<span class="kn">from</span> <span class="nn">regelum.actors</span> <span class="kn">import</span> <span class="n">Actor</span>
+<span class="kn">from</span> <span class="nn">regelum.critics</span> <span class="kn">import</span> <span class="n">Critic</span>
+<span class="kn">from</span> <span class="nn">regelum.scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="o">...</span>  <span class="c1">## Define the robot</span>
@@ -258,14 +256,14 @@ manage your training pipeline for RL (if needed):</p>
 <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The main intended advantages of <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> are customizability and modularity.
+<p>The main intended advantages of <code class="docutils literal notranslate"><span class="pre">regelum</span></code> are customizability and modularity.
 For instance if you wanted to try out your own numerical methods for integrating
 ODEs and whatnot, you could simply:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MySimulator</span><span class="p">(</span><span class="n">Simulator</span><span class="p">):</span>
     <span class="o">...</span> <span class="c1">## Your methods</span>
 </pre></div>
 </div>
-<p>This applies to just about any entity in <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>. Want a more advanced
+<p>This applies to just about any entity in <code class="docutils literal notranslate"><span class="pre">regelum</span></code>. Want a more advanced
 training pipeline? All it takes is too derive your own <code class="docutils literal notranslate"><span class="pre">Scenario</span></code>.
 Want to push the boundaries of what an RL agent looks like? Say no more:
 just derive a child from <code class="docutils literal notranslate"><span class="pre">RLController</span></code> and modify it to your heart’s content.</p>
@@ -274,8 +272,8 @@ best way of deriving something yourself. In most cases you’ll find that
 only a few methods need to be overriden to produce the desired result. In fact,
 in a great number of cases no deriving is necessary.</p>
 </section>
-<section id="rcognita-s-config-pipeline">
-<h1><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline<a class="headerlink" href="#rcognita-s-config-pipeline" title="Permalink to this headline"></a></h1>
+<section id="regelum-s-config-pipeline">
+<h1><code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s config pipeline<a class="headerlink" href="#regelum-s-config-pipeline" title="Permalink to this headline"></a></h1>
 <p>RL and control theory are infamous for having overwhelmingly many
 entities to keep track of: agents, environments, models, training routines,
 integrators, predictors, observers, optimizers… Each of the above in turn
@@ -283,24 +281,24 @@ has a number of parameters of its own, and to make things worse,
 your setup will most likely be highly sensitive to all of these. Therefore
 tweaking and tuning your setup may and will get tedeous unless you figure
 out a way to do it conveniently and systematically.</p>
-<p>Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+<p>Enter hierarchical configs! Regelum has a builtin hierarchical config pipeline
 built on top of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>. It must be noted that a regular <code class="docutils literal notranslate"><span class="pre">hydra</span></code>
-config will run on <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> just fine (but not vice versa), since
-<code class="docutils literal notranslate"><span class="pre">rcognita</span></code> includes all of the original features and syntaxes of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.
-However <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> additionally provides convenient syntactic sugars that
+config will run on <code class="docutils literal notranslate"><span class="pre">regelum</span></code> just fine (but not vice versa), since
+<code class="docutils literal notranslate"><span class="pre">regelum</span></code> includes all of the original features and syntaxes of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.
+However <code class="docutils literal notranslate"><span class="pre">regelum</span></code> additionally provides convenient syntactic sugars that
 <code class="docutils literal notranslate"><span class="pre">hydra</span></code> does not posses.</p>
-<p>Keep in mind that <strong>using rcognita’s config pipeline IS NOT mandatory</strong> and
+<p>Keep in mind that <strong>using regelum’s config pipeline IS NOT mandatory</strong> and
 the examples mentioned in the previous section are totally valid. However, in
 a more realistic usecase one will often find that the utility of
-<code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s configs is <strong>IMMEASURABLE</strong>.
+<code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s configs is <strong>IMMEASURABLE</strong>.
 The reader is thus encouraged to familiarize themselves
 with <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.</p>
 <section id="example-1">
 <h2>Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline"></a></h2>
 <p>Consider the following files in your hypothetical project.</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -335,9 +333,9 @@ with <code class="docutils literal notranslate"><span class="pre">hydra</span></
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
-<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
-<span class="kn">from</span> <span class="nn">rcognita.scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">from</span> <span class="nn">regelum.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">regelum.scenarios</span> <span class="kn">import</span> <span class="n">OnlineScenario</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -362,10 +360,10 @@ with <code class="docutils literal notranslate"><span class="pre">hydra</span></
 </pre></div>
 </div>
 <p>The above example project is the equivalent to the first example in section
-“What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?”. Here instead of providing args for
+“What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?”. Here instead of providing args for
 MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.</p>
-<p>Note, that the operator <code class="docutils literal notranslate"><span class="pre">~</span></code> is necessary to let rcognita know that
+<p>Note, that the operator <code class="docutils literal notranslate"><span class="pre">~</span></code> is necessary to let regelum know that
 the corresponding node within the config describes an instance of a class
 and we would like to instantiate it
 (as opposed to accessing it as a config-dictionary).</p>
@@ -384,8 +382,8 @@ and we would like to instantiate it
 <strong>literally everything</strong> directly inside the config, leaving the python script
 almost empty. Here’s an example of how this can be done:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.systems</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -401,10 +399,10 @@ almost empty. Here’s an example of how this can be done:</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
 
 <span class="n">simulator</span><span class="p">:</span>
-    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
     <span class="n">system</span><span class="p">:</span>
         <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
         <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
@@ -421,7 +419,7 @@ almost empty. Here’s an example of how this can be done:</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -448,16 +446,16 @@ conveniently override any input parameters, when running the script like so</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">simulator</span><span class="o">.</span><span class="n">_target_</span><span class="o">=</span><span class="n">MyOwnBetterSimulator</span>
 </pre></div>
 </div>
-<p>A more detailed tutorial on building <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications using the config pipeline
-can be found <a class="reference external" href="https://rcognita.website.yandexcloud.net/tutorials.html#">here</a> .</p>
+<p>A more detailed tutorial on building <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications using the config pipeline
+can be found <a class="reference external" href="https://regelum.website.yandexcloud.net/tutorials.html#">here</a> .</p>
 </section>
 </section>
 <section id="presets">
 <h1>Presets<a class="headerlink" href="#presets" title="Permalink to this headline"></a></h1>
-<p>To get started with using <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> the reader is advised to examine some concrete usecases.
-<code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s <a class="reference external" href="https://gitflic.ru/project/aidynamicaction/rcognita">repository</a> contains an
+<p>To get started with using <code class="docutils literal notranslate"><span class="pre">regelum</span></code> the reader is advised to examine some concrete usecases.
+<code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s <a class="reference external" href="https://gitflic.ru/project/aidynamicaction/regelum">repository</a> contains an
 assortment of presets, which can be both studied and conveniently repurposed.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">presets</span></code> directory contains several working  <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> projects:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">presets</span></code> directory contains several working  <code class="docutils literal notranslate"><span class="pre">regelum</span></code> projects:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">presets/3wrobot</span></code>: Parking a three wheeled robot.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">presets/3wrobot_ni</span></code>: Parking a massless three wheeled robot.</p></li>
@@ -555,16 +553,16 @@ Q-learning</a></p></li>
 </section>
 <section id="closing-remarks">
 <h1>Closing remarks<a class="headerlink" href="#closing-remarks" title="Permalink to this headline"></a></h1>
-<p>Please contact <a class="reference external" href="mailto:p&#46;osinenko&#37;&#52;&#48;gmail&#46;com">me</a> for any inquiries
-and don’t forget to give me credit for usage of this code. If you are
+<p>Please contact <a class="reference external" href="mailto:p&#46;osinenko&#37;&#52;&#48;gmail&#46;com">us</a> for any inquiries
+and don’t forget to give us credit for usage of this code. If you are
 interested in stacked Q-learning, kindly read the
 <a class="reference external" href="https://arxiv.org/abs/2007.03999">paper</a>.</p>
 <p>Original author: P. Osinenko, 2020</p>
 <section id="bibtex-reference">
 <h2>Bibtex reference<a class="headerlink" href="#bibtex-reference" title="Permalink to this headline"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">rcognita2020</span><span class="p">,</span>
-<span class="n">author</span> <span class="o">=</span>   <span class="p">{</span><span class="n">Pavel</span> <span class="n">Osinenko</span><span class="p">},</span>
-<span class="n">title</span> <span class="o">=</span>    <span class="p">{</span><span class="n">Rcognita</span><span class="p">:</span> <span class="n">a</span> <span class="n">framework</span> <span class="k">for</span> <span class="n">hybrid</span> <span class="n">agent</span><span class="o">-</span><span class="n">enviroment</span> <span class="n">simultion</span><span class="p">},</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@misc</span><span class="p">{</span><span class="n">regelum2023</span><span class="p">,</span>
+<span class="n">author</span> <span class="o">=</span>   <span class="p">{</span><span class="n">Pavel</span> <span class="n">Osinenko</span><span class="p">,</span> <span class="n">Grigory</span> <span class="n">Yaremenko</span><span class="p">,</span> <span class="n">Georgiy</span> <span class="n">Malaniya</span><span class="p">,</span> <span class="n">Anton</span> <span class="n">Bolychev</span><span class="p">},</span>
+<span class="n">title</span> <span class="o">=</span>    <span class="p">{</span><span class="n">Regelum</span><span class="p">:</span> <span class="n">a</span> <span class="n">framework</span> <span class="k">for</span> <span class="n">hybrid</span> <span class="n">agent</span><span class="o">-</span><span class="n">enviroment</span> <span class="n">simultion</span><span class="p">},</span>
 <span class="n">howpublished</span> <span class="o">=</span> <span class="p">{</span>\<span class="n">url</span><span class="p">{</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">AIDynamicAction</span><span class="o">/</span><span class="n">rcognita</span><span class="p">}},</span>
 <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2020</span><span class="p">}</span>
 <span class="p">}</span>
@@ -581,12 +579,12 @@ interested in stacked Q-learning, kindly read the
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip3</span> <span class="n">install</span> <span class="n">rst</span><span class="o">-</span><span class="n">to</span><span class="o">-</span><span class="n">myst</span><span class="o">==</span><span class="mf">0.3.3</span> <span class="n">sphinx</span><span class="o">==</span><span class="mf">4.0</span> <span class="o">-</span><span class="n">U</span>
 </pre></div>
 </div>
-<p>It is also necessary for <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s dependencies to be installed,
-which can be accomplished by running the following inside <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s repository folder:</p>
+<p>It is also necessary for <code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s dependencies to be installed,
+which can be accomplished by running the following inside <code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s repository folder:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">.</span>
 </pre></div>
 </div>
-<p>Once the dependencies are installed proceed to execute the following in <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s repostitory
+<p>Once the dependencies are installed proceed to execute the following in <code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s repostitory
 folder:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">docsrc</span>
 <span class="n">make</span>
@@ -601,19 +599,14 @@ via <a class="reference external" href="mailto:p&#46;osinenko&#37;&#52;&#48;gmai
 <p>If you’d like to request features or report bugs, please post respective issues
 to the <a class="reference external" href="https://gitflic.ru/project/aidynamicaction/rcognita/issue?status=OPEN">repository</a> .</p>
 </section>
-<section id="forking">
-<h2>Forking<a class="headerlink" href="#forking" title="Permalink to this headline"></a></h2>
-<p>When forking rcognita, please, be sure to either delete the docs or modify them in such a way that it
-becomes clear that your fork is not in fact the original <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>.</p>
-</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Rcognita: A framework for DP and RL algorithm development, testing, and simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="tutorials.html" class="btn btn-neutral float-right" title="Configs and basic rcognita applications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Regelum: simulate, control, reinforce!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorials.html" class="btn btn-neutral float-right" title="Configs and basic regelum applications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

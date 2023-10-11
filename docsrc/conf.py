@@ -41,7 +41,7 @@ author = "AIDA Lab"
 # The full version, including alpha/beta/rc tags
 release = __version__
 
-html_logo = "logo_with_background.png"
+# html_logo = "logo_with_background.png"
 
 html_show_sourcelink = False
 

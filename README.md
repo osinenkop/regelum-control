@@ -2,7 +2,7 @@
 
 # About
 
-`rcognita` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
+`regelum` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
 reinforcement learning controllers. It is made for researchers and engineers in reinforcement learning and control theory.
 A detailed documentation is available [here](https://aidynamicaction.github.io/rcognita/).
 
@@ -17,7 +17,7 @@ A detailed documentation is available [here](https://aidynamicaction.github.io/r
 Run in terminal:
 
 ```
-pip3 install rcognita
+pip3 install regelum
 ```
 
 Alternatively, one can install the package direcly form the master
@@ -26,7 +26,7 @@ terminal and Python3 interpreter.
 
 ```
 git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
-cd rcognita
+cd regelum
 pip3 install .
 ```
 
@@ -36,64 +36,64 @@ for instance, just `python`.
 ## With PyTorch for neural networks
 
 It is common for deep reinforcement learning software to make use of
-advanced frameworks for building and training neural networks. `rcognita`
+advanced frameworks for building and training neural networks. `regelum`
 supports integration with PyTorch, a powerful Python interface for deep learning.
 
-Here is how to install `rcognita` together with PyTorch.
+Here is how to install `regelum` together with PyTorch.
 
 ```
-pip3 install rcognita[TORCH]
+pip3 install regelum[TORCH]
 ```
 
 or
 
 ```
 git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
-cd rcognita
+cd regelum
 pip3 install .[TORCH]
 ```
 
 ## With CasADi for nonlinear optimization
 
 In model predictive control it is important that one can time-efficiently optimize over numerically integrated
-ODEs. `rcognita` interfaces with CasADi, a python package that offers an efficient and convenient
+ODEs. `regelum` interfaces with CasADi, a python package that offers an efficient and convenient
 toolset for optimization tasks of this kind.
 
-Here is how to install `rcognita` together with CasADi.
+Here is how to install `regelum` together with CasADi.
 
 ```
-pip3 install rcognita[CASADI]
+pip3 install regelum[CASADI]
 ```
 
 or
 
 ```
 git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
-cd rcognita
+cd regelum
 pip3 install .[CASADI]
 ```
 
 **You can use both CasADi and PyTorch. They are not mutually exclusive.**
 
-# What is `rcognita`?
+# What is `regelum`?
 
-![image](https://gitflic.ru/project/aidynamicaction/rcognita/blob/raw?file=gfx%2Fflowchart.png&commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d)
+![image](https://gitflic.ru/project/aidynamicaction/regelum/blob/raw?file=gfx%2Fflowchart.png&commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d)
 
-`rcognita` Python package is designed for hybrid simulation of agents
-and environments (i.e. controllers and control-systems). `rcognita` allows one to
+`regelum` Python package is designed for hybrid simulation of agents
+and environments (i.e. controllers and control-systems). `regelum` allows one to
 simulate either discrete-time systems (environments) or continuous-time systems (environments)
 with sampled feedback (agents that react to their observations at a finite frequency).
 
-For instance, if you have a model of a robot and an agent of some kind, `rcognita` would allow
+For instance, if you have a model of a robot and an agent of some kind, `regelum` would allow
 you to see how the robot would behave if this agent controlled the robot by
 issuing its actions at a given rate.
 
 ```
 import numpy as np
-from rcognita.simulator import Simulator
-from rcognita.systems import System
-from rcognita.controllers import Controller
-from scenarios import OnlineScenario
+from regelum.simulator import Simulator
+from regelum.system import System
+from regelum.controller import Controller
+from regelum.scenario import OnlineScenario
 
 class MyRobotSystem(System):
     ...  ## Define the robot
@@ -111,18 +111,18 @@ scenario = OnlineScenario(simulator, controller)
 scenario.run()
 ```
 
-Not only can you use `rcognita` to simulate things, but you can also
+Not only can you use `regelum` to simulate things, but you can also
 use it to run your training and tuning. `Scenario` objects are also meant to
 manage your training pipeline for RL (if needed):
 
 ```
 import numpy as np
-from rcognita.simulator import Simulator
-from rcognita.systems import System
-from rcognita.controllers import RLController
-from rcognita.actors import Actor
-from rcognita.critics import Critic
-from scenarios import OnlineScenario
+from regelum.simulator import Simulator
+from regelum.systems import System
+from regelum.controllers import RLController
+from regelum.actors import Actor
+from regelum.critics import Critic
+from regelum.scenarios import OnlineScenario
 
 class MyRobotSystem(System):
     ...  ## Define the robot
@@ -148,7 +148,7 @@ scenario = OnlineScenario(simulator, controller, objective=my_reward)
 scenario.run()
 ```
 
-The main intended advantages of `rcognita` are customizability and modularity.
+The main intended advantages of `regelum` are customizability and modularity.
 For instance if you wanted to try out your own numerical methods for integrating
 ODEs and whatnot, you could simply:
 
@@ -157,7 +157,7 @@ class MySimulator(Simulator):
     ... ## Your methods
 ```
 
-This applies to just about any entity in `rcognita`. Want a more advanced
+This applies to just about any entity in `regelum`. Want a more advanced
 training pipeline? All it takes is too derive your own `Scenario`.
 Want to push the boundaries of what an RL agent looks like? Say no more:
 just derive a child from `RLController` and modify it to your heart's content.
@@ -167,7 +167,7 @@ best way of deriving something yourself. In most cases you'll find that
 only a few methods need to be overriden to produce the desired result. In fact,
 in a great number of cases no deriving is necessary.
 
-# `rcognita`'s config pipeline
+# `regelum`'s config pipeline
 
 RL and control theory are infamous for having overwhelmingly many
 entities to keep track of: agents, environments, models, training routines,
@@ -177,17 +177,17 @@ your setup will most likely be highly sensitive to all of these. Therefore
 tweaking and tuning your setup may and will get tedeous unless you figure
 out a way to do it conveniently and systematically.
 
-Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+Enter hierarchical configs! Regelum has a builtin hierarchical config pipeline
 built on top of `hydra`. It must be noted that a regular `hydra`
-config will run on `rcognita` just fine (but not vice versa), since
-`rcognita` includes all of the original features and syntaxes of `hydra`.
-However `rcognita` additionally provides convenient syntactic sugars that
+config will run on `regelum` just fine (but not vice versa), since
+`regelum` includes all of the original features and syntaxes of `hydra`.
+However `regelum` additionally provides convenient syntactic sugars that
 `hydra` does not posses.
 
-Keep in mind that **using rcognita's config pipeline IS NOT mandatory** and
+Keep in mind that **using regelum's config pipeline IS NOT mandatory** and
 the examples mentioned in the previous section are totally valid. However, in
 a more realistic usecase one will often find that the utility of
-`rcognita`'s configs is **IMMEASURABLE**.
+`regelum`'s configs is **IMMEASURABLE**.
 The reader is thus encouraged to familiarize themselves
 with `hydra`.
 
@@ -198,8 +198,8 @@ Consider the following files in your hypothetical project.
 `my_utilities.py`:
 
 ```
-from rcognita.systems import System
-from rcognita.controllers import Controller
+from regelum.systems import System
+from regelum.controllers import Controller
 
 class MyRobotSystem(System):
     def __init__(self, x, y, z):
@@ -238,9 +238,9 @@ agent:
 `main.py`:
 
 ```
-import rcognita as r
-from rcognita.simulator import Simulator
-from rcognita.scenarios import OnlineScenario
+import regelum as r
+from regelum.simulator import Simulator
+from regelum.scenarios import OnlineScenario
 import my_utilities
 import numpy
 
@@ -265,11 +265,11 @@ if __name__ == "__main__":
 ```
 
 The above example project is the equivalent to the first example in section
-"What is `rcognita`?". Here instead of providing args for
+"What is `regelum`?". Here instead of providing args for
 MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in `my_config.yaml`.
 
-Note, that the operator `~` is necessary to let rcognita know that
+Note, that the operator `~` is necessary to let regelum know that
 the corresponding node within the config describes an instance of a class
 and we would like to instantiate it
 (as opposed to accessing it as a config-dictionary).
@@ -295,8 +295,8 @@ almost empty. Here's an example of how this can be done:
 `my_utilities.py`:
 
 ```
-from rcognita.systems import System
-from rcognita.controllers import Controller
+from regelum.systems import System
+from regelum.controllers import Controller
 
 class MyRobotSystem(System):
     def __init__(self, x, y, z):
@@ -314,10 +314,10 @@ class MyAgent(Controller):
 `my_config.yaml`:
 
 ```
-_target_: rcognita.scenarios.Scenario
+_target_: regelum.scenarios.Scenario
 
 simulator:
-    _target_: rcognita.simulator.Simulator
+    _target_: regelum.simulator.Simulator
     system:
         _target_: my_utilities.MyRobotSystem
         x: 1
@@ -336,7 +336,7 @@ controller:
 `main.py`:
 
 ```
-import rcognita as r
+import regelum as r
 import my_utilities
 import numpy
 
@@ -367,16 +367,16 @@ or even
 python3 main.py simulator._target_=MyOwnBetterSimulator
 ```
 
-A more detailed tutorial on building `rcognita` applications using the config pipeline
-can be found [here](https://rcognita.website.yandexcloud.net/tutorials.html#) .
+A more detailed tutorial on building `regelum` applications using the config pipeline
+can be found [here](https://regelum.website.yandexcloud.net/tutorials.html#) .
 
 # Presets
 
-To get started with using `rcognita` the reader is advised to examine some concrete usecases.
-`rcognita`'s [repository](https://gitflic.ru/project/aidynamicaction/rcognita) contains an
+To get started with using `regelum` the reader is advised to examine some concrete usecases.
+`regelum`'s [repository](https://gitflic.ru/project/aidynamicaction/regelum) contains an
 assortment of presets, which can be both studied and conveniently repurposed.
 
-The `presets` directory contains several working  `rcognita` projects:
+The `presets` directory contains several working  `regelum` projects:
 
 - `presets/3wrobot`: Parking a three wheeled robot.
 - `presets/3wrobot_ni`: Parking a massless three wheeled robot.
@@ -441,8 +441,8 @@ You could, of course, instead just edit the config.
 
 # Closing remarks
 
-Please contact [me](mailto:p.osinenko@gmail.com) for any inquiries
-and don't forget to give me credit for usage of this code. If you are
+Please contact [us](mailto:p.osinenko@gmail.com) for any inquiries
+and don't forget to give us credit for usage of this code. If you are
 interested in stacked Q-learning, kindly read the
 [paper](https://arxiv.org/abs/2007.03999).
 
@@ -451,9 +451,9 @@ Original author: P. Osinenko, 2020
 ## Bibtex reference
 
 ```
-@misc{rcognita2020,
-author =   {Pavel Osinenko},
-title =    {Rcognita: a framework for hybrid agent-enviroment simultion},
+@misc{regelum2023,
+author =   {Pavel Osinenko, Grigory Yaremenko, Georgiy Malaniya, Anton Bolychev},
+title =    {Regelum: a framework for hybrid agent-enviroment simultion},
 howpublished = {\url{https://github.com/AIDynamicAction/rcognita}},
 year = {2020}
 }
