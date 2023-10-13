@@ -9,17 +9,17 @@ This document provides run commands for several algorithms
 on different environments also known as systems. It can be done via running ``preset_endpoint.py`` with different flags. 
 ``preset_endpoint.py`` works as follows. It parses provided flags and configs that are located in general folder with further instantiation
 the scenario class (and corresponding system animator if necessary) and runs the learning procedure. For detailed explanation of how to work
-with configuration files in rcognita go to this page. The list of available systems can be found here. And their corresponding instantiation 
+with configuration files in regelum go to this page. The list of available systems can be found here. And their corresponding instantiation
 configurations are located in this folder. Note that we used simplified notation in the provided configs (link)
 
 So, the list of available systems that are provided in configuration files is the following:
- - ``2tank`` that instatiates rcognita.systems.System2Tank
- - ``3wrobot_ni`` that instatiates rcognita.systems.Sys3WRobotNI
- - ``3wrobot`` that instatiates rcognita.systems.Sys3WRobot
- - ``cartpole`` that instatiates rcognita.systems.SysCartpole
- - ``inv_pendulum`` that instatiates rcognita.systems.SysInvertedPedulum
- - ``kin_point`` that instatiates rcognita.systems.SysKinematicPoint
- - ``lunar_lander`` that instatiates rcognita.systems.SysLunarLande
+ - ``2tank`` that instatiates regelum.system.System2Tank
+ - ``3wrobot_ni`` that instatiates regelum.system.Sys3WRobotNI
+ - ``3wrobot`` that instatiates regelum.system.Sys3WRobot
+ - ``cartpole`` that instatiates regelum.system.SysCartpole
+ - ``inv_pendulum`` that instatiates regelum.system.SysInvertedPedulum
+ - ``kin_point`` that instatiates regelum.system.SysKinematicPoint
+ - ``lunar_lander`` that instatiates regelum.system.SysLunarLande
 
 Environment variables setup
 ---------------------------   

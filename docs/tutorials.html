@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Configs and basic rcognita applications &mdash; regelum 0.2.1 documentation</title>
+  <title>Configs and basic regelum applications &mdash; regelum 0.2.1 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -31,8 +31,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> regelum
-            <img src="_static/logo_with_background.png" class="logo" alt="Logo"/>
+            <a href="index.html" class="icon icon-home" style="color: #8cc770;"> regelum
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -45,8 +44,8 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">About</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#installation">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html#what-is-rcognita">What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?</a></li>
-<li class="toctree-l1"><a class="reference internal" href="introduction.html#rcognita-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#what-is-regelum">What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html#regelum-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s config pipeline</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#presets">Presets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#related-literature">Related literature</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#closing-remarks">Closing remarks</a></li>
@@ -54,7 +53,7 @@
 </ul>
 <p class="caption"><span class="caption-text">Tutorials</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example-1-basics">Example 1: Basics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example-2-nested-instantiation">Example 2: Nested instantiation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#remark-on-overriding-and-forwarding">Remark on overriding and forwarding</a></li>
@@ -115,8 +114,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a></li>
-      <li class="breadcrumb-item active">Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications</li>
+      <li><a href="index.html" class="icon icon-home" style="color: #8cc770;"></a></li>
+      <li class="breadcrumb-item active">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -125,8 +124,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="configs-and-basic-rcognita-applications">
-<h1>Configs and basic <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> applications<a class="headerlink" href="#configs-and-basic-rcognita-applications" title="Permalink to this headline"></a></h1>
+  <section id="configs-and-basic-regelum-applications">
+<h1>Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications<a class="headerlink" href="#configs-and-basic-regelum-applications" title="Permalink to this headline"></a></h1>
 <p>RL and control theory are infamous for having overwhelmingly many
 entities to keep track of: agents, environments, models, training routines,
 integrators, predictors, observers, optimizers… Each of the above in turn
@@ -134,14 +133,14 @@ has a number of parameters of its own, and to make things worse,
 your setup will most likely be highly sensitive to all of these. Therefore
 tweaking and tuning your setup may and will get tedeous unless you figure
 out a way to do it conveniently and systematically.</p>
-<p>Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+<p>Enter hierarchical configs! Regelum has a builtin hierarchical config pipeline
 built on top of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>. It must be noted that a regular <code class="docutils literal notranslate"><span class="pre">hydra</span></code>
-config will run on <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> just fine (but not vice versa), since
-<code class="docutils literal notranslate"><span class="pre">rcognita</span></code> includes all of the original features and syntaxes of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.
-However <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> additionally provides convenient syntactic sugars that
+config will run on <code class="docutils literal notranslate"><span class="pre">regelum</span></code> just fine (but not vice versa), since
+<code class="docutils literal notranslate"><span class="pre">regelum</span></code> includes all of the original features and syntaxes of <code class="docutils literal notranslate"><span class="pre">hydra</span></code>.
+However <code class="docutils literal notranslate"><span class="pre">regelum</span></code> additionally provides convenient syntactic sugars that
 <code class="docutils literal notranslate"><span class="pre">hydra</span></code> does not posses.</p>
 <p>This tutorial is focused on explaining the structure and intended workflow of
-<code class="docutils literal notranslate"><span class="pre">rcognita</span></code> from the perspective of the config paradigm.</p>
+<code class="docutils literal notranslate"><span class="pre">regelum</span></code> from the perspective of the config paradigm.</p>
 <p>The reader is encouraged to familiarize themselves
 with <code class="docutils literal notranslate"><span class="pre">hydra</span></code>. Some of the basic syntaxes along with the additional features will also
 be covered in the present tutorial.</p>
@@ -151,8 +150,8 @@ be sure to skip them if you’ve already seen them.</p>
 <h2>Example 1: Basics<a class="headerlink" href="#example-1-basics" title="Permalink to this headline"></a></h2>
 <p>Consider the following files in your hypothetical project.</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -187,9 +186,9 @@ be sure to skip them if you’ve already seen them.</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
-<span class="kn">from</span> <span class="nn">rcognita.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
-<span class="kn">from</span> <span class="nn">rcognita.scenarios</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
+<span class="kn">from</span> <span class="nn">regelum.simulator</span> <span class="kn">import</span> <span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">regelum.scenario</span> <span class="kn">import</span> <span class="n">EpisodicScenario</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -214,10 +213,10 @@ be sure to skip them if you’ve already seen them.</p>
 </pre></div>
 </div>
 <p>The above example project is the equivalent to the first example in section
-“What is <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>?”. Here instead of providing args for
+“What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?”. Here instead of providing args for
 MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.</p>
-<p>Note, that the operator <code class="docutils literal notranslate"><span class="pre">~</span></code> is necessary to let rcognita know that
+<p>Note, that the operator <code class="docutils literal notranslate"><span class="pre">~</span></code> is necessary to let regelum know that
 the corresponding node within the config describes an instance of a class
 and we would like to instantiate it
 (as opposed to accessing it as a config-dictionary).</p>
@@ -236,8 +235,8 @@ and we would like to instantiate it
 <strong>literally everything</strong> directly inside the config, leaving the python script
 almost empty. Here’s an example of how this can be done:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -253,10 +252,10 @@ almost empty. Here’s an example of how this can be done:</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">scenario</span><span class="o">.</span><span class="n">Scenario</span>
 
 <span class="n">simulator</span><span class="p">:</span>
-    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
     <span class="n">system</span><span class="p">:</span>
         <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
         <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
@@ -273,7 +272,7 @@ almost empty. Here’s an example of how this can be done:</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -305,7 +304,7 @@ conveniently override any input parameters, when running the script like so</p>
 <p>Sure, overriding individual parameters is nice, but writing
 <code class="docutils literal notranslate"><span class="pre">simulator.system.x=3</span></code> can be rather inconvenient as compared to simply writing
 <code class="docutils literal notranslate"><span class="pre">x=3</span></code>.</p>
-<p>Fortunately, <code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s configs have a feature that allows you
+<p>Fortunately, <code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s configs have a feature that allows you
 to <strong>forward</strong> a variable by simply adding the following line to you config:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@simulator</span><span class="o">.</span><span class="n">system</span><span class="o">.</span><span class="n">x</span>
 </pre></div>
@@ -330,8 +329,8 @@ when we want to be able swap out an entire agent or an entire environment withou
 rewriting the whole config?</p>
 <p>Consider the following example:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -353,13 +352,13 @@ rewriting the whole config?</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">scenario</span><span class="o">.</span><span class="n">Scenario</span>
 
 <span class="n">defaults</span><span class="p">:</span>
     <span class="o">-</span> <span class="n">controller</span><span class="p">:</span> <span class="n">reliable</span>
 
 <span class="n">simulator</span><span class="p">:</span>
-    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
     <span class="n">system</span><span class="p">:</span>
         <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
         <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
@@ -385,7 +384,7 @@ rewriting the whole config?</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -452,8 +451,8 @@ accounts for the error of the simulations (for the purpose of improving offline 
 To be able to extract the necessary data it needs to have access to the simulator instance.
 Here’s how you could go about doing it.</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -470,10 +469,10 @@ Here’s how you could go about doing it.</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">scenarios</span><span class="o">.</span><span class="n">Scenario</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">scenario</span><span class="o">.</span><span class="n">Scenario</span>
 
 <span class="n">simulator</span><span class="p">:</span>
-    <span class="n">_target_</span><span class="p">:</span> <span class="n">rcognita</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
+    <span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
     <span class="n">system</span><span class="p">:</span>
         <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyRobotSystem</span>
         <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
@@ -492,7 +491,7 @@ Here’s how you could go about doing it.</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
 <span class="kn">import</span> <span class="nn">my_utilities</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -529,8 +528,8 @@ instance if the <code class="docutils literal notranslate"><span class="pre">MyA
 to account for the accuracy of simulation, then one could implement that in
 the following way:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rcognita.systems</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">rcognita.controllers</span> <span class="kn">import</span> <span class="n">Controller</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
+<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -546,10 +545,10 @@ the following way:</p>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>_target_: rcognita.scenarios.Scenario
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>_target_: regelum.scenario.Scenario
 
 simulator:
-    _target_: rcognita.simulator.Simulator
+    _target_: regelum.simulator.Simulator
     system:
         _target_: my_utilities.MyRobotSystem
         x: 1
@@ -606,7 +605,7 @@ that the relevant modules are imported in your <code class="docutils literal not
 </section>
 <section id="callbacks-and-logging">
 <h1>Callbacks and Logging<a class="headerlink" href="#callbacks-and-logging" title="Permalink to this headline"></a></h1>
-<p>In <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> we avoid mixing logging routines with functional
+<p>In <code class="docutils literal notranslate"><span class="pre">regelum</span></code> we avoid mixing logging routines with functional
 code. This is motivated by the fact that different applications
 may require very different logging behaviors from same objects.
 We thus introduce a lightweight event handling system that allows
@@ -621,13 +620,13 @@ for flexible and convenient configuration of logging: Callbacks.</p>
 </pre></div>
 </div>
 <p>To make this callback work we would need
-to decorate the <code class="docutils literal notranslate"><span class="pre">objective</span></code> method with <code class="docutils literal notranslate"><span class="pre">&#64;rcognita.callbacks.apply_callbacks</span></code> after
-decorating the respective class with <code class="docutils literal notranslate"><span class="pre">&#64;rcognita.callbacks.introduce_callbacks()</span></code>. This will
+to decorate the <code class="docutils literal notranslate"><span class="pre">objective</span></code> method with <code class="docutils literal notranslate"><span class="pre">&#64;regelum.callbacks.apply_callbacks</span></code> after
+decorating the respective class with <code class="docutils literal notranslate"><span class="pre">&#64;regelum.callbacks.introduce_callbacks()</span></code>. This will
 make <code class="docutils literal notranslate"><span class="pre">objective</span></code> trigger callback events. To make sure the event is handled we will also need to
 register the callback. There are two way of doing so.</p>
 <p>You could either specify it in your Python script
 <code class="docutils literal notranslate"><span class="pre">main.py</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">rcognita</span> <span class="k">as</span> <span class="nn">r</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">r</span>
 <span class="kn">import</span> <span class="nn">my_callbacks</span>
 <span class="kn">import</span> <span class="nn">numpy</span>
 
@@ -655,8 +654,8 @@ to your config:
 </pre></div>
 </div>
 <p>The above will not mess with your instantiation parameters. <code class="docutils literal notranslate"><span class="pre">config.callbacks</span></code> gets
-deleted automatically as soon as <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> extracts the callbacks from it.</p>
-<p>By default <code class="docutils literal notranslate"><span class="pre">rcognita</span></code> creates its own <code class="docutils literal notranslate"><span class="pre">Logger</span></code> instance and passes it to the callbacks.
+deleted automatically as soon as <code class="docutils literal notranslate"><span class="pre">regelum</span></code> extracts the callbacks from it.</p>
+<p>By default <code class="docutils literal notranslate"><span class="pre">regelum</span></code> creates its own <code class="docutils literal notranslate"><span class="pre">Logger</span></code> instance and passes it to the callbacks.
 You can insist on your own logger with <code class="docutils literal notranslate"><span class="pre">&#64;r.main(logger=...,</span> <span class="pre">...)</span></code>.</p>
 <p>If you’d like to know more, be sure to read the <span class="xref std std-doc">relevant API Docs</span>.</p>
 </section>
@@ -664,7 +663,7 @@ You can insist on your own logger with <code class="docutils literal notranslate
 <h1>What if I still don’t know what I’m doing?<a class="headerlink" href="#what-if-i-still-don-t-know-what-i-m-doing" title="Permalink to this headline"></a></h1>
 <p>If after reading these tutorials you still don’t quite know where to start,
 do not be discouraged. You are now well equipped to understand the presets provided in
-<code class="docutils literal notranslate"><span class="pre">rcognita</span></code>’s repository. As soon as you examine a few of them, you should be able to write
+<code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s repository. As soon as you examine a few of them, you should be able to write
 code of your own. In fact many of the presets can likely be conveniently repurposed for
 your own projects.</p>
 <p>Be sure to hit the API Docs when in doubt, and good luck with your experiments!</p>

@@ -1,4 +1,4 @@
-Configs and basic ``rcognita`` applications
+Configs and basic ``regelum`` applications
 ===========================================
 
 RL and control theory are infamous for having overwhelmingly many
@@ -9,15 +9,15 @@ your setup will most likely be highly sensitive to all of these. Therefore
 tweaking and tuning your setup may and will get tedeous unless you figure
 out a way to do it conveniently and systematically.
 
-Enter hierarchical configs! Rcognita has a builtin hierarchical config pipeline
+Enter hierarchical configs! Regelum has a builtin hierarchical config pipeline
 built on top of ``hydra``. It must be noted that a regular ``hydra``
-config will run on ``rcognita`` just fine (but not vice versa), since
-``rcognita`` includes all of the original features and syntaxes of ``hydra``.
-However ``rcognita`` additionally provides convenient syntactic sugars that
+config will run on ``regelum`` just fine (but not vice versa), since
+``regelum`` includes all of the original features and syntaxes of ``hydra``.
+However ``regelum`` additionally provides convenient syntactic sugars that
 ``hydra`` does not posses.
 
 This tutorial is focused on explaining the structure and intended workflow of
-``rcognita`` from the perspective of the config paradigm.
+``regelum`` from the perspective of the config paradigm.
 
 The reader is encouraged to familiarize themselves
 with ``hydra``. Some of the basic syntaxes along with the additional features will also
@@ -33,8 +33,8 @@ Consider the following files in your hypothetical project.
 ``my_utilities.py``:
 ::
 
-    from rcognita.systems import System
-    from rcognita.controllers import Controller
+    from regelum.system import System
+    from regelum.controller import Controller
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -72,9 +72,9 @@ Consider the following files in your hypothetical project.
 ``main.py``:
 ::
 
-    import rcognita as r
-    from rcognita.simulator import Simulator
-    from rcognita.scenarios import EpisodicScenario
+    import regelum as r
+    from regelum.simulator import Simulator
+    from regelum.scenario import EpisodicScenario
     import my_utilities
     import numpy
 
@@ -102,7 +102,7 @@ The above example project is the equivalent to the first example in section
 MyRobotSystem and MyAgent inside the python script, we instead specify
 both the classes and their args in ``my_config.yaml``.
 
-Note, that the operator ``~`` is necessary to let rcognita know that
+Note, that the operator ``~`` is necessary to let regelum know that
 the corresponding node within the config describes an instance of a class
 and we would like to instantiate it
 (as opposed to accessing it as a config-dictionary).
@@ -125,8 +125,8 @@ almost empty. Here's an example of how this can be done:
 ``my_utilities.py``:
 ::
 
-    from rcognita.systems import System
-    from rcognita.controllers import Controller
+    from regelum.system import System
+    from regelum.controller import Controller
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -144,10 +144,10 @@ almost empty. Here's an example of how this can be done:
 ``my_config.yaml``:
 ::
 
-    _target_: rcognita.scenarios.Scenario
+    _target_: regelum.scenario.Scenario
 
     simulator:
-        _target_: rcognita.simulator.Simulator
+        _target_: regelum.simulator.Simulator
         system:
             _target_: my_utilities.MyRobotSystem
             x: 1
@@ -165,7 +165,7 @@ almost empty. Here's an example of how this can be done:
 ``main.py``:
 ::
 
-   import rcognita as r
+   import regelum as r
    import my_utilities
    import numpy
 
@@ -201,7 +201,7 @@ Sure, overriding individual parameters is nice, but writing
 ``simulator.system.x=3`` can be rather inconvenient as compared to simply writing
 ``x=3``.
 
-Fortunately, ``rcognita``'s configs have a feature that allows you
+Fortunately, ``regelum``'s configs have a feature that allows you
 to **forward** a variable by simply adding the following line to you config:
 ::
 
@@ -233,8 +233,8 @@ Consider the following example:
 ``my_utilities.py``:
 ::
 
-    from rcognita.systems import System
-    from rcognita.controllers import Controller
+    from regelum.system import System
+    from regelum.controller import Controller
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -257,13 +257,13 @@ Consider the following example:
 ``my_config.yaml``:
 ::
 
-    _target_: rcognita.scenarios.Scenario
+    _target_: regelum.scenario.Scenario
 
     defaults:
         - controller: reliable
 
     simulator:
-        _target_: rcognita.simulator.Simulator
+        _target_: regelum.simulator.Simulator
         system:
             _target_: my_utilities.MyRobotSystem
             x: 1
@@ -294,7 +294,7 @@ Consider the following example:
 ``main.py``:
 ::
 
-   import rcognita as r
+   import regelum as r
    import my_utilities
    import numpy
 
@@ -373,8 +373,8 @@ Here's how you could go about doing it.
 ``my_utilities.py``:
 ::
 
-    from rcognita.systems import System
-    from rcognita.controllers import Controller
+    from regelum.system import System
+    from regelum.controller import Controller
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -393,10 +393,10 @@ Here's how you could go about doing it.
 ``my_config.yaml``:
 ::
 
-    _target_: rcognita.scenarios.Scenario
+    _target_: regelum.scenario.Scenario
 
     simulator:
-        _target_: rcognita.simulator.Simulator
+        _target_: regelum.simulator.Simulator
         system:
             _target_: my_utilities.MyRobotSystem
             x: 1
@@ -417,7 +417,7 @@ Here's how you could go about doing it.
 ``main.py``:
 ::
 
-   import rcognita as r
+   import regelum as r
    import my_utilities
    import numpy
 
@@ -460,8 +460,8 @@ the following way:
 ``my_utilities.py``:
 ::
 
-    from rcognita.systems import System
-    from rcognita.controllers import Controller
+    from regelum.system import System
+    from regelum.controller import Controller
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -479,10 +479,10 @@ the following way:
 ``my_config.yaml``:
 ::
 
-    _target_: rcognita.scenarios.Scenario
+    _target_: regelum.scenario.Scenario
 
     simulator:
-        _target_: rcognita.simulator.Simulator
+        _target_: regelum.simulator.Simulator
         system:
             _target_: my_utilities.MyRobotSystem
             x: 1
@@ -543,7 +543,7 @@ that the relevant modules are imported in your ``main.py``.
 Callbacks and Logging
 =====================
 
-In ``rcognita`` we avoid mixing logging routines with functional
+In ``regelum`` we avoid mixing logging routines with functional
 code. This is motivated by the fact that different applications
 may require very different logging behaviors from same objects.
 We thus introduce a lightweight event handling system that allows
@@ -561,8 +561,8 @@ Let's write a callback the logs the objective every time it's computed.
                 self.log(f"The current objective is equal to {output}.")
 
 To make this callback work we would need
-to decorate the ``objective`` method with ``@rcognita.callbacks.apply_callbacks`` after
-decorating the respective class with ``@rcognita.callbacks.introduce_callbacks()``. This will
+to decorate the ``objective`` method with ``@regelum.callbacks.apply_callbacks`` after
+decorating the respective class with ``@regelum.callbacks.introduce_callbacks()``. This will
 make ``objective`` trigger callback events. To make sure the event is handled we will also need to
 register the callback. There are two way of doing so.
 
@@ -570,7 +570,7 @@ You could either specify it in your Python script
 ``main.py``
 ::
 
-   import rcognita as r
+   import regelum as r
    import my_callbacks
    import numpy
 
@@ -598,19 +598,19 @@ to your config:
     ...
 
 The above will not mess with your instantiation parameters. ``config.callbacks`` gets
-deleted automatically as soon as ``rcognita`` extracts the callbacks from it.
+deleted automatically as soon as ``regelum`` extracts the callbacks from it.
 
-By default ``rcognita`` creates its own ``Logger`` instance and passes it to the callbacks.
+By default ``regelum`` creates its own ``Logger`` instance and passes it to the callbacks.
 You can insist on your own logger with ``@r.main(logger=..., ...)``.
 
-If you'd like to know more, be sure to read the :doc:`relevant API Docs </modules/rcognita.callbacks>`.
+If you'd like to know more, be sure to read the :doc:`relevant API Docs </modules/regelum.callbacks>`.
 
 What if I still don't know what I'm doing?
 ==========================================
 
 If after reading these tutorials you still don't quite know where to start,
 do not be discouraged. You are now well equipped to understand the presets provided in
-``rcognita``'s repository. As soon as you examine a few of them, you should be able to write
+``regelum``'s repository. As soon as you examine a few of them, you should be able to write
 code of your own. In fact many of the presets can likely be conveniently repurposed for
 your own projects.
 
