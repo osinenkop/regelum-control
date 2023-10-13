@@ -48,6 +48,11 @@ class OptimizationVariable:
                 is_constant=self.is_constant,
             )
 
+    def is_nested_function(self):
+        return any(
+            ["source" in hook_name for hook_name in self.hooks.hooks_container.names]
+        )
+
     def with_data(self, new_data, inplace=True):
         # if isinstance(new_data, GeneratorType):
         #     new_data = list(new_data)
@@ -391,7 +396,18 @@ class FunctionWithSignature:
             return self.func(*args, **kwargs_to_pass)
 
         if kwargs == {} and len(args) == 1:
-            return self.func(**{self.free_placeholders[0]: args[0]})
+            dvar = self.variables[self.free_placeholders[0]]
+            is_decision_var_nested_function = dvar.is_nested_function()
+            if is_decision_var_nested_function:
+                self.variables.substitute_data(**{self.free_placeholders[0]: args[0]})
+            return self.func(
+                **{self.free_placeholders[0]: dvar()},
+                **{
+                    k: v
+                    for k, v in self.variables.to_data_dict().items()
+                    if k != self.free_placeholders[0]
+                },
+            )
 
         kwargs_to_pass = {
             k: v for k, v in kwargs.items() if k in self.free_placeholders

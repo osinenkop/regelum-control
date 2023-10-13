@@ -316,9 +316,7 @@ class Critic(Optimizable, ABC):
         weights = None
         if opt_kwargs is not None:
             if self.kind == "tensor":
-                self.optimize(
-                    **opt_kwargs,
-                )
+                self.optimize(**opt_kwargs, is_constrained=is_constrained)
                 if is_update_and_cache_weights:
                     self.model.update_and_cache_weights()
             elif self.kind == "symbolic":

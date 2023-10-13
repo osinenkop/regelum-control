@@ -1,5 +1,4 @@
 _target_: regelum.OptimizerConfig
-
 kind: tensor
 opt_method: = torch.optim.SGD
 opt_options: 

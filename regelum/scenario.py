@@ -24,6 +24,12 @@ except ImportError:
     torch = MagicMock()
 
 
+def safe_round(precision=2, **kwargs):
+    for k, v in kwargs.items():
+        kwargs[k] = round(v, precision)
+    return kwargs
+
+
 class Scenario(regelum.RegelumBase, ABC):
     """A base scenario class."""
 

@@ -170,6 +170,7 @@ class RLController(Controller):
             self.critic.optimize_on_event(self.data_buffer)
 
     @apply_action_bounds
+    @apply_callbacks()
     def compute_action(
         self,
         state,
@@ -361,7 +362,7 @@ class CALFControllerExPost(RLController):
             self.step_counter += 1
             return self.policy.action
 
-        if rc.norm_2(observation) > 1.0:
+        if rc.norm_2(observation) > 0.5:
             critic_weights = self.critic.optimize_on_event(
                 self.data_buffer, is_update_and_cache_weights=False
             )
@@ -456,6 +457,7 @@ class CALFControllerExPostExperimental(RLController):
         )
 
     @apply_action_bounds
+    @apply_callbacks()
     def compute_action(
         self,
         state,
@@ -479,14 +481,18 @@ class CALFControllerExPostExperimental(RLController):
             self.critic.observation_last_good = observation
             self.update_data_buffer_with_action_stats(observation)
             self.is_first_compute_action_call = False
+            return self.policy.action
 
-        if rc.norm_2(observation) > 1.0:
+        if rc.norm_2(observation) > 0.5:
             critic_weights = self.critic.optimize_on_event(
                 self.data_buffer,
                 is_update_and_cache_weights=False,
-                is_constrained=rc.norm_2(observation) > 2,
+                is_constrained=rc.norm_2(observation) > 2.0,
             )
-            # critic_weights_accepted = self.critic.opt_status == "success"
+            critic_weights_accepted = self.critic.opt_status == "success"
+            # print(critic_weights_accepted)
+            if critic_weights_accepted:
+                self.critic.observation_last_good = observation
         else:
             critic_weights = self.critic.model.weights
             # critic_weights_accepted = False
@@ -494,16 +500,9 @@ class CALFControllerExPostExperimental(RLController):
         # №if critic_weights_accepted:
         self.critic.update_weights(critic_weights)
         self.policy.optimize_on_event(self.data_buffer)
-        # policy_weights_accepted = True  # self.policy.opt_status == "success"
-        # if policy_weights_accepted:
         self.policy.update_action(observation)
-        self.critic.observation_last_good = observation
         self.update_data_buffer_with_action_stats(observation)
         self.critic.cache_weights(critic_weights)
-        #     else:
-        #         self.invoke_safe_action(state, observation)
-        # else:
-        #     self.invoke_safe_action(state, observation)
 
         self.step_counter += 1
         return self.policy.action

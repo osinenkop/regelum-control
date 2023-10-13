@@ -11,13 +11,13 @@ try:
     from casadi import Opti
 
 except (ModuleNotFoundError, ImportError):
-    pass
+    from unittest.mock import MagicMock
+
+    Opti = MagicMock()
 
 
 try:
     import torch
-
-    # from regelum.data_buffers import UpdatableSampler
 
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
@@ -51,11 +51,12 @@ class Optimizable(regelum.RegelumBase):
         """Initialize an optimizable object."""
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
-        self.__is_problem_defined = False
+
         self.__variables: VarContainer = VarContainer([])
         self.__functions: FuncContainer = FuncContainer(tuple())
         self.params_changed = False
         self.is_check_status = True
+        self.__is_problem_defined = False
 
         if self.kind == "symbolic":
             self.__opti_common = Opti()
@@ -88,6 +89,27 @@ class Optimizable(regelum.RegelumBase):
     @property
     def log_options(self):
         return self.__log_options
+
+    @property
+    def objective(self):
+        assert len(self.objectives) == 1, "Ambiguous objective definition."
+        return self.objectives[0]
+
+    @property
+    def objectives(self):
+        return self.__functions.objectives
+
+    @property
+    def constraints(self):
+        return self.__functions.constraints
+
+    @property
+    def functions(self):
+        return self.__functions
+
+    @property
+    def variables(self) -> VarContainer:
+        return self.__variables
 
     def __recreate_opti(self):
         self.__opti = Opti()
@@ -145,27 +167,6 @@ class Optimizable(regelum.RegelumBase):
                 self.__opti.minimize(metafunc)
             else:
                 self.__opti.subject_to(metafunc <= 0)
-
-    @property
-    def objective(self):
-        assert len(self.objectives) == 1, "Ambiguous objective definition."
-        return self.objectives[0]
-
-    @property
-    def objectives(self):
-        return self.__functions.objectives
-
-    @property
-    def constraints(self):
-        return self.__functions.constraints
-
-    @property
-    def functions(self):
-        return self.__functions
-
-    @property
-    def variables(self) -> VarContainer:
-        return self.__variables
 
     def __refresh_binded_variables(self):
         for function in self.functions:
@@ -281,7 +282,7 @@ class Optimizable(regelum.RegelumBase):
         new_variable = OptimizationVariable(
             name=name, dims=dims, metadata=metadata, is_constant=is_constant
         )
-        if self.kind == "tensor":
+        if self.kind == "tensor" or self.kind == "numeric":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
                 # new_variable.register_hook(data_closure(like), act_on="data")
@@ -551,6 +552,9 @@ class Optimizable(regelum.RegelumBase):
                         params_to_delete.append(k)
             for k in params_to_delete:
                 del parameters[k]
+        elif self.kind == "numeric":
+            self.variables.substitute_data(**parameters)
+            self.variables.substitute_metadata(**parameters)
 
     def is_target_event(self, event):
         if self.__callback_target_events is None:
@@ -567,13 +571,9 @@ class Optimizable(regelum.RegelumBase):
 
         result = None
         if self.kind == "symbolic":
-            result = self.optimize_symbolic(
-                **parameters, is_constrained=is_constrained, raw=raw
-            )
+            result = self.optimize_symbolic(**parameters, raw=raw)
         elif self.kind == "numeric":
-            result = self.optimize_numeric(
-                **parameters, is_constrained=is_constrained, raw=raw
-            )
+            result = self.optimize_numeric(**parameters, raw=raw)
         elif self.kind == "tensor":
             self.optimize_tensor(**parameters, is_constrained=is_constrained)
             result = self.variables.decision_variables
@@ -665,6 +665,13 @@ class Optimizable(regelum.RegelumBase):
             NonlinearConstraint(func, -np.inf, 0) for func in self.constraints
         ]
         initial_guess = parameters.get(self.decision_variables.names[0])
+        if initial_guess is None:
+            assert (
+                self.decision_variables[0].data is not None
+            ), "Initial guess is None. Try to set 'like=...' when creating a decision variable"
+
+            initial_guess = self.decision_variables[0].data
+
         opt_result = minimize(
             self.objective,
             x0=initial_guess,

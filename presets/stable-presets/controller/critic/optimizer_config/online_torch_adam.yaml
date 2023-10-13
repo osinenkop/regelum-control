@@ -1,4 +1,4 @@
- _target_: regelum.OptimizerConfig
+_target_: regelum.OptimizerConfig
 kind: tensor
 opt_method: = torch.optim.Adam
 opt_options: 

@@ -15,13 +15,14 @@ callbacks:
   - regelum.callback.HistoricalObjectiveCallback
   - regelum.callback.TotalObjectiveCallback
   # - regelum.callback.CriticObjectiveCallback
-  - regelum.callback.CalfCallback
+  # - regelum.callback.CalfCallback
   - regelum.callback.HistoricalObservationCallback
   # - regelum.callback.QFunctionModelSaverCallback
   # - regelum.callback.CalfWeightsCallback
-  # - regelum.callback.CriticWeightsCallback
-  # - regelum.callback.InspectReferrersCallback
+  # - regelum.callback.CALFWeightsCallback
   - regelum.callback.ObjectiveLearningSaver
+  - regelum.callback.CriticWeightsCallback
+  - regelum.callback.CriticCallback
 
 
 disallow_uncommitted%%: False
@@ -31,8 +32,8 @@ disallow_uncommitted%%: False
 suffix%%: ${controller.name%%}_${system_specific.name}
 
 hydra:
-  launcher:
-    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: -1
+  # launcher:
+  #   _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+  #   n_jobs: -1
   sweep:
     dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
