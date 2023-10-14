@@ -631,6 +631,11 @@ class ThreeWheeledRobotNI(System):
         return Dstate
 
 
+ThreeWheeledRobotComposed = (Integrator() @ ThreeWheeledRobotNI()).permute_state(
+    [3, 4, 0, 1, 2]
+)
+
+
 class TwoTank(System):
     """Two-tank system with nonlinearity."""
 
@@ -724,30 +729,6 @@ class CartPole(System):
         sin_theta = rc.sin(theta)
         cos_theta = rc.cos(theta)
 
-        # Dstate[0] = theta_dot
-
-        # Dstate[1] = x_dot
-
-        # Dstate[2] = (
-        #     (
-        #         g * rc.sin(theta)
-        #         - rc.cos(theta)
-        #         * (inputs[0] + m_p * l * theta_dot**2 * rc.sin(theta))
-        #         / (m_c + m_p)
-        #     )
-        #     / l
-        #     / (4 / 3 - m_p * (rc.cos(theta) ** 2) / (m_c + m_p))
-        # )
-        # Dstate[3] = (
-        #     inputs[0]
-        #     + m_p
-        #     * l
-        #     * (
-        #         theta_dot**2 * rc.sin(theta)
-        #         - Dstate[0] * rc.cos(theta)
-        #     )
-        # ) / (m_c + m_p)
-
         Dstate[0] = theta_dot
 
         Dstate[1] = x_dot
@@ -769,10 +750,13 @@ class CartPole(System):
         x_dot = state[3]
 
         theta_observed = theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi
-        if theta_observed > np.pi:
-            theta_observed = theta_observed - 2 * np.pi
+        theta_observed = rc.if_else(
+            theta_observed - 2 * np.pi,
+            theta_observed > np.pi,
+            theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi,
+        )
 
-        return rc.array([theta_observed, x, theta_dot, x_dot])
+        return rc.hstack([theta_observed, x, theta_dot, x_dot])
 
 
 class LunarLander(System):

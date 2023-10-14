@@ -34,6 +34,7 @@ from .core.entities import (
     OptimizationVariable,
     VarContainer,
     FuncContainer,
+    NestedFunction,
 )
 from .core.hooks import requires_grad, detach, data_closure
 
@@ -272,16 +273,31 @@ class Optimizable(regelum.RegelumBase):
         return metadata
 
     def create_variable(
-        self, *dims, name: str, is_constant=False, like=None, is_nested_function=False
+        self,
+        *dims,
+        name: str,
+        is_constant=False,
+        like=None,
+        is_nested_function=False,
+        nested_variables=None,
     ):
         metadata = None
+        nested_variables = [] if nested_variables is None else nested_variables
         if not is_nested_function:
             metadata = self.create_variable_metadata(
                 *dims, is_constant=is_constant, like=like
             )
-        new_variable = OptimizationVariable(
-            name=name, dims=dims, metadata=metadata, is_constant=is_constant
-        )
+            new_variable = OptimizationVariable(
+                name=name, dims=dims, metadata=metadata, is_constant=is_constant
+            )
+        else:
+            new_variable = NestedFunction(
+                name=name,
+                dims=dims,
+                metadata=metadata,
+                is_constant=is_constant,
+                nested_variables=VarContainer(nested_variables),
+            )
         if self.kind == "tensor" or self.kind == "numeric":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
@@ -337,7 +353,11 @@ class Optimizable(regelum.RegelumBase):
     ):
         def source_hook(whatever):
             return func(
-                source(), **{kwarg: var() for kwarg, var in source_kwargs.items()}
+                source(),
+                **{
+                    kwarg: var() if isinstance(var, OptimizationVariable) else var
+                    for kwarg, var in source_kwargs.items()
+                },
             )
 
         def source_metadata_hook(whatever):
@@ -345,6 +365,8 @@ class Optimizable(regelum.RegelumBase):
                 source(with_metadata=True),
                 **{
                     kwarg: var(with_metadata=True)
+                    if isinstance(var, OptimizationVariable)
+                    else var
                     for kwarg, var in source_kwargs.items()
                 },
             )
@@ -676,7 +698,7 @@ class Optimizable(regelum.RegelumBase):
             self.objective,
             x0=initial_guess,
             method=self.opt_method,
-            bounds=self.__bounds,
+            bounds=self.__bounds if hasattr(self, "__bounds") else None,
             options=self.__opt_options,
             constraints=constraints,
             tol=1e-7,

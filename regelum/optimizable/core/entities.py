@@ -48,11 +48,6 @@ class OptimizationVariable:
                 is_constant=self.is_constant,
             )
 
-    def is_nested_function(self):
-        return any(
-            ["source" in hook_name for hook_name in self.hooks.hooks_container.names]
-        )
-
     def with_data(self, new_data, inplace=True):
         # if isinstance(new_data, GeneratorType):
         #     new_data = list(new_data)
@@ -348,6 +343,58 @@ class VarContainer(Mapping):
 
 
 @dataclass
+class NestedFunction(OptimizationVariable):
+    """A class representing nested functions.
+
+    The variables which the nested function depends on are stored in the `nested_variables` field.
+    """
+
+    nested_variables: VarContainer = field(default_factory=lambda: VarContainer([]))
+
+    def substitute_parameters(self, **parameters):
+        self.nested_variables.substitute_data(**parameters)
+        self.nested_variables.substitute_metadata(**parameters)
+
+    def with_data(self, new_data, inplace=True):
+        # if isinstance(new_data, GeneratorType):
+        #     new_data = list(new_data)
+
+        if inplace:
+            self.data = new_data
+            return self
+        else:
+            return NestedFunction(
+                name=self.name,
+                dims=self.dims,
+                data=new_data,
+                metadata=self.metadata,
+                is_constant=self.is_constant,
+                nested_variables=self.nested_variables,
+            )
+
+    def with_metadata(self, new_metadata, inplace=True):
+        """Construct a new OptimizationVariable object with the given metadata.
+
+        :param metadata: The metadata to associate with the variable.
+        :type metadata: dict
+        :return: A new OptimizationVariable object with the specified metadata.
+        :rtype: OptimizationVariable
+        """
+        if inplace:
+            self.metadata = new_metadata
+            return self
+        else:
+            return NestedFunction(
+                name=self.name,
+                dims=self.dims,
+                data=self.data,
+                metadata=new_metadata,
+                is_constant=self.is_constant,
+                nested_variables=self.nested_variables,
+            )
+
+
+@dataclass
 class FunctionWithSignature:
     """Wrapper class for functions, that parses a signature and ensures correctness of optimization procedure in the runtime."""
 
@@ -397,9 +444,14 @@ class FunctionWithSignature:
 
         if kwargs == {} and len(args) == 1:
             dvar = self.variables[self.free_placeholders[0]]
-            is_decision_var_nested_function = dvar.is_nested_function()
+            is_decision_var_nested_function = isinstance(dvar, NestedFunction)
             if is_decision_var_nested_function:
-                self.variables.substitute_data(**{self.free_placeholders[0]: args[0]})
+                assert (
+                    len(self.free_placeholders) == 1
+                ), "The amount of free placeholders should be 1"
+                dvar.substitute_parameters(
+                    **{dvar.nested_variables.decision_variables.names[0]: args[0]}
+                )
             return self.func(
                 **{self.free_placeholders[0]: dvar()},
                 **{

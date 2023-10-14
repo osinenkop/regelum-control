@@ -22,6 +22,7 @@ from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
 from .data_buffers.data_buffer import DataBuffer
 from .objective import (
+    RunningObjective,
     reinforce_objective,
     sdpg_objective,
     ddpg_objective,
@@ -625,7 +626,10 @@ class RLPolicy(Policy):
             like=self.model.named_parameters,
         )
         self.policy_model_output = self.create_variable(
-            name="policy_model_output", is_constant=True
+            name="policy_model_output",
+            is_constant=True,
+            is_nested_function=True,
+            nested_variables=[self.observation],
         )
         self.observation = self.create_variable(name="observation", is_constant=True)
         self.connect_source(
@@ -687,7 +691,7 @@ class RLPolicyPredictive(Policy):
         optimizer_config: OptimizerConfig,
         predictor: Predictor,
         prediction_horizon: int,
-        running_objective,
+        running_objective: RunningObjective,
         discount_factor: float = 1.0,
         device: str = "cpu",
         epsilon_random: bool = False,
@@ -862,8 +866,8 @@ class RLPolicyPredictive(Policy):
         return self.model.weights
 
 
-class CALF(RLPolicyPredictive):
-    """Policy using Critic As a Lyapunov Function (CALF) to constrain the optimization."""
+class CALFLegacy(RLPolicyPredictive):
+    """Do not use it. Do not import it."""
 
     def __init__(
         self,
@@ -953,38 +957,3 @@ class CALF(RLPolicyPredictive):
         )
 
         return self.predictive_constraint_violation
-
-
-class CLF(CALF):
-    """PolicyCLF is anpolicy class that aims to optimize the decay of a Control-Lyapunov function (CLF)."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the policy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
-
-        :param safe_controller: object of class SafeController that provides a safe action if the current action would violate the safe set.
-        :type safe_controller: SafeController
-        """
-        super().__init__(*args, **kwargs)
-        self.intrinsic_constraints = []
-
-    def objective(
-        self,
-        action,
-        observation,
-    ):
-        """Compute the anticipated decay of the CLF.
-
-        :param action: Action taken by thepolicy.
-        :type action: ndarray
-        :param observation: Observation of the system.
-        :type observation: ndarray
-        :return: Policy objective
-        :rtype: float
-        """
-        observation_predicted = self.predictor.predict(observation, action)
-
-        policy_objective = 0
-
-        policy_objective += self.safe_controller.compute_LF(observation_predicted)
-
-        return policy_objective

@@ -1804,15 +1804,15 @@ class CriticCallback(CalfCallback):
             last_observation,
         )
         self.log(f"current critic value:{critic_val}, observation: {last_observation}")
-
-        self.add_datum(
-            {
-                "time": regelum.main.metadata["time"],
-                "J": critic_val[0]
-                if isinstance(critic_val, (np.ndarray, torch.Tensor))
-                else critic_val.full()[0],
-            }
-        )
+        if critic_val is not None:
+            self.add_datum(
+                {
+                    "time": regelum.main.metadata["time"],
+                    "J": critic_val[0]
+                    if isinstance(critic_val, (np.ndarray, torch.Tensor))
+                    else critic_val.full()[0],
+                }
+            )
 
     def on_episode_done(
         self,
