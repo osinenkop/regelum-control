@@ -751,8 +751,8 @@ class CartPole(System):
 
         theta_observed = theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi
         theta_observed = rc.if_else(
-            theta_observed - 2 * np.pi,
             theta_observed > np.pi,
+            theta_observed - 2 * np.pi,
             theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi,
         )
 
@@ -776,13 +776,11 @@ class LunarLander(System):
         """Initialize an instance of LunarLander by specifying relevant physical parameters."""
         super().__init__(*args, **kwargs)
 
-        self.name = "lander"
         self.a = 1
         self.r = 1
         self.alpha = np.arctan(self.a / self.r)
         self.l = np.sqrt(self.a**2 + self.r**2)
         self.sigma = 1
-        self.state_cache = []
         self.is_landed = False
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
@@ -865,7 +863,11 @@ class LunarLander(System):
             self.dim_state,
             prototype=prototype,
         )
-        m, J, g = self.pars
+        m, J, g = (
+            self.parameters["m"],
+            self.parameters["J"],
+            self.parameters["g"],
+        )
 
         x = self.l * rc.sin(angle)
         y = self.l * rc.cos(angle)

@@ -1,0 +1,8 @@
+name: inv_pendulum
+target: regelum.system.KinematicPoint
+dim_observation: = ${.target}().dim_observation
+dim_action: = ${.target}().dim_inputs
+
+time_final: 10.
+sampling_time: 0.01
+action_bounds: = np.array([[-10., 10.],[-10, 10]])
