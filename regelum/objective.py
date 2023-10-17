@@ -172,6 +172,57 @@ def sdpg_objective(
     return objective / N_episodes
 
 
+def ppo_objective(
+    policy_model: PerceptronWithNormalNoise,
+    critic_model: ModelNN,
+    observations: torch.FloatTensor,
+    actions: torch.FloatTensor,
+    timestamps: torch.FloatTensor,
+    episode_ids: torch.LongTensor,
+    device: Union[str, torch.device],
+    discount_factor: float,
+    N_episodes: int,
+    running_objectives: torch.FloatTensor,
+    epsilon: float,
+    initial_log_probs: torch.FloatTensor,
+    running_objective_type: str,
+):
+    critic_values = critic_model(observations)
+    prob_ratios = torch.exp(
+        policy_model.log_pdf(observations.to(device), actions.to(device))
+        - initial_log_probs.reshape(-1)
+    ).reshape(-1, 1)
+    clipped_prob_ratios = torch.clamp(prob_ratios, 1 - epsilon, 1 + epsilon)
+    objective_value = 0.0
+    for episode_idx in torch.unique(episode_ids):
+        mask = episode_ids.reshape(-1) == episode_idx
+        advantages = (
+            running_objectives[mask][:-1]
+            + discount_factor * critic_values[mask][1:]
+            - critic_values[mask][:-1]
+        )
+
+        objective_value += (
+            torch.sum(
+                (discount_factor ** timestamps[mask][:-1])
+                * (
+                    torch.maximum(
+                        advantages * prob_ratios[mask][:-1],
+                        advantages * clipped_prob_ratios[mask][:-1],
+                    )
+                    if running_objective_type == "cost"
+                    else torch.minimum(
+                        advantages * prob_ratios[mask][:-1],
+                        advantages * clipped_prob_ratios[mask][:-1],
+                    )
+                )
+            )
+            / N_episodes
+        )
+
+    return objective_value
+
+
 def ddpg_objective(
     policy_model: ModelNN,
     critic_model: ModelNN,

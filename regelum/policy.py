@@ -30,6 +30,7 @@ from .objective import (
     rpo_objective,
     sql_objective,
     rql_objective,
+    ppo_objective,
 )
 from typing import List
 
@@ -502,6 +503,106 @@ class SDPG(PolicyGradient):
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
             running_objectives=running_objective,
+        )
+
+    def update_action(self, observation):
+        self.action_old = self.action
+        with torch.no_grad():
+            self.action = (
+                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
+            )
+
+
+class PPO(PolicyGradient):
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+        running_objective_type="cost",
+        epsilon: float = 0.2,
+    ):
+        """Instantiate SDPG class.
+
+        :param model: Policy Model.
+        :type model: ModelNN
+        :param critic: Critic object that is optmized via temporal difference objective.
+        :type critic: Critic
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Action bounds for the Agent.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: Configuration of the optimization procedure.
+        :type optimizer_config: OptimizerConfig
+        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Device to proceed the optimization process, defaults to "cpu"
+        :type device: str, optional
+        """
+        PolicyGradient.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            discount_factor=discount_factor,
+            device=device,
+            critic=critic,
+            optimizer_config=optimizer_config,
+        )
+        self.epsilon = epsilon
+        self.running_objective_type = running_objective_type
+        self.initialize_optimization_procedure()
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return [
+            "observation",
+            "action",
+            "timestamp",
+            "episode_id",
+            "running_objective",
+            "initial_log_probs",
+        ]
+
+    def objective_function(
+        self,
+        observation,
+        action,
+        timestamp,
+        episode_id,
+        running_objective,
+        initial_log_probs,
+    ):
+        return ppo_objective(
+            policy_model=self.model,
+            critic_model=self.critic.model,
+            observations=observation,
+            actions=action,
+            timestamps=timestamp,
+            device=self.device,
+            discount_factor=self.discount_factor,
+            N_episodes=self.N_episodes,
+            episode_ids=episode_id.long(),
+            running_objectives=running_objective,
+            initial_log_probs=initial_log_probs,
+            epsilon=self.epsilon,
+            running_objective_type=self.running_objective_type,
+        )
+
+    def update_data_buffer(self, data_buffer: DataBuffer):
+        data_buffer.update(
+            {
+                "initial_log_probs": self.model.log_pdf(
+                    torch.FloatTensor(np.vstack(data_buffer.data["observation"])),
+                    torch.FloatTensor(np.vstack(data_buffer.data["action"])),
+                )
+                .detach()
+                .cpu()
+                .numpy()
+            }
         )
 
     def update_action(self, observation):
