@@ -22,7 +22,7 @@ callbacks:
   # - regelum.callback.CALFWeightsCallback
   - regelum.callback.ObjectiveLearningSaver
   - regelum.callback.CriticWeightsCallback
-  - regelum.callback.CriticCallback
+  # - regelum.callback.CriticCallback
 
 
 disallow_uncommitted%%: False

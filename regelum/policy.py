@@ -486,9 +486,11 @@ class SDPG(PolicyGradient):
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation", "action", "timestamp"]
+        return ["observation", "action", "timestamp", "episode_id", "running_objective"]
 
-    def objective_function(self, observation, action, timestamp):
+    def objective_function(
+        self, observation, action, timestamp, episode_id, running_objective
+    ):
         return sdpg_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
@@ -498,6 +500,8 @@ class SDPG(PolicyGradient):
             device=self.device,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
+            episode_ids=episode_id.long(),
+            running_objectives=running_objective,
         )
 
     def update_action(self, observation):

@@ -121,9 +121,11 @@ def sdpg_objective(
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
     timestamps: torch.FloatTensor,
+    episode_ids: torch.LongTensor,
     device: Union[str, torch.device],
     discount_factor: float,
     N_episodes: int,
+    running_objectives: torch.FloatTensor,
 ) -> torch.FloatTensor:
     """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
@@ -149,19 +151,25 @@ def sdpg_objective(
     :return: SDPG surrogate objective.
     :rtype: torch.FloatTensor
     """
-    observations_actions = torch.cat([observations, actions], dim=1).to(device)
-    observations_zero_actions = torch.cat(
-        [observations, torch.zeros_like(actions)],
-        dim=1,
-    ).to(device)
-
-    with torch.no_grad():
-        baseline = critic_model(observations_zero_actions)
-        discounts = discount_factor ** timestamps.to(device)
-        critic_value = discounts * (critic_model(observations_actions) - baseline)
-
+    critic_values = critic_model(observations)
     log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
-    return (log_pdfs * critic_value).sum() / N_episodes
+
+    objective = 0.0
+    for episode_idx in torch.unique(episode_ids):
+        mask = episode_ids == episode_idx
+        advantages = (
+            running_objectives[mask][:-1]
+            + discount_factor * critic_values[mask][1:]
+            - critic_values[mask][:-1]
+        )
+
+        objective += (
+            discount_factor ** timestamps[mask][:-1]
+            * advantages
+            * log_pdfs[mask.reshape(-1)][:-1]
+        ).sum()
+
+    return objective / N_episodes
 
 
 def ddpg_objective(
