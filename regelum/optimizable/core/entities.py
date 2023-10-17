@@ -393,6 +393,53 @@ class NestedFunction(OptimizationVariable):
                 nested_variables=self.nested_variables,
             )
 
+    def renamed(self, new_name: str, inplace=True) -> Self:
+        if inplace:
+            self.name = new_name
+            return self
+        else:
+            return NestedFunction(
+                name=new_name,
+                dims=self.dims,
+                data=self.data,
+                metadata=self.metadata,
+                is_constant=self.is_constant,
+                nested_variables=self.nested_variables,
+            )
+
+    def as_constant(self, inplace=True):
+        if self.is_constant:
+            return self
+        else:
+            if inplace:
+                self.is_constant = True
+                return self
+            else:
+                return NestedFunction(
+                    name=self.name,
+                    dims=self.dims,
+                    data=self.data,
+                    metadata=self.metadata,
+                    is_constant=True,
+                    nested_variables=self.nested_variables,
+                )
+
+    def as_decision_variable(self, inplace=True):
+        if not self.is_constant:
+            return self
+        else:
+            if inplace:
+                self.is_constant = False
+                return self
+            return NestedFunction(
+                name=self.name,
+                dims=self.dims,
+                data=self.data,
+                metadata=self.metadata,
+                is_constant=False,
+                nested_variables=self.nested_variables,
+            )
+
 
 @dataclass
 class FunctionWithSignature:
