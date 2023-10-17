@@ -18,8 +18,8 @@ device%%: cpu
 
 critic:
   is_on_policy: True
-  is_same_critic: False
-  is_value_function: False
+  is_same_critic: True
+  is_value_function: True 
   td_n: 5
   device: $ controller.device%%
   optimizer_config: 
@@ -27,20 +27,31 @@ critic:
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.001
+      lr: 0.02
     config_options:
-      n_epochs: 50
+      n_epochs: 10
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs: 
         batch_sampler: = regelum.data_buffers.batch_sampler.EpisodicSampler
         dtype: = torch.FloatTensor
+  model:
+    dim_input: = ${system_specific.dim_observation}
+    dim_output: 1
+    dim_hidden: 24
+    n_hidden_layers: 4
+    is_force_infinitesimal: True
+    is_bias: True
+    force_positive_def: False
 
 policy:
+  model:
+    dim_hidden: 4
+    n_hidden_layers: 2
   optimizer_config: 
     opt_options:
-      lr: 0.001
+      lr: 0.1
     config_options:
-      is_reinstantiate_optimizer: True
-      n_epochs: 100
+      is_reinstantiate_optimizer: False
+      n_epochs: 1
   device: $ controller.device%%

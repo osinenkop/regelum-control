@@ -9,9 +9,9 @@ services:
       POSTGRES_USER: ${MLFLOW_POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${MLFLOW_POSTGRES_PASSWORD:-password}
     ports:
-      - "${MLFLOW_POSTGRES_PORT}:5432"
+      - "${MLFLOW_POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ${MLFLOW_POSTGRES_DATA}:/var/lib/postgresql/data
+      - ${MLFLOW_POSTGRES_DATA:-${HOME}/.regelum/mlflowdb}:/var/lib/postgresql/data
 
   mlflow-server:
     restart: unless-stopped
@@ -28,6 +28,6 @@ services:
       - --host=0.0.0.0
       - --port=5000
       - --backend-store-uri=postgresql+psycopg2://${MLFLOW_POSTGRES_USER:-user}:${MLFLOW_POSTGRES_PASSWORD:-password}@mlflow-postgres:5432/${MLFLOW_POSTGRES_DB:-mlflowdb}
-      - --default-artifact-root=${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-./mlruns}
+      - --default-artifact-root=${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-${HOME}/.regelum/mlflow-artifacts}
     volumes:
-      - ${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-./mlruns}:${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-./mlruns}
+      - ${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-${HOME}/.regelum/mlflow-artifacts}:${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-${HOME}/.regelum/mlflow-artifacts}

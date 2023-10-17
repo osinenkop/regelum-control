@@ -11,3 +11,6 @@ action_bounds: $ system_specific.action_bounds
 discount_factor: $ scenario.discount_factor
 device: cpu
 
+model:
+  dim_hidden: 4
+  n_hidden_layers: 2
