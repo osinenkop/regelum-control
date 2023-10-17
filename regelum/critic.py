@@ -275,16 +275,22 @@ class Critic(Optimizable, ABC):
         critic_weights,
         critic_targets=None,
     ):
-        return temporal_difference_objective(
+        td_objective = temporal_difference_objective(
             critic_model_output=critic_model_output,
             running_objective=running_objective,
             td_n=self.td_n,
             discount_factor=self.discount_factor,
             sampling_time=self.sampling_time,
             critic_targets=critic_targets,
-        ) + self.regularization_function(
-            critic_stored_weights=critic_stored_weights, critic_weights=critic_weights
         )
+        if self.kind == "tensor":
+            return td_objective
+
+        else:
+            return td_objective + self.regularization_function(
+                critic_stored_weights=critic_stored_weights,
+                critic_weights=critic_weights,
+            )
 
     def update_data_buffer_with_optimal_policy_targets(self, data_buffer: DataBuffer):
         assert self.size_mesh is not None, "Specify size_mesh for off-policy critic"
