@@ -16,6 +16,6 @@ prediction_horizon: 1
 
 model:
   dim_output: $ system_specific.dim_action
-  weights_init: = numpy.zeros((${controller.policy.prediction_horizon}, ${.dim_output}))
+  weights_init: = numpy.zeros((${controller.policy.prediction_horizon} + 1, ${.dim_output}))
 
 

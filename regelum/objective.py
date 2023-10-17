@@ -371,21 +371,22 @@ def mpc_objective(
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
+        is_predict_last=False,
     )
 
     observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
+        (rc.force_row(observation), observation_sequence_predicted)
     )
 
     running_objectives = running_objective(
         observation_sequence, action_sequence_predicted, is_save_batch_format=True
     )
 
-    if discount_factor == 1.0:
+    if discount_factor < 1.0:
         discount_factors = rc.array(
             [
                 [discount_factor ** (predictor.pred_step_size * i)]
-                for i in range(prediction_horizon)
+                for i in range(prediction_horizon + 1)
             ],
             prototype=observation,
             _force_numeric=True,
@@ -417,6 +418,7 @@ def rpo_objective(
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
+        is_predict_last=True,
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted[:-1, :])
@@ -458,7 +460,6 @@ def rql_objective(
     critic,
     critic_weights,
 ):
-    assert prediction_horizon >= 2, "rql only works for prediction_horizon >= 2"
     rql_objective_value = 0
     (
         observation_sequence_predicted,
@@ -468,14 +469,15 @@ def rql_objective(
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
+        is_predict_last=False,
     )
     observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted[:-2, :])
+        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
     )
     discount_factors = rc.array(
         [
             [discount_factor ** (predictor.pred_step_size * i)]
-            for i in range(prediction_horizon - 1)
+            for i in range(prediction_horizon)
         ],
         prototype=observation,
         _force_numeric=True,
@@ -489,9 +491,9 @@ def rql_objective(
         )
     )
 
-    observation_last = observation_sequence_predicted[-2, :]
+    observation_last = observation_sequence_predicted[-1, :]
     rql_objective_value += rc.sum(
-        discount_factor ** (predictor.pred_step_size * (prediction_horizon - 1))
+        discount_factor ** (predictor.pred_step_size * prediction_horizon)
         * critic(
             observation_last, action_sequence_predicted[-1, :], weights=critic_weights
         )
@@ -517,10 +519,11 @@ def sql_objective(
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
+        is_predict_last=False,
     )
 
     observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
+        (rc.force_row(observation), observation_sequence_predicted)
     )
 
     sql_objective_value = rc.sum(

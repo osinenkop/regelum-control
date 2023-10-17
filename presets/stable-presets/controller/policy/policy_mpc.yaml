@@ -2,3 +2,4 @@ defaults:
   - policy_predictive
 
 algorithm: mpc
+prediction_horizon: 3
