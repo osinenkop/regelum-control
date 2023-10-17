@@ -141,6 +141,8 @@ def sdpg_objective(
     :type actions: torch.FloatTensor
     :param timestamps: The tensor containing the timestamps.
     :type timestamps: torch.FloatTensor
+    :param episode_ids: Episode ids.
+    :type episode_ids: torch.LongTensor
     :param device: The device on which the computations are performed.
     :type device: Union[str, torch.device]
     :param discount_factor: The discount factor used to discount future running objectives.
@@ -186,7 +188,44 @@ def ppo_objective(
     epsilon: float,
     initial_log_probs: torch.FloatTensor,
     running_objective_type: str,
-):
+) -> torch.FloatTensor:
+    """Calculate PPO objective.
+
+    TODO: Write docsting with for ppo objective.
+
+    :param policy_model: policy model
+    :type policy_model: PerceptronWithNormalNoise
+    :param critic_model: critic model
+    :type critic_model: ModelNN
+    :param observations: tensor of observations in iteration
+    :type observations: torch.FloatTensor
+    :param actions: tensor of actions in iteration
+    :type actions: torch.FloatTensor
+    :param timestamps: timestamps
+    :type timestamps: torch.FloatTensor
+    :param episode_ids: episode ids
+    :type episode_ids: torch.LongTensor
+    :param device: device (cuda or cpu)
+    :type device: Union[str, torch.device]
+    :param discount_factor: discount factor
+    :type discount_factor: float
+    :param N_episodes: number of episodes
+    :type N_episodes: int
+    :param running_objectives: tensor of running objectives (either costs or rewards)
+    :type running_objectives: torch.FloatTensor
+    :param epsilon: epsilon
+    :type epsilon: float
+    :param initial_log_probs:
+    :type initial_log_probs: torch.FloatTensor
+    :param running_objective_type: can be either `cost` or `reward`
+    :type running_objective_type: str
+    :return: objective for PPO
+    :rtype: torch.FloatTensor
+    """
+    assert (
+        running_objective_type == "cost" or running_objective_type == "reward"
+    ), "running_objective_type can be either 'cost' or 'reward'"
+
     critic_values = critic_model(observations)
     prob_ratios = torch.exp(
         policy_model.log_pdf(observations.to(device), actions.to(device))

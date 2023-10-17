@@ -526,7 +526,7 @@ class PPO(PolicyGradient):
         running_objective_type="cost",
         epsilon: float = 0.2,
     ):
-        """Instantiate SDPG class.
+        """Instantiate PPO policy class.
 
         :param model: Policy Model.
         :type model: ModelNN
@@ -542,6 +542,8 @@ class PPO(PolicyGradient):
         :type discount_factor: float, optional
         :param device: Device to proceed the optimization process, defaults to "cpu"
         :type device: str, optional
+        :param epsilon: Epsilon parameter, defaults to 0.2
+        :type epsilon: float, optional
         """
         PolicyGradient.__init__(
             self,
