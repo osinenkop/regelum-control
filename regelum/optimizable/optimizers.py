@@ -301,8 +301,6 @@ class Optimizable(regelum.RegelumBase):
         if self.kind == "tensor" or self.kind == "numeric":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
-                # new_variable.register_hook(data_closure(like), act_on="data")
-                # new_variable.register_hook(metadata_closure(like), act_on="metadata")
 
         self.__variables = self.__variables + new_variable
         return new_variable

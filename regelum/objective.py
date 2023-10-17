@@ -283,15 +283,18 @@ def mpc_objective(
         observation_sequence, action_sequence_predicted, is_save_batch_format=True
     )
 
-    discount_factors = rc.array(
-        [
-            [discount_factor ** (predictor.pred_step_size * i)]
-            for i in range(prediction_horizon)
-        ],
-        prototype=observation,
-        _force_numeric=True,
-    )
-    mpc_objective_value = rc.sum(running_objectives * discount_factors)
+    if discount_factor == 1.0:
+        discount_factors = rc.array(
+            [
+                [discount_factor ** (predictor.pred_step_size * i)]
+                for i in range(prediction_horizon)
+            ],
+            prototype=observation,
+            _force_numeric=True,
+        )
+        mpc_objective_value = rc.sum(running_objectives * discount_factors)
+    else:
+        mpc_objective_value = rc.sum(running_objectives)
 
     return mpc_objective_value
 

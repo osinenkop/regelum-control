@@ -45,6 +45,7 @@ class Critic(Optimizable, ABC):
         is_value_function: bool = False,
         is_on_policy: bool = False,
         optimizer_config: Optional[OptimizerConfig] = None,
+        regularization_param: float = 0.0,
         action_bounds: Optional[Union[List, np.array]] = None,
         size_mesh: Optional[int] = None,
         discount_factor: float = 1.0,
@@ -91,6 +92,7 @@ class Critic(Optimizable, ABC):
         self.action_bounds = (
             np.array(action_bounds) if action_bounds is not None else None
         )
+        self.regularization_param = regularization_param
         self.size_mesh = size_mesh
 
         self.initialize_optimize_procedure()
@@ -239,6 +241,8 @@ class Critic(Optimizable, ABC):
             variables=[
                 self.running_objective_var,
                 self.critic_model_output,
+                self.critic_weights_var,
+                self.critic_stored_weights_var,
             ]
             + (
                 [self.critic_targets_var]
@@ -258,10 +262,17 @@ class Critic(Optimizable, ABC):
 
         return keys
 
+    def regularization_function(self, critic_stored_weights, critic_weights):
+        return self.regularization_param * rc.sum(
+            (critic_stored_weights - critic_weights) ** 2
+        )
+
     def objective_function(
         self,
         critic_model_output,
         running_objective,
+        critic_stored_weights,
+        critic_weights,
         critic_targets=None,
     ):
         return temporal_difference_objective(
@@ -271,6 +282,8 @@ class Critic(Optimizable, ABC):
             discount_factor=self.discount_factor,
             sampling_time=self.sampling_time,
             critic_targets=critic_targets,
+        ) + self.regularization_function(
+            critic_stored_weights=critic_stored_weights, critic_weights=critic_weights
         )
 
     def update_data_buffer_with_optimal_policy_targets(self, data_buffer: DataBuffer):
