@@ -3,3 +3,6 @@ defaults:
 
 critic: ~ controller.critic
 algorithm: rpo
+
+model:
+  dim_weights: = (${controller.policy.prediction_horizon}, ${system_specific.dim_action})

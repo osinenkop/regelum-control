@@ -31,70 +31,84 @@ class Predictor(regelum.RegelumBase, ABC):
     def predict(self):
         pass
 
-    def predict_state_sequence_from_action_sequence(self, state, action_sequence):
-        len_action_sequence = action_sequence.shape[0]
+    def predict_state_sequence_from_action_sequence(
+        self, state, action_sequence, is_predict_last: bool
+    ):
+        len_state_sequence = action_sequence.shape[0] - int(not is_predict_last)
         predicted_state_sequence = rc.zeros(
-            [len_action_sequence, self.system.dim_state],
+            [len_state_sequence, self.system.dim_state],
             prototype=action_sequence,
         )
         current_state = state
-        for k in range(len_action_sequence):
+        for k in range(len_state_sequence):
             current_action = action_sequence[k, :]
             next_state = self.predict(current_state, current_action)
             predicted_state_sequence[k, :] = self.system.get_observation(
                 time=None, state=next_state, inputs=current_action
             )
             current_state = next_state
+
         return predicted_state_sequence, action_sequence
 
     def predict_state_sequence_from_model(
         self,
         state,
         prediction_horizon,
+        is_predict_last: bool,
         model,
         model_weights=None,
     ):
         if isinstance(model, ModelWeightContainer):
             if model_weights is not None:
-                assert (
-                    model_weights.shape[0] == prediction_horizon
-                ), "prediction_horizon must be equal to weights.shape[0] for ModelWeightContainer"
+                assert model_weights.shape[0] == prediction_horizon + 1 - int(
+                    is_predict_last
+                ), "model_weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
                 return self.predict_state_sequence_from_action_sequence(
-                    state, action_sequence=model_weights
+                    state,
+                    action_sequence=model_weights,
+                    is_predict_last=is_predict_last,
                 )
             else:
-                assert (
-                    model._weights.shape[0] == prediction_horizon
-                ), "prediction_horizon must be equal to weights.shape[0] for ModelWeightContainer"
+                assert model._weights.shape[0] == prediction_horizon + 1 - int(
+                    is_predict_last
+                ), "model._weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
                 return self.predict_state_sequence_from_action_sequence(
-                    state, action_sequence=model._weights
+                    state,
+                    action_sequence=model._weights,
+                    is_predict_last=is_predict_last,
                 )
         elif isinstance(model, ModelWeightContainerTorch):
-            assert (
-                model._weights.shape[0] == prediction_horizon
-            ), "prediction_horizon must be equal to weights.shape[0] for ModelWeightContainerTorch"
+            assert model._weights.shape[0] == prediction_horizon + 1 - int(
+                is_predict_last
+            ), "model._weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
             dummy_input = torch.zeros(
-                [prediction_horizon, self.system.dim_observation],
+                [
+                    prediction_horizon + 1 - int(is_predict_last),
+                    self.system.dim_observation,
+                ],
             )
             return self.predict_state_sequence_from_action_sequence(
-                state, action_sequence=model(dummy_input)
+                state,
+                action_sequence=model(dummy_input),
+                is_predict_last=is_predict_last,
             )
 
         predicted_state_sequence = rc.zeros(
-            [prediction_horizon, self.system.dim_state],
+            [prediction_horizon + 1 - int(not is_predict_last), self.system.dim_state],
             prototype=state,
         )
         action_sequence = rc.zeros(
-            [prediction_horizon, self.system.dim_state],
+            [prediction_horizon + 1, self.system.dim_state],
             prototype=state,
         )
         current_state = state
-        for k in range(prediction_horizon):
+        for k in range(prediction_horizon + 1):
             action_sequence[k, :] = model(current_state, model_weights)
             next_state = self.predict(current_state, action_sequence[k, :])
-            predicted_state_sequence[k, :] = self.system.get_observation(
-                time=None, state=next_state, inputs=action_sequence[k, :]
-            )
+            if k < predicted_state_sequence.shape[0]:
+                predicted_state_sequence[k, :] = self.system.get_observation(
+                    time=None, state=next_state, inputs=action_sequence[k, :]
+                )
 
             current_state = next_state
         return predicted_state_sequence, action_sequence

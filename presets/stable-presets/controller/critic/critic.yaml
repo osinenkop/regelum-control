@@ -2,6 +2,7 @@ _target_: regelum.critic.Critic
 
 defaults:
   - model: perceptron
+  - optimizer_config: online_torch_adam
 
 discount_factor: $ scenario.discount_factor
 sampling_time: $ controller.sampling_time
@@ -19,12 +20,3 @@ model:
   is_force_infinitesimal: True
   is_bias: True
   force_positive_def: False
-
-optimizer_config: 
-  _target_: regelum.OptimizerConfig
-  kind: tensor
-  opt_method: = torch.optim.Adam
-  opt_options: 
-    lr: 3.0E-4
-  config_options:
-    n_epochs: 1 

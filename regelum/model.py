@@ -32,50 +32,58 @@ import casadi as cs
 
 
 def force_positive_def(func):
-    def positive_def_wrapper(self, *args, **kwargs):
-        if self.force_positive_def:
-            return rc.soft_abs(func(self, *args, **kwargs))
+    def positive_def_wrapper(obj, *args, **kwargs):
+        if obj.force_positive_def:
+            return rc.soft_abs(func(obj, *args, **kwargs))
         else:
-            return func(self, *args, **kwargs)
+            return func(obj, *args, **kwargs)
 
     return positive_def_wrapper
+
+
+def unversal_model_call(obj, *argin, weights=None, use_stored_weights=False):
+    if len(argin) == 2:
+        left, right = argin
+        if len(left.shape) != len(right.shape):
+            raise ValueError(
+                f"In {obj.__class__.__name__}.__call__ left and right arguments must have same number of dimensions!"
+            )
+
+        dim = len(left.shape)
+
+        if dim == 1:
+            argin = rc.concatenate(argin, axis=0)
+        elif dim == 2:
+            argin = rc.concatenate(argin, axis=1)
+        else:
+            raise ValueError(
+                f"Wrong number of dimensions in {obj.__class__.__name__}.__call__"
+            )
+    elif len(argin) == 1:
+        argin = argin[0]
+    else:
+        raise ValueError(
+            f"Wrong number of arguments in {obj.__class__.__name__}.__call__. Can be either 1 or 2. Got: {len(argin)}"
+        )
+
+    if use_stored_weights is False:
+        if weights is not None:
+            result = obj.forward(argin, weights)
+        else:
+            result = obj.forward(argin)
+    else:
+        obj = obj.cache.forward(argin)
+
+    return result
 
 
 class Model(regelum.RegelumBase, ABC):
     """Blueprint of a model."""
 
     def __call__(self, *argin, weights=None, use_stored_weights=False):
-        if len(argin) == 2:
-            left, right = argin
-            if len(left.shape) != len(right.shape):
-                raise ValueError(
-                    "In Model.__call__ left and right arguments must have same number of dimensions!"
-                )
-
-            dim = len(left.shape)
-
-            if dim == 1:
-                argin = rc.concatenate(argin, axis=0)
-            elif dim == 2:
-                argin = rc.concatenate(argin, axis=1)
-            else:
-                raise ValueError("Wrong number of dimensions in Model.__call__")
-        elif len(argin) == 1:
-            argin = argin[0]
-        else:
-            raise ValueError(
-                f"Wrong number of arguments in Model.__call__. Can be either 1 or 2. Got: {len(argin)}"
-            )
-
-        if use_stored_weights is False:
-            if weights is not None:
-                result = self.forward(argin, weights=weights)
-            else:
-                result = self.forward(argin)
-        else:
-            result = self.cache.forward(argin)
-
-        return result
+        return unversal_model_call(
+            self, *argin, weights=weights, use_stored_weights=use_stored_weights
+        )
 
     @property
     def weights(self):
@@ -83,12 +91,16 @@ class Model(regelum.RegelumBase, ABC):
 
     @property
     def named_parameters(self):
-        return self._weights
+        return self.weights
 
-    @property
-    @abstractmethod
-    def model_name(self):
-        return "model_name"
+    @weights.setter
+    def weights(self, new_weights):
+        assert (
+            self.weights.shape == new_weights.shape
+        ), "The shape of weights was changed "
+        f"in runtime from {self.weights.shape} to {new_weights.shape}"
+
+        self._weights = new_weights
 
     @abstractmethod
     def __init__(self):
@@ -100,14 +112,14 @@ class Model(regelum.RegelumBase, ABC):
         pass
 
     def update_weights(self, weights):
-        self._weights = weights
+        self.weights = weights
 
     def cache_weights(self, weights=None):
         if "cache" not in self.__dict__.keys():
             self.cache = deepcopy(self)
 
         if weights is None:
-            self.cache.update_weights(self._weights)
+            self.cache.update_weights(self.weights)
         else:
             self.cache.update_weights(weights)
 
@@ -129,8 +141,6 @@ class ModelQuadLin(Model):
 
     Normally used for running objective specification (diagonal quadratic matrix without linear terms) and critic polynomial models.
     """
-
-    model_name = "ModelQuadLin"
 
     def __init__(
         self,
@@ -169,13 +179,31 @@ class ModelQuadLin(Model):
             self._calculate_dims(dim_inputs)
             self.weight_min = weight_min * rc.ones(self.dim_weights)
             self.weight_max = weight_max * rc.ones(self.dim_weights)
-            self._weights = (self.weight_min + self.weight_max) / 20.0
+            self.weights = (self.weight_min + self.weight_max) / 20.0
         else:
             self._calculate_dims(self._calculate_dim_inputs(len(weights)))
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
-            self._weights = rc.array(weights)
+            self.weights = rc.array(weights)
 
-        self.update_and_cache_weights(self._weights)
+        self.cache_weights(self.weights)
+
+    @Model.weights.setter
+    def weights(self, new_weights):
+        self._weights = new_weights
+        if self.quad_matrix_type == "full":
+            self._quad_matrix = rc.reshape(
+                self.weights[: self.dim_quad], (self.dim_inputs, self.dim_inputs)
+            )
+        elif self.quad_matrix_type == "diagonal":
+            self._quad_matrix = rc.diag(self.weights[: self.dim_quad])
+        elif self.quad_matrix_type == "symmetric":
+            self._quad_matrix = ModelQuadLin.quad_matrix_from_flat_weights(
+                self.weights[: self.dim_quad]
+            )
+
+        self._linear_coefs = (
+            self.weights[None, self.dim_quad :] if self.is_with_linear_terms else None
+        )
 
     @property
     def weight_bounds(self):
@@ -223,55 +251,14 @@ class ModelQuadLin(Model):
             value = rc.DM(value)
         return value
 
-    def forward_symmetric(self, inputs, weights):
-        quad_matrix = ModelQuadLin.quad_matrix_from_flat_weights(
-            weights[: self.dim_quad]
-        )
-        linear_coefs = (
-            weights[None, self.dim_quad :] if self.is_with_linear_terms else None
-        )
-
-        return ModelQuadLin.quadratic_linear_form(
-            inputs,
-            self.cast_to_inputs_type(quad_matrix, inputs),
-            self.cast_to_inputs_type(linear_coefs, inputs),
-        )
-
-    def forward_diagonal(self, inputs, weights):
-        quad_matrix = rc.diag(weights[: self.dim_quad])
-        linear_coefs = (
-            weights[None, self.dim_quad :] if self.is_with_linear_terms else None
-        )
-
-        return ModelQuadLin.quadratic_linear_form(
-            inputs,
-            self.cast_to_inputs_type(quad_matrix, inputs),
-            self.cast_to_inputs_type(linear_coefs, inputs),
-        )
-
-    def forward_full(self, inputs, weights):
-        quad_matrix = rc.reshape(
-            weights[: self.dim_quad], (self.dim_inputs, self.dim_inputs)
-        )
-        linear_coefs = (
-            weights[None, self.dim_quad :] if self.is_with_linear_terms else None
-        )
-
-        return ModelQuadLin.quadratic_linear_form(
-            inputs,
-            self.cast_to_inputs_type(quad_matrix, inputs),
-            self.cast_to_inputs_type(linear_coefs, inputs),
-        )
-
     def forward(self, inputs, weights=None):
         if weights is None:
-            weights = self._weights
-        if self.quad_matrix_type == "symmetric":
-            return self.forward_symmetric(inputs, weights)
-        elif self.quad_matrix_type == "diagonal":
-            return self.forward_diagonal(inputs, weights)
-        elif self.quad_matrix_type == "full":
-            return self.forward_full(inputs, weights)
+            weights = self.weights
+        return ModelQuadLin.quadratic_linear_form(
+            inputs,
+            self.cast_to_inputs_type(self._quad_matrix, inputs),
+            self.cast_to_inputs_type(self._linear_coefs, inputs),
+        )
 
     @staticmethod
     def quad_matrix_from_flat_weights(
@@ -342,8 +329,6 @@ class ModelQuadLin(Model):
 class ModelWeightContainer(Model):
     """Trivial model, which is typically used in actor in which actions are being optimized directly."""
 
-    model_name = "action-sequence"
-
     def __init__(self, dim_output, weights_init=None):
         """Initialize an instance of a model returns weights on call independent of input.
 
@@ -370,8 +355,6 @@ class ModelNN(nn.Module):
 
     """
 
-    model_name = "NN"
-
     @property
     def cache(self):
         """Isolate parameters of cached model from the current model."""
@@ -395,7 +378,7 @@ class ModelNN(nn.Module):
         if "cached_model" not in self.__dict__.keys():
             self.cached_model = (
                 deepcopy(self),
-            )  ## this is needed to prevent cached_model's parameters to be parsed by model init hooks
+            )  ## this is needed to prevent cached_model's parameters to be parsed by Torch module init hooks
 
         self.cache.load_state_dict(self.state_dict())
         self.cache.detach_weights()
@@ -423,37 +406,9 @@ class ModelNN(nn.Module):
         self.update_and_cache_weights(self.cache.state_dict())
 
     def __call__(self, *argin, weights=None, use_stored_weights=False):
-        if len(argin) == 2:
-            left, right = argin
-            if len(left.shape) != len(right.shape):
-                raise ValueError(
-                    "In ModelNN.__call__ left and right arguments must have same number of dimensions!"
-                )
-
-            dim = len(left.shape)
-
-            if dim == 1:
-                argin = rc.concatenate(argin, axis=0)
-            elif dim == 2:
-                argin = rc.concatenate(argin, axis=1)
-            else:
-                raise ValueError("Wrong number of dimensions in ModelNN.__call__")
-        elif len(argin) == 1:
-            argin = argin[0]
-        else:
-            raise ValueError(
-                f"Wrong number of arguments in ModelNN.__call__. Can be either 1 or 2. Got: {len(argin)}"
-            )
-
-        if use_stored_weights is False:
-            if weights is not None:
-                result = self.forward(argin, weights)
-            else:
-                result = self.forward(argin)
-        else:
-            result = self.cache.forward(argin)
-
-        return result
+        return unversal_model_call(
+            self, *argin, weights=weights, use_stored_weights=use_stored_weights
+        )
 
 
 class WeightClipper:
@@ -471,9 +426,7 @@ class WeightClipper:
     def __call__(self, module):
         if self.weight_min is not None or self.weight_max is not None:
             # filter the variables to get the ones you want
-            w = module.weight.data
-            w = w.clamp(self.weight_min, self.weight_max)
-            module.weight.data = w
+            module.weight.data.clamp_(self.weight_min, self.weight_max)
 
 
 class ModelPerceptron(ModelNN):
@@ -614,7 +567,8 @@ class ModelWeightContainerTorch(ModelNN):
                 inputs_like = self._weights[: inputs.shape[0], :]
             else:
                 raise ValueError(
-                    f"ModelWeightContainerTorch: Wrong inputs shape! inputs.shape[0] (Got: {inputs.shape[0]}) should be <= dim_weights[0] (Got: {self.dim_weights[0]})."
+                    "ModelWeightContainerTorch: Wrong inputs shape! inputs.shape[0]"
+                    f"(Got: {inputs.shape[0]}) should be <= dim_weights[0] (Got: {self.dim_weights[0]})."
                 )
         else:
             raise ValueError("Wrong inputs shape! Can be either 1 or 2")

@@ -15,24 +15,20 @@ callbacks:
   - regelum.callback.HistoricalObjectiveCallback
   - regelum.callback.TotalObjectiveCallback
   # - regelum.callback.CriticObjectiveCallback
-  - regelum.callback.CalfCallback
+  # - regelum.callback.CalfCallback
   - regelum.callback.HistoricalObservationCallback
   # - regelum.callback.QFunctionModelSaverCallback
   # - regelum.callback.CalfWeightsCallback
-  # - regelum.callback.CriticWeightsCallback
-  # - regelum.callback.InspectReferrersCallback
+  # - regelum.callback.CALFWeightsCallback
   - regelum.callback.ObjectiveLearningSaver
+  - regelum.callback.CriticWeightsCallback
+  # - regelum.callback.CriticCallback
 
 
 disallow_uncommitted%%: False
-# mlflow_tracking_uri%%: ${oc.env:REGELUM_MLFLOW_TRACKING_URI}
 
 
 suffix%%: ${controller.name%%}_${system_specific.name}
-
-# regelum:
-#  n_jobs: -1
-#  sweep_dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
 
 rehydra:
   sweep:

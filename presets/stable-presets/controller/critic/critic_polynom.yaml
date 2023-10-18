@@ -10,6 +10,7 @@ td_n: 1
 device: cpu
 is_same_critic: False
 system: ~ system
+regularization_param: 10000
 
 
 model:

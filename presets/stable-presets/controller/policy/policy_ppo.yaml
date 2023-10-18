@@ -1,4 +1,4 @@
-_target_: regelum.policy.SDPG
+_target_: regelum.policy.PPO
 
 defaults:
   - model: perceptron_with_normal_noise
@@ -10,7 +10,11 @@ critic: ~ controller.critic
 action_bounds: $ system_specific.action_bounds
 discount_factor: $ scenario.discount_factor
 device: cpu
+epsilon: 0.2
+running_objective_type: cost
+
 
 model:
   dim_hidden: 4
   n_hidden_layers: 2
+

@@ -22,6 +22,7 @@ from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
 from .data_buffers.data_buffer import DataBuffer
 from .objective import (
+    RunningObjective,
     reinforce_objective,
     sdpg_objective,
     ddpg_objective,
@@ -29,6 +30,7 @@ from .objective import (
     rpo_objective,
     sql_objective,
     rql_objective,
+    ppo_objective,
 )
 from typing import List
 
@@ -485,9 +487,11 @@ class SDPG(PolicyGradient):
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation", "action", "timestamp"]
+        return ["observation", "action", "timestamp", "episode_id", "running_objective"]
 
-    def objective_function(self, observation, action, timestamp):
+    def objective_function(
+        self, observation, action, timestamp, episode_id, running_objective
+    ):
         return sdpg_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
@@ -497,6 +501,112 @@ class SDPG(PolicyGradient):
             device=self.device,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
+            episode_ids=episode_id.long(),
+            running_objectives=running_objective,
+        )
+
+    def update_action(self, observation):
+        self.action_old = self.action
+        with torch.no_grad():
+            self.action = (
+                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
+            )
+
+
+class PPO(PolicyGradient):
+    """Proximal Policy Optimization."""
+
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        action_bounds: Union[list, np.ndarray, None],
+        optimizer_config: OptimizerConfig,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+        running_objective_type="cost",
+        epsilon: float = 0.2,
+    ):
+        """Instantiate PPO policy class.
+
+        :param model: Policy Model.
+        :type model: ModelNN
+        :param critic: Critic object that is optmized via temporal difference objective.
+        :type critic: Critic
+        :param system: Agent environment.
+        :type system: Union[System, ComposedSystem]
+        :param action_bounds: Action bounds for the Agent.
+        :type action_bounds: Union[list, np.ndarray, None]
+        :param optimizer_config: Configuration of the optimization procedure.
+        :type optimizer_config: OptimizerConfig
+        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
+        :type discount_factor: float, optional
+        :param device: Device to proceed the optimization process, defaults to "cpu"
+        :type device: str, optional
+        :param epsilon: Epsilon parameter, defaults to 0.2
+        :type epsilon: float, optional
+        """
+        PolicyGradient.__init__(
+            self,
+            model=model,
+            system=system,
+            action_bounds=action_bounds,
+            discount_factor=discount_factor,
+            device=device,
+            critic=critic,
+            optimizer_config=optimizer_config,
+        )
+        self.epsilon = epsilon
+        self.running_objective_type = running_objective_type
+        self.initialize_optimization_procedure()
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        return [
+            "observation",
+            "action",
+            "timestamp",
+            "episode_id",
+            "running_objective",
+            "initial_log_probs",
+        ]
+
+    def objective_function(
+        self,
+        observation,
+        action,
+        timestamp,
+        episode_id,
+        running_objective,
+        initial_log_probs,
+    ):
+        return ppo_objective(
+            policy_model=self.model,
+            critic_model=self.critic.model,
+            observations=observation,
+            actions=action,
+            timestamps=timestamp,
+            device=self.device,
+            discount_factor=self.discount_factor,
+            N_episodes=self.N_episodes,
+            episode_ids=episode_id.long(),
+            running_objectives=running_objective,
+            initial_log_probs=initial_log_probs,
+            epsilon=self.epsilon,
+            running_objective_type=self.running_objective_type,
+        )
+
+    def update_data_buffer(self, data_buffer: DataBuffer):
+        data_buffer.update(
+            {
+                "initial_log_probs": self.model.log_pdf(
+                    torch.FloatTensor(np.vstack(data_buffer.data["observation"])),
+                    torch.FloatTensor(np.vstack(data_buffer.data["action"])),
+                )
+                .detach()
+                .cpu()
+                .numpy()
+            }
         )
 
     def update_action(self, observation):
@@ -625,7 +735,10 @@ class RLPolicy(Policy):
             like=self.model.named_parameters,
         )
         self.policy_model_output = self.create_variable(
-            name="policy_model_output", is_constant=True
+            name="policy_model_output",
+            is_constant=True,
+            is_nested_function=True,
+            nested_variables=[self.observation],
         )
         self.observation = self.create_variable(name="observation", is_constant=True)
         self.connect_source(
@@ -687,7 +800,7 @@ class RLPolicyPredictive(Policy):
         optimizer_config: OptimizerConfig,
         predictor: Predictor,
         prediction_horizon: int,
-        running_objective,
+        running_objective: RunningObjective,
         discount_factor: float = 1.0,
         device: str = "cpu",
         epsilon_random: bool = False,
@@ -862,8 +975,8 @@ class RLPolicyPredictive(Policy):
         return self.model.weights
 
 
-class CALF(RLPolicyPredictive):
-    """Policy using Critic As a Lyapunov Function (CALF) to constrain the optimization."""
+class CALFLegacy(RLPolicyPredictive):
+    """Do not use it. Do not import it."""
 
     def __init__(
         self,
@@ -953,38 +1066,3 @@ class CALF(RLPolicyPredictive):
         )
 
         return self.predictive_constraint_violation
-
-
-class CLF(CALF):
-    """PolicyCLF is anpolicy class that aims to optimize the decay of a Control-Lyapunov function (CLF)."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the policy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
-
-        :param safe_controller: object of class SafeController that provides a safe action if the current action would violate the safe set.
-        :type safe_controller: SafeController
-        """
-        super().__init__(*args, **kwargs)
-        self.intrinsic_constraints = []
-
-    def objective(
-        self,
-        action,
-        observation,
-    ):
-        """Compute the anticipated decay of the CLF.
-
-        :param action: Action taken by thepolicy.
-        :type action: ndarray
-        :param observation: Observation of the system.
-        :type observation: ndarray
-        :return: Policy objective
-        :rtype: float
-        """
-        observation_predicted = self.predictor.predict(observation, action)
-
-        policy_objective = 0
-
-        policy_objective += self.safe_controller.compute_LF(observation_predicted)
-
-        return policy_objective

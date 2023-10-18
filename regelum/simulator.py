@@ -276,8 +276,11 @@ class CasADi(Simulator):
             time, state_symbolic, action_symbolic, _native_dim=True
         )
         DAE = {"x": state_symbolic, "p": action_symbolic, "ode": ODE}
+
         # options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
         options = {"tf": max_step}
         integrator = casadi.integrator("intg", "rk", DAE, options)
+
+        # integrator = casadi.integrator("intg", "rk", DAE, 0, max_step)
 
         return integrator

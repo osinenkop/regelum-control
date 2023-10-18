@@ -1,9 +1,9 @@
 _target_: regelum.controller.RLController
 
-name%%: sdpg 
+name%%: ppo 
 
 defaults:
-  - policy: policy_sdpg
+  - policy: policy_ppo
   - critic: critic
 
 action_bounds: $ system_specific.action_bounds
@@ -27,9 +27,9 @@ critic:
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.02
+      lr: 0.001
     config_options:
-      n_epochs: 10
+      n_epochs: 50
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs: 
@@ -38,7 +38,7 @@ critic:
   model:
     dim_input: = ${system_specific.dim_observation}
     dim_output: 1
-    dim_hidden: 24
+    dim_hidden: 100
     n_hidden_layers: 4
     is_force_infinitesimal: True
     is_bias: True
@@ -46,12 +46,14 @@ critic:
 
 policy:
   model:
-    dim_hidden: 4
-    n_hidden_layers: 2
+    dim_hidden: 100
+    n_hidden_layers: 4
   optimizer_config: 
     opt_options:
-      lr: 0.1
+      lr: 0.001
     config_options:
-      is_reinstantiate_optimizer: False
-      n_epochs: 1
+      is_reinstantiate_optimizer: True
+      n_epochs: 50
   device: $ controller.device%%
+  epsilon: 0.2
+  running_objective_type: cost

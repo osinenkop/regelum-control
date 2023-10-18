@@ -25,10 +25,6 @@ callbacks:
 
 
 disallow_uncommitted%%: False
-mlflow_tracking_uri%%: ${oc.env:RCOGNITA_MLFLOW_TRACKING_URI}
-mlflow_artifacts_location%%: ${oc.env:RCOGNITA_MLFLOW_ARTIFACTS_LOCATION}
-
-
 
 rehydra:
   launcher:
@@ -45,4 +41,4 @@ rehydra:
     max_nbytes: null
     mmap_mode: r
   sweep:
-    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}
+    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name%%}_${system_specific.name}

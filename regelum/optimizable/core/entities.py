@@ -343,6 +343,105 @@ class VarContainer(Mapping):
 
 
 @dataclass
+class NestedFunction(OptimizationVariable):
+    """A class representing nested functions.
+
+    The variables which the nested function depends on are stored in the `nested_variables` field.
+    """
+
+    nested_variables: VarContainer = field(default_factory=lambda: VarContainer([]))
+
+    def substitute_parameters(self, **parameters):
+        self.nested_variables.substitute_data(**parameters)
+        self.nested_variables.substitute_metadata(**parameters)
+
+    def with_data(self, new_data, inplace=True):
+        # if isinstance(new_data, GeneratorType):
+        #     new_data = list(new_data)
+
+        if inplace:
+            self.data = new_data
+            return self
+        else:
+            return NestedFunction(
+                name=self.name,
+                dims=self.dims,
+                data=new_data,
+                metadata=self.metadata,
+                is_constant=self.is_constant,
+                nested_variables=self.nested_variables,
+            )
+
+    def with_metadata(self, new_metadata, inplace=True):
+        """Construct a new OptimizationVariable object with the given metadata.
+
+        :param metadata: The metadata to associate with the variable.
+        :type metadata: dict
+        :return: A new OptimizationVariable object with the specified metadata.
+        :rtype: OptimizationVariable
+        """
+        if inplace:
+            self.metadata = new_metadata
+            return self
+        else:
+            return NestedFunction(
+                name=self.name,
+                dims=self.dims,
+                data=self.data,
+                metadata=new_metadata,
+                is_constant=self.is_constant,
+                nested_variables=self.nested_variables,
+            )
+
+    def renamed(self, new_name: str, inplace=True) -> Self:
+        if inplace:
+            self.name = new_name
+            return self
+        else:
+            return NestedFunction(
+                name=new_name,
+                dims=self.dims,
+                data=self.data,
+                metadata=self.metadata,
+                is_constant=self.is_constant,
+                nested_variables=self.nested_variables,
+            )
+
+    def as_constant(self, inplace=True):
+        if self.is_constant:
+            return self
+        else:
+            if inplace:
+                self.is_constant = True
+                return self
+            else:
+                return NestedFunction(
+                    name=self.name,
+                    dims=self.dims,
+                    data=self.data,
+                    metadata=self.metadata,
+                    is_constant=True,
+                    nested_variables=self.nested_variables,
+                )
+
+    def as_decision_variable(self, inplace=True):
+        if not self.is_constant:
+            return self
+        else:
+            if inplace:
+                self.is_constant = False
+                return self
+            return NestedFunction(
+                name=self.name,
+                dims=self.dims,
+                data=self.data,
+                metadata=self.metadata,
+                is_constant=False,
+                nested_variables=self.nested_variables,
+            )
+
+
+@dataclass
 class FunctionWithSignature:
     """Wrapper class for functions, that parses a signature and ensures correctness of optimization procedure in the runtime."""
 
@@ -391,7 +490,23 @@ class FunctionWithSignature:
             return self.func(*args, **kwargs_to_pass)
 
         if kwargs == {} and len(args) == 1:
-            return self.func(**{self.free_placeholders[0]: args[0]})
+            dvar = self.variables[self.free_placeholders[0]]
+            is_decision_var_nested_function = isinstance(dvar, NestedFunction)
+            if is_decision_var_nested_function:
+                assert (
+                    len(self.free_placeholders) == 1
+                ), "The amount of free placeholders should be 1"
+                dvar.substitute_parameters(
+                    **{dvar.nested_variables.decision_variables.names[0]: args[0]}
+                )
+            return self.func(
+                **{self.free_placeholders[0]: dvar()},
+                **{
+                    k: v
+                    for k, v in self.variables.to_data_dict().items()
+                    if k != self.free_placeholders[0]
+                },
+            )
 
         kwargs_to_pass = {
             k: v for k, v in kwargs.items() if k in self.free_placeholders

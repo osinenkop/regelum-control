@@ -45,6 +45,7 @@ class Critic(Optimizable, ABC):
         is_value_function: bool = False,
         is_on_policy: bool = False,
         optimizer_config: Optional[OptimizerConfig] = None,
+        regularization_param: float = 0.0,
         action_bounds: Optional[Union[List, np.array]] = None,
         size_mesh: Optional[int] = None,
         discount_factor: float = 1.0,
@@ -91,6 +92,7 @@ class Critic(Optimizable, ABC):
         self.action_bounds = (
             np.array(action_bounds) if action_bounds is not None else None
         )
+        self.regularization_param = regularization_param
         self.size_mesh = size_mesh
 
         self.initialize_optimize_procedure()
@@ -154,7 +156,6 @@ class Critic(Optimizable, ABC):
             self.observation_var,
             self.observation_action_var,
             self.critic_targets_var,
-            self.critic_model_output,
             self.critic_weights_var,
             self.critic_stored_weights_var,
         ) = (
@@ -182,7 +183,6 @@ class Critic(Optimizable, ABC):
                 name="critic_targets",
                 is_constant=True,
             ),
-            self.create_variable(self.batch_size, 1, name="critic_model_output"),
             self.create_variable(
                 name="critic_weights",
                 like=self.model.named_parameters,
@@ -192,6 +192,17 @@ class Critic(Optimizable, ABC):
                 like=self.model.cache.weights,
                 is_constant=True,
             ),
+        )
+        self.critic_model_output = self.create_variable(
+            self.batch_size,
+            1,
+            name="critic_model_output",
+            is_nested_function=True,
+            nested_variables=[
+                self.observation_var,
+                self.critic_stored_weights_var,
+                self.critic_weights_var,
+            ],
         )
         if hasattr(self.model, "weight_bounds"):
             self.register_bounds(self.critic_weights_var, self.model.weight_bounds)
@@ -230,6 +241,8 @@ class Critic(Optimizable, ABC):
             variables=[
                 self.running_objective_var,
                 self.critic_model_output,
+                self.critic_weights_var,
+                self.critic_stored_weights_var,
             ]
             + (
                 [self.critic_targets_var]
@@ -249,13 +262,20 @@ class Critic(Optimizable, ABC):
 
         return keys
 
+    def regularization_function(self, critic_stored_weights, critic_weights):
+        return self.regularization_param * rc.sum(
+            (critic_stored_weights - critic_weights) ** 2
+        )
+
     def objective_function(
         self,
         critic_model_output,
         running_objective,
+        critic_stored_weights,
+        critic_weights,
         critic_targets=None,
     ):
-        return temporal_difference_objective(
+        td_objective = temporal_difference_objective(
             critic_model_output=critic_model_output,
             running_objective=running_objective,
             td_n=self.td_n,
@@ -263,6 +283,14 @@ class Critic(Optimizable, ABC):
             sampling_time=self.sampling_time,
             critic_targets=critic_targets,
         )
+        if self.kind == "tensor":
+            return td_objective
+
+        else:
+            return td_objective + self.regularization_function(
+                critic_stored_weights=critic_stored_weights,
+                critic_weights=critic_weights,
+            )
 
     def update_data_buffer_with_optimal_policy_targets(self, data_buffer: DataBuffer):
         assert self.size_mesh is not None, "Specify size_mesh for off-policy critic"
@@ -299,7 +327,9 @@ class Critic(Optimizable, ABC):
         if "critic_targets" in data_buffer.keys():
             data_buffer.delete_key("critic_targets")
 
-    def optimize_on_event(self, data_buffer, is_update_and_cache_weights=True):
+    def optimize_on_event(
+        self, data_buffer, is_update_and_cache_weights=True, is_constrained=True
+    ):
         if isinstance(self.model, ModelNN):
             self.model.to(self.device)
             self.model.cache.to(self.device)
@@ -314,14 +344,13 @@ class Critic(Optimizable, ABC):
         weights = None
         if opt_kwargs is not None:
             if self.kind == "tensor":
-                self.optimize(
-                    **opt_kwargs,
-                )
+                self.optimize(**opt_kwargs, is_constrained=is_constrained)
                 if is_update_and_cache_weights:
                     self.model.update_and_cache_weights()
             elif self.kind == "symbolic":
                 weights = self.optimize(
                     **opt_kwargs,
+                    is_constrained=is_constrained,
                     critic_weights=self.model.weights,
                     critic_stored_weights=self.model.cache.weights,
                 )["critic_weights"]
@@ -446,7 +475,15 @@ class CriticCALF(Critic):
             is_constant=True,
         )
         self.prev_good_critic_var = self.create_variable(
-            1, 1, name="prev_good_critic", is_constant=True
+            1,
+            1,
+            name="prev_good_critic",
+            is_constant=True,
+            is_nested_function=True,
+            nested_variables=[
+                self.observation_last_good_var,
+                self.critic_stored_weights_var,
+            ],
         )
         self.connect_source(
             connect_to=self.prev_good_critic_var,
@@ -587,50 +624,3 @@ class CriticCALF(Critic):
             + self.predictor.pred_step_size * self.safe_decay_param
         )
         return self.stabilizing_constraint_violation
-
-    # def objective(self, data_buffer=None, weights=None):
-    #     """Objective of the critic, say, a squared temporal difference."""
-    #     if data_buffer is None:
-    #         observation_buffer = self.observation_buffer
-    #         action_buffer = self.action_buffer
-    #     else:
-    #         observation_buffer = data_buffer["observation_buffer"]
-    #         action_buffer = data_buffer["action_buffer"]
-
-    #     critic_objective = 0
-
-    #     for k in range(self.data_buffer_size - 1, 0, -1):
-    #         observation_old = observation_buffer[:, k - 1]
-    #         observation_next = observation_buffer[:, k]
-    #         action_next = action_buffer[:, k - 1]
-
-    #         # Temporal difference
-
-    #         critic_old = self.model(observation_old, weights=weights)
-    #         critic_next = self.model(observation_next, use_stored_weights=True)
-
-    #         if self.critic_regularization_param > 1e-9:
-    #             weights_current = weights
-    #             weights_last_good = self.model.cache.weights
-    #             regularization_term = (
-    #                 rc.sum_2(weights_current - weights_last_good)
-    #                 * self.critic_regularization_param
-    #             )
-    #         else:
-    #             regularization_term = 0
-
-    #         temporal_difference = (
-    #             critic_old
-    #             - self.discount_factor * critic_next
-    #             - self.running_objective(observation_next, action_next)
-    #         )
-
-    #         critic_objective += 1 / 2 * temporal_difference**2 + regularization_term
-
-    #     if self.intrinsic_constraints != [] and self.penalty_param > 0:
-    #         for constraint in self.intrinsic_constraints:
-    #             critic_objective += self.penalty_param * rc.penalty_function(
-    #                 constraint(), penalty_coeff=1.0e-1
-    #             )
-
-    #     return critic_objective

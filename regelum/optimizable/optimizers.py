@@ -11,13 +11,13 @@ try:
     from casadi import Opti
 
 except (ModuleNotFoundError, ImportError):
-    pass
+    from unittest.mock import MagicMock
+
+    Opti = MagicMock()
 
 
 try:
     import torch
-
-    # from regelum.data_buffers import UpdatableSampler
 
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
@@ -34,6 +34,7 @@ from .core.entities import (
     OptimizationVariable,
     VarContainer,
     FuncContainer,
+    NestedFunction,
 )
 from .core.hooks import requires_grad, detach, data_closure
 
@@ -51,11 +52,12 @@ class Optimizable(regelum.RegelumBase):
         """Initialize an optimizable object."""
         self.optimizer_config = optimizer_config
         self.kind = optimizer_config.kind
-        self.__is_problem_defined = False
+
         self.__variables: VarContainer = VarContainer([])
         self.__functions: FuncContainer = FuncContainer(tuple())
         self.params_changed = False
         self.is_check_status = True
+        self.__is_problem_defined = False
 
         if self.kind == "symbolic":
             self.__opti_common = Opti()
@@ -88,6 +90,27 @@ class Optimizable(regelum.RegelumBase):
     @property
     def log_options(self):
         return self.__log_options
+
+    @property
+    def objective(self):
+        assert len(self.objectives) == 1, "Ambiguous objective definition."
+        return self.objectives[0]
+
+    @property
+    def objectives(self):
+        return self.__functions.objectives
+
+    @property
+    def constraints(self):
+        return self.__functions.constraints
+
+    @property
+    def functions(self):
+        return self.__functions
+
+    @property
+    def variables(self) -> VarContainer:
+        return self.__variables
 
     def __recreate_opti(self):
         self.__opti = Opti()
@@ -145,27 +168,6 @@ class Optimizable(regelum.RegelumBase):
                 self.__opti.minimize(metafunc)
             else:
                 self.__opti.subject_to(metafunc <= 0)
-
-    @property
-    def objective(self):
-        assert len(self.objectives) == 1, "Ambiguous objective definition."
-        return self.objectives[0]
-
-    @property
-    def objectives(self):
-        return self.__functions.objectives
-
-    @property
-    def constraints(self):
-        return self.__functions.constraints
-
-    @property
-    def functions(self):
-        return self.__functions
-
-    @property
-    def variables(self) -> VarContainer:
-        return self.__variables
 
     def __refresh_binded_variables(self):
         for function in self.functions:
@@ -271,21 +273,34 @@ class Optimizable(regelum.RegelumBase):
         return metadata
 
     def create_variable(
-        self, *dims, name: str, is_constant=False, like=None, is_nested_function=False
+        self,
+        *dims,
+        name: str,
+        is_constant=False,
+        like=None,
+        is_nested_function=False,
+        nested_variables=None,
     ):
         metadata = None
+        nested_variables = [] if nested_variables is None else nested_variables
         if not is_nested_function:
             metadata = self.create_variable_metadata(
                 *dims, is_constant=is_constant, like=like
             )
-        new_variable = OptimizationVariable(
-            name=name, dims=dims, metadata=metadata, is_constant=is_constant
-        )
-        if self.kind == "tensor":
+            new_variable = OptimizationVariable(
+                name=name, dims=dims, metadata=metadata, is_constant=is_constant
+            )
+        else:
+            new_variable = NestedFunction(
+                name=name,
+                dims=dims,
+                metadata=metadata,
+                is_constant=is_constant,
+                nested_variables=VarContainer(nested_variables),
+            )
+        if self.kind == "tensor" or self.kind == "numeric":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
-                # new_variable.register_hook(data_closure(like), act_on="data")
-                # new_variable.register_hook(metadata_closure(like), act_on="metadata")
 
         self.__variables = self.__variables + new_variable
         return new_variable
@@ -336,7 +351,11 @@ class Optimizable(regelum.RegelumBase):
     ):
         def source_hook(whatever):
             return func(
-                source(), **{kwarg: var() for kwarg, var in source_kwargs.items()}
+                source(),
+                **{
+                    kwarg: var() if isinstance(var, OptimizationVariable) else var
+                    for kwarg, var in source_kwargs.items()
+                },
             )
 
         def source_metadata_hook(whatever):
@@ -344,6 +363,8 @@ class Optimizable(regelum.RegelumBase):
                 source(with_metadata=True),
                 **{
                     kwarg: var(with_metadata=True)
+                    if isinstance(var, OptimizationVariable)
+                    else var
                     for kwarg, var in source_kwargs.items()
                 },
             )
@@ -551,6 +572,9 @@ class Optimizable(regelum.RegelumBase):
                         params_to_delete.append(k)
             for k in params_to_delete:
                 del parameters[k]
+        elif self.kind == "numeric":
+            self.variables.substitute_data(**parameters)
+            self.variables.substitute_metadata(**parameters)
 
     def is_target_event(self, event):
         if self.__callback_target_events is None:
@@ -561,7 +585,7 @@ class Optimizable(regelum.RegelumBase):
     def optimize_on_event(self, **parameters):
         raise NotImplementedError("optimize_on_event is not implemented")
 
-    def optimize(self, raw=False, **parameters):
+    def optimize(self, raw=False, is_constrained=True, **parameters):
         if not self.__is_problem_defined:
             self.define_problem()
 
@@ -571,7 +595,7 @@ class Optimizable(regelum.RegelumBase):
         elif self.kind == "numeric":
             result = self.optimize_numeric(**parameters, raw=raw)
         elif self.kind == "tensor":
-            self.optimize_tensor(**parameters)
+            self.optimize_tensor(**parameters, is_constrained=is_constrained)
             result = self.variables.decision_variables
         else:
             raise NotImplementedError
@@ -661,11 +685,18 @@ class Optimizable(regelum.RegelumBase):
             NonlinearConstraint(func, -np.inf, 0) for func in self.constraints
         ]
         initial_guess = parameters.get(self.decision_variables.names[0])
+        if initial_guess is None:
+            assert (
+                self.decision_variables[0].data is not None
+            ), "Initial guess is None. Try to set 'like=...' when creating a decision variable"
+
+            initial_guess = self.decision_variables[0].data
+
         opt_result = minimize(
             self.objective,
             x0=initial_guess,
             method=self.opt_method,
-            bounds=self.__bounds,
+            bounds=self.__bounds if hasattr(self, "__bounds") else None,
             options=self.__opt_options,
             constraints=constraints,
             tol=1e-7,
@@ -721,7 +752,7 @@ class Optimizable(regelum.RegelumBase):
             ]
         )
 
-    def opt_constraints_tensor(self, **parameters):
+    def opt_constraints_tensor(self):
         n_epochs_per_constraint = 1
         if self.optimizer_config.config_options["constrained_optimization_policy"][
             "is_activated"
@@ -731,7 +762,6 @@ class Optimizable(regelum.RegelumBase):
             ]["defaults"]["n_epochs_per_constraint"]
         for _ in range(n_epochs_per_constraint):
             self.optimizer.zero_grad()
-            self.substitute_parameters(**parameters)
             constr_value = self.eval_contraints()
             if (
                 max(
@@ -753,16 +783,23 @@ class Optimizable(regelum.RegelumBase):
         else:
             self.opt_status = "success"
 
-    def optimize_tensor_batch_sampler(self, batch_sampler, n_epochs, objective):
+    def optimize_tensor_batch_sampler(
+        self, batch_sampler, n_epochs, objective, is_constrained
+    ):
         for epoch_idx in range(n_epochs):
             objective_value = None
             for batch_sample in batch_sampler:
-                if len(self.constraints) > 0:
-                    self.opt_constraints_tensor(**batch_sample)
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
-                objective_value = objective(**self.variables.to_data_dict())
-                objective_value.backward()
+                if is_constrained and len(self.constraints) > 0:
+                    self.opt_constraints_tensor()
+                    objective_value_constrained = (
+                        objective(**self.variables.to_data_dict())
+                        + self.eval_contraints()
+                    )
+                    objective_value_constrained.backward()
+                else:
+                    objective(**self.variables.to_data_dict()).backward()
                 self.optimizer.step()
             if objective_value is not None:
                 self.post_epoch(epoch_idx, objective_value.item())
@@ -778,20 +815,27 @@ class Optimizable(regelum.RegelumBase):
     def optimize_tensor(self, **parameters):
         n_epochs, objective = self.instantiate_configuration()
         batch_sampler = parameters.get("batch_sampler")
+        is_constrained = parameters.get("is_constrained")
         if batch_sampler is not None:
             self.optimize_tensor_batch_sampler(
-                batch_sampler=batch_sampler, n_epochs=n_epochs, objective=objective
+                batch_sampler=batch_sampler,
+                n_epochs=n_epochs,
+                objective=objective,
+                is_constrained=is_constrained,
             )
         else:
+            self.substitute_parameters(**parameters)
             for _ in range(n_epochs):
-                if len(self.constraints) > 0:
-                    self.opt_constraints_tensor(**parameters)
                 self.optimizer.zero_grad()
-                self.substitute_parameters(**parameters)
-                objective_value = (
-                    objective(**self.variables.to_data_dict()) + self.eval_contraints()
-                )
-                objective_value.backward()
+                if is_constrained and len(self.constraints) > 0:
+                    self.opt_constraints_tensor()
+                    objective_value_constrained = (
+                        objective(**self.variables.to_data_dict())
+                        + self.eval_contraints()
+                    )
+                    objective_value_constrained.backward()
+                else:
+                    objective(**self.variables.to_data_dict()).backward()
                 self.optimizer.step()
             if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):
                 self.optimizer = None

@@ -109,6 +109,11 @@ if "REGELUM_DATA_DIR" not in os.environ:
 else:
     os.environ["REGELUM_DATA_DIR"] = os.path.abspath(os.environ["REGELUM_DATA_DIR"])
 
+if "MLFLOW_TRACKING_URI" not in os.environ:
+    os.environ[
+        "MLFLOW_TRACKING_URI"
+    ] = f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
+
 
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
@@ -735,10 +740,6 @@ class main:
 
         self.parser.add_argument("--jobs", trigger=jobs)
 
-        self.mlflow_tracking_uri = f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
-        # raise ValueError(str(self.mlflow_tracking_uri) + "\n" +  str(os.environ["RCOGNITA_MULTIRUN_DIR"]))
-        # self.mlflow_artifacts_location = self.mlflow_tracking_uri + "/artifacts"
-
         self.tags = {}
         self.experiment_name = "Default"
 
@@ -787,16 +788,7 @@ class main:
                 else:
                     seed = 0
 
-                if "mlflow_tracking_uri__IGNORE__" in cfg:
-                    try:
-                        mlflow_tracking_uri = cfg.mlflow_tracking_uri__IGNORE__
-                    except BaseException:
-                        mlflow_tracking_uri = self.mlflow_tracking_uri
-                    delattr(cfg, "mlflow_tracking_uri__IGNORE__")
-                    self.mlflow_tracking_uri = mlflow_tracking_uri
-
-                mlflow.set_tracking_uri(self.mlflow_tracking_uri)
-
+                mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
                 numpy.random.seed(seed)
                 torch.manual_seed(seed)
                 random.seed(seed)

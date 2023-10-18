@@ -1,0 +1,23 @@
+_target_: regelum.controller.CALFControllerExPostExperimental
+
+name%%: calf_ex_post
+
+defaults:
+  - policy: policy_rpo
+  - critic: critic_calf
+
+action_bounds: $ system_specific.action_bounds
+sampling_time: $ system_specific.sampling_time
+running_objective: ~ running_objective
+discount_factor: $ scenario.discount_factor
+policy_optimization_event: compute_action
+data_buffer_nullify_event: reset_episode
+critic_optimization_event: compute_action
+safe_controller: ~ nominal_controller
+
+policy:
+  prediction_horizon: 2
+
+critic:
+  is_on_policy: True
+  is_value_function: True
