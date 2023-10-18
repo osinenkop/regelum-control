@@ -1407,21 +1407,43 @@ class ObjectiveLearningSaver(HistoricalCallback):
         self.iteration_number = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.critic.Critic) and (method == "post_epoch")
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and (method == "pre_optimize")
+        ) or (
+            isinstance(obj, regelum.optimizable.Optimizable)
+            and (method == "post_epoch")
+        )
 
     def perform(self, obj, method, output):
-        epoch_idx, objective = output
-        self.add_datum(
-            {
-                "epoch": epoch_idx,
-                "loss": objective,
-            }
-        )
-        mlflow.log_metric(
-            f"B. Critic td loss on iteration {str(self.iteration_number).zfill(5)}",
-            objective,
-            step=epoch_idx,
-        )
+        if isinstance(obj, regelum.controller.RLController) and (
+            method == "pre_optimize"
+        ):
+            which, event, time, episode_counter, iteration_counter = output
+            if which == "Critic":
+                self.key = f"B. {which} objective. "
+            else:
+                self.key = f"C. {which} objective. "
+
+            if event == "compute_action":
+                if time is None:
+                    raise ValueError("Time should be passed if one uses compute action")
+                self.key += f"Time {str(round(time, 4))}. Ep {str(episode_counter).zfill(5)}. It {str(iteration_counter).zfill(5)}"
+            elif event == "reset_episode":
+                self.key += f"Ep {str(episode_counter).zfill(5)}. It {str(iteration_counter).zfill(5)}"
+            elif event == "reset_iteration":
+                self.key += f"It {str(iteration_counter).zfill(5)}"
+
+        if isinstance(obj, regelum.optimizable.Optimizable) and (
+            method == "post_epoch"
+        ):
+            epoch_idx, objective_values = output
+            if len(objective_values) > 0:
+                mlflow.log_metric(
+                    self.key,
+                    np.mean(objective_values),
+                    step=epoch_idx,
+                )
 
     def on_iteration_done(
         self,
@@ -1431,9 +1453,9 @@ class ObjectiveLearningSaver(HistoricalCallback):
         iteration_number,
         iterations_total,
     ):
-        self.dump_and_clear_data(
-            f"critic_objective_on_iteration_{str(iteration_number).zfill(5)}"
-        )
+        # self.dump_and_clear_data(
+        #     f"critic_objective_on_iteration_{str(iteration_number).zfill(5)}"
+        # )
         self.iteration_number = iteration_number + 1
 
 
@@ -1528,48 +1550,6 @@ class TotalObjectiveCallback(HistoricalCallback):
         plt.grid()
         plt.xticks(range(1, len(self.data) + 1))
         return res.figure
-
-
-class QFunctionModelSaverCallback(HistoricalCallback):
-    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of QFunctionModelSaverCallback."""
-        super().__init__(*args, **kwargs)
-
-        self.cooldown = 0.0
-
-    def plot_gui(self):
-        return None
-
-    def load_data(self, idx=None):
-        assert idx is not None, "Provide idx=..."
-        return torch.load(
-            os.path.join(
-                self.get_save_directory(),
-                f"critic_model_{str(idx).zfill(5)}.pt",
-            )
-        )
-
-    def is_target_event(self, obj, method, output):
-        return False
-
-    def perform(self, obj, method, output):
-        pass
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        if "CriticOffPolicy" in scenario.critic.__class__.__name__:
-            torch.save(
-                scenario.critic.model.state_dict(),
-                f"{self.get_save_directory()}/critic_model_{str(episode_number).zfill(5)}.pt",
-            )
 
 
 class TimeRemainingCallback(Callback):

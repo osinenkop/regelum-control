@@ -21,7 +21,7 @@ callbacks:
   # - regelum.callback.CalfWeightsCallback
   # - regelum.callback.CALFWeightsCallback
   - regelum.callback.ObjectiveLearningSaver
-  - regelum.callback.CriticWeightsCallback
+  # - regelum.callback.CriticWeightsCallback
   # - regelum.callback.CriticCallback
 
 
