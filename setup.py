@@ -47,10 +47,10 @@ setup(
         "matplotx==0.3.10",
         "svgpathtools==1.6.1",
         "PyQt5==5.15.9",
+        "rehydra==1.3.2",
+        "rehydra-joblib-launcher==1.3.0",
+        "torch>=1.13.1",
+        "gpytorch==1.8.0",
     ],
-    extras_require={
-        "CASADI": ["casadi>=3.5.5"],
-        "TORCH": ["torch>=1.13.1", "gpytorch==1.8.0"],
-    },
     python_requires=">=3.9.16, <3.10",
 )
