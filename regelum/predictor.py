@@ -32,15 +32,15 @@ class Predictor(regelum.RegelumBase, ABC):
         pass
 
     def predict_state_sequence_from_action_sequence(
-        self, state, action_sequence, is_predict_last: False
+        self, state, action_sequence, is_predict_last: bool
     ):
-        len_action_sequence = action_sequence.shape[0] - int(not is_predict_last)
+        len_state_sequence = action_sequence.shape[0] - int(not is_predict_last)
         predicted_state_sequence = rc.zeros(
-            [len_action_sequence, self.system.dim_state],
+            [len_state_sequence, self.system.dim_state],
             prototype=action_sequence,
         )
         current_state = state
-        for k in range(len_action_sequence):
+        for k in range(len_state_sequence):
             current_action = action_sequence[k, :]
             next_state = self.predict(current_state, current_action)
             predicted_state_sequence[k, :] = self.system.get_observation(
@@ -62,7 +62,7 @@ class Predictor(regelum.RegelumBase, ABC):
             if model_weights is not None:
                 assert model_weights.shape[0] == prediction_horizon + 1 - int(
                     is_predict_last
-                )
+                ), "model_weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
                 return self.predict_state_sequence_from_action_sequence(
                     state,
                     action_sequence=model_weights,
@@ -71,7 +71,7 @@ class Predictor(regelum.RegelumBase, ABC):
             else:
                 assert model._weights.shape[0] == prediction_horizon + 1 - int(
                     is_predict_last
-                )
+                ), "model._weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
                 return self.predict_state_sequence_from_action_sequence(
                     state,
                     action_sequence=model._weights,
@@ -80,7 +80,7 @@ class Predictor(regelum.RegelumBase, ABC):
         elif isinstance(model, ModelWeightContainerTorch):
             assert model._weights.shape[0] == prediction_horizon + 1 - int(
                 is_predict_last
-            )
+            ), "model._weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
             dummy_input = torch.zeros(
                 [
                     prediction_horizon + 1 - int(is_predict_last),
