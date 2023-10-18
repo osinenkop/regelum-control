@@ -20,7 +20,8 @@ callbacks:
   # - regelum.callback.QFunctionModelSaverCallback
   # - regelum.callback.CalfWeightsCallback
   # - regelum.callback.CALFWeightsCallback
-  - regelum.callback.ObjectiveLearningSaver
+  - regelum.callback.CriticObjectiveSaver
+  - regelum.callback.PolicyObjectiveSaver
   # - regelum.callback.CriticWeightsCallback
   # - regelum.callback.CriticCallback
 

@@ -87,6 +87,7 @@ from . import data_buffers
 from .optimizable import *
 from . import critic
 from . import controller
+from . import policy
 
 mock = Mock()
 

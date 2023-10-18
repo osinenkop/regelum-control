@@ -783,6 +783,10 @@ class Optimizable(regelum.RegelumBase):
     def post_epoch(self, epoch_idx: int, objective_epoch_history: List[float]):
         return epoch_idx, objective_epoch_history
 
+    @apply_callbacks()
+    def post_optimize(self):
+        pass
+
     def optimize_tensor_batch_sampler(
         self, batch_sampler, n_epochs, objective, is_constrained
     ):
@@ -800,7 +804,6 @@ class Optimizable(regelum.RegelumBase):
                     objective_value.backward()
                 self.optimizer.step()
                 objective_epoch_history.append(objective_value.item())
-            if objective_value is not None:
                 self.post_epoch(epoch_idx, objective_epoch_history)
 
         if (
@@ -838,6 +841,8 @@ class Optimizable(regelum.RegelumBase):
                 self.post_epoch(epoch_idx, [objective_value.item()])
             if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):
                 self.optimizer = None
+
+        self.post_optimize()
 
     def define_problem(self):
         self.__is_problem_defined = True

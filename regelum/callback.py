@@ -1396,8 +1396,8 @@ class HistoricalObservationCallback(HistoricalCallback):
         return res[0].figure
 
 
-class ObjectiveLearningSaver(HistoricalCallback):
-    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
+class ObjectiveSaver(HistoricalCallback):
+    """A callback which allows to store objective values during execution runtime."""
 
     def __init__(self, *args, **kwargs):
         """Initialize an instance of PolicyGradientObjectiveSaverCallback."""
@@ -1412,7 +1412,7 @@ class ObjectiveLearningSaver(HistoricalCallback):
             and (method == "pre_optimize")
         ) or (
             isinstance(obj, regelum.optimizable.Optimizable)
-            and (method == "post_epoch")
+            and (method == "post_epoch" or method == "post_optimize")
         )
 
     def perform(self, obj, method, output):
@@ -1444,19 +1444,40 @@ class ObjectiveLearningSaver(HistoricalCallback):
                     np.mean(objective_values),
                     step=epoch_idx,
                 )
+                self.add_datum(
+                    {"epoch_idx": epoch_idx, "objective": np.mean(objective_values)}
+                )
 
-    def on_iteration_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        # self.dump_and_clear_data(
-        #     f"critic_objective_on_iteration_{str(iteration_number).zfill(5)}"
-        # )
-        self.iteration_number = iteration_number + 1
+        if isinstance(obj, regelum.optimizable.Optimizable) and (
+            method == "post_optimize"
+        ):
+            self.dump_and_clear_data(self.key)
+
+
+class CriticObjectiveSaver(ObjectiveSaver):
+    """A callback which allows to store critic objective values during execution runtime."""
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and (method == "pre_optimize")
+        ) or (
+            isinstance(obj, regelum.critic.Critic)
+            and (method == "post_epoch" or method == "post_optimize")
+        )
+
+
+class PolicyObjectiveSaver(ObjectiveSaver):
+    """A callback which allows to store critic objective values during execution runtime."""
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and (method == "pre_optimize")
+        ) or (
+            isinstance(obj, regelum.policy.Policy)
+            and (method == "post_epoch" or method == "post_optimize")
+        )
 
 
 class TotalObjectiveCallback(HistoricalCallback):
