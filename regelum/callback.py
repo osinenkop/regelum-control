@@ -375,7 +375,7 @@ class ConfigDiagramCallback(Callback):
         cfg_hash = hex(hash(cfg))
         html = html.replace("<body>", f"<title>{name} {cfg_hash}</title><body>")
         overrides_table = ""
-        with open(".hydra/hydra.yaml", "r") as f:
+        with open(".rehydra/rehydra.yaml", "r") as f:
             content = f.read()
             content = content[content.find("task:") :]
             content = content[: content.find("job:")]

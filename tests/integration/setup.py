@@ -36,6 +36,7 @@ class TestSetup:
         sys.argv.insert(1, "controller.sampling_time=0.5")
         sys.argv.insert(1, "scenario.N_episodes=2")
         sys.argv.insert(1, "scenario.N_iterations=1")
+        sys.argv.insert(1, "+disallow_uncommitted=False")
         sys.argv.insert(1, "--experiment=TESTS")
 
     def __call__(self):
@@ -43,8 +44,9 @@ class TestSetup:
         for param in self.params:
             sys.argv.insert(1, f"{param}={self.params[param]}")
         self._pre_setup()
-        os.environ['REGELUM_RECENT_TEST_INFO'] = \
-            f"Command line arguments: {' '.join(sys.argv[1:])}\nConfig: {os.path.abspath(self.config_path)}/{self.config_name}.yaml"
+        os.environ[
+            "REGELUM_RECENT_TEST_INFO"
+        ] = f"Command line arguments: {' '.join(sys.argv[1:])}\nConfig: {os.path.abspath(self.config_path)}/{self.config_name}.yaml"
         return {"config_path": self.config_path, "config_name": self.config_name}
 
     def __str__(self):
@@ -64,7 +66,9 @@ class MPCTest(TestSetup):
 #######################################################################################################################
 
 basic = [
-    TestSetup(system="inv_pendulum", controller="sdpg", **{"simulator.time_final" : 3.0}),
+    TestSetup(
+        system="inv_pendulum", controller="sdpg", **{"simulator.time_final": 3.0}
+    ),
     TestSetup(system="inv_pendulum", controller="ddpg"),
     TestSetup(system="inv_pendulum", controller="reinforce"),
 ]

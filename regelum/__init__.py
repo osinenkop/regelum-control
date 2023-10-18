@@ -30,44 +30,20 @@ from omegaconf import Container
 from omegaconf._utils import _DEFAULT_MARKER_
 from omegaconf.errors import ConfigKeyError, InterpolationResolutionError
 
-# from omegaconf.grammar_parser import *
-
-from recursive_monkey_patch import monkey_patch
 
 import hashlib
 
 from . import __utilities
 
 
-# from . import controllers
-# from . import systems
-# from . import simulator
-# from . import systems
-# from .visualization import animator
-# from . import __utilities
-# from . import models
-# from . import predictors
-# from . import policies
-# from . import visualization
-# from . import optimizable
-# from . import scenarios
-# from . import critics
-# from . import objectives
-# from .optimizable import *
-# from .optimizable.core import *
-# from .visualization import *
-from hydra._internal.utils import _locate
+import rehydra
+from rehydra._internal.utils import _locate
 
-import hydra.core.plugins
-import hydra._internal.config_loader_impl
+import rehydra.core.plugins
+import rehydra._internal.config_loader_impl
 from scipy.optimize import OptimizeWarning
-from .__internal import (
-    __fake_config_loader_impl,
-    __fake_plugins,
-    __instantiate as inst,
-    _Plugins__fake_file_config_source,
-)
-from regelum.__internal.__gui_server import __file__ as gui_script_file
+from rehydra.utils import instantiate as inst
+
 
 import mlflow
 from unittest.mock import Mock
@@ -79,23 +55,13 @@ import json
 
 import tempfile
 
-from multiprocessing import Process
+
 import numpy
 
 from unittest.mock import MagicMock
 
-# main = MagicMock()
 
-# from . import optimizable
-# from . import scenarios
-# from . import critics
-# from . import objectives
-# from .optimizable import *
-# from .optimizable.core import *
-# from .visualization import *
-# from . import policies
-
-from regelum.__internal.__hydra_main import main as hydramain
+from rehydra import main as rehydramain
 from . import callback
 from regelum.__internal.base import RegelumBase
 from .__internal.metadata import Metadata
@@ -116,7 +82,6 @@ try:
 except (ModuleNotFoundError, ImportError):
     torch = MagicMock()
 
-
 from . import model
 from . import data_buffers
 from .optimizable import *
@@ -125,8 +90,8 @@ from . import critic
 
 mock = Mock()
 
-monkey_patch(__fake_plugins, hydra.core.plugins)
-monkey_patch(__fake_config_loader_impl, hydra._internal.config_loader_impl)
+# monkey_patch(__fake_plugins, rehydra.core.plugins)
+# monkey_patch(__fake_config_loader_impl, rehydra._internal.config_loader_impl)
 
 ANIMATION_TYPES_SAVE_FORMATS = ["html", "mp4"]
 ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK = [
@@ -168,9 +133,7 @@ def __memorize_instance(resolver):
         if instance_name in main.objects_created:
             return main.objects_created[instance_name]
         else:
-            obj = inst.instantiate(
-                resolver(key, default=default, _parent_=_parent_), path=default
-            )
+            obj = inst(resolver(key, default=default, _parent_=_parent_), path=default)
             main.objects_created[instance_name] = obj
             return obj
 
@@ -199,7 +162,9 @@ def obtain(obj_repr):
         .replace("__APOSTROPHE__", "'")
         .replace("__TILDE__", "~")
     )
-    obj_repr = _Plugins__fake_file_config_source.numerize_string(obj_repr)
+    obj_repr = rehydra._internal.core_plugins.file_config_source.numerize_string(
+        obj_repr
+    )
     pattern = re.compile(r"(\A|[^a-zA-Z0-9\._])[a-zA-Z_][a-zA-Z0-9_]*")
     resolved = []
 
@@ -238,12 +203,12 @@ class ComplementedConfig:
     def __init__(self, cfg, config_path=""):
         """Initialize a complemented config.
 
-        :param cfg: hydra config object
+        :param cfg: rehydra config object
         :param config_path: path to a config file
         :return: The self object
         :doc-author: Trelent
         """
-        self._hydra_config = cfg
+        self._rehydra_config = cfg
         self.config_path = config_path
         self._saved_hash = None
 
@@ -257,7 +222,7 @@ class ComplementedConfig:
 
     def __str__(self):
         return (
-            str(self._hydra_config)
+            str(self._rehydra_config)
             .replace("DictConfig", "ComplementedConfigDict")
             .replace("ListConfig", "ComplementedConfigList")
             .replace("${get:", "={")
@@ -265,17 +230,17 @@ class ComplementedConfig:
         )
 
     def __repr__(self):
-        return self.__class__.__name__ + "( " + repr(self._hydra_config) + ")"
+        return self.__class__.__name__ + "( " + repr(self._rehydra_config) + ")"
 
     def __hash__(self):
         if not self._saved_hash:
-            real_config = omegaconf.OmegaConf.to_container(self._hydra_config)
+            real_config = omegaconf.OmegaConf.to_container(self._rehydra_config)
             return hash_string(json.dumps(real_config, sort_keys=True))
         else:
             return self._saved_hash
 
     def copy(self):
-        return self.__class__(self._hydra_config.copy(), config_path=self.config_path)
+        return self.__class__(self._rehydra_config.copy(), config_path=self.config_path)
 
     def __invert__(self):
         """Instantiate the object described by the config (recursively).
@@ -283,13 +248,13 @@ class ComplementedConfig:
         ``_target_`` has to be specified.
         """
         # if not self.config_path:
-        return inst.instantiate(self._hydra_config, path=self.config_path)
+        return inst(self._rehydra_config, path=self.config_path)
         # else:
         #     instance_name = self.config_path.strip()
         #     if instance_name in self.objects_created:
         #         return self.objects_created[instance_name]
         #     else:
-        #         res = inst.instantiate(self.__hydra_config, path=self.config_path)
+        #         res = inst(self.__rehydra_config, path=self.config_path)
         #         self.objects_created[instance_name] = res
         #         return res
 
@@ -298,10 +263,10 @@ class ComplementedConfigList(ComplementedConfig):
     """A config object, generated by ``regelum``'s config pipeline that corresponds to a complemented version of `ListConfig` from omegaconf."""
 
     def __contains__(self, item):
-        return item in self._hydra_config
+        return item in self._rehydra_config
 
     def __getitem__(self, key):
-        cfg = object.__getattribute__(self, "_hydra_config")
+        cfg = object.__getattribute__(self, "_rehydra_config")
         name = key
         item = cfg[name]
         if isinstance(item, DictConfig) or isinstance(item, ListConfig):
@@ -318,10 +283,10 @@ class ComplementedConfigList(ComplementedConfig):
         return item
 
     def __setitem__(self, key, value):
-        self._hydra_config[key] = value
+        self._rehydra_config[key] = value
 
     def __delitem__(self, key):
-        del self._hydra_config[key]
+        del self._rehydra_config[key]
 
 
 class ComplementedConfigDict(ComplementedConfig):
@@ -346,7 +311,7 @@ class ComplementedConfigDict(ComplementedConfig):
                 # check if node as attribute value
                 parents.append(parent_name)
                 # if type(parent_node_raw) is str:
-                #    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__hydra_config)
+                #    parent_node_raw = omegaconf.OmegaConf.to_container(parent_node.__rehydra_config)
                 if not isinstance(name, int):
                     real_name = (
                         name if name in parent_node_raw else name + "__IGNORE__"
@@ -360,7 +325,9 @@ class ComplementedConfigDict(ComplementedConfig):
                     node_raw = parent_node_raw[real_name]
                     if type(node_raw) is str:
                         text.append(node_raw.replace("__IGNORE__", "%%"))
-                        node_raw = omegaconf.OmegaConf.to_container(value._hydra_config)
+                        node_raw = omegaconf.OmegaConf.to_container(
+                            value._rehydra_config
+                        )
                     else:
                         text.append("")
                     labels.append(name)
@@ -407,7 +374,7 @@ class ComplementedConfigDict(ComplementedConfig):
             # TODO: WHAT THIS COMMENT REFERS TO?
             # append attributes to root
 
-        raw_self = omegaconf.OmegaConf.to_container(self._hydra_config)
+        raw_self = omegaconf.OmegaConf.to_container(self._rehydra_config)
         self._saved_hash = hash_string(json.dumps(raw_self, sort_keys=True))
         parents, labels, colors, text = format(
             f"{root} {hex(hash(self))}", self, raw_self
@@ -426,10 +393,12 @@ class ComplementedConfigDict(ComplementedConfig):
         return fig
 
     def __contains__(self, item):
-        return item in self._hydra_config or item + "__IGNORE__" in self._hydra_config
+        return (
+            item in self._rehydra_config or item + "__IGNORE__" in self._rehydra_config
+        )
 
     def __getattr__(self, item):
-        cfg = object.__getattribute__(self, "_hydra_config")
+        cfg = object.__getattribute__(self, "_rehydra_config")
         try:
             name = item
             attr = cfg.__getattr__(name)
@@ -450,7 +419,7 @@ class ComplementedConfigDict(ComplementedConfig):
         return attr
 
     def __getitem__(self, key):
-        cfg = object.__getattribute__(self, "_hydra_config")
+        cfg = object.__getattribute__(self, "_rehydra_config")
         try:
             name = key
             item = cfg[name]
@@ -474,28 +443,28 @@ class ComplementedConfigDict(ComplementedConfig):
         return item
 
     def __setitem__(self, key, value):
-        if key + "__IGNORE__" in self._hydra_config:
-            self._hydra_config[key + "__IGNORE__"] = value
+        if key + "__IGNORE__" in self._rehydra_config:
+            self._rehydra_config[key + "__IGNORE__"] = value
         else:
-            self._hydra_config[key] = value
+            self._rehydra_config[key] = value
 
     def __setattr__(self, key, value):
         if key in ["config_path", "_saved_hash"]:
             object.__setattr__(self, key, value)
             return
-        if hasattr(self, "_hydra_config"):
-            if key + "__IGNORE__" in self._hydra_config:
-                self._hydra_config.__setattr__(key + "__IGNORE__", value)
+        if hasattr(self, "_rehydra_config"):
+            if key + "__IGNORE__" in self._rehydra_config:
+                self._rehydra_config.__setattr__(key + "__IGNORE__", value)
             else:
-                self._hydra_config.__setattr__(key, value)
+                self._rehydra_config.__setattr__(key, value)
         else:
             object.__setattr__(self, key, value)
 
     def has_key(self, key):
-        return key in self._hydra_config or key + "__IGNORE__" in self._hydra_config
+        return key in self._rehydra_config or key + "__IGNORE__" in self._rehydra_config
 
     def clear(self):
-        self._hydra_config.clear()
+        self._rehydra_config.clear()
 
     def update(self, *args, **kwargs):
         for subdict in args:
@@ -505,7 +474,7 @@ class ComplementedConfigDict(ComplementedConfig):
             self[key] = value
 
     def keys(self):
-        return [key.replace("__IGNORE__", "") for key in self._hydra_config.keys()]
+        return [key.replace("__IGNORE__", "") for key in self._rehydra_config.keys()]
 
     def items(self):
         return [
@@ -525,7 +494,7 @@ class ComplementedConfigDict(ComplementedConfig):
                     else f"{self.config_path}.{key}",
                 ),
             )
-            for key, value in self._hydra_config.items()
+            for key, value in self._rehydra_config.items()
         ]
 
     def values(self):
@@ -545,14 +514,14 @@ class ComplementedConfigDict(ComplementedConfig):
                     else f"{self.config_path}.{key}",
                 )
             )
-            for key, value in self._hydra_config.items()
+            for key, value in self._rehydra_config.items()
         ]
 
     def __delitem__(self, key):
-        if key + "__IGNORE__" in self._hydra_config:
-            del self._hydra_config[key + "__IGNORE__"]
+        if key + "__IGNORE__" in self._rehydra_config:
+            del self._rehydra_config[key + "__IGNORE__"]
         else:
-            del self._hydra_config[key]
+            del self._rehydra_config[key]
 
 
 class RegelumExitException(Exception):
@@ -593,7 +562,7 @@ class main:
     objects_created = {}
 
     class RegelumArgumentParser(argparse.ArgumentParser):
-        """A parser object designed for handling peculiar nuances of arg parsing while interfacing with hydra."""
+        """A parser object designed for handling peculiar nuances of arg parsing while interfacing with rehydra."""
 
         def __init__(self, *args, **kwargs):
             """Initialize and instance of RegelumArgumentParser.
@@ -625,6 +594,12 @@ class main:
             return res
 
         def parse_args(self):
+            if "--single-thread" in sys.argv:
+                for i, arg in enumerate(sys.argv):
+                    if "--jobs" in arg or "launcher.n_jobs" in arg:
+                        print(f"Ingnoring {arg}, since --single-thread was specified.")
+                        sys.argv.pop(i)
+                        break
             self.old_args = sys.argv
             self._stored_args = [
                 arg for arg in sys.argv if arg.split("=")[0] in self._registered_args
@@ -636,7 +611,7 @@ class main:
             self._registered_args = []
 
             sys.argv.insert(1, "--multirun")
-            sys.argv.append("hydra.job.chdir=True")
+            sys.argv.append("rehydra.job.chdir=True")
 
             return res
 
@@ -701,7 +676,7 @@ class main:
 
         def disable_logging(flag):
             if flag:
-                sys.argv.append("hydra/job_logging=disabled")
+                sys.argv.append("rehydra/job_logging=disabled")
 
         self.parser.add_argument(
             "--disable-logging", action="store_true", trigger=disable_logging
@@ -724,7 +699,7 @@ class main:
 
         def single_thread(flag):
             if not flag:
-                sys.argv.append("hydra/launcher=joblib")
+                sys.argv.append("rehydra/launcher=joblib")
 
         self.parser.add_argument(
             "--single-thread", action="store_true", trigger=single_thread
@@ -732,7 +707,7 @@ class main:
 
         def sweep(flag):
             if flag:
-                sys.argv.append("hydra/sweeper=ax")
+                sys.argv.append("rehydra/sweeper=ax")
                 self.is_sweep = True
             else:
                 self.is_sweep = False
@@ -753,6 +728,12 @@ class main:
                 self.experiment_name = val
 
         self.parser.add_argument("--experiment", trigger=experiment)
+
+        def jobs(val):
+            if val is not None:
+                sys.argv.append(f"rehydra.launcher.n_jobs={val}")
+
+        self.parser.add_argument("--jobs", trigger=jobs)
 
         self.mlflow_tracking_uri = f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
         # raise ValueError(str(self.mlflow_tracking_uri) + "\n" +  str(os.environ["RCOGNITA_MULTIRUN_DIR"]))
@@ -895,12 +876,14 @@ class main:
                                     line.split("=")[0]
                                     .replace("+", "")
                                     .replace("/", "-"): line.split("=")[1]
-                                    for line in OmegaConf.load(".hydra/overrides.yaml")
+                                    for line in OmegaConf.load(
+                                        ".rehydra/overrides.yaml"
+                                    )
                                 }
                                 mlflow.log_params(overrides)
                                 mlflow.log_artifact("SUMMARY.html")
                                 mlflow.log_artifact(".summary")
-                                mlflow.log_artifact(".hydra")
+                                mlflow.log_artifact(".rehydra")
                                 res = old_app(ccfg)
                                 mlflow.log_artifact(".callbacks")
                                 try:
@@ -955,7 +938,7 @@ class main:
                         }
 
             app.__module__ = old_app.__module__
-            res = hydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
+            res = rehydramain(*self.args, **self.kwargs)(app)(*args, **kwargs)
             common_dir.cleanup()
             self.parser.restore_args()
             return res
@@ -963,7 +946,7 @@ class main:
         return rcognita_main
 
 
-warnings.filterwarnings("ignore", category=UserWarning, module=hydra.__name__)
+warnings.filterwarnings("ignore", category=UserWarning, module=rehydra.__name__)
 warnings.filterwarnings("ignore", category=pd.io.pytables.PerformanceWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)

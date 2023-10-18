@@ -1,6 +1,6 @@
 """
 This python script is used as a universal means of launching experiments. Systems, controllers and other
-parameters are meant to be set via hydra's override syntax.
+parameters are meant to be set via rehydra's override syntax.
 """
 
 import regelum as rc

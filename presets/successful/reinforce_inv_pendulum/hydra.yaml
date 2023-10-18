@@ -1,11 +1,11 @@
-hydra:
+rehydra:
   run:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
     dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name__IGNORE__}_${system_specific.name}
-    subdir: ${hydra.job.num}
+    subdir: ${rehydra.job.num}
   launcher:
-    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    _target_: rehydra_plugins.rehydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: -1
     backend: null
     prefer: processes
@@ -18,20 +18,20 @@ hydra:
     max_nbytes: null
     mmap_mode: r
   sweeper:
-    _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
+    _target_: rehydra._internal.core_plugins.basic_sweeper.BasicSweeper
     max_batch_size: null
     params: null
   help:
-    app_name: ${hydra.job.name}
-    header: '${hydra.help.app_name} is powered by Hydra.
+    app_name: ${rehydra.job.name}
+    header: '${rehydra.help.app_name} is powered by Hydra.
 
       '
-    footer: 'Powered by Hydra (https://hydra.cc)
+    footer: 'Powered by Hydra (https://rehydra.cc)
 
-      Use --hydra-help to view Hydra specific help
+      Use --rehydra-help to view Hydra specific help
 
       '
-    template: '${hydra.help.header}
+    template: '${rehydra.help.header}
 
       == Configuration groups ==
 
@@ -49,13 +49,13 @@ hydra:
       $CONFIG
 
 
-      ${hydra.help.footer}
+      ${rehydra.help.footer}
 
       '
-  hydra_help:
-    template: 'Hydra (${hydra.runtime.version})
+  rehydra_help:
+    template: 'Hydra (${rehydra.runtime.version})
 
-      See https://hydra.cc for more info.
+      See https://rehydra.cc for more info.
 
 
       == Flags ==
@@ -65,18 +65,18 @@ hydra:
 
       == Configuration groups ==
 
-      Compose your configuration from those groups (For example, append hydra/job_logging=disabled
+      Compose your configuration from those groups (For example, append rehydra/job_logging=disabled
       to command line)
 
 
       $HYDRA_CONFIG_GROUPS
 
 
-      Use ''--cfg hydra'' to Show the Hydra config.
+      Use ''--cfg rehydra'' to Show the Hydra config.
 
       '
-    hydra_help: ???
-  hydra_logging:
+    rehydra_help: ???
+  rehydra_logging:
     version: 1
     formatters:
       simple:
@@ -107,7 +107,7 @@ hydra:
       file:
         class: logging.FileHandler
         formatter: simple
-        filename: ${hydra.runtime.output_dir}/${hydra.job.name}.log
+        filename: ${rehydra.runtime.output_dir}/${rehydra.job.name}.log
     root:
       level: INFO
       handlers:
@@ -118,12 +118,12 @@ hydra:
   mode: MULTIRUN
   searchpath: []
   callbacks: {}
-  output_subdir: .hydra
+  output_subdir: .rehydra
   overrides:
-    hydra:
-    - hydra.job.chdir=True
-    - hydra/launcher=joblib
-    - hydra.mode=MULTIRUN
+    rehydra:
+    - rehydra.job.chdir=True
+    - rehydra/launcher=joblib
+    - rehydra.mode=MULTIRUN
     task:
     - system=inv_pendulum
     - controller=pg
@@ -156,9 +156,9 @@ hydra:
     version_base: '1.3'
     cwd: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets
     config_sources:
-    - path: hydra.conf
+    - path: rehydra.conf
       schema: pkg
-      provider: hydra
+      provider: rehydra
     - path: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets/general
       schema: file
       provider: main
@@ -184,13 +184,13 @@ hydra:
       running_objective: quadratic_inv_pendulum
       running_objective/model: quad_form
       nominal_controller: nominal_inv_pendulum
-      hydra/env: default
-      hydra/callbacks: null
-      hydra/job_logging: default
-      hydra/hydra_logging: default
-      hydra/hydra_help: default
-      hydra/help: default
-      hydra/sweeper: basic
-      hydra/launcher: joblib
-      hydra/output: default
+      rehydra/env: default
+      rehydra/callbacks: null
+      rehydra/job_logging: default
+      rehydra/rehydra_logging: default
+      rehydra/rehydra_help: default
+      rehydra/help: default
+      rehydra/sweeper: basic
+      rehydra/launcher: joblib
+      rehydra/output: default
   verbose: false

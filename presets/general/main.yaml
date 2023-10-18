@@ -30,9 +30,9 @@ mlflow_artifacts_location%%: ${oc.env:RCOGNITA_MLFLOW_ARTIFACTS_LOCATION}
 
 
 
-hydra:
+rehydra:
   launcher:
-    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    _target_: rehydra_plugins.rehydra_joblib_launcher.joblib_launcher.JoblibLauncher
     n_jobs: 10
     backend: null
     prefer: processes
