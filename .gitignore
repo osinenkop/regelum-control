@@ -176,3 +176,4 @@ regelum_data/
 *.json
 
 *.envrc
+*.ruff_cache
