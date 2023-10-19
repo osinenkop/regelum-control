@@ -72,7 +72,7 @@ def unversal_model_call(obj, *argin, weights=None, use_stored_weights=False):
         else:
             result = obj.forward(argin)
     else:
-        obj = obj.cache.forward(argin)
+        result = obj.cache.forward(argin)
 
     return result
 

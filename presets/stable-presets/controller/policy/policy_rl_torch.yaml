@@ -1,4 +1,4 @@
-_target_: regelum.policy.RLPolicyPredictive
+_target_: regelum.policy.RLPolicy
 
 defaults:
   - model: weight_container_torch

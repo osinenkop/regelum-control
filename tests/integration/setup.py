@@ -66,11 +66,20 @@ class MPCTest(TestSetup):
 #######################################################################################################################
 
 basic = [
+    TestSetup(system="3wrobot_ni", controller="sdpg", **{"simulator.time_final": 3.0}),
+    TestSetup(system="3wrobot_ni", controller="ppo", **{"simulator.time_final": 3.0}),
+    TestSetup(system="3wrobot_ni", controller="ddpg"),
+    TestSetup(system="3wrobot_ni", controller="reinforce"),
+    TestSetup(system="3wrobot_ni", controller="dqn", **{"simulator.time_final": 0.5}),
+    TestSetup(system="3wrobot_ni", controller="sarsa", **{"simulator.time_final": 0.5}),
+    TestSetup(system="3wrobot_ni", controller="rpo", **{"simulator.time_final": 0.5}),
     TestSetup(
-        system="inv_pendulum", controller="sdpg", **{"simulator.time_final": 3.0}
+        system="3wrobot_ni", controller="rpo_torch", **{"simulator.time_final": 0.5}
     ),
-    TestSetup(system="inv_pendulum", controller="ddpg"),
-    TestSetup(system="inv_pendulum", controller="reinforce"),
+    TestSetup(
+        system="3wrobot_ni", controller="mpc_torch", **{"simulator.time_final": 0.5}
+    ),
+    TestSetup(system="3wrobot_ni", controller="mpc", **{"simulator.time_final": 0.5}),
 ]
 
 """
