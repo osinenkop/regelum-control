@@ -65,23 +65,44 @@ class MPCTest(TestSetup):
 #######################################################################################################################
 #######################################################################################################################
 
-basic = [
-    TestSetup(system="3wrobot_ni", controller="sdpg", **{"simulator.time_final": 3.0}),
-    TestSetup(system="3wrobot_ni", controller="ppo", **{"simulator.time_final": 3.0}),
-    TestSetup(system="3wrobot_ni", controller="ddpg"),
-    TestSetup(system="3wrobot_ni", controller="reinforce"),
-    TestSetup(system="3wrobot_ni", controller="dqn", **{"simulator.time_final": 0.5}),
-    TestSetup(system="3wrobot_ni", controller="sarsa", **{"simulator.time_final": 0.5}),
-    TestSetup(system="3wrobot_ni", controller="rpo", **{"simulator.time_final": 0.5}),
-    TestSetup(
-        system="3wrobot_ni", controller="rpo_torch", **{"simulator.time_final": 0.5}
-    ),
-    TestSetup(
-        system="3wrobot_ni", controller="mpc_torch", **{"simulator.time_final": 0.5}
-    ),
-    TestSetup(system="3wrobot_ni", controller="mpc", **{"simulator.time_final": 0.5}),
-]
-
+basic = sum(
+    [
+        [
+            TestSetup(
+                system=system, controller="sdpg", **{"simulator.time_final": 3.0}
+            ),
+            TestSetup(system=system, controller="ppo", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, controller="ddpg"),
+            TestSetup(system=system, controller="reinforce"),
+            TestSetup(system=system, controller="dqn", **{"simulator.time_final": 0.5}),
+            TestSetup(
+                system=system, controller="sarsa", **{"simulator.time_final": 0.5}
+            ),
+            TestSetup(system=system, controller="rpo", **{"simulator.time_final": 0.5}),
+            TestSetup(
+                system=system,
+                controller="rpo_torch",
+                **{"simulator.time_final": 0.5},
+            ),
+            TestSetup(
+                system=system,
+                controller="mpc_torch",
+                **{"simulator.time_final": 0.5},
+            ),
+            TestSetup(system=system, controller="mpc", **{"simulator.time_final": 0.5}),
+        ]
+        for system in [
+            # "2tank",
+            # "3wrobot",
+            "3wrobot_ni",
+            "cartpole",
+            "inv_pendulum",
+            "kin_point",
+            # "lunar_lander",
+        ]
+    ],
+    [],
+)
 """
 basic = [MPCTest(system="2tank"),
          TestSetup(system="3wrobot", controller="rpo"),
