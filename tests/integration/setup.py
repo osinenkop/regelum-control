@@ -74,22 +74,22 @@ basic = sum(
             TestSetup(system=system, controller="ppo", **{"simulator.time_final": 3.0}),
             TestSetup(system=system, controller="ddpg"),
             TestSetup(system=system, controller="reinforce"),
-            TestSetup(system=system, controller="dqn", **{"simulator.time_final": 0.5}),
+            TestSetup(system=system, controller="dqn", **{"simulator.time_final": 3.0}),
             TestSetup(
-                system=system, controller="sarsa", **{"simulator.time_final": 0.5}
+                system=system, controller="sarsa", **{"simulator.time_final": 3.0}
             ),
-            TestSetup(system=system, controller="rpo", **{"simulator.time_final": 0.5}),
+            TestSetup(system=system, controller="rpo", **{"simulator.time_final": 3.0}),
             TestSetup(
                 system=system,
                 controller="rpo_torch",
-                **{"simulator.time_final": 0.5},
+                **{"simulator.time_final": 3.0},
             ),
             TestSetup(
                 system=system,
                 controller="mpc_torch",
-                **{"simulator.time_final": 0.5},
+                **{"simulator.time_final": 3.0},
             ),
-            TestSetup(system=system, controller="mpc", **{"simulator.time_final": 0.5}),
+            TestSetup(system=system, controller="mpc", **{"simulator.time_final": 3.0}),
         ]
         for system in [
             # "2tank",

@@ -734,15 +734,8 @@ class RLPolicy(Policy):
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
         )
-        (
-            self.action_bounds,
-            self.action_initial_guess,
-            self.action_min,
-            self.action_max,
-        ) = self.handle_bounds(
-            action_bounds, self.dim_action, tile_parameter=prediction_horizon + 1
-        )
 
+        self.action_bounds = action_bounds
         self.predictor = predictor
         self.prediction_horizon = prediction_horizon
         self.critic = critic
@@ -763,12 +756,21 @@ class RLPolicy(Policy):
             1, self.system.dim_observation, name="observation", is_constant=True
         )
         objective_variables.append(self.observation_variable)
-
         self.policy_model_weights = self.create_variable(
             name="policy_model_weights", like=self.model.named_parameters
         )
-        if hasattr(self.model, "weight_bounds"):
-            self.register_bounds(self.policy_model_weights, self.model.weight_bounds)
+        if isinstance(self.model, ModelWeightContainer):
+            (
+                self.action_bounds_tiled,
+                self.action_initial_guess,
+                self.action_min,
+                self.action_max,
+            ) = self.handle_bounds(
+                self.action_bounds,
+                self.dim_action,
+                tile_parameter=self.model.weights.shape[0],
+            )
+            self.register_bounds(self.policy_model_weights, self.action_bounds_tiled)
 
         objective_variables.append(self.policy_model_weights)
         if self.critic is not None:
@@ -783,6 +785,27 @@ class RLPolicy(Policy):
             self.objective_function,
             variables=objective_variables,
         )
+        # self.predicted_states_var = self.create_variable(
+        #     self.prediction_horizon,
+        #     self.system.dim_state,
+        #     name="predicted_states",
+        #     is_nested_function=True,
+        #     nested_variables=[self.policy_model_weights],
+        # )
+        # if self.constraint_on_predicted_sequence is not None:
+        #     self.connect_source(
+        #         connect_to=self.predicted_states_var,
+        #         func=self.predictor.predict_state_sequence_from_model,
+        #         prediction_horizon=self.prediction_horizon,
+        #         state=self.observation_variable,
+        #         model=self.model,
+        #         model_weights=self.policy_model_weights,
+        #         is_predict_last=False,
+        #     )
+        #     self.register_constraint(
+        #         self.constraint_on_predicted_sequence,
+        #         variables=[self.predicted_states_var],
+        #     )
 
     def objective_function(
         self, observation, policy_model_weights, critic_weights=None

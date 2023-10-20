@@ -288,12 +288,17 @@ class Optimizable(regelum.RegelumBase):
                 *dims, is_constant=is_constant, like=like
             )
             new_variable = OptimizationVariable(
-                name=name, dims=dims, metadata=metadata, is_constant=is_constant
+                name=name,
+                dims=dims,
+                metadata=metadata,
+                data=like,
+                is_constant=is_constant,
             )
         else:
             new_variable = NestedFunction(
                 name=name,
                 dims=dims,
+                data=like,
                 metadata=metadata,
                 is_constant=is_constant,
                 nested_variables=VarContainer(nested_variables),
@@ -344,30 +349,32 @@ class Optimizable(regelum.RegelumBase):
     def connect_source(
         connect_to: OptimizationVariable,
         func: Callable,
-        source: OptimizationVariable,
+        source: Optional[OptimizationVariable] = None,
         act_on="all",
         discard_prev_sources=True,
         **source_kwargs,
     ):
         def source_hook(whatever):
-            return func(
-                source(),
-                **{
-                    kwarg: var() if isinstance(var, OptimizationVariable) else var
-                    for kwarg, var in source_kwargs.items()
-                },
-            )
+            kwargs = {
+                kwarg: var() if isinstance(var, OptimizationVariable) else var
+                for kwarg, var in source_kwargs.items()
+            }
+            if source is None:
+                return func(**kwargs)
+            else:
+                return func(source(), **kwargs)
 
         def source_metadata_hook(whatever):
-            return func(
-                source(with_metadata=True),
-                **{
-                    kwarg: var(with_metadata=True)
-                    if isinstance(var, OptimizationVariable)
-                    else var
-                    for kwarg, var in source_kwargs.items()
-                },
-            )
+            kwargs = {
+                kwarg: var(with_metadata=True)
+                if isinstance(var, OptimizationVariable)
+                else var
+                for kwarg, var in source_kwargs.items()
+            }
+            if source is None:
+                return func(**kwargs)
+            else:
+                return func(source(with_metadata=True), **kwargs)
 
         data_hook = Hook(source_hook, act_on="data")
         metadata_hook = Hook(source_metadata_hook, act_on="metadata")
@@ -570,6 +577,7 @@ class Optimizable(regelum.RegelumBase):
                             self.variables[k](with_metadata=True), v
                         )
                         params_to_delete.append(k)
+
             for k in params_to_delete:
                 del parameters[k]
         elif self.kind == "numeric":
