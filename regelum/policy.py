@@ -766,7 +766,7 @@ class RLPolicy(Policy):
 
         self.policy_model_weights = self.create_variable(
             name="policy_model_weights", like=self.model.named_parameters
-        )  #
+        )
         if hasattr(self.model, "weight_bounds"):
             self.register_bounds(self.policy_model_weights, self.model.weight_bounds)
 
