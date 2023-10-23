@@ -213,7 +213,7 @@ class VarContainer(Mapping):
         return {var.name: var(with_metadata=True) for var in self.variables}
 
     def selected(self, var_names: List[str]) -> Tuple[OptimizationVariable]:
-        return tuple(var for var in self.variables if var.name in var_names)
+        return VarContainer([var for var in self.variables if var.name in var_names])
 
     def substitute_data(self, **name_data_dict) -> Self:
         for var in self.selected(list(name_data_dict.keys())):

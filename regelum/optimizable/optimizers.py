@@ -181,7 +181,7 @@ class Optimizable(regelum.RegelumBase):
     def __fix_variables_symbolic(self, variables_to_fix, data_dict, metadata_dict):
         if metadata_dict is None:
             metadata_dict = {}
-        passed_unfixed_variables = sum(self.variables.selected(variables_to_fix))
+        passed_unfixed_variables = self.variables.selected(variables_to_fix)
         assert isinstance(
             passed_unfixed_variables, VarContainer
         ), "An error occured while fixing variables."
@@ -215,7 +215,7 @@ class Optimizable(regelum.RegelumBase):
         )
 
     def __unfix_variables_symbolic(self, variables_to_unfix):
-        passed_fixed_variables = sum(self.variables.selected(variables_to_unfix))
+        passed_fixed_variables = self.variables.selected(variables_to_unfix)
         assert isinstance(
             passed_fixed_variables, VarContainer
         ), "An error occured while fixing variables."
@@ -541,7 +541,7 @@ class Optimizable(regelum.RegelumBase):
         self, func: FunctionWithSignature, variables: VarContainer
     ):
         func = self.__infer_and_register_symbolic_prototype(func, variables)
-        constr = rc.vec(func.metadata) <= -1e-12
+        constr = rc.vec(func.metadata) <= -1e-8
         self.__opti.subject_to(constr)
 
     def __register_numeric_constraint(
@@ -567,6 +567,8 @@ class Optimizable(regelum.RegelumBase):
             self.variables.substitute_data(**parameters)
             self.variables.substitute_metadata(**parameters)
         elif self.kind == "symbolic":
+            self.variables.substitute_data(**parameters)
+            self.variables.substitute_metadata(**parameters)
             params_to_delete = []
             for k, v in parameters.items():
                 if k in self.variables:
@@ -577,7 +579,14 @@ class Optimizable(regelum.RegelumBase):
                             self.variables[k](with_metadata=True), v
                         )
                         params_to_delete.append(k)
-
+            for k, v in self.variables.to_data_dict().items():
+                if k not in parameters.keys() and self.variables[k].data is not None:
+                    if self.variables[k].is_constant:
+                        self.__opti.set_value(self.variables[k](with_metadata=True), v)
+                    else:
+                        self.__opti.set_initial(
+                            self.variables[k](with_metadata=True), v
+                        )
             for k in params_to_delete:
                 del parameters[k]
         elif self.kind == "numeric":
@@ -661,11 +670,7 @@ class Optimizable(regelum.RegelumBase):
         self.substitute_parameters(**kwargs)
 
         result = self.__opt_func(
-            **{
-                k: v
-                for k, v in kwargs.items()
-                if k in self.var_for_opti.constants.names
-            }
+            **{k: v for k, v in self.var_for_opti.constants.to_data_dict().items()}
         )
         if self.is_check_status:
             self.update_status(result, tol=tol)
@@ -679,7 +684,7 @@ class Optimizable(regelum.RegelumBase):
             }
         )
 
-    def update_status(self, result=None, tol=1e-12):
+    def update_status(self, result=None, tol=1e-8):
         self.opt_status = "success"
         if self.kind == "symbolic":
             for constr_name in self.constraints.names:

@@ -33,7 +33,7 @@ class TestSetup:
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
         sys.argv.insert(1, "simulator.time_final=1")
-        sys.argv.insert(1, "controller.sampling_time=0.5")
+        sys.argv.insert(1, "controller.sampling_time=0.1")
         sys.argv.insert(1, "scenario.N_episodes=2")
         sys.argv.insert(1, "scenario.N_iterations=1")
         sys.argv.insert(1, "+disallow_uncommitted=False")
@@ -79,6 +79,14 @@ basic = sum(
                 system=system, controller="sarsa", **{"simulator.time_final": 3.0}
             ),
             TestSetup(system=system, controller="rpo", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, controller="rql", **{"simulator.time_final": 3.0}),
+            TestSetup(
+                system=system, controller="rql_torch", **{"simulator.time_final": 3.0}
+            ),
+            TestSetup(system=system, controller="sql", **{"simulator.time_final": 3.0}),
+            TestSetup(
+                system=system, controller="sql_torch", **{"simulator.time_final": 3.0}
+            ),
             TestSetup(
                 system=system,
                 controller="rpo_torch",

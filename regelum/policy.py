@@ -17,7 +17,7 @@ from .__utilities import rc
 
 from .predictor import Predictor
 from .model import ModelNN, Model, ModelWeightContainer, ModelWeightContainerTorch
-from .critic import Critic
+from .critic import Critic, CriticTrivial
 from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
 from .data_buffers.data_buffer import DataBuffer
@@ -773,7 +773,7 @@ class RLPolicy(Policy):
             self.register_bounds(self.policy_model_weights, self.action_bounds_tiled)
 
         objective_variables.append(self.policy_model_weights)
-        if self.critic is not None:
+        if not isinstance(self.critic, CriticTrivial):
             self.critic_weights = self.create_variable(
                 name="critic_weights",
                 like=self.critic.model.named_parameters,

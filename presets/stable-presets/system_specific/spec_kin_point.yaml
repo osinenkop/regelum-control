@@ -1,4 +1,4 @@
-name: inv_pendulum
+name: kin_point
 target: regelum.system.KinematicPoint
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
