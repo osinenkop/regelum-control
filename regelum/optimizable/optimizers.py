@@ -556,10 +556,10 @@ class Optimizable(regelum.RegelumBase):
         return self.__variables.decision_variables
 
     def substitute_parameters(self, **parameters):
-        if self.kind == "tensor":
-            self.variables.substitute_data(**parameters)
-            self.variables.substitute_metadata(**parameters)
-        elif self.kind == "symbolic":
+        self.variables.substitute_data(**parameters)
+        self.variables.substitute_metadata(**parameters)
+
+        if self.kind == "symbolic":
             params_to_delete = []
             for k, v in parameters.items():
                 if k in self.variables:
@@ -570,11 +570,8 @@ class Optimizable(regelum.RegelumBase):
                             self.variables[k](with_metadata=True), v
                         )
                         params_to_delete.append(k)
-            for k in params_to_delete:
-                del parameters[k]
-        elif self.kind == "numeric":
-            self.variables.substitute_data(**parameters)
-            self.variables.substitute_metadata(**parameters)
+            # for k in params_to_delete:
+            #     del parameters[k]
 
     def is_target_event(self, event):
         if self.__callback_target_events is None:
