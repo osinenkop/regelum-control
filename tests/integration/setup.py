@@ -1,4 +1,5 @@
 import sys, os
+import numpy as np
 
 # ["2tank", "3wrobot", "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "lunar_lander"])
 # ["ddpg", "ddqn", "dqn", "dqn", "mpc", "pg", "pid", "rpo", "rpo_deep", "rql", "sarsa", "sdpg", "sql"]
@@ -64,8 +65,31 @@ class MPCTest(TestSetup):
 
 #######################################################################################################################
 #######################################################################################################################
+controllers = (
+    "sdpg",
+    "ppo",
+    "ddpg",
+    "reinforce",
+    "dqn",
+    "sarsa",
+    "rpo",
+    "rql",
+    "rql_torch",
+    "sql",
+    "sql_torch",
+    "rpo_torch",
+    "mpc_torch",
+    "mpc",
+)
+systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point"
 
-basic = sum(
+
+basic = [
+    TestSetup(system=system, controller=controller, **{"simulator.time_final": 3.0})
+    for controller, system in zip(controllers, np.tile(systems, len(controllers)))
+]
+
+full = sum(
     [
         [
             TestSetup(
