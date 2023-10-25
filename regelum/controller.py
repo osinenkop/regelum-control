@@ -252,6 +252,7 @@ class RLController(Controller):
     def optimize_on_event(self, event):
         if event == "reset_iteration":
             self.iteration_counter += 1
+            self.episode_counter = 0
             self.step_counter = 0
             self.is_first_compute_action_call = True
         if event == "reset_episode":
@@ -361,6 +362,7 @@ class CALFControllerExPost(RLController):
             observation_last_good=self.critic.observation_last_good
         )
 
+    @apply_callbacks()
     @apply_action_bounds
     def compute_action(
         self,

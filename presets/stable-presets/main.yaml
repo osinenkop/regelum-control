@@ -12,7 +12,7 @@ defaults:
   # - ${controller}_${system}
 
 callbacks:
-  - regelum.callback.HistoricalObjectiveCallback
+  - regelum.callback.StepControllerLogger
   - regelum.callback.TotalObjectiveCallback
   # - regelum.callback.CriticObjectiveCallback
   # - regelum.callback.CalfCallback

@@ -1230,65 +1230,48 @@ class ObjectiveCallback(Callback):
         self.log(f"Current objective: {output}")
 
 
-class HistoricalObjectiveCallback(HistoricalCallback):
+class StepControllerLogger(Callback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of HistoricalObjectiveCallback."""
-        super().__init__(*args, **kwargs)
-
-        self.timeline = []
-        self.num_launch = 1
-        self.counter = 0
-        self.cooldown = 1.0
-
-    def on_launch(self):
-        super().on_launch()
-        with regelum.main.metadata["report"]() as r:
-            r["elapsed_relative"] = 0
+    cooldown = 1.0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.scenario.Scenario) and (method == "post_step")
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and method == "compute_action"
+        ) or (
+            isinstance(obj, regelum.scenario.OnlineScenario) and (method == "__init__")
+        )
 
     def perform(self, obj, method, output):
-        self.counter += 1
+        if isinstance(obj, regelum.scenario.OnlineScenario) and method == "__init__":
+            self.N_episodes = obj.N_episodes
+            self.N_iterations = obj.N_iterations
+            self.time_final = obj.simulator.time_final
+
+            return
+
+        datum = obj.data_buffer.getitem(
+            idx=-1,
+            keys=[
+                "observation",
+                "action",
+                "timestamp",
+                "running_objective",
+                "current_total_objective",
+                "episode_id",
+                "iteration_id",
+            ],
+        )
         self.log(
-            f"Current objective: {output[0]}, observation: {output[1][0]}, action: {output[2][0]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}, iteration: {obj.iteration_counter + 1}/{obj.N_iterations}"
+            f"Current objective: {datum['running_objective'][0]:.2f}, "
+            f"observation: {datum['observation']}, "
+            f"action: {datum['action']}, "
+            f"total objective: {datum['current_total_objective'][0]:.4f}, "
+            f"time: {datum['timestamp'][0]:.4f} ({100 * datum['timestamp'][0]/self.time_final:.1f}%), "
+            f"episode: {int(datum['episode_id'][0]) + 1}/{self.N_episodes}, "
+            f"iteration: {int(datum['iteration_id'][0]) + 1}/{self.N_iterations}"
         )
-        if not self.counter % 3:
-            do_exit = False
-            with regelum.main.metadata["report"]() as r:
-                r["elapsed_relative"] = obj.time / obj.simulator.time_final
-                if "terminate" in r:
-                    do_exit = True
-            if do_exit:
-                self.log("Termination request issued from GUI.")
-                raise regelum.RegelumExitException(
-                    "Termination request issued from gui."
-                )
-
-        self.add_datum(
-            {
-                "time": round(output[3], 4),
-                "current objective": output[0],
-                "observation": output[1][0],
-                "action": output[2][0],
-                "total_objective": round(output[3], 4),
-                "completed_percent": 100
-                * round(obj.time / obj.simulator.time_final, 1),
-            }
-        )
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        self.insert_column_left("episode", episode_number)
-        self.dump_and_clear_data(f"episode_{str(episode_number).zfill(5)}")
 
 
 class SaveProgressCallback(Callback):
@@ -1341,26 +1324,61 @@ class HistoricalObservationCallback(HistoricalCallback):
     def __init__(self, *args, **kwargs):
         """Initialize an instance of HistoricalObservationCallback."""
         super().__init__(*args, **kwargs)
-
         self.cooldown = 0.0
 
-        self.current_episode = None
-        self.dt_simulator_counter = 0
-        self.time_threshold = 10
-
     def is_target_event(self, obj, method, output):
-        if isinstance(obj, regelum.scenario.Scenario) and (method == "post_step"):
-            self.dt_simulator_counter += 1
-            return not self.dt_simulator_counter % self.time_threshold
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and method == "compute_action"
+        ) or (
+            isinstance(obj, regelum.scenario.OnlineScenario) and (method == "__init__")
+        )
 
     def perform(self, obj, method, output):
+        if isinstance(obj, regelum.scenario.OnlineScenario) and method == "__init__":
+            self.N_episodes = obj.N_episodes
+            self.N_iterations = obj.N_iterations
+            self.time_final = obj.simulator.time_final
+            if obj.observation_components_naming is None:
+                self.observation_components_naming = [
+                    f"observation_{i + 1}" for i in range(obj.system.dim_observation)
+                ]
+            else:
+                self.observation_components_naming = obj.observation_components_naming
+
+            if obj.action_components_naming is None:
+                self.action_components_naming = [
+                    f"action_{i + 1}" for i in range(obj.simulator.system.dim_inputs)
+                ]
+            else:
+                self.action_components_naming = obj.action_components_naming
+
+            return
+
+        datum = obj.data_buffer.getitem(
+            idx=-1,
+            keys=[
+                "observation",
+                "action",
+                "timestamp",
+                "running_objective",
+                "current_total_objective",
+                "episode_id",
+                "iteration_id",
+            ],
+        )
+
         self.add_datum(
             {
                 **{
-                    "time": obj.time,
-                    "action": obj.action[0],
+                    "time": datum["timestamp"][0],
+                    "running_objective": datum["running_objective"][0],
+                    "current_total_objective": datum["current_total_objective"][0],
+                    "episode_id": datum["episode_id"][0],
+                    "iteration_id": datum["iteration_id"][0],
                 },
-                **dict(zip(obj.observation_components_naming, obj.observation[0])),
+                **dict(zip(self.action_components_naming, datum["action"])),
+                **dict(zip(self.observation_components_naming, datum["observation"])),
             }
         )
 
@@ -1373,11 +1391,10 @@ class HistoricalObservationCallback(HistoricalCallback):
         iterations_total,
     ):
         if iterations_total == 1:
-            identifier = f"observations_ep_{str(episode_number).zfill(5)}"
+            identifier = f"observations_actions_ep_{str(episode_number).zfill(5)}"
         else:
-            identifier = f"observations_it_{str(iteration_number).zfill(5)}_ep_{str(episode_number).zfill(5)}"
+            identifier = f"observations_actions_it_{str(iteration_number).zfill(5)}_ep_{str(episode_number).zfill(5)}"
         self.save_plot(identifier)
-        self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
@@ -1388,12 +1405,22 @@ class HistoricalObservationCallback(HistoricalCallback):
 
         if not name:
             name = self.__class__.__name__
-        res = (
-            self.data.drop(["action"], axis=1)
+
+        axes = (
+            self.data[
+                self.observation_components_naming
+                + self.action_components_naming
+                + ["time"]
+            ]
             .set_index("time")
-            .plot(subplots=True, grid=True, xlabel="time", title=name)
+            .plot(subplots=True, grid=True, xlabel="time", title=name, legend=False)
         )
-        return res[0].figure
+        for ax, label in zip(
+            axes, self.observation_components_naming + self.action_components_naming
+        ):
+            ax.set_ylabel(label)
+
+        return axes[0].figure
 
 
 class ObjectiveSaver(HistoricalCallback):

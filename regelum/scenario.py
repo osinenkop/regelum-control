@@ -8,7 +8,7 @@ For instance, an online scenario is when the controller and system interact with
 from abc import ABC, abstractmethod
 from itertools import islice, cycle
 import numpy as np
-from typing import Optional
+from typing import Optional, List
 from unittest.mock import MagicMock
 
 import regelum
@@ -52,18 +52,20 @@ class OnlineScenario(Scenario):
 
     cache = dict()
 
+    @apply_callbacks()
     def __init__(
         self,
         simulator: Simulator,
         controller: Controller,
         running_objective: RunningObjective,
         howanim: Optional[str] = None,
-        observation_components_naming=None,
-        N_episodes=1,
-        N_iterations=1,
-        speedup=1,
-        total_objective_threshold=np.inf,
-        discount_factor=1.0,
+        N_episodes: int = 1,
+        N_iterations: int = 1,
+        speedup: int = 1,
+        total_objective_threshold: float = np.inf,
+        discount_factor: float = 1.0,
+        observation_components_naming: Optional[List[str]] = None,
+        action_components_naming: Optional[List[str]] = None,
     ):
         """Initialize an instance of OnlineScenario.
 
@@ -80,9 +82,6 @@ class OnlineScenario(Scenario):
         :param N_iterations: number of iterations in simulation
         :param speedup: number of frames to skip in order to speed up animation rendering
         """
-        if observation_components_naming is None:
-            observation_components_naming = []
-
         self.cache.clear()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
@@ -98,6 +97,7 @@ class OnlineScenario(Scenario):
         self.time_old = 0
         self.delta_time = 0
         self.observation_components_naming = observation_components_naming
+        self.action_components_naming = action_components_naming
 
         self.recent_total_objectives_of_episodes = []
         self.total_objectives_of_episodes = []
@@ -302,23 +302,6 @@ class OnlineScenario(Scenario):
         return step_with_memory
 
     # TODO: DOCSTRING
-    @apply_callbacks()
-    def post_step(self):
-        self.running_objective_value = self.running_objective(
-            self.observation, self.action
-        )
-        self.update_total_objective(self.observation, self.action, self.delta_time)
-
-        return (
-            np.around(self.running_objective_value, decimals=2),
-            self.observation.round(decimals=2)
-            if self.observation is not None
-            else None,
-            self.action.round(2) if self.action is not None else None,
-            self.total_objective,
-        )
-
-    # TODO: DOCSTRING
     @memorize
     def step(self):
         # sim_status = self.simulator.do_sim_step()
@@ -350,7 +333,6 @@ class OnlineScenario(Scenario):
             )
             self.simulator.receive_action(self.action)
             self.is_episode_ended = self.simulator.do_sim_step() == -1
-            self.post_step()
             return "episode_continues"
         else:
             self.reset_episode()
