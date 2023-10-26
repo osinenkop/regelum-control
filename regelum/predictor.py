@@ -32,7 +32,11 @@ class Predictor(regelum.RegelumBase, ABC):
         pass
 
     def predict_state_sequence_from_action_sequence(
-        self, state, action_sequence, is_predict_last: bool
+        self,
+        state,
+        action_sequence,
+        is_predict_last: bool,
+        return_predicted_states_only=False,
     ):
         len_state_sequence = action_sequence.shape[0] - int(not is_predict_last)
         predicted_state_sequence = rc.zeros(
@@ -48,7 +52,11 @@ class Predictor(regelum.RegelumBase, ABC):
             )
             current_state = next_state
 
-        return predicted_state_sequence, action_sequence
+        return (
+            (predicted_state_sequence, action_sequence)
+            if not return_predicted_states_only
+            else predicted_state_sequence
+        )
 
     def predict_state_sequence_from_model(
         self,
@@ -57,16 +65,18 @@ class Predictor(regelum.RegelumBase, ABC):
         is_predict_last: bool,
         model,
         model_weights=None,
+        return_predicted_states_only=False,
     ):
         if isinstance(model, ModelWeightContainer):
             if model_weights is not None:
                 assert model_weights.shape[0] == prediction_horizon + 1 - int(
                     is_predict_last
-                ), "model_weights.shape[0] should have length prediction_horizon + 1 - int(is_predict_last)"
+                ), f"model_weights.shape[0] = {model_weights.shape[0]} should have length prediction_horizon + 1 - int(is_predict_last) = {prediction_horizon + 1 - int(is_predict_last)}"
                 return self.predict_state_sequence_from_action_sequence(
                     state,
                     action_sequence=model_weights,
                     is_predict_last=is_predict_last,
+                    return_predicted_states_only=return_predicted_states_only,
                 )
             else:
                 assert model._weights.shape[0] == prediction_horizon + 1 - int(
@@ -76,6 +86,7 @@ class Predictor(regelum.RegelumBase, ABC):
                     state,
                     action_sequence=model._weights,
                     is_predict_last=is_predict_last,
+                    return_predicted_states_only=return_predicted_states_only,
                 )
         elif isinstance(model, ModelWeightContainerTorch):
             assert model._weights.shape[0] == prediction_horizon + 1 - int(
@@ -91,6 +102,7 @@ class Predictor(regelum.RegelumBase, ABC):
                 state,
                 action_sequence=model(dummy_input),
                 is_predict_last=is_predict_last,
+                return_predicted_states_only=return_predicted_states_only,
             )
 
         predicted_state_sequence = rc.zeros(
@@ -111,7 +123,11 @@ class Predictor(regelum.RegelumBase, ABC):
                 )
 
             current_state = next_state
-        return predicted_state_sequence, action_sequence
+        return (
+            (predicted_state_sequence, action_sequence)
+            if not return_predicted_states_only
+            else predicted_state_sequence
+        )
 
 
 class EulerPredictor(Predictor):

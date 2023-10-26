@@ -10,3 +10,4 @@ N_iterations: 100
 controller: ~ controller
 observation_components_naming: $ observation_naming.observation
 discount_factor: 1.0
+constraint_parser: ~ constraint_parser

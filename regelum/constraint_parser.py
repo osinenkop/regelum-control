@@ -1,10 +1,11 @@
+"""Contains a tool box for parsing constraints that are injected outside."""
+
 from . import RegelumBase
 from .__utilities import rc
 from abc import abstractmethod, ABC
 import numpy as np
-from .system import ThreeWheeledRobotNI
 from itertools import groupby
-from typing import List, Optional
+from typing import List, Optional, Generator
 from dataclasses import dataclass
 
 
@@ -13,26 +14,45 @@ def all_equal(iterable):
     return next(g, True) and not next(g, False)
 
 
-def row_wise(ignore: Optional[List[str]] = None):
-    if ignore is None:
-        ignore = []
+def state_wise(func):
+    def wrapped_constr(predicted_states=None, **kwargs):
+        if len(predicted_states.shape) == 1:
+            predicted_states = rc.force_row(predicted_states)
+        assert predicted_states is not None, "states cannot be None"
+        return rc.max(
+            rc.vstack(
+                [
+                    func(**kwargs, state=predicted_states[i, :])
+                    for i in range(predicted_states.shape[0])
+                ]
+            )
+        )
+
+    return wrapped_constr
+
+
+def row_wise(with_respect_to: Optional[List[str]] = None):
+    if with_respect_to is None:
+        with_respect_to = []
 
     def row_wise_inner(constr_func):
         def wrapped_constr(**kwargs):
             if not kwargs:
                 return constr_func()
             else:
-                lens = [v.shape[0] for k, v in kwargs.items() if k not in ignore]
+                lens = [
+                    v.shape[0] for k, v in kwargs.items() if k not in with_respect_to
+                ]
                 assert all_equal(
                     lens
                 ), "Numbers of rows must be the same in order to apply row_wise decorator."
                 len_single = lens.pop(0)
                 return rc.force_column(
-                    rc.array(
+                    rc.vstack(
                         [
                             constr_func(
                                 **{
-                                    k: v[i, :] if k not in ignore else v
+                                    k: v[i, :] if k not in with_respect_to else v
                                     for k, v in kwargs.items()
                                 }
                             )
@@ -47,22 +67,27 @@ def row_wise(ignore: Optional[List[str]] = None):
 
 
 class ConstraintParser(RegelumBase, ABC):
+    """Base class for Constraint Parser."""
+
     @dataclass
     class ConstraintParameter:
+        """Dataclass that represents constraint parameters."""
+
         name: str
         dims: tuple
         data: np.ndarray
 
     def __init__(self) -> None:
+        """Instantiate ConstraintParser."""
         pass
 
     def parse_constraints(self, simulation_metadata=None):
-        if simulation_metadata is None:
-            return {}
-        else:
-            return self._parse_constraints(simulation_metadata=simulation_metadata)
+        # if simulation_metadata is None:
+        #     return {}
+        # else:
+        return self._parse_constraints(simulation_metadata=simulation_metadata)
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[ConstraintParameter, None, None]:
         yield from self.constraint_parameters()
 
     @abstractmethod
@@ -79,33 +104,60 @@ class ConstraintParser(RegelumBase, ABC):
 
 
 class ConstraintParserTrivial(ConstraintParser):
+    """Trivial constraint parser that does nothing."""
+
     def _parse_constraints(self, simulation_metadata):
         return {}
 
     def constraint_parameters(self):
         return []
 
+    def constraint_function(self, whatever=None):
+        return -1
+
 
 def assert_shape(array, shape, message):
     assert array.shape == tuple(shape), message
 
 
-@row_wise(ignore=["state"])
+@state_wise
+@row_wise(with_respect_to=["state"])
 def linear_constraint(weights, bias, state):
     assert state is not None, "state cannot be None"
     return state @ weights + bias
 
 
-@row_wise(ignore=["state"])
+@state_wise
+@row_wise(with_respect_to=["state"])
 def circle_constraint(coefs, radius, center, state):
     assert state is not None, "state cannot be None"
     return radius**2 - (rc.dot(coefs, (state - center) ** 2))
 
 
 class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
+    """Constraint parser for ThreeWheeledRobotNI that consist of several circles and lines."""
+
     def __init__(
-        self, centers=None, coefs=None, radii=None, weights=None, biases=None
+        self,
+        centers: Optional[np.ndarray] = None,
+        coefs: Optional[np.ndarray] = None,
+        radii: Optional[np.ndarray] = None,
+        weights: Optional[np.ndarray] = None,
+        biases: Optional[np.ndarray] = None,
     ) -> None:
+        """Instantiate ThreeWheeledRobotNIConstantContstraintsParser.
+
+        :param centers: centers of circles, defaults to None
+        :type centers: Optional[np.ndarray], optional
+        :param coefs: circle coeficients, defaults to None
+        :type coefs: Optional[np.ndarray], optional
+        :param radii: radii of circles, defaults to None
+        :type radii: Optional[np.ndarray], optional
+        :param weights: lines' coefficients, defaults to None
+        :type weights: Optional[np.ndarray], optional
+        :param biases: lines' biases, defaults to None
+        :type biases: Optional[np.ndarray], optional
+        """
         self.radii = np.array(radii) if radii is not None else radii
         self.centers = np.array(centers) if centers is not None else centers
         self.coefs = np.array(coefs) if coefs is not None else coefs
@@ -113,7 +165,13 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
         self.biases = np.array(biases) if biases is not None else biases
 
     def _parse_constraints(self, simulation_metadata=None):
-        return {"radii": self.radii, "centers": self.centers, "coefs": self.coefs}
+        return {
+            "radii": self.radii,
+            "centers": self.centers,
+            "coefs": self.coefs,
+            "weights": self.weights,
+            "biases": self.biases,
+        }
 
     def constraint_parameters(self):
         return [
@@ -135,7 +193,7 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
         radii=None,
         centers=None,
         coefs=None,
-        state=None,
+        predicted_states=None,
     ):
         weights = weights if weights is not None else self.weights
         biases = biases if biases is not None else self.biases
@@ -147,11 +205,14 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
         circle_constraint_values = None
         if weights is not None and biases is not None:
             linear_constraint_values = linear_constraint(
-                weights=weights, bias=biases, state=state
+                weights=weights, bias=biases, predicted_states=predicted_states
             )
         if radii is not None and centers is not None and coefs is not None:
             circle_constraint_values = circle_constraint(
-                coefs=coefs, radius=radii, center=centers, state=state
+                coefs=coefs,
+                radius=radii,
+                center=centers,
+                predicted_states=predicted_states,
             )
         constraint_values = rc.vstack(
             [

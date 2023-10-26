@@ -291,7 +291,8 @@ class VarContainer(Mapping):
             return VarContainer(self.variables[key])
         elif isinstance(key, str) and self.variables_hashmap is not None:
             res = self.variables_hashmap.get(key)
-            assert res is not None, f"OptimizationVariable {key} not found."
+            if res is None:
+                raise KeyError(f"OptimizationVariable {key} not found.")
             return res
         else:
             raise NotImplementedError

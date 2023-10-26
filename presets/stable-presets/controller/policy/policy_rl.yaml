@@ -5,6 +5,7 @@ defaults:
   - predictor: euler 
   - optimizer_config: symbolic
 
+constraint_parser: ~ constraint_parser
 system: ~ system
 critic: ~ controller.critic
 action_bounds: $ system_specific.action_bounds

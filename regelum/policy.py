@@ -21,6 +21,7 @@ from .critic import Critic, CriticTrivial
 from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
 from .data_buffers.data_buffer import DataBuffer
+from .constraint_parser import ConstraintParser, ConstraintParserTrivial
 from .objective import (
     RunningObjective,
     reinforce_objective,
@@ -691,6 +692,7 @@ class RLPolicy(Policy):
         predictor: Optional[Predictor] = None,
         prediction_horizon: Optional[int] = None,
         running_objective: Optional[RunningObjective] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
         discount_factor: float = 1.0,
         device: str = "cpu",
         epsilon_random: bool = False,
@@ -744,6 +746,11 @@ class RLPolicy(Policy):
         self.epsilon_random_parameter = epsilon_random_parameter
         self.running_objective = running_objective
         self.algorithm = algorithm
+        self.constraint_parser = (
+            constraint_parser
+            if constraint_parser is not None
+            else ConstraintParserTrivial()
+        )
         self.initialize_optimization_procedure()
         self.initial_guess = None
 
@@ -785,27 +792,40 @@ class RLPolicy(Policy):
             self.objective_function,
             variables=objective_variables,
         )
-        # self.predicted_states_var = self.create_variable(
-        #     self.prediction_horizon,
-        #     self.system.dim_state,
-        #     name="predicted_states",
-        #     is_nested_function=True,
-        #     nested_variables=[self.policy_model_weights],
-        # )
-        # if self.constraint_on_predicted_sequence is not None:
-        #     self.connect_source(
-        #         connect_to=self.predicted_states_var,
-        #         func=self.predictor.predict_state_sequence_from_model,
-        #         prediction_horizon=self.prediction_horizon,
-        #         state=self.observation_variable,
-        #         model=self.model,
-        #         model_weights=self.policy_model_weights,
-        #         is_predict_last=False,
-        #     )
-        #     self.register_constraint(
-        #         self.constraint_on_predicted_sequence,
-        #         variables=[self.predicted_states_var],
-        #     )
+
+        if len(list(self.constraint_parser.constraint_parameters())) > 0:
+            if self.algorithm == "rpo":
+                is_predict_last = True
+            else:
+                is_predict_last = False
+
+            self.predicted_states_var = self.create_variable(
+                self.prediction_horizon,
+                self.system.dim_state,
+                name="predicted_states",
+                is_nested_function=True,
+                nested_variables=[self.policy_model_weights],
+            )
+            self.connect_source(
+                connect_to=self.predicted_states_var,
+                func=self.predictor.predict_state_sequence_from_model,
+                prediction_horizon=self.prediction_horizon,
+                state=self.observation_variable,
+                model=self.model,
+                model_weights=self.policy_model_weights,
+                is_predict_last=is_predict_last,
+                return_predicted_states_only=True,
+            )
+            self.constraint_parameters = [
+                self.create_variable(
+                    *parameter.dims, name=parameter.name, is_constant=True
+                ).with_data(parameter.data)
+                for parameter in self.constraint_parser
+            ]
+            self.register_constraint(
+                self.constraint_parser.constraint_function,
+                variables=[self.predicted_states_var, *self.constraint_parameters],
+            )
 
     def objective_function(
         self, observation, policy_model_weights, critic_weights=None
