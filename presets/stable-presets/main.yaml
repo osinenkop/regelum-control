@@ -12,18 +12,11 @@ defaults:
   # - ${controller}_${system}
 
 callbacks:
-  - regelum.callback.StepControllerLogger
+  - regelum.callback.ControllerStepLogger
   - regelum.callback.TotalObjectiveCallback
-  # - regelum.callback.CriticObjectiveCallback
-  # - regelum.callback.CalfCallback
-  - regelum.callback.HistoricalObservationCallback
-  # - regelum.callback.QFunctionModelSaverCallback
-  # - regelum.callback.CalfWeightsCallback
-  # - regelum.callback.CALFWeightsCallback
+  - regelum.callback.HistoricalDataCallback
   - regelum.callback.CriticObjectiveSaver
   - regelum.callback.PolicyObjectiveSaver
-  # - regelum.callback.CriticWeightsCallback
-  # - regelum.callback.CriticCallback
 
 
 disallow_uncommitted%%: False
