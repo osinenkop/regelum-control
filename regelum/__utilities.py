@@ -326,7 +326,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             else:
                 device = torch.device("cpu")
 
-            self._array = torch.tensor(array, device=device)
+            self._array = torch.FloatTensor(array, device=device)
         elif rc_type == CASADI:
             if _force_numeric:
                 self._array = casadi.DM(array)

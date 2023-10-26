@@ -124,14 +124,19 @@ def assert_shape(array, shape, message):
 @row_wise(with_respect_to=["state"])
 def linear_constraint(weights, bias, state):
     assert state is not None, "state cannot be None"
-    return state @ weights + bias
+    return state @ rc.array(weights, prototype=state) + rc.array(bias, prototype=state)
 
 
 @state_wise
 @row_wise(with_respect_to=["state"])
 def circle_constraint(coefs, radius, center, state):
     assert state is not None, "state cannot be None"
-    return radius**2 - (rc.dot(coefs, (state - center) ** 2))
+    return rc.array(radius, prototype=state) ** 2 - (
+        rc.dot(
+            rc.array(coefs, prototype=state),
+            (state - rc.array(center, prototype=state)) ** 2,
+        )
+    )
 
 
 class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):

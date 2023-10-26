@@ -89,6 +89,37 @@ basic = [
     for controller, system in zip(controllers, np.tile(systems, len(controllers)))
 ]
 
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        controller=controller,
+        **{
+            "simulator.time_final": 3.0,
+            "constraint_parser": "constant_parser",
+            "prefix": "constraint",
+        },
+    )
+    for controller in ["rpo", "sql", "mpc", "rql"]
+]
+
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        controller=controller,
+        **{
+            "simulator.time_final": 0.5,
+            "constraint_parser": "constant_parser",
+            "prefix": "constraint_torch",
+            "controller.policy.prediction_horizon": 1,
+            "controller/policy/optimizer_config": "online_torch_sgd",
+            "controller.policy.optimizer_config.config_options.n_epochs": 1,
+            "controller.policy.optimizer_config.config_options.constrained_optimization_policy.defaults.n_epochs_per_constraint": 1,
+        },
+    )
+    for controller in ["mpc_torch"]
+]
+
+
 full = sum(
     [
         [

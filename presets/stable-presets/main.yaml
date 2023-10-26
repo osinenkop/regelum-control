@@ -23,8 +23,8 @@ callbacks:
 disallow_uncommitted%%: False
 
 
-suffix%%: ${controller.name%%}_${system_specific.name}
+prefix%%: ""
 
 rehydra:
   sweep:
-    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
+    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${prefix%%}_${controller.name%%}_${system_specific.name}
