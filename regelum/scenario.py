@@ -16,6 +16,7 @@ from .__utilities import rc
 from .simulator import Simulator
 from .controller import Controller, RLController
 from .objective import RunningObjective
+from .constraint_parser import ConstraintParser, ConstraintParserTrivial
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 
 try:
@@ -58,6 +59,7 @@ class OnlineScenario(Scenario):
         simulator: Simulator,
         controller: Controller,
         running_objective: RunningObjective,
+        constraint_parser: Optional[ConstraintParser] = None,
         howanim: Optional[str] = None,
         N_episodes: int = 1,
         N_iterations: int = 1,
@@ -111,6 +113,11 @@ class OnlineScenario(Scenario):
         self.total_objective_threshold = total_objective_threshold
         self.discount_factor = discount_factor
         self.is_episode_ended = False
+        self.constraint_parser = (
+            ConstraintParserTrivial()
+            if constraint_parser is None
+            else constraint_parser
+        )
 
         self.state_init, self.action_init = self.simulator.get_init_state_and_action()
         self.state = self.state_init
@@ -316,6 +323,7 @@ class OnlineScenario(Scenario):
                 self.time,
                 self.state,
                 self.observation,
+                self.simulation_metadata,
             ) = self.simulator.get_sim_step_data()
 
             self.delta_time = (
@@ -324,6 +332,12 @@ class OnlineScenario(Scenario):
                 else 0
             )
             self.time_old = self.time
+            self.constraint_parameters = self.constraint_parser.parse_constraints(
+                self.simulation_metadata
+            )
+            self.controller.substitute_constraint_parameters(
+                **self.constraint_parameters
+            )
 
             # In future versions state vector being passed into controller should be obtained from an observer.
             self.action = self.controller.compute_action_sampled(

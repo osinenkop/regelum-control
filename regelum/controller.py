@@ -44,6 +44,7 @@ class Controller(RegelumBase, ABC):
 
     def __init__(
         self,
+        policy: Policy,
         time_start: float = 0,
         sampling_time: float = 0.1,
     ):
@@ -53,6 +54,7 @@ class Controller(RegelumBase, ABC):
         :param sampling_time: time interval between two consecutive actions
         """
         super().__init__()
+        self.policy = policy
         self.controller_clock = time_start
         self.sampling_time = sampling_time
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -72,6 +74,9 @@ class Controller(RegelumBase, ABC):
             action = self.action_old
 
         return action
+
+    def substitute_constraint_parameters(self, **kwargs):
+        self.policy.substitute_parameters(**kwargs)
 
     @abstractmethod
     @apply_callbacks()
@@ -127,7 +132,9 @@ class RLController(Controller):
         :param sampling_time: time interval between two consecutive actions, defaults to 0.1
         :type sampling_time: float, optional
         """
-        Controller.__init__(self, time_start=time_start, sampling_time=sampling_time)
+        Controller.__init__(
+            self, time_start=time_start, sampling_time=sampling_time, policy=policy
+        )
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
@@ -139,7 +146,6 @@ class RLController(Controller):
         self.episode_counter: int = 0
         self.step_counter: int = 0
         self.total_objective: float = 0.0
-        self.policy = policy
         self.critic = critic
         self.action_bounds = action_bounds
         self.is_first_compute_action_call = True

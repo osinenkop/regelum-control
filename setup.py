@@ -47,7 +47,7 @@ setup(
         "matplotx==0.3.10",
         "svgpathtools==1.6.1",
         "PyQt5==5.15.9",
-        "rehydra==1.3.2",
+        "rehydra==1.3.3",
         "rehydra-joblib-launcher==1.3.0",
         "torch>=1.13.1",
         "gpytorch==1.8.0",
