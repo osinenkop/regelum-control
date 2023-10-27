@@ -23,6 +23,7 @@ import matplotlib.animation
 import matplotx.styles
 import mlflow
 import torch
+from matplotlib.transforms import Affine2D
 
 import regelum
 import pandas as pd
@@ -792,6 +793,18 @@ class AnimationCallback(Callback, ABC):
                 f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
             )
 
+    @classmethod
+    def lim_from_reference(cls, x, y, extra_margin=0):
+        x_min, x_max = x.min(), x.max()
+        y_min, y_max = y.min(), y.max()
+        x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
+        y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
+        left = x_min - extra_margin
+        right = x_min + max(x_max - x_min, y_max - y_min) + extra_margin
+        top = y_min - extra_margin
+        bottom = y_min + max(x_max - x_min, y_max - y_min) + extra_margin
+        return left, right, bottom, top
+
     def lim(self, width=None, height=None, center=None, extra_margin=0.0):
         if width is not None or height is not None:
             if center is None:
@@ -894,23 +907,10 @@ class PointAnimation(AnimationCallback, ABC):
         return (self.point,)
 
     def lim(self, *args, extra_margin=0.01, **kwargs):
-        try:
-            super().lim(*args, extra_margin=extra_margin, **kwargs)
-            return
-        except ValueError:
-            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T
-            x_min, x_max = x.min(), x.max()
-            y_min, y_max = y.min(), y.max()
-            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
-            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-            self.ax.set_xlim(
-                x_min - extra_margin,
-                x_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
-            self.ax.set_ylim(
-                y_min - extra_margin,
-                y_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
+        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+        left, right, bottom, top = self.lim_from_reference(x, y, extra_margin)
+        self.ax.set_xlim(left, right)
+        self.ax.set_ylim(bottom, top)
 
 
 @passdown
@@ -962,25 +962,13 @@ class TriangleAnimation(AnimationCallback, ABC):
         parsed.vertices -= parsed.vertices.mean(axis=0)
         self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
         (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=30)
+        self.original_transform = self.marker.get_transform()
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
-        try:
-            super().lim(*args, extra_margin=extra_margin, **kwargs)
-            return
-        except ValueError:
-            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
-            x_min, x_max = x.min(), x.max()
-            y_min, y_max = y.min(), y.max()
-            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
-            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-            self.ax.set_xlim(
-                x_min - extra_margin,
-                x_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
-            self.ax.set_ylim(
-                y_min - extra_margin,
-                y_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
+        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+        left, right, bottom, top = self.lim_from_reference(x, y, extra_margin)
+        self.ax.set_xlim(left, right)
+        self.ax.set_ylim(bottom, top)
 
     def construct_frame(self, x, y, theta):
         if self._pic is None:
@@ -1009,6 +997,7 @@ class TriangleAnimation(AnimationCallback, ABC):
 
     def construct_frame_pic(self, x, y, theta):
         self.triangle.set_data([x], [y])
+        self.marker._transform = Affine2D(self.original_transform._mtx.copy())
         self.marker._transform = self.marker.get_transform().rotate_deg(
             180 * theta / np.pi
         )
@@ -1030,18 +1019,20 @@ class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
         )
 
 
-class PendulumAnimation(PlanarMotionAnimation):
+class PendulumAnimation(DirectionalPlanarMotionAnimation):
     """Animates the head of a swinging pendulum.
 
     Interprets the first state coordinate as the angle of the pendulum with respect to the topmost position.
     """
 
-    def on_trigger(self, _):
-        self.add_frame(x=np.sin(self.system_state[0]), y=np.cos(self.system_state[0]))
+    _pic = "pendulum.svg"
 
-    def lim(self):
-        self.ax.set_xlim(-1.1, 1.1)
-        self.ax.set_ylim(-1.1, 1.1)
+    def on_trigger(self, _):
+        self.add_frame(x=0, y=0, theta=self.system_state[0])
+
+    def lim(self, *args, **kwargs):
+        self.ax.set_xlim(-1, 1)
+        self.ax.set_ylim(-1, 1)
 
 
 class BarAnimation(AnimationCallback, StateTracker):
