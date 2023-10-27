@@ -1,5 +1,5 @@
 defaults:
-  - policy_predictive
+  - policy_rl
 
 critic: ~ controller.critic
 algorithm: rql

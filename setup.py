@@ -53,5 +53,5 @@ setup(
         "gpytorch==1.8.0",
         "cues==0.3.0",
     ],
-    python_requires=">=3.9.16",
+    python_requires=">=3.9.16, <3.12",
 )

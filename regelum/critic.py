@@ -297,9 +297,7 @@ class Critic(Optimizable, ABC):
         data_buffer_size = len(data_buffer)
         if data_buffer_size == 0:
             return
-        observations = data_buffer.getitem(
-            slice(0, data_buffer_size), keys=["observation"], dtype=np.array
-        )["observation"]
+        observations = np.vstack(data_buffer.data["observation"])
         actions = np.random.uniform(
             self.action_bounds[:, 0],
             self.action_bounds[:, 1],

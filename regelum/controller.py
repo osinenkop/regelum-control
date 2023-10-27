@@ -147,7 +147,7 @@ class RLController(Controller):
 
     def policy_update(self, observation, event, time):
         if self.policy_optimization_event == event:
-            self.policy.optimize_on_event(self.data_buffer)
+            self.call_optimize_on_event(self.policy, "compute_action", time)
         if event == "compute_action":
             self.policy.update_action(observation)
             self.update_data_buffer_with_action_stats(observation)
@@ -165,9 +165,34 @@ class RLController(Controller):
             ),
         )
 
-    def critic_update(self):
+    @apply_callbacks()
+    def pre_optimize(
+        self,
+        which: str,
+        event: str,
+        time: Optional[int] = None,
+    ):
+        return which, event, time, self.episode_counter, self.iteration_counter
+
+    def call_optimize_on_event(
+        self,
+        optimizable_object: Union[Critic, Policy],
+        event: str,
+        time: Optional[float] = None,
+    ):
+        if isinstance(optimizable_object, Critic):
+            which = "Critic"
+        elif isinstance(optimizable_object, Policy):
+            which = "Policy"
+        else:
+            raise ValueError("optimizable object can be either Critic or Policy")
+
+        self.pre_optimize(which=which, event=event, time=time)
+        optimizable_object.optimize_on_event(self.data_buffer)
+
+    def critic_update(self, time=None):
         if self.critic_optimization_event == "compute_action":
-            self.critic.optimize_on_event(self.data_buffer)
+            self.call_optimize_on_event(self.critic, "compute_action", time)
 
     @apply_action_bounds
     @apply_callbacks()
@@ -196,11 +221,11 @@ class RLController(Controller):
             return self.policy.action
 
         if self.is_critic_first:
-            self.critic_update()
+            self.critic_update(time)
             self.policy_update(observation, "compute_action", time)
         else:
             self.policy_update(observation, "compute_action", time)
-            self.critic_update()
+            self.critic_update(time)
 
         self.step_counter += 1
         return self.policy.action
@@ -236,14 +261,14 @@ class RLController(Controller):
 
         if self.is_critic_first:
             if event == self.critic_optimization_event:
-                self.critic.optimize_on_event(self.data_buffer)
+                self.call_optimize_on_event(self.critic, event)
             if event == self.policy_optimization_event:
-                self.policy.optimize_on_event(self.data_buffer)
+                self.call_optimize_on_event(self.policy, event)
         else:
             if event == self.policy_optimization_event:
-                self.policy.optimize_on_event(self.data_buffer)
+                self.call_optimize_on_event(self.policy, event)
             if event == self.critic_optimization_event:
-                self.critic.optimize_on_event(self.data_buffer)
+                self.call_optimize_on_event(self.critic, event)
 
         if event == self.data_buffer_nullify_event:
             self.data_buffer.nullify_buffer()

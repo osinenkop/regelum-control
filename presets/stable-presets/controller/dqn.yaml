@@ -3,7 +3,7 @@ _target_: regelum.controller.RLController
 name%%: dqn
 
 defaults:
-  - policy: policy_rl
+  - policy: policy_rl_torch
   - critic: critic
 
 action_bounds: $ system_specific.action_bounds

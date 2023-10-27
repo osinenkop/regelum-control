@@ -556,10 +556,10 @@ class Optimizable(regelum.RegelumBase):
         return self.__variables.decision_variables
 
     def substitute_parameters(self, **parameters):
-        if self.kind == "tensor":
-            self.variables.substitute_data(**parameters)
-            self.variables.substitute_metadata(**parameters)
-        elif self.kind == "symbolic":
+        self.variables.substitute_data(**parameters)
+        self.variables.substitute_metadata(**parameters)
+
+        if self.kind == "symbolic":
             params_to_delete = []
             for k, v in parameters.items():
                 if k in self.variables:
@@ -570,11 +570,8 @@ class Optimizable(regelum.RegelumBase):
                             self.variables[k](with_metadata=True), v
                         )
                         params_to_delete.append(k)
-            for k in params_to_delete:
-                del parameters[k]
-        elif self.kind == "numeric":
-            self.variables.substitute_data(**parameters)
-            self.variables.substitute_metadata(**parameters)
+            # for k in params_to_delete:
+            #     del parameters[k]
 
     def is_target_event(self, event):
         if self.__callback_target_events is None:
@@ -703,10 +700,6 @@ class Optimizable(regelum.RegelumBase):
         )
         return opt_result if raw else opt_result.x
 
-    @apply_callbacks()
-    def post_epoch(self, epoch_idx, last_epoch_objective_value):
-        return epoch_idx, last_epoch_objective_value
-
     def instantiate_configuration(self):
         options = self.optimizer_config.config_options
         if self.optimizer is None:
@@ -783,26 +776,32 @@ class Optimizable(regelum.RegelumBase):
         else:
             self.opt_status = "success"
 
+    @apply_callbacks()
+    def post_epoch(self, epoch_idx: int, objective_epoch_history: List[float]):
+        return epoch_idx, objective_epoch_history
+
+    @apply_callbacks()
+    def post_optimize(self):
+        pass
+
     def optimize_tensor_batch_sampler(
         self, batch_sampler, n_epochs, objective, is_constrained
     ):
         for epoch_idx in range(n_epochs):
-            objective_value = None
+            objective_epoch_history = []
             for batch_sample in batch_sampler:
                 self.optimizer.zero_grad()
                 self.substitute_parameters(**batch_sample)
                 if is_constrained and len(self.constraints) > 0:
                     self.opt_constraints_tensor()
-                    objective_value_constrained = (
-                        objective(**self.variables.to_data_dict())
-                        + self.eval_contraints()
-                    )
-                    objective_value_constrained.backward()
+                    objective_value = objective(**self.variables.to_data_dict())
+                    (objective_value + self.eval_contraints()).backward()
                 else:
-                    objective(**self.variables.to_data_dict()).backward()
+                    objective_value = objective(**self.variables.to_data_dict())
+                    objective_value.backward()
                 self.optimizer.step()
-            if objective_value is not None:
-                self.post_epoch(epoch_idx, objective_value.item())
+                objective_epoch_history.append(objective_value.item())
+                self.post_epoch(epoch_idx, objective_epoch_history)
 
         if (
             self.optimizer_config.config_options.get("is_reinstantiate_optimizer")
@@ -825,20 +824,22 @@ class Optimizable(regelum.RegelumBase):
             )
         else:
             self.substitute_parameters(**parameters)
-            for _ in range(n_epochs):
+            for epoch_idx in range(n_epochs):
                 self.optimizer.zero_grad()
                 if is_constrained and len(self.constraints) > 0:
                     self.opt_constraints_tensor()
-                    objective_value_constrained = (
-                        objective(**self.variables.to_data_dict())
-                        + self.eval_contraints()
-                    )
+                    objective_value = objective(**self.variables.to_data_dict())
+                    objective_value_constrained = +self.eval_contraints()
                     objective_value_constrained.backward()
                 else:
-                    objective(**self.variables.to_data_dict()).backward()
+                    objective_value = objective(**self.variables.to_data_dict())
+                    objective_value.backward()
                 self.optimizer.step()
+                self.post_epoch(epoch_idx, [objective_value.item()])
             if self.optimizer_config.config_options.get("is_reinstantiate_optimizer"):
                 self.optimizer = None
+
+        self.post_optimize()
 
     def define_problem(self):
         self.__is_problem_defined = True

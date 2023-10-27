@@ -65,14 +65,44 @@ class MPCTest(TestSetup):
 #######################################################################################################################
 #######################################################################################################################
 
-basic = [
-    TestSetup(
-        system="inv_pendulum", controller="sdpg", **{"simulator.time_final": 3.0}
-    ),
-    TestSetup(system="inv_pendulum", controller="ddpg"),
-    TestSetup(system="inv_pendulum", controller="reinforce"),
-]
-
+basic = sum(
+    [
+        [
+            TestSetup(
+                system=system, controller="sdpg", **{"simulator.time_final": 3.0}
+            ),
+            TestSetup(system=system, controller="ppo", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, controller="ddpg"),
+            TestSetup(system=system, controller="reinforce"),
+            TestSetup(system=system, controller="dqn", **{"simulator.time_final": 0.5}),
+            TestSetup(
+                system=system, controller="sarsa", **{"simulator.time_final": 0.5}
+            ),
+            TestSetup(system=system, controller="rpo", **{"simulator.time_final": 0.5}),
+            TestSetup(
+                system=system,
+                controller="rpo_torch",
+                **{"simulator.time_final": 0.5},
+            ),
+            TestSetup(
+                system=system,
+                controller="mpc_torch",
+                **{"simulator.time_final": 0.5},
+            ),
+            TestSetup(system=system, controller="mpc", **{"simulator.time_final": 0.5}),
+        ]
+        for system in [
+            # "2tank",
+            # "3wrobot",
+            "3wrobot_ni",
+            "cartpole",
+            "inv_pendulum",
+            "kin_point",
+            # "lunar_lander",
+        ]
+    ],
+    [],
+)
 """
 basic = [MPCTest(system="2tank"),
          TestSetup(system="3wrobot", controller="rpo"),

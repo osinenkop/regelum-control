@@ -679,116 +679,6 @@ class DDPG(PolicyGradient):
 
 
 class RLPolicy(Policy):
-    """Base class for policies in online RL algorithms."""  # noqa: D205
-
-    def __init__(
-        self,
-        model: Union[ModelNN, Model],
-        system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
-        optimizer_config: OptimizerConfig,
-        critic: Critic,
-        discount_factor: float = 1.0,
-        device: str = "cpu",
-        epsilon_random: bool = False,
-        epsilon_random_parameter: float = 0.0,
-    ):
-        """Initialize RLPolicy class.
-
-        :param model: Policy model.
-        :type model: Union[ModelNN, Model]
-        :param system: Agent environment.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Bounds for the action.
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param optimizer_config: Configuration of the optimization procedure.
-        :type optimizer_config: OptimizerConfig
-        :param critic: Critic object that is optmized via temporal difference objective in cases of value-based learning algorithms.
-        :type critic: Critic
-        :param discount_factor:  Discounting factor for control problems, defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Keyword argument specifying the device for torch (tensor) optimization . Defaults to "cpu".
-        :type device: str, optional
-        :param epsilon_random: If set to True, policy becomes epsilon-greedy with probability epsilon_random_parameter. Defaults to False.
-        :type epsilon_random: bool, optional
-        :param epsilon_random_parameter: Probability of taking a random action during epsilon-greedy policy update phase. Defaults to 0.0.
-        :type epsilon_random_parameter: float, optional
-        """
-        Policy.__init__(
-            self,
-            model=model,
-            system=system,
-            action_bounds=action_bounds,
-            optimizer_config=optimizer_config,
-            discount_factor=discount_factor,
-        )
-        self.critic = critic
-        self.device = device
-        self.epsilon_random = epsilon_random
-        self.epsilon_random_parameter = epsilon_random_parameter
-        self.initialize_optimization_procedure()
-
-    def initialize_optimization_procedure(self):
-        self.policy_weights = self.create_variable(
-            name="policy_weights",
-            is_constant=False,
-            like=self.model.named_parameters,
-        )
-        self.policy_model_output = self.create_variable(
-            name="policy_model_output",
-            is_constant=True,
-            is_nested_function=True,
-            nested_variables=[self.observation],
-        )
-        self.observation = self.create_variable(name="observation", is_constant=True)
-        self.connect_source(
-            self.policy_model_output, func=self.model, source=self.observation
-        )
-        self.register_objective(
-            self.objective_function,
-            variables=[self.observation, self.policy_model_output],
-        )
-
-    def update_action(self, observation=None):
-        self.action_old = self.action
-        if self.epsilon_random:
-            toss = np.random.choice(
-                2,
-                1,
-                p=[
-                    1 - self.epsilon_random_parameter,
-                    self.epsilon_random_parameter,
-                ],
-            )
-            is_exploration = bool(toss)
-
-            if is_exploration:
-                self.action = np.random.uniform(
-                    self.action_bounds[:, 0], self.action_bounds[:, 1]
-                )[None, :]
-            else:
-                self.action = self.get_action(observation)
-        else:
-            self.action = self.get_action(observation)
-
-        return self.action
-
-    def objective_function(self, observation, policy_model_output):
-        return rc.mean(self.critic(observation, policy_model_output))
-
-    def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation"]
-
-    def optimize_on_event(self, data_buffer: DataBuffer):
-        self.optimize(
-            **data_buffer.get_optimization_kwargs(
-                keys=self.data_buffer_objective_keys(),
-                optimizer_config=self.optimizer_config,
-            )
-        )
-
-
-class RLPolicyPredictive(Policy):
     """Class for with Predictive Control algorithms."""
 
     def __init__(
@@ -798,16 +688,16 @@ class RLPolicyPredictive(Policy):
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
-        predictor: Predictor,
-        prediction_horizon: int,
-        running_objective: RunningObjective,
+        predictor: Optional[Predictor] = None,
+        prediction_horizon: Optional[int] = None,
+        running_objective: Optional[RunningObjective] = None,
         discount_factor: float = 1.0,
         device: str = "cpu",
         epsilon_random: bool = False,
         epsilon_random_parameter: float = 0.0,
         algorithm: str = "mpc",
     ):
-        """Initialize an instance of RLPolicyPredictive class.
+        """Initialize an instance of RLPolicy class.
 
         :param model: Model for predictive policy
         :type model: Union[ModelNN, Model]
@@ -819,10 +709,12 @@ class RLPolicyPredictive(Policy):
         :type action_bounds: Union[list, np.ndarray, None]
         :param optimizer_config: A config for Optimizable
         :type optimizer_config: OptimizerConfig
-        :param predictor: Predictor utilizing by policy to obtain a sequence of predictions.
-        :type predictor: Predictor
-        :param running_objective: Running objective of the control problem.
-        :type running_objective: Objective
+        :param predictor: Predictor utilizing by policy to obtain a sequence of predictions, defaults to None.
+        :type predictor: Optional[Predictor], optional
+        :param prediction_horizon: length of predicted state sequence (needed for Predictior), defaults to None
+        :type prediction_horizon: Optional[int], optional
+        :param running_objective: Running objective of the control problem, defaults to None.
+        :type running_objective: Optional[RunningObjective], optional
         :param discount_factor: Discounting factor for control problem. Defaults to 1.0
         :type discount_factor: float, optional
         :param device: Keyword argument specifying the device for torch (tensor) optimization. Defaults to "cpu"
@@ -860,7 +752,6 @@ class RLPolicyPredictive(Policy):
         self.running_objective = running_objective
         self.algorithm = algorithm
         self.initialize_optimization_procedure()
-        # self.initialize_generic_optimization_procedure()
         self.initial_guess = None
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -940,6 +831,16 @@ class RLPolicyPredictive(Policy):
                 critic_weights=critic_weights,
                 discount_factor=self.discount_factor,
             )
+        elif self.algorithm == "greedy":
+            return rc.mean(
+                self.critic(
+                    observation,
+                    self.model(observation, weights=policy_model_weights),
+                    weights=critic_weights,
+                )
+            )
+        else:
+            raise AssertionError("RLPolicy: Wrong algorithm name")
 
     def get_sequential_output(self, observation):
         if isinstance(self.model, (ModelWeightContainerTorch, ModelWeightContainer)):
@@ -975,7 +876,7 @@ class RLPolicyPredictive(Policy):
         return self.model.weights
 
 
-class CALFLegacy(RLPolicyPredictive):
+class CALFLegacy(RLPolicy):
     """Do not use it. Do not import it."""
 
     def __init__(

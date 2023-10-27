@@ -89,7 +89,8 @@ from . import model
 from . import data_buffers
 from .optimizable import *
 from . import critic
-
+from . import controller
+from . import policy
 
 from rich import print, pretty
 from rich.panel import Panel
