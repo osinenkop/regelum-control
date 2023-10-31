@@ -1,11 +1,27 @@
 """Tools for systems' state estimation."""
 
 import numpy as np
+from abc import ABC, abstractmethod
 
 import regelum
 
 
-class KalmanFilter(regelum.RegelumBase):
+class Observer(regelum.RegelumBase, ABC):
+    """A class implementing observer."""
+
+    @abstractmethod
+    def get_state_estimation(self):
+        ...
+
+
+class ObserverTrivial(Observer):
+    """A class implementing a trivial observer, which simply returns the current state."""
+
+    def get_state_estimation(self, t, observation, action):
+        return observation
+
+
+class KalmanFilter(Observer):
     """A class implementing Kalman filter."""
 
     def __init__(
@@ -31,8 +47,6 @@ class KalmanFilter(regelum.RegelumBase):
         self.posterior_state_est = state_init
         self.prior_state_est = None
         self.dim_state = self.posterior_state_est.shape[0]
-        self.estimation_buffer = []
-
         self.sys_noise_cov = sys_noise_cov
         self.observ_noise_cov = observ_noise_cov
 
@@ -68,11 +82,10 @@ class KalmanFilter(regelum.RegelumBase):
         self.posterior_est_cov = (np.eye(self.dim_state) - K @ J_h) @ P_pred
         print(f"Kalman gain:\n{K}, \n Post est cov: \n{self.posterior_est_cov}")
 
-    def compute_estimate(self, t, observation, action):
+    def get_state_estimation(self, t, observation, action):
         dt = t - self.est_clock
         self.est_clock = t
         print(f"TRACE OF COV EST MATRIX:{self.prior_est_cov.trace()}\n")
         self.predict_state(action, dt)
         self.correct_state(observation)
-        self.estimation_buffer.append(self.posterior_state_est)
         return self.posterior_state_est
