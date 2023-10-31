@@ -11,7 +11,6 @@ from typing import Optional, List
 from unittest.mock import MagicMock
 
 import regelum
-from .__utilities import rc
 from .simulator import Simulator
 from .controller import Controller, RLController
 from .objective import RunningObjective
@@ -183,7 +182,6 @@ class OnlineScenario(Scenario):
             is_iteration_ended = self.episode_counter >= self.N_episodes
 
             if is_iteration_ended:
-                self.iteration_update()
                 self.reset_iteration()
 
                 is_simulation_ended = self.iteration_counter >= self.N_iterations
@@ -201,11 +199,10 @@ class OnlineScenario(Scenario):
         self.sim_status = 1
         self.time = 0
         self.time_old = 0
-        self.recent_total_objective = self.total_objective
-        self.total_objective = 0
         self.action = self.action_init
         self.simulator.reset()
         if isinstance(self.controller, RLController):
+            self.recent_total_objective = self.controller.total_objective
             self.controller.policy.reset()
             self.controller.critic.reset()
             self.controller.reset()
@@ -226,8 +223,6 @@ class OnlineScenario(Scenario):
                     self.sim_status = self.step()
 
                 self.reload_pipeline()
-        self.recent_total_objective = self.total_objective
-        return self.recent_total_objective
 
     @apply_callbacks()
     def reset_iteration(self):
@@ -240,7 +235,6 @@ class OnlineScenario(Scenario):
             self.controller.optimize_on_event(event="reset_iteration")
 
     def reset_episode(self):
-        self.total_objectives_of_episodes.append(self.total_objective)
         self.episode_counter += 1
         self.is_episode_ended = False
         if self.sim_status != "simulation_ended":
@@ -252,8 +246,3 @@ class OnlineScenario(Scenario):
         self.current_scenario_status = "episode_continues"
         self.iteration_counter = 0
         self.episode_counter = 0
-
-    def iteration_update(self):
-        self.total_objective_episodic_means.append(
-            rc.mean(self.total_objectives_of_episodes)
-        )

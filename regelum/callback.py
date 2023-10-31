@@ -1224,15 +1224,16 @@ class ControllerStepLogger(Callback):
                 "iteration_id",
             ],
         )
-        self.log(
-            f"Current objective: {datum['running_objective'][0]:.2f}, "
-            f"observation: {datum['observation']}, "
-            f"action: {datum['action']}, "
-            f"total objective: {datum['current_total_objective'][0]:.4f}, "
-            f"time: {datum['timestamp'][0]:.4f} ({100 * datum['timestamp'][0]/self.time_final:.1f}%), "
-            f"episode: {int(datum['episode_id'][0]) + 1}/{self.N_episodes}, "
-            f"iteration: {int(datum['iteration_id'][0]) + 1}/{self.N_iterations}"
-        )
+        with np.printoptions(precision=2, suppress=True):
+            self.log(
+                f"Current objective: {datum['running_objective'][0]:.2f}, "
+                f"observation: {datum['observation']}, "
+                f"action: {datum['action']}, "
+                f"total objective: {datum['current_total_objective'][0]:.4f}, "
+                f"time: {datum['timestamp'][0]:.4f} ({100 * datum['timestamp'][0]/self.time_final:.1f}%), "
+                f"episode: {int(datum['episode_id'][0]) + 1}/{self.N_episodes}, "
+                f"iteration: {int(datum['iteration_id'][0]) + 1}/{self.N_iterations}"
+            )
 
 
 class SaveProgressCallback(Callback):
@@ -1477,6 +1478,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.cache = pd.DataFrame()
         self.xlabel = "Episode"
         self.ylabel = "Total objective"
+        self.total_objectives = []
 
     def is_target_event(self, obj, method, output):
         return False
@@ -1491,9 +1493,11 @@ class TotalObjectiveCallback(HistoricalCallback):
     ):
         mlflow.log_metric(
             "A. Avg total objectives",
-            np.mean(scenario.recent_total_objectives_of_episodes),
+            np.mean(self.total_objectives),
             step=iteration_number,
         )
+
+        self.total_objectives = []
 
     def on_episode_done(
         self,
@@ -1509,6 +1513,7 @@ class TotalObjectiveCallback(HistoricalCallback):
                 "objective": scenario.recent_total_objective,
             }
         )
+        self.total_objectives.append(scenario.recent_total_objective)
         self.log(
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
