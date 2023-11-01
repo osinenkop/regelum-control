@@ -20,14 +20,14 @@ critic:
   is_on_policy: True
   is_same_critic: True
   is_value_function: True 
-  td_n: 5
+  td_n: 1
   device: $ controller.device%%
   optimizer_config: 
     _target_: regelum.OptimizerConfig
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.001
+      lr: 0.0002
     config_options:
       n_epochs: 50
       is_reinstantiate_optimizer: True
@@ -50,7 +50,7 @@ policy:
     n_hidden_layers: 4
   optimizer_config: 
     opt_options:
-      lr: 0.001
+      lr: 0.0002
     config_options:
       is_reinstantiate_optimizer: True
       n_epochs: 50

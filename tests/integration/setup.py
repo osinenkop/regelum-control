@@ -81,7 +81,7 @@ controllers = (
     "mpc_torch",
     "mpc",
 )
-systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point"
+systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "2tank", "lunar_lander"
 
 
 basic = [

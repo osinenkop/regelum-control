@@ -1,2 +1,1 @@
 state_init: = numpy.array([2, -2])
-action_init: = numpy.ones(${system.dim_action%%})

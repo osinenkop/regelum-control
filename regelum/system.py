@@ -128,18 +128,26 @@ class ComposedSystem(regelum.RegelumBase):
                 time, state, inputs, _native_dim=_native_dim
             )
 
-    def get_observation(self, time, state, inputs, _native_dim=False):
-        if not _native_dim:
-            return rc.force_row(
-                self._get_observation(
-                    time,
-                    rc.force_column(state),
-                    rc.force_column(inputs),
-                    _native_dim=_native_dim,
+    def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
+        if not is_batch:
+            if not _native_dim:
+                return rc.force_row(
+                    self._get_observation(
+                        time, rc.force_column(state), rc.force_column(inputs)
+                    )
                 )
-            )
+            else:
+                return self._get_observation(time, state, inputs)
         else:
-            return self._get_observation(time, state, inputs, _native_dim=_native_dim)
+            observations = rc.zeros(state.shape, prototype=state)
+            for i in range(state.shape[0]):
+                observations[i, :] = self.get_observation(
+                    time=time,
+                    state=state[i, :],
+                    inputs=inputs[i, :],
+                    is_batch=False,
+                )
+            return observations
 
     def _compute_state_dynamics(self, time, state, inputs, _native_dim):
         state = rc.array(state, prototype=state)
@@ -186,7 +194,7 @@ class ComposedSystem(regelum.RegelumBase):
                 _native_dim=_native_dim,
             )
         )
-        final_dstate_vector = rc.hstack((dstate_of_left.T, dstate_of_right.T)).T
+        final_dstate_vector = rc.hstack((dstate_of_left, dstate_of_right))
 
         assert (
             final_dstate_vector is not None
@@ -196,7 +204,7 @@ class ComposedSystem(regelum.RegelumBase):
             final_dstate_vector = rc.force_row(final_dstate_vector)
         return final_dstate_vector
 
-    def _get_observation(self, time, state, inputs, _native_dim):
+    def _get_observation(self, time, state, inputs, _native_dim=False):
         state = rc.array(state, prototype=state)
         inputs = rc.array(inputs, prototype=state)
 
@@ -393,15 +401,26 @@ class System(regelum.RegelumBase, ABC):
     def _compute_state_dynamics(time, state, inputs):
         pass
 
-    def get_observation(self, time, state, inputs, _native_dim=False):
-        if not _native_dim:
-            return rc.force_row(
-                self._get_observation(
-                    time, rc.force_column(state), rc.force_column(inputs)
+    def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
+        if not is_batch:
+            if not _native_dim:
+                return rc.force_row(
+                    self._get_observation(
+                        time, rc.force_column(state), rc.force_column(inputs)
+                    )
                 )
-            )
+            else:
+                return self._get_observation(time, state, inputs)
         else:
-            return self._get_observation(time, state, inputs)
+            observations = rc.zeros(state.shape, prototype=state)
+            for i in range(state.shape[0]):
+                observations[i, :] = self.get_observation(
+                    time=time,
+                    state=state[i, :],
+                    inputs=inputs[i, :],
+                    is_batch=False,
+                )
+            return observations
 
     def _get_observation(self, time, state, inputs):
         return state
@@ -665,6 +684,68 @@ class TwoTank(System):
         return Dstate
 
 
+class TwoTankConstantReference(System):
+    """Substracts reference from inputs."""
+
+    _name = "constant_reference"
+    _system_type = "diff_eqn"
+    _dim_state = 0
+    _dim_inputs = 2
+    _dim_observation = 2
+    _parameters = {"reference": np.array([[0.4], [0.4]])}
+
+    def _get_observation(self, time, state, inputs):
+        return inputs - rc.array(
+            self.parameters["reference"], prototype=state, _force_numeric=True
+        )
+
+    def _compute_state_dynamics(self, time, state, inputs):
+        return inputs
+
+
+class ThreeWheeledRobotNIConstantReference(System):
+    """Substracts reference from inputs."""
+
+    _name = "constant_reference"
+    _system_type = "diff_eqn"
+    _dim_state = 0
+    _dim_inputs = 3
+    _dim_observation = 3
+    _parameters = {"reference": np.array([[1.0], [1.0], [0.0]])}
+
+    def _get_observation(self, time, state, inputs):
+        return inputs - rc.array(
+            self.parameters["reference"], prototype=inputs, _force_numeric=True
+        )
+
+    def _compute_state_dynamics(self, time, state, inputs):
+        return inputs
+
+
+def ThreeWheeledRobotNIWithReference(reference=None):
+    if reference is None:
+        reference = np.array([1.0, 2.0, 3.0])
+
+    return ThreeWheeledRobotNI().compose(
+        ThreeWheeledRobotNIConstantReference(
+            system_parameters_init={"reference": np.array(reference).reshape(-1, 1)}
+        ),
+        output_mode="right",
+    )
+
+
+def TwoTankWithReference(reference=None):
+    if reference is None:
+        reference = np.array([0.4, 0.4])
+
+    return TwoTank().compose(
+        TwoTankConstantReference(
+            system_parameters_init={"reference": np.array(reference).reshape(-1, 1)}
+        ),
+        output_mode="right",
+    )
+
+
 class GridWorld(System):
     """A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
 
@@ -770,17 +851,17 @@ class LunarLander(System):
     _dim_state = 6
     _dim_inputs = 2
     _dim_observation = 6
-    _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1, "r": 0.5, "sigma": 0.1}
+    _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1.0, "r": 1.0, "sigma": 1.0}
 
     def __init__(self, *args, **kwargs):
         """Initialize an instance of LunarLander by specifying relevant physical parameters."""
         super().__init__(*args, **kwargs)
 
-        self.a = 1
-        self.r = 1
+        self.a = self.parameters["a"]
+        self.r = self.parameters["r"]
         self.alpha = np.arctan(self.a / self.r)
         self.l = np.sqrt(self.a**2 + self.r**2)
-        self.sigma = 1
+        self.sigma = self.parameters["r"]
         self.is_landed = False
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
@@ -891,8 +972,8 @@ class LunarLander(System):
 
     def compute_supports_geometry(self, xi, theta):
         A = rc.zeros((2, 2), prototype=xi)
-        xi_2 = rc.zeros(2, prototype=xi)
-        xi_3 = rc.zeros(2, prototype=xi)
+        xi_2 = rc.zeros((2, 1), prototype=xi)
+        xi_3 = rc.zeros((2, 1), prototype=xi)
 
         A[0, 0] = rc.cos(theta)
         A[0, 1] = -rc.sin(theta)
@@ -900,10 +981,10 @@ class LunarLander(System):
         A[1, 1] = rc.cos(theta)
 
         a, r = self.parameters["a"], self.parameters["r"]
-        xi_2[0] = xi[0] - a
-        xi_2[1] = xi[1] - r
-        xi_3[0] = xi[0] + a
-        xi_3[1] = xi[1] - r
+        xi_2[0, 0] = xi[0, 0] - a
+        xi_2[1, 0] = xi[1, 0] - r
+        xi_3[0, 0] = xi[0, 0] + a
+        xi_3[1, 0] = xi[1, 0] - r
 
         xi_2_d = xi_2 - xi
         xi_3_d = xi_3 - xi

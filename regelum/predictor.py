@@ -47,9 +47,7 @@ class Predictor(regelum.RegelumBase, ABC):
         for k in range(len_state_sequence):
             current_action = action_sequence[k, :]
             next_state = self.predict(current_state, current_action)
-            predicted_state_sequence[k, :] = self.system.get_observation(
-                time=None, state=next_state, inputs=current_action
-            )
+            predicted_state_sequence[k, :] = next_state
             current_state = next_state
 
         return (
@@ -118,9 +116,7 @@ class Predictor(regelum.RegelumBase, ABC):
             action_sequence[k, :] = model(current_state, model_weights)
             next_state = self.predict(current_state, action_sequence[k, :])
             if k < predicted_state_sequence.shape[0]:
-                predicted_state_sequence[k, :] = self.system.get_observation(
-                    time=None, state=next_state, inputs=action_sequence[k, :]
-                )
+                predicted_state_sequence[k, :] = next_state
 
             current_state = next_state
         return (

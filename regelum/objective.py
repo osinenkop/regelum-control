@@ -126,6 +126,7 @@ def sdpg_objective(
     discount_factor: float,
     N_episodes: int,
     running_objectives: torch.FloatTensor,
+    sampling_time: float,
 ) -> torch.FloatTensor:
     """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
@@ -161,7 +162,7 @@ def sdpg_objective(
         mask = episode_ids == episode_idx
         advantages = (
             running_objectives[mask][:-1]
-            + discount_factor * critic_values[mask][1:]
+            + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
         )
 
@@ -188,6 +189,7 @@ def ppo_objective(
     epsilon: float,
     initial_log_probs: torch.FloatTensor,
     running_objective_type: str,
+    sampling_time: float,
 ) -> torch.FloatTensor:
     """Calculate PPO objective.
 
@@ -237,9 +239,9 @@ def ppo_objective(
         mask = episode_ids.reshape(-1) == episode_idx
         advantages = (
             running_objectives[mask][:-1]
-            + discount_factor * critic_values[mask][1:]
+            + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
-        )
+        ).detach()
 
         objective_value += (
             torch.sum(
@@ -356,6 +358,7 @@ def temporal_difference_objective(
 
 def mpc_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -364,16 +367,21 @@ def mpc_objective(
     discount_factor=1.0,
 ):
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=False,
     )
-
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
+    )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted)
     )
@@ -400,6 +408,7 @@ def mpc_objective(
 
 def rpo_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -411,14 +420,20 @@ def rpo_objective(
 ):
     rpo_objective_value = 0
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=True,
+    )
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted[:-1, :])
@@ -451,6 +466,7 @@ def rpo_objective(
 
 def rql_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -462,14 +478,23 @@ def rql_objective(
 ):
     rql_objective_value = 0
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=False,
+    )
+
+    if prediction_horizon == 0:
+        return critic(observation, action_sequence_predicted, weights=critic_weights)
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted[:-1, :])
@@ -491,7 +516,7 @@ def rql_objective(
         )
     )
 
-    observation_last = observation_sequence_predicted[-1, :]
+    observation_last = state_sequence_predicted[-1, :]
     rql_objective_value += rc.sum(
         discount_factor ** (predictor.pred_step_size * prediction_horizon)
         * critic(
@@ -504,6 +529,7 @@ def rql_objective(
 
 def sql_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     model,
@@ -512,16 +538,21 @@ def sql_objective(
     critic_weights=None,
 ):
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=False,
     )
-
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
+    )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted)
     )

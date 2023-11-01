@@ -61,12 +61,12 @@ class Controller(RegelumBase, ABC):
         self.action_old = None
 
     @apply_action_bounds
-    def compute_action_sampled(self, time, state, observation):
+    def compute_action_sampled(self, time, state_estimated, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
         if self.is_time_for_new_sample:
             action = self.compute_action(
                 time=time,
-                state=state,
+                state_estimated=state_estimated,
                 observation=observation,
             )
             self.action_old = action
@@ -204,15 +204,16 @@ class RLController(Controller):
     @apply_callbacks()
     def compute_action(
         self,
-        state,
+        state_estimated,
         observation,
         time=0,
     ):
-        self.critic.receive_state(state)
-        self.policy.receive_state(state)
+        self.critic.receive_state(state_estimated)
+        self.policy.receive_state(state_estimated)
         self.policy.receive_observation(observation)
 
         self.data_buffer.push_to_end(
+            state_estimated=state_estimated,
             observation=observation,
             timestamp=time,
             episode_id=self.episode_counter,
@@ -236,8 +237,8 @@ class RLController(Controller):
         self.step_counter += 1
         return self.policy.action
 
-    def compute_action_sampled(self, time, state, observation):
-        action = super().compute_action_sampled(time, state, observation)
+    def compute_action_sampled(self, time, state_estimated, observation):
+        action = super().compute_action_sampled(time, state_estimated, observation)
         self.calculate_total_objective(
             self.running_objective(observation, action), is_to_update=True
         )

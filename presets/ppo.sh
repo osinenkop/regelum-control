@@ -1,0 +1,1 @@
+python run_stable.py controller=ppo scenario.N_episodes=2 scenario.N_iterations=72 system=3wrobot_ni,inv_pendulum,kin_point,lunar_lander --experiment=PPO_GRID_SEARCH scenario.discount_factor=0.7 controller.policy.model.dim_hidden=4 controller.policy.model.n_hidden_layers=2 --jobs=4 controller.policy.model.sigma=0.1 controller.policy.optimizer_config.opt_options.lr=0.01

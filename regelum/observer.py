@@ -4,6 +4,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 import regelum
+from typing import Union, List
 
 
 class Observer(regelum.RegelumBase, ABC):
@@ -19,6 +20,21 @@ class ObserverTrivial(Observer):
 
     def get_state_estimation(self, t, observation, action):
         return observation
+
+
+class ObserverReference(Observer):
+    """Estimates state via adding reference to observation."""
+
+    def __init__(self, reference: Union[np.ndarray, List[float]]):
+        """Instatiate ObserverReference.
+
+        :param reference: array for reference
+        :type reference: Union[np.ndarray, List[float]]
+        """
+        self.reference = np.array(reference).reshape(1, -1)
+
+    def get_state_estimation(self, t, observation, action):
+        return observation + self.reference
 
 
 class KalmanFilter(Observer):

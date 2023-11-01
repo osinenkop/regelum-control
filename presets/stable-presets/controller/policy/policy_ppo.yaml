@@ -12,7 +12,7 @@ discount_factor: $ scenario.discount_factor
 device: cpu
 epsilon: 0.2
 running_objective_type: cost
-
+sampling_time: $ system_specific.sampling_time
 
 model:
   dim_hidden: 4

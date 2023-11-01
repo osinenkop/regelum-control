@@ -88,6 +88,7 @@ from .optimizable import *
 from . import critic
 from . import controller
 from . import policy
+from . import observer
 
 mock = Mock()
 

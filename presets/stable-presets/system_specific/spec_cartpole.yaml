@@ -1,5 +1,6 @@
 name: carpole
 target: regelum.system.CartPole
+observer: = regelum.observer.ObserverTrivial()
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 

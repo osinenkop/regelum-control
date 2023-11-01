@@ -455,6 +455,7 @@ class SDPG(PolicyGradient):
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
+        sampling_time: float,
         discount_factor: float = 1.0,
         device: str = "cpu",
     ):
@@ -485,6 +486,7 @@ class SDPG(PolicyGradient):
             critic=critic,
             optimizer_config=optimizer_config,
         )
+        self.sampling_time = sampling_time
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -504,6 +506,7 @@ class SDPG(PolicyGradient):
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
             running_objectives=running_objective,
+            sampling_time=self.sampling_time,
         )
 
     def update_action(self, observation):
@@ -524,6 +527,7 @@ class PPO(PolicyGradient):
         system: Union[System, ComposedSystem],
         action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
+        sampling_time: float,
         discount_factor: float = 1.0,
         device: str = "cpu",
         running_objective_type="cost",
@@ -558,6 +562,7 @@ class PPO(PolicyGradient):
             critic=critic,
             optimizer_config=optimizer_config,
         )
+        self.sampling_time = sampling_time
         self.epsilon = epsilon
         self.running_objective_type = running_objective_type
         self.initialize_optimization_procedure()
@@ -595,6 +600,7 @@ class PPO(PolicyGradient):
             initial_log_probs=initial_log_probs,
             epsilon=self.epsilon,
             running_objective_type=self.running_objective_type,
+            sampling_time=self.sampling_time,
         )
 
     def update_data_buffer(self, data_buffer: DataBuffer):
@@ -755,14 +761,19 @@ class RLPolicy(Policy):
         self.initial_guess = None
 
     def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation"]
+        return ["observation", "state_estimated"]
 
     def initialize_optimization_procedure(self):
         objective_variables = []
         self.observation_variable = self.create_variable(
             1, self.system.dim_observation, name="observation", is_constant=True
         )
-        objective_variables.append(self.observation_variable)
+        self.state_estimated_variable = self.create_variable(
+            1, self.system.dim_state, name="state_estimated", is_constant=True
+        )
+        objective_variables.extend(
+            [self.observation_variable, self.state_estimated_variable]
+        )
         self.policy_model_weights = self.create_variable(
             name="policy_model_weights", like=self.model.named_parameters
         )
@@ -810,7 +821,7 @@ class RLPolicy(Policy):
                 connect_to=self.predicted_states_var,
                 func=self.predictor.predict_state_sequence_from_model,
                 prediction_horizon=self.prediction_horizon,
-                state=self.observation_variable,
+                state=self.state_estimated_variable,
                 model=self.model,
                 model_weights=self.policy_model_weights,
                 is_predict_last=is_predict_last,
@@ -828,10 +839,11 @@ class RLPolicy(Policy):
             )
 
     def objective_function(
-        self, observation, policy_model_weights, critic_weights=None
+        self, state_estimated, observation, policy_model_weights, critic_weights=None
     ):
         if self.algorithm == "mpc":
             return mpc_objective(
+                state_estimated=state_estimated,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -842,6 +854,7 @@ class RLPolicy(Policy):
             )
         elif self.algorithm == "rpo":
             return rpo_objective(
+                state_estimated=state_estimated,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -854,6 +867,7 @@ class RLPolicy(Policy):
             )
         elif self.algorithm == "sql":
             return sql_objective(
+                state_estimated=state_estimated,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -864,6 +878,7 @@ class RLPolicy(Policy):
             )
         elif self.algorithm == "rql":
             return rql_objective(
+                state_estimated=state_estimated,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
