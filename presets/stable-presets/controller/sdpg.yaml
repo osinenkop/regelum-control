@@ -27,9 +27,9 @@ critic:
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.02
+      lr: 0.0002
     config_options:
-      n_epochs: 10
+      n_epochs: 50
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs: 
@@ -38,7 +38,7 @@ critic:
   model:
     dim_input: = ${system_specific.dim_observation}
     dim_output: 1
-    dim_hidden: 24
+    dim_hidden: 100
     n_hidden_layers: 4
     is_force_infinitesimal: True
     is_bias: True

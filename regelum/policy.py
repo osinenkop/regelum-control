@@ -326,7 +326,7 @@ class Reinforce(PolicyGradient):
         discount_factor: float = 1.0,
         device: str = "cpu",
         is_with_baseline: bool = True,
-        is_do_not_let_the_past_distract_you: bool = False,
+        is_do_not_let_the_past_distract_you: bool = True,
     ):
         """Instantiate Reinforce class.
 
@@ -414,10 +414,27 @@ class Reinforce(PolicyGradient):
 
     def calculate_baseline(self, data_buffer: DataBuffer):
         baseline = self.next_baseline
-        self.next_baseline = np.mean(
-            data_buffer.to_pandas(keys=["total_objective"]).values
-        )
-        return np.full(shape=len(data_buffer), fill_value=baseline)
+        if not self.is_do_not_let_the_past_distract_you:
+            self.next_baseline = np.mean(
+                data_buffer.to_pandas(keys=["total_objective"]).values
+            )
+
+        else:
+            self.next_baseline = (
+                data_buffer.to_pandas(keys=["tail_total_objective", "step_id"])
+                .astype(float)
+                .groupby("step_id")
+                .mean()
+                .loc[
+                    data_buffer.to_pandas(keys=["step_id"])
+                    .astype(float)
+                    .values.reshape(-1)
+                ]
+            ).values
+        if isinstance(baseline, float):
+            return np.full(shape=len(data_buffer), fill_value=baseline)
+        else:
+            return baseline
 
     def data_buffer_objective_keys(self) -> List[str]:
         return [

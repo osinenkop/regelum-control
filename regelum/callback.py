@@ -1486,22 +1486,6 @@ class TotalObjectiveCallback(HistoricalCallback):
     def is_target_event(self, obj, method, output):
         return False
 
-    def on_iteration_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        mlflow.log_metric(
-            "A. Avg total objectives",
-            np.mean(self.total_objectives),
-            step=iteration_number,
-        )
-
-        self.total_objectives = []
-
     def on_episode_done(
         self,
         scenario,
@@ -1534,6 +1518,12 @@ class TotalObjectiveCallback(HistoricalCallback):
         )
 
         if episode_number == episodes_total:
+            mlflow.log_metric(
+                "A. Avg total objectives",
+                np.mean(self.total_objectives),
+                step=iteration_number,
+            )
+            self.total_objectives = []
             self.clear_recent_data()
 
     def perform(self, obj, method, output):
