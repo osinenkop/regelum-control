@@ -14,7 +14,7 @@ import numpy as np
 import regelum
 from abc import ABC, abstractmethod
 from .__utilities import rc
-from typing import Optional, Union
+from typing import Optional, Union, List
 from typing_extensions import Self
 
 
@@ -684,34 +684,37 @@ class TwoTank(System):
         return Dstate
 
 
-class TwoTankConstantReference(System):
-    """Substracts reference from inputs."""
+class ConstantReference(System):
+    """Subtracts reference from system."""
 
-    _name = "constant_reference"
+    name = "constant_reference"
     _system_type = "diff_eqn"
     _dim_state = 0
     _dim_inputs = 2
     _dim_observation = 2
     _parameters = {"reference": np.array([[0.4], [0.4]])}
 
-    def _get_observation(self, time, state, inputs):
-        return inputs - rc.array(
-            self.parameters["reference"], prototype=state, _force_numeric=True
-        )
+    def __init__(self, reference: Optional[Union[List[float], np.array]] = None):
+        """Instantiate ConstantReference.
 
-    def _compute_state_dynamics(self, time, state, inputs):
-        return inputs
-
-
-class ThreeWheeledRobotNIConstantReference(System):
-    """Substracts reference from inputs."""
-
-    _name = "constant_reference"
-    _system_type = "diff_eqn"
-    _dim_state = 0
-    _dim_inputs = 3
-    _dim_observation = 3
-    _parameters = {"reference": np.array([[1.0], [1.0], [0.0]])}
+        :param reference: reference to be substracted from inputs, defaults to None
+        :type reference: Optional[Union[List[float], np.array]], optional
+        """
+        if reference is None:
+            super().__init__(
+                system_parameters_init=None, state_init=None, inputs_init=None
+            )
+        else:
+            super().__init__(
+                system_parameters_init={
+                    "reference": np.array(reference).reshape(-1, 1)
+                },
+                state_init=None,
+                inputs_init=None,
+            )
+            self._dim_inputs = self._dim_observation = (
+                np.array(reference).reshape(-1).shape[0]
+            )
 
     def _get_observation(self, time, state, inputs):
         return inputs - rc.array(
@@ -722,28 +725,31 @@ class ThreeWheeledRobotNIConstantReference(System):
         return inputs
 
 
-def ThreeWheeledRobotNIWithReference(reference=None):
-    if reference is None:
-        reference = np.array([1.0, 2.0, 3.0])
+class SystemWithConstantReference(ComposedSystem):
+    """Creates system with that substracts from state a reference value."""
 
-    return ThreeWheeledRobotNI().compose(
-        ThreeWheeledRobotNIConstantReference(
-            system_parameters_init={"reference": np.array(reference).reshape(-1, 1)}
-        ),
-        output_mode="right",
-    )
+    def __init__(self, system: System, state_reference: Union[List[float], np.array]):
+        """Instantiate System with ConstantReference.
 
+        The result ComposedSystem's method get_observation subtracts from state reference value state_reference.
 
-def TwoTankWithReference(reference=None):
-    if reference is None:
-        reference = np.array([0.4, 0.4])
+        :param system: system
+        :type system: System
+        :param state_reference: reference to be subtracted from state.
+        :type state_reference: Union[List[float], np.array]
+        """
+        constant_reference = ConstantReference(state_reference)
 
-    return TwoTank().compose(
-        TwoTankConstantReference(
-            system_parameters_init={"reference": np.array(reference).reshape(-1, 1)}
-        ),
-        output_mode="right",
-    )
+        assert (
+            system.dim_state == constant_reference.dim_inputs
+        ), "state_reference should have the same length as dimension of state of system"
+
+        super().__init__(
+            sys_left=system,
+            sys_right=constant_reference,
+            io_mapping=None,
+            output_mode="right",
+        )
 
 
 class GridWorld(System):

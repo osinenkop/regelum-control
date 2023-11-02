@@ -1,6 +1,7 @@
 name: 2tank
-target: regelum.system.TwoTankWithReference
-observer: = regelum.observer.ObserverReference([0.4, 0.4])
+reference: = [0.4, 0.4]
+target: regelum.system.TwoTank
+observer: = regelum.observer.ObserverReference(${.reference})
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 

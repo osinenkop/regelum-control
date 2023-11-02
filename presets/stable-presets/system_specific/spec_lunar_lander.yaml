@@ -1,6 +1,7 @@
 name: lunar_lander
 target: regelum.system.LunarLander
-observer: = regelum.observer.ObserverReference([0., 1., 0., 0., 0., 0.])
+reference: = [0., 1., 0., 0., 0., 0.]
+observer: = regelum.observer.ObserverReference(${.reference})
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 
