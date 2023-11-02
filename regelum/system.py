@@ -862,12 +862,8 @@ class LunarLander(System):
     def __init__(self, *args, **kwargs):
         """Initialize an instance of LunarLander by specifying relevant physical parameters."""
         super().__init__(*args, **kwargs)
-
-        self.a = self.parameters["a"]
-        self.r = self.parameters["r"]
-        self.alpha = np.arctan(self.a / self.r)
-        self.l = np.sqrt(self.a**2 + self.r**2)
-        self.sigma = self.parameters["r"]
+        self.alpha = np.arctan(self.parameters["a"] / self.parameters["r"])
+        self.l = np.sqrt(self.parameters["a"] ** 2 + self.parameters["r"] ** 2)
         self.is_landed = False
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
@@ -917,16 +913,12 @@ class LunarLander(System):
         Dstate_before_landing[5] = (4 * F_l) / J
 
         Dstate_landed_right = self._compute_pendulum_dynamics(
-            # x=x,
-            # y=y,
             angle=-theta - self.alpha,
             angle_dot=theta_dot,
             prototype=(state, inputs),
         )
 
         Dstate_landed_left = self._compute_pendulum_dynamics(
-            # x=x,
-            # y=y,
             angle=self.alpha - theta,
             angle_dot=theta_dot,
             prototype=(state, inputs),
@@ -950,24 +942,12 @@ class LunarLander(System):
             self.dim_state,
             prototype=prototype,
         )
-        _, _, g = (
-            self.parameters["m"],
-            self.parameters["J"],
-            self.parameters["g"],
-        )
+        g = self.parameters["g"]
 
         x = self.l * rc.sin(angle)
         y = self.l * rc.cos(angle)
 
         Dstate[5] = g / self.l**2 * x
-
-        # Dstate[0] = angle_dot * y
-        # Dstate[1] = -angle_dot * x
-        # Dstate[2] = angle_dot
-        # Dstate[3] = y * Dstate[5] - angle_dot**2 * x
-        # Dstate[4] = -x * Dstate[5] - angle_dot**2 * y
-        # angle_dot = 1
-        # Dstate[5] = 0.0
         Dstate[0] = angle_dot * y
         Dstate[1] = -angle_dot * x
         Dstate[2] = -angle_dot
@@ -1006,9 +986,8 @@ class LunarLander(System):
         r,
         r_support,
     ):
-        m, _, g, sigma = (
+        m, g, sigma = (
             self.parameters["m"],
-            self.parameters["J"],
             self.parameters["g"],
             self.parameters["sigma"],
         )
