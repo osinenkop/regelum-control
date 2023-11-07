@@ -46,11 +46,11 @@ critic:
 
 policy:
   model:
-    dim_hidden: 100
-    n_hidden_layers: 4
+    dim_hidden: 4 
+    n_hidden_layers: 2
   optimizer_config: 
     opt_options:
-      lr: 0.0002
+      lr: 0.01
     config_options:
       is_reinstantiate_optimizer: True
       n_epochs: 50
