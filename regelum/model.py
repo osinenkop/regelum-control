@@ -710,7 +710,7 @@ class PerceptronWithNormalNoise(ModelNN):
         weight_min: Optional[float] = None,
         weight_max: Optional[float] = None,
     ):
-        r"""Instantiate PerceptronWithTruncatedNormalNoise.
+        r"""Instantiate PerceptronWithNormalNoise.
 
         :param dim_input: Dimensionality of input (x)
         :type dim_input: int
