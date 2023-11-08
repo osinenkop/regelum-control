@@ -6,7 +6,7 @@ Updates to come.
 
 """
 from copy import deepcopy
-
+from scipy.stats import truncnorm
 import regelum
 
 
@@ -17,6 +17,7 @@ try:
     import torch.nn.functional as F
     from torch import nn
     from torch.distributions.multivariate_normal import MultivariateNormal
+    from torch.distributions.normal import Normal
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
 
@@ -635,6 +636,64 @@ class BoundsHandler(ModelNN):
         return (y - unscale_bias) / unscale_multiplier
 
 
+class ModelWithOutputBounds(ModelNN):
+    """Perceptron that bounds output."""
+
+    def __init__(
+        self,
+        dim_input: int,
+        dim_output: int,
+        dim_hidden: int,
+        n_hidden_layers: int,
+        leaky_relu_coef: float,
+        output_bounds: Union[List[Any], np.array],
+        normalize_output_coef: float,
+        weight_min: Optional[float] = None,
+        weight_max: Optional[float] = None,
+    ):
+        """Instatiate ModelWithOutputBounds.
+
+        :param dim_input: dimension of input
+        :type dim_input: int
+        :param dim_output: dimension of output
+        :type dim_output: int
+        :param dim_hidden: dimesion of hidden layer
+        :type dim_hidden: int
+        :param n_hidden_layers: number of hidden layers
+        :type n_hidden_layers: int
+        :param leaky_relu_coef: coefficient for LeakyReLU
+        :type leaky_relu_coef: float
+        :param output_bounds: bounds for output
+        :type output_bounds: Union[List[Any], np.array]
+        :param normalize_output_coef: normalization constant in last activation
+        :type normalize_output_coef: float
+        :param weight_min: minimal weight in perceptron, defaults to None
+        :type weight_min: Optional[float], optional
+        :param weight_max: maximal weight in perceptron, defaults to None
+        :type weight_max: Optional[float], optional
+        """
+        super().__init__()
+        self.normalize_output_coef = normalize_output_coef
+
+        self.perceptron = ModelPerceptron(
+            dim_input=dim_input,
+            dim_output=dim_output,
+            dim_hidden=dim_hidden,
+            n_hidden_layers=n_hidden_layers,
+            leaky_relu_coef=leaky_relu_coef,
+            weight_min=weight_min,
+            weight_max=weight_max,
+        )
+
+        self.bounds_handler = BoundsHandler(output_bounds)
+        self.cache_weights()
+
+    def forward(self, inputs):
+        return self.bounds_handler.unscale_from_minus_one_one_to_bounds(
+            torch.tanh(self.perceptron(inputs) / self.normalize_output_coef)
+        )
+
+
 class PerceptronWithNormalNoise(ModelNN):
     r"""Sample from :math:`F^{-1}\\left(\\mathcal{N}(f_{\\theta}(x), \\sigma^2)\\right)`, where :math:`\\sigma` is the standard deviation of the noise, :math:`f_{\\theta}(x)` is perceptron with weights :math:`\\theta`, and :math:`F` is the linear transformation from `bounds` to [-1, 1]."""
 
@@ -651,7 +710,7 @@ class PerceptronWithNormalNoise(ModelNN):
         weight_min: Optional[float] = None,
         weight_max: Optional[float] = None,
     ):
-        r"""Instantiate PerceptronWithNormalNoise.
+        r"""Instantiate PerceptronWithTruncatedNormalNoise.
 
         :param dim_input: Dimensionality of input (x)
         :type dim_input: int
@@ -727,6 +786,44 @@ class PerceptronWithNormalNoise(ModelNN):
             loc=mean,
             scale_tril=self.get_parameter("__scale_tril_matrix"),
         ).sample()
+
+        sampled_action = self.bounds_handler.unscale_from_minus_one_one_to_bounds(
+            sampled_scaled_action
+        )
+
+        return sampled_action
+
+
+class PerceptronWithTruncatedNormalNoise(PerceptronWithNormalNoise):
+    r"""Sample from :math:`F^{-1}\\left(\\mathcal{N}(f_{\\theta}(x), \\sigma^2)\\right)`, where :math:`\\sigma` is the standard deviation of the noise, :math:`f_{\\theta}(x)` is perceptron with weights :math:`\\theta`, and :math:`F` is the linear transformation from `bounds` to [-1, 1]."""
+
+    def get_mean(self, observations):
+        return torch.tanh(self.perceptron(observations) / self.normalize_output_coef)
+
+    def log_pdf(self, observations, actions):
+        means = self.get_mean(observations)
+        scaled_actions = self.bounds_handler.scale_from_bounds_to_minus_one_one(actions)
+        normal = Normal(loc=means, scale=torch.full_like(means, self.std))
+        return (
+            normal.log_prob(scaled_actions)
+            - torch.log(
+                normal.cdf(torch.ones_like(means)) - normal.cdf(-torch.ones_like(means))
+            )
+        ).sum(axis=1)
+
+    def sample(self, observation):
+        mean = self.get_mean(observation)
+        mean_numpy = mean.detach().cpu().numpy()
+        sampled_scaled_action = torch.FloatTensor(
+            truncnorm(
+                loc=mean_numpy,
+                scale=np.full(mean.shape, self.std),
+                b=(1 - mean_numpy) / self.std,
+                a=(-1 - mean_numpy) / self.std,
+            )
+            .rvs()
+            .reshape(1, -1)
+        )
 
         sampled_action = self.bounds_handler.unscale_from_minus_one_one_to_bounds(
             sampled_scaled_action

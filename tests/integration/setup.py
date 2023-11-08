@@ -119,6 +119,20 @@ basic += [
     for controller in ["mpc_torch"]
 ]
 
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        controller=controller,
+        **{
+            "simulator.time_final": 3.0,
+            "prefix": "truncated_noise",
+            "controller/policy/model": "perceptron_with_truncated_normal_noise",
+            "controller.sampling_time": 0.1,
+        },
+    )
+    for controller in ["ppo", "reinforce", "sdpg"]
+]
+
 
 full = sum(
     [
