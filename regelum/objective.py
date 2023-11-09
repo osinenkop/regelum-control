@@ -7,7 +7,7 @@ For instance, a running objective can be used commonly by a generic optimal cont
 from abc import ABC, abstractmethod
 
 import regelum
-from .model import Model, PerceptronWithNormalNoise, ModelNN
+from .model import Model, PerceptronWithTruncatedNormalNoise, ModelNN
 from typing import Optional, Union
 import torch
 from .__utilities import rc
@@ -58,7 +58,7 @@ class RunningObjective(Objective):
 
 
 def reinforce_objective(
-    policy_model: PerceptronWithNormalNoise,
+    policy_model: PerceptronWithTruncatedNormalNoise,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
     tail_total_objectives: torch.FloatTensor,
@@ -116,7 +116,7 @@ def reinforce_objective(
 
 
 def sdpg_objective(
-    policy_model: PerceptronWithNormalNoise,
+    policy_model: PerceptronWithTruncatedNormalNoise,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
@@ -176,7 +176,7 @@ def sdpg_objective(
 
 
 def ppo_objective(
-    policy_model: PerceptronWithNormalNoise,
+    policy_model: PerceptronWithTruncatedNormalNoise,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,

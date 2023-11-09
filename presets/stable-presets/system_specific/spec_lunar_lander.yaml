@@ -7,4 +7,4 @@ dim_action: = ${.target}().dim_inputs
 
 time_final: 10.
 sampling_time: 0.01
-action_bounds: = np.array([[-100., 100.],[-50, 50]])
+action_bounds: = [[-100., 100.],[-50, 50]]

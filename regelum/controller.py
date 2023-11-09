@@ -147,7 +147,7 @@ class RLController(Controller):
         self.step_counter: int = 0
         self.total_objective: float = 0.0
         self.critic = critic
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
 
@@ -758,7 +758,7 @@ class Controller3WRobotDisassembledCLF:
         self.m = m
         self.moment_of_inertia = moment_of_inertia
         self.controller_gain = controller_gain
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.controller_clock = time_start
         self.sampling_time = sampling_time
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1143,7 +1143,7 @@ class Controller3WRobotMemoryPID:
         if action_bounds is None:
             action_bounds = []
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
         self.controller_clock = time_start
@@ -1360,7 +1360,7 @@ class Controller3WRobotPID:
         self.to_origin_bounds = to_origin_bounds
         self.to_arctan_bounds = to_arctan_bounds
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
         self.controller_clock = time_start
@@ -1530,7 +1530,7 @@ class ControllerCartPolePID:
             state_init = rc.array([np.pi, 0, 0, 0])
         if upright_gain is None:
             upright_gain = rc.array([1, 1, 1, 1])
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1621,7 +1621,7 @@ class ControllerCartPoleEnergyBased:
         """
         if state_init is None:
             state_init = rc.array([np.pi, 0, 0, 0])
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1738,7 +1738,7 @@ class ControllerLunarLanderPID:
             PID_height_parameters = [10, 0, 0]
         if PID_x_parameters is None:
             PID_x_parameters = [10, 0, 0]
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1849,7 +1849,7 @@ class Controller2TankPID:
         else:
             self.tau1, self.tau2, self.K1, self.K2, self.K3 = params
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1923,7 +1923,7 @@ class Controller3WRobotNIDisassembledCLF:
         :param sampling_time: time interval between two consecutive actions
         """
         self.controller_gain = controller_gain
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.controller_clock = time_start
         self.time_start = time_start
         self.sampling_time = sampling_time
@@ -2117,7 +2117,7 @@ class NominalControllerInvertedPendulum:
         :param time_start: time at which computations start
         :param sampling_time: time interval between two consecutive actions
         """
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.controller_gain = controller_gain
         self.observation = np.array([np.pi, 0])
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -2169,7 +2169,7 @@ class Controller3WRobotNIMotionPrimitive(Controller):
         if action_bounds is None:
             action_bounds = []
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.K = K
         self.controller_clock = time_start
         self.sampling_time = sampling_time
@@ -2225,7 +2225,7 @@ class ControllerKinPoint:
         if action_bounds is None:
             action_bounds = []
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.gain = gain
         self.controller_clock = time_start
         self.sampling_time = sampling_time

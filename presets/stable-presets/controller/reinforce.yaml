@@ -20,7 +20,6 @@ policy:
   model:
     dim_hidden: 4
     n_hidden_layers: 2
-    normalize_output_coef: 100.
   optimizer_config: 
     opt_options:
       lr: 0.1

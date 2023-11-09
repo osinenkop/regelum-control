@@ -760,7 +760,7 @@ class RLPolicy(Policy):
             discount_factor=discount_factor,
         )
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.predictor = predictor
         self.prediction_horizon = prediction_horizon
         self.critic = critic
