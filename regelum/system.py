@@ -266,9 +266,6 @@ class ComposedSystem(regelum.RegelumBase):
 
         return rhs_full_state
 
-    def receive_state(self, state):
-        self.state = state
-
     def reset(self):
         pass
 
@@ -427,9 +424,6 @@ class System(regelum.RegelumBase, ABC):
 
     def receive_action(self, action):
         self.inputs = action
-
-    def receive_state(self, state):
-        self.state = state
 
     def update_system_parameters(self, inputs):
         assert isinstance(inputs, dict)

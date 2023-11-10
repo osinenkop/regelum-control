@@ -1,13 +1,14 @@
 """Contains auxiliary tools."""
 
-# TODO: THIS DESCRIPTION IS TOO SHORT. EXTEND IT
-
 import inspect
 import numpy as np
 
 
-from enum import IntEnum
+from enum import IntEnum, auto
 from typing import Union
+from dataclasses import dataclass
+from typing import List, Optional
+
 
 try:
     import casadi
@@ -140,6 +141,41 @@ class Clock:
         self.last_sampled_time = self.current_time = self.time_start
         self.is_first_time_called = True
         self.delta_time = 0.0
+
+
+@dataclass
+class AwaitedParameter:
+    """A nested class to tag parameters that are expected to be computed at initial simulation step."""
+
+    name: str
+    awaited_from: Optional[str]
+
+    def __post_init__(self):
+        self._string_to_show = f"Parameter {self.name}'s value is awaited from the source {self.awaited_from}"
+
+    def __repr__(self):
+        return self._string_to_show
+
+    def __str__(self):
+        return self._string_to_show
+
+    def __getattribute__(self, name):
+        if name == "__repr__":
+            return object.__repr__()
+        elif name == "__str__":
+            return object.__str__()
+        elif name == "name":
+            return object.__getattribute__(self, "name")
+        elif name == "awaited_from":
+            return object.__getattribute__(self, "awaited_from")
+        elif name == "_string_to_show":
+            return object.__getattribute__(self, "_string_to_show")
+        elif name == "__post_init__":
+            return object.__getattribute__(self, "__post_init__")
+        elif name == "__instancecheck__":
+            return object.__getattribute__(self, "__instancecheck__")
+        else:
+            raise Exception(str(self))
 
 
 # TODO: ADD DOCSTRING

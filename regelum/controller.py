@@ -14,13 +14,14 @@ import numpy as np
 import scipy as setpoint
 from scipy.optimize import minimize
 
-from .__utilities import rc, Clock
+from .__utilities import rc, Clock, AwaitedParameter
 from regelum import RegelumBase
 from .policy import Policy
 from .critic import Critic, CriticCALF
 from typing import Optional, Union
 from .objective import RunningObjective
 from .data_buffers import DataBuffer
+from .event import BufferNullifyEvent, OptimizationEvent
 
 
 def apply_action_bounds(method):
@@ -58,15 +59,20 @@ class Controller(RegelumBase, ABC):
         self.controller_clock = time_start
         self.sampling_time = sampling_time
         self.clock = Clock(period=sampling_time, time_start=time_start)
-        self.action_old = None
+        self.iteration_counter: int = 0
+        self.episode_counter: int = 0
+        self.step_counter: int = 0
+        self.action_old = AwaitedParameter(
+            "action_old", awaited_from=self.compute_action.__name__
+        )
 
     @apply_action_bounds
-    def compute_action_sampled(self, time, state_estimated, observation):
+    def compute_action_sampled(self, time, estimated_state, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
         if self.is_time_for_new_sample:
             action = self.compute_action(
                 time=time,
-                state_estimated=state_estimated,
+                estimated_state=estimated_state,
                 observation=observation,
             )
             self.action_old = action
@@ -75,12 +81,24 @@ class Controller(RegelumBase, ABC):
 
         return action
 
+    def __compute_action(self, *args, **kwargs):
+        self.on_observation_received(*args, **kwargs)
+        return object.__getattribute__(self, "compute_action")(*args, **kwargs)
+
+    def __getattribute__(self, name):
+        if name == "compute_action":
+            return self.__compute_action
+        return object.__getattribute__(self, name)
+
+    def on_observation_received(self, time, estimated_state, observation):
+        ...
+
     def substitute_constraint_parameters(self, **kwargs):
         self.policy.substitute_parameters(**kwargs)
 
     @abstractmethod
     @apply_callbacks()
-    def compute_action(self, time, state, observation):
+    def compute_action(self, time, estimated_state, observation):
         pass
 
     def optimize_on_event(self, event):
@@ -95,12 +113,12 @@ class RLController(Controller):
         policy: Policy,
         critic: Critic,
         running_objective: RunningObjective,
-        critic_optimization_event: str,
-        policy_optimization_event: str,
-        data_buffer_nullify_event: str,
+        critic_optimization_event: OptimizationEvent,
+        policy_optimization_event: OptimizationEvent,
+        data_buffer_nullify_event: BufferNullifyEvent,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
-        action_bounds: Union[list, np.ndarray, None] = None,
+        action_bounds: Optional[Union[list, np.ndarray]] = None,
         max_data_buffer_size: Optional[int] = None,
         time_start: float = 0,
         sampling_time: float = 0.1,
@@ -142,9 +160,6 @@ class RLController(Controller):
         self.data_buffer = DataBuffer(max_data_buffer_size)
         self.running_objective = running_objective
         self.discount_factor = discount_factor
-        self.iteration_counter: int = 0
-        self.episode_counter: int = 0
-        self.step_counter: int = 0
         self.total_objective: float = 0.0
         self.critic = critic
         self.action_bounds = action_bounds
@@ -153,8 +168,10 @@ class RLController(Controller):
 
     def policy_update(self, observation, event, time):
         if self.policy_optimization_event == event:
-            self.call_optimize_on_event(self.policy, "compute_action", time)
-        if event == "compute_action":
+            self.call_optimize_on_event(
+                self.policy, OptimizationEvent.compute_action, time
+            )
+        if event == OptimizationEvent.compute_action:
             self.policy.update_action(observation)
             self.update_data_buffer_with_action_stats(observation)
 
@@ -200,20 +217,13 @@ class RLController(Controller):
         if self.critic_optimization_event == "compute_action":
             self.call_optimize_on_event(self.critic, "compute_action", time)
 
-    @apply_action_bounds
-    @apply_callbacks()
-    def compute_action(
-        self,
-        state_estimated,
-        observation,
-        time=0,
-    ):
-        self.critic.receive_state(state_estimated)
-        self.policy.receive_state(state_estimated)
+    def on_observation_received(self, time, estimated_state, observation):
+        self.critic.receive_estimated_state(estimated_state)
+        self.policy.receive_estimated_state(estimated_state)
         self.policy.receive_observation(observation)
 
         self.data_buffer.push_to_end(
-            state_estimated=state_estimated,
+            estimated_state=estimated_state,
             observation=observation,
             timestamp=time,
             episode_id=self.episode_counter,
@@ -221,6 +231,14 @@ class RLController(Controller):
             step_id=self.step_counter,
         )
 
+    @apply_action_bounds
+    @apply_callbacks()
+    def compute_action(
+        self,
+        estimated_state,
+        observation,
+        time=0,
+    ):
         if self.is_first_compute_action_call:
             self.policy_update(observation, "compute_action", time)
             self.is_first_compute_action_call = False
@@ -237,8 +255,8 @@ class RLController(Controller):
         self.step_counter += 1
         return self.policy.action
 
-    def compute_action_sampled(self, time, state_estimated, observation):
-        action = super().compute_action_sampled(time, state_estimated, observation)
+    def compute_action_sampled(self, time, estimated_state, observation):
+        action = super().compute_action_sampled(time, estimated_state, observation)
         self.calculate_total_objective(
             self.running_objective(observation, action), is_to_update=True
         )
@@ -357,7 +375,7 @@ class CALFControllerExPost(RLController):
         self.safe_controller = safe_controller
 
     def invoke_safe_action(self, state, observation):
-        # self.policy.restore_weights()
+        self.policy.restore_weights()
         self.critic.restore_weights()
         action = self.safe_controller.compute_action(state, observation)
         self.policy.set_action(action)
@@ -369,16 +387,9 @@ class CALFControllerExPost(RLController):
             observation_last_good=self.critic.observation_last_good
         )
 
-    @apply_callbacks()
-    @apply_action_bounds
-    def compute_action(
-        self,
-        state,
-        observation,
-        time=0,
-    ):
-        self.critic.receive_state(state)
-        self.policy.receive_state(state)
+    def on_observation_received(self, time, estimated_state, observation):
+        self.critic.receive_estimated_state(estimated_state)
+        self.policy.receive_estimated_state(estimated_state)
         self.policy.receive_observation(observation)
 
         self.data_buffer.push_to_end(
@@ -389,6 +400,14 @@ class CALFControllerExPost(RLController):
             step_id=self.step_counter,
         )
 
+    @apply_callbacks()
+    @apply_action_bounds
+    def compute_action(
+        self,
+        state,
+        observation,
+        time=0,
+    ):
         if self.is_first_compute_action_call:
             self.critic.observation_last_good = observation
             self.invoke_safe_action(state, observation)
@@ -418,125 +437,6 @@ class CALFControllerExPost(RLController):
                 self.invoke_safe_action(state, observation)
         else:
             self.invoke_safe_action(state, observation)
-
-        self.step_counter += 1
-        return self.policy.action
-
-
-class CALFControllerExPostExperimental(RLController):
-    """Controller for CALF algorithm."""
-
-    def __init__(
-        self,
-        policy: Policy,
-        critic: CriticCALF,
-        safe_controller: Controller,
-        running_objective,
-        critic_optimization_event: str,
-        policy_optimization_event: str,
-        data_buffer_nullify_event: str,
-        discount_factor=1,
-        action_bounds=None,
-        max_data_buffer_size: Optional[int] = None,
-        time_start: float = 0,
-        sampling_time: float = 0.1,
-    ):
-        """Instantiate a CALFControllerExPost object. The docstring will be completed in the next release.
-
-        :param policy: Pol
-        :type policy: Policy
-        :param critic: _description_
-        :type critic: Critic
-        :param safe_controller: _description_
-        :type safe_controller: Controller
-        :param running_objective: _description_
-        :type running_objective: _type_
-        :param critic_optimization_event: _description_
-        :type critic_optimization_event: str
-        :param policy_optimization_event: _description_
-        :type policy_optimization_event: str
-        :param data_buffer_nullify_event: _description_
-        :type data_buffer_nullify_event: str
-        :param discount_factor: _description_, defaults to 1
-        :type discount_factor: int, optional
-        :param action_bounds: _description_, defaults to None
-        :type action_bounds: _type_, optional
-        :param max_data_buffer_size: _description_, defaults to None
-        :type max_data_buffer_size: Optional[int], optional
-        :param time_start: _description_, defaults to 0
-        :type time_start: float, optional
-        :param sampling_time: _description_, defaults to 0.1
-        :type sampling_time: float, optional
-        """
-        super().__init__(
-            policy=policy,
-            critic=critic,
-            running_objective=running_objective,
-            critic_optimization_event=critic_optimization_event,
-            policy_optimization_event=policy_optimization_event,
-            data_buffer_nullify_event=data_buffer_nullify_event,
-            discount_factor=discount_factor,
-            is_critic_first=True,
-            action_bounds=action_bounds,
-            max_data_buffer_size=max_data_buffer_size,
-            time_start=time_start,
-            sampling_time=sampling_time,
-        )
-        self.safe_controller = safe_controller
-
-    def update_data_buffer_with_action_stats(self, observation):
-        super().update_data_buffer_with_action_stats(observation)
-        self.data_buffer.push_to_end(
-            observation_last_good=self.critic.observation_last_good
-        )
-
-    @apply_action_bounds
-    @apply_callbacks()
-    def compute_action(
-        self,
-        state,
-        observation,
-        time=0,
-    ):
-        self.critic.receive_state(state)
-        self.policy.receive_state(state)
-        self.policy.receive_observation(observation)
-
-        self.data_buffer.push_to_end(
-            observation=observation,
-            timestamp=time,
-            episode_id=self.episode_counter,
-            iteration_id=self.iteration_counter,
-            step_id=self.step_counter,
-        )
-
-        # if self.is_first_compute_action_call:
-        if self.is_first_compute_action_call:
-            self.critic.observation_last_good = observation
-            self.update_data_buffer_with_action_stats(observation)
-            self.is_first_compute_action_call = False
-            return self.policy.action
-
-        if rc.norm_2(observation) > 0.5:
-            critic_weights = self.critic.optimize_on_event(
-                self.data_buffer,
-                is_update_and_cache_weights=False,
-                is_constrained=rc.norm_2(observation) > 2.0,
-            )
-            critic_weights_accepted = self.critic.opt_status == "success"
-            # print(critic_weights_accepted)
-            if critic_weights_accepted:
-                self.critic.observation_last_good = observation
-        else:
-            critic_weights = self.critic.model.weights
-            # critic_weights_accepted = False
-
-        # №if critic_weights_accepted:
-        self.critic.update_weights(critic_weights)
-        self.policy.optimize_on_event(self.data_buffer)
-        self.policy.update_action(observation)
-        self.update_data_buffer_with_action_stats(observation)
-        self.critic.cache_weights(critic_weights)
 
         self.step_counter += 1
         return self.policy.action
@@ -587,12 +487,12 @@ class CALFControllerExPostLegacy(RLController):
         self.critic.update_buffers(
             observation, self.policy.action
         )  ### store current action and observation in critic's data buffer
-        self.critic.receive_state(state)
+        self.critic.receive_estimated_state(state)
         # self.critic.safe_decay_param = 1e-1 * rc.norm_2(observation)
         self.policy.receive_observation(
             observation
         )  ### store current observation in policy
-        self.policy.receive_state(state)
+        self.policy.receive_estimated_state(state)
         self.critic.optimize_weights(time=time)
         critic_weights_accepted = self.critic.opt_status == "success"
 

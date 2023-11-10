@@ -10,7 +10,7 @@ Remarks:
 
 from unittest.mock import MagicMock
 import numpy as np
-from .__utilities import rc
+from .__utilities import rc, AwaitedParameter
 from abc import ABC
 from .optimizable import Optimizable
 from .objective import temporal_difference_objective
@@ -97,7 +97,7 @@ class Critic(Optimizable, ABC):
 
         self.initialize_optimize_procedure()
 
-    def receive_state(self, state):
+    def receive_estimated_state(self, state):
         self.state = state
 
     def __call__(self, *args, use_stored_weights=False, weights=None):

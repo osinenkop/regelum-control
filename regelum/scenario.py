@@ -18,6 +18,8 @@ from .constraint_parser import ConstraintParser, ConstraintParserTrivial
 from .observer import Observer, ObserverTrivial
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
 from dataclasses import dataclass
+from .__utilities import AwaitedParameter
+from .event import OptimizationEvent
 
 try:
     import torch
@@ -46,16 +48,46 @@ class Scenario(regelum.RegelumBase, ABC):
     def step(self):
         pass
 
+    @apply_callbacks()
+    def reset_iteration(self):
+        self.episode_counter = 0
+        self.iteration_counter += 1
+        self.recent_total_objectives_of_episodes = self.total_objectives_of_episodes
+        self.total_objectives_of_episodes = []
+
+    def reset_episode(self):
+        self.episode_counter += 1
+        self.is_episode_ended = False
+
+        return self.total_objective
+
+    def reset_simulation(self):
+        self.current_scenario_status = "episode_continues"
+        self.iteration_counter = 0
+        self.episode_counter = 0
+
+    def __getattribute__(self, name: str):
+        if name.startswith("reset"):
+            suffix = name.split("_")[-1]
+            return self.__reset_whatever(suffix)
+        else:
+            return object.__getattribute__(self, name)
+
+    def __reset_whatever(self, suffix):
+        def wrapped(*args, **kwargs):
+            res = object.__getattribute__(self, f"reset_{suffix}")(*args, **kwargs)
+            if self.sim_status != "simulation_ended":
+                self.controller.optimize_on_event(
+                    event=getattr(OptimizationEvent, f"reset_{suffix}")
+                )
+            return res
+
+        return wrapped
+
 
 # TODO: DOCSTRING
 class OnlineScenario(Scenario):
     """Basic scenario for simulation and online learning."""
-
-    @dataclass
-    class AwaitedParameter:
-        """A nested class to tag parameters that are expected to be computed at initial simulation step."""
-
-        name: str
 
     @apply_callbacks()
     def __init__(
@@ -124,16 +156,20 @@ class OnlineScenario(Scenario):
         )
         self.observer = observer if observer is not None else ObserverTrivial()
 
-        self.state_init, self.action_init = self.AwaitedParameter(
-            "state_init"
-        ), self.AwaitedParameter("action_init")
+        self.state_init, self.action_init = AwaitedParameter(
+            "state_init", awaited_from=self.simulator.__class__.__name__
+        ), AwaitedParameter(
+            "action_init", awaited_from=self.simulator.__class__.__name__
+        )
         self.state = self.state_init
         self.action = self.controller.action = self.action_init
-        self.observation = self.AwaitedParameter("observation")
+        self.observation = AwaitedParameter(
+            "observation", awaited_from=self.simulator.system.get_observation.__name__
+        )
 
     def step(self):
-        if isinstance(self.action_init, self.AwaitedParameter) and isinstance(
-            self.state_init, self.AwaitedParameter
+        if isinstance(self.action_init, AwaitedParameter) and isinstance(
+            self.state_init, AwaitedParameter
         ):
             (
                 self.state_init,
@@ -165,13 +201,13 @@ class OnlineScenario(Scenario):
             self.controller.substitute_constraint_parameters(
                 **self.constraint_parameters
             )
-            state_estimated = self.observer.get_state_estimation(
+            estimated_state = self.observer.get_state_estimation(
                 self.time, self.observation, self.action
             )
 
             self.action = self.controller.compute_action_sampled(
                 self.time,
-                state_estimated,
+                estimated_state,
                 self.observation,
             )
             self.simulator.receive_action(self.action)
@@ -212,7 +248,6 @@ class OnlineScenario(Scenario):
         return self.recent_total_objective
 
     def run(self):
-        ### We use values `iteration_counter` and `episode_counter` only for debug purposes
         for _ in range(self.N_iterations):
             for _ in range(self.N_episodes):
                 while self.sim_status not in [
@@ -223,26 +258,3 @@ class OnlineScenario(Scenario):
                     self.sim_status = self.step()
 
                 self.reload_pipeline()
-
-    @apply_callbacks()
-    def reset_iteration(self):
-        self.episode_counter = 0
-        self.iteration_counter += 1
-        self.recent_total_objectives_of_episodes = self.total_objectives_of_episodes
-        self.total_objectives_of_episodes = []
-
-        if self.sim_status != "simulation_ended":
-            self.controller.optimize_on_event(event="reset_iteration")
-
-    def reset_episode(self):
-        self.episode_counter += 1
-        self.is_episode_ended = False
-        if self.sim_status != "simulation_ended":
-            self.controller.optimize_on_event(event="reset_episode")
-
-        return self.total_objective
-
-    def reset_simulation(self):
-        self.current_scenario_status = "episode_continues"
-        self.iteration_counter = 0
-        self.episode_counter = 0

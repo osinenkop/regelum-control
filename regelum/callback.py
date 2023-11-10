@@ -1215,7 +1215,7 @@ class ControllerStepLogger(Callback):
         datum = obj.data_buffer.getitem(
             idx=-1,
             keys=[
-                "state_estimated",
+                "estimated_state",
                 "observation",
                 "action",
                 "timestamp",
@@ -1228,7 +1228,7 @@ class ControllerStepLogger(Callback):
         with np.printoptions(precision=2, suppress=True):
             self.log(
                 f"Current objective: {datum['running_objective'][0]:.2f}, "
-                f"state est.: {datum['state_estimated']}, "
+                f"state est.: {datum['estimated_state']}, "
                 f"observation: {datum['observation']}, "
                 f"action: {datum['action']}, "
                 f"total objective: {datum['current_total_objective'][0]:.4f}, "
@@ -1322,7 +1322,7 @@ class HistoricalDataCallback(HistoricalCallback):
         datum = obj.data_buffer.getitem(
             idx=-1,
             keys=[
-                "state_estimated",
+                "estimated_state",
                 "observation",
                 "action",
                 "timestamp",
