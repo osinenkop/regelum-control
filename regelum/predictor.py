@@ -38,6 +38,20 @@ class Predictor(regelum.RegelumBase, ABC):
         is_predict_last: bool,
         return_predicted_states_only=False,
     ):
+        """Predicts the state sequence from the given action sequence.
+
+        :param state: The initial state.
+        :type state: numpy.ndarray
+        :param action_sequence: The sequence of actions.
+        :type action_sequence: numpy.ndarray
+        :param is_predict_last: Whether to predict the last state or not.
+        :type is_predict_last: bool
+        :param return_predicted_states_only: Whether to return only the predicted states or both the predicted states and the action sequence. Defaults to False.
+        :type return_predicted_states_only: bool, optional
+
+        :return: If `return_predicted_states_only` is False, returns a tuple containing the predicted state sequence and the action sequence. If `return_predicted_states_only` is True, returns only the predicted state sequence.
+        :rtype: tuple or numpy.ndarray
+        """
         len_state_sequence = action_sequence.shape[0] - int(not is_predict_last)
         predicted_state_sequence = rc.zeros(
             [len_state_sequence, self.system.dim_state],
@@ -65,6 +79,18 @@ class Predictor(regelum.RegelumBase, ABC):
         model_weights=None,
         return_predicted_states_only=False,
     ):
+        """Predicts a sequence of states from a given initial state using a model.
+
+        :param state: The initial state.
+        :param prediction_horizon: The number of steps to predict into the future.
+        :param is_predict_last: A boolean indicating whether to predict the last state.
+        :param model: The model used for prediction.
+        :param model_weights: The weights of the model (optional).
+        :param return_predicted_states_only: A boolean indicating whether to return only the predicted states.
+
+        :return: If `return_predicted_states_only` is `True`, returns the predicted state sequence.
+                 Otherwise, returns a tuple containing the predicted state sequence and the action sequence.
+        """
         if isinstance(model, ModelWeightContainer):
             if model_weights is not None:
                 assert model_weights.shape[0] == prediction_horizon + 1 - int(

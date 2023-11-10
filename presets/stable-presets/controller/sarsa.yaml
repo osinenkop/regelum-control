@@ -41,7 +41,6 @@ critic:
 
 policy:
   device: $ controller.device%%
-  epsilon_random: True
   epsilon_random_parameter: 0.05
   prediction_horizon: 0 
   algorithm: rql

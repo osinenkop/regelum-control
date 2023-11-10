@@ -66,33 +66,27 @@ def middle_inputs():
 
 @pytest.fixture
 def right_bound_tr_samples(truncated_model, right_bound_inputs):
-    return torch.vstack(
-        [truncated_model.sample(right_bound_inputs) for _ in range(1500)]
-    )
+    return torch.vstack([truncated_model(right_bound_inputs) for _ in range(1500)])
 
 
 @pytest.fixture
 def left_bound_tr_samples(truncated_model, left_bound_inputs):
-    return torch.vstack(
-        [truncated_model.sample(left_bound_inputs) for _ in range(1500)]
-    )
+    return torch.vstack([truncated_model(left_bound_inputs) for _ in range(1500)])
 
 
 @pytest.fixture
 def middle_tr_samples(truncated_model, middle_inputs):
-    return torch.vstack([truncated_model.sample(middle_inputs) for _ in range(1500)])
+    return torch.vstack([truncated_model(middle_inputs) for _ in range(1500)])
 
 
 @pytest.fixture
 def middle_un_samples(untruncated_model, middle_inputs):
-    return torch.vstack([untruncated_model.sample(middle_inputs) for _ in range(1500)])
+    return torch.vstack([untruncated_model(middle_inputs) for _ in range(1500)])
 
 
 @pytest.fixture
 def right_un_samples(untruncated_model, right_bound_inputs):
-    return torch.vstack(
-        [untruncated_model.sample(right_bound_inputs) for _ in range(1500)]
-    )
+    return torch.vstack([untruncated_model(right_bound_inputs) for _ in range(1500)])
 
 
 @pytest.fixture

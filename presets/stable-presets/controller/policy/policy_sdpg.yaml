@@ -7,7 +7,6 @@ defaults:
 
 system: ~ system
 critic: ~ controller.critic
-action_bounds: $ system_specific.action_bounds
 discount_factor: $ scenario.discount_factor
 device: cpu
 sampling_time: $ system_specific.sampling_time

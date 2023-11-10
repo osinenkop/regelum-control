@@ -16,7 +16,7 @@ from typing import Union, Optional
 from .__utilities import rc
 
 from .predictor import Predictor
-from .model import ModelNN, Model, ModelWeightContainer, ModelWeightContainerTorch
+from .model import ModelNN, Model, ModelWeightContainer
 from .critic import Critic, CriticTrivial
 from .system import System, ComposedSystem
 from .optimizable.optimizers import Optimizable, OptimizerConfig
@@ -57,8 +57,7 @@ class Policy(Optimizable, ABC):
         action_init=None,
         optimizer_config: Optional[OptimizerConfig] = None,
         discount_factor: Optional[float] = 1.0,
-        epsilon_random: bool = False,
-        epsilon_random_parameter: float = 0.0,
+        epsilon_random_parameter: Optional[float] = None,
     ):
         """Initialize an instance of Policy class.
 
@@ -88,7 +87,6 @@ class Policy(Optimizable, ABC):
         self.dim_observation = self.system.dim_observation
 
         self.discount_factor = discount_factor if discount_factor is not None else 1.0
-        self.epsilon_random = epsilon_random
         self.epsilon_random_parameter = epsilon_random_parameter
 
         super().__init__(optimizer_config=optimizer_config)
@@ -158,7 +156,7 @@ class Policy(Optimizable, ABC):
         if observation is None:
             observation = self.observation
 
-        if self.epsilon_random:
+        if self.epsilon_random_parameter is not None:
             toss = np.random.choice(
                 2,
                 1,
@@ -185,7 +183,7 @@ class Policy(Optimizable, ABC):
 
     def get_action(self, observation):
         if isinstance(self.model, ModelNN):
-            action = self.model(observation).detach().numpy()
+            action = self.model(torch.FloatTensor(observation)).detach().cpu().numpy()
         else:
             action = self.model(observation)
         return action
@@ -232,7 +230,6 @@ class PolicyGradient(Policy, ABC):
         self,
         model: ModelNN,
         system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
         discount_factor: float = 1.0,
         device: str = "cpu",
@@ -261,7 +258,6 @@ class PolicyGradient(Policy, ABC):
             self,
             model=model,
             system=system,
-            action_bounds=action_bounds,
             discount_factor=discount_factor,
             optimizer_config=optimizer_config,
         )
@@ -269,10 +265,6 @@ class PolicyGradient(Policy, ABC):
         self.critic = critic
 
         self.N_episodes: int
-
-    @abstractmethod
-    def update_action(self, observation):
-        pass
 
     def update_data_buffer(self, data_buffer: DataBuffer):
         pass
@@ -321,7 +313,6 @@ class Reinforce(PolicyGradient):
         self,
         model: ModelNN,
         system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
         discount_factor: float = 1.0,
         device: str = "cpu",
@@ -349,7 +340,6 @@ class Reinforce(PolicyGradient):
             self,
             model=model,
             system=system,
-            action_bounds=action_bounds,
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
             device=device,
@@ -359,13 +349,6 @@ class Reinforce(PolicyGradient):
         self.next_baseline = 0.0
 
         self.initialize_optimization_procedure()
-
-    def update_action(self, observation):
-        self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
-            )
 
     def update_data_buffer(self, data_buffer: DataBuffer):
         data_buffer.update(
@@ -457,7 +440,6 @@ class Reinforce(PolicyGradient):
             baselines=baseline,
             is_with_baseline=self.is_with_baseline,
             is_do_not_let_the_past_distract_you=self.is_do_not_let_the_past_distract_you,
-            device=self.device,
             N_episodes=self.N_episodes,
         )
 
@@ -470,7 +452,6 @@ class SDPG(PolicyGradient):
         model: ModelNN,
         critic: Critic,
         system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
         sampling_time: float,
         discount_factor: float = 1.0,
@@ -497,7 +478,6 @@ class SDPG(PolicyGradient):
             self,
             model=model,
             system=system,
-            action_bounds=action_bounds,
             discount_factor=discount_factor,
             device=device,
             critic=critic,
@@ -518,20 +498,12 @@ class SDPG(PolicyGradient):
             observations=observation,
             actions=action,
             timestamps=timestamp,
-            device=self.device,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
             running_objectives=running_objective,
             sampling_time=self.sampling_time,
         )
-
-    def update_action(self, observation):
-        self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
-            )
 
 
 class PPO(PolicyGradient):
@@ -542,7 +514,6 @@ class PPO(PolicyGradient):
         model: ModelNN,
         critic: Critic,
         system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
         sampling_time: float,
         discount_factor: float = 1.0,
@@ -573,7 +544,6 @@ class PPO(PolicyGradient):
             self,
             model=model,
             system=system,
-            action_bounds=action_bounds,
             discount_factor=discount_factor,
             device=device,
             critic=critic,
@@ -609,7 +579,6 @@ class PPO(PolicyGradient):
             observations=observation,
             actions=action,
             timestamps=timestamp,
-            device=self.device,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
@@ -633,13 +602,6 @@ class PPO(PolicyGradient):
             }
         )
 
-    def update_action(self, observation):
-        self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
-            )
-
 
 class DDPG(PolicyGradient):
     """Policy for Deterministic Deep Policy Gradient (DDPG)."""
@@ -649,7 +611,6 @@ class DDPG(PolicyGradient):
         model: ModelNN,
         critic: Critic,
         system: Union[System, ComposedSystem],
-        action_bounds: Union[list, np.ndarray, None],
         optimizer_config: OptimizerConfig,
         discount_factor: float = 1.0,
         device: str = "cpu",
@@ -675,7 +636,6 @@ class DDPG(PolicyGradient):
             self,
             model=model,
             system=system,
-            action_bounds=action_bounds,
             discount_factor=discount_factor,
             device=device,
             critic=critic,
@@ -691,15 +651,7 @@ class DDPG(PolicyGradient):
             policy_model=self.model,
             critic_model=self.critic.model,
             observations=observation,
-            device=self.device,
         )
-
-    def update_action(self, observation):
-        self.action_old = self.action
-        with torch.no_grad():
-            self.action = (
-                self.model.sample(torch.FloatTensor(observation)).cpu().numpy()
-            )
 
 
 class RLPolicy(Policy):
@@ -718,8 +670,7 @@ class RLPolicy(Policy):
         constraint_parser: Optional[ConstraintParser] = None,
         discount_factor: float = 1.0,
         device: str = "cpu",
-        epsilon_random: bool = False,
-        epsilon_random_parameter: float = 0.0,
+        epsilon_random_parameter: Optional[float] = None,
         algorithm: str = "mpc",
     ):
         """Initialize an instance of RLPolicy class.
@@ -765,7 +716,6 @@ class RLPolicy(Policy):
         self.prediction_horizon = prediction_horizon
         self.critic = critic
         self.device = device
-        self.epsilon_random = epsilon_random
         self.epsilon_random_parameter = epsilon_random_parameter
         self.running_objective = running_objective
         self.algorithm = algorithm
@@ -916,10 +866,6 @@ class RLPolicy(Policy):
             )
         else:
             raise AssertionError("RLPolicy: Wrong algorithm name")
-
-    def get_sequential_output(self, observation):
-        if isinstance(self.model, (ModelWeightContainerTorch, ModelWeightContainer)):
-            pass
 
     def optimize_on_event(self, data_buffer: DataBuffer):
         opt_kwargs = data_buffer.get_optimization_kwargs(

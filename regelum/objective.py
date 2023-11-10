@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 
 import regelum
 from .model import Model, PerceptronWithTruncatedNormalNoise, ModelNN
-from typing import Optional, Union
+from typing import Optional
 import torch
 from .__utilities import rc
 from .predictor import Predictor
@@ -66,7 +66,6 @@ def reinforce_objective(
     baselines: torch.FloatTensor,
     is_with_baseline: bool,
     is_do_not_let_the_past_distract_you: bool,
-    device: Union[str, torch.device],
     N_episodes: int,
 ) -> torch.FloatTensor:
     r"""Calculate the surrogate objective for REINFORCE algorithm.
@@ -104,13 +103,13 @@ def reinforce_objective(
     :return: surrogate objective value.
     :rtype: torch.FloatTensor
     """
-    log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
+    log_pdfs = policy_model.log_pdf(observations, actions)
     if is_do_not_let_the_past_distract_you:
-        target_objectives = tail_total_objectives.to(device)
+        target_objectives = tail_total_objectives
     else:
-        target_objectives = total_objectives.to(device)
+        target_objectives = total_objectives
     if is_with_baseline:
-        target_objectives -= baselines.to(device)
+        target_objectives -= baselines
 
     return (log_pdfs * target_objectives).sum() / N_episodes
 
@@ -122,7 +121,6 @@ def sdpg_objective(
     actions: torch.FloatTensor,
     timestamps: torch.FloatTensor,
     episode_ids: torch.LongTensor,
-    device: Union[str, torch.device],
     discount_factor: float,
     N_episodes: int,
     running_objectives: torch.FloatTensor,
@@ -155,7 +153,7 @@ def sdpg_objective(
     :rtype: torch.FloatTensor
     """
     critic_values = critic_model(observations)
-    log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
+    log_pdfs = policy_model.log_pdf(observations, actions)
 
     objective = 0.0
     for episode_idx in torch.unique(episode_ids):
@@ -182,7 +180,6 @@ def ppo_objective(
     actions: torch.FloatTensor,
     timestamps: torch.FloatTensor,
     episode_ids: torch.LongTensor,
-    device: Union[str, torch.device],
     discount_factor: float,
     N_episodes: int,
     running_objectives: torch.FloatTensor,
@@ -230,8 +227,7 @@ def ppo_objective(
 
     critic_values = critic_model(observations)
     prob_ratios = torch.exp(
-        policy_model.log_pdf(observations.to(device), actions.to(device))
-        - initial_log_probs.reshape(-1)
+        policy_model.log_pdf(observations, actions) - initial_log_probs.reshape(-1)
     ).reshape(-1, 1)
     clipped_prob_ratios = torch.clamp(prob_ratios, 1 - epsilon, 1 + epsilon)
     objective_value = 0.0
@@ -268,7 +264,6 @@ def ddpg_objective(
     policy_model: ModelNN,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
-    device: Union[str, torch.device],
 ) -> torch.FloatTensor:
     """Calculate the objective value for the DDPG algorithm.
 
@@ -286,12 +281,8 @@ def ddpg_objective(
     :return: The objective value.
     :rtype: torch.FloatTensor
     """
-    observations_on_device = observations.to(device)
     return critic_model(
-        torch.cat(
-            [observations_on_device, policy_model(observations_on_device)],
-            dim=1,
-        )
+        observations, policy_model.forward(observations, is_means_only=True)
     ).mean()
 
 

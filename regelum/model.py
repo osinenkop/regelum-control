@@ -717,8 +717,7 @@ class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
 
     The `PerceptronWithTruncatedNormalNoise` class provides the following functionality:
 
-    - Forward pass: The `forward` method performs a forward pass through the perceptron model, applying linear transformations and activation functions to the input data.
-    - Sampling : After the forward pass, normal noise is added to the output of the perceptron. The standard deviations of the noise can be specified using the `stds` parameter.
+    - Sampling : After the forward pass, normal noise is added to the output of the perceptron. The standard deviations of the noise can be specified using the `stds` parameter. All this functionality is implemented in the forward method.
     - Truncation to output bounds: The `is_truncated_to_output_bounds` flag determines whether the noise should be truncated to the output bounds. When set to `True`, the noise values are generated from corresponding truncated normal distribution.
     """
 
@@ -828,7 +827,7 @@ class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
         )
 
     def log_pdf(self, distribution_params_input, log_prob_args):
-        means = self(distribution_params_input)
+        means = super().forward(distribution_params_input)
         normal = Normal(loc=means, scale=torch.ones_like(means) * self.stds)
         if self.is_truncated_to_output_bounds:
             left_bounds, right_bounds = (
@@ -845,8 +844,10 @@ class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
         else:
             return normal.log_prob(log_prob_args).sum(axis=1)
 
-    def sample(self, observation):
-        mean = self(observation)
+    def forward(self, observation, is_means_only=False):
+        mean = super().forward(observation)
+        if is_means_only:
+            return mean
         mean_numpy = mean.detach().cpu().numpy()
         if self.is_truncated_to_output_bounds:
             left_bounds, right_bounds = (
