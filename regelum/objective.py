@@ -349,7 +349,7 @@ def temporal_difference_objective(
 
 def mpc_objective(
     observation,
-    state_estimated,
+    estimated_state,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -361,7 +361,7 @@ def mpc_objective(
         state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        state_estimated,
+        estimated_state,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
@@ -399,7 +399,7 @@ def mpc_objective(
 
 def rpo_objective(
     observation,
-    state_estimated,
+    estimated_state,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -414,7 +414,7 @@ def rpo_objective(
         state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        state_estimated,
+        estimated_state,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
@@ -457,7 +457,7 @@ def rpo_objective(
 
 def rql_objective(
     observation,
-    state_estimated,
+    estimated_state,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -472,7 +472,7 @@ def rql_objective(
         state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        state_estimated,
+        estimated_state,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
@@ -520,7 +520,7 @@ def rql_objective(
 
 def sql_objective(
     observation,
-    state_estimated,
+    estimated_state,
     policy_model_weights,
     predictor: Predictor,
     model,
@@ -532,7 +532,7 @@ def sql_objective(
         state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        state_estimated,
+        estimated_state,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,

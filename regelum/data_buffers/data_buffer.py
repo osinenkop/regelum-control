@@ -190,6 +190,9 @@ class DataBuffer:
             fill_na=self.fill_na_for_indexing,
         )
 
+    def get_latest(self, key: str) -> np.array:
+        return self.data[key][-1]
+
     def iter_batches(
         self,
         keys: List[str],

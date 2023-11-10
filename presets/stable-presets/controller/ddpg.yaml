@@ -11,9 +11,9 @@ sampling_time: $ system_specific.sampling_time
 is_critic_first: True
 running_objective: ~ running_objective
 discount_factor: $ scenario.discount_factor
-critic_optimization_event: reset_iteration
-policy_optimization_event: reset_iteration
-data_buffer_nullify_event: reset_iteration
+critic_optimization_event: = regelum.Event.reset_iteration
+policy_optimization_event: = regelum.Event.reset_iteration
+data_buffer_nullify_event: = regelum.Event.reset_iteration
 
 device%%: cpu
 

@@ -154,7 +154,6 @@ class RegelumBase(metaclass=RegelumType):
         #        regelum.main.callbacks = [callback_instance] + regelum.main.callbacks
 
 
-# TODO: DOCSTRING
 class Node(abc.ABC):
     """A node is an object that is responsible for sending/receiving/rerouting/processing messages."""
 

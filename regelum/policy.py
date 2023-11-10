@@ -128,7 +128,7 @@ class Policy(Optimizable, ABC):
         """
         self.observation = observation
 
-    def receive_state(self, state):
+    def receive_estimated_state(self, state):
         """Update the current observation of the policy.
 
         :param observation: The current observation.
@@ -269,7 +269,7 @@ class PolicyGradient(Policy, ABC):
     def update_data_buffer(self, data_buffer: DataBuffer):
         pass
 
-    def optimize_on_event(self, data_buffer: DataBuffer):
+    def optimize(self, data_buffer: DataBuffer):
         # Send to device before optimization
         if self.critic is not None:
             self.critic.model = self.critic.model.to(self.device)
@@ -277,7 +277,7 @@ class PolicyGradient(Policy, ABC):
         self.N_episodes = len(np.unique(data_buffer.data["episode_id"]))
         self.update_data_buffer(data_buffer)
 
-        self.optimize(
+        super().optimize(
             **data_buffer.get_optimization_kwargs(
                 keys=self.data_buffer_objective_keys(),
                 optimizer_config=self.optimizer_config,
@@ -728,18 +728,18 @@ class RLPolicy(Policy):
         self.initial_guess = None
 
     def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation", "state_estimated"]
+        return ["observation", "estimated_state"]
 
     def initialize_optimization_procedure(self):
         objective_variables = []
         self.observation_variable = self.create_variable(
             1, self.system.dim_observation, name="observation", is_constant=True
         )
-        self.state_estimated_variable = self.create_variable(
-            1, self.system.dim_state, name="state_estimated", is_constant=True
+        self.estimated_state_variable = self.create_variable(
+            1, self.system.dim_state, name="estimated_state", is_constant=True
         )
         objective_variables.extend(
-            [self.observation_variable, self.state_estimated_variable]
+            [self.observation_variable, self.estimated_state_variable]
         )
         self.policy_model_weights = self.create_variable(
             name="policy_model_weights", like=self.model.named_parameters
@@ -788,7 +788,7 @@ class RLPolicy(Policy):
                 connect_to=self.predicted_states_var,
                 func=self.predictor.predict_state_sequence_from_model,
                 prediction_horizon=self.prediction_horizon,
-                state=self.state_estimated_variable,
+                state=self.estimated_state_variable,
                 model=self.model,
                 model_weights=self.policy_model_weights,
                 is_predict_last=is_predict_last,
@@ -806,11 +806,11 @@ class RLPolicy(Policy):
             )
 
     def objective_function(
-        self, state_estimated, observation, policy_model_weights, critic_weights=None
+        self, estimated_state, observation, policy_model_weights, critic_weights=None
     ):
         if self.algorithm == "mpc":
             return mpc_objective(
-                state_estimated=state_estimated,
+                estimated_state=estimated_state,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -821,7 +821,7 @@ class RLPolicy(Policy):
             )
         elif self.algorithm == "rpo":
             return rpo_objective(
-                state_estimated=state_estimated,
+                estimated_state=estimated_state,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -834,7 +834,7 @@ class RLPolicy(Policy):
             )
         elif self.algorithm == "sql":
             return sql_objective(
-                state_estimated=state_estimated,
+                estimated_state=estimated_state,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -845,7 +845,7 @@ class RLPolicy(Policy):
             )
         elif self.algorithm == "rql":
             return rql_objective(
-                state_estimated=state_estimated,
+                estimated_state=estimated_state,
                 observation=observation,
                 policy_model_weights=policy_model_weights,
                 predictor=self.predictor,
@@ -867,7 +867,7 @@ class RLPolicy(Policy):
         else:
             raise AssertionError("RLPolicy: Wrong algorithm name")
 
-    def optimize_on_event(self, data_buffer: DataBuffer):
+    def optimize(self, data_buffer: DataBuffer):
         opt_kwargs = data_buffer.get_optimization_kwargs(
             keys=self.data_buffer_objective_keys(),
             optimizer_config=self.optimizer_config,
@@ -876,13 +876,13 @@ class RLPolicy(Policy):
         if opt_kwargs is not None:
             if self.kind == "symbolic":
                 result = (
-                    self.optimize(
+                    super().optimize(
                         **opt_kwargs,
                         policy_model_weights=self.get_initial_guess(),
                         tol=1e-8,
                     )
                     if self.critic.weights is None
-                    else self.optimize(
+                    else super().optimize(
                         **opt_kwargs,
                         policy_model_weights=self.get_initial_guess(),
                         critic_weights=self.critic.weights,
@@ -891,7 +891,7 @@ class RLPolicy(Policy):
                 )
                 self.update_weights(result["policy_model_weights"])
             elif self.kind == "tensor":
-                self.optimize(**opt_kwargs)
+                super().optimize(**opt_kwargs)
 
     def get_initial_guess(self):
         return self.model.weights

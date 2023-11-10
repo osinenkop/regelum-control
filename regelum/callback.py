@@ -782,12 +782,24 @@ class ControllerStepLogger(Callback):
 
     cooldown = 1.0
 
+    def trigger_cooldown(self, t):
+        if self.datum is not None:
+            super().trigger_cooldown(t)
+
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.RLController)
-            and method == "compute_action"
-        ) or (
-            isinstance(obj, regelum.scenario.OnlineScenario) and (method == "__init__")
+            (
+                isinstance(obj, regelum.controller.RLController)
+                and method == "on_observation_received"
+            )
+            or (
+                isinstance(obj, regelum.controller.RLController)
+                and method == "on_action_issued"
+            )
+            or (
+                isinstance(obj, regelum.scenario.OnlineScenario)
+                and (method == "__init__")
+            )
         )
 
     def perform(self, obj, method, output):
@@ -795,33 +807,24 @@ class ControllerStepLogger(Callback):
             self.N_episodes = obj.N_episodes
             self.N_iterations = obj.N_iterations
             self.time_final = obj.simulator.time_final
+            self.datum = None
+        elif method == "on_observation_received":
+            self.datum = output
+        elif method == "on_action_issued":
+            self.datum |= output
 
-            return
-
-        datum = obj.data_buffer.getitem(
-            idx=-1,
-            keys=[
-                "state_estimated",
-                "observation",
-                "action",
-                "timestamp",
-                "running_objective",
-                "current_total_objective",
-                "episode_id",
-                "iteration_id",
-            ],
-        )
-        with np.printoptions(precision=2, suppress=True):
-            self.log(
-                f"Current objective: {datum['running_objective'][0]:.2f}, "
-                f"state est.: {datum['state_estimated']}, "
-                f"observation: {datum['observation']}, "
-                f"action: {datum['action']}, "
-                f"total objective: {datum['current_total_objective'][0]:.4f}, "
-                f"time: {datum['timestamp'][0]:.4f} ({100 * datum['timestamp'][0]/self.time_final:.1f}%), "
-                f"episode: {int(datum['episode_id'][0]) + 1}/{self.N_episodes}, "
-                f"iteration: {int(datum['iteration_id'][0]) + 1}/{self.N_iterations}"
-            )
+            with np.printoptions(precision=2, suppress=True):
+                self.log(
+                    f"Current objective: {self.datum['running_objective']:.2f}, "
+                    f"state est.: {self.datum['estimated_state'][0]}, "
+                    f"observation: {self.datum['observation'][0]}, "
+                    f"action: {self.datum['action'][0]}, "
+                    f"total objective: {self.datum['current_total_objective']:.4f}, "
+                    f"time: {self.datum['timestamp']:.4f} ({100 * self.datum['timestamp']/self.time_final:.1f}%), "
+                    f"episode: {int(self.datum['episode_id']) + 1}/{self.N_episodes}, "
+                    f"iteration: {int(self.datum['iteration_id']) + 1}/{self.N_iterations}"
+                )
+            self.datum = None
 
 
 class SaveProgressCallback(Callback):
@@ -908,7 +911,7 @@ class HistoricalDataCallback(HistoricalCallback):
         datum = obj.data_buffer.getitem(
             idx=-1,
             keys=[
-                "state_estimated",
+                "estimated_state",
                 "observation",
                 "action",
                 "timestamp",
