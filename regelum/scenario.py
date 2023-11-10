@@ -17,9 +17,8 @@ from .objective import RunningObjective
 from .constraint_parser import ConstraintParser, ConstraintParserTrivial
 from .observer import Observer, ObserverTrivial
 from . import ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK
-from dataclasses import dataclass
 from .__utilities import AwaitedParameter
-from .event import OptimizationEvent
+from .event import Event
 
 try:
     import torch
@@ -77,9 +76,7 @@ class Scenario(regelum.RegelumBase, ABC):
         def wrapped(*args, **kwargs):
             res = object.__getattribute__(self, f"reset_{suffix}")(*args, **kwargs)
             if self.sim_status != "simulation_ended":
-                self.controller.optimize_on_event(
-                    event=getattr(OptimizationEvent, f"reset_{suffix}")
-                )
+                self.controller.optimize(event=getattr(Event, f"reset_{suffix}"))
             return res
 
         return wrapped

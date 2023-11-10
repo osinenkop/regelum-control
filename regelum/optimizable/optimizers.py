@@ -4,6 +4,7 @@
 """
 import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
+from enum import Enum, auto
 
 from regelum.__utilities import rc
 
@@ -672,11 +673,11 @@ class Optimizable(regelum.RegelumBase):
         )
 
     def update_status(self, result=None, tol=1e-8):
-        self.opt_status = "success"
+        self.opt_status = OptStatus.success
         if self.kind == "symbolic":
             for constr_name in self.constraints.names:
                 if rc.max(result[constr_name]) > tol:
-                    self.opt_status = "failed"
+                    self.opt_status = OptStatus.failed
                     break
 
     def optimize_numeric(self, raw=False, **parameters):
@@ -775,9 +776,9 @@ class Optimizable(regelum.RegelumBase):
             ).item()
             > 0
         ):
-            self.opt_status = "failed"
+            self.opt_status = OptStatus.failed
         else:
-            self.opt_status = "success"
+            self.opt_status = OptStatus.success
 
     @apply_callbacks()
     def post_epoch(self, epoch_idx: int, objective_epoch_history: List[float]):
@@ -865,3 +866,10 @@ class Optimizable(regelum.RegelumBase):
             return kwargs.get("n_samples") if kwargs.get("n_samples") is not None else 1
         else:
             raise ValueError("Unknown data_buffer_sampling_method")
+
+
+class OptStatus(Enum):
+    """Enum class representing optimization status."""
+
+    success = auto()
+    failed = auto()

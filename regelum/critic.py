@@ -10,7 +10,7 @@ Remarks:
 
 from unittest.mock import MagicMock
 import numpy as np
-from .__utilities import rc, AwaitedParameter
+from .__utilities import rc
 from abc import ABC
 from .optimizable import Optimizable
 from .objective import temporal_difference_objective
@@ -337,7 +337,7 @@ class Critic(Optimizable, ABC):
         if "critic_targets" in data_buffer.keys():
             data_buffer.delete_key("critic_targets")
 
-    def optimize_on_event(
+    def optimize(
         self, data_buffer, is_update_and_cache_weights=True, is_constrained=True
     ):
         if isinstance(self.model, ModelNN):
@@ -354,11 +354,11 @@ class Critic(Optimizable, ABC):
         weights = None
         if opt_kwargs is not None:
             if self.kind == "tensor":
-                self.optimize(**opt_kwargs, is_constrained=is_constrained)
+                super().optimize(**opt_kwargs, is_constrained=is_constrained)
                 if is_update_and_cache_weights:
                     self.model.update_and_cache_weights()
             elif self.kind == "symbolic":
-                weights = self.optimize(
+                weights = super().optimize(
                     **opt_kwargs,
                     is_constrained=is_constrained,
                     critic_weights=self.model.weights,
@@ -386,7 +386,7 @@ class CriticTrivial(Critic):
         """Instantiate a CriticTrivial object."""
         self.model = self.TrivialModel()
 
-    def optimize_on_event(self, *args, **kwargs):
+    def optimize(self, *args, **kwargs):
         pass
 
     def update_weights(self, *args, **kwargs):

@@ -8,8 +8,6 @@ Remarks:
 
 """
 
-from abc import ABC, abstractmethod
-
 import numpy as np
 import scipy as setpoint
 from scipy.optimize import minimize
@@ -21,7 +19,8 @@ from .critic import Critic, CriticCALF
 from typing import Optional, Union
 from .objective import RunningObjective
 from .data_buffers import DataBuffer
-from .event import BufferNullifyEvent, OptimizationEvent
+from .event import Event
+from . import OptStatus
 
 
 def apply_action_bounds(method):
@@ -40,7 +39,7 @@ def apply_action_bounds(method):
     return wrapper
 
 
-class Controller(RegelumBase, ABC):
+class Controller(RegelumBase):
     """A blueprint of optimal controllers."""
 
     def __init__(
@@ -48,6 +47,7 @@ class Controller(RegelumBase, ABC):
         policy: Policy,
         time_start: float = 0,
         sampling_time: float = 0.1,
+        running_objective: Optional[RunningObjective] = None,
     ):
         """Initialize an instance of Controller.
 
@@ -65,11 +65,18 @@ class Controller(RegelumBase, ABC):
         self.action_old = AwaitedParameter(
             "action_old", awaited_from=self.compute_action.__name__
         )
+        self.running_objective = (
+            running_objective
+            if running_objective is not None
+            else lambda *args, **kwargs: 0
+        )
+        self.reset()
 
     @apply_action_bounds
     def compute_action_sampled(self, time, estimated_state, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
         if self.is_time_for_new_sample:
+            self.on_observation_received(time, estimated_state, observation)
             action = self.compute_action(
                 time=time,
                 estimated_state=estimated_state,
@@ -78,31 +85,79 @@ class Controller(RegelumBase, ABC):
             self.action_old = action
         else:
             action = self.action_old
-
+        self.calculate_total_objective(
+            running_objective=self.running_objective(observation, action),
+            is_to_update=True,
+        )
         return action
 
-    def __compute_action(self, *args, **kwargs):
-        self.on_observation_received(*args, **kwargs)
-        return object.__getattribute__(self, "compute_action")(*args, **kwargs)
+    def compute_action(self, time, estimated_state, observation):
+        self.issue_action(observation)
+
+    def issue_action(self, observation):
+        self.policy.update_action(observation)
 
     def __getattribute__(self, name):
-        if name == "compute_action":
-            return self.__compute_action
+        if name == "issue_action":
+            return self.__issue_action
         return object.__getattribute__(self, name)
 
+    def __issue_action(self, observation):
+        object.__getattribute__(self, "issue_action")(observation)
+        self.on_action_issued(observation)
+
+    @apply_callbacks()
+    def on_action_issued(self, observation):
+        running_objective = self.running_objective(observation, self.policy.action)
+        current_total_objective = self.calculate_total_objective(
+            running_objective, is_to_update=False
+        )
+        observation_action = np.concatenate((observation, self.policy.action), axis=1)
+        return {
+            "action": self.policy.action,
+            "running_objective": running_objective,
+            "current_total_objective": current_total_objective,
+            "observation_action": observation_action,
+        }
+
+    @apply_callbacks()
     def on_observation_received(self, time, estimated_state, observation):
-        ...
+        return {
+            "estimated_state": estimated_state,
+            "observation": observation,
+            "timestamp": time,
+            "episode_id": self.episode_counter,
+            "iteration_id": self.iteration_counter,
+            "step_id": self.step_counter,
+        }
 
     def substitute_constraint_parameters(self, **kwargs):
         self.policy.substitute_parameters(**kwargs)
 
-    @abstractmethod
-    @apply_callbacks()
-    def compute_action(self, time, estimated_state, observation):
-        pass
+    def calculate_total_objective(self, running_objective: float, is_to_update=True):
+        total_objective = (
+            self.total_objective
+            + running_objective
+            * self.discount_factor**self.clock.current_time
+            * self.clock.delta_time
+        )
+        if is_to_update:
+            self.total_objective = total_objective
+        else:
+            return total_objective
 
-    def optimize_on_event(self, event):
-        pass
+    def reset(self):
+        """Reset agent for use in multi-episode simulation.
+
+        Only __internal clock and current actions are reset.
+        All the learned parameters are retained.
+
+        """
+        self.clock.reset()
+        self.total_objective = 0.0
+        self.policy.action_old = self.policy.action_init
+        self.policy.action = self.policy.action_init
+        self.is_first_compute_action_call = True
 
 
 class RLController(Controller):
@@ -113,9 +168,9 @@ class RLController(Controller):
         policy: Policy,
         critic: Critic,
         running_objective: RunningObjective,
-        critic_optimization_event: OptimizationEvent,
-        policy_optimization_event: OptimizationEvent,
-        data_buffer_nullify_event: BufferNullifyEvent,
+        critic_optimization_event: Event,
+        policy_optimization_event: Event,
+        data_buffer_nullify_event: Event,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
         action_bounds: Optional[Union[list, np.ndarray]] = None,
@@ -166,70 +221,22 @@ class RLController(Controller):
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
 
-    def policy_update(self, observation, event, time):
-        if self.policy_optimization_event == event:
-            self.call_optimize_on_event(
-                self.policy, OptimizationEvent.compute_action, time
-            )
-        if event == OptimizationEvent.compute_action:
-            self.policy.update_action(observation)
-            self.update_data_buffer_with_action_stats(observation)
-
-    def update_data_buffer_with_action_stats(self, observation):
-        running_objective = self.running_objective(observation, self.policy.action)
-        self.data_buffer.push_to_end(
-            action=self.policy.action,
-            running_objective=running_objective,
-            current_total_objective=self.calculate_total_objective(
-                running_objective, is_to_update=False
-            ),
-            observation_action=np.concatenate(
-                (observation, self.policy.action), axis=1
-            ),
-        )
-
-    @apply_callbacks()
-    def pre_optimize(
-        self,
-        which: str,
-        event: str,
-        time: Optional[int] = None,
-    ):
-        return which, event, time, self.episode_counter, self.iteration_counter
-
-    def call_optimize_on_event(
-        self,
-        optimizable_object: Union[Critic, Policy],
-        event: str,
-        time: Optional[float] = None,
-    ):
-        if isinstance(optimizable_object, Critic):
-            which = "Critic"
-        elif isinstance(optimizable_object, Policy):
-            which = "Policy"
-        else:
-            raise ValueError("optimizable object can be either Critic or Policy")
-
-        self.pre_optimize(which=which, event=event, time=time)
-        optimizable_object.optimize_on_event(self.data_buffer)
-
-    def critic_update(self, time=None):
-        if self.critic_optimization_event == "compute_action":
-            self.call_optimize_on_event(self.critic, "compute_action", time)
-
     def on_observation_received(self, time, estimated_state, observation):
         self.critic.receive_estimated_state(estimated_state)
         self.policy.receive_estimated_state(estimated_state)
         self.policy.receive_observation(observation)
 
-        self.data_buffer.push_to_end(
-            estimated_state=estimated_state,
-            observation=observation,
-            timestamp=time,
-            episode_id=self.episode_counter,
-            iteration_id=self.iteration_counter,
-            step_id=self.step_counter,
+        received_data = super().on_observation_received(
+            time, estimated_state, observation
         )
+        self.data_buffer.push_to_end(**received_data)
+
+        return received_data
+
+    def on_action_issued(self, observation):
+        received_data = super().on_action_issued(observation)
+        self.data_buffer.push_to_end(**received_data)
+        return received_data
 
     @apply_action_bounds
     @apply_callbacks()
@@ -239,78 +246,85 @@ class RLController(Controller):
         observation,
         time=0,
     ):
-        if self.is_first_compute_action_call:
-            self.policy_update(observation, "compute_action", time)
-            self.is_first_compute_action_call = False
-            self.step_counter += 1
-            return self.policy.action
+        # Check data consistency
+        assert np.allclose(
+            estimated_state, self.data_buffer.get_latest("estimated_state")
+        )
+        assert np.allclose(observation, self.data_buffer.get_latest("observation"))
+        assert np.allclose(time, self.data_buffer.get_latest("timestamp"))
 
-        if self.is_critic_first:
-            self.critic_update(time)
-            self.policy_update(observation, "compute_action", time)
-        else:
-            self.policy_update(observation, "compute_action", time)
-            self.critic_update(time)
-
-        self.step_counter += 1
+        self.optimize(Event.compute_action)
         return self.policy.action
 
-    def compute_action_sampled(self, time, estimated_state, observation):
-        action = super().compute_action_sampled(time, estimated_state, observation)
-        self.calculate_total_objective(
-            self.running_objective(observation, action), is_to_update=True
-        )
-        return action
-
-    def calculate_total_objective(self, running_objective: float, is_to_update=True):
-        total_objective = (
-            self.total_objective
-            + running_objective
-            * self.discount_factor**self.clock.current_time
-            * self.clock.delta_time
-        )
-        if is_to_update:
-            self.total_objective = total_objective
+    def optimize(self, event):
+        self.update_counters_on_event(event)
+        if self.is_first_compute_action_call and event == Event.compute_action:
+            self.optimize_or_skip_on_event(self.policy, event)
+            self.issue_action(self.data_buffer.get_latest("observation"))
+            self.is_first_compute_action_call = False
+        elif self.is_critic_first:
+            self.optimize_or_skip_on_event(self.critic, event)
+            self.optimize_or_skip_on_event(self.policy, event)
+            if event == Event.compute_action:
+                self.issue_action(self.data_buffer.get_latest("observation"))
         else:
-            return total_objective
-
-    def optimize_on_event(self, event):
-        if event == "reset_iteration":
-            self.iteration_counter += 1
-            self.episode_counter = 0
-            self.step_counter = 0
-            self.is_first_compute_action_call = True
-        if event == "reset_episode":
-            self.episode_counter += 1
-            self.step_counter = 0
-            self.is_first_compute_action_call = True
-
-        if self.is_critic_first:
-            if event == self.critic_optimization_event:
-                self.call_optimize_on_event(self.critic, event)
-            if event == self.policy_optimization_event:
-                self.call_optimize_on_event(self.policy, event)
-        else:
-            if event == self.policy_optimization_event:
-                self.call_optimize_on_event(self.policy, event)
-            if event == self.critic_optimization_event:
-                self.call_optimize_on_event(self.critic, event)
+            self.optimize_or_skip_on_event(self.policy, event)
+            if event == Event.compute_action:
+                self.issue_action(self.data_buffer.get_latest("observation"))
+            self.optimize_or_skip_on_event(self.critic, event)
 
         if event == self.data_buffer_nullify_event:
             self.data_buffer.nullify_buffer()
 
-    def reset(self):
-        """Reset agent for use in multi-episode simulation.
+    def update_counters_on_event(self, event):
+        if event == Event.reset_iteration:
+            self.iteration_counter += 1
+            self.episode_counter = 0
+            self.step_counter = 0
+            self.is_first_compute_action_call = True
+            self.reset()
+        elif event == Event.reset_episode:
+            self.episode_counter += 1
+            self.step_counter = 0
+            self.is_first_compute_action_call = True
+            self.reset()
+        elif event == Event.compute_action:
+            self.step_counter += 1
 
-        Only __internal clock and current actions are reset.
-        All the learned parameters are retained.
+    def optimize_or_skip_on_event(
+        self,
+        optimizable_object: Union[Critic, Policy],
+        event: str,
+    ):
+        if (
+            isinstance(optimizable_object, Critic)
+            and event == self.critic_optimization_event
+        ) or (
+            isinstance(optimizable_object, Policy)
+            and event == self.policy_optimization_event
+        ):
+            self.pre_optimize(
+                optimizable_object=optimizable_object,
+                event=event,
+                time=self.data_buffer.get_latest("timestamp"),
+            )
+            optimizable_object.optimize(self.data_buffer)
 
-        """
-        self.clock.reset()
-        self.total_objective = 0.0
-        self.policy.action_old = self.policy.action_init
-        self.policy.action = self.policy.action_init
-        self.is_first_compute_action_call = True
+    @apply_callbacks()
+    def pre_optimize(
+        self,
+        optimizable_object: Union[Critic, Policy],
+        event: str,
+        time: Optional[int] = None,
+    ):
+        if isinstance(optimizable_object, Critic):
+            which = "Critic"
+        elif isinstance(optimizable_object, Policy):
+            which = "Policy"
+        else:
+            raise ValueError("optimizable object can be either Critic or Policy")
+
+        return which, event, time, self.episode_counter, self.iteration_counter
 
 
 class CALFControllerExPost(RLController):
@@ -416,17 +430,17 @@ class CALFControllerExPost(RLController):
             return self.policy.action
 
         if rc.norm_2(observation) > 0.5:
-            critic_weights = self.critic.optimize_on_event(
+            critic_weights = self.critic.optimize(
                 self.data_buffer, is_update_and_cache_weights=False
             )
-            critic_weights_accepted = self.critic.opt_status == "success"
+            critic_weights_accepted = self.critic.opt_status == OptStatus.success
         else:
             critic_weights = self.critic.model.weights
             critic_weights_accepted = False
 
         if critic_weights_accepted:
             self.critic.update_weights(critic_weights)
-            self.policy.optimize_on_event(self.data_buffer)
+            self.policy.optimize(self.data_buffer)
             policy_weights_accepted = True  # self.policy.opt_status == "success"
             if policy_weights_accepted:
                 self.policy.update_action(observation)
@@ -494,7 +508,7 @@ class CALFControllerExPostLegacy(RLController):
         )  ### store current observation in policy
         self.policy.receive_estimated_state(state)
         self.critic.optimize_weights(time=time)
-        critic_weights_accepted = self.critic.opt_status == "success"
+        critic_weights_accepted = self.critic.opt_status == OptStatus.success
 
         if critic_weights_accepted:
             self.critic.update_weights()

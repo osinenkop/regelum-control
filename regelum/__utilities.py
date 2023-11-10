@@ -4,10 +4,10 @@ import inspect
 import numpy as np
 
 
-from enum import IntEnum, auto
+from enum import IntEnum
 from typing import Union
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 
 try:
@@ -160,20 +160,16 @@ class AwaitedParameter:
         return self._string_to_show
 
     def __getattribute__(self, name):
-        if name == "__repr__":
-            return object.__repr__()
-        elif name == "__str__":
-            return object.__str__()
-        elif name == "name":
-            return object.__getattribute__(self, "name")
-        elif name == "awaited_from":
-            return object.__getattribute__(self, "awaited_from")
-        elif name == "_string_to_show":
-            return object.__getattribute__(self, "_string_to_show")
-        elif name == "__post_init__":
-            return object.__getattribute__(self, "__post_init__")
-        elif name == "__instancecheck__":
-            return object.__getattribute__(self, "__instancecheck__")
+        if name in [
+            "__repr__",
+            "__str__",
+            "name",
+            "awaited_from",
+            "_string_to_show",
+            "__post_init__",
+            "__instancecheck__",
+        ]:
+            return object.__getattribute__(self, name)
         else:
             raise Exception(str(self))
 

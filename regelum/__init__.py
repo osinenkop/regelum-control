@@ -89,6 +89,7 @@ from . import critic
 from . import controller
 from . import policy
 from . import observer
+from .event import Event
 
 mock = Mock()
 

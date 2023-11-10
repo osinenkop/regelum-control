@@ -277,7 +277,7 @@ class PolicyGradient(Policy, ABC):
     def update_data_buffer(self, data_buffer: DataBuffer):
         pass
 
-    def optimize_on_event(self, data_buffer: DataBuffer):
+    def optimize(self, data_buffer: DataBuffer):
         # Send to device before optimization
         if self.critic is not None:
             self.critic.model = self.critic.model.to(self.device)
@@ -285,7 +285,7 @@ class PolicyGradient(Policy, ABC):
         self.N_episodes = len(np.unique(data_buffer.data["episode_id"]))
         self.update_data_buffer(data_buffer)
 
-        self.optimize(
+        super().optimize(
             **data_buffer.get_optimization_kwargs(
                 keys=self.data_buffer_objective_keys(),
                 optimizer_config=self.optimizer_config,
@@ -921,7 +921,7 @@ class RLPolicy(Policy):
         if isinstance(self.model, (ModelWeightContainerTorch, ModelWeightContainer)):
             pass
 
-    def optimize_on_event(self, data_buffer: DataBuffer):
+    def optimize(self, data_buffer: DataBuffer):
         opt_kwargs = data_buffer.get_optimization_kwargs(
             keys=self.data_buffer_objective_keys(),
             optimizer_config=self.optimizer_config,
@@ -930,13 +930,13 @@ class RLPolicy(Policy):
         if opt_kwargs is not None:
             if self.kind == "symbolic":
                 result = (
-                    self.optimize(
+                    super().optimize(
                         **opt_kwargs,
                         policy_model_weights=self.get_initial_guess(),
                         tol=1e-8,
                     )
                     if self.critic.weights is None
-                    else self.optimize(
+                    else super().optimize(
                         **opt_kwargs,
                         policy_model_weights=self.get_initial_guess(),
                         critic_weights=self.critic.weights,
@@ -945,7 +945,7 @@ class RLPolicy(Policy):
                 )
                 self.update_weights(result["policy_model_weights"])
             elif self.kind == "tensor":
-                self.optimize(**opt_kwargs)
+                super().optimize(**opt_kwargs)
 
     def get_initial_guess(self):
         return self.model.weights
