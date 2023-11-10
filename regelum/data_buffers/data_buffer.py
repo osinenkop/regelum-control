@@ -123,6 +123,12 @@ class DataBuffer:
         fill_na: Optional[float] = 0.0,
     ) -> dict[str, RgArray]:
         _keys = keys if keys is not None else self.data.keys()
+        difference_keys_set = set(_keys).difference(self.data.keys())
+        if len(difference_keys_set) > 0:
+            raise ValueError(
+                f"Unexpected keys in DataBuffer.getitem: {difference_keys_set}"
+            )
+
         if (
             isinstance(idx, int)
             or isinstance(idx, slice)

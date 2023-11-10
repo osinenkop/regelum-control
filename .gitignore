@@ -177,3 +177,4 @@ regelum_data/
 
 *.envrc
 *.ruff_cache
+*.idea/*

@@ -7,8 +7,8 @@ For instance, a running objective can be used commonly by a generic optimal cont
 from abc import ABC, abstractmethod
 
 import regelum
-from .model import Model, PerceptronWithNormalNoise, ModelNN
-from typing import Optional, Union
+from .model import Model, PerceptronWithTruncatedNormalNoise, ModelNN
+from typing import Optional
 import torch
 from .__utilities import rc
 from .predictor import Predictor
@@ -58,7 +58,7 @@ class RunningObjective(Objective):
 
 
 def reinforce_objective(
-    policy_model: PerceptronWithNormalNoise,
+    policy_model: PerceptronWithTruncatedNormalNoise,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
     tail_total_objectives: torch.FloatTensor,
@@ -66,7 +66,6 @@ def reinforce_objective(
     baselines: torch.FloatTensor,
     is_with_baseline: bool,
     is_do_not_let_the_past_distract_you: bool,
-    device: Union[str, torch.device],
     N_episodes: int,
 ) -> torch.FloatTensor:
     r"""Calculate the surrogate objective for REINFORCE algorithm.
@@ -104,28 +103,28 @@ def reinforce_objective(
     :return: surrogate objective value.
     :rtype: torch.FloatTensor
     """
-    log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
+    log_pdfs = policy_model.log_pdf(observations, actions)
     if is_do_not_let_the_past_distract_you:
-        target_objectives = tail_total_objectives.to(device)
+        target_objectives = tail_total_objectives
     else:
-        target_objectives = total_objectives.to(device)
+        target_objectives = total_objectives
     if is_with_baseline:
-        target_objectives -= baselines.to(device)
+        target_objectives -= baselines
 
     return (log_pdfs * target_objectives).sum() / N_episodes
 
 
 def sdpg_objective(
-    policy_model: PerceptronWithNormalNoise,
+    policy_model: PerceptronWithTruncatedNormalNoise,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
     timestamps: torch.FloatTensor,
     episode_ids: torch.LongTensor,
-    device: Union[str, torch.device],
     discount_factor: float,
     N_episodes: int,
     running_objectives: torch.FloatTensor,
+    sampling_time: float,
 ) -> torch.FloatTensor:
     """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
@@ -154,14 +153,14 @@ def sdpg_objective(
     :rtype: torch.FloatTensor
     """
     critic_values = critic_model(observations)
-    log_pdfs = policy_model.log_pdf(observations.to(device), actions.to(device))
+    log_pdfs = policy_model.log_pdf(observations, actions)
 
     objective = 0.0
     for episode_idx in torch.unique(episode_ids):
         mask = episode_ids == episode_idx
         advantages = (
             running_objectives[mask][:-1]
-            + discount_factor * critic_values[mask][1:]
+            + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
         )
 
@@ -175,19 +174,19 @@ def sdpg_objective(
 
 
 def ppo_objective(
-    policy_model: PerceptronWithNormalNoise,
+    policy_model: PerceptronWithTruncatedNormalNoise,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
     timestamps: torch.FloatTensor,
     episode_ids: torch.LongTensor,
-    device: Union[str, torch.device],
     discount_factor: float,
     N_episodes: int,
     running_objectives: torch.FloatTensor,
     epsilon: float,
     initial_log_probs: torch.FloatTensor,
     running_objective_type: str,
+    sampling_time: float,
 ) -> torch.FloatTensor:
     """Calculate PPO objective.
 
@@ -228,8 +227,7 @@ def ppo_objective(
 
     critic_values = critic_model(observations)
     prob_ratios = torch.exp(
-        policy_model.log_pdf(observations.to(device), actions.to(device))
-        - initial_log_probs.reshape(-1)
+        policy_model.log_pdf(observations, actions) - initial_log_probs.reshape(-1)
     ).reshape(-1, 1)
     clipped_prob_ratios = torch.clamp(prob_ratios, 1 - epsilon, 1 + epsilon)
     objective_value = 0.0
@@ -237,9 +235,9 @@ def ppo_objective(
         mask = episode_ids.reshape(-1) == episode_idx
         advantages = (
             running_objectives[mask][:-1]
-            + discount_factor * critic_values[mask][1:]
+            + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
-        )
+        ).detach()
 
         objective_value += (
             torch.sum(
@@ -266,7 +264,6 @@ def ddpg_objective(
     policy_model: ModelNN,
     critic_model: ModelNN,
     observations: torch.FloatTensor,
-    device: Union[str, torch.device],
 ) -> torch.FloatTensor:
     """Calculate the objective value for the DDPG algorithm.
 
@@ -284,12 +281,8 @@ def ddpg_objective(
     :return: The objective value.
     :rtype: torch.FloatTensor
     """
-    observations_on_device = observations.to(device)
     return critic_model(
-        torch.cat(
-            [observations_on_device, policy_model(observations_on_device)],
-            dim=1,
-        )
+        observations, policy_model.forward(observations, is_means_only=True)
     ).mean()
 
 
@@ -356,6 +349,7 @@ def temporal_difference_objective(
 
 def mpc_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -364,16 +358,21 @@ def mpc_objective(
     discount_factor=1.0,
 ):
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=False,
     )
-
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
+    )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted)
     )
@@ -400,6 +399,7 @@ def mpc_objective(
 
 def rpo_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -411,14 +411,20 @@ def rpo_objective(
 ):
     rpo_objective_value = 0
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=True,
+    )
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted[:-1, :])
@@ -451,6 +457,7 @@ def rpo_objective(
 
 def rql_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     running_objective,
@@ -462,14 +469,23 @@ def rql_objective(
 ):
     rql_objective_value = 0
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=False,
+    )
+
+    if prediction_horizon == 0:
+        return critic(observation, action_sequence_predicted, weights=critic_weights)
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
     )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted[:-1, :])
@@ -491,7 +507,7 @@ def rql_objective(
         )
     )
 
-    observation_last = observation_sequence_predicted[-1, :]
+    observation_last = state_sequence_predicted[-1, :]
     rql_objective_value += rc.sum(
         discount_factor ** (predictor.pred_step_size * prediction_horizon)
         * critic(
@@ -504,6 +520,7 @@ def rql_objective(
 
 def sql_objective(
     observation,
+    state_estimated,
     policy_model_weights,
     predictor: Predictor,
     model,
@@ -512,16 +529,21 @@ def sql_objective(
     critic_weights=None,
 ):
     (
-        observation_sequence_predicted,
+        state_sequence_predicted,
         action_sequence_predicted,
     ) = predictor.predict_state_sequence_from_model(
-        observation,
+        state_estimated,
         prediction_horizon=prediction_horizon,
         model=model,
         model_weights=policy_model_weights,
         is_predict_last=False,
     )
-
+    observation_sequence_predicted = predictor.system.get_observation(
+        None,
+        state=state_sequence_predicted,
+        inputs=action_sequence_predicted,
+        is_batch=True,
+    )
     observation_sequence = rc.vstack(
         (rc.force_row(observation), observation_sequence_predicted)
     )

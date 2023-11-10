@@ -153,8 +153,6 @@ class Critic(Optimizable, ABC):
         self.batch_size = self.get_data_buffer_batch_size()
         (
             self.running_objective_var,
-            self.observation_var,
-            self.observation_action_var,
             self.critic_targets_var,
             self.critic_weights_var,
             self.critic_stored_weights_var,
@@ -163,18 +161,6 @@ class Critic(Optimizable, ABC):
                 self.batch_size,
                 1,
                 name="running_objective",
-                is_constant=True,
-            ),
-            self.create_variable(
-                self.batch_size,
-                self.system.dim_observation,
-                name="observation",
-                is_constant=True,
-            ),
-            self.create_variable(
-                self.batch_size,
-                self.system.dim_observation + self.system.dim_inputs,
-                name="observation_action",
                 is_constant=True,
             ),
             self.create_variable(
@@ -193,17 +179,43 @@ class Critic(Optimizable, ABC):
                 is_constant=True,
             ),
         )
-        self.critic_model_output = self.create_variable(
-            self.batch_size,
-            1,
-            name="critic_model_output",
-            is_nested_function=True,
-            nested_variables=[
-                self.observation_var,
-                self.critic_stored_weights_var,
-                self.critic_weights_var,
-            ],
-        )
+        if not self.is_value_function:
+            self.observation_action_var = self.create_variable(
+                self.batch_size,
+                self.system.dim_observation + self.system.dim_inputs,
+                name="observation_action",
+                is_constant=True,
+            )
+            self.critic_model_output = self.create_variable(
+                self.batch_size,
+                1,
+                name="critic_model_output",
+                is_nested_function=True,
+                nested_variables=[
+                    self.observation_action_var,
+                    self.critic_stored_weights_var,
+                    self.critic_weights_var,
+                ],
+            )
+        else:
+            self.observation_var = self.create_variable(
+                self.batch_size,
+                self.system.dim_observation,
+                name="observation",
+                is_constant=True,
+            )
+            self.critic_model_output = self.create_variable(
+                self.batch_size,
+                1,
+                name="critic_model_output",
+                is_nested_function=True,
+                nested_variables=[
+                    self.observation_var,
+                    self.critic_stored_weights_var,
+                    self.critic_weights_var,
+                ],
+            )
+
         if hasattr(self.model, "weight_bounds"):
             self.register_bounds(self.critic_weights_var, self.model.weight_bounds)
 
@@ -364,9 +376,15 @@ class Critic(Optimizable, ABC):
 class CriticTrivial(Critic):
     """A mocked Critic object."""
 
+    class TrivialModel:
+        """A mocked Trivial model."""
+
+        def named_parameters(self):
+            return None
+
     def __init__(self, *args, **kwargs):
         """Instantiate a CriticTrivial object."""
-        self.model = MagicMock()
+        self.model = self.TrivialModel()
 
     def optimize_on_event(self, *args, **kwargs):
         pass

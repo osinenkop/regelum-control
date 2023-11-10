@@ -6,7 +6,7 @@ Updates to come.
 
 """
 from copy import deepcopy
-
+from scipy.stats import truncnorm
 import regelum
 
 
@@ -17,6 +17,7 @@ try:
     import torch.nn.functional as F
     from torch import nn
     from torch.distributions.multivariate_normal import MultivariateNormal
+    from torch.distributions.normal import Normal
 except ModuleNotFoundError:
     from unittest.mock import MagicMock
 
@@ -26,7 +27,7 @@ except ModuleNotFoundError:
     MultivariateNormal = MagicMock()
 
 from abc import ABC, abstractmethod
-from typing import Optional, Union, List, Any, Tuple
+from typing import Optional, Union, List, Any, Tuple, Dict, Callable
 import numpy as np
 import casadi as cs
 
@@ -438,45 +439,62 @@ class ModelPerceptron(ModelNN):
         dim_output: int,
         dim_hidden: int,
         n_hidden_layers: int,
-        leaky_relu_coef: float = 0.15,
+        hidden_activation: Optional[nn.Module] = None,
+        output_activation: Optional[nn.Module] = None,
         force_positive_def: bool = False,
         is_force_infinitesimal: bool = False,
         is_bias: bool = True,
         weight_max: Optional[float] = None,
         weight_min: Optional[float] = None,
+        linear_weights_init: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        linear_weights_init_kwargs: Optional[Dict[str, Any]] = None,
+        biases_init: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        biases_init_kwargs: Optional[Dict[str, Any]] = None,
+        output_bounds: Union[List[List[float]], np.array] = None,
         weights=None,
     ):
         """Initialize an instance of a fully-connected model.
 
-        :param dim_input: dimension of model's input
+        :param dim_input: The dimensionality of the input.
         :type dim_input: int
-        :param dim_output: dimension of model's output
+        :param dim_output: The dimensionality of the output.
         :type dim_output: int
-        :param dim_hidden: number of neurons in hidden layers
+        :param dim_hidden: The dimensionality of the hidden linear layers (dim_hidden * dim_hidden).
         :type dim_hidden: int
-        :param n_hidden_layers: number of hidden layers
+        :param n_hidden_layers: The number of hidden layers.
         :type n_hidden_layers: int
-        :param leaky_relu_coef: Leaky ReLU coefficient, defaults to 0.15
-        :type leaky_relu_coef: float, optional
-        :param force_positive_def: Whether to force positive definiteness of model through soft abs function, defaults to False
-        :type force_positive_def: bool, optional
-        :param is_force_infinitesimal: Make model equal to zero in the origin, defaults to False
-        :type is_force_infinitesimal: bool, optional
-        :param is_bias: Add bias, defaults to True
-        :type is_bias: bool, optional
-        :param weight_max: Upper bound for weights, defaults to None
-        :type weight_max: Optional[float], optional
-        :param weight_min: Lower bound for weights, defaults to None
-        :type weight_min: Optional[float], optional
-        :param weights: Pass weights manually with state_dict of torch module, defaults to None
-        :type weights: _type_, optional
+        :param hidden_activation: The activation function for the hidden layers. (Optional, defaults to None). If None then nn.LeakyReLU(0.2) is used.
+        :type hidden_activation: Optional[nn.Module]
+        :param output_activation: The activation function for the output layer. (Optional, defaults to None)
+        :type output_activation: Optional[nn.Module]
+        :param force_positive_def: Whether to force perceptron to be positive definite (if True softabs is used). (Optional, defaults to False)
+        :type force_positive_def: bool
+        :param is_force_infinitesimal: Whether to force perceptron to be equal to 0 with zero input. (Optional, defaults to False)
+        :type is_force_infinitesimal: bool
+        :param is_bias: Whether to include bias terms. (Optional, defaults to True)
+        :type is_bias: bool
+        :param weight_max: The maximum value for the weights. (Optional, defaults to None)
+        :type weight_max: Optional[float]
+        :param weight_min: The minimum value for the weights. (Optional, defaults to None)
+        :type weight_min: Optional[float]
+        :param linear_weights_init: The weight initialization function for the linear layers. (Optional, defaults to None)
+        :type linear_weights_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
+        :param linear_weights_init_kwargs: Additional keyword arguments for the linear weight initialization function. (Optional, defaults to None)
+        :type linear_weights_init_kwargs: Optional[Dict[str, Any]]
+        :param biases_init: The bias initialization function for the linear layers. (Optional, defaults to None)
+        :type biases_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
+        :param biases_init_kwargs: Additional keyword arguments for the bias initialization function. (Optional, defaults to None)
+        :type biases_init_kwargs: Optional[Dict[str, Any]]
+        :param output_bounds: The bounds for the output values. (Optional, defaults to None)
+        :type output_bounds: Union[List[List[float]], np.array]
+        :param weights: Pre-trained weights for the model. (Optional, defaults to None)
+        :type weights: Optional
         """
         ModelNN.__init__(self)
         self.weight_clipper = WeightClipper(weight_min, weight_max)
         self.dim_input = dim_input
         self.dim_output = dim_output
         self.n_hidden_layers = n_hidden_layers
-        self.leaky_relu_coef = leaky_relu_coef
         self.force_positive_def = force_positive_def
         self.is_force_infinitesimal = is_force_infinitesimal
         self.is_bias = is_bias
@@ -488,6 +506,30 @@ class ModelPerceptron(ModelNN):
             ]
         )
         self.output_layer = nn.Linear(dim_hidden, dim_output, bias=is_bias)
+        self.hidden_activation = (
+            hidden_activation if hidden_activation is not None else nn.LeakyReLU(0.15)
+        )
+        self.output_activation = output_activation
+        self.bounds_handler = (
+            BoundsHandler(output_bounds) if output_bounds is not None else None
+        )
+        if linear_weights_init is not None or biases_init is not None:
+            for layer in (
+                [self.input_layer]
+                + [hidden_layer for hidden_layer in self.hidden_layers]
+                + [self.output_layer]
+            ):
+                if linear_weights_init is not None:
+                    if linear_weights_init_kwargs is not None:
+                        linear_weights_init(layer.weight, **linear_weights_init_kwargs)
+                    else:
+                        linear_weights_init(layer.weight)
+
+                if biases_init is not None:
+                    if biases_init_kwargs is not None:
+                        biases_init(layer.bias, **biases_init_kwargs)
+                    else:
+                        biases_init(layer.bias)
 
         if weights is not None:
             self.load_state_dict(weights)
@@ -496,15 +538,16 @@ class ModelPerceptron(ModelNN):
 
     def _forward(self, x: torch.FloatTensor) -> torch.FloatTensor:
         self.input_layer.apply(self.weight_clipper)
-        x = nn.functional.leaky_relu(
-            self.input_layer(x), negative_slope=self.leaky_relu_coef
-        )
+        x = self.hidden_activation(self.input_layer(x))
         for hidden_layer in self.hidden_layers:
             hidden_layer.apply(self.weight_clipper)
-            x = nn.functional.leaky_relu(
-                hidden_layer(x), negative_slope=self.leaky_relu_coef
-            )
+            x = self.hidden_activation(hidden_layer(x))
         x = self.output_layer(x)
+        if self.output_activation is not None:
+            x = self.output_activation(x)
+
+        if self.bounds_handler is not None:
+            x = self.bounds_handler.unscale_from_minus_one_one_to_bounds(torch.tanh(x))
 
         return x
 
@@ -521,7 +564,12 @@ class ModelPerceptron(ModelNN):
 
 
 class ModelWeightContainerTorch(ModelNN):
-    """Pytorch model with forward that returns weights."""
+    """Pytorch model that have raw weights as its parameter.
+
+    When using output bounds, the `output_bounding_type` parameter determines how the output is bounded:
+    - If `output_bounding_type` is set to "clip", the output is clipped to the specified bounds.
+    - If `output_bounding_type` is set to "tanh", the output is scaled using the hyperbolic tangent function to fit within the specified bounds.
+    """
 
     def __init__(
         self,
@@ -531,10 +579,12 @@ class ModelWeightContainerTorch(ModelNN):
     ):
         """Instantiate ModelWeightContainerTorch.
 
-        :param dim_weights: Dimensionality of the weights
-        :type dim_weights: int
-        :param output_bounds: Bounds of the output. If `None` output is not bounded, defaults to None
-        :type output_bounds: Optional[List[Any]], optional
+        :param dim_weights: The dimensionality of the weights.
+        :type dim_weights: Union[int, Tuple[int, int]]
+        :param output_bounds: Optional bounds of the output. If `None`, the output is not bounded. Defaults to None.
+        :type output_bounds: Optional[List[Any]]
+        :param output_bounding_type: The type of output bounding. Must be either "clip" or "tanh". Defaults to "clip".
+        :type output_bounding_type: str
         """
         assert (
             output_bounding_type == "clip" or output_bounding_type == "tanh"
@@ -588,31 +638,40 @@ class ModelWeightContainerTorch(ModelNN):
 
 
 class BoundsHandler(ModelNN):
-    r"""Output layer for bounding the model's output. The formula is: math: `F^{-1}(\\tanh(x))`, where F is the linear transformation from `bounds` to [-1, 1]."""
+    r"""Output layer that restricts the model's output within specified bounds. The formula used is: F^{-1}(y), where F represents a linear transformation from the given bounds to the range [-1, 1].
 
-    def __init__(self, bounds: Union[List[Any], np.array]):
-        """Initialize an instance of NNOutputBounder.
+    It is recommended to stack this layer after applying the tanh activation function to the model's output.
+    """
 
-        :param bounds: Bounds for the output.
-        :type bounds: Union[List[Any], np.array]
+    def __init__(self, bounds: Union[List[List[float]], np.array], is_unscale=True):
+        """Initialize a new instance of the BoundsHandler class.
+
+        :param bounds: Bounds of the model's output.
+        :type bounds: Union[List[List[float]], np.array]
+            The bounds should be provided as a 2-column array-like object.
+            The first column represents the left bounds, and the second column represents the right bounds.
+        :param is_unscale: Flag indicating whether to unscale (from [-1, 1] to bounds) or scale (from bounds to [-1, 1]) in forward. Defaults to True.
+        :type is_unscale: bool, optional
         """
         ModelNN.__init__(self)
-        self.register_parameter(
-            name="__bounds",
-            param=torch.nn.Parameter(
-                torch.FloatTensor(bounds),
-                requires_grad=False,
-            ),
+        self.is_unscale = is_unscale
+        self.bounds = torch.nn.Parameter(
+            torch.FloatTensor(bounds),
+            requires_grad=False,
         )
+
+    def forward(self, x):
+        if self.is_unscale:
+            return self.unscale_from_minus_one_one_to_bounds(x)
+        else:
+            return self.scale_from_bounds_to_minus_one_one(x)
 
     def get_unscale_coefs_from_minus_one_one_to_bounds(
         self,
     ) -> Tuple[torch.FloatTensor, torch.FloatTensor]:
-        bounds = self.get_parameter("__bounds")
-
         unscale_bias, unscale_multiplier = (
-            bounds.mean(dim=1),
-            (bounds[:, 1] - bounds[:, 0]) / 2.0,
+            self.bounds.mean(dim=1),
+            (self.bounds[:, 1] - self.bounds[:, 0]) / 2.0,
         )
         return unscale_bias, unscale_multiplier
 
@@ -635,8 +694,32 @@ class BoundsHandler(ModelNN):
         return (y - unscale_bias) / unscale_multiplier
 
 
-class PerceptronWithNormalNoise(ModelNN):
-    r"""Sample from :math:`F^{-1}\\left(\\mathcal{N}(f_{\\theta}(x), \\sigma^2)\\right)`, where :math:`\\sigma` is the standard deviation of the noise, :math:`f_{\\theta}(x)` is perceptron with weights :math:`\\theta`, and :math:`F` is the linear transformation from `bounds` to [-1, 1]."""
+class MultiplyByConstant(nn.Module):
+    """Represents a module that multiplies the input tensor by a constant value."""
+
+    def __init__(self, constant: float) -> None:
+        """Instatiate MultiplyByConstant.
+
+        :param constant: The constant value to multiply the input by.
+        :type constant: float
+        :return: The tensor resulting from multiplying the input by the constant value.
+        :rtype: torch.Tensor
+        """
+        super().__init__()
+        self.constant = constant
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return input * self.constant
+
+
+class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
+    """Represents a perceptron model that applies a forward pass to input data and adds normal noise to the output.
+
+    The `PerceptronWithTruncatedNormalNoise` class provides the following functionality:
+
+    - Sampling : After the forward pass, normal noise is added to the output of the perceptron. The standard deviations of the noise can be specified using the `stds` parameter. All this functionality is implemented in the forward method.
+    - Truncation to output bounds: The `is_truncated_to_output_bounds` flag determines whether the noise should be truncated to the output bounds. When set to `True`, the noise values are generated from corresponding truncated normal distribution.
+    """
 
     def __init__(
         self,
@@ -644,92 +727,146 @@ class PerceptronWithNormalNoise(ModelNN):
         dim_output: int,
         dim_hidden: int,
         n_hidden_layers: int,
-        leaky_relu_coef: float,
-        output_bounds: Union[List[Any], np.array],
-        sigma: float,
-        normalize_output_coef: float,
-        weight_min: Optional[float] = None,
+        stds: Union[List[float], np.array] = None,
+        hidden_activation: Optional[nn.Module] = None,
+        output_activation: Optional[nn.Module] = None,
+        force_positive_def: bool = False,
+        is_force_infinitesimal: bool = False,
+        is_bias: bool = True,
         weight_max: Optional[float] = None,
+        weight_min: Optional[float] = None,
+        linear_weights_init: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        linear_weights_init_kwargs: Optional[Dict[str, Any]] = None,
+        biases_init: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        biases_init_kwargs: Optional[Dict[str, Any]] = None,
+        output_bounds: Union[List[List[float]], np.array] = None,
+        is_truncated_to_output_bounds: Optional[Dict[str, Any]] = False,
+        weights=None,
     ):
-        r"""Instantiate PerceptronWithNormalNoise.
+        """Instantiate PerceptronWithTruncatedNormalNoise.
 
-        :param dim_input: Dimensionality of input (x)
+        :param dim_input: The dimensionality of the input.
         :type dim_input: int
-        :param dim_output: Dimensionality of output :math `f_{\\theta}(x)`
+        :param dim_output: The dimensionality of the output.
         :type dim_output: int
-        :param dim_hidden: Dimensionality of hidden layers in perceptron :math `f_{\\theta}(x)`
+        :param dim_hidden: The dimensionality of the hidden linear layers (dim_hidden * dim_hidden).
         :type dim_hidden: int
-        :param n_hidden_layers: Number of hidden layers in perceptron :math `f_{\\theta}(x)`
+        :param n_hidden_layers: The number of hidden layers.
         :type n_hidden_layers: int
-        :param leaky_relu_coef: Negative slope of the nn.LeakyReLU in perceptron.
-        :type leaky_relu_coef: float
-        :param output_bounds: Bounds for the output
-        :type output_bounds: Union[List[Any], np.array]
-        :param sigma: Standard deviation of normal distribution
-        :type sigma: float
-        :param normalize_output_coef: Coefficient :math `L` in latest activation function in perceptron :math `(1 - 3 \\sigma)\\tanh\\left(\\frac{\\cdot}{L}\\right)`. We use :math `3\\sigma` rule here to guarantee that sampled random variable is in [-1, 1] with good probability. Moreover, :math `L` is an hyperparameter that stabilizes the training in small times.
-        :type normalize_output_coef: float
-        :param weight_min: Minimum value for weight. If `None` the weights are not clipped, defaults to None
-        :type weight_min: Optional[float], optional
-        :param weight_max: Maximum value for weight. If `None` the weights are not clipped, defaults to None
-        :type weight_max: Optional[float], optional
+        :param hidden_activation: The activation function for the hidden layers.
+            If None, nn.LeakyReLU(0.2) is used. (Optional, defaults to None)
+        :type hidden_activation: Optional[nn.Module]
+        :param output_activation: The activation function for the output layer. (Optional, defaults to None)
+        :type output_activation: Optional[nn.Module]
+        :param force_positive_def: Whether to force the perceptron to be positive definite
+            (if True, softabs is used). (Optional, defaults to False)
+        :type force_positive_def: bool
+        :param is_force_infinitesimal: Whether to force the perceptron to be equal to 0 with zero input.
+            (Optional, defaults to False)
+        :type is_force_infinitesimal: bool
+        :param is_bias: Whether to include bias terms. (Optional, defaults to True)
+        :type is_bias: bool
+        :param weight_max: The maximum value for the weights. (Optional, defaults to None)
+        :type weight_max: Optional[float]
+        :param weight_min: The minimum value for the weights. (Optional, defaults to None)
+        :type weight_min: Optional[float]
+        :param linear_weights_init: The weight initialization function for the linear layers.
+            (Optional, defaults to None)
+        :type linear_weights_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
+        :param linear_weights_init_kwargs: Additional keyword arguments for the linear weight initialization function.
+            (Optional, defaults to None)
+        :type linear_weights_init_kwargs: Optional[Dict[str, Any]]
+        :param biases_init: The bias initialization function for the linear layers. (Optional, defaults to None)
+        :type biases_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
+        :param biases_init_kwargs: Additional keyword arguments for the bias initialization function.
+            (Optional, defaults to None)
+        :type biases_init_kwargs: Optional[Dict[str, Any]]
+        :param output_bounds: The bounds for the output values. (Optional, defaults to None)
+        :type output_bounds: Union[List[List[float]], np.array]
+        :param weights: Pre-trained weights for the model. (Optional, defaults to None)
+        :type weights: Optional
+        :param stds: The standard deviations for sampling the normal distribution. (Optional, defaults to None)
+        :type stds: Optional[np.array]
+        :param is_truncated_to_output_bounds: Whether to truncate the samples to the output bounds.
+            (Optional, defaults to False)
+        :type is_truncated_to_output_bounds: bool
         """
-        super().__init__()
-        self.std = sigma
-        self.normalize_output_coef = normalize_output_coef
-
-        self.perceptron = ModelPerceptron(
+        super().__init__(
             dim_input=dim_input,
             dim_output=dim_output,
             dim_hidden=dim_hidden,
             n_hidden_layers=n_hidden_layers,
-            leaky_relu_coef=leaky_relu_coef,
+            hidden_activation=hidden_activation,
+            output_activation=output_activation,
+            force_positive_def=force_positive_def,
+            is_force_infinitesimal=is_force_infinitesimal,
+            is_bias=is_bias,
             weight_min=weight_min,
             weight_max=weight_max,
+            output_bounds=output_bounds,
+            linear_weights_init=linear_weights_init,
+            linear_weights_init_kwargs=linear_weights_init_kwargs,
+            biases_init=biases_init,
+            biases_init_kwargs=biases_init_kwargs,
+            weights=weights,
+        )
+        self.is_truncated_to_output_bounds = is_truncated_to_output_bounds
+        self.output_bounds_array = np.array(output_bounds)
+        if self.is_truncated_to_output_bounds:
+            if output_bounds is None:
+                raise AssertionError(
+                    "Cannot truncate the output without specifying output bounds. Please set output_bounds and use is_truncated_to_output_bounds=True."
+                )
+
+        self.stds_array = np.array(stds).reshape(-1)
+        assert (
+            len(self.stds_array) == dim_output
+        ), "The length of standard deviations should be equal to dim_output."
+        self.stds = torch.nn.Parameter(
+            torch.FloatTensor(self.stds_array), requires_grad=False
         )
 
-        self.bounds_handler = BoundsHandler(output_bounds)
+    def log_pdf(self, distribution_params_input, log_prob_args):
+        means = super().forward(distribution_params_input)
+        normal = Normal(loc=means, scale=torch.ones_like(means) * self.stds)
+        if self.is_truncated_to_output_bounds:
+            left_bounds, right_bounds = (
+                self.bounds_handler.bounds[:, 0],
+                self.bounds_handler.bounds[:, 1],
+            )
+            return (
+                normal.log_prob(log_prob_args)
+                - torch.log(
+                    normal.cdf(torch.ones_like(means) * right_bounds)
+                    - normal.cdf(torch.ones_like(means) * left_bounds)
+                )
+            ).sum(axis=1)
+        else:
+            return normal.log_prob(log_prob_args).sum(axis=1)
 
-        self.register_parameter(
-            name="__scale_tril_matrix",
-            param=torch.nn.Parameter(
-                (self.std * torch.eye(dim_output)).float(),
-                requires_grad=False,
-            ),
-        )
-        self.cache_weights()
-
-    def get_mean(self, observations):
-        assert 1 - 3 * self.std > 0, "1 - 3 std should be greater than 0"
-        # We should guarantee with good probability that sampled actions are within action bounds that are scaled to [-1, 1]
-        # That is why we use 3 sigma rule here
-        return (1 - 3 * self.std) * torch.tanh(
-            self.perceptron(observations) / self.normalize_output_coef
-        )
-
-    def forward(self, observations):
-        return self.bounds_handler.unscale_from_minus_one_one_to_bounds(
-            self.get_mean(observations)
-        )
-
-    def log_pdf(self, observations, actions):
-        means = self.get_mean(observations)
-        scaled_actions = self.bounds_handler.scale_from_bounds_to_minus_one_one(actions)
-
-        return MultivariateNormal(
-            loc=means,
-            scale_tril=self.get_parameter("__scale_tril_matrix"),
-        ).log_prob(scaled_actions)
-
-    def sample(self, observation):
-        mean = self.get_mean(observation)
-        sampled_scaled_action = MultivariateNormal(
-            loc=mean,
-            scale_tril=self.get_parameter("__scale_tril_matrix"),
-        ).sample()
-
-        sampled_action = self.bounds_handler.unscale_from_minus_one_one_to_bounds(
-            sampled_scaled_action
-        )
+    def forward(self, observation, is_means_only=False):
+        mean = super().forward(observation)
+        if is_means_only:
+            return mean
+        mean_numpy = mean.detach().cpu().numpy()
+        if self.is_truncated_to_output_bounds:
+            left_bounds, right_bounds = (
+                self.output_bounds_array[None, :, 0],
+                self.output_bounds_array[None, :, 1],
+            )
+            sampled_action = torch.FloatTensor(
+                truncnorm(
+                    loc=mean_numpy,
+                    scale=np.ones_like(mean_numpy) * self.stds_array,
+                    b=(right_bounds - mean_numpy) / self.stds_array,
+                    a=(left_bounds - mean_numpy) / self.stds_array,
+                )
+                .rvs()
+                .reshape(1, -1)
+            )
+        else:
+            sampled_action = Normal(
+                loc=mean, scale=self.stds * torch.ones_like(mean)
+            ).sample()
 
         return sampled_action

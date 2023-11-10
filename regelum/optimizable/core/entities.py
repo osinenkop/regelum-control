@@ -213,7 +213,7 @@ class VarContainer(Mapping):
         return {var.name: var(with_metadata=True) for var in self.variables}
 
     def selected(self, var_names: List[str]) -> Tuple[OptimizationVariable]:
-        return tuple(var for var in self.variables if var.name in var_names)
+        return VarContainer([var for var in self.variables if var.name in var_names])
 
     def substitute_data(self, **name_data_dict) -> Self:
         for var in self.selected(list(name_data_dict.keys())):
@@ -291,7 +291,8 @@ class VarContainer(Mapping):
             return VarContainer(self.variables[key])
         elif isinstance(key, str) and self.variables_hashmap is not None:
             res = self.variables_hashmap.get(key)
-            assert res is not None, f"OptimizationVariable {key} not found."
+            if res is None:
+                raise KeyError(f"OptimizationVariable {key} not found.")
             return res
         else:
             raise NotImplementedError

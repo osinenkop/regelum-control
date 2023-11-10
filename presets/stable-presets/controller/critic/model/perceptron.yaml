@@ -9,4 +9,3 @@ n_hidden_layers: 2
 is_force_infinitesimal: False
 is_bias: False
 force_positive_def: False
-leaky_relu_coef: 0.15 

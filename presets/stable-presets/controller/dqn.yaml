@@ -44,7 +44,6 @@ critic:
 
 policy:
   device: $ controller.device%%
-  epsilon_random: True
   epsilon_random_parameter: 0.05
 
   optimizer_config: 
@@ -52,9 +51,9 @@ policy:
     kind: tensor
     opt_method: = torch.optim.Adam
     opt_options: 
-      lr: 0.001
+      lr: 0.01
     config_options:
-      n_epochs: 100
+      n_epochs: 10
       is_reinstantiate_optimizer: True
       data_buffer_sampling_method: iter_batches
       data_buffer_sampling_kwargs:

@@ -1,5 +1,6 @@
 name: carpole
 target: regelum.system.CartPole
+observer: = regelum.observer.ObserverTrivial()
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 
@@ -8,4 +9,4 @@ sampling_time: 0.01
 
 F_min: -50.
 F_max: 50.
-action_bounds: = numpy.array([[${.F_min}, ${.F_max}]])
+action_bounds: = [[${.F_min}, ${.F_max}]]

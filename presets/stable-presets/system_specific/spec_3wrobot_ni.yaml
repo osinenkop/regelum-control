@@ -1,5 +1,8 @@
 name: 3wrobot_ni
 target: regelum.system.ThreeWheeledRobotNI
+observer: = regelum.observer.ObserverTrivial()
+# target: regelum.system.ThreeWheeledRobotNIWithReference
+# observer: = regelum.observer.ObserverReference([1.0, 2.0, 3.0])
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 
@@ -10,4 +13,4 @@ v_min: -25.
 v_max: 25.
 omega_min: -5.
 omega_max: 5.
-action_bounds: = numpy.array([[${.v_min}, ${.v_max}], [${.omega_min}, ${.omega_max}]])
+action_bounds: = [[${.v_min}, ${.v_max}], [${.omega_min}, ${.omega_max}]]

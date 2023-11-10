@@ -8,29 +8,23 @@ defaults:
   - initial_conditions: ic_${system}
   - observation_naming: naming_${system}
   - system_specific: spec_${system}
+  - constraint_parser: trivial_parser
   # - optional animator: animator_${system}
   # - ${controller}_${system}
 
 callbacks:
-  - regelum.callback.HistoricalObjectiveCallback
+  - regelum.callback.ControllerStepLogger
   - regelum.callback.TotalObjectiveCallback
-  # - regelum.callback.CriticObjectiveCallback
-  # - regelum.callback.CalfCallback
-  - regelum.callback.HistoricalObservationCallback
-  # - regelum.callback.QFunctionModelSaverCallback
-  # - regelum.callback.CalfWeightsCallback
-  # - regelum.callback.CALFWeightsCallback
+  - regelum.callback.HistoricalDataCallback
   - regelum.callback.CriticObjectiveSaver
   - regelum.callback.PolicyObjectiveSaver
-  # - regelum.callback.CriticWeightsCallback
-  # - regelum.callback.CriticCallback
 
 
 disallow_uncommitted%%: False
 
 
-suffix%%: ${controller.name%%}_${system_specific.name}
+prefix%%: ""
 
 rehydra:
   sweep:
-    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${suffix%%}
+    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${prefix%%}_${controller.name%%}_${system_specific.name}

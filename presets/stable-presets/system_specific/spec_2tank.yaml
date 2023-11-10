@@ -1,0 +1,13 @@
+name: 2tank
+reference: = [0.4, 0.4]
+target: regelum.system.TwoTank
+observer: = regelum.observer.ObserverReference(${.reference})
+dim_observation: = ${.target}().dim_observation
+dim_action: = ${.target}().dim_inputs
+
+sampling_time: 0.1
+time_final: 80
+
+action_bounds: = [[0., 1.]]
+
+

@@ -44,6 +44,7 @@ class Controller(RegelumBase, ABC):
 
     def __init__(
         self,
+        policy: Policy,
         time_start: float = 0,
         sampling_time: float = 0.1,
     ):
@@ -53,18 +54,19 @@ class Controller(RegelumBase, ABC):
         :param sampling_time: time interval between two consecutive actions
         """
         super().__init__()
+        self.policy = policy
         self.controller_clock = time_start
         self.sampling_time = sampling_time
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.action_old = None
 
     @apply_action_bounds
-    def compute_action_sampled(self, time, state, observation):
+    def compute_action_sampled(self, time, state_estimated, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
         if self.is_time_for_new_sample:
             action = self.compute_action(
                 time=time,
-                state=state,
+                state_estimated=state_estimated,
                 observation=observation,
             )
             self.action_old = action
@@ -72,6 +74,9 @@ class Controller(RegelumBase, ABC):
             action = self.action_old
 
         return action
+
+    def substitute_constraint_parameters(self, **kwargs):
+        self.policy.substitute_parameters(**kwargs)
 
     @abstractmethod
     @apply_callbacks()
@@ -127,7 +132,9 @@ class RLController(Controller):
         :param sampling_time: time interval between two consecutive actions, defaults to 0.1
         :type sampling_time: float, optional
         """
-        Controller.__init__(self, time_start=time_start, sampling_time=sampling_time)
+        Controller.__init__(
+            self, time_start=time_start, sampling_time=sampling_time, policy=policy
+        )
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
@@ -139,9 +146,8 @@ class RLController(Controller):
         self.episode_counter: int = 0
         self.step_counter: int = 0
         self.total_objective: float = 0.0
-        self.policy = policy
         self.critic = critic
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
 
@@ -198,15 +204,16 @@ class RLController(Controller):
     @apply_callbacks()
     def compute_action(
         self,
-        state,
+        state_estimated,
         observation,
         time=0,
     ):
-        self.critic.receive_state(state)
-        self.policy.receive_state(state)
+        self.critic.receive_state(state_estimated)
+        self.policy.receive_state(state_estimated)
         self.policy.receive_observation(observation)
 
         self.data_buffer.push_to_end(
+            state_estimated=state_estimated,
             observation=observation,
             timestamp=time,
             episode_id=self.episode_counter,
@@ -230,8 +237,8 @@ class RLController(Controller):
         self.step_counter += 1
         return self.policy.action
 
-    def compute_action_sampled(self, time, state, observation):
-        action = super().compute_action_sampled(time, state, observation)
+    def compute_action_sampled(self, time, state_estimated, observation):
+        action = super().compute_action_sampled(time, state_estimated, observation)
         self.calculate_total_objective(
             self.running_objective(observation, action), is_to_update=True
         )
@@ -252,6 +259,7 @@ class RLController(Controller):
     def optimize_on_event(self, event):
         if event == "reset_iteration":
             self.iteration_counter += 1
+            self.episode_counter = 0
             self.step_counter = 0
             self.is_first_compute_action_call = True
         if event == "reset_episode":
@@ -361,6 +369,7 @@ class CALFControllerExPost(RLController):
             observation_last_good=self.critic.observation_last_good
         )
 
+    @apply_callbacks()
     @apply_action_bounds
     def compute_action(
         self,
@@ -749,7 +758,7 @@ class Controller3WRobotDisassembledCLF:
         self.m = m
         self.moment_of_inertia = moment_of_inertia
         self.controller_gain = controller_gain
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.controller_clock = time_start
         self.sampling_time = sampling_time
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -1134,7 +1143,7 @@ class Controller3WRobotMemoryPID:
         if action_bounds is None:
             action_bounds = []
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
         self.controller_clock = time_start
@@ -1351,7 +1360,7 @@ class Controller3WRobotPID:
         self.to_origin_bounds = to_origin_bounds
         self.to_arctan_bounds = to_arctan_bounds
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
         self.controller_clock = time_start
@@ -1521,7 +1530,7 @@ class ControllerCartPolePID:
             state_init = rc.array([np.pi, 0, 0, 0])
         if upright_gain is None:
             upright_gain = rc.array([1, 1, 1, 1])
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1612,7 +1621,7 @@ class ControllerCartPoleEnergyBased:
         """
         if state_init is None:
             state_init = rc.array([np.pi, 0, 0, 0])
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1729,7 +1738,7 @@ class ControllerLunarLanderPID:
             PID_height_parameters = [10, 0, 0]
         if PID_x_parameters is None:
             PID_x_parameters = [10, 0, 0]
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1840,7 +1849,7 @@ class Controller2TankPID:
         else:
             self.tau1, self.tau2, self.K1, self.K2, self.K3 = params
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
         self.clock = Clock(period=sampling_time, time_start=time_start)
         self.sampling_time = sampling_time
@@ -1914,7 +1923,7 @@ class Controller3WRobotNIDisassembledCLF:
         :param sampling_time: time interval between two consecutive actions
         """
         self.controller_gain = controller_gain
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.controller_clock = time_start
         self.time_start = time_start
         self.sampling_time = sampling_time
@@ -2108,7 +2117,7 @@ class NominalControllerInvertedPendulum:
         :param time_start: time at which computations start
         :param sampling_time: time interval between two consecutive actions
         """
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.controller_gain = controller_gain
         self.observation = np.array([np.pi, 0])
         self.clock = Clock(period=sampling_time, time_start=time_start)
@@ -2160,7 +2169,7 @@ class Controller3WRobotNIMotionPrimitive(Controller):
         if action_bounds is None:
             action_bounds = []
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.K = K
         self.controller_clock = time_start
         self.sampling_time = sampling_time
@@ -2216,7 +2225,7 @@ class ControllerKinPoint:
         if action_bounds is None:
             action_bounds = []
 
-        self.action_bounds = action_bounds
+        self.action_bounds = np.array(action_bounds)
         self.gain = gain
         self.controller_clock = time_start
         self.sampling_time = sampling_time

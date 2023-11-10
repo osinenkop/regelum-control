@@ -1,0 +1,18 @@
+_target_: regelum.OptimizerConfig
+kind: tensor
+opt_method: = torch.optim.SGD
+opt_options: 
+  lr: 3.0E-9
+  momentum: 0.9
+config_options:
+  n_epochs: 30
+  data_buffer_sampling_method: iter_batches 
+  data_buffer_sampling_kwargs:
+    dtype: = torch.FloatTensor
+    batch_size: 1
+    n_batches: 1
+    mode: backward 
+  constrained_optimization_policy:
+    is_activated: True
+    defaults:
+      n_epochs_per_constraint: 200

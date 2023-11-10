@@ -16,13 +16,8 @@ Callbacks can be registered by simply supplying them in the respective keyword a
 """
 import logging
 from abc import ABC, abstractmethod
-from copy import copy
-from unittest.mock import Mock
 
-import matplotlib.animation
-import matplotx.styles
 import mlflow
-import torch
 
 import regelum
 import pandas as pd
@@ -45,13 +40,7 @@ import sys
 import filelock
 import regelum.__internal.base
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 import numpy as np
-from matplotlib.backends import backend_qt5agg  # e.g.
-
-from svgpathtools import svg2paths
-from svgpath2mpl import parse_path
 
 
 def is_in_debug_mode():
@@ -644,275 +633,6 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
             f.write(html)
 
 
-plt.rcParams["animation.frame_format"] = "svg"  # VERY important
-
-plt.style.use(matplotx.styles.dracula)
-
-
-class AnimationCallback(Callback, ABC):
-    """Callback (base) responsible for rendering animated visualizations of the experiment."""
-
-    _frames = 100
-
-    @classmethod
-    def _compose(cls_left, cls_right):
-        animations = []
-        for cls in [cls_left, cls_right]:
-            if issubclass(cls, ComposedAnimationCallback):
-                assert (
-                    cls is not ComposedAnimationCallback
-                ), "Adding a composed animation in this way is ambiguous."
-                animations += cls._animations
-            else:
-                animations.append(cls)
-
-        class Composed(ComposedAnimationCallback):
-            _animations = animations
-
-            def __init__(self, **kwargs):
-                super().__init__(*self._animations, **kwargs)
-
-        return Composed
-
-    def __init__(self, *args, interactive=None, **kwargs):
-        """Initialize an instance of AnimationCallback."""
-        super().__init__(*args, **kwargs)
-        assert (
-            self.attachee is not None
-        ), "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
-        self.frame_data = []
-        # matplotlib.use('Qt5Agg', force=True)
-
-        self.interactive_mode = (
-            self._metadata["argv"].interactive if interactive is None else interactive
-        )
-        if self.interactive_mode:
-            self.fig = Figure(figsize=(10, 10))
-            canvas = FigureCanvas(self.fig)
-            self.ax = canvas.figure.add_subplot(111)
-            self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
-            self.setup()
-        else:
-            self.mng = None
-            self.fig, self.ax = None, None
-        self.save_directory = Path(
-            f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}"
-        ).resolve()
-        self.saved_counter = 0
-
-    @abstractmethod
-    def setup(self):
-        pass
-
-    def get_save_directory(self):
-        return str(self.save_directory)
-
-    def add_frame(self, **frame_datum):
-        self.frame_data.append(frame_datum)
-        if hasattr(self, "interactive_status"):
-            self.interactive_status["frame"] = frame_datum
-
-        if self.interactive_mode:
-            self.lim()
-            self.construct_frame(**frame_datum)
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            self.fig.show()
-
-    def __getstate__(self):
-        state = copy(self.__dict__)
-        del state["mng"]
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        self.mng = Mock()
-
-    def reset(self):
-        self.frame_data = []
-        if self.interactive_mode:
-            self.mng.window.close()
-            self.ax.clear()
-            self.setup()
-        # self.__init__(attachee=self.attachee, interactive=self.interactive_mode)
-
-    @abstractmethod
-    def construct_frame(self, **frame_datum):
-        pass
-
-    def animate(self, frames=None):
-        temp_fig, temp_ax = self.fig, self.ax
-        plt.ioff()
-        self.fig = Figure(figsize=(10, 10))
-        canvas = FigureCanvas(self.fig)
-        self.ax = canvas.figure.add_subplot(111)
-        self.setup()
-        if frames is None:
-            frames = self.__class__._frames
-        if frames == "all":
-            frames = len(self.frame_data)
-        elif isinstance(frames, int):
-            frames = max(min(frames, len(self.frame_data)), 0)
-        elif isinstance(frames, float) and 0 <= frames <= 1:
-            frames = int(frames * len(self.frame_data))
-        else:
-            raise ValueError(
-                'animate accepts an int, a float or "all", but instead a different value was provided.'
-            )
-
-        def animation_update(i):
-            j = int((i / frames) * len(self.frame_data) + 0.5)
-            return self.construct_frame(**self.frame_data[j])
-
-        self.lim()
-        anim = matplotlib.animation.FuncAnimation(
-            self.fig,
-            animation_update,
-            frames=frames,
-            interval=30,
-            blit=True,
-            repeat=False,
-        )
-        res = anim.to_jshtml()
-        plt.close(self.fig)
-        self.fig, self.ax = temp_fig, temp_ax
-        return res
-
-    def on_launch(self):
-        os.mkdir(self.get_save_directory())
-
-    def animate_and_save(self, frames=None, name=None):
-        if name is None:
-            name = str(self.saved_counter)
-            self.saved_counter += 1
-        animation = self.animate(frames=frames)
-        dir = self.get_save_directory()
-        with open(dir + "/" + name + ".html", "w") as f:
-            f.write(
-                f"<html><head><title>{self.__class__.__name__}: {name}</title></head><body>{animation}</body></html>"
-            )
-
-    def lim(self, width=None, height=None, center=None, extra_margin=0.0):
-        if width is not None or height is not None:
-            if center is None:
-                center = [0.0, 0.0]
-            if width is None:
-                width = height
-            if height is None:
-                height = width
-            self.ax.set_xlim(
-                center[0] - width / 2 - extra_margin,
-                center[0] + width / 2 + extra_margin,
-            )
-            self.ax.set_ylim(
-                center[1] - height / 2 - extra_margin,
-                center[1] - height / 2 + extra_margin,
-            )
-        else:
-            raise ValueError("No axis limits known for animation.")
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        self.animate_and_save(name=str(episode_number))
-        self.reset()
-
-
-class ComposedAnimationCallback(AnimationCallback):
-    """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
-
-    def __init__(self, *animations, **kwargs):
-        """Initialize an instance of ComposedAnimationCallback.
-
-        :param animations: animation classes to be composed
-        :param kwargs: keyword arguments to be passed to __init__ of said animations and the base class
-        """
-        Callback.__init__(self, **kwargs)
-        self.animations = [
-            Animation(interactive=False, **kwargs) for Animation in animations
-        ]
-        self.fig = Figure(figsize=(10, 10))
-        canvas = FigureCanvas(self.fig)
-        width = int(len(self.animations) ** 0.5 + 0.5)
-        height = width - (width**2 - len(self.animations)) // width
-        for i, animation in enumerate(self.animations):
-            animation.fig = self.fig
-            animation.ax = canvas.figure.add_subplot(width, height, 1 + i)
-            animation.ax.set_aspect("equal", "box")
-        self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
-        for animation in self.animations:
-            animation.mng = self.mng
-            animation.interactive_mode = self._metadata["argv"].interactive
-            animation.setup()
-
-    def perform(self, obj, method, output):
-        raise AssertionError(
-            f"A {self.__class__.__name__} object is not meant to have its `perform` method called."
-        )
-
-    def construct_frame(self, **frame_datum):
-        raise AssertionError(
-            f"A {self.__class__.__name__} object is not meant to have its `construct_frame` method called."
-        )
-
-    def setup(self):
-        raise AssertionError(
-            f"A {self.__class__.__name__} object is not meant to have its `setup` method called."
-        )
-
-    def is_target_event(self, obj, method, output):
-        raise AssertionError(
-            f"A {self.__class__.__name__} object is not meant to have its `is_target_event` method called."
-        )
-
-    def on_launch(self):
-        for animation in self.animations:
-            animation.on_launch()
-
-    def on_episode_done(self, *args, **kwargs):
-        for animation in self.animations:
-            animation.on_episode_done(*args, **kwargs)
-
-    def __call__(self, *args, **kwargs):
-        for animation in self.animations:
-            animation(*args, **kwargs)
-
-
-class PointAnimation(AnimationCallback, ABC):
-    """Animation that sets the location of a planar point at each frame."""
-
-    def setup(self):
-        (self.point,) = self.ax.plot(0, 1, marker="o", label="location")
-
-    def construct_frame(self, x, y):
-        self.point.set_data([x], [y])
-        return (self.point,)
-
-    def lim(self, *args, extra_margin=0.01, **kwargs):
-        try:
-            super().lim(*args, extra_margin=extra_margin, **kwargs)
-            return
-        except ValueError:
-            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T
-            x_min, x_max = x.min(), x.max()
-            y_min, y_max = y.min(), y.max()
-            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
-            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-            self.ax.set_xlim(
-                x_min - extra_margin,
-                x_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
-            self.ax.set_ylim(
-                y_min - extra_margin,
-                y_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
-
-
 @passdown
 class StateTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
@@ -928,141 +648,6 @@ class StateTracker(Callback):
 
     def perform(self, obj, method, output):
         self.system_state = obj.state
-
-
-class PlanarMotionAnimation(PointAnimation, StateTracker):
-    """Animates dynamics of systems that can be viewed as a point moving on a plane."""
-
-    def on_trigger(self, _):
-        self.add_frame(x=self.system_state[0], y=self.system_state[1])
-
-
-class TriangleAnimation(AnimationCallback, ABC):
-    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
-
-    _pic = None  # must be an svg located in regelum/img
-
-    def setup(self):
-        if self._pic is None:
-            return self.setup_points()
-        else:
-            return self.setup_pic()
-
-    def setup_points(self):
-        (point1,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        (point2,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        (point3,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        self.points = (point1, point2, point3)
-        self.ax.grid()
-
-    def setup_pic(self):
-        self.path = regelum.__file__.replace("__init__.py", f"img/{self._pic}")
-        self.pic_data, self.attributes = svg2paths(self.path)
-        parsed = parse_path(self.attributes[0]["d"])
-        parsed.vertices -= parsed.vertices.mean(axis=0)
-        self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
-        (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=30)
-
-    def lim(self, *args, extra_margin=0.11, **kwargs):
-        try:
-            super().lim(*args, extra_margin=extra_margin, **kwargs)
-            return
-        except ValueError:
-            x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
-            x_min, x_max = x.min(), x.max()
-            y_min, y_max = y.min(), y.max()
-            x_min, x_max = x_min - (x_max - x_min) * 0.1, x_max + (x_max - x_min) * 0.1
-            y_min, y_max = y_min - (y_max - y_min) * 0.1, y_max + (y_max - y_min) * 0.1
-            self.ax.set_xlim(
-                x_min - extra_margin,
-                x_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
-            self.ax.set_ylim(
-                y_min - extra_margin,
-                y_min + max(x_max - x_min, y_max - y_min) + extra_margin,
-            )
-
-    def construct_frame(self, x, y, theta):
-        if self._pic is None:
-            return self.construct_frame_points(x, y, theta)
-        else:
-            return self.construct_frame_pic(x, y, theta)
-
-    def construct_frame_points(self, x, y, theta):
-        offsets = (
-            np.array(
-                [
-                    [
-                        np.cos(theta + i * 2 * np.pi / 3),
-                        np.sin(theta + i * 2 * np.pi / 3),
-                    ]
-                    for i in range(3)
-                ]
-            )
-            / 10
-        )
-        location = np.array([x, y])
-        for point, offset in zip(self.points, offsets):
-            x, y = location + offset
-            point.set_data([x], [y])
-        return self.points
-
-    def construct_frame_pic(self, x, y, theta):
-        self.triangle.set_data([x], [y])
-        self.marker._transform = self.marker.get_transform().rotate_deg(
-            180 * theta / np.pi
-        )
-        return (self.triangle,)
-
-
-class DirectionalPlanarMotionAnimation(TriangleAnimation, StateTracker):
-    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
-
-    def setup(self):
-        super().setup()
-        self.ax.set_xlabel("x")
-        self.ax.set_ylabel("y")
-        self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
-
-    def on_trigger(self, _):
-        self.add_frame(
-            x=self.system_state[0], y=self.system_state[1], theta=self.system_state[2]
-        )
-
-
-class PendulumAnimation(PlanarMotionAnimation):
-    """Animates the head of a swinging pendulum.
-
-    Interprets the first state coordinate as the angle of the pendulum with respect to the topmost position.
-    """
-
-    def on_trigger(self, _):
-        self.add_frame(x=np.sin(self.system_state[0]), y=np.cos(self.system_state[0]))
-
-    def lim(self):
-        self.ax.set_xlim(-1.1, 1.1)
-        self.ax.set_ylim(-1.1, 1.1)
-
-
-class BarAnimation(AnimationCallback, StateTracker):
-    """Animates the state of a system as a collection of vertical bars."""
-
-    def setup(self):
-        self.bar = None
-
-    def construct_frame(self, state):
-        if self.bar is None:
-            self.bar = self.ax.bar(range(len(state)), state)
-        else:
-            for rect, h in zip(self.bar, state):
-                rect.set_height(h)
-        return self.bar
-
-    def on_trigger(self, _):
-        self.add_frame(state=self.system_state)
-
-    def lim(self):
-        pass
 
 
 class HistoricalCallback(Callback, ABC):
@@ -1192,103 +777,51 @@ def method_callback(method_name, class_name=None, log_level="debug"):
     return MethodCallback
 
 
-class StateCallback(Callback):
-    """StateCallback is a subclass of the Callback class that logs the state of a system object when the compute_closed_loop_rhs method of the System class is called.
-
-    Attributes
-    ----------
-    log (function): A function that logs a message at a specified log level.
-    """
-
-    def is_target_event(self, obj, method, output):
-        attachee = self.attachee if self.attachee is not None else regelum.system.System
-        return (
-            isinstance(obj, attachee)
-            and method == regelum.system.System.compute_closed_loop_rhs.__name__
-        )
-
-    def perform(self, obj, method, output):
-        self.log(f"System's state: {obj._state}")
-
-
-class ObjectiveCallback(Callback):
-    """A Callback class that logs the current objective value of an Actor instance.
-
-    This callback is triggered whenever the Actor.objective method is called.
-
-    Attributes
-    ----------
-    log (function): A logger function with the specified log level.
-    """
-
-    cooldown = 8.0
-
-    def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.policies.Policy) and method == "objective"
-
-    def perform(self, obj, method, output):
-        self.log(f"Current objective: {output}")
-
-
-class HistoricalObjectiveCallback(HistoricalCallback):
+class ControllerStepLogger(Callback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of HistoricalObjectiveCallback."""
-        super().__init__(*args, **kwargs)
-
-        self.timeline = []
-        self.num_launch = 1
-        self.counter = 0
-        self.cooldown = 1.0
-
-    def on_launch(self):
-        super().on_launch()
-        with regelum.main.metadata["report"]() as r:
-            r["elapsed_relative"] = 0
+    cooldown = 1.0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.scenario.Scenario) and (method == "post_step")
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and method == "compute_action"
+        ) or (
+            isinstance(obj, regelum.scenario.OnlineScenario) and (method == "__init__")
+        )
 
     def perform(self, obj, method, output):
-        self.counter += 1
-        self.log(
-            f"Current objective: {output[0]}, observation: {output[1][0]}, action: {output[2][0]}, total objective: {output[3]:.4f}, time: {obj.time:.4f} ({100 * obj.time/obj.simulator.time_final:.1f}%), episode: {obj.episode_counter + 1}/{obj.N_episodes}, iteration: {obj.iteration_counter + 1}/{obj.N_iterations}"
-        )
-        if not self.counter % 3:
-            do_exit = False
-            with regelum.main.metadata["report"]() as r:
-                r["elapsed_relative"] = obj.time / obj.simulator.time_final
-                if "terminate" in r:
-                    do_exit = True
-            if do_exit:
-                self.log("Termination request issued from GUI.")
-                raise regelum.RegelumExitException(
-                    "Termination request issued from gui."
-                )
+        if isinstance(obj, regelum.scenario.OnlineScenario) and method == "__init__":
+            self.N_episodes = obj.N_episodes
+            self.N_iterations = obj.N_iterations
+            self.time_final = obj.simulator.time_final
 
-        self.add_datum(
-            {
-                "time": round(output[3], 4),
-                "current objective": output[0],
-                "observation": output[1][0],
-                "action": output[2][0],
-                "total_objective": round(output[3], 4),
-                "completed_percent": 100
-                * round(obj.time / obj.simulator.time_final, 1),
-            }
-        )
+            return
 
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        self.insert_column_left("episode", episode_number)
-        self.dump_and_clear_data(f"episode_{str(episode_number).zfill(5)}")
+        datum = obj.data_buffer.getitem(
+            idx=-1,
+            keys=[
+                "state_estimated",
+                "observation",
+                "action",
+                "timestamp",
+                "running_objective",
+                "current_total_objective",
+                "episode_id",
+                "iteration_id",
+            ],
+        )
+        with np.printoptions(precision=2, suppress=True):
+            self.log(
+                f"Current objective: {datum['running_objective'][0]:.2f}, "
+                f"state est.: {datum['state_estimated']}, "
+                f"observation: {datum['observation']}, "
+                f"action: {datum['action']}, "
+                f"total objective: {datum['current_total_objective'][0]:.4f}, "
+                f"time: {datum['timestamp'][0]:.4f} ({100 * datum['timestamp'][0]/self.time_final:.1f}%), "
+                f"episode: {int(datum['episode_id'][0]) + 1}/{self.N_episodes}, "
+                f"iteration: {int(datum['iteration_id'][0]) + 1}/{self.N_iterations}"
+            )
 
 
 class SaveProgressCallback(Callback):
@@ -1335,32 +868,68 @@ class SaveProgressCallback(Callback):
             self.on_episode_done(None, 0, None, None, None)
 
 
-class HistoricalObservationCallback(HistoricalCallback):
+class HistoricalDataCallback(HistoricalCallback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
-        """Initialize an instance of HistoricalObservationCallback."""
+        """Initialize an instance of HistoricalDataSaverCallback."""
         super().__init__(*args, **kwargs)
-
         self.cooldown = 0.0
 
-        self.current_episode = None
-        self.dt_simulator_counter = 0
-        self.time_threshold = 10
-
     def is_target_event(self, obj, method, output):
-        if isinstance(obj, regelum.scenario.Scenario) and (method == "post_step"):
-            self.dt_simulator_counter += 1
-            return not self.dt_simulator_counter % self.time_threshold
+        return (
+            isinstance(obj, regelum.controller.RLController)
+            and method == "compute_action"
+        ) or (
+            isinstance(obj, regelum.scenario.OnlineScenario) and (method == "__init__")
+        )
 
     def perform(self, obj, method, output):
+        if isinstance(obj, regelum.scenario.OnlineScenario) and method == "__init__":
+            self.N_episodes = obj.N_episodes
+            self.N_iterations = obj.N_iterations
+            self.time_final = obj.simulator.time_final
+            if obj.observation_components_naming is None:
+                self.observation_components_naming = [
+                    f"observation_{i + 1}" for i in range(obj.system.dim_observation)
+                ]
+            else:
+                self.observation_components_naming = obj.observation_components_naming
+
+            if obj.action_components_naming is None:
+                self.action_components_naming = [
+                    f"action_{i + 1}" for i in range(obj.simulator.system.dim_inputs)
+                ]
+            else:
+                self.action_components_naming = obj.action_components_naming
+
+            return
+
+        datum = obj.data_buffer.getitem(
+            idx=-1,
+            keys=[
+                "state_estimated",
+                "observation",
+                "action",
+                "timestamp",
+                "running_objective",
+                "current_total_objective",
+                "episode_id",
+                "iteration_id",
+            ],
+        )
+
         self.add_datum(
             {
                 **{
-                    "time": obj.time,
-                    "action": obj.action[0],
+                    "time": datum["timestamp"][0],
+                    "running_objective": datum["running_objective"][0],
+                    "current_total_objective": datum["current_total_objective"][0],
+                    "episode_id": datum["episode_id"][0],
+                    "iteration_id": datum["iteration_id"][0],
                 },
-                **dict(zip(obj.observation_components_naming, obj.observation[0])),
+                **dict(zip(self.action_components_naming, datum["action"])),
+                **dict(zip(self.observation_components_naming, datum["observation"])),
             }
         )
 
@@ -1373,11 +942,10 @@ class HistoricalObservationCallback(HistoricalCallback):
         iterations_total,
     ):
         if iterations_total == 1:
-            identifier = f"observations_ep_{str(episode_number).zfill(5)}"
+            identifier = f"observations_actions_ep_{str(episode_number).zfill(5)}"
         else:
-            identifier = f"observations_it_{str(iteration_number).zfill(5)}_ep_{str(episode_number).zfill(5)}"
+            identifier = f"observations_actions_it_{str(iteration_number).zfill(5)}_ep_{str(episode_number).zfill(5)}"
         self.save_plot(identifier)
-        self.insert_column_left("episode", episode_number)
         self.dump_and_clear_data(identifier)
 
     def plot(self, name=None):
@@ -1388,12 +956,22 @@ class HistoricalObservationCallback(HistoricalCallback):
 
         if not name:
             name = self.__class__.__name__
-        res = (
-            self.data.drop(["action"], axis=1)
+
+        axes = (
+            self.data[
+                self.observation_components_naming
+                + self.action_components_naming
+                + ["time"]
+            ]
             .set_index("time")
-            .plot(subplots=True, grid=True, xlabel="time", title=name)
+            .plot(subplots=True, grid=True, xlabel="time", title=name, legend=False)
         )
-        return res[0].figure
+        for ax, label in zip(
+            axes, self.observation_components_naming + self.action_components_naming
+        ):
+            ax.set_ylabel(label)
+
+        return axes[0].figure
 
 
 class ObjectiveSaver(HistoricalCallback):
@@ -1489,33 +1067,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.cache = pd.DataFrame()
         self.xlabel = "Episode"
         self.ylabel = "Total objective"
+        self.total_objectives = []
 
     def is_target_event(self, obj, method, output):
         return False
-
-    def on_iteration_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        mlflow.log_metric(
-            "A. Avg total objectives",
-            np.mean(scenario.recent_total_objectives_of_episodes),
-            step=iteration_number,
-        )
-        mlflow.log_metric(
-            "A. Med total objectives",
-            np.median(scenario.recent_total_objectives_of_episodes),
-            step=iteration_number,
-        )
-        mlflow.log_metric(
-            "A. Std total objectives",
-            np.std(scenario.recent_total_objectives_of_episodes),
-            step=iteration_number,
-        )
 
     def on_episode_done(
         self,
@@ -1531,6 +1086,7 @@ class TotalObjectiveCallback(HistoricalCallback):
                 "objective": scenario.recent_total_objective,
             }
         )
+        self.total_objectives.append(scenario.recent_total_objective)
         self.log(
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
@@ -1548,6 +1104,12 @@ class TotalObjectiveCallback(HistoricalCallback):
         )
 
         if episode_number == episodes_total:
+            mlflow.log_metric(
+                "A. Avg total objectives",
+                np.mean(self.total_objectives),
+                step=iteration_number,
+            )
+            self.total_objectives = []
             self.clear_recent_data()
 
     def perform(self, obj, method, output):
@@ -1619,232 +1181,4 @@ class TimeRemainingCallback(Callback):
         )
 
 
-class CALFWeightsCallback(HistoricalCallback):
-    """Callback that records the relevant model weights for CALF-based methods."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of CALFWeightsCallback."""
-        super().__init__(*args, **kwargs)
-        self.cooldown = 0.0
-        self.time = 0.0
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.controller.Controller)
-            and method == "compute_action"
-            and "calf" in obj.critic.__class__.__name__.lower()
-        )
-
-    def perform(self, obj, method, output):
-        try:
-            datum = {
-                **{"time": regelum.main.metadata["time"]},
-                **{
-                    f"weight_{i + 1}": weight[0]
-                    for i, weight in enumerate(obj.critic.model.weights.full())
-                },
-            }
-
-            # print(datum["time"], obj.critic.model.weights)
-            self.add_datum(datum)
-        finally:
-            pass
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        identifier = f"CALF_weights_during_episode_{str(episode_number).zfill(5)}"
-        if not self.data.empty:
-            self.save_plot(identifier)
-            self.insert_column_left("episode", episode_number)
-            self.dump_and_clear_data(identifier)
-
-    def plot(self, name=None):
-        if not self.data.empty:
-            if regelum.main.is_clear_matplotlib_cache_in_callbacks:
-                plt.clf()
-                plt.cla()
-                plt.close()
-            if not name:
-                name = self.__class__.__name__
-            res = self.data.set_index("time").plot(
-                subplots=True, grid=True, xlabel="time", title=name
-            )
-            return res[0].figure
-
-
-class CriticWeightsCallback(CALFWeightsCallback):
-    """Whatever."""
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.controller.Controller)
-            and method == "compute_action"
-        )
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        identifier = f"Critic_weights_during_episode_{str(episode_number).zfill(5)}"
-        if not self.data.empty:
-            self.save_plot(identifier)
-            self.insert_column_left("episode", episode_number)
-            self.dump_and_clear_data(identifier)
-
-
-class CalfCallback(HistoricalCallback):
-    """Callback that records various diagnostic data during experiments with CALF-based methods."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of CalfCallback."""
-        super().__init__(*args, **kwargs)
-        self.cooldown = 1.0
-        self.time = 0.0
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.controller.Controller)
-            and method == "compute_action"
-            and "calf" in obj.critic.__class__.__name__.lower()
-        )
-
-    def perform(self, obj, method, output):
-        current_CALF = obj.critic(
-            obj.critic.observation_last_good,
-            use_stored_weights=True,
-        )
-        self.log(
-            f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.data_buffer.sample_last(keys=['observation'], dtype=np.array)['observation']}"
-        )
-        is_calf = (
-            obj.critic.opt_status == "success" and obj.policy.opt_status == "success"
-        )
-        if not self.data.empty:
-            prev_CALF = self.data["J_hat"].iloc[-1]
-        else:
-            prev_CALF = current_CALF
-
-        delta_CALF = prev_CALF - current_CALF
-        self.add_datum(
-            {
-                "time": regelum.main.metadata["time"],
-                "J_hat": current_CALF[0]
-                if isinstance(current_CALF, (np.ndarray, torch.Tensor))
-                else current_CALF.full()[0],
-                "is_CALF": is_calf,
-                "delta": delta_CALF[0]
-                if isinstance(delta_CALF, (np.ndarray, torch.Tensor))
-                else delta_CALF.full()[0],
-            }
-        )
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        identifier = f"CALF_diagnostics_on_episode_{str(episode_number).zfill(5)}"
-        if not self.data.empty:
-            self.save_plot(identifier)
-            self.insert_column_left("episode", episode_number)
-            self.dump_and_clear_data(identifier)
-
-    def plot(self, name=None):
-        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
-            plt.clf()
-            plt.cla()
-            plt.close()
-        if not self.data.empty:
-            fig = plt.figure(figsize=(10, 10))
-
-            ax_calf, ax_switch, ax_delta = ax_array = fig.subplots(1, 3)
-            ax_calf.plot(self.data["time"], self.data["J_hat"], label="CALF")
-            ax_switch.plot(self.data["time"], self.data["is_CALF"], label="CALF on")
-            ax_delta.plot(self.data["time"], self.data["delta"], label="delta decay")
-
-            for ax in ax_array:
-                ax.set_xlabel("Time [s]")
-                ax.grid()
-                ax.legend()
-
-            ax_calf.set_ylabel("J_hat")
-            ax_switch.set_ylabel("Is CALF on")
-            ax_delta.set_ylabel("Decay size")
-
-            plt.legend()
-            return fig
-
-
-class CriticCallback(CalfCallback):
-    """Watever."""
-
-    def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.controller.Controller)
-            and method == "compute_action"
-        )
-
-    def perform(self, obj, method, output):
-        last_observation = obj.data_buffer.sample_last(
-            keys=["observation"], dtype=np.array
-        )["observation"]
-        critic_val = obj.critic(
-            last_observation,
-        )
-        self.log(f"current critic value:{critic_val}, observation: {last_observation}")
-        if critic_val is not None:
-            self.add_datum(
-                {
-                    "time": regelum.main.metadata["time"],
-                    "J": critic_val[0]
-                    if isinstance(critic_val, (np.ndarray, torch.Tensor))
-                    else critic_val.full()[0],
-                }
-            )
-
-    def on_episode_done(
-        self,
-        scenario,
-        episode_number,
-        episodes_total,
-        iteration_number,
-        iterations_total,
-    ):
-        identifier = f"Critic_values_on_episode_{str(episode_number).zfill(5)}"
-        if not self.data.empty:
-            self.save_plot(identifier)
-            self.insert_column_left("episode", episode_number)
-            self.dump_and_clear_data(identifier)
-
-    def plot(self, name=None):
-        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
-            plt.clf()
-            plt.cla()
-            plt.close()
-        if not self.data.empty:
-            fig = plt.figure(figsize=(10, 10))
-
-            ax_critic = fig.subplots(1, 1)
-            ax_critic.plot(self.data["time"], self.data["J"], label="Critic")
-
-            ax_critic.set_xlabel("Time [s]")
-            ax_critic.grid()
-            ax_critic.legend()
-
-            ax_critic.set_ylabel("J")
-
-            plt.legend()
-            return fig
+from .animation import *

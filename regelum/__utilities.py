@@ -326,7 +326,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
             else:
                 device = torch.device("cpu")
 
-            self._array = torch.tensor(array, device=device)
+            self._array = torch.FloatTensor(array).to(device=device)
         elif rc_type == CASADI:
             if _force_numeric:
                 self._array = casadi.DM(array)
@@ -486,7 +486,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == TORCH:
             return torch.min(array)
         elif rc_type == CASADI:
-            return casadi.fmin(*safe_unpack(array))
+            return casadi.mmin(*safe_unpack(array))
 
     def max(self, array, rc_type: RCType = NUMPY):
         if isinstance(array, (list, tuple)):

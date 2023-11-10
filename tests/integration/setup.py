@@ -1,4 +1,5 @@
 import sys, os
+import numpy as np
 
 # ["2tank", "3wrobot", "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "lunar_lander"])
 # ["ddpg", "ddqn", "dqn", "dqn", "mpc", "pg", "pid", "rpo", "rpo_deep", "rql", "sarsa", "sdpg", "sql"]
@@ -33,7 +34,7 @@ class TestSetup:
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
         sys.argv.insert(1, "simulator.time_final=1")
-        sys.argv.insert(1, "controller.sampling_time=0.5")
+        sys.argv.insert(1, "controller.sampling_time=0.1")
         sys.argv.insert(1, "scenario.N_episodes=2")
         sys.argv.insert(1, "scenario.N_iterations=1")
         sys.argv.insert(1, "+disallow_uncommitted=False")
@@ -64,8 +65,76 @@ class MPCTest(TestSetup):
 
 #######################################################################################################################
 #######################################################################################################################
+controllers = (
+    "sdpg",
+    "ppo",
+    "ddpg",
+    "reinforce",
+    "dqn",
+    "sarsa",
+    "rpo",
+    "rql",
+    "rql_torch",
+    "sql",
+    "sql_torch",
+    "rpo_torch",
+    "mpc_torch",
+    "mpc",
+)
+systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "2tank", "lunar_lander"
 
-basic = sum(
+
+basic = [
+    TestSetup(system=system, controller=controller, **{"simulator.time_final": 3.0})
+    for controller, system in zip(controllers, np.tile(systems, len(controllers)))
+]
+
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        controller=controller,
+        **{
+            "simulator.time_final": 3.0,
+            "constraint_parser": "constant_parser",
+            "prefix": "constraint",
+        },
+    )
+    for controller in ["rpo", "sql", "mpc", "rql"]
+]
+
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        controller=controller,
+        **{
+            "simulator.time_final": 0.5,
+            "constraint_parser": "constant_parser",
+            "prefix": "constraint_torch",
+            "controller.policy.prediction_horizon": 1,
+            "controller/policy/optimizer_config": "online_torch_sgd",
+            "controller.policy.optimizer_config.config_options.n_epochs": 1,
+            "controller.policy.optimizer_config.config_options.constrained_optimization_policy.defaults.n_epochs_per_constraint": 1,
+        },
+    )
+    for controller in ["mpc_torch"]
+]
+
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        controller=controller,
+        **{
+            "simulator.time_final": 3.0,
+            "prefix": "truncated_noise",
+            "controller/policy/model": "perceptron_with_truncated_normal_noise",
+            "controller.sampling_time": 0.1,
+        },
+    )
+    for controller in ["ppo", "reinforce", "sdpg"]
+]
+
+
+full = sum(
     [
         [
             TestSetup(
@@ -74,22 +143,30 @@ basic = sum(
             TestSetup(system=system, controller="ppo", **{"simulator.time_final": 3.0}),
             TestSetup(system=system, controller="ddpg"),
             TestSetup(system=system, controller="reinforce"),
-            TestSetup(system=system, controller="dqn", **{"simulator.time_final": 0.5}),
+            TestSetup(system=system, controller="dqn", **{"simulator.time_final": 3.0}),
             TestSetup(
-                system=system, controller="sarsa", **{"simulator.time_final": 0.5}
+                system=system, controller="sarsa", **{"simulator.time_final": 3.0}
             ),
-            TestSetup(system=system, controller="rpo", **{"simulator.time_final": 0.5}),
+            TestSetup(system=system, controller="rpo", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, controller="rql", **{"simulator.time_final": 3.0}),
+            TestSetup(
+                system=system, controller="rql_torch", **{"simulator.time_final": 3.0}
+            ),
+            TestSetup(system=system, controller="sql", **{"simulator.time_final": 3.0}),
+            TestSetup(
+                system=system, controller="sql_torch", **{"simulator.time_final": 3.0}
+            ),
             TestSetup(
                 system=system,
                 controller="rpo_torch",
-                **{"simulator.time_final": 0.5},
+                **{"simulator.time_final": 3.0},
             ),
             TestSetup(
                 system=system,
                 controller="mpc_torch",
-                **{"simulator.time_final": 0.5},
+                **{"simulator.time_final": 3.0},
             ),
-            TestSetup(system=system, controller="mpc", **{"simulator.time_final": 0.5}),
+            TestSetup(system=system, controller="mpc", **{"simulator.time_final": 3.0}),
         ]
         for system in [
             # "2tank",

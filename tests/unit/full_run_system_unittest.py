@@ -3,6 +3,7 @@ from regelum.system import (
     ThreeWheeledRobot,
     Integrator,
     InvertedPendulumPD,
+    TwoTankWithReference,
 )
 from regelum.__utilities import rc
 import numpy as np

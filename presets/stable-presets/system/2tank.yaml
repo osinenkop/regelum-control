@@ -1,0 +1,4 @@
+_target_: regelum.system.SystemWithConstantReference
+
+system: = regelum.system.TwoTank()
+state_reference: $ system_specific.reference 

@@ -181,7 +181,7 @@ class Optimizable(regelum.RegelumBase):
     def __fix_variables_symbolic(self, variables_to_fix, data_dict, metadata_dict):
         if metadata_dict is None:
             metadata_dict = {}
-        passed_unfixed_variables = sum(self.variables.selected(variables_to_fix))
+        passed_unfixed_variables = self.variables.selected(variables_to_fix)
         assert isinstance(
             passed_unfixed_variables, VarContainer
         ), "An error occured while fixing variables."
@@ -215,7 +215,7 @@ class Optimizable(regelum.RegelumBase):
         )
 
     def __unfix_variables_symbolic(self, variables_to_unfix):
-        passed_fixed_variables = sum(self.variables.selected(variables_to_unfix))
+        passed_fixed_variables = self.variables.selected(variables_to_unfix)
         assert isinstance(
             passed_fixed_variables, VarContainer
         ), "An error occured while fixing variables."
@@ -288,12 +288,17 @@ class Optimizable(regelum.RegelumBase):
                 *dims, is_constant=is_constant, like=like
             )
             new_variable = OptimizationVariable(
-                name=name, dims=dims, metadata=metadata, is_constant=is_constant
+                name=name,
+                dims=dims,
+                metadata=metadata,
+                data=like,
+                is_constant=is_constant,
             )
         else:
             new_variable = NestedFunction(
                 name=name,
                 dims=dims,
+                data=like,
                 metadata=metadata,
                 is_constant=is_constant,
                 nested_variables=VarContainer(nested_variables),
@@ -344,30 +349,32 @@ class Optimizable(regelum.RegelumBase):
     def connect_source(
         connect_to: OptimizationVariable,
         func: Callable,
-        source: OptimizationVariable,
+        source: Optional[OptimizationVariable] = None,
         act_on="all",
         discard_prev_sources=True,
         **source_kwargs,
     ):
         def source_hook(whatever):
-            return func(
-                source(),
-                **{
-                    kwarg: var() if isinstance(var, OptimizationVariable) else var
-                    for kwarg, var in source_kwargs.items()
-                },
-            )
+            kwargs = {
+                kwarg: var() if isinstance(var, OptimizationVariable) else var
+                for kwarg, var in source_kwargs.items()
+            }
+            if source is None:
+                return func(**kwargs)
+            else:
+                return func(source(), **kwargs)
 
         def source_metadata_hook(whatever):
-            return func(
-                source(with_metadata=True),
-                **{
-                    kwarg: var(with_metadata=True)
-                    if isinstance(var, OptimizationVariable)
-                    else var
-                    for kwarg, var in source_kwargs.items()
-                },
-            )
+            kwargs = {
+                kwarg: var(with_metadata=True)
+                if isinstance(var, OptimizationVariable)
+                else var
+                for kwarg, var in source_kwargs.items()
+            }
+            if source is None:
+                return func(**kwargs)
+            else:
+                return func(source(with_metadata=True), **kwargs)
 
         data_hook = Hook(source_hook, act_on="data")
         metadata_hook = Hook(source_metadata_hook, act_on="metadata")
@@ -534,7 +541,7 @@ class Optimizable(regelum.RegelumBase):
         self, func: FunctionWithSignature, variables: VarContainer
     ):
         func = self.__infer_and_register_symbolic_prototype(func, variables)
-        constr = rc.vec(func.metadata) <= -1e-12
+        constr = rc.vec(func.metadata) <= -1e-8
         self.__opti.subject_to(constr)
 
     def __register_numeric_constraint(
@@ -556,10 +563,8 @@ class Optimizable(regelum.RegelumBase):
         return self.__variables.decision_variables
 
     def substitute_parameters(self, **parameters):
-        if self.kind == "tensor":
-            self.variables.substitute_data(**parameters)
-            self.variables.substitute_metadata(**parameters)
-        elif self.kind == "symbolic":
+        self.variables.substitute_data(**parameters)
+        if self.kind == "symbolic":
             params_to_delete = []
             for k, v in parameters.items():
                 if k in self.variables:
@@ -572,8 +577,7 @@ class Optimizable(regelum.RegelumBase):
                         params_to_delete.append(k)
             for k in params_to_delete:
                 del parameters[k]
-        elif self.kind == "numeric":
-            self.variables.substitute_data(**parameters)
+        else:
             self.variables.substitute_metadata(**parameters)
 
     def is_target_event(self, event):
@@ -653,11 +657,7 @@ class Optimizable(regelum.RegelumBase):
         self.substitute_parameters(**kwargs)
 
         result = self.__opt_func(
-            **{
-                k: v
-                for k, v in kwargs.items()
-                if k in self.var_for_opti.constants.names
-            }
+            **{k: v for k, v in self.var_for_opti.constants.to_data_dict().items()}
         )
         if self.is_check_status:
             self.update_status(result, tol=tol)
@@ -671,7 +671,7 @@ class Optimizable(regelum.RegelumBase):
             }
         )
 
-    def update_status(self, result=None, tol=1e-12):
+    def update_status(self, result=None, tol=1e-8):
         self.opt_status = "success"
         if self.kind == "symbolic":
             for constr_name in self.constraints.names:

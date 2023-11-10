@@ -19,6 +19,7 @@ import warnings
 
 import random
 import omegaconf
+import rich
 
 from omegaconf import DictConfig, OmegaConf, ListConfig
 from omegaconf.resolvers import oc
@@ -77,6 +78,8 @@ from .callback import (
 import time
 import pandas as pd
 
+from .configure import get_user_settings, config_file
+
 try:
     import torch
 except (ModuleNotFoundError, ImportError):
@@ -88,11 +91,15 @@ from .optimizable import *
 from . import critic
 from . import controller
 from . import policy
+from . import observer
+
+from rich import print, pretty
+from rich.panel import Panel
+import rich.logging
+from rich.logging import RichHandler
 
 mock = Mock()
 
-# monkey_patch(__fake_plugins, rehydra.core.plugins)
-# monkey_patch(__fake_config_loader_impl, rehydra._internal.config_loader_impl)
 
 ANIMATION_TYPES_SAVE_FORMATS = ["html", "mp4"]
 ANIMATION_TYPES_REQUIRING_SAVING_SCENARIO_PLAYBACK = [
@@ -536,6 +543,24 @@ class RegelumExitException(Exception):
     pass
 
 
+logging.basicConfig(
+    level="INFO", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()]
+)
+
+pretty.install()
+
+
+logo_ascii = """                                  ___                            
+                                 /\_ \                           
+ _ __     __      __        __   \//\ \     __  __    ___ ___    
+/\`'__\ /'__`\  /'_ `\    /'__`\   \ \ \   /\ \/\ \ /' __` __`\  
+\ \ \/ /\  __/ /\ \L\ \  /\  __/    \_\ \_ \ \ \_\ \/\ \/\ \/\ \ 
+ \ \_\ \ \____\\\\ \____ \ \ \____\   /\____\ \ \____/\ \_\ \_\ \_\\
+  \/_/  \/____/ \/___L\ \ \/____/   \/____/  \/___/  \/_/\/_/\/_/
+                  /\____/                                        
+                  \_/__/                                         """
+
+
 # TODO: ADD 2-3 GENERAL SENTENCES OF WHAT THIS AND WHAT ITS FUNCTIONALITY ARE
 class main:
     """The decorator used to invoke ``regelum``'s config pipeline.
@@ -669,10 +694,27 @@ class main:
         :type logger: Logger, optional
 
         """
+        print(
+            Panel.fit(
+                logo_ascii, subtitle=f"v{__version__}", title="AIDA Solutions, 2023"
+            )
+        )
         if logger is None:
             logger = logging.getLogger("regelum")
+            # logger.info("Try")
         if callbacks is None:
             callbacks = []
+
+        if "--configure" in sys.argv:
+            if os.path.exists(config_file):
+                os.remove(config_file)
+            sys.argv.pop(sys.argv.index("--configure"))
+
+        user_settings = get_user_settings()
+        for name in user_settings:
+            if name not in os.environ:
+                if user_settings[name] is not None:
+                    os.environ[name] = str(user_settings[name])
 
         self.callbacks_ = callbacks + self.builtin_callbacks
 
@@ -762,6 +804,12 @@ class main:
     # TODO: DESCRIBE WHAT THIS DOES
     def __call__(self, old_app):
         def rcognita_main(*args, **kwargs):
+            # logging.basicConfig(
+            #    level="NOTSET",
+            #    format="%(message)s",
+            #    datefmt="[%X]",
+            #    handlers=[RichHandler()]
+            # )
             argv = self.parser.parse_args()
             common_dir = tempfile.TemporaryDirectory()
             initial_working_directory = os.getcwd()
@@ -806,6 +854,7 @@ class main:
                     f["seed"] = seed
                 os.mkdir("gfx")
                 os.mkdir(".callbacks")
+
                 with omegaconf.flag_override(cfg, "allow_objects", True):
                     self.__class__.metadata = {
                         "no_git": no_git,

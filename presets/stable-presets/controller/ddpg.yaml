@@ -37,6 +37,23 @@ critic:
       data_buffer_sampling_kwargs: 
         batch_sampler: = regelum.data_buffers.batch_sampler.EpisodicSampler
         dtype: = torch.FloatTensor
+  model:
+    dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+    dim_output: 1
+    dim_hidden: 100
+    n_hidden_layers: 4
+    is_force_infinitesimal: True
+    is_bias: True
+    force_positive_def: False
 
 policy:
+  model:
+    dim_hidden: 4
+    n_hidden_layers: 2
+  optimizer_config: 
+    opt_options:
+      lr: 0.1
+    config_options:
+      is_reinstantiate_optimizer: False
+      n_epochs: 1
   device: $ controller.device%%
