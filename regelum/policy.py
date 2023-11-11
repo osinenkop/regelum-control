@@ -12,7 +12,7 @@ Remarks:
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Optional
-
+import casadi as cs
 from .__utilities import rc, AwaitedParameter
 
 from .predictor import Predictor
@@ -103,6 +103,22 @@ class Policy(Optimizable, ABC):
 
     def __call__(self, observation):
         return self.get_action(observation)
+
+    @property
+    def action(self):
+        return self._action
+
+    @action.setter
+    def action(self, value):
+        self._action = value
+
+    @action.getter
+    def action(self):
+        if isinstance(self._action, cs.DM):
+            return self._action.full()
+        elif isinstance(self._action, torch.Tensor):
+            return self._action.detach().cpu().numpy()
+        return self._action
 
     @property
     def data_buffer_objective_keys(self) -> Optional[List[str]]:
