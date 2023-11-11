@@ -45,13 +45,13 @@ def apply_action_bounds(method):
 class Controller(RegelumBase):
     """A blueprint of optimal controllers."""
 
-    @apply_callbacks()
     def __init__(
         self,
         policy: Policy,
         simulator: Simulator,
         time_start: float = 0,
         sampling_time: float = 0.1,
+        action_bounds: Optional[list] = None,
         running_objective: Optional[RunningObjective] = None,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -76,6 +76,7 @@ class Controller(RegelumBase):
         self.recent_total_objectives_of_episodes = []
         self.total_objectives_of_episodes = []
         self.total_objective_episodic_means = []
+        self.action_bounds = np.array(action_bounds)
 
         self.sim_status = 1
         self.episode_counter = 0
@@ -159,10 +160,11 @@ class Controller(RegelumBase):
                 else 0
             )
             self.time_old = self.time
-            self.constraint_parameters = self.constraint_parser.parse_constraints(
-                simulation_metadata=self.simulation_metadata
-            )
-            self.substitute_constraint_parameters(**self.constraint_parameters)
+            if len(list(self.constraint_parser)) > 0:
+                self.constraint_parameters = self.constraint_parser.parse_constraints(
+                    simulation_metadata=self.simulation_metadata
+                )
+                self.substitute_constraint_parameters(**self.constraint_parameters)
             estimated_state = self.observer.get_state_estimation(
                 self.time, self.observation, self.action
             )
@@ -216,7 +218,6 @@ class Controller(RegelumBase):
         self.time = 0
         self.time_old = 0
         self.action = self.action_init
-        self.policy.reset()
         self.simulator.reset()
         self.reset()
         self.recent_total_objective = self.total_objective
@@ -257,6 +258,7 @@ class Controller(RegelumBase):
 
     def compute_action(self, time, estimated_state, observation):
         self.issue_action(observation)
+        return self.policy.action
 
     def issue_action(self, observation):
         self.policy.update_action(observation)
@@ -316,8 +318,6 @@ class Controller(RegelumBase):
         """
         self.clock.reset()
         self.total_objective = 0.0
-        self.policy.action_old = self.policy.action_init
-        self.policy.action = self.policy.action_init
         self.is_first_compute_action_call = True
 
 
@@ -385,6 +385,7 @@ class RLController(Controller):
             N_iterations=N_iterations,
             total_objective_threshold=total_objective_threshold,
             discount_factor=discount_factor,
+            action_bounds=action_bounds,
         )
 
         self.critic_optimization_event = critic_optimization_event
@@ -392,7 +393,6 @@ class RLController(Controller):
         self.data_buffer_nullify_event = data_buffer_nullify_event
         self.data_buffer = DataBuffer(max_data_buffer_size)
         self.critic = critic
-        self.action_bounds = np.array(action_bounds)
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
 
@@ -2003,358 +2003,3 @@ class Controller2TankPID:
             [rc.array(observation[1])], error_derivative=error_derivative_x2
         )
         return self.action
-
-
-class Controller3WRobotNIDisassembledCLF:
-    """Nominal parking controller for NI using disassembled control Lyapunov function."""
-
-    def __init__(
-        self, controller_gain=10, action_bounds=None, time_start=0, sampling_time=0.1
-    ):
-        """Initialize an instance of disassembled-clf controller.
-
-        :param controller_gain: gain of controller
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        :param time_start: time at which computations start
-        :param sampling_time: time interval between two consecutive actions
-        """
-        self.controller_gain = controller_gain
-        self.action_bounds = np.array(action_bounds)
-        self.controller_clock = time_start
-        self.time_start = time_start
-        self.sampling_time = sampling_time
-        self.Ls = []
-        self.times = []
-        self.action_old = rc.zeros(2)
-        self.clock = Clock(period=sampling_time, time_start=time_start)
-
-    def reset(self):
-        """Reset controller for use in multi-episode simulation."""
-        self.controller_clock = self.time_start
-        self.action_old = rc.zeros(2)
-
-    def _zeta(self, xNI):
-        """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
-        sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
-
-        nablaL = rc.zeros(3)
-
-        nablaL[0] = (
-            4 * xNI[0] ** 3
-            + rc.abs(xNI[2]) ** 3
-            / sigma**3
-            * 1
-            / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
-            * 2
-            * xNI[0]
-        )
-        nablaL[1] = (
-            4 * xNI[1] ** 3
-            + rc.abs(xNI[2]) ** 3
-            / sigma**3
-            * 1
-            / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
-            * 2
-            * xNI[1]
-        )
-        nablaL[2] = 3 * rc.abs(xNI[2]) ** 2 * rc.sign(xNI[2]) + rc.abs(
-            xNI[2]
-        ) ** 3 / sigma**3 * 1 / np.sqrt(rc.abs(xNI[2])) * rc.sign(xNI[2])
-
-        theta = 0
-
-        sigma_tilde = (
-            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
-        )
-
-        nablaF = rc.zeros(3)
-
-        nablaF[0] = (
-            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde**3
-        )
-        nablaF[1] = (
-            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde**3
-        )
-        nablaF[2] = (
-            (
-                3 * xNI[0] * rc.cos(theta)
-                + 3 * xNI[1] * rc.sin(theta)
-                + 2 * np.sqrt(rc.abs(xNI[2]))
-            )
-            * xNI[2] ** 2
-            * rc.sign(xNI[2])
-            / sigma_tilde**3
-        )
-
-        if xNI[0] == 0 and xNI[1] == 0:
-            return nablaF
-        else:
-            return nablaL
-
-    def _kappa(self, xNI):
-        """Stabilizing controller for NI-part."""
-        kappa_val = rc.zeros(2)
-
-        G = rc.zeros([3, 2])
-        G[:, 0] = rc.array([1, 0, xNI[1]], prototype=G)
-        G[:, 1] = rc.array([0, 1, -xNI[0]], prototype=G)
-
-        zeta_val = self._zeta(xNI)
-
-        kappa_val[0] = -rc.abs(np.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 0])
-        )
-        kappa_val[1] = -rc.abs(np.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 1])
-        )
-
-        return kappa_val
-
-    def _F(self, xNI, eta, theta):
-        """Marginal function for NI."""
-        sigma_tilde = (
-            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
-        )
-
-        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde**2
-
-        z = eta - self._kappa(xNI, theta)
-
-        return F + 1 / 2 * rc.dot(z, z)
-
-    def _Cart2NH(self, coords_Cart):
-        """Transform from Cartesian coordinates to non-holonomic (NH) coordinates."""
-        xNI = rc.zeros(3)
-
-        xc = coords_Cart[0]
-        yc = coords_Cart[1]
-        angle = coords_Cart[2]
-
-        xNI[0] = angle
-        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
-        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
-            xc * rc.cos(angle) + yc * rc.sin(angle)
-        )
-
-        return xNI
-
-    def _NH2ctrl_Cart(self, xNI, uNI):
-        """Get control for Cartesian NI from NH coordinates."""
-        uCart = rc.zeros(2)
-
-        uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
-        uCart[1] = uNI[0]
-
-        return uCart
-
-    def compute_action_sampled(self, time, state, observation):
-        """Compute sampled action."""
-        is_time_for_new_sample = self.clock.check_time(time)
-
-        if is_time_for_new_sample:  # New sample
-            action = self.compute_action(state, observation)
-            self.times.append(time)
-            self.action_old = action
-
-            # DEBUG ===================================================================
-            # ================================LF debugger
-            # R  = '\033[31m'
-            # Bl  = '\033[30m'
-            # headerRow = ['L']
-            # dataRow = [self.compute_LF(observation)]
-            # rowFormat = ('8.5f', '8.5f', '8.5f', '8.5f')
-            # table = tabulate([headerRow, dataRow], floatfmt=rowFormat, headers='firstrow', tablefmt='grid')
-            # print(R+table+Bl)
-            # /DEBUG ===================================================================
-
-            return action
-
-        else:
-            return self.action_old
-
-    @apply_action_bounds
-    def compute_action(self, state, observation, time=0):
-        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
-        xNI = self._Cart2NH(observation)
-        kappa_val = self._kappa(xNI)
-        uNI = self.controller_gain * kappa_val
-        self.action = self._NH2ctrl_Cart(xNI, uNI)
-
-        self.action_old = self.action
-        self.compute_LF(observation)
-
-        return self.action
-
-    def compute_LF(self, observation):
-        xNI = self._Cart2NH(observation)
-
-        sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
-        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma**2
-
-        self.Ls.append(LF_value)
-
-        return LF_value
-
-
-class NominalControllerInvertedPendulum:
-    """A nominal controller for inverted pendulum representing a PD controller."""
-
-    def __init__(
-        self,
-        action_bounds,
-        controller_gain,
-        time_start: float = 0,
-        sampling_time: float = 0.1,
-    ):
-        """Initialize an instance of nominal PD controller.
-
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        :param controller_gain: gain of controller
-        :param time_start: time at which computations start
-        :param sampling_time: time interval between two consecutive actions
-        """
-        self.action_bounds = np.array(action_bounds)
-        self.controller_gain = controller_gain
-        self.observation = np.array([np.pi, 0])
-        self.clock = Clock(period=sampling_time, time_start=time_start)
-        self.sampling_time = sampling_time
-        self.action = np.array([np.mean(action_bounds)])
-
-    def compute_action_sampled(self, time, state, observation, constraints=()):
-        is_time_for_new_sample = self.clock.check_time(time)
-
-        if is_time_for_new_sample:
-            self.action = self.compute_action(state, observation, time=time)
-
-        return self.action
-
-    def __call__(self, observation):
-        return self.compute_action(observation)
-
-    @apply_action_bounds
-    def compute_action(self, state, observation, time=0):
-        self.observation = observation
-        return np.array(
-            [
-                [
-                    -((observation[0, 0]) + 0.1 * (observation[0, 1]))
-                    * self.controller_gain
-                ]
-            ]
-        )
-
-    def reset(self):
-        self.clock.reset()
-
-
-class Controller3WRobotNIMotionPrimitive(Controller):
-    """Controller for non-inertial three-wheeled robot composed of three PID controllers."""
-
-    def __init__(self, K, time_start=0, sampling_time=0.01, action_bounds=None):
-        """Initialize an instance of controller.
-
-        :param K: gain of controller
-        :param time_start: time at which computations start
-        :param sampling_time: time interval between two consecutive actions
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        """
-        super().__init__(
-            sampling_time=sampling_time,
-            time_start=time_start,
-        )
-        if action_bounds is None:
-            action_bounds = []
-
-        self.action_bounds = np.array(action_bounds)
-        self.K = K
-        self.controller_clock = time_start
-        self.sampling_time = sampling_time
-        self.Ls = []
-        self.times = []
-        self.time_start = time_start
-
-    @apply_action_bounds
-    def compute_action(self, state, observation, time=0):
-        x = observation[0, 0]
-        y = observation[0, 1]
-        angle = observation[0, 2]
-
-        angle_cond = np.arctan2(y, x)
-
-        if not np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
-            angle, angle_cond, atol=1e-03
-        ):
-            omega = (
-                -self.K
-                * np.sign(angle - angle_cond)
-                * rc.sqrt(rc.abs(angle - angle_cond))
-            )
-            v = 0
-        elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
-            angle, angle_cond, atol=1e-03
-        ):
-            omega = 0
-            v = -self.K * rc.sqrt(rc.norm_2(rc.hstack([x, y])))
-        elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
-            angle, 0, atol=1e-03
-        ):
-            omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
-            v = 0
-        else:
-            omega = 0
-            v = 0
-
-        return rc.force_row(rc.hstack([v, omega]))
-
-
-class ControllerKinPoint:
-    """A nominal controller stabilizing kinematic point (omni-wheel)."""
-
-    def __init__(self, gain, time_start=0, sampling_time=0.01, action_bounds=None):
-        """Initialize an instance of kinematic point nominal controller.
-
-        :param gain: gain of controller
-        :param time_start: time at which computations start
-        :param sampling_time: time interval between two consecutive actions
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        """
-        if action_bounds is None:
-            action_bounds = []
-
-        self.action_bounds = np.array(action_bounds)
-        self.gain = gain
-        self.controller_clock = time_start
-        self.sampling_time = sampling_time
-        self.Ls = []
-        self.times = []
-        self.action_old = rc.zeros(2)
-        self.clock = Clock(period=sampling_time, time_start=time_start)
-        self.time_start = time_start
-
-    @apply_action_bounds
-    def compute_action(self, state, observation, time=0):
-        return -self.gain * observation
-
-    def compute_action_sampled(self, time, state, observation):
-        """Compute sampled action."""
-        is_time_for_new_sample = self.clock.check_time(time)
-
-        if is_time_for_new_sample:  # New sample
-            # Update __internal clock
-            self.controller_clock = time
-
-            action = self.compute_action(state, observation)
-            self.times.append(time)
-            self.action_old = action
-            return action
-
-        else:
-            return self.action_old
-
-    def reset(self):
-        self.controller_clock = self.time_start
-        self.Ls = []
-        self.times = []
-
-    def compute_LF(self, observation):
-        pass

@@ -869,17 +869,6 @@ class HistoricalDataCallback(HistoricalCallback):
                 else obj.simulator.system.inputs_naming
             )
 
-            self.log(
-                f"Current objective: {output['running_objective']:.2f}, "
-                f"state est.: {output['estimated_state'][0]}, "
-                f"observation: {output['observation'][0]}, "
-                f"action: {output['action'][0]}, "
-                f"total objective: {output['current_total_objective']:.4f}, "
-                f"time: {output['timestamp']:.4f} ({100 * output['timestamp']/obj.simulator.time_final:.1f}%), "
-                f"episode: {int(output['episode_id']) + 1}/{obj.N_episodes}, "
-                f"iteration: {int(output['iteration_id']) + 1}/{obj.N_iterations}"
-            )
-
         self.add_datum(
             {
                 **{

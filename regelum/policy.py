@@ -13,7 +13,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Optional
 
-from .__utilities import rc
+from .__utilities import rc, AwaitedParameter
 
 from .predictor import Predictor
 from .model import ModelNN, Model, ModelWeightContainer
@@ -51,10 +51,9 @@ class Policy(Optimizable, ABC):
 
     def __init__(
         self,
-        model: Union[Model, ModelNN],
+        model: Union[Model, ModelNN] = None,
         system: Union[System, ComposedSystem] = None,
         action_bounds: Union[list, np.ndarray, None] = None,
-        action_init=None,
         optimizer_config: Optional[OptimizerConfig] = None,
         discount_factor: Optional[float] = 1.0,
         epsilon_random_parameter: Optional[float] = None,
@@ -69,8 +68,6 @@ class Policy(Optimizable, ABC):
         :type predictor: Optional[Predictor], optional
         :param action_bounds: Bounds for the action., defaults to None
         :type action_bounds: Union[list, np.ndarray, None], optional
-        :param action_init: _description_, defaults to None
-        :type action_init: _type_, optional
         :param optimizer_config: Configuration of the optimization procedure, defaults to None
         :type optimizer_config: Optional[OptimizerConfig], optional
         :param discount_factor: _description_, defaults to 1.0
@@ -83,36 +80,32 @@ class Policy(Optimizable, ABC):
         self.system = system
         self.model = model
 
-        self.dim_action = self.system.dim_inputs
-        self.dim_observation = self.system.dim_observation
+        self.dim_action = self.system.dim_inputs if self.system is not None else None
+        self.dim_observation = (
+            self.system.dim_observation if self.system is not None else None
+        )
 
         self.discount_factor = discount_factor if discount_factor is not None else 1.0
         self.epsilon_random_parameter = epsilon_random_parameter
+        if optimizer_config is not None:
+            super().__init__(optimizer_config=optimizer_config)
+        if self.dim_action is not None:
+            (
+                self.action_bounds,
+                self.action_initial_guess,
+                self.action_min,
+                self.action_max,
+            ) = self.handle_bounds(action_bounds, self.dim_action, 0)
 
-        super().__init__(optimizer_config=optimizer_config)
-        (
-            self.action_bounds,
-            self.action_initial_guess,
-            self.action_min,
-            self.action_max,
-        ) = self.handle_bounds(action_bounds, self.dim_action, 0)
-        self.action_old = self.action_init = (
-            self.action_initial_guess[: self.dim_action]
-            if action_init is None
-            else action_init
-        )
-        self.action = (
-            self.action_initial_guess[: self.dim_action]
-            if action_init is None
-            else action_init
+        self.action = AwaitedParameter(
+            "action", awaited_from=self.update_action.__name__
         )
 
     def __call__(self, observation):
         return self.get_action(observation)
 
     @property
-    @abstractmethod
-    def data_buffer_objective_keys(self) -> List[str]:
+    def data_buffer_objective_keys(self) -> Optional[List[str]]:
         pass
 
     @property
@@ -142,7 +135,6 @@ class Policy(Optimizable, ABC):
         :param action: The current action.
         :type action: numpy array
         """
-        self.action_old = self.action
         self.action = action
 
     def update_action(self, observation=None):
@@ -151,8 +143,6 @@ class Policy(Optimizable, ABC):
         :param observation: The current observation. If not provided, the previously received observation will be used.
         :type observation: numpy array, optional
         """
-        self.action_old = self.action
-
         if observation is None:
             observation = self.observation
 
@@ -215,12 +205,6 @@ class Policy(Optimizable, ABC):
     def restore_weights(self):
         """Restore the previously cached weights of the model of thepolicy."""
         self.model.restore_weights()
-        self.set_action(self.action_old)
-
-    def reset(self):
-        """Reset the policy to its initial state."""
-        self.action_old = self.action_initial_guess[: self.dim_action]
-        self.action = self.action_initial_guess[: self.dim_action]
 
 
 class PolicyGradient(Policy, ABC):
@@ -988,3 +972,228 @@ class CALFLegacy(RLPolicy):
         )
 
         return self.predictive_constraint_violation
+
+
+class KinPointStabilizingPolicy(Policy):
+    """Controller for kinematic point stabilization."""
+
+    def __init__(self, gain):
+        """Initialize an instance of the class with the given gain.
+
+        :param gain: The gain value to set for the instance.
+        :type gain: float
+        :return: None
+        """
+        super().__init__()
+        self.gain = gain
+
+    def get_action(self, observation):
+        return -self.gain * observation
+
+
+class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
+    """Controller for non-inertial three-wheeled robot composed of three PID controllers."""
+
+    def __init__(self, K):
+        """Initialize an instance of controller.
+
+        :param K: gain of controller
+        """
+        super().__init__()
+        self.K = K
+
+    def get_action(self, observation):
+        x = observation[0, 0]
+        y = observation[0, 1]
+        angle = observation[0, 2]
+
+        angle_cond = np.arctan2(y, x)
+
+        if not np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
+            angle, angle_cond, atol=1e-03
+        ):
+            omega = (
+                -self.K
+                * np.sign(angle - angle_cond)
+                * rc.sqrt(rc.abs(angle - angle_cond))
+            )
+            v = 0
+        elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
+            angle, angle_cond, atol=1e-03
+        ):
+            omega = 0
+            v = -self.K * rc.sqrt(rc.norm_2(rc.hstack([x, y])))
+        elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
+            angle, 0, atol=1e-03
+        ):
+            omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
+            v = 0
+        else:
+            omega = 0
+            v = 0
+
+        return rc.force_row(rc.hstack([v, omega]))
+
+
+class InvertedPendulumStabilizingPolicy(Policy):
+    """A nominal policy for inverted pendulum representing a PD controller."""
+
+    def __init__(self, controller_gain):
+        """Initialize an instance of policy.
+
+        :param controller_gain: gain of controller
+        """
+        super().__init__()
+        self.controller_gain = controller_gain
+
+    def get_action(self, observation):
+        return np.array(
+            [
+                [
+                    -((observation[0, 0]) + 0.1 * (observation[0, 1]))
+                    * self.controller_gain
+                ]
+            ]
+        )
+
+
+class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
+    """Nominal parking controller for NI using disassembled control Lyapunov function."""
+
+    def __init__(self, controller_gain=10):
+        """Initialize an instance of disassembled-clf controller.
+
+        :param controller_gain: gain of controller
+        """
+        super().__init__()
+        self.controller_gain = controller_gain
+
+    def _zeta(self, xNI):
+        """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
+        sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
+
+        nablaL = rc.zeros(3)
+
+        nablaL[0] = (
+            4 * xNI[0] ** 3
+            + rc.abs(xNI[2]) ** 3
+            / sigma**3
+            * 1
+            / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
+            * 2
+            * xNI[0]
+        )
+        nablaL[1] = (
+            4 * xNI[1] ** 3
+            + rc.abs(xNI[2]) ** 3
+            / sigma**3
+            * 1
+            / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
+            * 2
+            * xNI[1]
+        )
+        nablaL[2] = 3 * rc.abs(xNI[2]) ** 2 * rc.sign(xNI[2]) + rc.abs(
+            xNI[2]
+        ) ** 3 / sigma**3 * 1 / np.sqrt(rc.abs(xNI[2])) * rc.sign(xNI[2])
+
+        theta = 0
+
+        sigma_tilde = (
+            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
+        )
+
+        nablaF = rc.zeros(3)
+
+        nablaF[0] = (
+            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde**3
+        )
+        nablaF[1] = (
+            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde**3
+        )
+        nablaF[2] = (
+            (
+                3 * xNI[0] * rc.cos(theta)
+                + 3 * xNI[1] * rc.sin(theta)
+                + 2 * np.sqrt(rc.abs(xNI[2]))
+            )
+            * xNI[2] ** 2
+            * rc.sign(xNI[2])
+            / sigma_tilde**3
+        )
+
+        if xNI[0] == 0 and xNI[1] == 0:
+            return nablaF
+        else:
+            return nablaL
+
+    def _kappa(self, xNI):
+        """Stabilizing controller for NI-part."""
+        kappa_val = rc.zeros(2)
+
+        G = rc.zeros([3, 2])
+        G[:, 0] = rc.array([1, 0, xNI[1]], prototype=G)
+        G[:, 1] = rc.array([0, 1, -xNI[0]], prototype=G)
+
+        zeta_val = self._zeta(xNI)
+
+        kappa_val[0] = -rc.abs(np.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
+            rc.dot(zeta_val, G[:, 0])
+        )
+        kappa_val[1] = -rc.abs(np.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
+            rc.dot(zeta_val, G[:, 1])
+        )
+
+        return kappa_val
+
+    def _F(self, xNI, eta, theta):
+        """Marginal function for NI."""
+        sigma_tilde = (
+            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
+        )
+
+        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde**2
+
+        z = eta - self._kappa(xNI, theta)
+
+        return F + 1 / 2 * rc.dot(z, z)
+
+    def _Cart2NH(self, coords_Cart):
+        """Transform from Cartesian coordinates to non-holonomic (NH) coordinates."""
+        xNI = rc.zeros(3)
+
+        xc = coords_Cart[0]
+        yc = coords_Cart[1]
+        angle = coords_Cart[2]
+
+        xNI[0] = angle
+        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
+        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
+            xc * rc.cos(angle) + yc * rc.sin(angle)
+        )
+
+        return xNI
+
+    def _NH2ctrl_Cart(self, xNI, uNI):
+        """Get control for Cartesian NI from NH coordinates."""
+        uCart = rc.zeros(2)
+
+        uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
+        uCart[1] = uNI[0]
+
+        return uCart
+
+    def get_action(self, observation):
+        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
+        xNI = self._Cart2NH(observation[0])
+        kappa_val = self._kappa(xNI)
+        uNI = self.controller_gain * kappa_val
+
+        return self._NH2ctrl_Cart(xNI, uNI).reshape(1, -1)
+
+    def compute_LF(self, observation):
+        xNI = self._Cart2NH(observation)
+
+        sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
+        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma**2
+
+        return LF_value

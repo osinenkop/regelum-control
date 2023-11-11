@@ -1,10 +1,14 @@
-_target_: regelum.controller.NominalControllerInvertedPendulum
+_target_: regelum.controller.Controller
 
 name%%: nominal_inv_pendulum
 
-###---Constructor arguments---###
+defaults:
+  - policy: policy_nominal_inv_pendulum
 
-time_start: 0
-sampling_time: 1.0E-2
 action_bounds: $ system_specific.action_bounds
-controller_gain: 20
+sampling_time: $ system_specific.sampling_time
+running_objective: ~ running_objective
+discount_factor: 1.0 
+simulator: ~ simulator
+N_episodes: 1
+N_iterations: 1
