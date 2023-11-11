@@ -1,5 +1,5 @@
 state_init: = numpy.array([${x1}, ${x2}, ${.phi})
-action_init: = numpy.ones(${system.dim_action%%})
+action_init: = numpy.ones(${system.dim_action})
 
 
 phi: = numpy.random.uniform(0, 2 * numpy.pi)

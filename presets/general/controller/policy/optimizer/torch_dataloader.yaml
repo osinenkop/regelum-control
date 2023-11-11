@@ -1,8 +1,0 @@
-_target_: regelum.optimizers.TorchDataloaderOptimizer
-
-opt_options:
-  lr: 1.0E-3
-  # betas: = [0.8,0.8]
-
-opt_method: = torch.optim.Adam
-model: ~ controller.actor.model

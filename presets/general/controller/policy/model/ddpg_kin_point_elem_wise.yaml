@@ -1,6 +1,0 @@
-_target_: regelum.model.ModelNNElementWiseProduct
-
-dim_input: $ controller.actor.dim_observation
-use_derivative: $ controller.actor.is_use_derivative
-weight_min: = None
-weight_max: 1.

@@ -1,0 +1,14 @@
+name: 3wrobot
+target: regelum.system.ThreeWheeledRobot
+observer: = regelum.observer.ObserverTrivial()
+dim_observation: = ${.target}().dim_observation
+dim_action: = ${.target}().dim_inputs
+
+time_final: 5.
+sampling_time: 0.01
+
+v_min: -25.
+v_max: 25.
+omega_min: -5.
+omega_max: 5.
+action_bounds: = [[${.v_min}, ${.v_max}], [${.omega_min}, ${.omega_max}]]

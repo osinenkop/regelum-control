@@ -63,6 +63,8 @@ class ComposedSystem(regelum.RegelumBase):
         else:
             self.system_type = sys_right.system_type
 
+        self.system_type = "diff_eqn"
+
         self.sys_left = sys_left
         self.sys_right = sys_right
         self.parameters = sys_left.parameters | sys_right.parameters
@@ -745,6 +747,7 @@ class ConstantReference(System):
             self._dim_inputs = self._dim_observation = (
                 np.array(reference).reshape(-1).shape[0]
             )
+            print(self.dim_inputs)
 
     def _get_observation(self, time, state, inputs):
         return inputs - rc.array(

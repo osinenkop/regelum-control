@@ -1,8 +1,0 @@
-_target_: regelum.model.ModelDQNSimple
-
-dim_observation: $ system.dim_observation%%
-dim_action: $ system.dim_action%%
-dim_hidden: 5
-force_positive_def: False
-leaky_relu_coef: 0.2
-bias: True 

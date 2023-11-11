@@ -1,7 +1,0 @@
-_target_: regelum.model.ModelDDQN
-
-dim_observation: $ system.dim_observation%%
-dim_action: $ system.dim_action%%
-dim_hidden: 40
-
-actions_grid: $ system_specific.actions_grid

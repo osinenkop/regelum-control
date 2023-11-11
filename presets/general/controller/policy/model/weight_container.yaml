@@ -1,3 +1,0 @@
-_target_: regelum.model.ModelWeightContainer
-dim_output: $ controller.actor.dim_action
-weights_init: = numpy.ones(${.dim_output})

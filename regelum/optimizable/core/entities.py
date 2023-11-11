@@ -500,6 +500,8 @@ class FunctionWithSignature:
                 dvar.substitute_parameters(
                     **{dvar.nested_variables.decision_variables.names[0]: args[0]}
                 )
+            else:
+                dvar.with_data(args[0])
             return self.func(
                 **{self.free_placeholders[0]: dvar()},
                 **{

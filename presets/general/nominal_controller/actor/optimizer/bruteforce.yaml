@@ -1,5 +1,0 @@
-_target_: regelum.optimizers.BruteForceOptimizer
-
-###---Constructor arguments---###
-
-possible_variants: 5

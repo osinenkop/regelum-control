@@ -1,8 +1,0 @@
-_target_: regelum.model.GaussianElementWisePDFModel
-
-dim_input: $ controller.actor.dim_observation
-use_derivative: $ controller.actor.is_use_derivative
-diag_scale_coef: $ system_specific.diag_scale_coef 
-weight_max: 1
-weight_min: = None
-

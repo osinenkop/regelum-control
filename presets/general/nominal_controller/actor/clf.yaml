@@ -1,5 +1,0 @@
-defaults:
-  - calf
-  - override safe_controller: disassembled_clf
-
-_target_: regelum.actors.ActorCLF

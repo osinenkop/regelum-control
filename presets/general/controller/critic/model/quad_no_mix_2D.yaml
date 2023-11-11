@@ -1,4 +1,0 @@
-_target_: regelum.model.ModelQuadNoMix2D
-dim_input: 2
-single_weight_min: 1.0E-6
-single_weight_max: 1.0E+2

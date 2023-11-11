@@ -1,8 +1,0 @@
-_target_: regelum.controller.ControllerKinPoint
-
-###---Constructor arguments---###
-
-gain: 0.5
-time_start: $ simulator.time_start
-sampling_time: 1.0E-2
-action_bounds: $ system.action_bounds%%

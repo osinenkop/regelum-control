@@ -1,9 +1,0 @@
-_target_: regelum.optimizers.TorchOptimizer
-
-opt_options:
-  lr: 5.0E-3
-  
-iterations: 50
-opt_method: = torch.optim.Adam
-
-model: ~ controller.actor.model

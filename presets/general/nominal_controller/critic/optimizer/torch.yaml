@@ -1,7 +1,0 @@
-_target_: regelum.optimizers.TorchOptimizer
-
-opt_options:
-  lr: 1.0E-1
-
-iterations: 3
-opt_method: = torch.optim.Adam

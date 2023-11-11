@@ -1,5 +1,0 @@
-_target_: regelum.critic.CriticTrivial
-
-###---Constructor arguments---###
-
-running_objective: ~ running_objective

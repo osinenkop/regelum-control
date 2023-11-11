@@ -1,7 +1,0 @@
-_target_: regelum.model.ModelQuadForm
-
-###---Constructor arguments---###
-
-weights: = numpy.diag(${.R1_diag%%})
-
-R1_diag%%: = [10., 10., 1., 0., 0., 0., 0.]

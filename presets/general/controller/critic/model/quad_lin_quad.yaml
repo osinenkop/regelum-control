@@ -1,5 +1,0 @@
-_target_: regelum.model.ModelQuadLinQuad
-dim_input: $ controller.actor.dim_observation
-single_weight_min: 1.0E-15
-single_weight_max: 1.0E+3
-force_positive_def: false

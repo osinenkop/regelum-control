@@ -1,2 +1,0 @@
-_target_: regelum.model.ModelWeightContainerTorch
-action_init: $ scenario.action_init

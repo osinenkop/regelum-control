@@ -1,6 +1,0 @@
-_target_: regelum.model.ModelDQN
-
-dim_observation: $ system.dim_observation%%
-dim_action: $ system.dim_action%%
-dim_hidden: 500
-force_positive_def: True

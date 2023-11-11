@@ -1,5 +1,0 @@
-_target_: regelum.predictor.trivial
-
-###---Constructor arguments---###
-
-system: $ simulator.system
