@@ -1,1 +1,0 @@
-observation: = ["x", "y", "angle", "x_dot", "y_dot", "angle_dot"]

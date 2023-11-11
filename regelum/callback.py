@@ -41,6 +41,7 @@ import filelock
 import regelum.__internal.base
 
 import numpy as np
+from typing import Dict, Any
 
 
 def is_in_debug_mode():
@@ -121,7 +122,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
 
     def on_episode_done(
         self,
-        scenario,
+        controller,
         episode_number,
         episodes_total,
         iteration_number,
@@ -134,7 +135,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
 
     def on_iteration_done(
         self,
-        scenario,
+        controller,
         episode_number,
         episodes_total,
         iteration_number,
@@ -213,19 +214,6 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
         pass
 
 
-class TimeCallback(Callback):
-    """Callback responsible for keeping track of simulation time."""
-
-    def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.scenario.Scenario) and method == "post_step"
-
-    def on_launch(self):
-        regelum.main.metadata["time"] = 0.0
-
-    def perform(self, obj, method, output):
-        regelum.main.metadata["time"] = obj.time if not obj.is_episode_ended else 0.0
-
-
 class OnEpisodeDoneCallback(Callback):
     """Callback responsible for logging and recording relevant data when an episode ends."""
 
@@ -236,7 +224,7 @@ class OnEpisodeDoneCallback(Callback):
         self.iteration_counter = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.scenario.Scenario) and (
+        return isinstance(obj, regelum.controller.Controller) and (
             method == "reload_pipeline"
         )
 
@@ -265,7 +253,7 @@ class OnIterationDoneCallback(Callback):
         self.iteration_counter = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.scenario.Scenario) and (
+        return isinstance(obj, regelum.controller.Controller) and (
             method == "reset_iteration"
         )
 
@@ -782,49 +770,24 @@ class ControllerStepLogger(Callback):
 
     cooldown = 1.0
 
-    def trigger_cooldown(self, t):
-        if self.datum is not None:
-            super().trigger_cooldown(t)
-
     def is_target_event(self, obj, method, output):
         return (
-            (
-                isinstance(obj, regelum.controller.RLController)
-                and method == "on_observation_received"
-            )
-            or (
-                isinstance(obj, regelum.controller.RLController)
-                and method == "on_action_issued"
-            )
-            or (
-                isinstance(obj, regelum.scenario.OnlineScenario)
-                and (method == "__init__")
-            )
+            isinstance(obj, regelum.controller.Controller)
+            and method == "post_compute_action"
         )
 
-    def perform(self, obj, method, output):
-        if isinstance(obj, regelum.scenario.OnlineScenario) and method == "__init__":
-            self.N_episodes = obj.N_episodes
-            self.N_iterations = obj.N_iterations
-            self.time_final = obj.simulator.time_final
-            self.datum = None
-        elif method == "on_observation_received":
-            self.datum = output
-        elif method == "on_action_issued":
-            self.datum |= output
-
-            with np.printoptions(precision=2, suppress=True):
-                self.log(
-                    f"Current objective: {self.datum['running_objective']:.2f}, "
-                    f"state est.: {self.datum['estimated_state'][0]}, "
-                    f"observation: {self.datum['observation'][0]}, "
-                    f"action: {self.datum['action'][0]}, "
-                    f"total objective: {self.datum['current_total_objective']:.4f}, "
-                    f"time: {self.datum['timestamp']:.4f} ({100 * self.datum['timestamp']/self.time_final:.1f}%), "
-                    f"episode: {int(self.datum['episode_id']) + 1}/{self.N_episodes}, "
-                    f"iteration: {int(self.datum['iteration_id']) + 1}/{self.N_iterations}"
-                )
-            self.datum = None
+    def perform(self, obj, method: str, output: Dict[str, Any]):
+        with np.printoptions(precision=2, suppress=True):
+            self.log(
+                f"Current objective: {output['running_objective']:.2f}, "
+                f"state est.: {output['estimated_state'][0]}, "
+                f"observation: {output['observation'][0]}, "
+                f"action: {output['action'][0]}, "
+                f"total objective: {output['current_total_objective']:.4f}, "
+                f"time: {output['timestamp']:.4f} ({100 * output['timestamp']/obj.simulator.time_final:.1f}%), "
+                f"episode: {int(output['episode_id']) + 1}/{obj.N_episodes}, "
+                f"iteration: {int(output['iteration_id']) + 1}/{obj.N_iterations}"
+            )
 
 
 class SaveProgressCallback(Callback):
@@ -844,7 +807,7 @@ class SaveProgressCallback(Callback):
 
     def on_episode_done(
         self,
-        scenario,
+        controller,
         episode_number,
         episodes_total,
         iteration_number,
@@ -859,7 +822,7 @@ class SaveProgressCallback(Callback):
         self.log(
             f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
         )
-        if scenario is not None:
+        if controller is not None:
             with regelum.main.metadata["report"]() as r:
                 r["episode_current"] = episode_number
                 if "episodes_total" not in r:
@@ -879,66 +842,63 @@ class HistoricalDataCallback(HistoricalCallback):
         super().__init__(*args, **kwargs)
         self.cooldown = 0.0
 
+        self.observation_components_naming = None
+        self.action_components_naming = None
+
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.RLController)
-            and method == "compute_action"
-        ) or (
-            isinstance(obj, regelum.scenario.OnlineScenario) and (method == "__init__")
+            isinstance(obj, regelum.controller.Controller)
+            and method == "post_compute_action"
         )
 
     def perform(self, obj, method, output):
-        if isinstance(obj, regelum.scenario.OnlineScenario) and method == "__init__":
-            self.N_episodes = obj.N_episodes
-            self.N_iterations = obj.N_iterations
-            self.time_final = obj.simulator.time_final
-            if obj.observation_components_naming is None:
-                self.observation_components_naming = [
-                    f"observation_{i + 1}" for i in range(obj.system.dim_observation)
+        if self.observation_components_naming is None:
+            self.observation_components_naming = (
+                [
+                    f"observation_{i + 1}"
+                    for i in range(obj.simulator.system.dim_observation)
                 ]
-            else:
-                self.observation_components_naming = obj.observation_components_naming
+                if obj.simulator.system.observation_naming is None
+                else obj.simulator.system.observation_naming
+            )
 
-            if obj.action_components_naming is None:
-                self.action_components_naming = [
-                    f"action_{i + 1}" for i in range(obj.simulator.system.dim_inputs)
-                ]
-            else:
-                self.action_components_naming = obj.action_components_naming
+        if self.action_components_naming is None:
+            self.action_components_naming = (
+                [f"action_{i + 1}" for i in range(obj.simulator.system.dim_inputs)]
+                if obj.simulator.system.inputs_naming is None
+                else obj.simulator.system.inputs_naming
+            )
 
-            return
-
-        datum = obj.data_buffer.getitem(
-            idx=-1,
-            keys=[
-                "estimated_state",
-                "observation",
-                "action",
-                "timestamp",
-                "running_objective",
-                "current_total_objective",
-                "episode_id",
-                "iteration_id",
-            ],
-        )
+            self.log(
+                f"Current objective: {output['running_objective']:.2f}, "
+                f"state est.: {output['estimated_state'][0]}, "
+                f"observation: {output['observation'][0]}, "
+                f"action: {output['action'][0]}, "
+                f"total objective: {output['current_total_objective']:.4f}, "
+                f"time: {output['timestamp']:.4f} ({100 * output['timestamp']/obj.simulator.time_final:.1f}%), "
+                f"episode: {int(output['episode_id']) + 1}/{obj.N_episodes}, "
+                f"iteration: {int(output['iteration_id']) + 1}/{obj.N_iterations}"
+            )
 
         self.add_datum(
             {
                 **{
-                    "time": datum["timestamp"][0],
-                    "running_objective": datum["running_objective"][0],
-                    "current_total_objective": datum["current_total_objective"][0],
-                    "episode_id": datum["episode_id"][0],
-                    "iteration_id": datum["iteration_id"][0],
+                    "time": output["timestamp"],
+                    "running_objective": output["running_objective"],
+                    "current_total_objective": output["current_total_objective"],
+                    "episode_id": output["episode_id"],
+                    "iteration_id": output["iteration_id"],
                 },
-                **dict(zip(self.action_components_naming, datum["action"])),
-                **dict(zip(self.observation_components_naming, datum["observation"])),
+                **dict(zip(self.action_components_naming, output["action"][0])),
+                **dict(
+                    zip(self.observation_components_naming, output["observation"][0])
+                ),
             }
         )
 
     def on_episode_done(
         self,
-        scenario,
+        controller,
         episode_number,
         episodes_total,
         iteration_number,
@@ -1077,7 +1037,7 @@ class TotalObjectiveCallback(HistoricalCallback):
 
     def on_episode_done(
         self,
-        scenario,
+        controller,
         episode_number,
         episodes_total,
         iteration_number,
@@ -1086,10 +1046,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.add_datum(
             {
                 "episode": len(self.data) + 1,
-                "objective": scenario.recent_total_objective,
+                "objective": controller.recent_total_objective,
             }
         )
-        self.total_objectives.append(scenario.recent_total_objective)
+        self.total_objectives.append(controller.recent_total_objective)
         self.log(
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
@@ -1098,7 +1058,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         )
         mlflow.log_metric(
             f"C. Total objectives in iteration {str(iteration_number).zfill(5)}",
-            scenario.recent_total_objective,
+            controller.recent_total_objective,
             step=len(self.data),
         )
 
@@ -1154,7 +1114,7 @@ class TimeRemainingCallback(Callback):
 
     def on_episode_done(
         self,
-        scenario,
+        controller,
         episode_number,
         episodes_total,
         iteration_number,

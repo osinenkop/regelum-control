@@ -6,5 +6,5 @@ defaults:
 
 system: ~ system
 critic: ~ controller.critic
-discount_factor: $ scenario.discount_factor
+discount_factor: $ controller.discount_factor
 device: cpu

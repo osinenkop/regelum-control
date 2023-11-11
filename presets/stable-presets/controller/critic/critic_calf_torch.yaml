@@ -4,7 +4,7 @@ defaults:
   - model: perceptron
   - optimizer_config: online_torch_sgd
 
-discount_factor: $ scenario.discount_factor
+discount_factor: $ controller.discount_factor
 sampling_time: $ controller.sampling_time
 td_n: 1
 device: cpu

@@ -5,7 +5,7 @@ defaults:
   - optimizer_config: symbolic
   # - safe_controller: ~ nominal_controller
 
-discount_factor: $ scenario.discount_factor
+discount_factor: $ controller.discount_factor
 sampling_time: $ controller.sampling_time
 td_n: 1
 device: cpu

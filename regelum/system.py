@@ -30,6 +30,9 @@ class ComposedSystem(regelum.RegelumBase):
         sys_right: Union[System, Self],
         io_mapping: Optional[list] = None,
         output_mode="right",
+        state_naming=None,
+        inputs_naming=None,
+        observation_naming=None,
     ):
         """Initialize a composed system by specifying systems to compose.
 
@@ -42,6 +45,10 @@ class ComposedSystem(regelum.RegelumBase):
         :param output_mode: How to combine the result outputs, defaults to "right"
         :type output_mode: str, optional
         """
+        self.state_naming = state_naming
+        self.inputs_naming = inputs_naming
+        self.observation_naming = observation_naming
+
         if io_mapping is None:
             io_mapping = np.arange(min(sys_left.dim_state, sys_right.dim_inputs))
 
@@ -68,7 +75,6 @@ class ComposedSystem(regelum.RegelumBase):
             self.dim_observation = (
                 self.sys_left.dim_observation + self.sys_right.dim_observation
             )
-
         self.rout_idx, self.occupied_idx = self.__get_routing(io_mapping)
         self.dim_inputs = (
             self.sys_right.dim_inputs
@@ -306,6 +312,8 @@ class System(regelum.RegelumBase, ABC):
     _dim_inputs: Optional[int] = None
     _dim_observation: Optional[int] = None
     _parameters = {}
+    _observation_naming = _state_naming = None
+    _inputs_naming = None
 
     def __init__(
         self,
@@ -381,6 +389,18 @@ class System(regelum.RegelumBase, ABC):
     @property
     def parameters(self):
         return self._parameters
+
+    @property
+    def state_naming(self):
+        return self._state_naming
+
+    @property
+    def observation_naming(self):
+        return self._observation_naming
+
+    @property
+    def inputs_naming(self):
+        return self._inputs_naming
 
     def compute_state_dynamics(
         self, time, state, inputs, _native_dim=False
@@ -468,6 +488,8 @@ class KinematicPoint(System):
     _dim_state = 2
     _dim_inputs = 2
     _dim_observation = 2
+    _observation_naming = _state_naming = ["x", "y"]
+    _inputs_naming = ["v_x", "v_y"]
 
     def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(
@@ -490,6 +512,8 @@ class InvertedPendulumPID(System):
     _dim_inputs = 1
     _dim_observation = 3
     _parameters = {"m": 1, "g": 9.8, "l": 1}
+    _observation_naming = _state_naming = ["angle", "angular velocity"]
+    _inputs_naming = ["momentum"]
 
     def __init__(self, *args, **kwargs):
         """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID controller."""
@@ -583,6 +607,14 @@ class ThreeWheeledRobot(System):
     _dim_inputs = 2
     _dim_observation = 5
     _parameters = {"m": 10, "I": 1}
+    _observation_naming = _state_naming = [
+        "x",
+        "y",
+        "angle",
+        "l_velocity",
+        "angular_velocity",
+    ]
+    _inputs_naming = ["Force", "Momentum"]
 
     def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(
@@ -633,6 +665,8 @@ class ThreeWheeledRobotNI(System):
     _dim_state = 3
     _dim_inputs = 2
     _dim_observation = 3
+    _observation_naming = _state_naming = ["x", "y", "angle"]
+    _inputs_naming = ["velocity", "angular velocity"]
 
     def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rc.zeros(self.dim_state, prototype=(state, inputs))
@@ -658,6 +692,8 @@ class TwoTank(System):
     _dim_inputs = 1
     _dim_observation = 2
     _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
+    _observation_naming = _state_naming = ["h1", "h2"]
+    _inputs_naming = ["P"]
 
     def _compute_state_dynamics(self, time, state, inputs):
         tau1, tau2, K1, K2, K3 = (
@@ -743,6 +779,9 @@ class SystemWithConstantReference(ComposedSystem):
             sys_right=constant_reference,
             io_mapping=None,
             output_mode="right",
+            inputs_naming=system.inputs_naming,
+            state_naming=system.state_naming,
+            observation_naming=[s + "-ref" for s in system.state_naming],
         )
 
 
@@ -790,6 +829,8 @@ class CartPole(System):
     _dim_inputs = 1
     _dim_observation = 4
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
+    _observation_naming = _state_naming = ["angle", "x", "angle_dot", "x_dot"]
+    _inputs_naming = ["force"]
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
         Dstate = rc.zeros(
@@ -852,6 +893,15 @@ class LunarLander(System):
     _dim_inputs = 2
     _dim_observation = 6
     _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1.0, "r": 1.0, "sigma": 1.0}
+    _observation_naming = _state_naming = [
+        "x",
+        "y",
+        "theta",
+        "x_dot",
+        "y_dot",
+        "theta_dot",
+    ]
+    _inputs_naming = ["vertical force", "side force"]
 
     def __init__(self, *args, **kwargs):
         """Initialize an instance of LunarLander by specifying relevant physical parameters."""

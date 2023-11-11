@@ -29,15 +29,14 @@ class TestSetup:
         return "main"
 
     def _pre_setup(self):
-        os.environ["HYDRA_FULL_ERROR"] = "1"
+        os.environ["REHYDRA_FULL_ERROR"] = "1"
         sys.argv.insert(1, "--single-thread")
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
         sys.argv.insert(1, "simulator.time_final=1")
         sys.argv.insert(1, "controller.sampling_time=0.1")
-        sys.argv.insert(1, "scenario.N_episodes=2")
-        sys.argv.insert(1, "scenario.N_iterations=1")
-        sys.argv.insert(1, "+disallow_uncommitted=False")
+        sys.argv.insert(1, "controller.N_episodes=2")
+        sys.argv.insert(1, "controller.N_iterations=1")
         sys.argv.insert(1, "--experiment=TESTS")
 
     def __call__(self):

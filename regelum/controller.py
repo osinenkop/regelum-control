@@ -21,6 +21,9 @@ from .objective import RunningObjective
 from .data_buffers import DataBuffer
 from .event import Event
 from . import OptStatus
+from .simulator import Simulator
+from .constraint_parser import ConstraintParser, ConstraintParserTrivial
+from .observer import Observer, ObserverTrivial
 
 
 def apply_action_bounds(method):
@@ -42,12 +45,20 @@ def apply_action_bounds(method):
 class Controller(RegelumBase):
     """A blueprint of optimal controllers."""
 
+    @apply_callbacks()
     def __init__(
         self,
         policy: Policy,
+        simulator: Simulator,
         time_start: float = 0,
         sampling_time: float = 0.1,
         running_objective: Optional[RunningObjective] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        observer: Optional[Observer] = None,
+        N_episodes: int = 1,
+        N_iterations: int = 1,
+        total_objective_threshold: float = np.inf,
+        discount_factor: float = 1.0,
     ):
         """Initialize an instance of Controller.
 
@@ -55,6 +66,42 @@ class Controller(RegelumBase):
         :param sampling_time: time interval between two consecutive actions
         """
         super().__init__()
+        self.N_episodes = N_episodes
+        self.N_iterations = N_iterations
+        self.simulator = simulator
+        self.time = self.simulator.time_start
+        self.time_old = 0
+        self.delta_time = 0
+        self.total_objective: float = 0.0
+        self.recent_total_objectives_of_episodes = []
+        self.total_objectives_of_episodes = []
+        self.total_objective_episodic_means = []
+
+        self.sim_status = 1
+        self.episode_counter = 0
+        self.iteration_counter = 0
+        self.current_scenario_status = "episode_continues"
+        self.total_objective_threshold = total_objective_threshold
+        self.discount_factor = discount_factor
+        self.is_episode_ended = False
+        self.constraint_parser = (
+            ConstraintParserTrivial()
+            if constraint_parser is None
+            else constraint_parser
+        )
+        self.observer = observer if observer is not None else ObserverTrivial()
+
+        self.state_init, self.action_init = AwaitedParameter(
+            "state_init", awaited_from=self.simulator.__class__.__name__
+        ), AwaitedParameter(
+            "action_init", awaited_from=self.simulator.__class__.__name__
+        )
+        self.state = self.state_init
+        self.action = self.action_init
+        self.observation = AwaitedParameter(
+            "observation", awaited_from=self.simulator.system.get_observation.__name__
+        )
+
         self.policy = policy
         self.controller_clock = time_start
         self.sampling_time = sampling_time
@@ -72,6 +119,125 @@ class Controller(RegelumBase):
         )
         self.reset()
 
+    def run(self):
+        for iteration_counter in range(self.N_iterations):
+            self.iteration_counter = iteration_counter
+            for episode_counter in range(self.N_episodes):
+                self.episode_counter = episode_counter
+                while self.sim_status not in [
+                    "episode_ended",
+                    "simulation_ended",
+                    "iteration_ended",
+                ]:
+                    self.sim_status = self.step()
+
+                self.reload_pipeline()
+
+    def step(self):
+        if isinstance(self.action_init, AwaitedParameter) and isinstance(
+            self.state_init, AwaitedParameter
+        ):
+            (
+                self.state_init,
+                self.action_init,
+            ) = self.simulator.get_init_state_and_action()
+
+        if (
+            not self.is_episode_ended
+            and self.total_objective <= self.total_objective_threshold
+        ):
+            (
+                self.time,
+                self.state,
+                self.observation,
+                self.simulation_metadata,
+            ) = self.simulator.get_sim_step_data()
+
+            self.delta_time = (
+                self.time - self.time_old
+                if self.time_old is not None and self.time is not None
+                else 0
+            )
+            self.time_old = self.time
+            self.constraint_parameters = self.constraint_parser.parse_constraints(
+                simulation_metadata=self.simulation_metadata
+            )
+            self.substitute_constraint_parameters(**self.constraint_parameters)
+            estimated_state = self.observer.get_state_estimation(
+                self.time, self.observation, self.action
+            )
+
+            self.action = self.compute_action_sampled(
+                self.time,
+                estimated_state,
+                self.observation,
+            )
+            self.simulator.receive_action(self.action)
+            self.is_episode_ended = self.simulator.do_sim_step() == -1
+            return "episode_continues"
+        else:
+            self.reset_episode()
+            is_iteration_ended = self.episode_counter >= self.N_episodes
+
+            if is_iteration_ended:
+                self.reset_iteration()
+
+                is_simulation_ended = self.iteration_counter >= self.N_iterations
+
+                if is_simulation_ended:
+                    self.reset_simulation()
+                    return "simulation_ended"
+                else:
+                    return "iteration_ended"
+            else:
+                return "episode_ended"
+
+    @apply_callbacks()
+    def reset_iteration(self):
+        self.episode_counter = 0
+        self.iteration_counter += 1
+        self.recent_total_objectives_of_episodes = self.total_objectives_of_episodes
+        self.total_objectives_of_episodes = []
+
+    def reset_episode(self):
+        self.episode_counter += 1
+        self.is_episode_ended = False
+
+        return self.total_objective
+
+    def reset_simulation(self):
+        self.current_scenario_status = "episode_continues"
+        self.iteration_counter = 0
+        self.episode_counter = 0
+
+    @apply_callbacks()
+    def reload_pipeline(self):
+        self.sim_status = 1
+        self.time = 0
+        self.time_old = 0
+        self.action = self.action_init
+        self.policy.reset()
+        self.simulator.reset()
+        self.reset()
+        self.recent_total_objective = self.total_objective
+        self.observation = self.simulator.observation
+        self.sim_status = 0
+        return self.recent_total_objective
+
+    @apply_callbacks()
+    def post_compute_action(self, observation, estimated_state):
+        return {
+            "estimated_state": estimated_state,
+            "observation": observation,
+            "timestamp": self.time,
+            "episode_id": self.episode_counter,
+            "iteration_id": self.iteration_counter,
+            "step_id": self.step_counter,
+            "action": self.policy.action,
+            "running_objective": self.current_running_objective,
+            "current_total_objective": self.total_objective,
+        }
+
     @apply_action_bounds
     def compute_action_sampled(self, time, estimated_state, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
@@ -82,13 +248,11 @@ class Controller(RegelumBase):
                 estimated_state=estimated_state,
                 observation=observation,
             )
+            self.post_compute_action(observation, estimated_state)
+            self.step_counter += 1
             self.action_old = action
         else:
             action = self.action_old
-        self.calculate_total_objective(
-            running_objective=self.running_objective(observation, action),
-            is_to_update=True,
-        )
         return action
 
     def compute_action(self, time, estimated_state, observation):
@@ -99,29 +263,31 @@ class Controller(RegelumBase):
 
     def __getattribute__(self, name):
         if name == "issue_action":
-            return self.__issue_action
-        return object.__getattribute__(self, name)
+            return self._issue_action
+        else:
+            return object.__getattribute__(self, name)
 
-    def __issue_action(self, observation):
+    def _issue_action(self, observation):
         object.__getattribute__(self, "issue_action")(observation)
         self.on_action_issued(observation)
 
-    @apply_callbacks()
     def on_action_issued(self, observation):
-        running_objective = self.running_objective(observation, self.policy.action)
-        current_total_objective = self.calculate_total_objective(
-            running_objective, is_to_update=False
+        self.current_running_objective = self.running_objective(
+            observation, self.policy.action
+        )
+        self.total_objective = self.calculate_total_objective(
+            self.current_running_objective, self.time
         )
         observation_action = np.concatenate((observation, self.policy.action), axis=1)
         return {
             "action": self.policy.action,
-            "running_objective": running_objective,
-            "current_total_objective": current_total_objective,
+            "running_objective": self.current_running_objective,
+            "current_total_objective": self.total_objective,
             "observation_action": observation_action,
         }
 
-    @apply_callbacks()
     def on_observation_received(self, time, estimated_state, observation):
+        self.time = time
         return {
             "estimated_state": estimated_state,
             "observation": observation,
@@ -134,17 +300,12 @@ class Controller(RegelumBase):
     def substitute_constraint_parameters(self, **kwargs):
         self.policy.substitute_parameters(**kwargs)
 
-    def calculate_total_objective(self, running_objective: float, is_to_update=True):
+    def calculate_total_objective(self, running_objective: float, time: float):
         total_objective = (
             self.total_objective
-            + running_objective
-            * self.discount_factor**self.clock.current_time
-            * self.clock.delta_time
+            + running_objective * self.discount_factor**time * self.sampling_time
         )
-        if is_to_update:
-            self.total_objective = total_objective
-        else:
-            return total_objective
+        return total_objective
 
     def reset(self):
         """Reset agent for use in multi-episode simulation.
@@ -168,15 +329,21 @@ class RLController(Controller):
         policy: Policy,
         critic: Critic,
         running_objective: RunningObjective,
-        critic_optimization_event: Event,
+        simulator: Simulator,
         policy_optimization_event: Event,
         data_buffer_nullify_event: Event,
+        critic_optimization_event: Event = None,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
         action_bounds: Optional[Union[list, np.ndarray]] = None,
         max_data_buffer_size: Optional[int] = None,
         time_start: float = 0,
         sampling_time: float = 0.1,
+        constraint_parser: Optional[ConstraintParser] = None,
+        observer: Optional[Observer] = None,
+        N_episodes: int = 1,
+        N_iterations: int = 1,
+        total_objective_threshold: float = np.inf,
     ):
         """Instantiate a RLController object.
 
@@ -206,20 +373,51 @@ class RLController(Controller):
         :type sampling_time: float, optional
         """
         Controller.__init__(
-            self, time_start=time_start, sampling_time=sampling_time, policy=policy
+            self,
+            simulator=simulator,
+            time_start=time_start,
+            sampling_time=sampling_time,
+            policy=policy,
+            running_objective=running_objective,
+            constraint_parser=constraint_parser,
+            observer=observer,
+            N_episodes=N_episodes,
+            N_iterations=N_iterations,
+            total_objective_threshold=total_objective_threshold,
+            discount_factor=discount_factor,
         )
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
         self.data_buffer_nullify_event = data_buffer_nullify_event
         self.data_buffer = DataBuffer(max_data_buffer_size)
-        self.running_objective = running_objective
-        self.discount_factor = discount_factor
-        self.total_objective: float = 0.0
         self.critic = critic
         self.action_bounds = np.array(action_bounds)
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
+
+    def _reset_whatever(self, suffix):
+        def wrapped(*args, **kwargs):
+            res = object.__getattribute__(self, f"reset_{suffix}")(*args, **kwargs)
+            if self.sim_status != "simulation_ended":
+                self.optimize(event=getattr(Event, f"reset_{suffix}"))
+            return res
+
+        return wrapped
+
+    def __getattribute__(self, name):
+        if name == "issue_action":
+            return self._issue_action
+        elif name.startswith("reset_"):
+            suffix = name.split("_")[-1]
+            return self._reset_whatever(suffix)
+        else:
+            return object.__getattribute__(self, name)
+
+    def reload_pipeline(self):
+        res = super().reload_pipeline()
+        self.critic.reset()
+        return res
 
     def on_observation_received(self, time, estimated_state, observation):
         self.critic.receive_estimated_state(estimated_state)
@@ -257,7 +455,6 @@ class RLController(Controller):
         return self.policy.action
 
     def optimize(self, event):
-        self.update_counters_on_event(event)
         if self.is_first_compute_action_call and event == Event.compute_action:
             self.optimize_or_skip_on_event(self.policy, event)
             self.issue_action(self.data_buffer.get_latest("observation"))
@@ -275,21 +472,6 @@ class RLController(Controller):
 
         if event == self.data_buffer_nullify_event:
             self.data_buffer.nullify_buffer()
-
-    def update_counters_on_event(self, event):
-        if event == Event.reset_iteration:
-            self.iteration_counter += 1
-            self.episode_counter = 0
-            self.step_counter = 0
-            self.is_first_compute_action_call = True
-            self.reset()
-        elif event == Event.reset_episode:
-            self.episode_counter += 1
-            self.step_counter = 0
-            self.is_first_compute_action_call = True
-            self.reset()
-        elif event == Event.compute_action:
-            self.step_counter += 1
 
     def optimize_or_skip_on_event(
         self,

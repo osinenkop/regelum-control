@@ -70,7 +70,6 @@ from .__internal.metadata import Metadata
 from .callback import (
     OnEpisodeDoneCallback,
     OnIterationDoneCallback,
-    TimeCallback,
     ConfigDiagramCallback,
     TimeRemainingCallback,
     SaveProgressCallback,
@@ -586,7 +585,6 @@ class main:
     builtin_callbacks = [
         OnEpisodeDoneCallback,
         OnIterationDoneCallback,
-        TimeCallback,
         ConfigDiagramCallback,
         TimeRemainingCallback,
         SaveProgressCallback,

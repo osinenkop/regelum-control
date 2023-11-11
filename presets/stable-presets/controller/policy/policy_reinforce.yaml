@@ -5,5 +5,5 @@ defaults:
   - optimizer_config: policy_gradient
 
 system: ~ system
-discount_factor: $ scenario.discount_factor
+discount_factor: $ controller.discount_factor
 device: cpu

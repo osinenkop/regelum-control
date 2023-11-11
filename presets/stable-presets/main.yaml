@@ -1,12 +1,10 @@
 defaults:
   - system: inv_pendulum 
-  - scenario: online 
   - simulator: casadi
   - optional nominal_controller: nominal_${system}
   - controller: reinforce
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
-  - observation_naming: naming_${system}
   - system_specific: spec_${system}
   - constraint_parser: trivial_parser
   # - optional animator: animator_${system}

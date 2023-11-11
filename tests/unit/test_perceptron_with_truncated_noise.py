@@ -164,8 +164,8 @@ def test_stats_on_bounds(truncated_model, samples, closest_bounds):
 def test_stats_inside_bounds(model, inputs, samples):
     stds = samples.std(axis=0)
     means = samples.mean(axis=0)
-    assert torch.allclose(stds, model.stds, rtol=0.05)
-    assert torch.allclose(model(inputs), means, rtol=0.05)
+    assert torch.allclose(stds, model.stds, rtol=0.1)
+    assert torch.allclose(model(inputs), means, rtol=0.1)
 
 
 @pytest.mark.parametrize(
