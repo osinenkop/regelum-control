@@ -2001,6 +2001,8 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         observation = observation[0]
         xNI, eta = self._Cart2NH(observation)
         theta_star = self.optimize(xNI=xNI, eta=eta)
+        if self.kind == "symbolic":
+            theta_star = theta_star["theta"]
         kappa_val = self._kappa(xNI, theta_star)
         z = eta - kappa_val
         uNI = -self.controller_gain * z

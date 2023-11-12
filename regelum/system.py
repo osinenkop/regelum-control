@@ -747,7 +747,6 @@ class ConstantReference(System):
             self._dim_inputs = self._dim_observation = (
                 np.array(reference).reshape(-1).shape[0]
             )
-            print(self.dim_inputs)
 
     def _get_observation(self, time, state, inputs):
         return inputs - rc.array(
