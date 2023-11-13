@@ -9,12 +9,14 @@ Remarks:
 """
 
 import numpy as np
+import casadi
+import torch
 
 from .__utilities import rc, Clock, AwaitedParameter
 from regelum import RegelumBase
-from .policy import Policy
-from .critic import Critic, CriticCALF
-from typing import Optional, Union
+from .policy import Policy, RLPolicy, PPO
+from .critic import Critic, CriticCALF, CriticTrivial
+from typing import Optional, Union, Type, Dict, List, Any
 from .objective import RunningObjective
 from .data_buffers import DataBuffer
 from .event import Event
@@ -22,6 +24,16 @@ from . import OptStatus
 from .simulator import Simulator
 from .constraint_parser import ConstraintParser, ConstraintParserTrivial
 from .observer import Observer, ObserverTrivial
+from .model import (
+    ModelNN,
+    ModelPerceptron,
+    ModelWeightContainer,
+    ModelWeightContainerTorch,
+    PerceptronWithTruncatedNormalNoise,
+)
+from .predictor import Predictor, EulerPredictor
+from regelum.optimizable import OptimizerConfig
+from regelum.data_buffers.batch_sampler import RollingBatchSampler, EpisodicSampler
 
 
 def apply_action_bounds(method):
@@ -49,7 +61,7 @@ class Controller(RegelumBase):
         simulator: Simulator,
         time_start: float = 0,
         sampling_time: float = 0.1,
-        action_bounds: Optional[list] = None,
+        action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         running_objective: Optional[RunningObjective] = None,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -333,7 +345,7 @@ class RLController(Controller):
         critic_optimization_event: Event = None,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
-        action_bounds: Optional[Union[list, np.ndarray]] = None,
+        action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         max_data_buffer_size: Optional[int] = None,
         time_start: float = 0,
         sampling_time: float = 0.1,
@@ -634,3 +646,323 @@ class CALFControllerExPost(RLController):
 
         self.step_counter += 1
         return self.policy.action
+
+
+class MPCController(RLController):
+    """MPCController."""
+
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Observer | None = None,
+        constraint_parser: ConstraintParser | None = None,
+        time_start: float = 0,
+        discount_factor: float = 1.0,
+    ):
+        """Initialize the MPCAgent class.
+
+        :param running_objective: The running objective for the MPC agent.
+        :type running_objective: RunningObjective
+        :param simulator: The simulator used for the MPC agent.
+        :type simulator: Simulator
+        :param prediction_horizon: The prediction horizon for the MPC agent.
+        :type prediction_horizon: int
+        :param predictor: The predictor used for the MPC agent. Defaults to None.
+        :type predictor: Optional[Predictor]
+        :param sampling_time: The sampling time for the MPC agent. Defaults to 0.1.
+        :type sampling_time: float
+        :param observer: The observer for the MPC agent. Defaults to None.
+        :type observer: Observer | None
+        :param constraint_parser: The constraint parser for the MPC agent. Defaults to None.
+        :type constraint_parser: ConstraintParser | None
+        :param time_start: The starting time for the MPC agent. Defaults to 0.
+        :type time_start: float
+        :param discount_factor: The discount factor for the MPC agent. Defaults to 1.0.
+        :type discount_factor: float
+        """
+        system = simulator.system
+        super().__init__(
+            N_episodes=1,
+            N_iterations=1,
+            data_buffer_nullify_event=Event.reset_episode,
+            policy_optimization_event=Event.compute_action,
+            action_bounds=system.action_bounds,
+            critic=CriticTrivial(),
+            running_objective=running_objective,
+            observer=observer,
+            time_start=time_start,
+            policy=RLPolicy(
+                model=ModelWeightContainer(
+                    weights_init=np.zeros(prediction_horizon + 1, system.dim_inputs),
+                    dim_output=system.dim_inputs,
+                ),
+                constraint_parser=constraint_parser,
+                system=system,
+                running_objective=running_objective,
+                prediction_horizon=prediction_horizon,
+                algorithm="mpc",
+                critic=CriticTrivial(),
+                predictor=predictor
+                if predictor is not None
+                else EulerPredictor(system=system, pred_step_size=sampling_time),
+                discount_factor=discount_factor,
+                optimizer_config=OptimizerConfig(
+                    log_options={
+                        "print_in": False,
+                        "print_out": False,
+                        "print_time": False,
+                    },
+                    config_options={
+                        "data_buffer_sampling_method": "sample_last",
+                        "data_buffer_sampling_kwargs": {"dtype": casadi.DM},
+                    },
+                    opt_method="ipopt",
+                    opt_options={"print_level": 0},
+                    kind="symbolic",
+                ),
+            ),
+        )
+
+
+class MPCTorchController(RLController):
+    """MPCTorchController."""
+
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        sampling_time: float,
+        n_epochs: int,
+        opt_method_kwargs: Dict[str, Any],
+        opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        predictor: Optional[Predictor] = None,
+        model: Optional[ModelNN] = None,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        time_start: float = 0,
+        discount_factor: float = 1.0,
+    ):
+        """Initialize the object with the given parameters.
+
+        :param running_objective: The running objective for the simulation.
+        :type running_objective: RunningObjective
+        :param simulator: The simulator object.
+        :type simulator: Simulator
+        :param prediction_horizon: The number of time steps to predict into the future.
+        :type prediction_horizon: int
+        :param sampling_time: The time step between each prediction.
+        :type sampling_time: float
+        :param n_epochs: The number of training epochs.
+        :type n_epochs: int
+        :param opt_method_kwargs: Additional keyword arguments for the optimization method.
+        :type opt_method_kwargs: Dict[str, Any]
+        :param opt_method: The optimization method to use. Defaults to torch.optim.Adam.
+        :type opt_method: Type[torch.optim.Optimizer]
+        :param predictor: The predictor object to use. Defaults to None.
+        :type predictor: Optional[Predictor]
+        :param model: The model object to use. Defaults to None.
+        :type model: Optional[ModelNN]
+        :param observer: The observer object to use. Defaults to None.
+        :type observer: Optional[Observer]
+        :param constraint_parser: The constraint parser object to use. Defaults to None.
+        :type constraint_parser: Optional[ConstraintParser]
+        :param time_start: The starting time for the simulation. Defaults to 0.
+        :type time_start: float
+        :param discount_factor: The discount factor for future rewards. Defaults to 1.0.
+        :type discount_factor: float
+
+        :return: None
+        """
+        system = simulator.system
+        super().__init__(
+            N_episodes=1,
+            N_iterations=1,
+            data_buffer_nullify_event=Event.reset_episode,
+            policy_optimization_event=Event.compute_action,
+            action_bounds=system.action_bounds,
+            critic=CriticTrivial(),
+            running_objective=running_objective,
+            observer=observer,
+            time_start=time_start,
+            policy=RLPolicy(
+                model=ModelWeightContainerTorch(
+                    dim_weights=(prediction_horizon + 1, system.dim_inputs),
+                    output_bounds=system.action_bounds,
+                )
+                if model is None
+                else model,
+                constraint_parser=constraint_parser,
+                system=system,
+                running_objective=running_objective,
+                prediction_horizon=prediction_horizon,
+                algorithm="mpc",
+                critic=CriticTrivial(),
+                predictor=predictor
+                if predictor is not None
+                else EulerPredictor(system=system, pred_step_size=sampling_time),
+                discount_factor=discount_factor,
+                optimizer_config=OptimizerConfig(
+                    config_options={
+                        "n_epochs": n_epochs,
+                        "data_buffer_sampling_method": "iter_batches",
+                        "data_buffer_sampling_kwargs": {
+                            "dtype": torch.FloatTensor,
+                            "mode": "backward",
+                            "batch_size": 1,
+                        },
+                    },
+                    opt_method=opt_method,
+                    opt_options=opt_method_kwargs,
+                    kind="tensor",
+                ),
+            ),
+        )
+
+
+class PPOController(RLController):
+    """PPOController."""
+
+    def __init__(
+        self,
+        policy_model: PerceptronWithTruncatedNormalNoise,
+        critic_model: ModelPerceptron,
+        sampling_time: float,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        critic_n_epochs: int,
+        policy_n_epochs: int,
+        critic_opt_method_kwargs: Dict[str, Any],
+        policy_opt_method_kwargs: Dict[str, Any],
+        critic_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        policy_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        running_objective_type: str = "cost",
+        critic_td_n: int = 1,
+        epsilon: float = 0.2,
+        discount_factor: float = 0.7,
+        observer: Optional[Observer] = None,
+        N_episodes: int = 2,
+        N_iterations: int = 100,
+        total_objective_threshold: float = np.inf,
+        time_start: float = 0.0,
+    ):
+        """Initialize the object with the given parameters.
+
+        :param policy_model: The policy model.
+        :type policy_model: PerceptronWithTruncatedNormalNoise
+        :param critic_model: The critic model.
+        :type critic_model: ModelPerceptron
+        :param sampling_time: The sampling time.
+        :type sampling_time: float
+        :param running_objective: The running objective.
+        :type running_objective: RunningObjective
+        :param simulator: The simulator.
+        :type simulator: Simulator
+        :param critic_n_epochs: The number of epochs for critic optimization.
+        :type critic_n_epochs: int
+        :param policy_n_epochs: The number of epochs for policy optimization.
+        :type policy_n_epochs: int
+        :param critic_opt_method_kwargs: The keyword arguments for the critic optimizer.
+        :type critic_opt_method_kwargs: Dict[str, Any]
+        :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer.
+        :type policy_opt_method_kwargs: Dict[str, Any]
+        :param critic_opt_method: The optimizer class for the critic.
+        :type critic_opt_method: Type[torch.optim.Optimizer]
+        :param policy_opt_method: The optimizer class for the policy.
+        :type policy_opt_method: Type[torch.optim.Optimizer]
+        :param running_objective_type: The type of running objective.
+        :type running_objective_type: str
+        :param critic_td_n: The number of timesteps for critic estimation.
+        :type critic_td_n: int
+        :param epsilon: The epsilon value for PPO.
+        :type epsilon: float
+        :param discount_factor: The discount factor.
+        :type discount_factor: float
+        :param observer: The observer.
+        :type observer: Optional[Observer]
+        :param N_episodes: The number of episodes.
+        :type N_episodes: int
+        :param N_iterations: The number of iterations.
+        :type N_iterations: int
+        :param total_objective_threshold: The total objective threshold.
+        :type total_objective_threshold: float
+        :param time_start: The starting time.
+        :type time_start: float
+
+        :raises AssertionError: If the `running_objective_type` is invalid.
+
+        :return: None
+        """
+        assert (
+            running_objective_type == "cost" or running_objective_type == "reward"
+        ), f"Invalid 'running_objective_type' value: '{running_objective_type}'. It must be either 'cost' or 'reward'."
+        system = simulator.system
+        critic = Critic(
+            system=system,
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+            model=critic_model,
+            td_n=critic_td_n,
+            is_value_function=True,
+            is_on_policy=True,
+            is_same_critic=True,
+            optimizer_config=OptimizerConfig(
+                config_options={
+                    "n_epochs": critic_n_epochs,
+                    "data_buffer_sampling_method": "iter_batches",
+                    "data_buffer_sampling_kwargs": {
+                        "batch_sampler": EpisodicSampler,
+                        "dtype": torch.FloatTensor,
+                    },
+                    "is_reinstantiate_optimizer": True,
+                },
+                opt_method=critic_opt_method,
+                opt_options=critic_opt_method_kwargs,
+                kind="tensor",
+            ),
+        )
+        super().__init__(
+            simulator=simulator,
+            time_start=time_start,
+            discount_factor=discount_factor,
+            is_critic_first=True,
+            data_buffer_nullify_event=Event.reset_iteration,
+            policy_optimization_event=Event.reset_iteration,
+            critic_optimization_event=Event.reset_iteration,
+            N_episodes=N_episodes,
+            N_iterations=N_iterations,
+            running_objective=running_objective,
+            action_bounds=system.action_bounds,
+            observer=observer,
+            critic=critic,
+            total_objective_threshold=total_objective_threshold,
+            policy=PPO(
+                model=policy_model,
+                system=system,
+                sampling_time=sampling_time,
+                epsilon=epsilon,
+                critic=critic,
+                running_objective_type=running_objective_type,
+                discount_factor=discount_factor,
+                optimizer_config=OptimizerConfig(
+                    config_options={
+                        "n_epochs": policy_n_epochs,
+                        "data_buffer_sampling_method": "iter_batches",
+                        "data_buffer_sampling_kwargs": {
+                            "batch_sampler": RollingBatchSampler,
+                            "dtype": torch.FloatTensor,
+                            "mode": "full",
+                            "n_batches": 1,
+                        },
+                        "is_reinstantiate_optimizer": True,
+                    },
+                    opt_method=policy_opt_method,
+                    opt_options=policy_opt_method_kwargs,
+                    kind="tensor",
+                ),
+            ),
+        )
