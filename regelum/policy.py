@@ -1251,7 +1251,6 @@ class MemoryPIDPolicy(Policy):
         self.integral = 0.0
         self.error_old = 0.0
         self.sampling_time = sampling_time
-        self.clock = Clock(period=sampling_time, time_start=0)
         self.initial_point = initial_point
         if isinstance(initial_point, (float, int)):
             self.observation_size = 1
@@ -1336,7 +1335,6 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         self,
         state_init,
         params=None,
-        time_start=0,
         sampling_time=0.01,
         action_bounds=None,
     ):
@@ -1344,7 +1342,6 @@ class ThreeWheeledRobotMemoryPIDPolicy:
 
         :param state_init: state at which simulation starts
         :param params: parameters of a 3-wheeled robot
-        :param time_start: time at which computations start
         :param sampling_time: time interval between two consecutive computations
         :param action_bounds: upper and lower bounds for action yielded from policy
         """
@@ -1359,11 +1356,9 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
-        self.controller_clock = time_start
         self.sampling_time = sampling_time
-        self.time_start = time_start
 
-        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.clock = Clock(period=sampling_time)
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
@@ -1506,7 +1501,6 @@ class ThreeWheeledRobotPIDPolicy:
         self,
         state_init,
         params=None,
-        time_start=0,
         sampling_time=0.01,
         action_bounds=None,
         PID_arctg_params=(10, 0.0, 3),
@@ -1522,7 +1516,6 @@ class ThreeWheeledRobotPIDPolicy:
         :param state_init: initial state of 3wrobot
         :param params: mass and moment of inertia `(M, I)`
         :type params: tuple
-        :param time_start: time start
         :param sampling_time: sampling time
         :param action_bounds: bounds that actions should not exceed `[[lower_bound, upper_bound], ...]`
         :param PID_arctg_params: coefficients for PD controller which sets the direction of robot to origin
@@ -1547,11 +1540,9 @@ class ThreeWheeledRobotPIDPolicy:
         self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
-        self.controller_clock = time_start
         self.sampling_time = sampling_time
-        self.time_start = time_start
 
-        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.clock = Clock(period=sampling_time)
         self.Ls = []
         self.times = []
         self.action_old = rc.zeros(2)
@@ -1666,7 +1657,6 @@ class CartPoleEnergyBasedPolicy(Policy):
         """Initialize an instance of ControllerCartPoleEnergyBased.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
-        :param time_start: time at which computations start
         :param sampling_time: time interval between two consecutive actions
         :param controller_gain: controller gain
         :param system: an instance of Cartpole system
@@ -1712,7 +1702,6 @@ class LunarLanderPIDPolicy:
         """Initialize an instance of PID controller for lunar lander.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
-        :param time_start: time at which computations start
         :param state_init: state at which simulation has begun
         :param sampling_time: time interval between two consecutive actions
         :param PID_angle_parameters: parameters for PID controller stabilizing angle of lander
@@ -1780,7 +1769,6 @@ class TwoTankPIDPolicy:
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param params: parameters of double tank system
-        :param time_start: time at which computations start
         :param state_init: state at which simulation has begun
         :param sampling_time: time interval between two consecutive actions
         :param PID_2tank_parameters_x1: parameters for PID controller stabilizing first component of system's state
@@ -1838,7 +1826,6 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         Mass and moment of inertia around vertical axis of the robot.
     controller_gain : : number
         Controller gain.
-    time_start : : number
         Initial value of the controller's __internal clock.
     sampling_time : : number
         Controller's sampling time (in seconds).

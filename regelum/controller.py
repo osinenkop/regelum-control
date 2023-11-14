@@ -59,7 +59,6 @@ class Controller(RegelumBase):
         self,
         policy: Policy,
         simulator: Simulator,
-        time_start: float = 0,
         sampling_time: float = 0.1,
         action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         running_objective: Optional[RunningObjective] = None,
@@ -72,14 +71,13 @@ class Controller(RegelumBase):
     ):
         """Initialize an instance of Controller.
 
-        :param time_start: time at which simulation started
         :param sampling_time: time interval between two consecutive actions
         """
         super().__init__()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
         self.simulator = simulator
-        self.time = self.simulator.time_start
+        self.time = 0.0
         self.time_old = 0
         self.delta_time = 0
         self.total_objective: float = 0.0
@@ -114,9 +112,9 @@ class Controller(RegelumBase):
         )
 
         self.policy = policy
-        self.controller_clock = time_start
+        self.controller_clock = 0.0
         self.sampling_time = sampling_time
-        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.clock = Clock(period=sampling_time)
         self.iteration_counter: int = 0
         self.episode_counter: int = 0
         self.step_counter: int = 0
@@ -347,7 +345,6 @@ class RLController(Controller):
         is_critic_first: bool = False,
         action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         max_data_buffer_size: Optional[int] = None,
-        time_start: float = 0,
         sampling_time: float = 0.1,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -377,15 +374,12 @@ class RLController(Controller):
         :type action_bounds: Union[list, np.ndarray, None], optional
         :param max_data_buffer_size: max size of DataBuffer, if is `None` the DataBuffer is unlimited. defaults to None
         :type max_data_buffer_size: Optional[int], optional
-        :param time_start: time at which simulation started, defaults to 0
-        :type time_start: float, optional
         :param sampling_time: time interval between two consecutive actions, defaults to 0.1
         :type sampling_time: float, optional
         """
         Controller.__init__(
             self,
             simulator=simulator,
-            time_start=time_start,
             sampling_time=sampling_time,
             policy=policy,
             running_objective=running_objective,
@@ -519,7 +513,7 @@ class RLController(Controller):
         return which, event, time, self.episode_counter, self.iteration_counter
 
 
-class CALFControllerExPost(RLController):
+class CALFControllerExPostOld(RLController):
     """Controller for CALF algorithm."""
 
     def __init__(
@@ -534,7 +528,6 @@ class CALFControllerExPost(RLController):
         discount_factor=1,
         action_bounds=None,
         max_data_buffer_size: Optional[int] = None,
-        time_start: float = 0,
         sampling_time: float = 0.1,
     ):
         """Instantiate a CALFControllerExPost object. The docstring will be completed in the next release.
@@ -559,8 +552,6 @@ class CALFControllerExPost(RLController):
         :type action_bounds: _type_, optional
         :param max_data_buffer_size: _description_, defaults to None
         :type max_data_buffer_size: Optional[int], optional
-        :param time_start: _description_, defaults to 0
-        :type time_start: float, optional
         :param sampling_time: _description_, defaults to 0.1
         :type sampling_time: float, optional
         """
@@ -575,7 +566,127 @@ class CALFControllerExPost(RLController):
             is_critic_first=True,
             action_bounds=action_bounds,
             max_data_buffer_size=max_data_buffer_size,
-            time_start=time_start,
+            sampling_time=sampling_time,
+        )
+        self.safe_controller = safe_controller
+
+    def invoke_safe_action(self, state, observation):
+        self.policy.restore_weights()
+        self.critic.restore_weights()
+        action = self.safe_controller.compute_action(state, observation)
+        self.policy.set_action(action)
+        self.update_data_buffer_with_action_stats(observation)
+
+    def update_data_buffer_with_action_stats(self, observation):
+        super().update_data_buffer_with_action_stats(observation)
+        self.data_buffer.push_to_end(
+            observation_last_good=self.critic.observation_last_good
+        )
+
+    def on_observation_received(self, time, estimated_state, observation):
+        self.critic.receive_estimated_state(estimated_state)
+        self.policy.receive_estimated_state(estimated_state)
+        self.policy.receive_observation(observation)
+
+        self.data_buffer.push_to_end(
+            observation=observation,
+            timestamp=time,
+            episode_id=self.episode_counter,
+            iteration_id=self.iteration_counter,
+            step_id=self.step_counter,
+        )
+
+    @apply_callbacks()
+    @apply_action_bounds
+    def compute_action(
+        self,
+        state,
+        observation,
+        time=0,
+    ):
+        if self.is_first_compute_action_call:
+            self.critic.observation_last_good = observation
+            self.invoke_safe_action(state, observation)
+            self.is_first_compute_action_call = False
+            self.step_counter += 1
+            return self.policy.action
+
+        if rc.norm_2(observation) > 0.5:
+            critic_weights = self.critic.optimize(
+                self.data_buffer, is_update_and_cache_weights=False
+            )
+            critic_weights_accepted = self.critic.opt_status == OptStatus.success
+        else:
+            critic_weights = self.critic.model.weights
+            critic_weights_accepted = False
+
+        if critic_weights_accepted:
+            self.critic.update_weights(critic_weights)
+            self.policy.optimize(self.data_buffer)
+            policy_weights_accepted = True  # self.policy.opt_status == "success"
+            if policy_weights_accepted:
+                self.policy.update_action(observation)
+                self.critic.observation_last_good = observation
+                self.update_data_buffer_with_action_stats(observation)
+                self.critic.cache_weights(critic_weights)
+            else:
+                self.invoke_safe_action(state, observation)
+        else:
+            self.invoke_safe_action(state, observation)
+
+        self.step_counter += 1
+        return self.policy.action
+
+
+class CALFControllerExPost(RLController):
+    """Controller for CALF algorithm."""
+
+    def __init__(
+        self,
+        policy_model: Policy,
+        critic_model: CriticCALF,
+        safe_policy: Controller,
+        running_objective,
+        discount_factor=1,
+        max_data_buffer_size: Optional[int] = None,
+        sampling_time: float = 0.1,
+    ):
+        """Instantiate a CALFControllerExPost object. The docstring will be completed in the next release.
+
+        :param policy: Pol
+        :type policy: Policy
+        :param critic: _description_
+        :type critic: Critic
+        :param safe_controller: _description_
+        :type safe_controller: Controller
+        :param running_objective: _description_
+        :type running_objective: _type_
+        :param critic_optimization_event: _description_
+        :type critic_optimization_event: str
+        :param policy_optimization_event: _description_
+        :type policy_optimization_event: str
+        :param data_buffer_nullify_event: _description_
+        :type data_buffer_nullify_event: str
+        :param discount_factor: _description_, defaults to 1
+        :type discount_factor: int, optional
+        :param action_bounds: _description_, defaults to None
+        :type action_bounds: _type_, optional
+        :param max_data_buffer_size: _description_, defaults to None
+        :type max_data_buffer_size: Optional[int], optional
+        :param sampling_time: _description_, defaults to 0.1
+        :type sampling_time: float, optional
+        """
+        super().__init__(
+            policy=policy,
+            critic=critic,
+            running_objective=running_objective,
+            critic_optimization_event=critic_optimization_event,
+            policy_optimization_event=policy_optimization_event,
+            data_buffer_nullify_event=data_buffer_nullify_event,
+            discount_factor=discount_factor,
+            is_critic_first=True,
+            action_bounds=action_bounds,
+            max_data_buffer_size=max_data_buffer_size,
             sampling_time=sampling_time,
         )
         self.safe_controller = safe_controller
@@ -660,7 +771,6 @@ class MPCController(RLController):
         sampling_time: float = 0.1,
         observer: Optional[Observer] = None,
         constraint_parser: Optional[ConstraintParser] = None,
-        time_start: float = 0,
         discount_factor: float = 1.0,
     ):
         """Initialize the MPCAgent class.
@@ -679,8 +789,6 @@ class MPCController(RLController):
         :type observer: Observer | None
         :param constraint_parser: The constraint parser for the MPC agent. Defaults to None.
         :type constraint_parser: ConstraintParser | None
-        :param time_start: The starting time for the MPC agent. Defaults to 0.
-        :type time_start: float
         :param discount_factor: The discount factor for the MPC agent. Defaults to 1.0.
         :type discount_factor: float
         """
@@ -694,7 +802,6 @@ class MPCController(RLController):
             critic=CriticTrivial(),
             running_objective=running_objective,
             observer=observer,
-            time_start=time_start,
             policy=RLPolicy(
                 model=ModelWeightContainer(
                     weights_init=np.zeros(prediction_horizon + 1, system.dim_inputs),
@@ -744,7 +851,6 @@ class MPCTorchController(RLController):
         model: Optional[ModelNN] = None,
         observer: Optional[Observer] = None,
         constraint_parser: Optional[ConstraintParser] = None,
-        time_start: float = 0,
         discount_factor: float = 1.0,
     ):
         """Initialize the object with the given parameters.
@@ -771,8 +877,6 @@ class MPCTorchController(RLController):
         :type observer: Optional[Observer]
         :param constraint_parser: The constraint parser object to use. Defaults to None.
         :type constraint_parser: Optional[ConstraintParser]
-        :param time_start: The starting time for the simulation. Defaults to 0.
-        :type time_start: float
         :param discount_factor: The discount factor for future rewards. Defaults to 1.0.
         :type discount_factor: float
 
@@ -788,7 +892,6 @@ class MPCTorchController(RLController):
             critic=CriticTrivial(),
             running_objective=running_objective,
             observer=observer,
-            time_start=time_start,
             policy=RLPolicy(
                 model=ModelWeightContainerTorch(
                     dim_weights=(prediction_horizon + 1, system.dim_inputs),
@@ -848,7 +951,6 @@ class PPOController(RLController):
         N_episodes: int = 2,
         N_iterations: int = 100,
         total_objective_threshold: float = np.inf,
-        time_start: float = 0.0,
     ):
         """Initialize the object with the given parameters.
 
@@ -890,8 +992,6 @@ class PPOController(RLController):
         :type N_iterations: int
         :param total_objective_threshold: The total objective threshold.
         :type total_objective_threshold: float
-        :param time_start: The starting time.
-        :type time_start: float
 
         :raises AssertionError: If the `running_objective_type` is invalid.
 
@@ -927,7 +1027,6 @@ class PPOController(RLController):
         )
         super().__init__(
             simulator=simulator,
-            time_start=time_start,
             discount_factor=discount_factor,
             is_critic_first=True,
             data_buffer_nullify_event=Event.reset_iteration,
@@ -992,7 +1091,6 @@ class SPDGController(RLController):
         N_episodes: int = 2,
         N_iterations: int = 100,
         total_objective_threshold: float = np.inf,
-        time_start: float = 0.0,
     ):
         """Initialize the object with the given parameters.
 
@@ -1034,8 +1132,6 @@ class SPDGController(RLController):
         :type N_iterations: int
         :param total_objective_threshold: The total objective threshold.
         :type total_objective_threshold: float
-        :param time_start: The starting time.
-        :type time_start: float
 
         :raises AssertionError: If the `running_objective_type` is invalid.
 
@@ -1071,7 +1167,6 @@ class SPDGController(RLController):
         )
         super().__init__(
             simulator=simulator,
-            time_start=time_start,
             discount_factor=discount_factor,
             is_critic_first=True,
             data_buffer_nullify_event=Event.reset_iteration,
@@ -1190,7 +1285,6 @@ class ReinforceController(RLController):
         # Initialize the RLController with the appropriate configuration
         super().__init__(
             simulator=simulator,
-            time_start=0.0,  # Assuming this is the start time as not specified in YAML
             discount_factor=discount_factor,
             is_critic_first=True,  # Assuming the critic is still included but trivial
             data_buffer_nullify_event=Event.reset_iteration,

@@ -115,10 +115,9 @@ def metaclassTypeInferenceDecorator(function):
 
 
 class Clock:
-    def __init__(self, period: float, time_start: float = 0.0, eps=1e-7):
+    def __init__(self, period: float, eps=1e-7):
         self.period = period
         self.eps = eps
-        self.time_start = time_start
         self.reset()
 
     def check_time(self, time: float):
@@ -138,7 +137,7 @@ class Clock:
         return result
 
     def reset(self):
-        self.last_sampled_time = self.current_time = self.time_start
+        self.last_sampled_time = self.current_time = 0.0
         self.is_first_time_called = True
         self.delta_time = 0.0
 

@@ -40,7 +40,6 @@ class Simulator(regelum.RegelumBase, ABC):
         system: Union[System, ComposedSystem],
         state_init: Optional[np.ndarray] = None,
         action_init: Optional[np.ndarray] = None,
-        time_start: Optional[float] = 0,
         time_final: Optional[float] = 1,
         max_step: Optional[float] = 1e-3,
         first_step: Optional[float] = 1e-6,
@@ -55,8 +54,6 @@ class Simulator(regelum.RegelumBase, ABC):
         :type state_init: Optional[np.ndarray], optional
         :param action_init: Set initial action manually, defaults to None
         :type action_init: Optional[np.ndarray], optional
-        :param time_start: Time at which simulation starts, defaults to 0
-        :type time_start: Optional[float], optional
         :param time_final: Time at which simulation ends, defaults to 1
         :type time_final: Optional[float], optional
         :param max_step: Total duration of one simulation step, defaults to 1e-3
@@ -77,7 +74,6 @@ class Simulator(regelum.RegelumBase, ABC):
                 state_init is not None
             ), "Initial state for this simulator needs to be passed"
 
-        self.time_start = time_start
         self.time_final = time_final
         if state_init is None:
             self.state_init = self.initialize_init_state()
@@ -88,7 +84,7 @@ class Simulator(regelum.RegelumBase, ABC):
         else:
             self.action_init = action_init
 
-        self.time = time_start
+        self.time = 0.0
         self.state = self.state_init
         self.observation = self.get_observation(
             time=self.time, state=self.state_init, inputs=self.action_init
@@ -99,11 +95,7 @@ class Simulator(regelum.RegelumBase, ABC):
         self.rtol = rtol
         self.first_step = first_step
 
-        ## TODO: Add support for other types of systems
         if self.system.system_type == "diff_eqn":
-            assert (
-                self.time_start is not None and self.time_final is not None
-            ), "Must specify time_start and time_final for diff_eqn systems"
             self.ODE_solver = self.initialize_ode_solver()
 
     def receive_action(self, action):
@@ -139,14 +131,14 @@ class Simulator(regelum.RegelumBase, ABC):
     def reset(self):
         if self.system.system_type == "diff_eqn":
             self.ODE_solver = self.initialize_ode_solver()
-            self.time = self.time_start
+            self.time = 0.0
             self.state = self.state_init
             self.observation = self.get_observation(
                 time=self.time, state=self.state_init, inputs=self.action_init
             )
             self.system.reset()
         else:
-            self.time = self.time_start
+            self.time = 0.0
             self.observation = self.get_observation(
                 time=self.time, state=self.state_init, inputs=self.system.inputs
             )
@@ -175,7 +167,6 @@ class SciPy(Simulator):
 
         ODE_solver = sp.integrate.RK45(
             self.system.compute_closed_loop_rhs,
-            self.time_start,
             self.state,
             self.time_final,
             max_step=self.max_step,
@@ -195,7 +186,6 @@ class CasADi(Simulator):
         def __init__(
             self,
             integrator,
-            time_start: float,
             time_final: float,
             step_size: float,
             state_init,
@@ -206,8 +196,6 @@ class CasADi(Simulator):
 
             :param integrator: A CasADi integrator object.
             :type integrator: casadi.integrator
-            :param time_start: The starting time for the solver.
-            :type time_start: float
             :param time_final: The final time for the solver.
             :type time_final: float
             :param step_size: The step size for the solver.
@@ -220,10 +208,9 @@ class CasADi(Simulator):
             :type system: System
             """
             self.integrator = integrator
-            self.time_start = time_start
             self.time_final = time_final
             self.step_size = step_size
-            self.time = self.time_start
+            self.time = 0.0
             self.state_init = state_init
             self.state = self.state_init
             self.state_new = self.state
@@ -251,17 +238,12 @@ class CasADi(Simulator):
 
     def initialize_ode_solver(self):
         self.integrator = self.create_CasADi_integrator(self.system, self.max_step)
-        assert (
-            self.time_start is not None
-            and self.time_final is not None
-            and self.max_step is not None
-        ), (
-            "Must specify time_start, time_final and max_step"
+        assert self.time_final is not None and self.max_step is not None, (
+            "Must specify time_final and max_step"
             + " in order to initialize CasADi solver"
         )
         ODE_solver = self.CasADiSolver(
             self.integrator,
-            self.time_start,
             self.time_final,
             self.max_step,
             self.state_init,
