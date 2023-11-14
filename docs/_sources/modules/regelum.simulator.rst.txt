@@ -1,0 +1,33 @@
+``regelum.simulator`` 
+=====================
+
+
+.. automodule:: regelum.simulator
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      CasADi
+      SciPy
+      Simulator
+   
+   
+
+   
+   
+   
+
+
+

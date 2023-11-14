@@ -1,0 +1,78 @@
+regelum.policy.DDPG
+===================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: DDPG
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DDPG.__init__
+      ~DDPG.cache_weights
+      ~DDPG.connect_source
+      ~DDPG.create_variable
+      ~DDPG.create_variable_metadata
+      ~DDPG.data_buffer_objective_keys
+      ~DDPG.define_problem
+      ~DDPG.eval_contraints
+      ~DDPG.fix_variables
+      ~DDPG.get_action
+      ~DDPG.get_data_buffer_batch_size
+      ~DDPG.handle_bounds
+      ~DDPG.initialize_optimization_procedure
+      ~DDPG.instantiate_configuration
+      ~DDPG.is_target_event
+      ~DDPG.objective_function
+      ~DDPG.opt_constraints_tensor
+      ~DDPG.optimize
+      ~DDPG.optimize_numeric
+      ~DDPG.optimize_on_event
+      ~DDPG.optimize_symbolic
+      ~DDPG.optimize_tensor
+      ~DDPG.optimize_tensor_batch_sampler
+      ~DDPG.post_epoch
+      ~DDPG.post_optimize
+      ~DDPG.receive_estimated_state
+      ~DDPG.receive_observation
+      ~DDPG.register_bounds
+      ~DDPG.register_constraint
+      ~DDPG.register_objective
+      ~DDPG.restore_weights
+      ~DDPG.set_action
+      ~DDPG.substitute_parameters
+      ~DDPG.unfix_variables
+      ~DDPG.update_action
+      ~DDPG.update_and_cache_weights
+      ~DDPG.update_data_buffer
+      ~DDPG.update_status
+      ~DDPG.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DDPG.action
+      ~DDPG.constants
+      ~DDPG.constraints
+      ~DDPG.decision_variables
+      ~DDPG.functions
+      ~DDPG.log_options
+      ~DDPG.objective
+      ~DDPG.objectives
+      ~DDPG.opt_func
+      ~DDPG.opt_options
+      ~DDPG.opti
+      ~DDPG.variables
+      ~DDPG.weights
+   
+   

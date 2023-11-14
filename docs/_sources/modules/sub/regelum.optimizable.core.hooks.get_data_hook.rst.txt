@@ -1,0 +1,6 @@
+regelum.optimizable.core.hooks.get\_data\_hook
+==============================================
+
+.. currentmodule:: regelum.optimizable.core.hooks
+
+.. autofunction:: get_data_hook

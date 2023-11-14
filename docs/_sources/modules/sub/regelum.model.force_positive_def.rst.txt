@@ -1,0 +1,6 @@
+regelum.model.force\_positive\_def
+==================================
+
+.. currentmodule:: regelum.model
+
+.. autofunction:: force_positive_def

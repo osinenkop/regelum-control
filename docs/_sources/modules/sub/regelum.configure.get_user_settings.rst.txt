@@ -1,0 +1,6 @@
+regelum.configure.get\_user\_settings
+=====================================
+
+.. currentmodule:: regelum.configure
+
+.. autofunction:: get_user_settings

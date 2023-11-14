@@ -1,0 +1,81 @@
+regelum.policy.Reinforce
+========================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: Reinforce
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Reinforce.__init__
+      ~Reinforce.cache_weights
+      ~Reinforce.calculate_baseline
+      ~Reinforce.calculate_last_total_objectives
+      ~Reinforce.calculate_tail_total_objectives
+      ~Reinforce.connect_source
+      ~Reinforce.create_variable
+      ~Reinforce.create_variable_metadata
+      ~Reinforce.data_buffer_objective_keys
+      ~Reinforce.define_problem
+      ~Reinforce.eval_contraints
+      ~Reinforce.fix_variables
+      ~Reinforce.get_action
+      ~Reinforce.get_data_buffer_batch_size
+      ~Reinforce.handle_bounds
+      ~Reinforce.initialize_optimization_procedure
+      ~Reinforce.instantiate_configuration
+      ~Reinforce.is_target_event
+      ~Reinforce.objective_function
+      ~Reinforce.opt_constraints_tensor
+      ~Reinforce.optimize
+      ~Reinforce.optimize_numeric
+      ~Reinforce.optimize_on_event
+      ~Reinforce.optimize_symbolic
+      ~Reinforce.optimize_tensor
+      ~Reinforce.optimize_tensor_batch_sampler
+      ~Reinforce.post_epoch
+      ~Reinforce.post_optimize
+      ~Reinforce.receive_estimated_state
+      ~Reinforce.receive_observation
+      ~Reinforce.register_bounds
+      ~Reinforce.register_constraint
+      ~Reinforce.register_objective
+      ~Reinforce.restore_weights
+      ~Reinforce.set_action
+      ~Reinforce.substitute_parameters
+      ~Reinforce.unfix_variables
+      ~Reinforce.update_action
+      ~Reinforce.update_and_cache_weights
+      ~Reinforce.update_data_buffer
+      ~Reinforce.update_status
+      ~Reinforce.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Reinforce.action
+      ~Reinforce.constants
+      ~Reinforce.constraints
+      ~Reinforce.decision_variables
+      ~Reinforce.functions
+      ~Reinforce.log_options
+      ~Reinforce.objective
+      ~Reinforce.objectives
+      ~Reinforce.opt_func
+      ~Reinforce.opt_options
+      ~Reinforce.opti
+      ~Reinforce.variables
+      ~Reinforce.weights
+   
+   

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>regelum.callback &mdash; regelum 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="regelum.callback.is_in_debug_mode" href="sub/regelum.callback.is_in_debug_mode.html" />
+    <link rel="prev" title="regelum.animation.TriangleAnimation" href="sub/regelum.animation.TriangleAnimation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home" style="color: #8cc770;">
+            regelum
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#what-is-regelum">What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#regelum-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#presets">Presets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#related-literature">Related literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#closing-remarks">Closing remarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html#for-developers">For developers</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Controllers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../controllers.html">REINFORCE Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../controllers.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../controllers.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Systems</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../systems.html">Avaliable systems</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Optimizable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../optimizable.html">Optimizable Subpackage Tutorial</a></li>
+</ul>
+<p class="caption"><span class="caption-text">rc singletone</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="regelum.animation.html"><code class="docutils literal notranslate"><span class="pre">regelum.animation</span></code></a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.is_in_debug_mode.html">regelum.callback.is_in_debug_mode</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.method_callback.html">regelum.callback.method_callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.passdown.html">regelum.callback.passdown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.Callback.html">regelum.callback.Callback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.ConfigDiagramCallback.html">regelum.callback.ConfigDiagramCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.ControllerStepLogger.html">regelum.callback.ControllerStepLogger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.CriticObjectiveSaver.html">regelum.callback.CriticObjectiveSaver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.HistoricalCallback.html">regelum.callback.HistoricalCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.HistoricalDataCallback.html">regelum.callback.HistoricalDataCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.ObjectiveSaver.html">regelum.callback.ObjectiveSaver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.OnEpisodeDoneCallback.html">regelum.callback.OnEpisodeDoneCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.OnIterationDoneCallback.html">regelum.callback.OnIterationDoneCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.PolicyObjectiveSaver.html">regelum.callback.PolicyObjectiveSaver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.SaveProgressCallback.html">regelum.callback.SaveProgressCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.StateTracker.html">regelum.callback.StateTracker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.TimeRemainingCallback.html">regelum.callback.TimeRemainingCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sub/regelum.callback.TotalObjectiveCallback.html">regelum.callback.TotalObjectiveCallback</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.configure.html"><code class="docutils literal notranslate"><span class="pre">regelum.configure</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.constraint_parser.html"><code class="docutils literal notranslate"><span class="pre">regelum.constraint_parser</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.critic.html"><code class="docutils literal notranslate"><span class="pre">regelum.critic</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.data_buffers.batch_sampler.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.batch_sampler</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.data_buffers.data_buffer.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.data_buffer</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.data_buffers.fifo_list.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.fifo_list</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.data_buffers.types.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.types</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.event.html"><code class="docutils literal notranslate"><span class="pre">regelum.event</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.model.html"><code class="docutils literal notranslate"><span class="pre">regelum.model</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.objective.html"><code class="docutils literal notranslate"><span class="pre">regelum.objective</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.observer.html"><code class="docutils literal notranslate"><span class="pre">regelum.observer</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.optimizable.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.optimizable.core.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.optimizable.core.configs.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.configs</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.optimizable.core.entities.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.entities</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.optimizable.core.hooks.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.hooks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.optimizable.optimizers.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.optimizers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.policy.html"><code class="docutils literal notranslate"><span class="pre">regelum.policy</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.predictor.html"><code class="docutils literal notranslate"><span class="pre">regelum.predictor</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.simulator.html"><code class="docutils literal notranslate"><span class="pre">regelum.simulator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="regelum.system.html"><code class="docutils literal notranslate"><span class="pre">regelum.system</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">regelum</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" style="color: #8cc770;" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-regelum.callback">
+<span id="regelum-callback"></span><h1><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code><a class="headerlink" href="#module-regelum.callback" title="Permalink to this headline"></a></h1>
+<p>Contains callbacks.</p>
+<p>Callbacks are lightweight event handlers, used mainly for logging.</p>
+<p>To make a method of a class trigger callbacks, one needs to
+decorate the class (or its base class) with <code class="docutils literal notranslate"><span class="pre">&#64;introduce_callbacks()</span></code> and then
+also decorate the method with <code class="docutils literal notranslate"><span class="pre">&#64;apply_callbacks</span></code>.</p>
+<p>Callbacks can be registered by simply supplying them in the respective keyword argument:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@regelum</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">],</span> <span class="o">...</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p class="rubric">Functions</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.is_in_debug_mode.html#regelum.callback.is_in_debug_mode" title="regelum.callback.is_in_debug_mode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_in_debug_mode</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.method_callback.html#regelum.callback.method_callback" title="regelum.callback.method_callback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">method_callback</span></code></a>(method_name[, class_name, …])</p></td>
+<td><p>Create a callback class that logs the output of a specific method of a class or any class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.passdown.html#regelum.callback.passdown" title="regelum.callback.passdown"><code class="xref py py-obj docutils literal notranslate"><span class="pre">passdown</span></code></a>(CallbackClass)</p></td>
+<td><p>Decorate a callback class in such a way that its event handling is inherited by derived classes.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.Callback.html#regelum.callback.Callback" title="regelum.callback.Callback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Callback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Base class for callbacks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.ConfigDiagramCallback.html#regelum.callback.ConfigDiagramCallback" title="regelum.callback.ConfigDiagramCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ConfigDiagramCallback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Callback responsible for constructing SUMMARY.html and relevant data, including the config diagram.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.ControllerStepLogger.html#regelum.callback.ControllerStepLogger" title="regelum.callback.ControllerStepLogger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ControllerStepLogger</span></code></a>([log_level, attachee])</p></td>
+<td><p>A callback which allows to store desired data collected among different runs inside multirun execution runtime.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.CriticObjectiveSaver.html#regelum.callback.CriticObjectiveSaver" title="regelum.callback.CriticObjectiveSaver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CriticObjectiveSaver</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store critic objective values during execution runtime.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.HistoricalCallback.html#regelum.callback.HistoricalCallback" title="regelum.callback.HistoricalCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoricalCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback (base) responsible for recording various temporal data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.HistoricalDataCallback.html#regelum.callback.HistoricalDataCallback" title="regelum.callback.HistoricalDataCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">HistoricalDataCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store desired data collected among different runs inside multirun execution runtime.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.ObjectiveSaver.html#regelum.callback.ObjectiveSaver" title="regelum.callback.ObjectiveSaver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ObjectiveSaver</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store objective values during execution runtime.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.OnEpisodeDoneCallback.html#regelum.callback.OnEpisodeDoneCallback" title="regelum.callback.OnEpisodeDoneCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnEpisodeDoneCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback responsible for logging and recording relevant data when an episode ends.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.OnIterationDoneCallback.html#regelum.callback.OnIterationDoneCallback" title="regelum.callback.OnIterationDoneCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OnIterationDoneCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback responsible for logging and recording relevant data when an iteration ends.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.PolicyObjectiveSaver.html#regelum.callback.PolicyObjectiveSaver" title="regelum.callback.PolicyObjectiveSaver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PolicyObjectiveSaver</span></code></a>(*args, **kwargs)</p></td>
+<td><p>A callback which allows to store critic objective values during execution runtime.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.SaveProgressCallback.html#regelum.callback.SaveProgressCallback" title="regelum.callback.SaveProgressCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SaveProgressCallback</span></code></a>([log_level, attachee])</p></td>
+<td><p>Callback responsible for regularly saving data collected by other callbacks to the hard-drive.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.StateTracker.html#regelum.callback.StateTracker" title="regelum.callback.StateTracker"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StateTracker</span></code></a>([log_level, attachee])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sub/regelum.callback.TimeRemainingCallback.html#regelum.callback.TimeRemainingCallback" title="regelum.callback.TimeRemainingCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimeRemainingCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that logs an estimate of the time that remains till the end of the simulation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sub/regelum.callback.TotalObjectiveCallback.html#regelum.callback.TotalObjectiveCallback" title="regelum.callback.TotalObjectiveCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TotalObjectiveCallback</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Callback that regularly logs total objective.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sub/regelum.animation.TriangleAnimation.html" class="btn btn-neutral float-left" title="regelum.animation.TriangleAnimation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sub/regelum.callback.is_in_debug_mode.html" class="btn btn-neutral float-right" title="regelum.callback.is_in_debug_mode" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, AIDA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

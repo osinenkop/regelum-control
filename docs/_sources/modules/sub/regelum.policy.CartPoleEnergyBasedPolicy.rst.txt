@@ -1,0 +1,75 @@
+regelum.policy.CartPoleEnergyBasedPolicy
+========================================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: CartPoleEnergyBasedPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CartPoleEnergyBasedPolicy.__init__
+      ~CartPoleEnergyBasedPolicy.cache_weights
+      ~CartPoleEnergyBasedPolicy.connect_source
+      ~CartPoleEnergyBasedPolicy.create_variable
+      ~CartPoleEnergyBasedPolicy.create_variable_metadata
+      ~CartPoleEnergyBasedPolicy.define_problem
+      ~CartPoleEnergyBasedPolicy.eval_contraints
+      ~CartPoleEnergyBasedPolicy.fix_variables
+      ~CartPoleEnergyBasedPolicy.get_action
+      ~CartPoleEnergyBasedPolicy.get_data_buffer_batch_size
+      ~CartPoleEnergyBasedPolicy.handle_bounds
+      ~CartPoleEnergyBasedPolicy.instantiate_configuration
+      ~CartPoleEnergyBasedPolicy.is_target_event
+      ~CartPoleEnergyBasedPolicy.opt_constraints_tensor
+      ~CartPoleEnergyBasedPolicy.optimize
+      ~CartPoleEnergyBasedPolicy.optimize_numeric
+      ~CartPoleEnergyBasedPolicy.optimize_on_event
+      ~CartPoleEnergyBasedPolicy.optimize_symbolic
+      ~CartPoleEnergyBasedPolicy.optimize_tensor
+      ~CartPoleEnergyBasedPolicy.optimize_tensor_batch_sampler
+      ~CartPoleEnergyBasedPolicy.post_epoch
+      ~CartPoleEnergyBasedPolicy.post_optimize
+      ~CartPoleEnergyBasedPolicy.receive_estimated_state
+      ~CartPoleEnergyBasedPolicy.receive_observation
+      ~CartPoleEnergyBasedPolicy.register_bounds
+      ~CartPoleEnergyBasedPolicy.register_constraint
+      ~CartPoleEnergyBasedPolicy.register_objective
+      ~CartPoleEnergyBasedPolicy.restore_weights
+      ~CartPoleEnergyBasedPolicy.set_action
+      ~CartPoleEnergyBasedPolicy.substitute_parameters
+      ~CartPoleEnergyBasedPolicy.unfix_variables
+      ~CartPoleEnergyBasedPolicy.update_action
+      ~CartPoleEnergyBasedPolicy.update_and_cache_weights
+      ~CartPoleEnergyBasedPolicy.update_status
+      ~CartPoleEnergyBasedPolicy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CartPoleEnergyBasedPolicy.action
+      ~CartPoleEnergyBasedPolicy.constants
+      ~CartPoleEnergyBasedPolicy.constraints
+      ~CartPoleEnergyBasedPolicy.data_buffer_objective_keys
+      ~CartPoleEnergyBasedPolicy.decision_variables
+      ~CartPoleEnergyBasedPolicy.functions
+      ~CartPoleEnergyBasedPolicy.log_options
+      ~CartPoleEnergyBasedPolicy.objective
+      ~CartPoleEnergyBasedPolicy.objectives
+      ~CartPoleEnergyBasedPolicy.opt_func
+      ~CartPoleEnergyBasedPolicy.opt_options
+      ~CartPoleEnergyBasedPolicy.opti
+      ~CartPoleEnergyBasedPolicy.variables
+      ~CartPoleEnergyBasedPolicy.weights
+   
+   

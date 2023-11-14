@@ -1,0 +1,6 @@
+regelum.optimizable.core.hooks.detach
+=====================================
+
+.. currentmodule:: regelum.optimizable.core.hooks
+
+.. autofunction:: detach

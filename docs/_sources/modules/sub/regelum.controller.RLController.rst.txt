@@ -1,0 +1,40 @@
+regelum.controller.RLController
+===============================
+
+.. currentmodule:: regelum.controller
+
+.. autoclass:: RLController
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RLController.__init__
+      ~RLController.calculate_total_objective
+      ~RLController.compute_action
+      ~RLController.compute_action_sampled
+      ~RLController.issue_action
+      ~RLController.on_action_issued
+      ~RLController.on_observation_received
+      ~RLController.optimize
+      ~RLController.optimize_or_skip_on_event
+      ~RLController.post_compute_action
+      ~RLController.pre_optimize
+      ~RLController.reload_pipeline
+      ~RLController.reset
+      ~RLController.reset_episode
+      ~RLController.reset_iteration
+      ~RLController.reset_simulation
+      ~RLController.run
+      ~RLController.step
+      ~RLController.substitute_constraint_parameters
+   
+   
+
+   
+   
+   

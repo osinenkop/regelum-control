@@ -1,0 +1,6 @@
+regelum.hash\_string
+====================
+
+.. currentmodule:: regelum
+
+.. autofunction:: hash_string

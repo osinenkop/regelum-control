@@ -1,0 +1,53 @@
+``regelum.callback`` 
+====================
+
+
+.. automodule:: regelum.callback
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      is_in_debug_mode
+      method_callback
+      passdown
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Callback
+      ConfigDiagramCallback
+      ControllerStepLogger
+      CriticObjectiveSaver
+      HistoricalCallback
+      HistoricalDataCallback
+      ObjectiveSaver
+      OnEpisodeDoneCallback
+      OnIterationDoneCallback
+      PolicyObjectiveSaver
+      SaveProgressCallback
+      StateTracker
+      TimeRemainingCallback
+      TotalObjectiveCallback
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,40 @@
+regelum.controller.PPOController
+================================
+
+.. currentmodule:: regelum.controller
+
+.. autoclass:: PPOController
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PPOController.__init__
+      ~PPOController.calculate_total_objective
+      ~PPOController.compute_action
+      ~PPOController.compute_action_sampled
+      ~PPOController.issue_action
+      ~PPOController.on_action_issued
+      ~PPOController.on_observation_received
+      ~PPOController.optimize
+      ~PPOController.optimize_or_skip_on_event
+      ~PPOController.post_compute_action
+      ~PPOController.pre_optimize
+      ~PPOController.reload_pipeline
+      ~PPOController.reset
+      ~PPOController.reset_episode
+      ~PPOController.reset_iteration
+      ~PPOController.reset_simulation
+      ~PPOController.run
+      ~PPOController.step
+      ~PPOController.substitute_constraint_parameters
+   
+   
+
+   
+   
+   

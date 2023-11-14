@@ -1,0 +1,80 @@
+regelum.policy.CALFLegacy
+=========================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: CALFLegacy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CALFLegacy.CALF_decay_constraint_for_policy
+      ~CALFLegacy.CALF_decay_constraint_for_policy_same_critic
+      ~CALFLegacy.__init__
+      ~CALFLegacy.cache_weights
+      ~CALFLegacy.connect_source
+      ~CALFLegacy.create_variable
+      ~CALFLegacy.create_variable_metadata
+      ~CALFLegacy.data_buffer_objective_keys
+      ~CALFLegacy.define_problem
+      ~CALFLegacy.eval_contraints
+      ~CALFLegacy.fix_variables
+      ~CALFLegacy.get_action
+      ~CALFLegacy.get_data_buffer_batch_size
+      ~CALFLegacy.get_initial_guess
+      ~CALFLegacy.handle_bounds
+      ~CALFLegacy.initialize_optimization_procedure
+      ~CALFLegacy.instantiate_configuration
+      ~CALFLegacy.is_target_event
+      ~CALFLegacy.objective_function
+      ~CALFLegacy.opt_constraints_tensor
+      ~CALFLegacy.optimize
+      ~CALFLegacy.optimize_numeric
+      ~CALFLegacy.optimize_on_event
+      ~CALFLegacy.optimize_symbolic
+      ~CALFLegacy.optimize_tensor
+      ~CALFLegacy.optimize_tensor_batch_sampler
+      ~CALFLegacy.post_epoch
+      ~CALFLegacy.post_optimize
+      ~CALFLegacy.receive_estimated_state
+      ~CALFLegacy.receive_observation
+      ~CALFLegacy.register_bounds
+      ~CALFLegacy.register_constraint
+      ~CALFLegacy.register_objective
+      ~CALFLegacy.restore_weights
+      ~CALFLegacy.set_action
+      ~CALFLegacy.substitute_parameters
+      ~CALFLegacy.unfix_variables
+      ~CALFLegacy.update_action
+      ~CALFLegacy.update_and_cache_weights
+      ~CALFLegacy.update_status
+      ~CALFLegacy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CALFLegacy.action
+      ~CALFLegacy.constants
+      ~CALFLegacy.constraints
+      ~CALFLegacy.decision_variables
+      ~CALFLegacy.functions
+      ~CALFLegacy.log_options
+      ~CALFLegacy.objective
+      ~CALFLegacy.objectives
+      ~CALFLegacy.opt_func
+      ~CALFLegacy.opt_options
+      ~CALFLegacy.opti
+      ~CALFLegacy.variables
+      ~CALFLegacy.weights
+   
+   

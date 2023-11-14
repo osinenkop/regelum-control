@@ -1,0 +1,37 @@
+``regelum.optimizable.core.entities`` 
+=====================================
+
+
+.. automodule:: regelum.optimizable.core.entities
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      ChainedHook
+      FuncContainer
+      FunctionWithSignature
+      Hook
+      NestedFunction
+      OptimizationVariable
+      VarContainer
+   
+   
+
+   
+   
+   
+
+
+

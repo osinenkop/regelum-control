@@ -669,7 +669,25 @@ class Integrator(System):
 
 
 class ThreeWheeledRobotNI(System):
-    """System class: 3-wheel robot with static actuators (the NI - non-holonomic integrator)."""
+    r"""Implements the ThreeWheeledRobotNI (Non-holonomic robot a.k.a. Brockett integrator).
+
+    This system class defines the dynamics of a 3-wheeled robot with non-holonomic constraints.
+    The robot's dynamics are given by the following differential equations:
+
+    .. math::
+        \begin{aligned}
+            &  \dot{x}_{\text{rob}} = v \cos(\\vartheta), \\
+            &  \dot{y}_{\text{rob}} = v \sin(\\vartheta), \\
+            & \dot{\\vartheta} = \\mega.
+        \end{aligned}
+
+    Where:
+    - :math:`\dot{x}_{\text{rob}}` is the rate of change of the robot's x-position.
+    - :math:`\dot{y}_{\text{rob}}` is the rate of change of the robot's y-position.
+    - :math:`\vartheta` is the robot's orientation.
+    - :math:`v` is the linear velocity input.
+    - :math:`\omega` is the angular velocity input.
+    """
 
     _name = "three-wheeled-robot-ni"
     _system_type = "diff_eqn"

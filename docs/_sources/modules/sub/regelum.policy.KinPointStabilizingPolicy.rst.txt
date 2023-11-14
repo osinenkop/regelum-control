@@ -1,0 +1,75 @@
+regelum.policy.KinPointStabilizingPolicy
+========================================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: KinPointStabilizingPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~KinPointStabilizingPolicy.__init__
+      ~KinPointStabilizingPolicy.cache_weights
+      ~KinPointStabilizingPolicy.connect_source
+      ~KinPointStabilizingPolicy.create_variable
+      ~KinPointStabilizingPolicy.create_variable_metadata
+      ~KinPointStabilizingPolicy.define_problem
+      ~KinPointStabilizingPolicy.eval_contraints
+      ~KinPointStabilizingPolicy.fix_variables
+      ~KinPointStabilizingPolicy.get_action
+      ~KinPointStabilizingPolicy.get_data_buffer_batch_size
+      ~KinPointStabilizingPolicy.handle_bounds
+      ~KinPointStabilizingPolicy.instantiate_configuration
+      ~KinPointStabilizingPolicy.is_target_event
+      ~KinPointStabilizingPolicy.opt_constraints_tensor
+      ~KinPointStabilizingPolicy.optimize
+      ~KinPointStabilizingPolicy.optimize_numeric
+      ~KinPointStabilizingPolicy.optimize_on_event
+      ~KinPointStabilizingPolicy.optimize_symbolic
+      ~KinPointStabilizingPolicy.optimize_tensor
+      ~KinPointStabilizingPolicy.optimize_tensor_batch_sampler
+      ~KinPointStabilizingPolicy.post_epoch
+      ~KinPointStabilizingPolicy.post_optimize
+      ~KinPointStabilizingPolicy.receive_estimated_state
+      ~KinPointStabilizingPolicy.receive_observation
+      ~KinPointStabilizingPolicy.register_bounds
+      ~KinPointStabilizingPolicy.register_constraint
+      ~KinPointStabilizingPolicy.register_objective
+      ~KinPointStabilizingPolicy.restore_weights
+      ~KinPointStabilizingPolicy.set_action
+      ~KinPointStabilizingPolicy.substitute_parameters
+      ~KinPointStabilizingPolicy.unfix_variables
+      ~KinPointStabilizingPolicy.update_action
+      ~KinPointStabilizingPolicy.update_and_cache_weights
+      ~KinPointStabilizingPolicy.update_status
+      ~KinPointStabilizingPolicy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~KinPointStabilizingPolicy.action
+      ~KinPointStabilizingPolicy.constants
+      ~KinPointStabilizingPolicy.constraints
+      ~KinPointStabilizingPolicy.data_buffer_objective_keys
+      ~KinPointStabilizingPolicy.decision_variables
+      ~KinPointStabilizingPolicy.functions
+      ~KinPointStabilizingPolicy.log_options
+      ~KinPointStabilizingPolicy.objective
+      ~KinPointStabilizingPolicy.objectives
+      ~KinPointStabilizingPolicy.opt_func
+      ~KinPointStabilizingPolicy.opt_options
+      ~KinPointStabilizingPolicy.opti
+      ~KinPointStabilizingPolicy.variables
+      ~KinPointStabilizingPolicy.weights
+   
+   

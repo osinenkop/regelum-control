@@ -1,0 +1,36 @@
+regelum.optimizable.core.entities.ChainedHook
+=============================================
+
+.. currentmodule:: regelum.optimizable.core.entities
+
+.. autoclass:: ChainedHook
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ChainedHook.__init__
+      ~ChainedHook.call_hook
+      ~ChainedHook.disable_hook
+      ~ChainedHook.enable_hook
+      ~ChainedHook.permute_order
+      ~ChainedHook.register_hook
+      ~ChainedHook.remove_hook
+      ~ChainedHook.set_priority
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ChainedHook.data_hooks
+      ~ChainedHook.metadata_hooks
+   
+   

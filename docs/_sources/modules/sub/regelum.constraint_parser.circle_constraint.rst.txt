@@ -1,0 +1,6 @@
+regelum.constraint\_parser.circle\_constraint
+=============================================
+
+.. currentmodule:: regelum.constraint_parser
+
+.. autofunction:: circle_constraint

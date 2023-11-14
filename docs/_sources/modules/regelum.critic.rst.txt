@@ -1,0 +1,33 @@
+``regelum.critic`` 
+==================
+
+
+.. automodule:: regelum.critic
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Critic
+      CriticCALF
+      CriticTrivial
+   
+   
+
+   
+   
+   
+
+
+

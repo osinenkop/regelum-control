@@ -1,0 +1,25 @@
+regelum.predictor.Predictor
+===========================
+
+.. currentmodule:: regelum.predictor
+
+.. autoclass:: Predictor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Predictor.__init__
+      ~Predictor.predict
+      ~Predictor.predict_state_sequence_from_action_sequence
+      ~Predictor.predict_state_sequence_from_model
+   
+   
+
+   
+   
+   

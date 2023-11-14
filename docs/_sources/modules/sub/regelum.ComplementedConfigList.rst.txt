@@ -1,0 +1,24 @@
+regelum.ComplementedConfigList
+==============================
+
+.. currentmodule:: regelum
+
+.. autoclass:: ComplementedConfigList
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ComplementedConfigList.__init__
+      ~ComplementedConfigList.copy
+      ~ComplementedConfigList.refresh
+   
+   
+
+   
+   
+   

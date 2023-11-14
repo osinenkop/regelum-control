@@ -1,0 +1,26 @@
+regelum.data\_buffers.batch\_sampler.EpisodicSampler
+====================================================
+
+.. currentmodule:: regelum.data_buffers.batch_sampler
+
+.. autoclass:: EpisodicSampler
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~EpisodicSampler.__init__
+      ~EpisodicSampler.get_episode_batch_ids
+      ~EpisodicSampler.next
+      ~EpisodicSampler.nullify_sampler
+      ~EpisodicSampler.stop_iteration_criterion
+   
+   
+
+   
+   
+   

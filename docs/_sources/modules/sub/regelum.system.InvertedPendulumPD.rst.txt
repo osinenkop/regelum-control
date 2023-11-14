@@ -1,0 +1,44 @@
+regelum.system.InvertedPendulumPD
+=================================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: InvertedPendulumPD
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~InvertedPendulumPD.__init__
+      ~InvertedPendulumPD.compose
+      ~InvertedPendulumPD.compute_closed_loop_rhs
+      ~InvertedPendulumPD.compute_state_dynamics
+      ~InvertedPendulumPD.get_observation
+      ~InvertedPendulumPD.receive_action
+      ~InvertedPendulumPD.reset
+      ~InvertedPendulumPD.update_system_parameters
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~InvertedPendulumPD.action_bounds
+      ~InvertedPendulumPD.dim_inputs
+      ~InvertedPendulumPD.dim_observation
+      ~InvertedPendulumPD.dim_state
+      ~InvertedPendulumPD.inputs_naming
+      ~InvertedPendulumPD.name
+      ~InvertedPendulumPD.observation_naming
+      ~InvertedPendulumPD.parameters
+      ~InvertedPendulumPD.state_naming
+      ~InvertedPendulumPD.system_type
+   
+   

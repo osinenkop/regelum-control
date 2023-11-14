@@ -1,0 +1,46 @@
+regelum.system.LunarLander
+==========================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: LunarLander
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LunarLander.__init__
+      ~LunarLander.compose
+      ~LunarLander.compute_closed_loop_rhs
+      ~LunarLander.compute_reaction
+      ~LunarLander.compute_state_dynamics
+      ~LunarLander.compute_supports_geometry
+      ~LunarLander.get_observation
+      ~LunarLander.receive_action
+      ~LunarLander.reset
+      ~LunarLander.update_system_parameters
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LunarLander.action_bounds
+      ~LunarLander.dim_inputs
+      ~LunarLander.dim_observation
+      ~LunarLander.dim_state
+      ~LunarLander.inputs_naming
+      ~LunarLander.name
+      ~LunarLander.observation_naming
+      ~LunarLander.parameters
+      ~LunarLander.state_naming
+      ~LunarLander.system_type
+   
+   

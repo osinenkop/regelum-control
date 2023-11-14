@@ -1,0 +1,83 @@
+regelum.model.ModelWeightContainerTorch
+=======================================
+
+.. currentmodule:: regelum.model
+
+.. autoclass:: ModelWeightContainerTorch
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ModelWeightContainerTorch.__init__
+      ~ModelWeightContainerTorch.add_module
+      ~ModelWeightContainerTorch.apply
+      ~ModelWeightContainerTorch.bfloat16
+      ~ModelWeightContainerTorch.buffers
+      ~ModelWeightContainerTorch.cache_weights
+      ~ModelWeightContainerTorch.children
+      ~ModelWeightContainerTorch.compile
+      ~ModelWeightContainerTorch.cpu
+      ~ModelWeightContainerTorch.cuda
+      ~ModelWeightContainerTorch.detach_weights
+      ~ModelWeightContainerTorch.double
+      ~ModelWeightContainerTorch.eval
+      ~ModelWeightContainerTorch.extra_repr
+      ~ModelWeightContainerTorch.float
+      ~ModelWeightContainerTorch.forward
+      ~ModelWeightContainerTorch.get_buffer
+      ~ModelWeightContainerTorch.get_extra_state
+      ~ModelWeightContainerTorch.get_parameter
+      ~ModelWeightContainerTorch.get_submodule
+      ~ModelWeightContainerTorch.half
+      ~ModelWeightContainerTorch.ipu
+      ~ModelWeightContainerTorch.load_state_dict
+      ~ModelWeightContainerTorch.modules
+      ~ModelWeightContainerTorch.named_buffers
+      ~ModelWeightContainerTorch.named_children
+      ~ModelWeightContainerTorch.named_modules
+      ~ModelWeightContainerTorch.named_parameters
+      ~ModelWeightContainerTorch.parameters
+      ~ModelWeightContainerTorch.register_backward_hook
+      ~ModelWeightContainerTorch.register_buffer
+      ~ModelWeightContainerTorch.register_forward_hook
+      ~ModelWeightContainerTorch.register_forward_pre_hook
+      ~ModelWeightContainerTorch.register_full_backward_hook
+      ~ModelWeightContainerTorch.register_full_backward_pre_hook
+      ~ModelWeightContainerTorch.register_load_state_dict_post_hook
+      ~ModelWeightContainerTorch.register_module
+      ~ModelWeightContainerTorch.register_parameter
+      ~ModelWeightContainerTorch.register_state_dict_pre_hook
+      ~ModelWeightContainerTorch.requires_grad_
+      ~ModelWeightContainerTorch.restore_weights
+      ~ModelWeightContainerTorch.set_extra_state
+      ~ModelWeightContainerTorch.share_memory
+      ~ModelWeightContainerTorch.state_dict
+      ~ModelWeightContainerTorch.to
+      ~ModelWeightContainerTorch.to_empty
+      ~ModelWeightContainerTorch.train
+      ~ModelWeightContainerTorch.type
+      ~ModelWeightContainerTorch.update_and_cache_weights
+      ~ModelWeightContainerTorch.update_weights
+      ~ModelWeightContainerTorch.xpu
+      ~ModelWeightContainerTorch.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ModelWeightContainerTorch.T_destination
+      ~ModelWeightContainerTorch.cache
+      ~ModelWeightContainerTorch.call_super_init
+      ~ModelWeightContainerTorch.dump_patches
+      ~ModelWeightContainerTorch.weights
+   
+   

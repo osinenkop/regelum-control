@@ -1,0 +1,44 @@
+regelum.system.KinematicPoint
+=============================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: KinematicPoint
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~KinematicPoint.__init__
+      ~KinematicPoint.compose
+      ~KinematicPoint.compute_closed_loop_rhs
+      ~KinematicPoint.compute_state_dynamics
+      ~KinematicPoint.get_observation
+      ~KinematicPoint.receive_action
+      ~KinematicPoint.reset
+      ~KinematicPoint.update_system_parameters
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~KinematicPoint.action_bounds
+      ~KinematicPoint.dim_inputs
+      ~KinematicPoint.dim_observation
+      ~KinematicPoint.dim_state
+      ~KinematicPoint.inputs_naming
+      ~KinematicPoint.name
+      ~KinematicPoint.observation_naming
+      ~KinematicPoint.parameters
+      ~KinematicPoint.state_naming
+      ~KinematicPoint.system_type
+   
+   

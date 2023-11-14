@@ -1,0 +1,39 @@
+regelum.callback.ControllerStepLogger
+=====================================
+
+.. currentmodule:: regelum.callback
+
+.. autoclass:: ControllerStepLogger
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ControllerStepLogger.__init__
+      ~ControllerStepLogger.attach
+      ~ControllerStepLogger.is_target_event
+      ~ControllerStepLogger.on_episode_done
+      ~ControllerStepLogger.on_iteration_done
+      ~ControllerStepLogger.on_launch
+      ~ControllerStepLogger.on_termination
+      ~ControllerStepLogger.on_trigger
+      ~ControllerStepLogger.perform
+      ~ControllerStepLogger.ready
+      ~ControllerStepLogger.register
+      ~ControllerStepLogger.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ControllerStepLogger.cooldown
+   
+   

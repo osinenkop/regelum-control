@@ -1,0 +1,22 @@
+regelum.objective.Objective
+===========================
+
+.. currentmodule:: regelum.objective
+
+.. autoclass:: Objective
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Objective.__init__
+   
+   
+
+   
+   
+   

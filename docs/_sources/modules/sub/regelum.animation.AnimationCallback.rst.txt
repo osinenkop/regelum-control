@@ -1,0 +1,48 @@
+regelum.animation.AnimationCallback
+===================================
+
+.. currentmodule:: regelum.animation
+
+.. autoclass:: AnimationCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AnimationCallback.__init__
+      ~AnimationCallback.add_frame
+      ~AnimationCallback.animate
+      ~AnimationCallback.animate_and_save
+      ~AnimationCallback.attach
+      ~AnimationCallback.construct_frame
+      ~AnimationCallback.get_save_directory
+      ~AnimationCallback.is_target_event
+      ~AnimationCallback.lim
+      ~AnimationCallback.lim_from_reference
+      ~AnimationCallback.on_episode_done
+      ~AnimationCallback.on_iteration_done
+      ~AnimationCallback.on_launch
+      ~AnimationCallback.on_termination
+      ~AnimationCallback.on_trigger
+      ~AnimationCallback.perform
+      ~AnimationCallback.ready
+      ~AnimationCallback.register
+      ~AnimationCallback.reset
+      ~AnimationCallback.setup
+      ~AnimationCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AnimationCallback.cooldown
+   
+   

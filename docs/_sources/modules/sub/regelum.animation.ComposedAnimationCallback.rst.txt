@@ -1,0 +1,48 @@
+regelum.animation.ComposedAnimationCallback
+===========================================
+
+.. currentmodule:: regelum.animation
+
+.. autoclass:: ComposedAnimationCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ComposedAnimationCallback.__init__
+      ~ComposedAnimationCallback.add_frame
+      ~ComposedAnimationCallback.animate
+      ~ComposedAnimationCallback.animate_and_save
+      ~ComposedAnimationCallback.attach
+      ~ComposedAnimationCallback.construct_frame
+      ~ComposedAnimationCallback.get_save_directory
+      ~ComposedAnimationCallback.is_target_event
+      ~ComposedAnimationCallback.lim
+      ~ComposedAnimationCallback.lim_from_reference
+      ~ComposedAnimationCallback.on_episode_done
+      ~ComposedAnimationCallback.on_iteration_done
+      ~ComposedAnimationCallback.on_launch
+      ~ComposedAnimationCallback.on_termination
+      ~ComposedAnimationCallback.on_trigger
+      ~ComposedAnimationCallback.perform
+      ~ComposedAnimationCallback.ready
+      ~ComposedAnimationCallback.register
+      ~ComposedAnimationCallback.reset
+      ~ComposedAnimationCallback.setup
+      ~ComposedAnimationCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ComposedAnimationCallback.cooldown
+   
+   

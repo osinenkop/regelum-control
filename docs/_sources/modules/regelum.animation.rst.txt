@@ -1,0 +1,39 @@
+``regelum.animation`` 
+=====================
+
+
+.. automodule:: regelum.animation
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      AnimationCallback
+      BarAnimation
+      ComposedAnimationCallback
+      DirectionalPlanarMotionAnimation
+      PendulumAnimation
+      PlanarMotionAnimation
+      PointAnimation
+      ThreeWheeledRobotAnimation
+      TriangleAnimation
+   
+   
+
+   
+   
+   
+
+
+

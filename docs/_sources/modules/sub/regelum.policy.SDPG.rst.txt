@@ -1,0 +1,78 @@
+regelum.policy.SDPG
+===================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: SDPG
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SDPG.__init__
+      ~SDPG.cache_weights
+      ~SDPG.connect_source
+      ~SDPG.create_variable
+      ~SDPG.create_variable_metadata
+      ~SDPG.data_buffer_objective_keys
+      ~SDPG.define_problem
+      ~SDPG.eval_contraints
+      ~SDPG.fix_variables
+      ~SDPG.get_action
+      ~SDPG.get_data_buffer_batch_size
+      ~SDPG.handle_bounds
+      ~SDPG.initialize_optimization_procedure
+      ~SDPG.instantiate_configuration
+      ~SDPG.is_target_event
+      ~SDPG.objective_function
+      ~SDPG.opt_constraints_tensor
+      ~SDPG.optimize
+      ~SDPG.optimize_numeric
+      ~SDPG.optimize_on_event
+      ~SDPG.optimize_symbolic
+      ~SDPG.optimize_tensor
+      ~SDPG.optimize_tensor_batch_sampler
+      ~SDPG.post_epoch
+      ~SDPG.post_optimize
+      ~SDPG.receive_estimated_state
+      ~SDPG.receive_observation
+      ~SDPG.register_bounds
+      ~SDPG.register_constraint
+      ~SDPG.register_objective
+      ~SDPG.restore_weights
+      ~SDPG.set_action
+      ~SDPG.substitute_parameters
+      ~SDPG.unfix_variables
+      ~SDPG.update_action
+      ~SDPG.update_and_cache_weights
+      ~SDPG.update_data_buffer
+      ~SDPG.update_status
+      ~SDPG.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SDPG.action
+      ~SDPG.constants
+      ~SDPG.constraints
+      ~SDPG.decision_variables
+      ~SDPG.functions
+      ~SDPG.log_options
+      ~SDPG.objective
+      ~SDPG.objectives
+      ~SDPG.opt_func
+      ~SDPG.opt_options
+      ~SDPG.opti
+      ~SDPG.variables
+      ~SDPG.weights
+   
+   

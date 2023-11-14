@@ -1,0 +1,35 @@
+``regelum.optimizable.core`` 
+============================
+
+
+.. automodule:: regelum.optimizable.core
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :template: module_custom.rst
+   :toctree:
+   :recursive:
+
+   regelum.optimizable.core.configs
+   regelum.optimizable.core.entities
+   regelum.optimizable.core.hooks
+

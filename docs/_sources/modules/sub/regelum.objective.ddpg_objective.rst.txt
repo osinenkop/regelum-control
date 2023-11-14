@@ -1,0 +1,6 @@
+regelum.objective.ddpg\_objective
+=================================
+
+.. currentmodule:: regelum.objective
+
+.. autofunction:: ddpg_objective

@@ -1,0 +1,6 @@
+regelum.controller.apply\_action\_bounds
+========================================
+
+.. currentmodule:: regelum.controller
+
+.. autofunction:: apply_action_bounds

@@ -1,0 +1,32 @@
+``regelum.optimizable.optimizers`` 
+==================================
+
+
+.. automodule:: regelum.optimizable.optimizers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      OptStatus
+      Optimizable
+   
+   
+
+   
+   
+   
+
+
+

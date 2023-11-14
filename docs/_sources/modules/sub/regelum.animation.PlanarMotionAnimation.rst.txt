@@ -1,0 +1,48 @@
+regelum.animation.PlanarMotionAnimation
+=======================================
+
+.. currentmodule:: regelum.animation
+
+.. autoclass:: PlanarMotionAnimation
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PlanarMotionAnimation.__init__
+      ~PlanarMotionAnimation.add_frame
+      ~PlanarMotionAnimation.animate
+      ~PlanarMotionAnimation.animate_and_save
+      ~PlanarMotionAnimation.attach
+      ~PlanarMotionAnimation.construct_frame
+      ~PlanarMotionAnimation.get_save_directory
+      ~PlanarMotionAnimation.is_target_event
+      ~PlanarMotionAnimation.lim
+      ~PlanarMotionAnimation.lim_from_reference
+      ~PlanarMotionAnimation.on_episode_done
+      ~PlanarMotionAnimation.on_iteration_done
+      ~PlanarMotionAnimation.on_launch
+      ~PlanarMotionAnimation.on_termination
+      ~PlanarMotionAnimation.on_trigger
+      ~PlanarMotionAnimation.perform
+      ~PlanarMotionAnimation.ready
+      ~PlanarMotionAnimation.register
+      ~PlanarMotionAnimation.reset
+      ~PlanarMotionAnimation.setup
+      ~PlanarMotionAnimation.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PlanarMotionAnimation.cooldown
+   
+   

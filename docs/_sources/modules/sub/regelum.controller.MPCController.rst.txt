@@ -1,0 +1,40 @@
+regelum.controller.MPCController
+================================
+
+.. currentmodule:: regelum.controller
+
+.. autoclass:: MPCController
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MPCController.__init__
+      ~MPCController.calculate_total_objective
+      ~MPCController.compute_action
+      ~MPCController.compute_action_sampled
+      ~MPCController.issue_action
+      ~MPCController.on_action_issued
+      ~MPCController.on_observation_received
+      ~MPCController.optimize
+      ~MPCController.optimize_or_skip_on_event
+      ~MPCController.post_compute_action
+      ~MPCController.pre_optimize
+      ~MPCController.reload_pipeline
+      ~MPCController.reset
+      ~MPCController.reset_episode
+      ~MPCController.reset_iteration
+      ~MPCController.reset_simulation
+      ~MPCController.run
+      ~MPCController.step
+      ~MPCController.substitute_constraint_parameters
+   
+   
+
+   
+   
+   

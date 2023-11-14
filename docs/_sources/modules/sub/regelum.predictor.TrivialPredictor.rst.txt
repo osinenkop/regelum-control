@@ -1,0 +1,25 @@
+regelum.predictor.TrivialPredictor
+==================================
+
+.. currentmodule:: regelum.predictor
+
+.. autoclass:: TrivialPredictor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TrivialPredictor.__init__
+      ~TrivialPredictor.predict
+      ~TrivialPredictor.predict_state_sequence_from_action_sequence
+      ~TrivialPredictor.predict_state_sequence_from_model
+   
+   
+
+   
+   
+   

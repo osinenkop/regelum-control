@@ -1,0 +1,32 @@
+regelum.simulator.Simulator
+===========================
+
+.. currentmodule:: regelum.simulator
+
+.. autoclass:: Simulator
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Simulator.__init__
+      ~Simulator.do_sim_step
+      ~Simulator.get_init_state_and_action
+      ~Simulator.get_observation
+      ~Simulator.get_sim_step_data
+      ~Simulator.get_simulation_metadata
+      ~Simulator.initialize_init_action
+      ~Simulator.initialize_init_state
+      ~Simulator.initialize_ode_solver
+      ~Simulator.receive_action
+      ~Simulator.reset
+   
+   
+
+   
+   
+   

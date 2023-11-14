@@ -1,0 +1,47 @@
+``regelum.objective`` 
+=====================
+
+
+.. automodule:: regelum.objective
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      ddpg_objective
+      mpc_objective
+      ppo_objective
+      reinforce_objective
+      rpo_objective
+      rql_objective
+      sdpg_objective
+      sql_objective
+      temporal_difference_objective
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Objective
+      RunningObjective
+   
+   
+
+   
+   
+   
+
+
+

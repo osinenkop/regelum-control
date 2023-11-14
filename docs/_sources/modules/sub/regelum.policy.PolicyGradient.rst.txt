@@ -1,0 +1,78 @@
+regelum.policy.PolicyGradient
+=============================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: PolicyGradient
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PolicyGradient.__init__
+      ~PolicyGradient.cache_weights
+      ~PolicyGradient.connect_source
+      ~PolicyGradient.create_variable
+      ~PolicyGradient.create_variable_metadata
+      ~PolicyGradient.define_problem
+      ~PolicyGradient.eval_contraints
+      ~PolicyGradient.fix_variables
+      ~PolicyGradient.get_action
+      ~PolicyGradient.get_data_buffer_batch_size
+      ~PolicyGradient.handle_bounds
+      ~PolicyGradient.initialize_optimization_procedure
+      ~PolicyGradient.instantiate_configuration
+      ~PolicyGradient.is_target_event
+      ~PolicyGradient.objective_function
+      ~PolicyGradient.opt_constraints_tensor
+      ~PolicyGradient.optimize
+      ~PolicyGradient.optimize_numeric
+      ~PolicyGradient.optimize_on_event
+      ~PolicyGradient.optimize_symbolic
+      ~PolicyGradient.optimize_tensor
+      ~PolicyGradient.optimize_tensor_batch_sampler
+      ~PolicyGradient.post_epoch
+      ~PolicyGradient.post_optimize
+      ~PolicyGradient.receive_estimated_state
+      ~PolicyGradient.receive_observation
+      ~PolicyGradient.register_bounds
+      ~PolicyGradient.register_constraint
+      ~PolicyGradient.register_objective
+      ~PolicyGradient.restore_weights
+      ~PolicyGradient.set_action
+      ~PolicyGradient.substitute_parameters
+      ~PolicyGradient.unfix_variables
+      ~PolicyGradient.update_action
+      ~PolicyGradient.update_and_cache_weights
+      ~PolicyGradient.update_data_buffer
+      ~PolicyGradient.update_status
+      ~PolicyGradient.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PolicyGradient.action
+      ~PolicyGradient.constants
+      ~PolicyGradient.constraints
+      ~PolicyGradient.data_buffer_objective_keys
+      ~PolicyGradient.decision_variables
+      ~PolicyGradient.functions
+      ~PolicyGradient.log_options
+      ~PolicyGradient.objective
+      ~PolicyGradient.objectives
+      ~PolicyGradient.opt_func
+      ~PolicyGradient.opt_options
+      ~PolicyGradient.opti
+      ~PolicyGradient.variables
+      ~PolicyGradient.weights
+   
+   

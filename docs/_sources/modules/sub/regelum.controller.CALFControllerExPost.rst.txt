@@ -1,0 +1,42 @@
+regelum.controller.CALFControllerExPost
+=======================================
+
+.. currentmodule:: regelum.controller
+
+.. autoclass:: CALFControllerExPost
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CALFControllerExPost.__init__
+      ~CALFControllerExPost.calculate_total_objective
+      ~CALFControllerExPost.compute_action
+      ~CALFControllerExPost.compute_action_sampled
+      ~CALFControllerExPost.invoke_safe_action
+      ~CALFControllerExPost.issue_action
+      ~CALFControllerExPost.on_action_issued
+      ~CALFControllerExPost.on_observation_received
+      ~CALFControllerExPost.optimize
+      ~CALFControllerExPost.optimize_or_skip_on_event
+      ~CALFControllerExPost.post_compute_action
+      ~CALFControllerExPost.pre_optimize
+      ~CALFControllerExPost.reload_pipeline
+      ~CALFControllerExPost.reset
+      ~CALFControllerExPost.reset_episode
+      ~CALFControllerExPost.reset_iteration
+      ~CALFControllerExPost.reset_simulation
+      ~CALFControllerExPost.run
+      ~CALFControllerExPost.step
+      ~CALFControllerExPost.substitute_constraint_parameters
+      ~CALFControllerExPost.update_data_buffer_with_action_stats
+   
+   
+
+   
+   
+   

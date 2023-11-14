@@ -1,0 +1,78 @@
+regelum.policy.PPO
+==================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: PPO
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PPO.__init__
+      ~PPO.cache_weights
+      ~PPO.connect_source
+      ~PPO.create_variable
+      ~PPO.create_variable_metadata
+      ~PPO.data_buffer_objective_keys
+      ~PPO.define_problem
+      ~PPO.eval_contraints
+      ~PPO.fix_variables
+      ~PPO.get_action
+      ~PPO.get_data_buffer_batch_size
+      ~PPO.handle_bounds
+      ~PPO.initialize_optimization_procedure
+      ~PPO.instantiate_configuration
+      ~PPO.is_target_event
+      ~PPO.objective_function
+      ~PPO.opt_constraints_tensor
+      ~PPO.optimize
+      ~PPO.optimize_numeric
+      ~PPO.optimize_on_event
+      ~PPO.optimize_symbolic
+      ~PPO.optimize_tensor
+      ~PPO.optimize_tensor_batch_sampler
+      ~PPO.post_epoch
+      ~PPO.post_optimize
+      ~PPO.receive_estimated_state
+      ~PPO.receive_observation
+      ~PPO.register_bounds
+      ~PPO.register_constraint
+      ~PPO.register_objective
+      ~PPO.restore_weights
+      ~PPO.set_action
+      ~PPO.substitute_parameters
+      ~PPO.unfix_variables
+      ~PPO.update_action
+      ~PPO.update_and_cache_weights
+      ~PPO.update_data_buffer
+      ~PPO.update_status
+      ~PPO.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PPO.action
+      ~PPO.constants
+      ~PPO.constraints
+      ~PPO.decision_variables
+      ~PPO.functions
+      ~PPO.log_options
+      ~PPO.objective
+      ~PPO.objectives
+      ~PPO.opt_func
+      ~PPO.opt_options
+      ~PPO.opti
+      ~PPO.variables
+      ~PPO.weights
+   
+   

@@ -1,0 +1,6 @@
+regelum.optimizable.core.hooks.requires\_grad
+=============================================
+
+.. currentmodule:: regelum.optimizable.core.hooks
+
+.. autofunction:: requires_grad

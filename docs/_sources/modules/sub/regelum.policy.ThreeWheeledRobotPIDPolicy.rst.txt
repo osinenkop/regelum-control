@@ -1,0 +1,26 @@
+regelum.policy.ThreeWheeledRobotPIDPolicy
+=========================================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: ThreeWheeledRobotPIDPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ThreeWheeledRobotPIDPolicy.F_error_derivative
+      ~ThreeWheeledRobotPIDPolicy.__init__
+      ~ThreeWheeledRobotPIDPolicy.cdf_uniform
+      ~ThreeWheeledRobotPIDPolicy.get_action
+      ~ThreeWheeledRobotPIDPolicy.get_setpoint_for_PID_angle_arctan
+   
+   
+
+   
+   
+   

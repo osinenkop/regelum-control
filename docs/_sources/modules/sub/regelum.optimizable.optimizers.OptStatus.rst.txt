@@ -1,0 +1,23 @@
+regelum.optimizable.optimizers.OptStatus
+========================================
+
+.. currentmodule:: regelum.optimizable.optimizers
+
+.. autoclass:: OptStatus
+
+   
+   .. automethod:: __init__
+
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~OptStatus.failed
+      ~OptStatus.success
+   
+   

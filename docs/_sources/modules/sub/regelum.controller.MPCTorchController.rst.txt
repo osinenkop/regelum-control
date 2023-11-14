@@ -1,0 +1,40 @@
+regelum.controller.MPCTorchController
+=====================================
+
+.. currentmodule:: regelum.controller
+
+.. autoclass:: MPCTorchController
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MPCTorchController.__init__
+      ~MPCTorchController.calculate_total_objective
+      ~MPCTorchController.compute_action
+      ~MPCTorchController.compute_action_sampled
+      ~MPCTorchController.issue_action
+      ~MPCTorchController.on_action_issued
+      ~MPCTorchController.on_observation_received
+      ~MPCTorchController.optimize
+      ~MPCTorchController.optimize_or_skip_on_event
+      ~MPCTorchController.post_compute_action
+      ~MPCTorchController.pre_optimize
+      ~MPCTorchController.reload_pipeline
+      ~MPCTorchController.reset
+      ~MPCTorchController.reset_episode
+      ~MPCTorchController.reset_iteration
+      ~MPCTorchController.reset_simulation
+      ~MPCTorchController.run
+      ~MPCTorchController.step
+      ~MPCTorchController.substitute_constraint_parameters
+   
+   
+
+   
+   
+   

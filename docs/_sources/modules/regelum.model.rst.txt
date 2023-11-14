@@ -1,0 +1,48 @@
+``regelum.model`` 
+=================
+
+
+.. automodule:: regelum.model
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      force_positive_def
+      unversal_model_call
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      BoundsHandler
+      Model
+      ModelNN
+      ModelPerceptron
+      ModelQuadLin
+      ModelWeightContainer
+      ModelWeightContainerTorch
+      MultiplyByConstant
+      PerceptronWithTruncatedNormalNoise
+      WeightClipper
+   
+   
+
+   
+   
+   
+
+
+

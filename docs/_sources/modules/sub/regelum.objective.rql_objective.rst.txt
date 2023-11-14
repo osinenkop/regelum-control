@@ -1,0 +1,6 @@
+regelum.objective.rql\_objective
+================================
+
+.. currentmodule:: regelum.objective
+
+.. autofunction:: rql_objective

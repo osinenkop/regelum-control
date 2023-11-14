@@ -28,11 +28,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home" style="color: #8cc770;"> regelum
+
+          
+          
+          <a href="index.html" class="icon icon-home" style="color: #8cc770;">
+            regelum
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -54,10 +58,31 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
 </ul>
+<p class="caption"><span class="caption-text">Controllers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html">REINFORCE Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Systems</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="systems.html">Avaliable systems</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Optimizable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="optimizable.html">Optimizable Subpackage Tutorial</a></li>
+</ul>
+<p class="caption"><span class="caption-text">rc singletone</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
+</ul>
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.adaptation_block.html"><code class="docutils literal notranslate"><span class="pre">regelum.adaptation_block</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.animation.html"><code class="docutils literal notranslate"><span class="pre">regelum.animation</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.callback.html"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.configure.html"><code class="docutils literal notranslate"><span class="pre">regelum.configure</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.constraint_parser.html"><code class="docutils literal notranslate"><span class="pre">regelum.constraint_parser</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.critic.html"><code class="docutils literal notranslate"><span class="pre">regelum.critic</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers</span></code></a></li>
@@ -65,6 +90,7 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.data_buffer.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.data_buffer</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.fifo_list.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.fifo_list</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.types.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.types</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.event.html"><code class="docutils literal notranslate"><span class="pre">regelum.event</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.model.html"><code class="docutils literal notranslate"><span class="pre">regelum.model</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.objective.html"><code class="docutils literal notranslate"><span class="pre">regelum.objective</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.observer.html"><code class="docutils literal notranslate"><span class="pre">regelum.observer</span></code></a></li>
@@ -76,7 +102,6 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.optimizers.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.policy.html"><code class="docutils literal notranslate"><span class="pre">regelum.policy</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.predictor.html"><code class="docutils literal notranslate"><span class="pre">regelum.predictor</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.scenario.html"><code class="docutils literal notranslate"><span class="pre">regelum.scenario</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.simulator.html"><code class="docutils literal notranslate"><span class="pre">regelum.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.system.html"><code class="docutils literal notranslate"><span class="pre">regelum.system</span></code></a></li>
 </ul>
@@ -94,7 +119,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" style="color: #8cc770;"></a></li>
+      <li><a href="index.html" class="icon icon-home" style="color: #8cc770;" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">Index</li>
       <li class="wy-breadcrumbs-aside">
       </li>
@@ -124,10 +149,10 @@
  | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
- | <a href="#Q"><strong>Q</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  
@@ -135,62 +160,52 @@
 <h2 id="_">_</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.adaptation_block.AdaptationBlock.html#regelum.adaptation_block.AdaptationBlock.__init__">__init__() (regelum.adaptation_block.AdaptationBlock method)</a>
+      <li><a href="modules/sub/regelum.animation.AnimationCallback.html#regelum.animation.AnimationCallback.__init__">__init__() (regelum.animation.AnimationCallback method)</a>
 
       <ul>
-        <li><a href="modules/sub/regelum.adaptation_block.AdaptationBlockCartpole.html#regelum.adaptation_block.AdaptationBlockCartpole.__init__">(regelum.adaptation_block.AdaptationBlockCartpole method)</a>
+        <li><a href="modules/sub/regelum.animation.BarAnimation.html#regelum.animation.BarAnimation.__init__">(regelum.animation.BarAnimation method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.AnimationCallback.html#regelum.callback.AnimationCallback.__init__">(regelum.callback.AnimationCallback method)</a>
+        <li><a href="modules/sub/regelum.animation.ComposedAnimationCallback.html#regelum.animation.ComposedAnimationCallback.__init__">(regelum.animation.ComposedAnimationCallback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.BarAnimation.html#regelum.callback.BarAnimation.__init__">(regelum.callback.BarAnimation method)</a>
+        <li><a href="modules/sub/regelum.animation.DirectionalPlanarMotionAnimation.html#regelum.animation.DirectionalPlanarMotionAnimation.__init__">(regelum.animation.DirectionalPlanarMotionAnimation method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.CalfCallback.html#regelum.callback.CalfCallback.__init__">(regelum.callback.CalfCallback method)</a>
+        <li><a href="modules/sub/regelum.animation.PendulumAnimation.html#regelum.animation.PendulumAnimation.__init__">(regelum.animation.PendulumAnimation method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.CALFWeightsCallback.html#regelum.callback.CALFWeightsCallback.__init__">(regelum.callback.CALFWeightsCallback method)</a>
+        <li><a href="modules/sub/regelum.animation.PlanarMotionAnimation.html#regelum.animation.PlanarMotionAnimation.__init__">(regelum.animation.PlanarMotionAnimation method)</a>
+</li>
+        <li><a href="modules/sub/regelum.animation.PointAnimation.html#regelum.animation.PointAnimation.__init__">(regelum.animation.PointAnimation method)</a>
+</li>
+        <li><a href="modules/sub/regelum.animation.ThreeWheeledRobotAnimation.html#regelum.animation.ThreeWheeledRobotAnimation.__init__">(regelum.animation.ThreeWheeledRobotAnimation method)</a>
+</li>
+        <li><a href="modules/sub/regelum.animation.TriangleAnimation.html#regelum.animation.TriangleAnimation.__init__">(regelum.animation.TriangleAnimation method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.Callback.html#regelum.callback.Callback.__init__">(regelum.callback.Callback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.ComposedAnimationCallback.html#regelum.callback.ComposedAnimationCallback.__init__">(regelum.callback.ComposedAnimationCallback method)</a>
-</li>
         <li><a href="modules/sub/regelum.callback.ConfigDiagramCallback.html#regelum.callback.ConfigDiagramCallback.__init__">(regelum.callback.ConfigDiagramCallback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.DirectionalPlanarMotionAnimation.html#regelum.callback.DirectionalPlanarMotionAnimation.__init__">(regelum.callback.DirectionalPlanarMotionAnimation method)</a>
+        <li><a href="modules/sub/regelum.callback.ControllerStepLogger.html#regelum.callback.ControllerStepLogger.__init__">(regelum.callback.ControllerStepLogger method)</a>
+</li>
+        <li><a href="modules/sub/regelum.callback.CriticObjectiveSaver.html#regelum.callback.CriticObjectiveSaver.__init__">(regelum.callback.CriticObjectiveSaver method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.HistoricalCallback.html#regelum.callback.HistoricalCallback.__init__">(regelum.callback.HistoricalCallback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.HistoricalObjectiveCallback.html#regelum.callback.HistoricalObjectiveCallback.__init__">(regelum.callback.HistoricalObjectiveCallback method)</a>
+        <li><a href="modules/sub/regelum.callback.HistoricalDataCallback.html#regelum.callback.HistoricalDataCallback.__init__">(regelum.callback.HistoricalDataCallback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.HistoricalObservationCallback.html#regelum.callback.HistoricalObservationCallback.__init__">(regelum.callback.HistoricalObservationCallback method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.ObjectiveCallback.html#regelum.callback.ObjectiveCallback.__init__">(regelum.callback.ObjectiveCallback method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.ObjectiveLearningSaver.html#regelum.callback.ObjectiveLearningSaver.__init__">(regelum.callback.ObjectiveLearningSaver method)</a>
+        <li><a href="modules/sub/regelum.callback.ObjectiveSaver.html#regelum.callback.ObjectiveSaver.__init__">(regelum.callback.ObjectiveSaver method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.OnEpisodeDoneCallback.html#regelum.callback.OnEpisodeDoneCallback.__init__">(regelum.callback.OnEpisodeDoneCallback method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.OnIterationDoneCallback.html#regelum.callback.OnIterationDoneCallback.__init__">(regelum.callback.OnIterationDoneCallback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.PendulumAnimation.html#regelum.callback.PendulumAnimation.__init__">(regelum.callback.PendulumAnimation method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.PlanarMotionAnimation.html#regelum.callback.PlanarMotionAnimation.__init__">(regelum.callback.PlanarMotionAnimation method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.PointAnimation.html#regelum.callback.PointAnimation.__init__">(regelum.callback.PointAnimation method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.QFunctionModelSaverCallback.html#regelum.callback.QFunctionModelSaverCallback.__init__">(regelum.callback.QFunctionModelSaverCallback method)</a>
+        <li><a href="modules/sub/regelum.callback.PolicyObjectiveSaver.html#regelum.callback.PolicyObjectiveSaver.__init__">(regelum.callback.PolicyObjectiveSaver method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.SaveProgressCallback.html#regelum.callback.SaveProgressCallback.__init__">(regelum.callback.SaveProgressCallback method)</a>
 </li>
-        <li><a href="modules/sub/regelum.callback.StateCallback.html#regelum.callback.StateCallback.__init__">(regelum.callback.StateCallback method)</a>
-</li>
         <li><a href="modules/sub/regelum.callback.StateTracker.html#regelum.callback.StateTracker.__init__">(regelum.callback.StateTracker method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.TimeCallback.html#regelum.callback.TimeCallback.__init__">(regelum.callback.TimeCallback method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.TimeRemainingCallback.html#regelum.callback.TimeRemainingCallback.__init__">(regelum.callback.TimeRemainingCallback method)</a>
 </li>
         <li><a href="modules/sub/regelum.callback.TotalObjectiveCallback.html#regelum.callback.TotalObjectiveCallback.__init__">(regelum.callback.TotalObjectiveCallback method)</a>
-</li>
-        <li><a href="modules/sub/regelum.callback.TriangleAnimation.html#regelum.callback.TriangleAnimation.__init__">(regelum.callback.TriangleAnimation method)</a>
 </li>
         <li><a href="modules/sub/regelum.ComplementedConfig.html#regelum.ComplementedConfig.__init__">(regelum.ComplementedConfig method)</a>
 </li>
@@ -198,39 +213,23 @@
 </li>
         <li><a href="modules/sub/regelum.ComplementedConfigList.html#regelum.ComplementedConfigList.__init__">(regelum.ComplementedConfigList method)</a>
 </li>
+        <li><a href="modules/sub/regelum.constraint_parser.ConstraintParser.html#regelum.constraint_parser.ConstraintParser.__init__">(regelum.constraint_parser.ConstraintParser method)</a>
+</li>
+        <li><a href="modules/sub/regelum.constraint_parser.ConstraintParserTrivial.html#regelum.constraint_parser.ConstraintParserTrivial.__init__">(regelum.constraint_parser.ConstraintParserTrivial method)</a>
+</li>
+        <li><a href="modules/sub/regelum.constraint_parser.ThreeWheeledRobotNIConstantContstraintsParser.html#regelum.constraint_parser.ThreeWheeledRobotNIConstantContstraintsParser.__init__">(regelum.constraint_parser.ThreeWheeledRobotNIConstantContstraintsParser method)</a>
+</li>
         <li><a href="modules/sub/regelum.controller.CALFControllerExPost.html#regelum.controller.CALFControllerExPost.__init__">(regelum.controller.CALFControllerExPost method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.CALFControllerExPostLegacy.html#regelum.controller.CALFControllerExPostLegacy.__init__">(regelum.controller.CALFControllerExPostLegacy method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.CALFControllerPredictive.html#regelum.controller.CALFControllerPredictive.__init__">(regelum.controller.CALFControllerPredictive method)</a>
 </li>
         <li><a href="modules/sub/regelum.controller.Controller.html#regelum.controller.Controller.__init__">(regelum.controller.Controller method)</a>
 </li>
-        <li><a href="modules/sub/regelum.controller.Controller2TankPID.html#regelum.controller.Controller2TankPID.__init__">(regelum.controller.Controller2TankPID method)</a>
+        <li><a href="modules/sub/regelum.controller.MPCController.html#regelum.controller.MPCController.__init__">(regelum.controller.MPCController method)</a>
 </li>
-        <li><a href="modules/sub/regelum.controller.Controller3WRobotDisassembledCLF.html#regelum.controller.Controller3WRobotDisassembledCLF.__init__">(regelum.controller.Controller3WRobotDisassembledCLF method)</a>
+        <li><a href="modules/sub/regelum.controller.MPCTorchController.html#regelum.controller.MPCTorchController.__init__">(regelum.controller.MPCTorchController method)</a>
 </li>
-        <li><a href="modules/sub/regelum.controller.Controller3WRobotMemoryPID.html#regelum.controller.Controller3WRobotMemoryPID.__init__">(regelum.controller.Controller3WRobotMemoryPID method)</a>
+        <li><a href="modules/sub/regelum.controller.PPOController.html#regelum.controller.PPOController.__init__">(regelum.controller.PPOController method)</a>
 </li>
-        <li><a href="modules/sub/regelum.controller.Controller3WRobotNIDisassembledCLF.html#regelum.controller.Controller3WRobotNIDisassembledCLF.__init__">(regelum.controller.Controller3WRobotNIDisassembledCLF method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.Controller3WRobotNIMotionPrimitive.html#regelum.controller.Controller3WRobotNIMotionPrimitive.__init__">(regelum.controller.Controller3WRobotNIMotionPrimitive method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.Controller3WRobotPID.html#regelum.controller.Controller3WRobotPID.__init__">(regelum.controller.Controller3WRobotPID method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.ControllerCartPoleEnergyBased.html#regelum.controller.ControllerCartPoleEnergyBased.__init__">(regelum.controller.ControllerCartPoleEnergyBased method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.ControllerCartPoleEnergyBasedAdaptive.html#regelum.controller.ControllerCartPoleEnergyBasedAdaptive.__init__">(regelum.controller.ControllerCartPoleEnergyBasedAdaptive method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.ControllerCartPolePID.html#regelum.controller.ControllerCartPolePID.__init__">(regelum.controller.ControllerCartPolePID method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.ControllerKinPoint.html#regelum.controller.ControllerKinPoint.__init__">(regelum.controller.ControllerKinPoint method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.ControllerLunarLanderPID.html#regelum.controller.ControllerLunarLanderPID.__init__">(regelum.controller.ControllerLunarLanderPID method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.ControllerMemoryPID.html#regelum.controller.ControllerMemoryPID.__init__">(regelum.controller.ControllerMemoryPID method)</a>
-</li>
-        <li><a href="modules/sub/regelum.controller.NominalControllerInvertedPendulum.html#regelum.controller.NominalControllerInvertedPendulum.__init__">(regelum.controller.NominalControllerInvertedPendulum method)</a>
+        <li><a href="modules/sub/regelum.controller.ReinforceController.html#regelum.controller.ReinforceController.__init__">(regelum.controller.ReinforceController method)</a>
 </li>
         <li><a href="modules/sub/regelum.controller.RLController.html#regelum.controller.RLController.__init__">(regelum.controller.RLController method)</a>
 </li>
@@ -250,6 +249,8 @@
 </li>
         <li><a href="modules/sub/regelum.data_buffers.fifo_list.FifoList.html#regelum.data_buffers.fifo_list.FifoList.__init__">(regelum.data_buffers.fifo_list.FifoList method)</a>
 </li>
+        <li><a href="modules/sub/regelum.event.Event.html#regelum.event.Event.__init__">(regelum.event.Event method)</a>
+</li>
         <li><a href="modules/sub/regelum.main.html#regelum.main.__init__">(regelum.main method)</a>
 </li>
         <li><a href="modules/sub/regelum.model.BoundsHandler.html#regelum.model.BoundsHandler.__init__">(regelum.model.BoundsHandler method)</a>
@@ -266,7 +267,9 @@
 </li>
         <li><a href="modules/sub/regelum.model.ModelWeightContainerTorch.html#regelum.model.ModelWeightContainerTorch.__init__">(regelum.model.ModelWeightContainerTorch method)</a>
 </li>
-        <li><a href="modules/sub/regelum.model.PerceptronWithNormalNoise.html#regelum.model.PerceptronWithNormalNoise.__init__">(regelum.model.PerceptronWithNormalNoise method)</a>
+        <li><a href="modules/sub/regelum.model.MultiplyByConstant.html#regelum.model.MultiplyByConstant.__init__">(regelum.model.MultiplyByConstant method)</a>
+</li>
+        <li><a href="modules/sub/regelum.model.PerceptronWithTruncatedNormalNoise.html#regelum.model.PerceptronWithTruncatedNormalNoise.__init__">(regelum.model.PerceptronWithTruncatedNormalNoise method)</a>
 </li>
         <li><a href="modules/sub/regelum.model.WeightClipper.html#regelum.model.WeightClipper.__init__">(regelum.model.WeightClipper method)</a>
 </li>
@@ -275,6 +278,12 @@
         <li><a href="modules/sub/regelum.objective.RunningObjective.html#regelum.objective.RunningObjective.__init__">(regelum.objective.RunningObjective method)</a>
 </li>
         <li><a href="modules/sub/regelum.observer.KalmanFilter.html#regelum.observer.KalmanFilter.__init__">(regelum.observer.KalmanFilter method)</a>
+</li>
+        <li><a href="modules/sub/regelum.observer.Observer.html#regelum.observer.Observer.__init__">(regelum.observer.Observer method)</a>
+</li>
+        <li><a href="modules/sub/regelum.observer.ObserverReference.html#regelum.observer.ObserverReference.__init__">(regelum.observer.ObserverReference method)</a>
+</li>
+        <li><a href="modules/sub/regelum.observer.ObserverTrivial.html#regelum.observer.ObserverTrivial.__init__">(regelum.observer.ObserverTrivial method)</a>
 </li>
         <li><a href="modules/sub/regelum.optimizable.core.configs.OptimizerConfig.html#regelum.optimizable.core.configs.OptimizerConfig.__init__">(regelum.optimizable.core.configs.OptimizerConfig method)</a>
 </li>
@@ -286,29 +295,53 @@
 </li>
         <li><a href="modules/sub/regelum.optimizable.core.entities.Hook.html#regelum.optimizable.core.entities.Hook.__init__">(regelum.optimizable.core.entities.Hook method)</a>
 </li>
+        <li><a href="modules/sub/regelum.optimizable.core.entities.NestedFunction.html#regelum.optimizable.core.entities.NestedFunction.__init__">(regelum.optimizable.core.entities.NestedFunction method)</a>
+</li>
         <li><a href="modules/sub/regelum.optimizable.core.entities.OptimizationVariable.html#regelum.optimizable.core.entities.OptimizationVariable.__init__">(regelum.optimizable.core.entities.OptimizationVariable method)</a>
 </li>
         <li><a href="modules/sub/regelum.optimizable.core.entities.VarContainer.html#regelum.optimizable.core.entities.VarContainer.__init__">(regelum.optimizable.core.entities.VarContainer method)</a>
 </li>
         <li><a href="modules/sub/regelum.optimizable.optimizers.Optimizable.html#regelum.optimizable.optimizers.Optimizable.__init__">(regelum.optimizable.optimizers.Optimizable method)</a>
 </li>
-        <li><a href="modules/sub/regelum.policy.CALF.html#regelum.policy.CALF.__init__">(regelum.policy.CALF method)</a>
+        <li><a href="modules/sub/regelum.optimizable.optimizers.OptStatus.html#regelum.optimizable.optimizers.OptStatus.__init__">(regelum.optimizable.optimizers.OptStatus method)</a>
 </li>
-        <li><a href="modules/sub/regelum.policy.CLF.html#regelum.policy.CLF.__init__">(regelum.policy.CLF method)</a>
+        <li><a href="modules/sub/regelum.policy.CALFLegacy.html#regelum.policy.CALFLegacy.__init__">(regelum.policy.CALFLegacy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.CartPoleEnergyBasedPolicy.html#regelum.policy.CartPoleEnergyBasedPolicy.__init__">(regelum.policy.CartPoleEnergyBasedPolicy method)</a>
 </li>
         <li><a href="modules/sub/regelum.policy.DDPG.html#regelum.policy.DDPG.__init__">(regelum.policy.DDPG method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.InvertedPendulumStabilizingPolicy.html#regelum.policy.InvertedPendulumStabilizingPolicy.__init__">(regelum.policy.InvertedPendulumStabilizingPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.KinPointStabilizingPolicy.html#regelum.policy.KinPointStabilizingPolicy.__init__">(regelum.policy.KinPointStabilizingPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.LunarLanderPIDPolicy.html#regelum.policy.LunarLanderPIDPolicy.__init__">(regelum.policy.LunarLanderPIDPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.MemoryPIDPolicy.html#regelum.policy.MemoryPIDPolicy.__init__">(regelum.policy.MemoryPIDPolicy method)</a>
 </li>
         <li><a href="modules/sub/regelum.policy.Policy.html#regelum.policy.Policy.__init__">(regelum.policy.Policy method)</a>
 </li>
         <li><a href="modules/sub/regelum.policy.PolicyGradient.html#regelum.policy.PolicyGradient.__init__">(regelum.policy.PolicyGradient method)</a>
 </li>
+        <li><a href="modules/sub/regelum.policy.PPO.html#regelum.policy.PPO.__init__">(regelum.policy.PPO method)</a>
+</li>
         <li><a href="modules/sub/regelum.policy.Reinforce.html#regelum.policy.Reinforce.__init__">(regelum.policy.Reinforce method)</a>
 </li>
         <li><a href="modules/sub/regelum.policy.RLPolicy.html#regelum.policy.RLPolicy.__init__">(regelum.policy.RLPolicy method)</a>
 </li>
-        <li><a href="modules/sub/regelum.policy.RLPolicy.html#regelum.policy.RLPolicy.__init__">(regelum.policy.RLPolicy method)</a>
-</li>
         <li><a href="modules/sub/regelum.policy.SDPG.html#regelum.policy.SDPG.__init__">(regelum.policy.SDPG method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.__init__">(regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotMemoryPIDPolicy.html#regelum.policy.ThreeWheeledRobotMemoryPIDPolicy.__init__">(regelum.policy.ThreeWheeledRobotMemoryPIDPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotPIDPolicy.html#regelum.policy.ThreeWheeledRobotPIDPolicy.__init__">(regelum.policy.ThreeWheeledRobotPIDPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.ThreeWheeledWRobotNIDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledWRobotNIDisassembledCLFPolicy.__init__">(regelum.policy.ThreeWheeledWRobotNIDisassembledCLFPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.ThreeWheeledWRobotNIStabilizingPolicy.html#regelum.policy.ThreeWheeledWRobotNIStabilizingPolicy.__init__">(regelum.policy.ThreeWheeledWRobotNIStabilizingPolicy method)</a>
+</li>
+        <li><a href="modules/sub/regelum.policy.TwoTankPIDPolicy.html#regelum.policy.TwoTankPIDPolicy.__init__">(regelum.policy.TwoTankPIDPolicy method)</a>
 </li>
         <li><a href="modules/sub/regelum.predictor.EulerPredictor.html#regelum.predictor.EulerPredictor.__init__">(regelum.predictor.EulerPredictor method)</a>
 </li>
@@ -317,10 +350,6 @@
         <li><a href="modules/sub/regelum.predictor.Predictor.html#regelum.predictor.Predictor.__init__">(regelum.predictor.Predictor method)</a>
 </li>
         <li><a href="modules/sub/regelum.predictor.TrivialPredictor.html#regelum.predictor.TrivialPredictor.__init__">(regelum.predictor.TrivialPredictor method)</a>
-</li>
-        <li><a href="modules/sub/regelum.scenario.OnlineScenario.html#regelum.scenario.OnlineScenario.__init__">(regelum.scenario.OnlineScenario method)</a>
-</li>
-        <li><a href="modules/sub/regelum.scenario.Scenario.html#regelum.scenario.Scenario.__init__">(regelum.scenario.Scenario method)</a>
 </li>
         <li><a href="modules/sub/regelum.simulator.CasADi.html#regelum.simulator.CasADi.__init__">(regelum.simulator.CasADi method)</a>
 </li>
@@ -331,6 +360,8 @@
         <li><a href="modules/sub/regelum.system.CartPole.html#regelum.system.CartPole.__init__">(regelum.system.CartPole method)</a>
 </li>
         <li><a href="modules/sub/regelum.system.ComposedSystem.html#regelum.system.ComposedSystem.__init__">(regelum.system.ComposedSystem method)</a>
+</li>
+        <li><a href="modules/sub/regelum.system.ConstantReference.html#regelum.system.ConstantReference.__init__">(regelum.system.ConstantReference method)</a>
 </li>
         <li><a href="modules/sub/regelum.system.GridWorld.html#regelum.system.GridWorld.__init__">(regelum.system.GridWorld method)</a>
 </li>
@@ -346,6 +377,8 @@
 </li>
         <li><a href="modules/sub/regelum.system.System.html#regelum.system.System.__init__">(regelum.system.System method)</a>
 </li>
+        <li><a href="modules/sub/regelum.system.SystemWithConstantReference.html#regelum.system.SystemWithConstantReference.__init__">(regelum.system.SystemWithConstantReference method)</a>
+</li>
         <li><a href="modules/sub/regelum.system.ThreeWheeledRobot.html#regelum.system.ThreeWheeledRobot.__init__">(regelum.system.ThreeWheeledRobot method)</a>
 </li>
         <li><a href="modules/sub/regelum.system.ThreeWheeledRobotNI.html#regelum.system.ThreeWheeledRobotNI.__init__">(regelum.system.ThreeWheeledRobotNI method)</a>
@@ -359,15 +392,15 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.adaptation_block.AdaptationBlock.html#regelum.adaptation_block.AdaptationBlock">AdaptationBlock (class in regelum.adaptation_block)</a>
+      <li><a href="modules/sub/regelum.constraint_parser.all_equal.html#regelum.constraint_parser.all_equal">all_equal() (in module regelum.constraint_parser)</a>
 </li>
-      <li><a href="modules/sub/regelum.adaptation_block.AdaptationBlockCartpole.html#regelum.adaptation_block.AdaptationBlockCartpole">AdaptationBlockCartpole (class in regelum.adaptation_block)</a>
+      <li><a href="modules/sub/regelum.animation.AnimationCallback.html#regelum.animation.AnimationCallback">AnimationCallback (class in regelum.animation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.AnimationCallback.html#regelum.callback.AnimationCallback">AnimationCallback (class in regelum.callback)</a>
-</li>
       <li><a href="modules/sub/regelum.controller.apply_action_bounds.html#regelum.controller.apply_action_bounds">apply_action_bounds() (in module regelum.controller)</a>
+</li>
+      <li><a href="modules/sub/regelum.constraint_parser.assert_shape.html#regelum.constraint_parser.assert_shape">assert_shape() (in module regelum.constraint_parser)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -375,7 +408,7 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.BarAnimation.html#regelum.callback.BarAnimation">BarAnimation (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.BarAnimation.html#regelum.animation.BarAnimation">BarAnimation (class in regelum.animation)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -389,27 +422,23 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.policy.CALF.html#regelum.policy.CALF">CALF (class in regelum.policy)</a>
-</li>
-      <li><a href="modules/sub/regelum.callback.CalfCallback.html#regelum.callback.CalfCallback">CalfCallback (class in regelum.callback)</a>
-</li>
       <li><a href="modules/sub/regelum.controller.CALFControllerExPost.html#regelum.controller.CALFControllerExPost">CALFControllerExPost (class in regelum.controller)</a>
 </li>
-      <li><a href="modules/sub/regelum.controller.CALFControllerExPostLegacy.html#regelum.controller.CALFControllerExPostLegacy">CALFControllerExPostLegacy (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.CALFControllerPredictive.html#regelum.controller.CALFControllerPredictive">CALFControllerPredictive (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.callback.CALFWeightsCallback.html#regelum.callback.CALFWeightsCallback">CALFWeightsCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.policy.CALFLegacy.html#regelum.policy.CALFLegacy">CALFLegacy (class in regelum.policy)</a>
 </li>
       <li><a href="modules/sub/regelum.callback.Callback.html#regelum.callback.Callback">Callback (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.system.CartPole.html#regelum.system.CartPole">CartPole (class in regelum.system)</a>
 </li>
+      <li><a href="modules/sub/regelum.policy.CartPoleEnergyBasedPolicy.html#regelum.policy.CartPoleEnergyBasedPolicy">CartPoleEnergyBasedPolicy (class in regelum.policy)</a>
+</li>
       <li><a href="modules/sub/regelum.simulator.CasADi.html#regelum.simulator.CasADi">CasADi (class in regelum.simulator)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.entities.ChainedHook.html#regelum.optimizable.core.entities.ChainedHook">ChainedHook (class in regelum.optimizable.core.entities)</a>
 </li>
-      <li><a href="modules/sub/regelum.policy.CLF.html#regelum.policy.CLF">CLF (class in regelum.policy)</a>
+      <li><a href="modules/sub/regelum.configure.choice.html#regelum.configure.choice">choice() (in module regelum.configure)</a>
+</li>
+      <li><a href="modules/sub/regelum.constraint_parser.circle_constraint.html#regelum.constraint_parser.circle_constraint">circle_constraint() (in module regelum.constraint_parser)</a>
 </li>
       <li><a href="modules/sub/regelum.ComplementedConfig.html#regelum.ComplementedConfig">ComplementedConfig (class in regelum)</a>
 </li>
@@ -417,45 +446,33 @@
 </li>
       <li><a href="modules/sub/regelum.ComplementedConfigList.html#regelum.ComplementedConfigList">ComplementedConfigList (class in regelum)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.ComposedAnimationCallback.html#regelum.callback.ComposedAnimationCallback">ComposedAnimationCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.ComposedAnimationCallback.html#regelum.animation.ComposedAnimationCallback">ComposedAnimationCallback (class in regelum.animation)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.system.ComposedSystem.html#regelum.system.ComposedSystem">ComposedSystem (class in regelum.system)</a>
 </li>
       <li><a href="modules/sub/regelum.callback.ConfigDiagramCallback.html#regelum.callback.ConfigDiagramCallback">ConfigDiagramCallback (class in regelum.callback)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/sub/regelum.configure.configure_user_settings.html#regelum.configure.configure_user_settings">configure_user_settings() (in module regelum.configure)</a>
+</li>
+      <li><a href="modules/sub/regelum.system.ConstantReference.html#regelum.system.ConstantReference">ConstantReference (class in regelum.system)</a>
+</li>
+      <li><a href="modules/sub/regelum.constraint_parser.ConstraintParser.html#regelum.constraint_parser.ConstraintParser">ConstraintParser (class in regelum.constraint_parser)</a>
+</li>
+      <li><a href="modules/sub/regelum.constraint_parser.ConstraintParserTrivial.html#regelum.constraint_parser.ConstraintParserTrivial">ConstraintParserTrivial (class in regelum.constraint_parser)</a>
+</li>
       <li><a href="modules/sub/regelum.controller.Controller.html#regelum.controller.Controller">Controller (class in regelum.controller)</a>
 </li>
-      <li><a href="modules/sub/regelum.controller.Controller2TankPID.html#regelum.controller.Controller2TankPID">Controller2TankPID (class in regelum.controller)</a>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.controller_gain">controller_gain (regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy attribute)</a>
 </li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotDisassembledCLF.html#regelum.controller.Controller3WRobotDisassembledCLF">Controller3WRobotDisassembledCLF (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotMemoryPID.html#regelum.controller.Controller3WRobotMemoryPID">Controller3WRobotMemoryPID (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotNIDisassembledCLF.html#regelum.controller.Controller3WRobotNIDisassembledCLF">Controller3WRobotNIDisassembledCLF (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotNIMotionPrimitive.html#regelum.controller.Controller3WRobotNIMotionPrimitive">Controller3WRobotNIMotionPrimitive (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotPID.html#regelum.controller.Controller3WRobotPID">Controller3WRobotPID (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotDisassembledCLF.html#regelum.controller.Controller3WRobotDisassembledCLF.controller_gain">controller_gain (regelum.controller.Controller3WRobotDisassembledCLF attribute)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.ControllerCartPoleEnergyBased.html#regelum.controller.ControllerCartPoleEnergyBased">ControllerCartPoleEnergyBased (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.ControllerCartPoleEnergyBasedAdaptive.html#regelum.controller.ControllerCartPoleEnergyBasedAdaptive">ControllerCartPoleEnergyBasedAdaptive (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.ControllerCartPolePID.html#regelum.controller.ControllerCartPolePID">ControllerCartPolePID (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.ControllerKinPoint.html#regelum.controller.ControllerKinPoint">ControllerKinPoint (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.ControllerLunarLanderPID.html#regelum.controller.ControllerLunarLanderPID">ControllerLunarLanderPID (class in regelum.controller)</a>
-</li>
-      <li><a href="modules/sub/regelum.controller.ControllerMemoryPID.html#regelum.controller.ControllerMemoryPID">ControllerMemoryPID (class in regelum.controller)</a>
+      <li><a href="modules/sub/regelum.callback.ControllerStepLogger.html#regelum.callback.ControllerStepLogger">ControllerStepLogger (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.critic.Critic.html#regelum.critic.Critic">Critic (class in regelum.critic)</a>
 </li>
       <li><a href="modules/sub/regelum.critic.CriticCALF.html#regelum.critic.CriticCALF">CriticCALF (class in regelum.critic)</a>
+</li>
+      <li><a href="modules/sub/regelum.callback.CriticObjectiveSaver.html#regelum.callback.CriticObjectiveSaver">CriticObjectiveSaver (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.critic.CriticTrivial.html#regelum.critic.CriticTrivial">CriticTrivial (class in regelum.critic)</a>
 </li>
@@ -477,7 +494,7 @@
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.hooks.detach.html#regelum.optimizable.core.hooks.detach">detach() (in module regelum.optimizable.core.hooks)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.DirectionalPlanarMotionAnimation.html#regelum.callback.DirectionalPlanarMotionAnimation">DirectionalPlanarMotionAnimation (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.DirectionalPlanarMotionAnimation.html#regelum.animation.DirectionalPlanarMotionAnimation">DirectionalPlanarMotionAnimation (class in regelum.animation)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -487,11 +504,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.data_buffers.batch_sampler.EpisodicSampler.html#regelum.data_buffers.batch_sampler.EpisodicSampler">EpisodicSampler (class in regelum.data_buffers.batch_sampler)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.predictor.EulerPredictor.html#regelum.predictor.EulerPredictor">EulerPredictor (class in regelum.predictor)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.predictor.EulerPredictorMultistep.html#regelum.predictor.EulerPredictorMultistep">EulerPredictorMultistep (class in regelum.predictor)</a>
+</li>
+      <li><a href="modules/sub/regelum.event.Event.html#regelum.event.Event">Event (class in regelum.event)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -505,6 +524,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/sub/regelum.configure.form.html#regelum.configure.form">form() (in module regelum.configure)</a>
+</li>
       <li><a href="modules/sub/regelum.optimizable.core.entities.FuncContainer.html#regelum.optimizable.core.entities.FuncContainer">FuncContainer (class in regelum.optimizable.core.entities)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.entities.FunctionWithSignature.html#regelum.optimizable.core.entities.FunctionWithSignature">FunctionWithSignature (class in regelum.optimizable.core.entities)</a>
@@ -519,6 +540,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/sub/regelum.configure.get_user_settings.html#regelum.configure.get_user_settings">get_user_settings() (in module regelum.configure)</a>
+</li>
       <li><a href="modules/sub/regelum.system.GridWorld.html#regelum.system.GridWorld">GridWorld (class in regelum.system)</a>
 </li>
   </ul></td>
@@ -533,9 +556,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.HistoricalObjectiveCallback.html#regelum.callback.HistoricalObjectiveCallback">HistoricalObjectiveCallback (class in regelum.callback)</a>
-</li>
-      <li><a href="modules/sub/regelum.callback.HistoricalObservationCallback.html#regelum.callback.HistoricalObservationCallback">HistoricalObservationCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.callback.HistoricalDataCallback.html#regelum.callback.HistoricalDataCallback">HistoricalDataCallback (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.entities.Hook.html#regelum.optimizable.core.entities.Hook">Hook (class in regelum.optimizable.core.entities)</a>
 </li>
@@ -553,6 +574,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.system.InvertedPendulumPID.html#regelum.system.InvertedPendulumPID">InvertedPendulumPID (class in regelum.system)</a>
 </li>
+      <li><a href="modules/sub/regelum.policy.InvertedPendulumStabilizingPolicy.html#regelum.policy.InvertedPendulumStabilizingPolicy">InvertedPendulumStabilizingPolicy (class in regelum.policy)</a>
+</li>
       <li><a href="modules/sub/regelum.callback.is_in_debug_mode.html#regelum.callback.is_in_debug_mode">is_in_debug_mode() (in module regelum.callback)</a>
 </li>
   </ul></td>
@@ -567,21 +590,21 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.system.KinematicPoint.html#regelum.system.KinematicPoint">KinematicPoint (class in regelum.system)</a>
 </li>
+      <li><a href="modules/sub/regelum.policy.KinPointStabilizingPolicy.html#regelum.policy.KinPointStabilizingPolicy">KinPointStabilizingPolicy (class in regelum.policy)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.ObjectiveCallback.html#regelum.callback.ObjectiveCallback.log">log (regelum.callback.ObjectiveCallback attribute)</a>
-
-      <ul>
-        <li><a href="modules/sub/regelum.callback.StateCallback.html#regelum.callback.StateCallback.log">(regelum.callback.StateCallback attribute)</a>
+      <li><a href="modules/sub/regelum.constraint_parser.linear_constraint.html#regelum.constraint_parser.linear_constraint">linear_constraint() (in module regelum.constraint_parser)</a>
 </li>
-      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.system.LunarLander.html#regelum.system.LunarLander">LunarLander (class in regelum.system)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.LunarLanderPIDPolicy.html#regelum.policy.LunarLanderPIDPolicy">LunarLanderPIDPolicy (class in regelum.policy)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -590,6 +613,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.main.html#regelum.main">main (class in regelum)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.MemoryPIDPolicy.html#regelum.policy.MemoryPIDPolicy">MemoryPIDPolicy (class in regelum.policy)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.hooks.metadata_closure.html#regelum.optimizable.core.hooks.metadata_closure">metadata_closure() (in module regelum.optimizable.core.hooks)</a>
 </li>
@@ -613,9 +638,13 @@
       <ul>
         <li><a href="index.html#module-regelum">regelum</a>, <a href="modules/regelum.html#module-regelum">[1]</a>
 </li>
-        <li><a href="modules/regelum.adaptation_block.html#module-regelum.adaptation_block">regelum.adaptation_block</a>
+        <li><a href="modules/regelum.animation.html#module-regelum.animation">regelum.animation</a>
 </li>
         <li><a href="modules/regelum.callback.html#module-regelum.callback">regelum.callback</a>
+</li>
+        <li><a href="modules/regelum.configure.html#module-regelum.configure">regelum.configure</a>
+</li>
+        <li><a href="modules/regelum.constraint_parser.html#module-regelum.constraint_parser">regelum.constraint_parser</a>
 </li>
         <li><a href="modules/regelum.controller.html#module-regelum.controller">regelum.controller</a>
 </li>
@@ -630,6 +659,8 @@
         <li><a href="modules/regelum.data_buffers.fifo_list.html#module-regelum.data_buffers.fifo_list">regelum.data_buffers.fifo_list</a>
 </li>
         <li><a href="modules/regelum.data_buffers.types.html#module-regelum.data_buffers.types">regelum.data_buffers.types</a>
+</li>
+        <li><a href="modules/regelum.event.html#module-regelum.event">regelum.event</a>
 </li>
         <li><a href="modules/regelum.model.html#module-regelum.model">regelum.model</a>
 </li>
@@ -653,8 +684,6 @@
 </li>
         <li><a href="modules/regelum.predictor.html#module-regelum.predictor">regelum.predictor</a>
 </li>
-        <li><a href="modules/regelum.scenario.html#module-regelum.scenario">regelum.scenario</a>
-</li>
         <li><a href="modules/regelum.simulator.html#module-regelum.simulator">regelum.simulator</a>
 </li>
         <li><a href="modules/regelum.system.html#module-regelum.system">regelum.system</a>
@@ -664,6 +693,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.objective.mpc_objective.html#regelum.objective.mpc_objective">mpc_objective() (in module regelum.objective)</a>
 </li>
+      <li><a href="modules/sub/regelum.controller.MPCController.html#regelum.controller.MPCController">MPCController (class in regelum.controller)</a>
+</li>
+      <li><a href="modules/sub/regelum.controller.MPCTorchController.html#regelum.controller.MPCTorchController">MPCTorchController (class in regelum.controller)</a>
+</li>
+      <li><a href="modules/sub/regelum.model.MultiplyByConstant.html#regelum.model.MultiplyByConstant">MultiplyByConstant (class in regelum.model)</a>
+</li>
       <li><a href="modules/sub/regelum.optimizable.core.hooks.mutate_metadata.html#regelum.optimizable.core.hooks.mutate_metadata">mutate_metadata() (in module regelum.optimizable.core.hooks)</a>
 </li>
   </ul></td>
@@ -672,7 +707,7 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.controller.NominalControllerInvertedPendulum.html#regelum.controller.NominalControllerInvertedPendulum">NominalControllerInvertedPendulum (class in regelum.controller)</a>
+      <li><a href="modules/sub/regelum.optimizable.core.entities.NestedFunction.html#regelum.optimizable.core.entities.NestedFunction">NestedFunction (class in regelum.optimizable.core.entities)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -682,25 +717,31 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.objective.Objective.html#regelum.objective.Objective">Objective (class in regelum.objective)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.ObjectiveCallback.html#regelum.callback.ObjectiveCallback">ObjectiveCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.callback.ObjectiveSaver.html#regelum.callback.ObjectiveSaver">ObjectiveSaver (class in regelum.callback)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.ObjectiveLearningSaver.html#regelum.callback.ObjectiveLearningSaver">ObjectiveLearningSaver (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.observer.Observer.html#regelum.observer.Observer">Observer (class in regelum.observer)</a>
+</li>
+      <li><a href="modules/sub/regelum.observer.ObserverReference.html#regelum.observer.ObserverReference">ObserverReference (class in regelum.observer)</a>
+</li>
+      <li><a href="modules/sub/regelum.observer.ObserverTrivial.html#regelum.observer.ObserverTrivial">ObserverTrivial (class in regelum.observer)</a>
 </li>
       <li><a href="modules/sub/regelum.obtain.html#regelum.obtain">obtain() (in module regelum)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.OnEpisodeDoneCallback.html#regelum.callback.OnEpisodeDoneCallback">OnEpisodeDoneCallback (class in regelum.callback)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.OnIterationDoneCallback.html#regelum.callback.OnIterationDoneCallback">OnIterationDoneCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.configure.ok.html#regelum.configure.ok">ok() (in module regelum.configure)</a>
 </li>
-      <li><a href="modules/sub/regelum.scenario.OnlineScenario.html#regelum.scenario.OnlineScenario">OnlineScenario (class in regelum.scenario)</a>
+      <li><a href="modules/sub/regelum.callback.OnEpisodeDoneCallback.html#regelum.callback.OnEpisodeDoneCallback">OnEpisodeDoneCallback (class in regelum.callback)</a>
+</li>
+      <li><a href="modules/sub/regelum.callback.OnIterationDoneCallback.html#regelum.callback.OnIterationDoneCallback">OnIterationDoneCallback (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.optimizers.Optimizable.html#regelum.optimizable.optimizers.Optimizable">Optimizable (class in regelum.optimizable.optimizers)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.entities.OptimizationVariable.html#regelum.optimizable.core.entities.OptimizationVariable">OptimizationVariable (class in regelum.optimizable.core.entities)</a>
 </li>
       <li><a href="modules/sub/regelum.optimizable.core.configs.OptimizerConfig.html#regelum.optimizable.core.configs.OptimizerConfig">OptimizerConfig (class in regelum.optimizable.core.configs)</a>
+</li>
+      <li><a href="modules/sub/regelum.optimizable.optimizers.OptStatus.html#regelum.optimizable.optimizers.OptStatus">OptStatus (class in regelum.optimizable.optimizers)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -710,29 +751,29 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.callback.passdown.html#regelum.callback.passdown">passdown() (in module regelum.callback)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.PendulumAnimation.html#regelum.callback.PendulumAnimation">PendulumAnimation (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.PendulumAnimation.html#regelum.animation.PendulumAnimation">PendulumAnimation (class in regelum.animation)</a>
 </li>
-      <li><a href="modules/sub/regelum.model.PerceptronWithNormalNoise.html#regelum.model.PerceptronWithNormalNoise">PerceptronWithNormalNoise (class in regelum.model)</a>
+      <li><a href="modules/sub/regelum.model.PerceptronWithTruncatedNormalNoise.html#regelum.model.PerceptronWithTruncatedNormalNoise">PerceptronWithTruncatedNormalNoise (class in regelum.model)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.PlanarMotionAnimation.html#regelum.callback.PlanarMotionAnimation">PlanarMotionAnimation (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.PlanarMotionAnimation.html#regelum.animation.PlanarMotionAnimation">PlanarMotionAnimation (class in regelum.animation)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.PointAnimation.html#regelum.callback.PointAnimation">PointAnimation (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.PointAnimation.html#regelum.animation.PointAnimation">PointAnimation (class in regelum.animation)</a>
 </li>
       <li><a href="modules/sub/regelum.policy.Policy.html#regelum.policy.Policy">Policy (class in regelum.policy)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.policy.PolicyGradient.html#regelum.policy.PolicyGradient">PolicyGradient (class in regelum.policy)</a>
 </li>
-      <li><a href="modules/sub/regelum.predictor.Predictor.html#regelum.predictor.Predictor">Predictor (class in regelum.predictor)</a>
+      <li><a href="modules/sub/regelum.callback.PolicyObjectiveSaver.html#regelum.callback.PolicyObjectiveSaver">PolicyObjectiveSaver (class in regelum.callback)</a>
 </li>
-  </ul></td>
-</tr></table>
-
-<h2 id="Q">Q</h2>
-<table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.callback.QFunctionModelSaverCallback.html#regelum.callback.QFunctionModelSaverCallback">QFunctionModelSaverCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.policy.PPO.html#regelum.policy.PPO">PPO (class in regelum.policy)</a>
+</li>
+      <li><a href="modules/sub/regelum.objective.ppo_objective.html#regelum.objective.ppo_objective">ppo_objective() (in module regelum.objective)</a>
+</li>
+      <li><a href="modules/sub/regelum.controller.PPOController.html#regelum.controller.PPOController">PPOController (class in regelum.controller)</a>
+</li>
+      <li><a href="modules/sub/regelum.predictor.Predictor.html#regelum.predictor.Predictor">Predictor (class in regelum.predictor)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -748,10 +789,10 @@
 </li>
       </ul></li>
       <li>
-    regelum.adaptation_block
+    regelum.animation
 
       <ul>
-        <li><a href="modules/regelum.adaptation_block.html#module-regelum.adaptation_block">module</a>
+        <li><a href="modules/regelum.animation.html#module-regelum.animation">module</a>
 </li>
       </ul></li>
       <li>
@@ -759,6 +800,20 @@
 
       <ul>
         <li><a href="modules/regelum.callback.html#module-regelum.callback">module</a>
+</li>
+      </ul></li>
+      <li>
+    regelum.configure
+
+      <ul>
+        <li><a href="modules/regelum.configure.html#module-regelum.configure">module</a>
+</li>
+      </ul></li>
+      <li>
+    regelum.constraint_parser
+
+      <ul>
+        <li><a href="modules/regelum.constraint_parser.html#module-regelum.constraint_parser">module</a>
 </li>
       </ul></li>
       <li>
@@ -811,6 +866,13 @@
 </li>
       </ul></li>
       <li>
+    regelum.event
+
+      <ul>
+        <li><a href="modules/regelum.event.html#module-regelum.event">module</a>
+</li>
+      </ul></li>
+      <li>
     regelum.model
 
       <ul>
@@ -831,6 +893,8 @@
         <li><a href="modules/regelum.observer.html#module-regelum.observer">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     regelum.optimizable
 
@@ -845,8 +909,6 @@
         <li><a href="modules/regelum.optimizable.core.html#module-regelum.optimizable.core">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     regelum.optimizable.core.configs
 
@@ -890,13 +952,6 @@
 </li>
       </ul></li>
       <li>
-    regelum.scenario
-
-      <ul>
-        <li><a href="modules/regelum.scenario.html#module-regelum.scenario">module</a>
-</li>
-      </ul></li>
-      <li>
     regelum.simulator
 
       <ul>
@@ -914,15 +969,17 @@
 </li>
       <li><a href="modules/sub/regelum.objective.reinforce_objective.html#regelum.objective.reinforce_objective">reinforce_objective() (in module regelum.objective)</a>
 </li>
+      <li><a href="modules/sub/regelum.controller.ReinforceController.html#regelum.controller.ReinforceController">ReinforceController (class in regelum.controller)</a>
+</li>
       <li><a href="modules/sub/regelum.optimizable.core.hooks.requires_grad.html#regelum.optimizable.core.hooks.requires_grad">requires_grad() (in module regelum.optimizable.core.hooks)</a>
 </li>
       <li><a href="modules/sub/regelum.controller.RLController.html#regelum.controller.RLController">RLController (class in regelum.controller)</a>
 </li>
       <li><a href="modules/sub/regelum.policy.RLPolicy.html#regelum.policy.RLPolicy">RLPolicy (class in regelum.policy)</a>
 </li>
-      <li><a href="modules/sub/regelum.policy.RLPolicy.html#regelum.policy.RLPolicy">RLPolicy (class in regelum.policy)</a>
-</li>
       <li><a href="modules/sub/regelum.data_buffers.batch_sampler.RollingBatchSampler.html#regelum.data_buffers.batch_sampler.RollingBatchSampler">RollingBatchSampler (class in regelum.data_buffers.batch_sampler)</a>
+</li>
+      <li><a href="modules/sub/regelum.constraint_parser.row_wise.html#regelum.constraint_parser.row_wise">row_wise() (in module regelum.constraint_parser)</a>
 </li>
       <li><a href="modules/sub/regelum.objective.rpo_objective.html#regelum.objective.rpo_objective">rpo_objective() (in module regelum.objective)</a>
 </li>
@@ -936,29 +993,29 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotDisassembledCLF.html#regelum.controller.Controller3WRobotDisassembledCLF.sampling_time">sampling_time (regelum.controller.Controller3WRobotDisassembledCLF attribute)</a>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.sampling_time">sampling_time (regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy attribute)</a>
 </li>
       <li><a href="modules/sub/regelum.callback.SaveProgressCallback.html#regelum.callback.SaveProgressCallback">SaveProgressCallback (class in regelum.callback)</a>
-</li>
-      <li><a href="modules/sub/regelum.scenario.Scenario.html#regelum.scenario.Scenario">Scenario (class in regelum.scenario)</a>
 </li>
       <li><a href="modules/sub/regelum.simulator.SciPy.html#regelum.simulator.SciPy">SciPy (class in regelum.simulator)</a>
 </li>
       <li><a href="modules/sub/regelum.policy.SDPG.html#regelum.policy.SDPG">SDPG (class in regelum.policy)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.objective.sdpg_objective.html#regelum.objective.sdpg_objective">sdpg_objective() (in module regelum.objective)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="modules/sub/regelum.simulator.Simulator.html#regelum.simulator.Simulator">Simulator (class in regelum.simulator)</a>
 </li>
       <li><a href="modules/sub/regelum.objective.sql_objective.html#regelum.objective.sql_objective">sql_objective() (in module regelum.objective)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.StateCallback.html#regelum.callback.StateCallback">StateCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.constraint_parser.state_wise.html#regelum.constraint_parser.state_wise">state_wise() (in module regelum.constraint_parser)</a>
 </li>
       <li><a href="modules/sub/regelum.callback.StateTracker.html#regelum.callback.StateTracker">StateTracker (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.system.System.html#regelum.system.System">System (class in regelum.system)</a>
+</li>
+      <li><a href="modules/sub/regelum.system.SystemWithConstantReference.html#regelum.system.SystemWithConstantReference">SystemWithConstantReference (class in regelum.system)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -970,23 +1027,45 @@
 </li>
       <li><a href="modules/sub/regelum.system.ThreeWheeledRobot.html#regelum.system.ThreeWheeledRobot">ThreeWheeledRobot (class in regelum.system)</a>
 </li>
+      <li><a href="modules/sub/regelum.animation.ThreeWheeledRobotAnimation.html#regelum.animation.ThreeWheeledRobotAnimation">ThreeWheeledRobotAnimation (class in regelum.animation)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy">ThreeWheeledRobotDisassembledCLFPolicy (class in regelum.policy)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotMemoryPIDPolicy.html#regelum.policy.ThreeWheeledRobotMemoryPIDPolicy">ThreeWheeledRobotMemoryPIDPolicy (class in regelum.policy)</a>
+</li>
       <li><a href="modules/sub/regelum.system.ThreeWheeledRobotNI.html#regelum.system.ThreeWheeledRobotNI">ThreeWheeledRobotNI (class in regelum.system)</a>
 </li>
-      <li><a href="modules/sub/regelum.controller.Controller3WRobotDisassembledCLF.html#regelum.controller.Controller3WRobotDisassembledCLF.time_start">time_start (regelum.controller.Controller3WRobotDisassembledCLF attribute)</a>
+      <li><a href="modules/sub/regelum.constraint_parser.ThreeWheeledRobotNIConstantContstraintsParser.html#regelum.constraint_parser.ThreeWheeledRobotNIConstantContstraintsParser">ThreeWheeledRobotNIConstantContstraintsParser (class in regelum.constraint_parser)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.TimeCallback.html#regelum.callback.TimeCallback">TimeCallback (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotPIDPolicy.html#regelum.policy.ThreeWheeledRobotPIDPolicy">ThreeWheeledRobotPIDPolicy (class in regelum.policy)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledWRobotNIDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledWRobotNIDisassembledCLFPolicy">ThreeWheeledWRobotNIDisassembledCLFPolicy (class in regelum.policy)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledWRobotNIStabilizingPolicy.html#regelum.policy.ThreeWheeledWRobotNIStabilizingPolicy">ThreeWheeledWRobotNIStabilizingPolicy (class in regelum.policy)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.html#regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy.time_start">time_start (regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy attribute)</a>
+</li>
       <li><a href="modules/sub/regelum.callback.TimeRemainingCallback.html#regelum.callback.TimeRemainingCallback">TimeRemainingCallback (class in regelum.callback)</a>
 </li>
       <li><a href="modules/sub/regelum.callback.TotalObjectiveCallback.html#regelum.callback.TotalObjectiveCallback">TotalObjectiveCallback (class in regelum.callback)</a>
 </li>
-      <li><a href="modules/sub/regelum.callback.TriangleAnimation.html#regelum.callback.TriangleAnimation">TriangleAnimation (class in regelum.callback)</a>
+      <li><a href="modules/sub/regelum.animation.TriangleAnimation.html#regelum.animation.TriangleAnimation">TriangleAnimation (class in regelum.animation)</a>
 </li>
       <li><a href="modules/sub/regelum.predictor.TrivialPredictor.html#regelum.predictor.TrivialPredictor">TrivialPredictor (class in regelum.predictor)</a>
 </li>
       <li><a href="modules/sub/regelum.system.TwoTank.html#regelum.system.TwoTank">TwoTank (class in regelum.system)</a>
+</li>
+      <li><a href="modules/sub/regelum.policy.TwoTankPIDPolicy.html#regelum.policy.TwoTankPIDPolicy">TwoTankPIDPolicy (class in regelum.policy)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="modules/sub/regelum.model.unversal_model_call.html#regelum.model.unversal_model_call">unversal_model_call() (in module regelum.model)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -1,0 +1,83 @@
+regelum.critic.CriticCALF
+=========================
+
+.. currentmodule:: regelum.critic
+
+.. autoclass:: CriticCALF
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticCALF.CALF_critic_lower_bound_constraint
+      ~CriticCALF.CALF_critic_lower_bound_constraint_predictive
+      ~CriticCALF.CALF_critic_upper_bound_constraint
+      ~CriticCALF.CALF_decay_constraint_no_prediction
+      ~CriticCALF.CALF_decay_constraint_predicted_on_policy
+      ~CriticCALF.CALF_decay_constraint_predicted_safe_policy
+      ~CriticCALF.__init__
+      ~CriticCALF.cache_weights
+      ~CriticCALF.connect_source
+      ~CriticCALF.create_variable
+      ~CriticCALF.create_variable_metadata
+      ~CriticCALF.data_buffer_objective_keys
+      ~CriticCALF.define_problem
+      ~CriticCALF.delete_critic_targets
+      ~CriticCALF.eval_contraints
+      ~CriticCALF.fix_variables
+      ~CriticCALF.get_data_buffer_batch_size
+      ~CriticCALF.handle_bounds
+      ~CriticCALF.initialize_optimize_procedure
+      ~CriticCALF.instantiate_configuration
+      ~CriticCALF.is_target_event
+      ~CriticCALF.objective_function
+      ~CriticCALF.opt_constraints_tensor
+      ~CriticCALF.optimize
+      ~CriticCALF.optimize_numeric
+      ~CriticCALF.optimize_on_event
+      ~CriticCALF.optimize_symbolic
+      ~CriticCALF.optimize_tensor
+      ~CriticCALF.optimize_tensor_batch_sampler
+      ~CriticCALF.post_epoch
+      ~CriticCALF.post_optimize
+      ~CriticCALF.receive_estimated_state
+      ~CriticCALF.register_bounds
+      ~CriticCALF.register_constraint
+      ~CriticCALF.register_objective
+      ~CriticCALF.regularization_function
+      ~CriticCALF.reset
+      ~CriticCALF.restore_weights
+      ~CriticCALF.substitute_parameters
+      ~CriticCALF.unfix_variables
+      ~CriticCALF.update_and_cache_weights
+      ~CriticCALF.update_data_buffer_with_optimal_policy_targets
+      ~CriticCALF.update_data_buffer_with_stored_weights_critic_output
+      ~CriticCALF.update_status
+      ~CriticCALF.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticCALF.constants
+      ~CriticCALF.constraints
+      ~CriticCALF.decision_variables
+      ~CriticCALF.functions
+      ~CriticCALF.log_options
+      ~CriticCALF.objective
+      ~CriticCALF.objectives
+      ~CriticCALF.opt_func
+      ~CriticCALF.opt_options
+      ~CriticCALF.opti
+      ~CriticCALF.variables
+      ~CriticCALF.weights
+   
+   

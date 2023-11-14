@@ -29,11 +29,15 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home" style="color: #8cc770;"> regelum
+
+          
+          
+          <a href="index.html" class="icon icon-home" style="color: #8cc770;">
+            regelum
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -55,10 +59,31 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
 </ul>
+<p class="caption"><span class="caption-text">Controllers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html">REINFORCE Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="controllers.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Systems</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="systems.html">Avaliable systems</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Optimizable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="optimizable.html">Optimizable Subpackage Tutorial</a></li>
+</ul>
+<p class="caption"><span class="caption-text">rc singletone</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
+</ul>
 <p class="caption"><span class="caption-text">API Documentation</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.adaptation_block.html"><code class="docutils literal notranslate"><span class="pre">regelum.adaptation_block</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.animation.html"><code class="docutils literal notranslate"><span class="pre">regelum.animation</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.callback.html"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.configure.html"><code class="docutils literal notranslate"><span class="pre">regelum.configure</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.constraint_parser.html"><code class="docutils literal notranslate"><span class="pre">regelum.constraint_parser</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.critic.html"><code class="docutils literal notranslate"><span class="pre">regelum.critic</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers</span></code></a></li>
@@ -66,6 +91,7 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.data_buffer.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.data_buffer</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.fifo_list.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.fifo_list</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.types.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.types</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/regelum.event.html"><code class="docutils literal notranslate"><span class="pre">regelum.event</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.model.html"><code class="docutils literal notranslate"><span class="pre">regelum.model</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.objective.html"><code class="docutils literal notranslate"><span class="pre">regelum.objective</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.observer.html"><code class="docutils literal notranslate"><span class="pre">regelum.observer</span></code></a></li>
@@ -77,7 +103,6 @@
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.optimizers.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.optimizers</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.policy.html"><code class="docutils literal notranslate"><span class="pre">regelum.policy</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.predictor.html"><code class="docutils literal notranslate"><span class="pre">regelum.predictor</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.scenario.html"><code class="docutils literal notranslate"><span class="pre">regelum.scenario</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.simulator.html"><code class="docutils literal notranslate"><span class="pre">regelum.simulator</span></code></a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/regelum.system.html"><code class="docutils literal notranslate"><span class="pre">regelum.system</span></code></a></li>
 </ul>
@@ -95,7 +120,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" style="color: #8cc770;"></a></li>
+      <li><a href="index.html" class="icon icon-home" style="color: #8cc770;" aria-label="Home"></a></li>
       <li class="breadcrumb-item active">About</li>
       <li class="wy-breadcrumbs-aside">
       </li>

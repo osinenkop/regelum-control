@@ -1,0 +1,50 @@
+regelum.callback.CriticObjectiveSaver
+=====================================
+
+.. currentmodule:: regelum.callback
+
+.. autoclass:: CriticObjectiveSaver
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticObjectiveSaver.__init__
+      ~CriticObjectiveSaver.add_datum
+      ~CriticObjectiveSaver.attach
+      ~CriticObjectiveSaver.clear_recent_data
+      ~CriticObjectiveSaver.dump_and_clear_data
+      ~CriticObjectiveSaver.dump_data
+      ~CriticObjectiveSaver.get_save_directory
+      ~CriticObjectiveSaver.insert_column_left
+      ~CriticObjectiveSaver.is_target_event
+      ~CriticObjectiveSaver.load_data
+      ~CriticObjectiveSaver.on_episode_done
+      ~CriticObjectiveSaver.on_iteration_done
+      ~CriticObjectiveSaver.on_launch
+      ~CriticObjectiveSaver.on_termination
+      ~CriticObjectiveSaver.on_trigger
+      ~CriticObjectiveSaver.perform
+      ~CriticObjectiveSaver.plot
+      ~CriticObjectiveSaver.plot_gui
+      ~CriticObjectiveSaver.ready
+      ~CriticObjectiveSaver.register
+      ~CriticObjectiveSaver.save_plot
+      ~CriticObjectiveSaver.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticObjectiveSaver.cooldown
+      ~CriticObjectiveSaver.data
+   
+   

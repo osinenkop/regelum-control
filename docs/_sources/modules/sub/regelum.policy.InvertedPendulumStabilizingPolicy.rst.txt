@@ -1,0 +1,75 @@
+regelum.policy.InvertedPendulumStabilizingPolicy
+================================================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: InvertedPendulumStabilizingPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~InvertedPendulumStabilizingPolicy.__init__
+      ~InvertedPendulumStabilizingPolicy.cache_weights
+      ~InvertedPendulumStabilizingPolicy.connect_source
+      ~InvertedPendulumStabilizingPolicy.create_variable
+      ~InvertedPendulumStabilizingPolicy.create_variable_metadata
+      ~InvertedPendulumStabilizingPolicy.define_problem
+      ~InvertedPendulumStabilizingPolicy.eval_contraints
+      ~InvertedPendulumStabilizingPolicy.fix_variables
+      ~InvertedPendulumStabilizingPolicy.get_action
+      ~InvertedPendulumStabilizingPolicy.get_data_buffer_batch_size
+      ~InvertedPendulumStabilizingPolicy.handle_bounds
+      ~InvertedPendulumStabilizingPolicy.instantiate_configuration
+      ~InvertedPendulumStabilizingPolicy.is_target_event
+      ~InvertedPendulumStabilizingPolicy.opt_constraints_tensor
+      ~InvertedPendulumStabilizingPolicy.optimize
+      ~InvertedPendulumStabilizingPolicy.optimize_numeric
+      ~InvertedPendulumStabilizingPolicy.optimize_on_event
+      ~InvertedPendulumStabilizingPolicy.optimize_symbolic
+      ~InvertedPendulumStabilizingPolicy.optimize_tensor
+      ~InvertedPendulumStabilizingPolicy.optimize_tensor_batch_sampler
+      ~InvertedPendulumStabilizingPolicy.post_epoch
+      ~InvertedPendulumStabilizingPolicy.post_optimize
+      ~InvertedPendulumStabilizingPolicy.receive_estimated_state
+      ~InvertedPendulumStabilizingPolicy.receive_observation
+      ~InvertedPendulumStabilizingPolicy.register_bounds
+      ~InvertedPendulumStabilizingPolicy.register_constraint
+      ~InvertedPendulumStabilizingPolicy.register_objective
+      ~InvertedPendulumStabilizingPolicy.restore_weights
+      ~InvertedPendulumStabilizingPolicy.set_action
+      ~InvertedPendulumStabilizingPolicy.substitute_parameters
+      ~InvertedPendulumStabilizingPolicy.unfix_variables
+      ~InvertedPendulumStabilizingPolicy.update_action
+      ~InvertedPendulumStabilizingPolicy.update_and_cache_weights
+      ~InvertedPendulumStabilizingPolicy.update_status
+      ~InvertedPendulumStabilizingPolicy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~InvertedPendulumStabilizingPolicy.action
+      ~InvertedPendulumStabilizingPolicy.constants
+      ~InvertedPendulumStabilizingPolicy.constraints
+      ~InvertedPendulumStabilizingPolicy.data_buffer_objective_keys
+      ~InvertedPendulumStabilizingPolicy.decision_variables
+      ~InvertedPendulumStabilizingPolicy.functions
+      ~InvertedPendulumStabilizingPolicy.log_options
+      ~InvertedPendulumStabilizingPolicy.objective
+      ~InvertedPendulumStabilizingPolicy.objectives
+      ~InvertedPendulumStabilizingPolicy.opt_func
+      ~InvertedPendulumStabilizingPolicy.opt_options
+      ~InvertedPendulumStabilizingPolicy.opti
+      ~InvertedPendulumStabilizingPolicy.variables
+      ~InvertedPendulumStabilizingPolicy.weights
+   
+   

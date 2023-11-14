@@ -1,0 +1,77 @@
+regelum.critic.CriticTrivial
+============================
+
+.. currentmodule:: regelum.critic
+
+.. autoclass:: CriticTrivial
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CriticTrivial.__init__
+      ~CriticTrivial.cache_weights
+      ~CriticTrivial.connect_source
+      ~CriticTrivial.create_variable
+      ~CriticTrivial.create_variable_metadata
+      ~CriticTrivial.data_buffer_objective_keys
+      ~CriticTrivial.define_problem
+      ~CriticTrivial.delete_critic_targets
+      ~CriticTrivial.eval_contraints
+      ~CriticTrivial.fix_variables
+      ~CriticTrivial.get_data_buffer_batch_size
+      ~CriticTrivial.handle_bounds
+      ~CriticTrivial.initialize_optimize_procedure
+      ~CriticTrivial.instantiate_configuration
+      ~CriticTrivial.is_target_event
+      ~CriticTrivial.objective_function
+      ~CriticTrivial.opt_constraints_tensor
+      ~CriticTrivial.optimize
+      ~CriticTrivial.optimize_numeric
+      ~CriticTrivial.optimize_on_event
+      ~CriticTrivial.optimize_symbolic
+      ~CriticTrivial.optimize_tensor
+      ~CriticTrivial.optimize_tensor_batch_sampler
+      ~CriticTrivial.post_epoch
+      ~CriticTrivial.post_optimize
+      ~CriticTrivial.receive_estimated_state
+      ~CriticTrivial.register_bounds
+      ~CriticTrivial.register_constraint
+      ~CriticTrivial.register_objective
+      ~CriticTrivial.regularization_function
+      ~CriticTrivial.reset
+      ~CriticTrivial.restore_weights
+      ~CriticTrivial.substitute_parameters
+      ~CriticTrivial.unfix_variables
+      ~CriticTrivial.update_and_cache_weights
+      ~CriticTrivial.update_data_buffer_with_optimal_policy_targets
+      ~CriticTrivial.update_data_buffer_with_stored_weights_critic_output
+      ~CriticTrivial.update_status
+      ~CriticTrivial.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CriticTrivial.constants
+      ~CriticTrivial.constraints
+      ~CriticTrivial.decision_variables
+      ~CriticTrivial.functions
+      ~CriticTrivial.log_options
+      ~CriticTrivial.objective
+      ~CriticTrivial.objectives
+      ~CriticTrivial.opt_func
+      ~CriticTrivial.opt_options
+      ~CriticTrivial.opti
+      ~CriticTrivial.variables
+      ~CriticTrivial.weights
+   
+   

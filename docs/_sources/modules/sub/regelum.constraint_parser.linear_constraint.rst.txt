@@ -1,0 +1,6 @@
+regelum.constraint\_parser.linear\_constraint
+=============================================
+
+.. currentmodule:: regelum.constraint_parser
+
+.. autofunction:: linear_constraint

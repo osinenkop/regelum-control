@@ -1,0 +1,6 @@
+regelum.constraint\_parser.state\_wise
+======================================
+
+.. currentmodule:: regelum.constraint_parser
+
+.. autofunction:: state_wise

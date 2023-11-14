@@ -1,0 +1,25 @@
+regelum.event.Event
+===================
+
+.. currentmodule:: regelum.event
+
+.. autoclass:: Event
+
+   
+   .. automethod:: __init__
+
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Event.compute_action
+      ~Event.reset_episode
+      ~Event.reset_iteration
+      ~Event.reset_simulation
+   
+   

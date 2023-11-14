@@ -1,0 +1,44 @@
+regelum.system.ConstantReference
+================================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: ConstantReference
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ConstantReference.__init__
+      ~ConstantReference.compose
+      ~ConstantReference.compute_closed_loop_rhs
+      ~ConstantReference.compute_state_dynamics
+      ~ConstantReference.get_observation
+      ~ConstantReference.receive_action
+      ~ConstantReference.reset
+      ~ConstantReference.update_system_parameters
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ConstantReference.action_bounds
+      ~ConstantReference.dim_inputs
+      ~ConstantReference.dim_observation
+      ~ConstantReference.dim_state
+      ~ConstantReference.inputs_naming
+      ~ConstantReference.name
+      ~ConstantReference.observation_naming
+      ~ConstantReference.parameters
+      ~ConstantReference.state_naming
+      ~ConstantReference.system_type
+   
+   

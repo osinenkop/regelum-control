@@ -1,0 +1,33 @@
+regelum.data\_buffers.fifo\_list.FifoList
+=========================================
+
+.. currentmodule:: regelum.data_buffers.fifo_list
+
+.. autoclass:: FifoList
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~FifoList.__init__
+      ~FifoList.append
+      ~FifoList.clear
+      ~FifoList.copy
+      ~FifoList.count
+      ~FifoList.extend
+      ~FifoList.index
+      ~FifoList.insert
+      ~FifoList.pop
+      ~FifoList.remove
+      ~FifoList.reverse
+      ~FifoList.sort
+   
+   
+
+   
+   
+   

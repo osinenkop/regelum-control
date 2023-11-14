@@ -1,0 +1,31 @@
+regelum.system.SystemWithConstantReference
+==========================================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: SystemWithConstantReference
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SystemWithConstantReference.__init__
+      ~SystemWithConstantReference.compose
+      ~SystemWithConstantReference.compute_closed_loop_rhs
+      ~SystemWithConstantReference.compute_state_dynamics
+      ~SystemWithConstantReference.get_inverse_permutation
+      ~SystemWithConstantReference.get_observation
+      ~SystemWithConstantReference.permute_state
+      ~SystemWithConstantReference.receive_action
+      ~SystemWithConstantReference.reset
+      ~SystemWithConstantReference.update_system_parameters
+   
+   
+
+   
+   
+   

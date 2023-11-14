@@ -1,0 +1,6 @@
+regelum.obtain
+==============
+
+.. currentmodule:: regelum
+
+.. autofunction:: obtain

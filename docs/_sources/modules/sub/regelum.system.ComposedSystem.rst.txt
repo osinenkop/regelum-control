@@ -1,0 +1,31 @@
+regelum.system.ComposedSystem
+=============================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: ComposedSystem
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ComposedSystem.__init__
+      ~ComposedSystem.compose
+      ~ComposedSystem.compute_closed_loop_rhs
+      ~ComposedSystem.compute_state_dynamics
+      ~ComposedSystem.get_inverse_permutation
+      ~ComposedSystem.get_observation
+      ~ComposedSystem.permute_state
+      ~ComposedSystem.receive_action
+      ~ComposedSystem.reset
+      ~ComposedSystem.update_system_parameters
+   
+   
+
+   
+   
+   

@@ -1,0 +1,86 @@
+regelum.policy.MemoryPIDPolicy
+==============================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: MemoryPIDPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MemoryPIDPolicy.__init__
+      ~MemoryPIDPolicy.cache_weights
+      ~MemoryPIDPolicy.compute_error
+      ~MemoryPIDPolicy.compute_error_derivative_numerically
+      ~MemoryPIDPolicy.compute_integral
+      ~MemoryPIDPolicy.compute_signal
+      ~MemoryPIDPolicy.connect_source
+      ~MemoryPIDPolicy.create_variable
+      ~MemoryPIDPolicy.create_variable_metadata
+      ~MemoryPIDPolicy.define_problem
+      ~MemoryPIDPolicy.error_derivative
+      ~MemoryPIDPolicy.eval_contraints
+      ~MemoryPIDPolicy.fix_variables
+      ~MemoryPIDPolicy.get_action
+      ~MemoryPIDPolicy.get_data_buffer_batch_size
+      ~MemoryPIDPolicy.handle_bounds
+      ~MemoryPIDPolicy.instantiate_configuration
+      ~MemoryPIDPolicy.is_stabilized
+      ~MemoryPIDPolicy.is_target_event
+      ~MemoryPIDPolicy.opt_constraints_tensor
+      ~MemoryPIDPolicy.optimize
+      ~MemoryPIDPolicy.optimize_numeric
+      ~MemoryPIDPolicy.optimize_on_event
+      ~MemoryPIDPolicy.optimize_symbolic
+      ~MemoryPIDPolicy.optimize_tensor
+      ~MemoryPIDPolicy.optimize_tensor_batch_sampler
+      ~MemoryPIDPolicy.post_epoch
+      ~MemoryPIDPolicy.post_optimize
+      ~MemoryPIDPolicy.receive_estimated_state
+      ~MemoryPIDPolicy.receive_observation
+      ~MemoryPIDPolicy.register_bounds
+      ~MemoryPIDPolicy.register_constraint
+      ~MemoryPIDPolicy.register_objective
+      ~MemoryPIDPolicy.reset
+      ~MemoryPIDPolicy.reset_buffer
+      ~MemoryPIDPolicy.restore_weights
+      ~MemoryPIDPolicy.set_action
+      ~MemoryPIDPolicy.set_initial_point
+      ~MemoryPIDPolicy.set_setpoint
+      ~MemoryPIDPolicy.substitute_parameters
+      ~MemoryPIDPolicy.unfix_variables
+      ~MemoryPIDPolicy.update_action
+      ~MemoryPIDPolicy.update_and_cache_weights
+      ~MemoryPIDPolicy.update_observation_buffer
+      ~MemoryPIDPolicy.update_status
+      ~MemoryPIDPolicy.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MemoryPIDPolicy.action
+      ~MemoryPIDPolicy.constants
+      ~MemoryPIDPolicy.constraints
+      ~MemoryPIDPolicy.data_buffer_objective_keys
+      ~MemoryPIDPolicy.decision_variables
+      ~MemoryPIDPolicy.functions
+      ~MemoryPIDPolicy.log_options
+      ~MemoryPIDPolicy.objective
+      ~MemoryPIDPolicy.objectives
+      ~MemoryPIDPolicy.opt_func
+      ~MemoryPIDPolicy.opt_options
+      ~MemoryPIDPolicy.opti
+      ~MemoryPIDPolicy.variables
+      ~MemoryPIDPolicy.weights
+   
+   

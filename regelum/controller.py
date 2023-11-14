@@ -14,7 +14,7 @@ import torch
 
 from .__utilities import rc, Clock, AwaitedParameter
 from regelum import RegelumBase
-from .policy import Policy, RLPolicy, PPO
+from .policy import Policy, RLPolicy, PPO, Reinforce, SDPG
 from .critic import Critic, CriticCALF, CriticTrivial
 from typing import Optional, Union, Type, Dict, List, Any
 from .objective import RunningObjective
@@ -658,8 +658,8 @@ class MPCController(RLController):
         prediction_horizon: int,
         predictor: Optional[Predictor] = None,
         sampling_time: float = 0.1,
-        observer: Observer | None = None,
-        constraint_parser: ConstraintParser | None = None,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
         time_start: float = 0,
         discount_factor: float = 1.0,
     ):
@@ -966,3 +966,244 @@ class PPOController(RLController):
                 ),
             ),
         )
+
+
+class SPDGController(RLController):
+    """PPOController."""
+
+    def __init__(
+        self,
+        policy_model: PerceptronWithTruncatedNormalNoise,
+        critic_model: ModelPerceptron,
+        sampling_time: float,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        critic_n_epochs: int,
+        policy_n_epochs: int,
+        critic_opt_method_kwargs: Dict[str, Any],
+        policy_opt_method_kwargs: Dict[str, Any],
+        critic_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        policy_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        running_objective_type: str = "cost",
+        critic_td_n: int = 1,
+        epsilon: float = 0.2,
+        discount_factor: float = 0.7,
+        observer: Optional[Observer] = None,
+        N_episodes: int = 2,
+        N_iterations: int = 100,
+        total_objective_threshold: float = np.inf,
+        time_start: float = 0.0,
+    ):
+        """Initialize the object with the given parameters.
+
+        :param policy_model: The policy model.
+        :type policy_model: PerceptronWithTruncatedNormalNoise
+        :param critic_model: The critic model.
+        :type critic_model: ModelPerceptron
+        :param sampling_time: The sampling time.
+        :type sampling_time: float
+        :param running_objective: The running objective.
+        :type running_objective: RunningObjective
+        :param simulator: The simulator.
+        :type simulator: Simulator
+        :param critic_n_epochs: The number of epochs for critic optimization.
+        :type critic_n_epochs: int
+        :param policy_n_epochs: The number of epochs for policy optimization.
+        :type policy_n_epochs: int
+        :param critic_opt_method_kwargs: The keyword arguments for the critic optimizer.
+        :type critic_opt_method_kwargs: Dict[str, Any]
+        :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer.
+        :type policy_opt_method_kwargs: Dict[str, Any]
+        :param critic_opt_method: The optimizer class for the critic.
+        :type critic_opt_method: Type[torch.optim.Optimizer]
+        :param policy_opt_method: The optimizer class for the policy.
+        :type policy_opt_method: Type[torch.optim.Optimizer]
+        :param running_objective_type: The type of running objective.
+        :type running_objective_type: str
+        :param critic_td_n: The number of timesteps for critic estimation.
+        :type critic_td_n: int
+        :param epsilon: The epsilon value for PPO.
+        :type epsilon: float
+        :param discount_factor: The discount factor.
+        :type discount_factor: float
+        :param observer: The observer.
+        :type observer: Optional[Observer]
+        :param N_episodes: The number of episodes.
+        :type N_episodes: int
+        :param N_iterations: The number of iterations.
+        :type N_iterations: int
+        :param total_objective_threshold: The total objective threshold.
+        :type total_objective_threshold: float
+        :param time_start: The starting time.
+        :type time_start: float
+
+        :raises AssertionError: If the `running_objective_type` is invalid.
+
+        :return: None
+        """
+        assert (
+            running_objective_type == "cost" or running_objective_type == "reward"
+        ), f"Invalid 'running_objective_type' value: '{running_objective_type}'. It must be either 'cost' or 'reward'."
+        system = simulator.system
+        critic = Critic(
+            system=system,
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+            model=critic_model,
+            td_n=critic_td_n,
+            is_value_function=True,
+            is_on_policy=True,
+            is_same_critic=True,
+            optimizer_config=OptimizerConfig(
+                config_options={
+                    "n_epochs": critic_n_epochs,
+                    "data_buffer_sampling_method": "iter_batches",
+                    "data_buffer_sampling_kwargs": {
+                        "batch_sampler": EpisodicSampler,
+                        "dtype": torch.FloatTensor,
+                    },
+                    "is_reinstantiate_optimizer": True,
+                },
+                opt_method=critic_opt_method,
+                opt_options=critic_opt_method_kwargs,
+                kind="tensor",
+            ),
+        )
+        super().__init__(
+            simulator=simulator,
+            time_start=time_start,
+            discount_factor=discount_factor,
+            is_critic_first=True,
+            data_buffer_nullify_event=Event.reset_iteration,
+            policy_optimization_event=Event.reset_iteration,
+            critic_optimization_event=Event.reset_iteration,
+            N_episodes=N_episodes,
+            N_iterations=N_iterations,
+            running_objective=running_objective,
+            action_bounds=system.action_bounds,
+            observer=observer,
+            critic=critic,
+            total_objective_threshold=total_objective_threshold,
+            policy=SDPG(
+                model=policy_model,
+                system=system,
+                sampling_time=sampling_time,
+                epsilon=epsilon,
+                critic=critic,
+                running_objective_type=running_objective_type,
+                discount_factor=discount_factor,
+                optimizer_config=OptimizerConfig(
+                    config_options={
+                        "n_epochs": policy_n_epochs,
+                        "data_buffer_sampling_method": "iter_batches",
+                        "data_buffer_sampling_kwargs": {
+                            "batch_sampler": RollingBatchSampler,
+                            "dtype": torch.FloatTensor,
+                            "mode": "full",
+                            "n_batches": 1,
+                        },
+                        "is_reinstantiate_optimizer": True,
+                    },
+                    opt_method=policy_opt_method,
+                    opt_options=policy_opt_method_kwargs,
+                    kind="tensor",
+                ),
+            ),
+        )
+
+
+class ReinforceController(RLController):
+    """ReinforceController is an implementation of the REINFORCE algorithm, a Monte Carlo policy gradient method for reinforcement learning."""
+
+    def __init__(
+        self,
+        policy_model: PerceptronWithTruncatedNormalNoise,
+        sampling_time: float,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        policy_opt_method_kwargs: Dict[str, Any],
+        policy_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        n_epochs: int = 1,
+        discount_factor: float = 1.0,
+        observer: Optional[Observer] = None,
+        N_episodes: int = 4,
+        N_iterations: int = 100,
+        is_with_baseline: bool = True,
+        is_do_not_let_the_past_distract_you: bool = True,
+    ):
+        """Initialize an RLController object.
+
+        :param policy_model: The policy model used by the RLController.
+        :type policy_model: PerceptronWithTruncatedNormalNoise
+        :param sampling_time: The sampling time for the system used by the RLController.
+        :type sampling_time: float
+        :param running_objective: The running objective used by the RLController.
+        :type running_objective: RunningObjective
+        :param simulator: The simulator used by the RLController.
+        :type simulator: Simulator
+        :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer method.
+        :type policy_opt_method_kwargs: Dict[str, Any]
+        :param policy_opt_method: The policy optimizer method. Defaults to torch.optim.Adam.
+        :type policy_opt_method: Type[torch.optim.Optimizer], optional
+        :param n_epochs: The number of epochs used by the policy optimizer. Defaults to 1.
+        :type n_epochs: int, optional
+        :param discount_factor: The discount factor used by the RLController. Defaults to 1.0.
+        :type discount_factor: float, optional
+        :param observer: The observer used by the RLController. Defaults to None.
+        :type observer: Optional[Observer], optional
+        :param N_episodes: The number of episodes used by the RLController. Defaults to 4.
+        :type N_episodes: int, optional
+        :param N_iterations: The number of iterations used by the RLController. Defaults to 100.
+        :type N_iterations: int, optional
+        :param is_with_baseline: Whether to use a baseline as listed in the description of the algorithm above. Defaults to True.
+        :type is_with_baseline: bool, optional
+        :param is_do_not_let_the_past_distract_you: Whether to use tail total costs or not. Defaults to True.
+        :type is_do_not_let_the_past_distract_you: bool, optional
+
+        :return: None
+        :rtype: None
+        """
+        policy = Reinforce(
+            model=policy_model,
+            system=simulator.system,
+            discount_factor=discount_factor,
+            is_with_baseline=is_with_baseline,
+            is_do_not_let_the_past_distract_you=is_do_not_let_the_past_distract_you,
+            optimizer_config=OptimizerConfig(
+                kind="tensor",
+                opt_method=policy_opt_method,
+                opt_options=policy_opt_method_kwargs,
+                config_options={
+                    "n_epochs": n_epochs,
+                    "data_buffer_sampling_method": "iter_batches",
+                    "data_buffer_sampling_kwargs": {
+                        "batch_sampler": RollingBatchSampler,
+                        "dtype": torch.FloatTensor,
+                        "mode": "full",
+                        "n_batches": 1,
+                    },
+                    "is_reinstantiate_optimizer": True,
+                },
+            ),
+        )
+
+        # Initialize the RLController with the appropriate configuration
+        super().__init__(
+            simulator=simulator,
+            time_start=0.0,  # Assuming this is the start time as not specified in YAML
+            discount_factor=discount_factor,
+            is_critic_first=True,  # Assuming the critic is still included but trivial
+            data_buffer_nullify_event=Event.reset_iteration,
+            policy_optimization_event=Event.reset_iteration,
+            N_episodes=N_episodes,
+            N_iterations=N_iterations,
+            running_objective=running_objective,
+            action_bounds=simulator.system.action_bounds,
+            observer=observer,
+            policy=policy,
+            critic=CriticTrivial(),  # Assuming critic is trivial and not needed
+            sampling_time=sampling_time,
+        )
+
+
+# Additional classes such as Policy may need to be defined or imported depending on the setup of your framework.

@@ -1,0 +1,6 @@
+regelum.optimizable.core.hooks.data\_closure
+============================================
+
+.. currentmodule:: regelum.optimizable.core.hooks
+
+.. autofunction:: data_closure

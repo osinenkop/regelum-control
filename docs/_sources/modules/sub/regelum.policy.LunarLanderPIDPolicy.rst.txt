@@ -1,0 +1,23 @@
+regelum.policy.LunarLanderPIDPolicy
+===================================
+
+.. currentmodule:: regelum.policy
+
+.. autoclass:: LunarLanderPIDPolicy
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LunarLanderPIDPolicy.__init__
+      ~LunarLanderPIDPolicy.get_action
+   
+   
+
+   
+   
+   

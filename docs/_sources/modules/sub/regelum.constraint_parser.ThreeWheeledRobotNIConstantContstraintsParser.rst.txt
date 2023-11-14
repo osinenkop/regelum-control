@@ -1,0 +1,25 @@
+regelum.constraint\_parser.ThreeWheeledRobotNIConstantContstraintsParser
+========================================================================
+
+.. currentmodule:: regelum.constraint_parser
+
+.. autoclass:: ThreeWheeledRobotNIConstantContstraintsParser
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ThreeWheeledRobotNIConstantContstraintsParser.__init__
+      ~ThreeWheeledRobotNIConstantContstraintsParser.constraint_function
+      ~ThreeWheeledRobotNIConstantContstraintsParser.constraint_parameters
+      ~ThreeWheeledRobotNIConstantContstraintsParser.parse_constraints
+   
+   
+
+   
+   
+   

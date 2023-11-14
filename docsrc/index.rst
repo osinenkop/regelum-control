@@ -33,6 +33,36 @@ you'd like to browse releases or fork the repository.
 
 .. toctree::
    :hidden:
+   :caption: Controllers
+   :maxdepth: 1
+
+   controllers
+
+.. toctree::
+   :hidden:
+   :caption: Systems
+   :maxdepth: 1
+
+   systems_tutorial
+   systems
+   
+
+.. toctree::
+   :hidden:
+   :caption: Optimizable
+   :maxdepth: 1
+
+   optimizable
+
+.. toctree::
+   :hidden:
+   :caption: rc singletone
+   :maxdepth: 1
+
+   rc
+
+.. toctree::
+   :hidden:
    :caption: API Documentation
    :maxdepth: 5
    :glob:

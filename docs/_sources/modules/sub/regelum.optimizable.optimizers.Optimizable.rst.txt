@@ -1,0 +1,63 @@
+regelum.optimizable.optimizers.Optimizable
+==========================================
+
+.. currentmodule:: regelum.optimizable.optimizers
+
+.. autoclass:: Optimizable
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Optimizable.__init__
+      ~Optimizable.connect_source
+      ~Optimizable.create_variable
+      ~Optimizable.create_variable_metadata
+      ~Optimizable.define_problem
+      ~Optimizable.eval_contraints
+      ~Optimizable.fix_variables
+      ~Optimizable.get_data_buffer_batch_size
+      ~Optimizable.handle_bounds
+      ~Optimizable.instantiate_configuration
+      ~Optimizable.is_target_event
+      ~Optimizable.opt_constraints_tensor
+      ~Optimizable.optimize
+      ~Optimizable.optimize_numeric
+      ~Optimizable.optimize_on_event
+      ~Optimizable.optimize_symbolic
+      ~Optimizable.optimize_tensor
+      ~Optimizable.optimize_tensor_batch_sampler
+      ~Optimizable.post_epoch
+      ~Optimizable.post_optimize
+      ~Optimizable.register_bounds
+      ~Optimizable.register_constraint
+      ~Optimizable.register_objective
+      ~Optimizable.substitute_parameters
+      ~Optimizable.unfix_variables
+      ~Optimizable.update_status
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Optimizable.constants
+      ~Optimizable.constraints
+      ~Optimizable.decision_variables
+      ~Optimizable.functions
+      ~Optimizable.log_options
+      ~Optimizable.objective
+      ~Optimizable.objectives
+      ~Optimizable.opt_func
+      ~Optimizable.opt_options
+      ~Optimizable.opti
+      ~Optimizable.variables
+   
+   

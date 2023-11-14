@@ -1,0 +1,31 @@
+``regelum.event`` 
+=================
+
+
+.. automodule:: regelum.event
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      Event
+   
+   
+
+   
+   
+   
+
+
+

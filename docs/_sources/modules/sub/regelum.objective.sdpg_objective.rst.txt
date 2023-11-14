@@ -1,0 +1,6 @@
+regelum.objective.sdpg\_objective
+=================================
+
+.. currentmodule:: regelum.objective
+
+.. autofunction:: sdpg_objective

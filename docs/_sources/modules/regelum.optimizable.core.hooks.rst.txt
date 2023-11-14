@@ -1,0 +1,36 @@
+``regelum.optimizable.core.hooks`` 
+==================================
+
+
+.. automodule:: regelum.optimizable.core.hooks
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      data_closure
+      detach
+      get_data_hook
+      metadata_closure
+      mutate_metadata
+      requires_grad
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

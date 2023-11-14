@@ -1,0 +1,44 @@
+``regelum.controller`` 
+======================
+
+
+.. automodule:: regelum.controller
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree: sub
+   
+      apply_action_bounds
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      CALFControllerExPost
+      Controller
+      MPCController
+      MPCTorchController
+      PPOController
+      RLController
+      ReinforceController
+   
+   
+
+   
+   
+   
+
+
+

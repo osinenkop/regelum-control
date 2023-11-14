@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>regelum.controller.CALFControllerExPost &mdash; regelum 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="regelum.controller.Controller" href="regelum.controller.Controller.html" />
+    <link rel="prev" title="regelum.controller.apply_action_bounds" href="regelum.controller.apply_action_bounds.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home" style="color: #8cc770;">
+            regelum
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#what-is-regelum">What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#regelum-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#presets">Presets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#related-literature">Related literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#closing-remarks">Closing remarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#for-developers">For developers</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Controllers</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../controllers.html">REINFORCE Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../controllers.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../controllers.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Systems</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../systems.html">Avaliable systems</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Optimizable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../optimizable.html">Optimizable Subpackage Tutorial</a></li>
+</ul>
+<p class="caption"><span class="caption-text">rc singletone</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../regelum.animation.html"><code class="docutils literal notranslate"><span class="pre">regelum.animation</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.callback.html"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.configure.html"><code class="docutils literal notranslate"><span class="pre">regelum.configure</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.constraint_parser.html"><code class="docutils literal notranslate"><span class="pre">regelum.constraint_parser</span></code></a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.apply_action_bounds.html">regelum.controller.apply_action_bounds</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">regelum.controller.CALFControllerExPost</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.Controller.html">regelum.controller.Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.MPCController.html">regelum.controller.MPCController</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.MPCTorchController.html">regelum.controller.MPCTorchController</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.PPOController.html">regelum.controller.PPOController</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.RLController.html">regelum.controller.RLController</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regelum.controller.ReinforceController.html">regelum.controller.ReinforceController</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.critic.html"><code class="docutils literal notranslate"><span class="pre">regelum.critic</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.data_buffers.batch_sampler.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.batch_sampler</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.data_buffers.data_buffer.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.data_buffer</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.data_buffers.fifo_list.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.fifo_list</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.data_buffers.types.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.types</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.event.html"><code class="docutils literal notranslate"><span class="pre">regelum.event</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.model.html"><code class="docutils literal notranslate"><span class="pre">regelum.model</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.objective.html"><code class="docutils literal notranslate"><span class="pre">regelum.objective</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.observer.html"><code class="docutils literal notranslate"><span class="pre">regelum.observer</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.optimizable.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.optimizable.core.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.optimizable.core.configs.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.configs</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.optimizable.core.entities.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.entities</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.optimizable.core.hooks.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.hooks</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.optimizable.optimizers.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.optimizers</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.policy.html"><code class="docutils literal notranslate"><span class="pre">regelum.policy</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.predictor.html"><code class="docutils literal notranslate"><span class="pre">regelum.predictor</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.simulator.html"><code class="docutils literal notranslate"><span class="pre">regelum.simulator</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../regelum.system.html"><code class="docutils literal notranslate"><span class="pre">regelum.system</span></code></a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">regelum</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" style="color: #8cc770;" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a></li>
+      <li class="breadcrumb-item active">regelum.controller.CALFControllerExPost</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="regelum-controller-calfcontrollerexpost">
+<h1>regelum.controller.CALFControllerExPost<a class="headerlink" href="#regelum-controller-calfcontrollerexpost" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="regelum.controller.CALFControllerExPost">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">regelum.controller.</span></span><span class="sig-name descname"><span class="pre">CALFControllerExPost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#regelum.controller.CALFControllerExPost" title="Permalink to this definition"></a></dt>
+<dd><p>Controller for CALF algorithm.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="regelum.controller.CALFControllerExPost.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#regelum.controller.CALFControllerExPost.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize an object from regelum.</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#regelum.controller.CALFControllerExPost.__init__" title="regelum.controller.CALFControllerExPost.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Initialize an object from regelum.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_total_objective</span></code>(running_objective, …)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action</span></code>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_action_sampled</span></code>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">invoke_safe_action</span></code>(state, observation)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">issue_action</span></code>(observation)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_action_issued</span></code>(observation)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_observation_received</span></code>(time, …)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize</span></code>(event)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_or_skip_on_event</span></code>(…)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_compute_action</span></code>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pre_optimize</span></code>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reload_pipeline</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code>()</p></td>
+<td><p>Reset agent for use in multi-episode simulation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_episode</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_iteration</span></code>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_simulation</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">substitute_constraint_parameters</span></code>(**kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_data_buffer_with_action_stats</span></code>(observation)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="regelum.controller.apply_action_bounds.html" class="btn btn-neutral float-left" title="regelum.controller.apply_action_bounds" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="regelum.controller.Controller.html" class="btn btn-neutral float-right" title="regelum.controller.Controller" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, AIDA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

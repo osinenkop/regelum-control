@@ -1,0 +1,6 @@
+regelum.callback.method\_callback
+=================================
+
+.. currentmodule:: regelum.callback
+
+.. autofunction:: method_callback

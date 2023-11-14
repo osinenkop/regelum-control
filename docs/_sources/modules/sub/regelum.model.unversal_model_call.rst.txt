@@ -1,0 +1,6 @@
+regelum.model.unversal\_model\_call
+===================================
+
+.. currentmodule:: regelum.model
+
+.. autofunction:: unversal_model_call

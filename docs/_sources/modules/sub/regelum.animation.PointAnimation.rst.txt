@@ -1,0 +1,48 @@
+regelum.animation.PointAnimation
+================================
+
+.. currentmodule:: regelum.animation
+
+.. autoclass:: PointAnimation
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PointAnimation.__init__
+      ~PointAnimation.add_frame
+      ~PointAnimation.animate
+      ~PointAnimation.animate_and_save
+      ~PointAnimation.attach
+      ~PointAnimation.construct_frame
+      ~PointAnimation.get_save_directory
+      ~PointAnimation.is_target_event
+      ~PointAnimation.lim
+      ~PointAnimation.lim_from_reference
+      ~PointAnimation.on_episode_done
+      ~PointAnimation.on_iteration_done
+      ~PointAnimation.on_launch
+      ~PointAnimation.on_termination
+      ~PointAnimation.on_trigger
+      ~PointAnimation.perform
+      ~PointAnimation.ready
+      ~PointAnimation.register
+      ~PointAnimation.reset
+      ~PointAnimation.setup
+      ~PointAnimation.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PointAnimation.cooldown
+   
+   

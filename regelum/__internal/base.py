@@ -26,7 +26,10 @@ class apply_callbacks:
         def new_method(self2, *args, **kwargs):
             res = method(self2, *args, **kwargs)
             if self.callbacks is None:
-                callbacks = RegelumBase._metadata["main"].callbacks
+                try:
+                    callbacks = RegelumBase._metadata["main"].callbacks
+                except AttributeError:
+                    callbacks = []
             for callback in callbacks:
                 callback(obj=self2, method=method.__name__, output=res)
             return res

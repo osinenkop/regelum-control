@@ -1,0 +1,52 @@
+regelum.animation.DirectionalPlanarMotionAnimation
+==================================================
+
+.. currentmodule:: regelum.animation
+
+.. autoclass:: DirectionalPlanarMotionAnimation
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DirectionalPlanarMotionAnimation.__init__
+      ~DirectionalPlanarMotionAnimation.add_frame
+      ~DirectionalPlanarMotionAnimation.animate
+      ~DirectionalPlanarMotionAnimation.animate_and_save
+      ~DirectionalPlanarMotionAnimation.attach
+      ~DirectionalPlanarMotionAnimation.construct_frame
+      ~DirectionalPlanarMotionAnimation.construct_frame_pic
+      ~DirectionalPlanarMotionAnimation.construct_frame_points
+      ~DirectionalPlanarMotionAnimation.get_save_directory
+      ~DirectionalPlanarMotionAnimation.is_target_event
+      ~DirectionalPlanarMotionAnimation.lim
+      ~DirectionalPlanarMotionAnimation.lim_from_reference
+      ~DirectionalPlanarMotionAnimation.on_episode_done
+      ~DirectionalPlanarMotionAnimation.on_iteration_done
+      ~DirectionalPlanarMotionAnimation.on_launch
+      ~DirectionalPlanarMotionAnimation.on_termination
+      ~DirectionalPlanarMotionAnimation.on_trigger
+      ~DirectionalPlanarMotionAnimation.perform
+      ~DirectionalPlanarMotionAnimation.ready
+      ~DirectionalPlanarMotionAnimation.register
+      ~DirectionalPlanarMotionAnimation.reset
+      ~DirectionalPlanarMotionAnimation.setup
+      ~DirectionalPlanarMotionAnimation.setup_pic
+      ~DirectionalPlanarMotionAnimation.setup_points
+      ~DirectionalPlanarMotionAnimation.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DirectionalPlanarMotionAnimation.cooldown
+   
+   

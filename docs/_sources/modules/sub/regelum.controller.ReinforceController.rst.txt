@@ -1,0 +1,40 @@
+regelum.controller.ReinforceController
+======================================
+
+.. currentmodule:: regelum.controller
+
+.. autoclass:: ReinforceController
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ReinforceController.__init__
+      ~ReinforceController.calculate_total_objective
+      ~ReinforceController.compute_action
+      ~ReinforceController.compute_action_sampled
+      ~ReinforceController.issue_action
+      ~ReinforceController.on_action_issued
+      ~ReinforceController.on_observation_received
+      ~ReinforceController.optimize
+      ~ReinforceController.optimize_or_skip_on_event
+      ~ReinforceController.post_compute_action
+      ~ReinforceController.pre_optimize
+      ~ReinforceController.reload_pipeline
+      ~ReinforceController.reset
+      ~ReinforceController.reset_episode
+      ~ReinforceController.reset_iteration
+      ~ReinforceController.reset_simulation
+      ~ReinforceController.run
+      ~ReinforceController.step
+      ~ReinforceController.substitute_constraint_parameters
+   
+   
+
+   
+   
+   

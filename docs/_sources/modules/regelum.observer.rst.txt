@@ -1,0 +1,34 @@
+``regelum.observer`` 
+====================
+
+
+.. automodule:: regelum.observer
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree: sub
+   
+      KalmanFilter
+      Observer
+      ObserverReference
+      ObserverTrivial
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,6 @@
+regelum.callback.passdown
+=========================
+
+.. currentmodule:: regelum.callback
+
+.. autofunction:: passdown

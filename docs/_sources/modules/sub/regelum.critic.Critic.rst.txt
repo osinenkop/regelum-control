@@ -1,0 +1,77 @@
+regelum.critic.Critic
+=====================
+
+.. currentmodule:: regelum.critic
+
+.. autoclass:: Critic
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Critic.__init__
+      ~Critic.cache_weights
+      ~Critic.connect_source
+      ~Critic.create_variable
+      ~Critic.create_variable_metadata
+      ~Critic.data_buffer_objective_keys
+      ~Critic.define_problem
+      ~Critic.delete_critic_targets
+      ~Critic.eval_contraints
+      ~Critic.fix_variables
+      ~Critic.get_data_buffer_batch_size
+      ~Critic.handle_bounds
+      ~Critic.initialize_optimize_procedure
+      ~Critic.instantiate_configuration
+      ~Critic.is_target_event
+      ~Critic.objective_function
+      ~Critic.opt_constraints_tensor
+      ~Critic.optimize
+      ~Critic.optimize_numeric
+      ~Critic.optimize_on_event
+      ~Critic.optimize_symbolic
+      ~Critic.optimize_tensor
+      ~Critic.optimize_tensor_batch_sampler
+      ~Critic.post_epoch
+      ~Critic.post_optimize
+      ~Critic.receive_estimated_state
+      ~Critic.register_bounds
+      ~Critic.register_constraint
+      ~Critic.register_objective
+      ~Critic.regularization_function
+      ~Critic.reset
+      ~Critic.restore_weights
+      ~Critic.substitute_parameters
+      ~Critic.unfix_variables
+      ~Critic.update_and_cache_weights
+      ~Critic.update_data_buffer_with_optimal_policy_targets
+      ~Critic.update_data_buffer_with_stored_weights_critic_output
+      ~Critic.update_status
+      ~Critic.update_weights
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Critic.constants
+      ~Critic.constraints
+      ~Critic.decision_variables
+      ~Critic.functions
+      ~Critic.log_options
+      ~Critic.objective
+      ~Critic.objectives
+      ~Critic.opt_func
+      ~Critic.opt_options
+      ~Critic.opti
+      ~Critic.variables
+      ~Critic.weights
+   
+   

@@ -1,0 +1,25 @@
+regelum.data\_buffers.batch\_sampler.BatchSampler
+=================================================
+
+.. currentmodule:: regelum.data_buffers.batch_sampler
+
+.. autoclass:: BatchSampler
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BatchSampler.__init__
+      ~BatchSampler.next
+      ~BatchSampler.nullify_sampler
+      ~BatchSampler.stop_iteration_criterion
+   
+   
+
+   
+   
+   

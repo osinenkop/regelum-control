@@ -1,0 +1,39 @@
+regelum.callback.ConfigDiagramCallback
+======================================
+
+.. currentmodule:: regelum.callback
+
+.. autoclass:: ConfigDiagramCallback
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ConfigDiagramCallback.__init__
+      ~ConfigDiagramCallback.attach
+      ~ConfigDiagramCallback.is_target_event
+      ~ConfigDiagramCallback.on_episode_done
+      ~ConfigDiagramCallback.on_iteration_done
+      ~ConfigDiagramCallback.on_launch
+      ~ConfigDiagramCallback.on_termination
+      ~ConfigDiagramCallback.on_trigger
+      ~ConfigDiagramCallback.perform
+      ~ConfigDiagramCallback.ready
+      ~ConfigDiagramCallback.register
+      ~ConfigDiagramCallback.trigger_cooldown
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ConfigDiagramCallback.cooldown
+   
+   

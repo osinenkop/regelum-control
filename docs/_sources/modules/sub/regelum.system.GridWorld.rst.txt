@@ -1,0 +1,44 @@
+regelum.system.GridWorld
+========================
+
+.. currentmodule:: regelum.system
+
+.. autoclass:: GridWorld
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GridWorld.__init__
+      ~GridWorld.compose
+      ~GridWorld.compute_closed_loop_rhs
+      ~GridWorld.compute_state_dynamics
+      ~GridWorld.get_observation
+      ~GridWorld.receive_action
+      ~GridWorld.reset
+      ~GridWorld.update_system_parameters
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GridWorld.action_bounds
+      ~GridWorld.dim_inputs
+      ~GridWorld.dim_observation
+      ~GridWorld.dim_state
+      ~GridWorld.inputs_naming
+      ~GridWorld.name
+      ~GridWorld.observation_naming
+      ~GridWorld.parameters
+      ~GridWorld.state_naming
+      ~GridWorld.system_type
+   
+   

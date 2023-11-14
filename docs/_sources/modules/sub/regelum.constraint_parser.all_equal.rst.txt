@@ -1,0 +1,6 @@
+regelum.constraint\_parser.all\_equal
+=====================================
+
+.. currentmodule:: regelum.constraint_parser
+
+.. autofunction:: all_equal
