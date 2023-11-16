@@ -59,7 +59,6 @@ class Pipeline(RegelumBase):
         self,
         policy: Policy,
         simulator: Simulator,
-        time_start: float = 0,
         sampling_time: float = 0.1,
         action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         running_objective: Optional[RunningObjective] = None,
@@ -72,14 +71,12 @@ class Pipeline(RegelumBase):
     ):
         """Initialize an instance of Pipeline.
 
-        :param time_start: time at which simulation started
         :param sampling_time: time interval between two consecutive actions
         """
         super().__init__()
         self.N_episodes = N_episodes
         self.N_iterations = N_iterations
         self.simulator = simulator
-        self.time = self.simulator.time_start
         self.time_old = 0
         self.delta_time = 0
         self.total_objective: float = 0.0
@@ -114,9 +111,8 @@ class Pipeline(RegelumBase):
         )
 
         self.policy = policy
-        self.pipeline_clock = time_start
         self.sampling_time = sampling_time
-        self.clock = Clock(period=sampling_time, time_start=time_start)
+        self.clock = Clock(period=sampling_time)
         self.iteration_counter: int = 0
         self.episode_counter: int = 0
         self.step_counter: int = 0
@@ -347,7 +343,6 @@ class RLPipeline(Pipeline):
         is_critic_first: bool = False,
         action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         max_data_buffer_size: Optional[int] = None,
-        time_start: float = 0,
         sampling_time: float = 0.1,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -377,15 +372,12 @@ class RLPipeline(Pipeline):
         :type action_bounds: Union[list, np.ndarray, None], optional
         :param max_data_buffer_size: max size of DataBuffer, if is `None` the DataBuffer is unlimited. defaults to None
         :type max_data_buffer_size: Optional[int], optional
-        :param time_start: time at which simulation started, defaults to 0
-        :type time_start: float, optional
         :param sampling_time: time interval between two consecutive actions, defaults to 0.1
         :type sampling_time: float, optional
         """
         Pipeline.__init__(
             self,
             simulator=simulator,
-            time_start=time_start,
             sampling_time=sampling_time,
             policy=policy,
             running_objective=running_objective,
@@ -534,7 +526,6 @@ class CALFPipelineExPost(RLPipeline):
         discount_factor=1,
         action_bounds=None,
         max_data_buffer_size: Optional[int] = None,
-        time_start: float = 0,
         sampling_time: float = 0.1,
     ):
         """Instantiate a CALFPipelineExPost object. The docstring will be completed in the next release.
@@ -559,8 +550,6 @@ class CALFPipelineExPost(RLPipeline):
         :type action_bounds: _type_, optional
         :param max_data_buffer_size: _description_, defaults to None
         :type max_data_buffer_size: Optional[int], optional
-        :param time_start: _description_, defaults to 0
-        :type time_start: float, optional
         :param sampling_time: _description_, defaults to 0.1
         :type sampling_time: float, optional
         """
@@ -575,7 +564,6 @@ class CALFPipelineExPost(RLPipeline):
             is_critic_first=True,
             action_bounds=action_bounds,
             max_data_buffer_size=max_data_buffer_size,
-            time_start=time_start,
             sampling_time=sampling_time,
         )
         self.safe_pipeline = safe_pipeline
@@ -678,8 +666,6 @@ class MPCPipeline(RLPipeline):
         :type observer: Observer | None
         :param constraint_parser: The constraint parser for the MPC agent. Defaults to None.
         :type constraint_parser: ConstraintParser | None
-        :param time_start: The starting time for the MPC agent. Defaults to 0.
-        :type time_start: float
         :param discount_factor: The discount factor for the MPC agent. Defaults to 1.0.
         :type discount_factor: float
         """
@@ -773,8 +759,6 @@ class MPCTorchPipeline(RLPipeline):
         :type observer: Optional[Observer]
         :param constraint_parser: The constraint parser object to use. Defaults to None.
         :type constraint_parser: Optional[ConstraintParser]
-        :param time_start: The starting time for the simulation. Defaults to 0.
-        :type time_start: float
         :param discount_factor: The discount factor for future rewards. Defaults to 1.0.
         :type discount_factor: float
 
@@ -997,8 +981,6 @@ class PPOPipeline(RLPipeline):
         :type N_iterations: int
         :param total_objective_threshold: The total objective threshold.
         :type total_objective_threshold: float
-        :param time_start: The starting time.
-        :type time_start: float
 
         :raises AssertionError: If the `running_objective_type` is invalid.
 
@@ -1103,8 +1085,6 @@ class SDPGPipeline(RLPipeline):
         :type N_iterations: int
         :param total_objective_threshold: The total objective threshold.
         :type total_objective_threshold: float
-        :param time_start: The starting time.
-        :type time_start: float
 
         :raises AssertionError: If the `running_objective_type` is invalid.
 
