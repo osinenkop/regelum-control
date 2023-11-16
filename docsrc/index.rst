@@ -56,10 +56,10 @@ you'd like to browse releases or fork the repository.
 
 .. toctree::
    :hidden:
-   :caption: rc singletone
+   :caption: rg singletone
    :maxdepth: 1
 
-   rc
+   rg
 
 .. toctree::
    :hidden:

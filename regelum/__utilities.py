@@ -315,7 +315,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return result
 
     def reshape_to_column(self, array, length, rc_type: RCType = NUMPY):
-        result_array = rc.reshape(array, [length, 1])
+        result_array = rg.reshape(array, [length, 1])
         return result_array
 
     def reshape(
@@ -756,7 +756,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             n = self.shape(mat)[0]
 
-            vec = rc.zeros((int(n * (n + 1) / 2)), prototype=mat)
+            vec = rg.zeros((int(n * (n + 1) / 2)), prototype=mat)
 
             k = 0
             for i in range(n):
@@ -794,7 +794,7 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         return casadi.Function("f", list(symbolic_vars), [symbolic_expression])
 
     def soft_abs(self, x, a=20, rc_type: RCType = NUMPY):
-        return a * rc.abs(x) ** 3 / (1 + a * x**2)
+        return a * rg.abs(x) ** 3 / (1 + a * x**2)
 
 
-rc = RCTypeHandler()
+rg = RCTypeHandler()

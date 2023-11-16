@@ -70,7 +70,7 @@ Control inputs :math:`(v, \omega)` are utilized in the code as follows:
     from regelum.system import System
     import numpy as np
 
-    from regelum.__utilities import rc  # Essential for array computations
+    from regelum.__utilities import rg  # Essential for array computations
 
     class ThreeWheeledRobotNI(System):
         """ Non-holonomic three-wheeled robot system implementation. """
@@ -91,11 +91,11 @@ Control inputs :math:`(v, \omega)` are utilized in the code as follows:
             """ Calculate the robot's state dynamics. """
 
             # Placeholder for the right-hand side of the differential equations
-            Dstate = rc.zeros(self._dim_state, prototype=state)
+            Dstate = rg.zeros(self._dim_state, prototype=state)
             
             # Element-wise calculation of the Dstate vector based on the system's differential equations
-            Dstate[0] = inputs[0] * rc.cos(state[2])  # v * cos(vartheta)
-            Dstate[1] = inputs[0] * rc.sin(state[2])  # v * sin(vartheta)
+            Dstate[0] = inputs[0] * rg.cos(state[2])  # v * cos(vartheta)
+            Dstate[1] = inputs[0] * rg.sin(state[2])  # v * sin(vartheta)
             Dstate[2] = inputs[1]                     # omega
 
             return Dstate
@@ -154,13 +154,13 @@ Parameters such as mass (:math:`m`) and moment of inertia (:math:`I`) are stored
             """ Compute the system's state dynamics. """
 
             # Initialize the right-hand-side of the differential equations
-            Dstate = rc.zeros(self._dim_state, prototype=(state, inputs))
+            Dstate = rg.zeros(self._dim_state, prototype=(state, inputs))
 
             m, I = self._parameters["m"], self._parameters["I"]
 
             # Compute the state derivatives
-            Dstate[0] = state[3] * rc.cos(state[2])  # v * cos(theta)
-            Dstate[1] = state[3] * rc.sin(state[2])  # v * sin(theta)
+            Dstate[0] = state[3] * rg.cos(state[2])  # v * cos(theta)
+            Dstate[1] = state[3] * rg.sin(state[2])  # v * sin(theta)
             Dstate[2] = state[4]                     # omega
             Dstate[3] = (1 / m) * inputs[0]          # F / m
             Dstate[4] = (1 / I) * inputs[1]          # M / I
@@ -215,7 +215,7 @@ with the simple `Integrator`` system that is represented by the following dynami
 .. code-block:: python
 
     from regelum.system import System
-    from regelum.__utilities import rc  # Essential for array computations
+    from regelum.__utilities import rg  # Essential for array computations
 
     class Integrator(System):
         """System yielding Non-holonomic double integrator when composed with kinematic three-wheeled robot."""
@@ -228,7 +228,7 @@ with the simple `Integrator`` system that is represented by the following dynami
         _parameters = {"m": 10, "I": 1}
 
         def _compute_state_dynamics(self, time, state, inputs):
-            Dstate = rc.zeros(
+            Dstate = rg.zeros(
                 self.dim_state,
                 prototype=(state, inputs),
             )
@@ -308,7 +308,7 @@ For instance, to park a robot at a designated point (e.g., (1, 1, 0)), we can co
     _parameters = {"reference": np.array([[1.0], [1.0], [0.0]])}
 
     def _get_observation(self, time, state, inputs):
-        return inputs - rc.array(
+        return inputs - rg.array(
             self.parameters["reference"], prototype=inputs, _force_numeric=True
         )
 

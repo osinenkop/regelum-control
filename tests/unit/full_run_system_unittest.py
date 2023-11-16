@@ -5,7 +5,7 @@ from regelum.system import (
     InvertedPendulumPD,
     TwoTankWithReference,
 )
-from regelum.__utilities import rc
+from regelum.__utilities import rg
 import numpy as np
 
 robot = ThreeWheeledRobotNI()
@@ -19,11 +19,11 @@ def get_sample_model_dstate(system):
     dim_state = system.dim_state
     dim_inputs = system.dim_inputs
 
-    state_num = rc.array([i for i in range(dim_state)])
-    action_num = rc.array([i for i in range(dim_inputs)])
+    state_num = rg.array([i for i in range(dim_state)])
+    action_num = rg.array([i for i in range(dim_inputs)])
 
-    state_symb = rc.array_symb((dim_state, 1), literal="s")
-    action_symb = rc.array_symb((dim_inputs, 1), literal="a")
+    state_symb = rg.array_symb((dim_state, 1), literal="s")
+    action_symb = rg.array_symb((dim_inputs, 1), literal="a")
     dstate_num = system.compute_state_dynamics(
         time=None, state=state_num, inputs=action_num
     )
@@ -52,11 +52,11 @@ def get_sample_model_observation(system):
     dim_state = system.dim_state
     dim_inputs = system.dim_inputs
 
-    state_num = rc.array([i for i in range(dim_state)])
-    action_num = rc.array([i for i in range(dim_inputs)])
+    state_num = rg.array([i for i in range(dim_state)])
+    action_num = rg.array([i for i in range(dim_inputs)])
 
-    state_symb = rc.array_symb((dim_state, 1), literal="s")
-    action_symb = rc.array_symb((dim_inputs, 1), literal="a")
+    state_symb = rg.array_symb((dim_state, 1), literal="s")
+    action_symb = rg.array_symb((dim_inputs, 1), literal="a")
     observation_num = system.get_observation(
         time=None, state=state_num, inputs=action_num
     )
@@ -93,9 +93,9 @@ def simple_unit_test(system):
         action_symb,
     ) = get_sample_model_dstate(system)
 
-    func = rc.to_casadi_function(dstate_symb, state_symb, action_symb)
+    func = rg.to_casadi_function(dstate_symb, state_symb, action_symb)
 
-    func_native = rc.to_casadi_function(dstate_symb_native, state_symb, action_symb)
+    func_native = rg.to_casadi_function(dstate_symb_native, state_symb, action_symb)
     return all(
         [
             np.allclose(func(state_num, action_num).full(), dstate_num),

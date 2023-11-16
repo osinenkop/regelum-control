@@ -13,7 +13,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Optional
 import casadi as cs
-from .__utilities import rc, AwaitedParameter
+from .__utilities import rg, AwaitedParameter
 
 from .predictor import Predictor
 from .model import ModelNN, Model, ModelWeightContainer
@@ -859,7 +859,7 @@ class RLPolicy(Policy):
                 discount_factor=self.discount_factor,
             )
         elif self.algorithm == "greedy":
-            return rc.mean(
+            return rg.mean(
                 self.critic(
                     observation,
                     self.model(observation, weights=policy_model_weights),
@@ -1033,24 +1033,24 @@ class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
             omega = (
                 -self.K
                 * np.sign(angle - angle_cond)
-                * rc.sqrt(rc.abs(angle - angle_cond))
+                * rg.sqrt(rg.abs(angle - angle_cond))
             )
             v = 0
         elif not np.allclose((x, y), (0, 0), atol=1e-03) and np.isclose(
             angle, angle_cond, atol=1e-03
         ):
             omega = 0
-            v = -self.K * rc.sqrt(rc.norm_2(rc.hstack([x, y])))
+            v = -self.K * rg.sqrt(rg.norm_2(rg.hstack([x, y])))
         elif np.allclose((x, y), (0, 0), atol=1e-03) and not np.isclose(
             angle, 0, atol=1e-03
         ):
-            omega = -self.K * np.sign(angle) * rc.sqrt(rc.abs(angle))
+            omega = -self.K * np.sign(angle) * rg.sqrt(rg.abs(angle))
             v = 0
         else:
             omega = 0
             v = 0
 
-        return rc.force_row(rc.hstack([v, omega]))
+        return rg.force_row(rg.hstack([v, omega]))
 
 
 class InvertedPendulumStabilizingPolicy(Policy):
@@ -1085,11 +1085,11 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
 
-        nablaL = rc.zeros(3)
+        nablaL = rg.zeros(3)
 
         nablaL[0] = (
             4 * xNI[0] ** 3
-            + rc.abs(xNI[2]) ** 3
+            + rg.abs(xNI[2]) ** 3
             / sigma**3
             * 1
             / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
@@ -1098,39 +1098,39 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         )
         nablaL[1] = (
             4 * xNI[1] ** 3
-            + rc.abs(xNI[2]) ** 3
+            + rg.abs(xNI[2]) ** 3
             / sigma**3
             * 1
             / np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) ** 3
             * 2
             * xNI[1]
         )
-        nablaL[2] = 3 * rc.abs(xNI[2]) ** 2 * rc.sign(xNI[2]) + rc.abs(
+        nablaL[2] = 3 * rg.abs(xNI[2]) ** 2 * rg.sign(xNI[2]) + rg.abs(
             xNI[2]
-        ) ** 3 / sigma**3 * 1 / np.sqrt(rc.abs(xNI[2])) * rc.sign(xNI[2])
+        ) ** 3 / sigma**3 * 1 / np.sqrt(rg.abs(xNI[2])) * rg.sign(xNI[2])
 
         theta = 0
 
         sigma_tilde = (
-            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
+            xNI[0] * rg.cos(theta) + xNI[1] * rg.sin(theta) + np.sqrt(rg.abs(xNI[2]))
         )
 
-        nablaF = rc.zeros(3)
+        nablaF = rg.zeros(3)
 
         nablaF[0] = (
-            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde**3
+            4 * xNI[0] ** 3 - 2 * rg.abs(xNI[2]) ** 3 * rg.cos(theta) / sigma_tilde**3
         )
         nablaF[1] = (
-            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde**3
+            4 * xNI[1] ** 3 - 2 * rg.abs(xNI[2]) ** 3 * rg.sin(theta) / sigma_tilde**3
         )
         nablaF[2] = (
             (
-                3 * xNI[0] * rc.cos(theta)
-                + 3 * xNI[1] * rc.sin(theta)
-                + 2 * np.sqrt(rc.abs(xNI[2]))
+                3 * xNI[0] * rg.cos(theta)
+                + 3 * xNI[1] * rg.sin(theta)
+                + 2 * np.sqrt(rg.abs(xNI[2]))
             )
             * xNI[2] ** 2
-            * rc.sign(xNI[2])
+            * rg.sign(xNI[2])
             / sigma_tilde**3
         )
 
@@ -1141,19 +1141,19 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
 
     def _kappa(self, xNI):
         """Stabilizing pipeline for NI-part."""
-        kappa_val = rc.zeros(2)
+        kappa_val = rg.zeros(2)
 
-        G = rc.zeros([3, 2])
-        G[:, 0] = rc.array([1, 0, xNI[1]], prototype=G)
-        G[:, 1] = rc.array([0, 1, -xNI[0]], prototype=G)
+        G = rg.zeros([3, 2])
+        G[:, 0] = rg.array([1, 0, xNI[1]], prototype=G)
+        G[:, 1] = rg.array([0, 1, -xNI[0]], prototype=G)
 
         zeta_val = self._zeta(xNI)
 
-        kappa_val[0] = -rc.abs(np.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 0])
+        kappa_val[0] = -rg.abs(np.dot(zeta_val, G[:, 0])) ** (1 / 3) * rg.sign(
+            rg.dot(zeta_val, G[:, 0])
         )
-        kappa_val[1] = -rc.abs(np.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 1])
+        kappa_val[1] = -rg.abs(np.dot(zeta_val, G[:, 1])) ** (1 / 3) * rg.sign(
+            rg.dot(zeta_val, G[:, 1])
         )
 
         return kappa_val
@@ -1161,34 +1161,34 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
     def _F(self, xNI, eta, theta):
         """Marginal function for NI."""
         sigma_tilde = (
-            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
+            xNI[0] * rg.cos(theta) + xNI[1] * rg.sin(theta) + np.sqrt(rg.abs(xNI[2]))
         )
 
-        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde**2
+        F = xNI[0] ** 4 + xNI[1] ** 4 + rg.abs(xNI[2]) ** 3 / sigma_tilde**2
 
         z = eta - self._kappa(xNI, theta)
 
-        return F + 1 / 2 * rc.dot(z, z)
+        return F + 1 / 2 * rg.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
         """Transform from Cartesian coordinates to non-holonomic (NH) coordinates."""
-        xNI = rc.zeros(3)
+        xNI = rg.zeros(3)
 
         xc = coords_Cart[0]
         yc = coords_Cart[1]
         angle = coords_Cart[2]
 
         xNI[0] = angle
-        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
-        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
-            xc * rc.cos(angle) + yc * rc.sin(angle)
+        xNI[1] = xc * rg.cos(angle) + yc * rg.sin(angle)
+        xNI[2] = -2 * (yc * rg.cos(angle) - xc * rg.sin(angle)) - angle * (
+            xc * rg.cos(angle) + yc * rg.sin(angle)
         )
 
         return xNI
 
     def _NH2ctrl_Cart(self, xNI, uNI):
         """Get control for Cartesian NI from NH coordinates."""
-        uCart = rc.zeros(2)
+        uCart = rg.zeros(2)
 
         uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
         uCart[1] = uNI[0]
@@ -1206,8 +1206,8 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
     def compute_LF(self, observation):
         xNI = self._Cart2NH(observation)
 
-        sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rc.abs(xNI[2]))
-        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma**2
+        sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(rg.abs(xNI[2]))
+        LF_value = xNI[0] ** 4 + xNI[1] ** 4 + rg.abs(xNI[2]) ** 3 / sigma**2
 
         return LF_value
 
@@ -1255,7 +1255,7 @@ class MemoryPIDPolicy(Policy):
             self.observation_size = len(initial_point)
 
         self.buffer_length = buffer_length
-        self.observation_buffer = rc.ones((self.observation_size, buffer_length)) * 1e3
+        self.observation_buffer = rg.ones((self.observation_size, buffer_length)) * 1e3
 
     def compute_error(self, process_variable):
         if isinstance(process_variable, (float, int)):
@@ -1264,8 +1264,8 @@ class MemoryPIDPolicy(Policy):
             if len(process_variable) == 1:
                 error = process_variable - self.setpoint
             else:
-                norm = rc.norm_2(self.setpoint - process_variable)
-                error = norm * rc.sign(rc.dot(self.initial_point, process_variable))
+                norm = rg.norm_2(self.setpoint - process_variable)
+                error = norm * rg.sign(rg.dot(self.initial_point, process_variable))
         return error
 
     def compute_integral(self, error):
@@ -1299,7 +1299,7 @@ class MemoryPIDPolicy(Policy):
         self.setpoint = setpoint
 
     def update_observation_buffer(self, observation):
-        self.observation_buffer = rc.push_vec(self.observation_buffer, observation)
+        self.observation_buffer = rg.push_vec(self.observation_buffer, observation)
 
     def set_initial_point(self, point):
         self.initial_point = point
@@ -1310,13 +1310,13 @@ class MemoryPIDPolicy(Policy):
 
     def reset_buffer(self):
         self.observation_buffer = (
-            rc.ones((self.observation_size, self.buffer_length)) * 1e3
+            rg.ones((self.observation_size, self.buffer_length)) * 1e3
         )
 
     def is_stabilized(self, stabilization_tollerance=1e-3):
         is_stabilized = np.allclose(
             self.observation_buffer,
-            rc.rep_mat(rc.reshape(self.setpoint, (-1, 1)), 1, self.buffer_length),
+            rg.rep_mat(rg.reshape(self.setpoint, (-1, 1)), 1, self.buffer_length),
             atol=stabilization_tollerance,
         )
         return is_stabilized
@@ -1358,7 +1358,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         self.clock = Clock(period=sampling_time)
         self.Ls = []
         self.times = []
-        self.action_old = rc.zeros(2)
+        self.action_old = rg.zeros(2)
         self.PID_angle_arctan = PolicyMemoryPID(
             35, 0.0, 10, initial_point=self.state_init[2]
         )
@@ -1369,7 +1369,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
             35,
             0.0,
             35,
-            setpoint=rc.array([0.0, 0.0]),
+            setpoint=rg.array([0.0, 0.0]),
             initial_point=self.state_init[:2],
             # buffer_length=100,
         )
@@ -1384,17 +1384,17 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         return np.arctan2(y, x)
 
     def compute_square_of_norm(self, x, y):
-        return rc.sqrt(rc.norm_2(rc.array([x, y])))
+        return rg.sqrt(rg.norm_2(rg.array([x, y])))
 
     def get_action(self, observation):
         observation = observation[0]
         x = observation[0]
         y = observation[1]
-        angle = rc.array([observation[2]])
-        v = rc.array([observation[3]])
-        omega = rc.array([observation[4]])
+        angle = rg.array([observation[2]])
+        v = rg.array([observation[3]])
+        omega = rg.array([observation[4]])
 
-        angle_setpoint = rc.array([self.get_setpoint_for_PID_angle_arctan(x, y)])
+        angle_setpoint = rg.array([self.get_setpoint_for_PID_angle_arctan(x, y)])
 
         if self.PID_angle_arctan.setpoint is None:
             self.PID_angle_arctan.set_setpoint(angle_setpoint)
@@ -1428,7 +1428,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
                 )
 
         elif ANGLE_STABILIZED_TO_ARCTAN and not XY_STABILIZED_TO_ORIGIN:
-            self.PID_x_y_origin.update_observation_buffer(rc.array([x, y]))
+            self.PID_x_y_origin.update_observation_buffer(rg.array([x, y]))
             self.PID_angle_arctan.update_observation_buffer(angle)
 
             self.PID_angle_arctan.reset()
@@ -1437,8 +1437,8 @@ class ThreeWheeledRobotMemoryPIDPolicy:
             # print(f"Stabilize (x, y) to (0, 0), (x, y) = {(x, y)}")
 
             error_derivative = (
-                v * (x * rc.cos(angle) + y * rc.sin(angle)) / rc.sqrt(x**2 + y**2)
-            ) * rc.sign(rc.dot(self.PID_x_y_origin.initial_point, [x, y]))
+                v * (x * rg.cos(angle) + y * rg.sin(angle)) / rg.sqrt(x**2 + y**2)
+            ) * rg.sign(rg.dot(self.PID_x_y_origin.initial_point, [x, y]))
 
             F = self.PID_x_y_origin.compute_signal(
                 [x, y], error_derivative=error_derivative
@@ -1480,7 +1480,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         self.current_F = clipped_F
         self.current_M = clipped_M
 
-        return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)]).reshape(1, -1)
+        return rg.array([np.squeeze(clipped_F), np.squeeze(clipped_M)]).reshape(1, -1)
 
     def reset_all_PID_pipelines(self):
         self.PID_x_y_origin.reset()
@@ -1542,7 +1542,7 @@ class ThreeWheeledRobotPIDPolicy:
         self.clock = Clock(period=sampling_time)
         self.Ls = []
         self.times = []
-        self.action_old = rc.zeros(2)
+        self.action_old = rg.zeros(2)
         self.PID_angle_arctan = PolicyMemoryPID(
             *PID_arctg_params, initial_point=self.state_init[2]
         )
@@ -1551,7 +1551,7 @@ class ThreeWheeledRobotPIDPolicy:
         )
         self.PID_x_y_origin = PolicyMemoryPID(
             *PID_x_y_origin_params,
-            setpoint=rc.array([0.0, 0.0]),
+            setpoint=rg.array([0.0, 0.0]),
             initial_point=self.state_init[:2],
         )
         self.PID_angle_origin = PolicyMemoryPID(
@@ -1574,22 +1574,22 @@ class ThreeWheeledRobotPIDPolicy:
 
     def F_error_derivative(self, x, y, angle, v, eps=1e-8):
         if abs(x) < eps and abs(y) < eps:
-            return rc.array([0.0])
+            return rg.array([0.0])
         F_error_derivative = (
-            v * (x * rc.cos(angle) + y * rc.sin(angle)) / rc.sqrt(x**2 + y**2)
-        ) * rc.sign(rc.dot(self.PID_x_y_origin.initial_point, [x, y]))
-        return rc.array([F_error_derivative])
+            v * (x * rg.cos(angle) + y * rg.sin(angle)) / rg.sqrt(x**2 + y**2)
+        ) * rg.sign(rg.dot(self.PID_x_y_origin.initial_point, [x, y]))
+        return rg.array([F_error_derivative])
 
     def get_action(self, observation):
         observation = observation[0]
         x = observation[0]
         y = observation[1]
-        angle = rc.array([observation[2]])
-        v = rc.array([observation[3]])
-        omega = rc.array([observation[4]])
+        angle = rg.array([observation[2]])
+        v = rg.array([observation[3]])
+        omega = rg.array([observation[4]])
         (F_min, F_max), (M_min, M_max) = self.action_bounds[0], self.action_bounds[1]
 
-        self.PID_x_y_origin.set_initial_point(rc.array([x, y]))
+        self.PID_x_y_origin.set_initial_point(rg.array([x, y]))
         F_error_derivative = self.F_error_derivative(x, y, angle[0], v[0])
         M_arctan_error_derivative = omega
         F_v_to_zero_error_derivative = self.current_F / self.m
@@ -1597,7 +1597,7 @@ class ThreeWheeledRobotPIDPolicy:
         F = self.PID_x_y_origin.compute_signal(
             [x, y], error_derivative=F_error_derivative
         )
-        angle_setpoint = rc.array([self.get_setpoint_for_PID_angle_arctan(x, y)])
+        angle_setpoint = rg.array([self.get_setpoint_for_PID_angle_arctan(x, y)])
         self.PID_angle_arctan.set_setpoint(angle_setpoint)
         M_arctan = self.PID_angle_arctan.compute_signal(
             angle, error_derivative=M_arctan_error_derivative
@@ -1608,29 +1608,29 @@ class ThreeWheeledRobotPIDPolicy:
         )
 
         lbd_v_to_zero = self.cdf_uniform(
-            rc.norm_2(rc.array([x, y, v[0]])),
+            rg.norm_2(rg.array([x, y, v[0]])),
             self.v_to_zero_bounds[0],
             self.v_to_zero_bounds[1],
         )
         lbd = self.cdf_uniform(
-            rc.norm_2(rc.array([x, y])),
+            rg.norm_2(rg.array([x, y])),
             self.to_origin_bounds[0],
             self.to_origin_bounds[1],
         )
         lbd_arctan = self.cdf_uniform(
-            rc.abs(angle[0] - self.PID_angle_arctan.setpoint[0]),
+            rg.abs(angle[0] - self.PID_angle_arctan.setpoint[0]),
             self.to_arctan_bounds[0],
             self.to_arctan_bounds[1],
         )
-        control_to_origin = rc.array(
+        control_to_origin = rg.array(
             [
                 (1 - lbd_arctan) * np.clip(F[0], F_min, F_max)
                 + lbd_arctan * np.clip(F_v_to_zero[0], F_min, F_max),
                 lbd_arctan * np.clip(M_arctan[0], M_min, M_max),
             ]
         )
-        control_v_to_zero = rc.array([np.clip(F_v_to_zero[0], F_min, F_max), 0.0])
-        control_angle_to_zero = rc.array([0, np.clip(M_zero[0], M_min, M_max)])
+        control_v_to_zero = rg.array([np.clip(F_v_to_zero[0], F_min, F_max), 0.0])
+        control_angle_to_zero = rg.array([0, np.clip(M_zero[0], M_min, M_max)])
 
         action = (
             lbd * control_to_origin
@@ -1680,9 +1680,9 @@ class CartPoleEnergyBasedPolicy(Policy):
         )
 
         self.action = (
-            self.m_p * self.g * rc.cos(theta) * rc.sin(theta)
-            + self.m_p * self.l * theta_dot * rc.sin(theta)
-            - self.pipeline_gain * theta_dot * rc.cos(theta)
+            self.m_p * self.g * rg.cos(theta) * rg.sin(theta)
+            + self.m_p * self.l * theta_dot * rg.sin(theta)
+            - self.pipeline_gain * theta_dot * rg.cos(theta)
         )
         return self.action.reshape(1, -1)
 
@@ -1713,18 +1713,18 @@ class LunarLanderPIDPolicy:
             PID_x_parameters = [10, 0, 0]
         self.PID_angle = PolicyMemoryPID(
             *PID_angle_parameters,
-            initial_point=rc.array([state_init[2]]),
-            setpoint=rc.array([0]),
+            initial_point=rg.array([state_init[2]]),
+            setpoint=rg.array([0]),
         )
         self.PID_height = PolicyMemoryPID(
             *PID_height_parameters,
-            initial_point=rc.array([state_init[1]]),
-            setpoint=rc.array([0]),
+            initial_point=rg.array([state_init[1]]),
+            setpoint=rg.array([0]),
         )
         self.PID_x = PolicyMemoryPID(
             *PID_x_parameters,
-            initial_point=rc.array([state_init[2]]),
-            setpoint=rc.array([0]),
+            initial_point=rg.array([state_init[2]]),
+            setpoint=rg.array([0]),
         )
         self.threshold_1 = 0.05
         self.threshold_2 = 1.2
@@ -1737,19 +1737,19 @@ class LunarLanderPIDPolicy:
         if abs(observation[2]) > self.threshold:
             self.threshold = self.threshold_1
             self.action[0] = self.PID_angle.compute_signal(
-                [rc.array(observation[2])], error_derivative=observation[5]
+                [rg.array(observation[2])], error_derivative=observation[5]
             )[0]
 
         else:
             self.threshold = self.threshold_2
             self.action[0] = self.PID_x.compute_signal(
-                [rc.array(observation[0])], error_derivative=observation[3]
+                [rg.array(observation[0])], error_derivative=observation[3]
             )[0]
             self.action[1] = self.PID_height.compute_signal(
-                [rc.array(observation[1])], error_derivative=observation[4]
+                [rg.array(observation[1])], error_derivative=observation[4]
             )[0]
 
-        self.action = rc.array(self.action).reshape(1, -1)
+        self.action = rg.array(self.action).reshape(1, -1)
         return self.action
 
 
@@ -1780,11 +1780,11 @@ class TwoTankPIDPolicy:
         self.sampling_time = sampling_time
         self.PID_2tank_x1 = PolicyMemoryPID(
             *PID_2tank_parameters_x1,
-            initial_point=rc.array([state_init[0]]),
+            initial_point=rg.array([state_init[0]]),
         )
         self.PID_2tank_x2 = PolicyMemoryPID(
             *PID_2tank_parameters_x2,
-            initial_point=rc.array([state_init[1]]),
+            initial_point=rg.array([state_init[1]]),
         )
 
     def get_action(self, observation):
@@ -1802,9 +1802,9 @@ class TwoTankPIDPolicy:
         )
 
         self.action = self.PID_2tank_x1.compute_signal(
-            [rc.array(observation[0])], error_derivative=error_derivative_x1
+            [rg.array(observation[0])], error_derivative=error_derivative_x1
         ) + self.PID_2tank_x2.compute_signal(
-            [rc.array(observation[1])], error_derivative=error_derivative_x2
+            [rg.array(observation[1])], error_derivative=error_derivative_x2
         )
         return self.action
 
@@ -1856,7 +1856,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         self.theta_var = self.create_variable(
             1, 1, name="theta", is_constant=False, like=np.array([0])
         )
-        self.register_bounds(self.theta_var, rc.array([[-np.pi, np.pi]]))
+        self.register_bounds(self.theta_var, rg.array([[-np.pi, np.pi]]))
         self.register_objective(
             self._Fc, variables=[self.xNI_var, self.eta_var, self.theta_var]
         )
@@ -1864,27 +1864,27 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
     def _zeta(self, xNI, theta):
         """Compute generic, i.e., theta-dependent, supper_bound_constraintradient (disassembled) of a CLF for NI (a.k.a. nonholonomic integrator, a 3wheel robot with static actuators)."""
         sigma_tilde = (
-            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + np.sqrt(rc.abs(xNI[2]))
+            xNI[0] * rg.cos(theta) + xNI[1] * rg.sin(theta) + np.sqrt(rg.abs(xNI[2]))
         )
 
-        nablaF = rc.zeros(3, prototype=theta)
+        nablaF = rg.zeros(3, prototype=theta)
 
         nablaF[0] = (
-            4 * xNI[0] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.cos(theta) / sigma_tilde**3
+            4 * xNI[0] ** 3 - 2 * rg.abs(xNI[2]) ** 3 * rg.cos(theta) / sigma_tilde**3
         )
 
         nablaF[1] = (
-            4 * xNI[1] ** 3 - 2 * rc.abs(xNI[2]) ** 3 * rc.sin(theta) / sigma_tilde**3
+            4 * xNI[1] ** 3 - 2 * rg.abs(xNI[2]) ** 3 * rg.sin(theta) / sigma_tilde**3
         )
 
         nablaF[2] = (
             (
-                3 * xNI[0] * rc.cos(theta)
-                + 3 * xNI[1] * rc.sin(theta)
-                + 2 * rc.sqrt(rc.abs(xNI[2]))
+                3 * xNI[0] * rg.cos(theta)
+                + 3 * xNI[1] * rg.sin(theta)
+                + 2 * rg.sqrt(rg.abs(xNI[2]))
             )
             * xNI[2] ** 2
-            * rc.sign(xNI[2])
+            * rg.sign(xNI[2])
             / sigma_tilde**3
         )
 
@@ -1892,20 +1892,20 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
 
     def _kappa(self, xNI, theta):
         """Stabilizing pipeline for NI-part."""
-        G = rc.zeros([2, 3], prototype=xNI)
-        G[0, :] = rc.hstack([1, 0, xNI[1]])
-        G[1, :] = rc.hstack([0, 1, -xNI[0]])
+        G = rg.zeros([2, 3], prototype=xNI)
+        G[0, :] = rg.hstack([1, 0, xNI[1]])
+        G[1, :] = rg.hstack([0, 1, -xNI[0]])
         G = G.T
 
-        kappa_val = rc.zeros(2, prototype=xNI)
+        kappa_val = rg.zeros(2, prototype=xNI)
 
         zeta_val = self._zeta(xNI, theta)
 
-        kappa_val[0] = -rc.abs(rc.dot(zeta_val, G[:, 0])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 0])
+        kappa_val[0] = -rg.abs(rg.dot(zeta_val, G[:, 0])) ** (1 / 3) * rg.sign(
+            rg.dot(zeta_val, G[:, 0])
         )
-        kappa_val[1] = -rc.abs(rc.dot(zeta_val, G[:, 1])) ** (1 / 3) * rc.sign(
-            rc.dot(zeta_val, G[:, 1])
+        kappa_val[1] = -rg.abs(rg.dot(zeta_val, G[:, 1])) ** (1 / 3) * rg.sign(
+            rg.dot(zeta_val, G[:, 1])
         )
 
         return kappa_val
@@ -1913,14 +1913,14 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
     def _Fc(self, xNI, eta, theta):
         """Marginal function for ENDI constructed by nonsmooth backstepping. See details in the literature mentioned in the class documentation."""
         sigma_tilde = (
-            xNI[0] * rc.cos(theta) + xNI[1] * rc.sin(theta) + rc.sqrt(rc.abs(xNI[2]))
+            xNI[0] * rg.cos(theta) + xNI[1] * rg.sin(theta) + rg.sqrt(rg.abs(xNI[2]))
         )
 
-        F = xNI[0] ** 4 + xNI[1] ** 4 + rc.abs(xNI[2]) ** 3 / sigma_tilde**2
+        F = xNI[0] ** 4 + xNI[1] ** 4 + rg.abs(xNI[2]) ** 3 / sigma_tilde**2
 
         z = eta - self._kappa(xNI, theta)
 
-        return F + 1 / 2 * rc.dot(z, z)
+        return F + 1 / 2 * rg.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
         r"""Transform from Cartesian coordinates to non-holonomic (NH) coordinates.
@@ -1935,8 +1935,8 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
                integrator model and invariant manifold theory. In 2010 IEEE/RSJ International Conference on Intelligent Robots and Systems (pp. 2862-2867)
 
         """
-        xNI = rc.zeros(3)
-        eta = rc.zeros(2)
+        xNI = rg.zeros(3)
+        eta = rg.zeros(2)
 
         xc = coords_Cart[0]
         yc = coords_Cart[1]
@@ -1945,13 +1945,13 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         omega = coords_Cart[4]
 
         xNI[0] = angle
-        xNI[1] = xc * rc.cos(angle) + yc * rc.sin(angle)
-        xNI[2] = -2 * (yc * rc.cos(angle) - xc * rc.sin(angle)) - angle * (
-            xc * rc.cos(angle) + yc * rc.sin(angle)
+        xNI[1] = xc * rg.cos(angle) + yc * rg.sin(angle)
+        xNI[2] = -2 * (yc * rg.cos(angle) - xc * rg.sin(angle)) - angle * (
+            xc * rg.cos(angle) + yc * rg.sin(angle)
         )
 
         eta[0] = omega
-        eta[1] = (yc * rc.cos(angle) - xc * rc.sin(angle)) * omega + v
+        eta[1] = (yc * rg.cos(angle) - xc * rg.sin(angle)) * omega + v
 
         return [xNI, eta]
 
@@ -1969,7 +1969,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
 
 
         """
-        uCart = rc.zeros(2)
+        uCart = rg.zeros(2)
 
         uCart[0] = self.m * (
             uNI[1]

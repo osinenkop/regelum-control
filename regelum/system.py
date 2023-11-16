@@ -13,7 +13,7 @@ import numpy as np
 
 import regelum
 from abc import ABC, abstractmethod
-from .__utilities import rc
+from .__utilities import rg
 from typing import Optional, Union, List
 from typing_extensions import Self
 
@@ -89,9 +89,9 @@ class SystemInterface(regelum.RegelumBase, ABC):
         self, time, state, inputs, _native_dim=False
     ) -> np.ndarray:
         if not _native_dim:
-            return rc.force_row(
+            return rg.force_row(
                 self._compute_state_dynamics(
-                    time, rc.force_column(state), rc.force_column(inputs)
+                    time, rg.force_column(state), rg.force_column(inputs)
                 )
             )
         else:
@@ -104,15 +104,15 @@ class SystemInterface(regelum.RegelumBase, ABC):
     def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
         if not is_batch:
             if not _native_dim:
-                return rc.force_row(
+                return rg.force_row(
                     self._get_observation(
-                        time, rc.force_column(state), rc.force_column(inputs)
+                        time, rg.force_column(state), rg.force_column(inputs)
                     )
                 )
             else:
                 return self._get_observation(time, state, inputs)
         else:
-            observations = rc.zeros(state.shape, prototype=state)
+            observations = rg.zeros(state.shape, prototype=state)
             for i in range(state.shape[0]):
                 observations[i, :] = self.get_observation(
                     time=time,
@@ -221,12 +221,12 @@ class ComposedSystem(SystemInterface):
                 io_mapping_extended.append([i, output])
 
         io_mapping_extended = sorted(io_mapping_extended, key=lambda x: x[1])
-        rout_idx, occupied_idx = rc.array(io_mapping_extended).astype(int).T
+        rout_idx, occupied_idx = rg.array(io_mapping_extended).astype(int).T
         return rout_idx, occupied_idx
 
     def _compute_state_dynamics(self, time, state, inputs, _native_dim=True):
-        state = rc.array(state, prototype=state)
-        inputs = rc.array(inputs, prototype=state)
+        state = rg.array(state, prototype=state)
+        inputs = rg.array(inputs, prototype=state)
         state = state[self.forward_permutation]
 
         state_for_left, state_for_right = (
@@ -234,7 +234,7 @@ class ComposedSystem(SystemInterface):
             state[self.sys_left.dim_state :],
         )
         inputs_for_left = inputs[: self.sys_left.dim_inputs]
-        dstate_of_left = rc.squeeze(
+        dstate_of_left = rg.squeeze(
             self.sys_left.compute_state_dynamics(
                 time=time,
                 state=state_for_left,
@@ -242,7 +242,7 @@ class ComposedSystem(SystemInterface):
                 _native_dim=_native_dim,
             )
         )
-        outputs_of_left = rc.squeeze(
+        outputs_of_left = rg.squeeze(
             self.sys_left.get_observation(
                 time=time,
                 state=state_for_left,
@@ -251,17 +251,17 @@ class ComposedSystem(SystemInterface):
             )
         )
 
-        inputs_for_right = rc.zeros(
+        inputs_for_right = rg.zeros(
             self.sys_right.dim_inputs,
             prototype=(state, inputs),
         )
         inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
-        inputs_for_right[self.free_right_input_indices] = rc.reshape(
+        inputs_for_right[self.free_right_input_indices] = rg.reshape(
             inputs[self.sys_left.dim_inputs :],
-            rc.shape(inputs_for_right[self.free_right_input_indices]),
+            rg.shape(inputs_for_right[self.free_right_input_indices]),
         )
 
-        dstate_of_right = rc.squeeze(
+        dstate_of_right = rg.squeeze(
             self.sys_right.compute_state_dynamics(
                 time=time,
                 state=state_for_right,
@@ -269,26 +269,26 @@ class ComposedSystem(SystemInterface):
                 _native_dim=_native_dim,
             )
         )
-        final_dstate_vector = rc.hstack((dstate_of_left, dstate_of_right))
+        final_dstate_vector = rg.hstack((dstate_of_left, dstate_of_right))
 
         assert (
             final_dstate_vector is not None
         ), f"final dstate_vector of system {self.name} is None"
         final_dstate_vector = final_dstate_vector[self.inverse_permutation]
         if not _native_dim:
-            final_dstate_vector = rc.force_row(final_dstate_vector)
+            final_dstate_vector = rg.force_row(final_dstate_vector)
         return final_dstate_vector
 
     def _get_observation(self, time, state, inputs, _native_dim=False):
-        state = rc.array(state, prototype=state)
-        inputs = rc.array(inputs, prototype=state)
+        state = rg.array(state, prototype=state)
+        inputs = rg.array(inputs, prototype=state)
 
         inputs_for_left = inputs[: self.sys_left.dim_inputs]
         state_for_left, state_for_right = (
             state[: self.sys_left.dim_state],
             state[self.sys_left.dim_state :],
         )
-        outputs_of_left = rc.squeeze(
+        outputs_of_left = rg.squeeze(
             self.sys_left.get_observation(
                 time=time,
                 state=state_for_left,
@@ -297,14 +297,14 @@ class ComposedSystem(SystemInterface):
             )
         )
 
-        inputs_for_right = rc.zeros(
+        inputs_for_right = rg.zeros(
             self.sys_right.dim_inputs,
             prototype=(state, inputs),
         )
         inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
-        inputs_for_right[self.free_right_input_indices] = rc.reshape(
+        inputs_for_right[self.free_right_input_indices] = rg.reshape(
             inputs[self.sys_left.dim_inputs :],
-            rc.shape(inputs_for_right[self.free_right_input_indices]),
+            rg.shape(inputs_for_right[self.free_right_input_indices]),
         )
         outputs_of_right = self.sys_right.get_observation(
             time=time,
@@ -317,7 +317,7 @@ class ComposedSystem(SystemInterface):
         elif self.output_mode == "state":
             output = state
         elif self.output_mode == "both":
-            output = rc.concatenate((state_for_left, state_for_right))
+            output = rg.concatenate((state_for_left, state_for_right))
         else:
             raise NotImplementedError
 
@@ -341,7 +341,7 @@ class ComposedSystem(SystemInterface):
         :return: link to self
         :rtype: Self
         """
-        self.forward_permutation = rc.array(permutation).astype(int)
+        self.forward_permutation = rg.array(permutation).astype(int)
         self.inverse_permutation = self.get_inverse_permutation(permutation)
         return self
 
@@ -396,12 +396,12 @@ class System(SystemInterface):
         self.system_parameters_init = self._parameters
 
         if state_init is None:
-            self.state = rc.zeros(self.dim_state)
+            self.state = rg.zeros(self.dim_state)
         else:
             self.state = state_init
 
         if inputs_init is None:
-            self.inputs = rc.zeros(self.dim_inputs)
+            self.inputs = rg.zeros(self.dim_inputs)
         else:
             self.inputs = inputs_init
 
@@ -438,12 +438,12 @@ class KinematicPoint(System):
     _action_bounds = [[-10.0, 10.0], [-10.0, 10.0]]
 
     def _compute_state_dynamics(self, time, state, inputs):
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
 
-        for i in range(rc.shape(inputs)[0]):
+        for i in range(rg.shape(inputs)[0]):
             Dstate[i] = inputs[i]
 
         return Dstate
@@ -470,7 +470,7 @@ class InvertedPendulumPID(System):
         self.integral_alpha = 0
 
     def _compute_state_dynamics(self, time, state, inputs):
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
@@ -482,7 +482,7 @@ class InvertedPendulumPID(System):
         )
 
         Dstate[0] = state[1]
-        Dstate[1] = g / l * rc.sin(state[0]) + inputs[0] / (m * l**2)
+        Dstate[1] = g / l * rg.sin(state[0]) + inputs[0] / (m * l**2)
 
         return Dstate
 
@@ -490,7 +490,7 @@ class InvertedPendulumPID(System):
         delta_time = time - self.time_old if time is not None else 0
         self.integral_alpha += delta_time * state[0]
 
-        return rc.hstack([state[0], self.integral_alpha, state[1]])
+        return rg.hstack([state[0], self.integral_alpha, state[1]])
 
     def reset(self):
         self.time_old = 0
@@ -503,7 +503,7 @@ class InvertedPendulumPD(InvertedPendulumPID):
     _dim_observation = 2
 
     def _get_observation(self, time, state, inputs):
-        return rc.hstack([state[0], state[1]])
+        return rg.hstack([state[0], state[1]])
 
 
 class ThreeWheeledRobot(System):
@@ -565,15 +565,15 @@ class ThreeWheeledRobot(System):
     _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
 
     def _compute_state_dynamics(self, time, state, inputs):
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
 
         m, I = self.parameters["m"], self.parameters["I"]
 
-        Dstate[0] = state[3] * rc.cos(state[2])
-        Dstate[1] = state[3] * rc.sin(state[2])
+        Dstate[0] = state[3] * rg.cos(state[2])
+        Dstate[1] = state[3] * rg.sin(state[2])
         Dstate[2] = state[4]
         Dstate[3] = 1 / m * inputs[0]
         Dstate[4] = 1 / I * inputs[1]
@@ -592,7 +592,7 @@ class Integrator(System):
     _parameters = {"m": 10, "I": 1}
 
     def _compute_state_dynamics(self, time, state, inputs):
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
@@ -636,10 +636,10 @@ class ThreeWheeledRobotNI(System):
     _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
 
     def _compute_state_dynamics(self, time, state, inputs):
-        Dstate = rc.zeros(self.dim_state, prototype=(state, inputs))
+        Dstate = rg.zeros(self.dim_state, prototype=(state, inputs))
 
-        Dstate[0] = inputs[0] * rc.cos(state[2])
-        Dstate[1] = inputs[0] * rc.sin(state[2])
+        Dstate[0] = inputs[0] * rg.cos(state[2])
+        Dstate[1] = inputs[0] * rg.sin(state[2])
         Dstate[2] = inputs[1]
 
         return Dstate
@@ -672,7 +672,7 @@ class TwoTank(System):
             self.parameters["K3"],
         )
 
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
@@ -715,7 +715,7 @@ class ConstantReference(System):
             )
 
     def _get_observation(self, time, state, inputs):
-        return inputs - rc.array(
+        return inputs - rg.array(
             self.parameters["reference"], prototype=inputs, _force_numeric=True
         )
 
@@ -803,7 +803,7 @@ class CartPole(System):
     _action_bounds = [[-50.0, 50.0]]
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
@@ -818,8 +818,8 @@ class CartPole(System):
         theta_dot = state[2]
         x_dot = state[3]
 
-        sin_theta = rc.sin(theta)
-        cos_theta = rc.cos(theta)
+        sin_theta = rg.sin(theta)
+        cos_theta = rg.cos(theta)
 
         Dstate[0] = theta_dot
 
@@ -841,14 +841,14 @@ class CartPole(System):
         theta_dot = state[2]
         x_dot = state[3]
 
-        theta_observed = theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi
-        theta_observed = rc.if_else(
+        theta_observed = theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi
+        theta_observed = rg.if_else(
             theta_observed > np.pi,
             theta_observed - 2 * np.pi,
-            theta - rc.floor(theta / (2 * np.pi)) * 2 * np.pi,
+            theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi,
         )
 
-        return rc.hstack([theta_observed, x, theta_dot, x_dot])
+        return rg.hstack([theta_observed, x, theta_dot, x_dot])
 
 
 class LunarLander(System):
@@ -882,7 +882,7 @@ class LunarLander(System):
         self.is_landed = False
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
-        Dstate_before_landing = rc.zeros(
+        Dstate_before_landing = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
         )
@@ -901,16 +901,16 @@ class LunarLander(System):
         left_support, right_support = self.compute_supports_geometry(state[:2], theta)
 
         self.is_landed = (
-            rc.if_else(left_support[1] <= 0, 1, 0)
-            + rc.if_else(right_support[1] <= 0, 1, 0)
+            rg.if_else(left_support[1] <= 0, 1, 0)
+            + rg.if_else(right_support[1] <= 0, 1, 0)
         ) > 0
 
         F_l = inputs[0] * (1 - self.is_landed)
         F_t = inputs[1] * (1 - self.is_landed)
 
-        self.is_landed_left = rc.if_else(left_support[1] <= 0, 1, 0)
-        self.is_landed_right = rc.if_else(right_support[1] <= 0, 1, 0)
-        self.is_landed_vertex = rc.if_else(state[1] <= 0, 1, 0)
+        self.is_landed_left = rg.if_else(left_support[1] <= 0, 1, 0)
+        self.is_landed_right = rg.if_else(right_support[1] <= 0, 1, 0)
+        self.is_landed_vertex = rg.if_else(state[1] <= 0, 1, 0)
         self.is_freezed = (
             self.is_landed_left * self.is_landed_right + self.is_landed_vertex
         ) > 0
@@ -921,9 +921,9 @@ class LunarLander(System):
         Dstate_before_landing[0] = x_dot
         Dstate_before_landing[1] = y_dot
         Dstate_before_landing[2] = theta_dot
-        Dstate_before_landing[3] = 1 / m * (F_l * rc.cos(theta) - F_t * rc.sin(theta))
+        Dstate_before_landing[3] = 1 / m * (F_l * rg.cos(theta) - F_t * rg.sin(theta))
         Dstate_before_landing[4] = (
-            1 / m * (F_l * rc.sin(theta) + F_t * rc.cos(theta)) - g
+            1 / m * (F_l * rg.sin(theta) + F_t * rg.cos(theta)) - g
         )
         Dstate_before_landing[5] = (4 * F_l) / J
 
@@ -953,14 +953,14 @@ class LunarLander(System):
         return Dstate
 
     def _compute_pendulum_dynamics(self, angle, angle_dot, prototype):
-        Dstate = rc.zeros(
+        Dstate = rg.zeros(
             self.dim_state,
             prototype=prototype,
         )
         g = self.parameters["g"]
 
-        x = self.l * rc.sin(angle)
-        y = self.l * rc.cos(angle)
+        x = self.l * rg.sin(angle)
+        y = self.l * rg.cos(angle)
 
         Dstate[5] = g / self.l**2 * x
         Dstate[0] = angle_dot * y
@@ -972,14 +972,14 @@ class LunarLander(System):
         return Dstate
 
     def compute_supports_geometry(self, xi, theta):
-        A = rc.zeros((2, 2), prototype=xi)
-        xi_2 = rc.zeros((2, 1), prototype=xi)
-        xi_3 = rc.zeros((2, 1), prototype=xi)
+        A = rg.zeros((2, 2), prototype=xi)
+        xi_2 = rg.zeros((2, 1), prototype=xi)
+        xi_3 = rg.zeros((2, 1), prototype=xi)
 
-        A[0, 0] = rc.cos(theta)
-        A[0, 1] = -rc.sin(theta)
-        A[1, 0] = rc.sin(theta)
-        A[1, 1] = rc.cos(theta)
+        A[0, 0] = rg.cos(theta)
+        A[0, 1] = -rg.sin(theta)
+        A[1, 0] = rg.sin(theta)
+        A[1, 1] = rg.cos(theta)
 
         a, r = self.parameters["a"], self.parameters["r"]
         xi_2[0, 0] = xi[0, 0] - a
@@ -1007,10 +1007,10 @@ class LunarLander(System):
             self.parameters["sigma"],
         )
         lvl = r_support[1]
-        e = (r - r_support) / rc.sqrt(rc.norm_2(r - r_support))
-        reaction = rc.if_else(
+        e = (r - r_support) / rg.sqrt(rg.norm_2(r - r_support))
+        reaction = rg.if_else(
             lvl <= 0,
-            e * rc.dot(e, m * g * rc.array([0, 1])) * lvl * sigma,
-            rc.array([0.0, 0.0]),
+            e * rg.dot(e, m * g * rg.array([0, 1])) * lvl * sigma,
+            rg.array([0.0, 0.0]),
         )
         return -reaction

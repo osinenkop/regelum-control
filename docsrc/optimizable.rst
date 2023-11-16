@@ -125,20 +125,20 @@ Registering Bounds
     # Register bounds in MyOptimizable class.
     self.register_bounds(variable_to_bound=self.x_var, bounds=bounds)
 
-Functionality of 'rc' Singleton
+Functionality of 'rg' Singleton
 ==============================
 
-The `rc` singleton provided in the `__utilities.py` module is designed to abstract away differences between numerical and symbolic computation, allowing developers to write type-agnostic code. This functionality enables seamless transition between numeric arrays (NumPy), GPU-accelerated tensors (PyTorch), and symbolic primitives (CasADi). Below is a brief overview of how `rc` can be used in various contexts:
+The `rg` singleton provided in the `__utilities.py` module is designed to abstract away differences between numerical and symbolic computation, allowing developers to write type-agnostic code. This functionality enables seamless transition between numeric arrays (NumPy), GPU-accelerated tensors (PyTorch), and symbolic primitives (CasADi). Below is a brief overview of how `rg` can be used in various contexts:
 
 Type-Agnostic Mathematical Functions
 ------------------------------------
 
-The `rc` singleton provides common mathematical operations that detect and handle the type of their inputs automatically. For instance, to calculate the cosine of an array, tensor, or symbolic variable, one would simply call:
+The `rg` singleton provides common mathematical operations that detect and handle the type of their inputs automatically. For instance, to calculate the cosine of an array, tensor, or symbolic variable, one would simply call:
 
 .. code-block:: python
 
-    cos_value = rc.cos(input_variable)
+    cos_value = rg.cos(input_variable)
 
-Whether `input_variable` is a NumPy array, Torch tensor, or CasADi symbolic, `rc.cos()` will return the cosine of the input in the corresponding type.
+Whether `input_variable` is a NumPy array, Torch tensor, or CasADi symbolic, `rg.cos()` will return the cosine of the input in the corresponding type.
 
-These features of the `rc` singleton simplify the development process by minimizing the need to write type-specific code, enhancing the reusability and generality of the optimization framework.
+These features of the `rg` singleton simplify the development process by minimizing the need to write type-specific code, enhancing the reusability and generality of the optimization framework.

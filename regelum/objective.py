@@ -10,7 +10,7 @@ import regelum
 from .model import Model, PerceptronWithTruncatedNormalNoise, ModelNN
 from typing import Optional
 import torch
-from .__utilities import rc
+from .__utilities import rg
 from .predictor import Predictor
 
 
@@ -319,14 +319,14 @@ def temporal_difference_objective(
     """
     batch_size = running_objective.shape[0]
     assert batch_size > td_n, f"batch size {batch_size} too small for such td_n {td_n}"
-    discount_factors = rc.array(
+    discount_factors = rg.array(
         [[discount_factor ** (sampling_time * i)] for i in range(td_n)],
         prototype=running_objective,
         _force_numeric=True,
     )
-    discounted_tdn_sum_of_running_objectives = rc.vstack(
+    discounted_tdn_sum_of_running_objectives = rg.vstack(
         [
-            rc.sum(running_objective[i : i + td_n, :] * discount_factors)
+            rg.sum(running_objective[i : i + td_n, :] * discount_factors)
             for i in range(batch_size - td_n)
         ]
     )
@@ -336,7 +336,7 @@ def temporal_difference_objective(
     else:
         critic_targets = critic_targets[td_n:, :]
 
-    temporal_difference = rc.mean(
+    temporal_difference = rg.mean(
         (
             critic_model_output[:-td_n, :]
             - discounted_tdn_sum_of_running_objectives
@@ -373,8 +373,8 @@ def mpc_objective(
         inputs=action_sequence_predicted,
         is_batch=True,
     )
-    observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted)
+    observation_sequence = rg.vstack(
+        (rg.force_row(observation), observation_sequence_predicted)
     )
 
     running_objectives = running_objective(
@@ -382,7 +382,7 @@ def mpc_objective(
     )
 
     if discount_factor < 1.0:
-        discount_factors = rc.array(
+        discount_factors = rg.array(
             [
                 [discount_factor ** (predictor.pred_step_size * i)]
                 for i in range(prediction_horizon + 1)
@@ -390,9 +390,9 @@ def mpc_objective(
             prototype=observation,
             _force_numeric=True,
         )
-        mpc_objective_value = rc.sum(running_objectives * discount_factors)
+        mpc_objective_value = rg.sum(running_objectives * discount_factors)
     else:
-        mpc_objective_value = rc.sum(running_objectives)
+        mpc_objective_value = rg.sum(running_objectives)
 
     return mpc_objective_value
 
@@ -426,11 +426,11 @@ def rpo_objective(
         inputs=action_sequence_predicted,
         is_batch=True,
     )
-    observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
+    observation_sequence = rg.vstack(
+        (rg.force_row(observation), observation_sequence_predicted[:-1, :])
     )
 
-    discount_factors = rc.array(
+    discount_factors = rg.array(
         [
             [discount_factor ** (predictor.pred_step_size * i)]
             for i in range(prediction_horizon)
@@ -439,7 +439,7 @@ def rpo_objective(
         _force_numeric=True,
     )
 
-    rpo_objective_value = rc.sum(
+    rpo_objective_value = rg.sum(
         discount_factors
         * running_objective(
             observation_sequence, action_sequence_predicted, is_save_batch_format=True
@@ -447,7 +447,7 @@ def rpo_objective(
     )
 
     observation_last = observation_sequence_predicted[-1, :]
-    rpo_objective_value += rc.sum(
+    rpo_objective_value += rg.sum(
         discount_factor ** (predictor.pred_step_size * prediction_horizon)
         * critic(observation_last, weights=critic_weights)
     )
@@ -487,10 +487,10 @@ def rql_objective(
         inputs=action_sequence_predicted,
         is_batch=True,
     )
-    observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted[:-1, :])
+    observation_sequence = rg.vstack(
+        (rg.force_row(observation), observation_sequence_predicted[:-1, :])
     )
-    discount_factors = rc.array(
+    discount_factors = rg.array(
         [
             [discount_factor ** (predictor.pred_step_size * i)]
             for i in range(prediction_horizon)
@@ -498,7 +498,7 @@ def rql_objective(
         prototype=observation,
         _force_numeric=True,
     )
-    rql_objective_value = rc.sum(
+    rql_objective_value = rg.sum(
         discount_factors
         * running_objective(
             observation_sequence,
@@ -508,7 +508,7 @@ def rql_objective(
     )
 
     observation_last = state_sequence_predicted[-1, :]
-    rql_objective_value += rc.sum(
+    rql_objective_value += rg.sum(
         discount_factor ** (predictor.pred_step_size * prediction_horizon)
         * critic(
             observation_last, action_sequence_predicted[-1, :], weights=critic_weights
@@ -544,12 +544,12 @@ def sql_objective(
         inputs=action_sequence_predicted,
         is_batch=True,
     )
-    observation_sequence = rc.vstack(
-        (rc.force_row(observation), observation_sequence_predicted)
+    observation_sequence = rg.vstack(
+        (rg.force_row(observation), observation_sequence_predicted)
     )
 
-    sql_objective_value = rc.sum(
-        rc.sum(
+    sql_objective_value = rg.sum(
+        rg.sum(
             critic(
                 observation_sequence, action_sequence_predicted, weights=critic_weights
             )

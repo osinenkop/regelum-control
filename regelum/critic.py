@@ -10,7 +10,7 @@ Remarks:
 
 from unittest.mock import MagicMock
 import numpy as np
-from .__utilities import rc
+from .__utilities import rg
 from abc import ABC
 from .optimizable import Optimizable
 from .objective import temporal_difference_objective
@@ -275,7 +275,7 @@ class Critic(Optimizable, ABC):
         return keys
 
     def regularization_function(self, critic_stored_weights, critic_weights):
-        return self.regularization_param * rc.sum(
+        return self.regularization_param * rg.sum(
             (critic_stored_weights - critic_weights) ** 2
         )
 
@@ -551,7 +551,7 @@ class CriticCALF(Critic):
         :rtype: float
         """
         self.lb_constraint_violation = (
-            self.lb_parameter * rc.norm_2(observation[:-1, :])
+            self.lb_parameter * rg.norm_2(observation[:-1, :])
             - critic_model_output[-1, :]
         )
         return self.lb_constraint_violation
@@ -570,7 +570,7 @@ class CriticCALF(Critic):
         predicted_observation = self.predictor.system.get_observation(
             time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
-        self.lb_constraint_violation = self.lb_parameter * rc.norm_2(
+        self.lb_constraint_violation = self.lb_parameter * rg.norm_2(
             predicted_observation
         ) - self.model(predicted_observation, weights=weights)
         return self.lb_constraint_violation
@@ -585,7 +585,7 @@ class CriticCALF(Critic):
         """
         self.ub_constraint_violation = self.model(
             self.current_observation, weights=weights
-        ) - self.ub_parameter * rc.norm_2(self.current_observation)
+        ) - self.ub_parameter * rg.norm_2(self.current_observation)
         return self.ub_constraint_violation
 
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):

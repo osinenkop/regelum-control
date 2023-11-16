@@ -19,7 +19,7 @@ Remarks:
 import numpy as np
 
 import regelum
-from .__utilities import rc
+from .__utilities import rg
 from .system import System, ComposedSystem
 from typing import Union, Optional
 from abc import ABC
@@ -146,7 +146,7 @@ class Simulator(regelum.RegelumBase, ABC):
         raise NotImplementedError("Not implemented ODE solver")
 
     def get_init_state_and_action(self):
-        return self.state_init, rc.zeros((1, self.system.dim_inputs))
+        return self.state_init, rg.zeros((1, self.system.dim_inputs))
 
     def initialize_init_state(self):
         raise NotImplementedError(
@@ -155,7 +155,7 @@ class Simulator(regelum.RegelumBase, ABC):
         )
 
     def initialize_init_action(self):
-        return rc.zeros(self.system.dim_inputs)
+        return rg.zeros(self.system.dim_inputs)
 
 
 class SciPy(Simulator):
@@ -252,9 +252,9 @@ class CasADi(Simulator):
         return ODE_solver
 
     def create_CasADi_integrator(self, system, max_step):
-        state_symbolic = rc.array_symb(self.system.dim_state, literal="x")
-        action_symbolic = rc.array_symb(self.system.dim_inputs, literal="u")
-        time = rc.array_symb((1, 1), literal="t")
+        state_symbolic = rg.array_symb(self.system.dim_state, literal="x")
+        action_symbolic = rg.array_symb(self.system.dim_inputs, literal="u")
+        time = rg.array_symb((1, 1), literal="t")
 
         ODE = system.compute_state_dynamics(
             time, state_symbolic, action_symbolic, _native_dim=True

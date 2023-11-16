@@ -12,7 +12,7 @@ import numpy as np
 import casadi
 import torch
 
-from .__utilities import rc, Clock, AwaitedParameter
+from .__utilities import rg, Clock, AwaitedParameter
 from regelum import RegelumBase
 from .policy import Policy, RLPolicy, PPO, Reinforce, SDPG, DDPG
 from .critic import Critic, CriticCALF, CriticTrivial
@@ -628,7 +628,7 @@ class CALFPipelineExPost(RLPipeline):
             self.step_counter += 1
             return self.policy.action
 
-        if rc.norm_2(observation) > 0.5:
+        if rg.norm_2(observation) > 0.5:
             critic_weights = self.critic.optimize(
                 self.data_buffer, is_update_and_cache_weights=False
             )

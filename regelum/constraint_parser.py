@@ -1,7 +1,7 @@
 """Contains a tool box for parsing constraints that are injected outside."""
 
 from . import RegelumBase
-from .__utilities import rc
+from .__utilities import rg
 from abc import abstractmethod, ABC
 import numpy as np
 from itertools import groupby
@@ -17,10 +17,10 @@ def all_equal(iterable):
 def state_wise(func):
     def wrapped_constr(predicted_states=None, **kwargs):
         if len(predicted_states.shape) == 1:
-            predicted_states = rc.force_row(predicted_states)
+            predicted_states = rg.force_row(predicted_states)
         assert predicted_states is not None, "states cannot be None"
-        return rc.max(
-            rc.vstack(
+        return rg.max(
+            rg.vstack(
                 [
                     func(**kwargs, state=predicted_states[i, :])
                     for i in range(predicted_states.shape[0])
@@ -47,8 +47,8 @@ def row_wise(with_respect_to: Optional[List[str]] = None):
                     lens
                 ), "Numbers of rows must be the same in order to apply row_wise decorator."
                 len_single = lens.pop(0)
-                return rc.force_column(
-                    rc.vstack(
+                return rg.force_column(
+                    rg.vstack(
                         [
                             constr_func(
                                 **{
@@ -124,17 +124,17 @@ def assert_shape(array, shape, message):
 @row_wise(with_respect_to=["state"])
 def linear_constraint(weights, bias, state):
     assert state is not None, "state cannot be None"
-    return state @ rc.array(weights, prototype=state) + rc.array(bias, prototype=state)
+    return state @ rg.array(weights, prototype=state) + rg.array(bias, prototype=state)
 
 
 @state_wise
 @row_wise(with_respect_to=["state"])
 def circle_constraint(coefs, radius, center, state):
     assert state is not None, "state cannot be None"
-    return rc.array(radius, prototype=state) ** 2 - (
-        rc.dot(
-            rc.array(coefs, prototype=state),
-            (state - rc.array(center, prototype=state)) ** 2,
+    return rg.array(radius, prototype=state) ** 2 - (
+        rg.dot(
+            rg.array(coefs, prototype=state),
+            (state - rg.array(center, prototype=state)) ** 2,
         )
     )
 
@@ -219,11 +219,11 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
                 center=centers,
                 predicted_states=predicted_states,
             )
-        constraint_values = rc.vstack(
+        constraint_values = rg.vstack(
             [
                 val
                 for val in [linear_constraint_values, circle_constraint_values]
                 if val is not None
             ]
         )
-        return rc.max(constraint_values)
+        return rg.max(constraint_values)

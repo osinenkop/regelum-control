@@ -992,8 +992,8 @@ warnings.filterwarnings("ignore", category=pd.io.pytables.PerformanceWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-array = __utilities.rc.array
-rc = __utilities.rc
+array = __utilities.rg.array
+rg = __utilities.rg
 
 
 class _FancyModule(types.ModuleType):

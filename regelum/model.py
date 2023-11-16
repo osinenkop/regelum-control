@@ -10,7 +10,7 @@ from scipy.stats import truncnorm
 import regelum
 
 
-from .__utilities import rc
+from .__utilities import rg
 
 try:
     import torch
@@ -35,7 +35,7 @@ import casadi as cs
 def force_positive_def(func):
     def positive_def_wrapper(obj, *args, **kwargs):
         if obj.force_positive_def:
-            return rc.soft_abs(func(obj, *args, **kwargs))
+            return rg.soft_abs(func(obj, *args, **kwargs))
         else:
             return func(obj, *args, **kwargs)
 
@@ -53,9 +53,9 @@ def unversal_model_call(obj, *argin, weights=None, use_stored_weights=False):
         dim = len(left.shape)
 
         if dim == 1:
-            argin = rc.concatenate(argin, axis=0)
+            argin = rg.concatenate(argin, axis=0)
         elif dim == 2:
-            argin = rc.concatenate(argin, axis=1)
+            argin = rg.concatenate(argin, axis=1)
         else:
             raise ValueError(
                 f"Wrong number of dimensions in {obj.__class__.__name__}.__call__"
@@ -178,13 +178,13 @@ class ModelQuadLin(Model):
 
         if weights is None:
             self._calculate_dims(dim_inputs)
-            self.weight_min = weight_min * rc.ones(self.dim_weights)
-            self.weight_max = weight_max * rc.ones(self.dim_weights)
+            self.weight_min = weight_min * rg.ones(self.dim_weights)
+            self.weight_max = weight_max * rg.ones(self.dim_weights)
             self.weights = (self.weight_min + self.weight_max) / 20.0
         else:
             self._calculate_dims(self._calculate_dim_inputs(len(weights)))
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
-            self.weights = rc.array(weights)
+            self.weights = rg.array(weights)
 
         self.cache_weights(self.weights)
 
@@ -192,11 +192,11 @@ class ModelQuadLin(Model):
     def weights(self, new_weights):
         self._weights = new_weights
         if self.quad_matrix_type == "full":
-            self._quad_matrix = rc.reshape(
+            self._quad_matrix = rg.reshape(
                 self.weights[: self.dim_quad], (self.dim_inputs, self.dim_inputs)
             )
         elif self.quad_matrix_type == "diagonal":
-            self._quad_matrix = rc.diag(self.weights[: self.dim_quad])
+            self._quad_matrix = rg.diag(self.weights[: self.dim_quad])
         elif self.quad_matrix_type == "symmetric":
             self._quad_matrix = ModelQuadLin.quad_matrix_from_flat_weights(
                 self.weights[: self.dim_quad]
@@ -208,7 +208,7 @@ class ModelQuadLin(Model):
 
     @property
     def weight_bounds(self):
-        return rc.array([[self.single_weight_min, self.single_weight_max]])
+        return rg.array([[self.single_weight_min, self.single_weight_max]])
 
     def _calculate_dim_inputs(self, dim_weights):
         if self.quad_matrix_type == "diagonal":
@@ -249,7 +249,7 @@ class ModelQuadLin(Model):
             elif device != value.device:
                 return value.to(device)
         if isinstance(inputs, cs.MX) and isinstance(value, np.ndarray):
-            value = rc.DM(value)
+            value = rg.DM(value)
         return value
 
     def forward(self, inputs, weights=None):
@@ -272,7 +272,7 @@ class ModelQuadLin(Model):
             dim_quad_matrix_float, dim_quad_matrix, tol
         ), f"Can't build quad matrix with flat_weights of dim {len_flat_weights}"
 
-        quad_matrix = rc.zeros(
+        quad_matrix = rg.zeros(
             (dim_quad_matrix, dim_quad_matrix), prototype=flat_weights
         )
         left_ids, right_ids = np.triu_indices(dim_quad_matrix)
@@ -304,7 +304,7 @@ class ModelQuadLin(Model):
 
         quadratic_term = inputs @ quad_matrix @ inputs.T
         if len(quadratic_term.shape) > 0:
-            quadratic_term = rc.diag(quadratic_term)
+            quadratic_term = rg.diag(quadratic_term)
 
         if linear_coefs is not None:
             assert (
@@ -344,9 +344,9 @@ class ModelWeightContainer(Model):
 
     def forward(self, *argin, weights=None):
         if weights is not None:
-            return rc.force_row(weights[0, : self.dim_output])
+            return rg.force_row(weights[0, : self.dim_output])
         else:
-            return rc.force_row(self._weights[0, : self.dim_output])
+            return rg.force_row(self._weights[0, : self.dim_output])
 
 
 class ModelNN(nn.Module):

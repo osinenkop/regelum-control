@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from enum import Enum, auto
 
-from regelum.__utilities import rc
+from regelum.__utilities import rg
 
 try:
     from casadi import Opti
@@ -602,16 +602,16 @@ class Optimizable(regelum.RegelumBase):
                     + " than the upper bound of action "
                     + f"at index {i} ({row[0] > row[1]})"
                 )
-        variable_min = rc.force_row(bounds[:, 0])
-        variable_max = rc.force_row(bounds[:, 1])
+        variable_min = rg.force_row(bounds[:, 0])
+        variable_max = rg.force_row(bounds[:, 1])
         variable_initial_guess = (variable_min + variable_max) / 2
         if tile_parameter > 0:
-            variable_sequence_initial_guess = rc.rep_mat(
+            variable_sequence_initial_guess = rg.rep_mat(
                 variable_initial_guess, 1, tile_parameter
             )
-            sequence_min = rc.rep_mat(variable_min, tile_parameter, 1)
-            sequence_max = rc.rep_mat(variable_max, tile_parameter, 1)
-            result_bounds = rc.hstack((sequence_min, sequence_max))
+            sequence_min = rg.rep_mat(variable_min, tile_parameter, 1)
+            sequence_max = rg.rep_mat(variable_max, tile_parameter, 1)
+            result_bounds = rg.hstack((sequence_min, sequence_max))
             variable_initial_guess = variable_sequence_initial_guess
         else:
             result_bounds = bounds
@@ -697,7 +697,7 @@ class Optimizable(regelum.RegelumBase):
         :param variables: The container of variables that the function operates on.
         """
         func = self.__infer_and_register_symbolic_prototype(func, variables)
-        constr = rc.vec(func.metadata) <= -1e-8
+        constr = rg.vec(func.metadata) <= -1e-8
         self.__opti.subject_to(constr)
 
     def __register_numeric_constraint(
@@ -914,7 +914,7 @@ class Optimizable(regelum.RegelumBase):
         self.opt_status = OptStatus.success
         if self.kind == "symbolic":
             for constr_name in self.constraints.names:
-                if rc.max(result[constr_name]) > tol:
+                if rg.max(result[constr_name]) > tol:
                     self.opt_status = OptStatus.failed
                     break
 
@@ -1005,7 +1005,7 @@ class Optimizable(regelum.RegelumBase):
         """
         return sum(
             [
-                rc.penalty_function(
+                rg.penalty_function(
                     func(**self.variables.to_data_dict()),
                     penalty_coeff=5,
                     delta=-3,

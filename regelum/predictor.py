@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 import regelum
-from .__utilities import rc
+from .__utilities import rg
 from .system import System
 from .model import ModelWeightContainer, ModelWeightContainerTorch
 import torch
@@ -53,7 +53,7 @@ class Predictor(regelum.RegelumBase, ABC):
         :rtype: tuple or numpy.ndarray
         """
         len_state_sequence = action_sequence.shape[0] - int(not is_predict_last)
-        predicted_state_sequence = rc.zeros(
+        predicted_state_sequence = rg.zeros(
             [len_state_sequence, self.system.dim_state],
             prototype=action_sequence,
         )
@@ -129,11 +129,11 @@ class Predictor(regelum.RegelumBase, ABC):
                 return_predicted_states_only=return_predicted_states_only,
             )
 
-        predicted_state_sequence = rc.zeros(
+        predicted_state_sequence = rg.zeros(
             [prediction_horizon + 1 - int(not is_predict_last), self.system.dim_state],
             prototype=state,
         )
-        action_sequence = rc.zeros(
+        action_sequence = rg.zeros(
             [prediction_horizon + 1, self.system.dim_state],
             prototype=state,
         )
