@@ -46,7 +46,11 @@ except ImportError:
 class Policy(Optimizable, ABC):
     """Class of policies.
 
-    These are to be passed to a `pipeline`.
+    Policy defines the strategy or rule by which an agent interacts with an environment.
+
+    The Policy calculates actions based on observations from the environment and the current state of the model. It can be optimized using various optimization techniques, adjusting the model's parameters to improve the chosen actions over time.
+
+    Policies are integrated into pipelines, allowing them to operate within agents that interact with dynamic environments, like those found in reinforcement learning.
     """
 
     def __init__(
@@ -60,21 +64,17 @@ class Policy(Optimizable, ABC):
     ):
         """Initialize an instance of Policy class.
 
-        :param model: Policy model.
+        :param model: The model representing the policy's decision-making mechanism.
         :type model: Union[Model, ModelNN]
-        :param system: Agent environment, defaults to None
+        :param system: System in which the policy will be deployed, defaults to None
         :type system: Union[System, ComposedSystem], optional
-        :param predictor: _description_, defaults to None
-        :type predictor: Optional[Predictor], optional
-        :param action_bounds: Bounds for the action., defaults to None
+        :param action_bounds: Limits to the range of actions the policy can generate, defaults to None
         :type action_bounds: Union[list, np.ndarray, None], optional
-        :param optimizer_config: Configuration of the optimization procedure, defaults to None
+        :param optimizer_config: Configuration settings for the optimization procedure, defaults to None
         :type optimizer_config: Optional[OptimizerConfig], optional
-        :param discount_factor: _description_, defaults to 1.0
+        :param discount_factor: Discount factor for the future running objectives, defaults to 1.0
         :type discount_factor: Optional[float], optional
-        :param epsilon_random: _description_, defaults to False
-        :type epsilon_random: bool, optional
-        :param epsilon_random_parameter: _description_, defaults to 0.0
+        :param epsilon_random_parameter: Parameter that defines the randomness in action selection to encourage exploration, defaults to None
         :type epsilon_random_parameter: float, optional
         """
         self.system = system
@@ -154,9 +154,11 @@ class Policy(Optimizable, ABC):
         self.action = action
 
     def update_action(self, observation=None):
-        """Update the current action of the policy.
+        """Update the current action of the policy based on the provided observation.
 
-        :param observation: The current observation. If not provided, the previously received observation will be used.
+        This method uses the current model to compute a new action, possibly incorporating random elements for exploration purposes. If no observation is provided, the method uses the last received observation.
+
+        :param observation: The most recent observation received from the environment. If not provided, the previously received observation will be used.
         :type observation: numpy array, optional
         """
         if observation is None:

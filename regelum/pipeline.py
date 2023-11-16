@@ -53,7 +53,12 @@ def apply_action_bounds(method):
 
 
 class Pipeline(RegelumBase):
-    """A blueprint of optimal pipelines."""
+    """Pipeline orchestrator.
+
+    A Pipeline orchestrates the training and evaluation cycle of a reinforcement learning agent.
+    It runs the simulation based on a given policy, collects observations, applies actions, and
+    manages the overall simulation loop, including assessing the agent's performance.
+    """
 
     def __init__(
         self,
@@ -69,9 +74,19 @@ class Pipeline(RegelumBase):
         total_objective_threshold: float = np.inf,
         discount_factor: float = 1.0,
     ):
-        """Initialize an instance of Pipeline.
+        """Initialize the Pipeline with the necessary components for running a reinforcement learning experiment.
 
-        :param sampling_time: time interval between two consecutive actions
+        :param policy: Policy to generate actions based on observations.
+        :param simulator: Simulator to interact with and collect data for training.
+        :param sampling_time: Time interval between action updates.
+        :param action_bounds: Boundaries for valid actions.
+        :param running_objective: Objective function for evaluating performance.
+        :param constraint_parser: Tool for parsing constraints during policy optimization.
+        :param observer: Observer for estimating the system state.
+        :param N_episodes: Total number of episodes to run.
+        :param N_iterations: Total number of iterations to run.
+        :param total_objective_threshold: Threshold to stop the simulation if the objective is met.
+        :param discount_factor: Discount factor for future rewards.
         """
         super().__init__()
         self.N_episodes = N_episodes
@@ -328,7 +343,11 @@ class Pipeline(RegelumBase):
 
 
 class RLPipeline(Pipeline):
-    """Pipeline for policy and value iteration updates."""
+    """Incorporates reinforcement learning algorithms.
+
+    The RLPipeline incorporates reinforcement learning algorithms into the Pipeline framework,
+    enabling iterative optimization of both policies and value functions as part of the agent's learning process.
+    """
 
     def __init__(
         self,
@@ -354,9 +373,9 @@ class RLPipeline(Pipeline):
 
         :param policy: Policy object
         :type policy: Policy
-        :param critic: Cricit
+        :param critic: Cricic
         :type critic: Critic
-        :param running_objective: RunningObjective object
+        :param running_objective: Function to calculate the running objective.
         :type running_objective: RunningObjective
         :param critic_optimization_event: moments when to optimize critic. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
         :type critic_optimization_event: str
@@ -637,7 +656,11 @@ class CALFPipelineExPost(RLPipeline):
 
 
 class MPCPipeline(RLPipeline):
-    """MPCPipeline."""
+    """Leverages the Model Predictive Control Pipeline.
+
+    The MPCPipeline leverages the Model Predictive Control (MPC) approach within the reinforcement learning pipeline,
+    utilizing a prediction model to plan and apply sequences of actions that optimize the desired objectives over a time horizon.
+    """
 
     def __init__(
         self,
@@ -650,23 +673,23 @@ class MPCPipeline(RLPipeline):
         constraint_parser: Optional[ConstraintParser] = None,
         discount_factor: float = 1.0,
     ):
-        """Initialize the MPCAgent class.
+        """Initialize the MPC agent, setting up the required structures for MPC.
 
-        :param running_objective: The running objective for the MPC agent.
+        :param running_objective: The objective function to assess the costs over the prediction horizon.
         :type running_objective: RunningObjective
-        :param simulator: The simulator used for the MPC agent.
+        :param simulator: The environment simulation for applying and testing the agent.
         :type simulator: Simulator
-        :param prediction_horizon: The prediction horizon for the MPC agent.
+        :param prediction_horizon: The number of steps into the future over which predictions are made.
         :type prediction_horizon: int
-        :param predictor: The predictor used for the MPC agent. Defaults to None.
+        :param predictor: The prediction model used for forecasting future states.
         :type predictor: Optional[Predictor]
-        :param sampling_time: The sampling time for the MPC agent. Defaults to 0.1.
+        :param sampling_time:  The time step interval for pipeline.
         :type sampling_time: float
-        :param observer: The observer for the MPC agent. Defaults to None.
+        :param observer: The component for estimating the system's current state. Defaults to None.
         :type observer: Observer | None
-        :param constraint_parser: The constraint parser for the MPC agent. Defaults to None.
-        :type constraint_parser: ConstraintParser | None
-        :param discount_factor: The discount factor for the MPC agent. Defaults to 1.0.
+        :param constraint_parser: The mechanism for enforcing operational constraints. Defaults to None.
+        :type constraint_parser: Optional[ConstraintParser]
+        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
         :type discount_factor: float
         """
         system = simulator.system
@@ -718,7 +741,10 @@ class MPCPipeline(RLPipeline):
 
 
 class MPCTorchPipeline(RLPipeline):
-    """MPCTorchPipeline."""
+    """MPCTorchPipeline encapsulates the model predictive control (MPC) approach using PyTorch optimization for reinforcement learning.
+
+    It integrates a policy that employs model-based predictions over a specified horizon to optimize actions, taking into account the dynamic nature of the environment. The pipeline coordinates the interaction between the policy, model, critic, and environment.
+    """
 
     def __init__(
         self,
@@ -737,13 +763,13 @@ class MPCTorchPipeline(RLPipeline):
     ):
         """Initialize the object with the given parameters.
 
-        :param running_objective: The running objective for the simulation.
+        :param running_objective: The objective function to assess the costs over the prediction horizon.
         :type running_objective: RunningObjective
-        :param simulator: The simulator object.
+        :param simulator: The environment simulation for applying and testing the agent.
         :type simulator: Simulator
-        :param prediction_horizon: The number of time steps to predict into the future.
+        :param prediction_horizon: The number of steps into the future over which predictions are made.
         :type prediction_horizon: int
-        :param sampling_time: The time step between each prediction.
+        :param sampling_time: The time step interval for pipeline.
         :type sampling_time: float
         :param n_epochs: The number of training epochs.
         :type n_epochs: int
@@ -753,13 +779,13 @@ class MPCTorchPipeline(RLPipeline):
         :type opt_method: Type[torch.optim.Optimizer]
         :param predictor: The predictor object to use. Defaults to None.
         :type predictor: Optional[Predictor]
-        :param model: The model object to use. Defaults to None.
+        :param model: The neural network model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainerTorch` is used, but you can implement any neural network you want.
         :type model: Optional[ModelNN]
-        :param observer: The observer object to use. Defaults to None.
+        :param observer: Object responsible for state estimation from observations. Defaults to None.
         :type observer: Optional[Observer]
-        :param constraint_parser: The constraint parser object to use. Defaults to None.
+        :param constraint_parser: The mechanism for enforcing operational constraints. Defaults to None.
         :type constraint_parser: Optional[ConstraintParser]
-        :param discount_factor: The discount factor for future rewards. Defaults to 1.0.
+        :param discount_factor: The discount factor for future costs. Defaults to 1.0.
         :type discount_factor: float
 
         :return: None
@@ -917,7 +943,12 @@ def get_policy_gradient_kwargs(
 
 
 class PPOPipeline(RLPipeline):
-    """PPOPipeline."""
+    """Pipeline for Proximal Polizy Optimization.
+
+    PPOPipeline is a reinforcement learning pipeline implementing the Proximal Policy Optimization (PPO) algorithm.
+    This algorithm uses a policy gradient approach with an objective function designed to reduce the variance
+    of policy updates, while ensuring that the new policy does not deviate significantly from the old one.
+    """
 
     def __init__(
         self,
@@ -943,43 +974,43 @@ class PPOPipeline(RLPipeline):
     ):
         """Initialize the object with the given parameters.
 
-        :param policy_model: The policy model.
+        :param policy_model: The neural network model parameterizing the policy.
         :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param critic_model: The critic model.
+        :param critic_model: The neural network model used for the value function approximation.
         :type critic_model: ModelPerceptron
-        :param sampling_time: The sampling time.
+        :param sampling_time: Time interval between two consecutive actions.
         :type sampling_time: float
-        :param running_objective: The running objective.
+        :param running_objective: A function that returns the scalar running cost or reward associated with an observation-action pair.
         :type running_objective: RunningObjective
-        :param simulator: The simulator.
+        :param simulator: The simulation environment where the agent performs actions.
         :type simulator: Simulator
-        :param critic_n_epochs: The number of epochs for critic optimization.
+        :param critic_n_epochs: The number of epochs for which the critic is trained per iteration.
         :type critic_n_epochs: int
-        :param policy_n_epochs: The number of epochs for policy optimization.
+        :param policy_n_epochs: The number of epochs for which the policy is trained per iteration.
         :type policy_n_epochs: int
-        :param critic_opt_method_kwargs: The keyword arguments for the critic optimizer.
+        :param critic_opt_method_kwargs: A dictionary of keyword arguments for the optimizer used for the critic.
         :type critic_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer.
+        :param policy_opt_method_kwargs: A dictionary of keyword arguments for the optimizer used for the policy.
         :type policy_opt_method_kwargs: Dict[str, Any]
-        :param critic_opt_method: The optimizer class for the critic.
+        :param critic_opt_method: The optimization algorithm class used for training the critic, e.g. torch.optim.Adam.
         :type critic_opt_method: Type[torch.optim.Optimizer]
-        :param policy_opt_method: The optimizer class for the policy.
+        :param policy_opt_method: The optimization algorithm class used for training the policy, e.g. torch.optim.Adam.
         :type policy_opt_method: Type[torch.optim.Optimizer]
-        :param running_objective_type: The type of running objective.
+        :param running_objective_type: Specifies whether the running objective represents a 'cost' to minimize or a 'reward' to maximize.
         :type running_objective_type: str
-        :param critic_td_n: The number of timesteps for critic estimation.
+        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
         :type critic_td_n: int
-        :param epsilon: The epsilon value for PPO.
+        :param epsilon: Clipping parameter that restricts the deviation of the new policy from the old policy.
         :type epsilon: float
-        :param discount_factor: The discount factor.
+        :param discount_factor: A factor applied to future rewards or costs to discount their value relative to immediate ones.
         :type discount_factor: float
-        :param observer: The observer.
+        :param observer: Object responsible for state estimation from observations.
         :type observer: Optional[Observer]
-        :param N_episodes: The number of episodes.
+        :param N_episodes: The number of episodes to run in every iteration.
         :type N_episodes: int
-        :param N_iterations: The number of iterations.
+        :param N_iterations: The number of iterations to run in the pipeline.
         :type N_iterations: int
-        :param total_objective_threshold: The total objective threshold.
+        :param total_objective_threshold: Threshold of the total objective to end an episode.
         :type total_objective_threshold: float
 
         :raises AssertionError: If the `running_objective_type` is invalid.
@@ -1023,7 +1054,17 @@ class PPOPipeline(RLPipeline):
 
 
 class SDPGPipeline(RLPipeline):
-    """PPOPipeline."""
+    """Implements the Stochastic Deep Policy Gradient (SDPG) algorithm.
+
+    SDPGPipeline implements the Stochastic Deep Policy Gradient (SDPG) algorithm,
+    an off-policy actor-critic method using a deep policy to model stochastic policies and
+    a deep network as the critic that approximates a value Function.
+
+    The SDPG algorithm performs policy updates by maximizing the critic's output and updates
+    the critic using temporal-difference learning. This pipeline orchestrates the training
+    process, including interaction with the simulation environment, handling of the experience
+    replay buffer, and coordination of policy and critic improvements.
+    """
 
     def __init__(
         self,
@@ -1045,50 +1086,42 @@ class SDPGPipeline(RLPipeline):
         N_iterations: int = 100,
         total_objective_threshold: float = np.inf,
     ):
-        """Initialize the object with the given parameters.
+        """Initialize SDPGPipeline.
 
-        :param policy_model: The policy model.
+        :param policy_model: The policy network model that defines the policy architecture.
         :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param critic_model: The critic model.
+        :param critic_model: The critic network model that defines the value function architecture.
         :type critic_model: ModelPerceptron
-        :param sampling_time: The sampling time.
+        :param sampling_time: The time step between agent actions in the environment.
         :type sampling_time: float
-        :param running_objective: The running objective.
+        :param running_objective: Function calculating the reward or cost at each time step when an action is taken.
         :type running_objective: RunningObjective
-        :param simulator: The simulator.
+        :param simulator: The environment in which the agent operates, providing observation.
         :type simulator: Simulator
-        :param critic_n_epochs: The number of epochs for critic optimization.
+        :param critic_n_epochs: Number of epochs for which the critic network is trained at each iteration.
         :type critic_n_epochs: int
-        :param policy_n_epochs: The number of epochs for policy optimization.
+        :param policy_n_epochs: Number of epochs for which the policy network is trained at each iteration.
         :type policy_n_epochs: int
-        :param critic_opt_method_kwargs: The keyword arguments for the critic optimizer.
+        :param critic_opt_method_kwargs: Parameters for the critic's optimization algorithm.
         :type critic_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer.
+        :param policy_opt_method_kwargs: Parameters for the policy's optimization algorithm.
         :type policy_opt_method_kwargs: Dict[str, Any]
-        :param critic_opt_method: The optimizer class for the critic.
+        :param critic_opt_method: Class of the optimizer to use for optimizing the critic,  defaults to torch.optim.Adam
         :type critic_opt_method: Type[torch.optim.Optimizer]
-        :param policy_opt_method: The optimizer class for the policy.
+        :param policy_opt_method: Class of the optimizer to use for optimizing the policy, , defaults to torch.optim.Adam
         :type policy_opt_method: Type[torch.optim.Optimizer]
-        :param running_objective_type: The type of running objective.
-        :type running_objective_type: str
-        :param critic_td_n: The number of timesteps for critic estimation.
+        :param critic_td_n: The number of steps to look ahead in the TD-target for the critic.
         :type critic_td_n: int
-        :param epsilon: The epsilon value for PPO.
-        :type epsilon: float
-        :param discount_factor: The discount factor.
+        :param discount_factor: The factor by which future rewards or costs are discounted relative to immediate running objectives.
         :type discount_factor: float
-        :param observer: The observer.
+        :param observer: The observer object that estimates the state of the environment from observations.
         :type observer: Optional[Observer]
-        :param N_episodes: The number of episodes.
+        :param N_episodes: The number of episodes per iteration.
         :type N_episodes: int
-        :param N_iterations: The number of iterations.
+        :param N_iterations: The total number of iterations for training.
         :type N_iterations: int
-        :param total_objective_threshold: The total objective threshold.
+        :param total_objective_threshold: Threshold for the total objective that, once reached, stops the episode, defaults to np.inf.
         :type total_objective_threshold: float
-
-        :raises AssertionError: If the `running_objective_type` is invalid.
-
-        :return: None
         """
         super().__init__(
             **get_policy_gradient_kwargs(
@@ -1142,13 +1175,13 @@ class ReinforcePipeline(RLPipeline):
     ):
         """Initialize an RLPipeline object.
 
-        :param policy_model: The policy model used by the RLPipeline.
+        :param policy_model: he policy network model that defines the policy architecture.
         :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param sampling_time: The sampling time for the system used by the RLPipeline.
+        :param sampling_time: The time step between agent actions in the environment.
         :type sampling_time: float
-        :param running_objective: The running objective used by the RLPipeline.
+        :param running_objective: Function calculating the reward or cost at each time step when an action is taken.
         :type running_objective: RunningObjective
-        :param simulator: The simulator used by the RLPipeline.
+        :param simulator: The environment in which the agent operates, providing state, observation.
         :type simulator: Simulator
         :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer method.
         :type policy_opt_method_kwargs: Dict[str, Any]
@@ -1158,13 +1191,13 @@ class ReinforcePipeline(RLPipeline):
         :type n_epochs: int, optional
         :param discount_factor: The discount factor used by the RLPipeline. Defaults to 1.0.
         :type discount_factor: float, optional
-        :param observer: The observer used by the RLPipeline. Defaults to None.
+        :param observer: The observer object that estimates the state of the environment from observations. Defaults to None.
         :type observer: Optional[Observer], optional
-        :param N_episodes: The number of episodes used by the RLPipeline. Defaults to 4.
+        :param N_episodes: The number of episodes per iteration. Defaults to 4.
         :type N_episodes: int, optional
-        :param N_iterations: The number of iterations used by the RLPipeline. Defaults to 100.
+        :param N_iterations: The total number of iterations for training. Defaults to 100.
         :type N_iterations: int, optional
-        :param is_with_baseline: Whether to use a baseline as listed in the description of the algorithm above. Defaults to True.
+        :param is_with_baseline: Whether to use baseline as value (i.e. cumulative cost or reward) from previous iteration. Defaults to True.
         :type is_with_baseline: bool, optional
         :param is_do_not_let_the_past_distract_you: Whether to use tail total costs or not. Defaults to True.
         :type is_do_not_let_the_past_distract_you: bool, optional
@@ -1198,7 +1231,7 @@ class ReinforcePipeline(RLPipeline):
 
 
 class DDPGPipeline(RLPipeline):
-    """DDPG Pipeline."""
+    """Implements a pipeline for interacting with an environment using the Deep Deterministic Policy Gradients (DDPG) algorithm."""
 
     def __init__(
         self,
@@ -1222,40 +1255,40 @@ class DDPGPipeline(RLPipeline):
     ):
         """Instantiate DDPG Pipeline.
 
-        :param policy_model: _description_
+        :param policy_model: The policy (actor) neural network model with input as state and output as action.
         :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param critic_model: _description_
+        :param critic_model: The critic neural network model with input as state-action pair and output as Q-value estimate.
         :type critic_model: ModelPerceptron
-        :param sampling_time: _description_
+        :param sampling_time: The time interval between each action taken by the policy.
         :type sampling_time: float
-        :param running_objective: _description_
+        :param running_objective: Th function calculating the running cost at each time step when an action is taken.
         :type running_objective: RunningObjective
-        :param simulator: _description_
+        :param simulator: The environment simulator in which the agent operates.
         :type simulator: Simulator
-        :param critic_n_epochs: _description_
+        :param critic_n_epochs: The number of epochs for training the critic model during each optimization.
         :type critic_n_epochs: int
-        :param policy_n_epochs: _description_
+        :param policy_n_epochs: The number of epochs for training the policy model during each optimization.
         :type policy_n_epochs: int
-        :param critic_opt_method_kwargs: _description_
+        :param critic_opt_method_kwargs: Keyword arguments for the critic optimizer method.
         :type critic_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method_kwargs: _description_
+        :param policy_opt_method_kwargs: Keyword arguments for the policy optimizer method.
         :type policy_opt_method_kwargs: Dict[str, Any]
-        :param critic_opt_method: _description_, defaults to torch.optim.Adam
-        :type critic_opt_method: Type[torch.optim.Optimizer], optional
-        :param policy_opt_method: _description_, defaults to torch.optim.Adam
-        :type policy_opt_method: Type[torch.optim.Optimizer], optional
-        :param critic_td_n: _description_, defaults to 1
-        :type critic_td_n: int, optional
-        :param discount_factor: _description_, defaults to 0.7
-        :type discount_factor: float, optional
-        :param observer: _description_, defaults to None
-        :type observer: Optional[Observer], optional
-        :param N_episodes: _description_, defaults to 2
-        :type N_episodes: int, optional
-        :param N_iterations: _description_, defaults to 100
-        :type N_iterations: int, optional
-        :param total_objective_threshold: _description_, defaults to np.inf
-        :type total_objective_threshold: float, optional
+        :param critic_opt_method: The optimizer class to be used for the critic. Defaults to torch.nn.Adam.
+        :type critic_opt_method: Type[torch.optim.Optimizer]
+        :param policy_opt_method: The optimizer class to be used for the policy. Defaults to torch.nn.Adam.
+        :type policy_opt_method: Type[torch.optim.Optimizer]
+        :param critic_td_n: The n-step return for temporal-difference learning for the critic estimator.
+        :type critic_td_n: int
+        :param discount_factor: The discount factor that weighs future costs lower compared to immediate costs.
+        :type discount_factor: float
+        :param observer: An observer object used for deriving state estimations from raw observations.
+        :type observer: Optional[Observer]
+        :param N_episodes: The number of episodes to be executed in each training iteration.
+        :type N_episodes: int
+        :param N_iterations: The total number of training iterations for the pipeline.
+        :type N_iterations: int
+        :param total_objective_threshold: The threshold for the total cumulative objective value that triggers the end of an episode.
+        :type total_objective_threshold: float
         """
         super().__init__(
             **get_policy_gradient_kwargs(
