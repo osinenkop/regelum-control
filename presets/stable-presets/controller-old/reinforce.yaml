@@ -1,0 +1,33 @@
+_target_: regelum.pipeline.RLPipeline
+
+name%%: reinforce
+
+defaults:
+  - policy: policy_reinforce
+  - critic: critic_trivial
+
+action_bounds: $ system_specific.action_bounds
+sampling_time: $ system_specific.sampling_time
+is_critic_first: True
+running_objective: ~ running_objective
+discount_factor: 1.0 
+policy_optimization_event: = regelum.Event.reset_iteration
+data_buffer_nullify_event: = regelum.Event.reset_iteration
+simulator: ~ simulator
+N_episodes: 4 
+N_iterations: 100
+constraint_parser: ~ constraint_parser
+observer: $ system_specific.observer
+device%%: cpu
+
+policy:
+  model:
+    dim_hidden: 4
+    n_hidden_layers: 2
+  optimizer_config: 
+    opt_options:
+      lr: 0.1
+    config_options:
+      is_reinstantiate_optimizer: False
+      n_epochs: 1
+  device: $ pipeline.device%%

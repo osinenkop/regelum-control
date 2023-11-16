@@ -17,7 +17,7 @@ regelum.policy.ThreeWheeledRobotMemoryPIDPolicy
       ~ThreeWheeledRobotMemoryPIDPolicy.compute_square_of_norm
       ~ThreeWheeledRobotMemoryPIDPolicy.get_action
       ~ThreeWheeledRobotMemoryPIDPolicy.get_setpoint_for_PID_angle_arctan
-      ~ThreeWheeledRobotMemoryPIDPolicy.reset_all_PID_controllers
+      ~ThreeWheeledRobotMemoryPIDPolicy.reset_all_PID_pipelines
    
    
 

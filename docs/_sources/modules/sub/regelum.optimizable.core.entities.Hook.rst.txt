@@ -35,5 +35,7 @@ regelum.optimizable.core.entities.Hook
       ~Hook.metadata
       ~Hook.occupied
       ~Hook.signature
+      ~Hook.func
+      ~Hook.variables
    
    

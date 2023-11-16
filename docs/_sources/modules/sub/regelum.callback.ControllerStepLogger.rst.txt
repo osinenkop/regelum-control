@@ -1,9 +1,9 @@
-regelum.callback.ControllerStepLogger
+regelum.callback.PipelineStepLogger
 =====================================
 
 .. currentmodule:: regelum.callback
 
-.. autoclass:: ControllerStepLogger
+.. autoclass:: PipelineStepLogger
 
    
    .. automethod:: __init__
@@ -13,18 +13,18 @@ regelum.callback.ControllerStepLogger
 
    .. autosummary::
    
-      ~ControllerStepLogger.__init__
-      ~ControllerStepLogger.attach
-      ~ControllerStepLogger.is_target_event
-      ~ControllerStepLogger.on_episode_done
-      ~ControllerStepLogger.on_iteration_done
-      ~ControllerStepLogger.on_launch
-      ~ControllerStepLogger.on_termination
-      ~ControllerStepLogger.on_trigger
-      ~ControllerStepLogger.perform
-      ~ControllerStepLogger.ready
-      ~ControllerStepLogger.register
-      ~ControllerStepLogger.trigger_cooldown
+      ~PipelineStepLogger.__init__
+      ~PipelineStepLogger.attach
+      ~PipelineStepLogger.is_target_event
+      ~PipelineStepLogger.on_episode_done
+      ~PipelineStepLogger.on_iteration_done
+      ~PipelineStepLogger.on_launch
+      ~PipelineStepLogger.on_termination
+      ~PipelineStepLogger.on_trigger
+      ~PipelineStepLogger.perform
+      ~PipelineStepLogger.ready
+      ~PipelineStepLogger.register
+      ~PipelineStepLogger.trigger_cooldown
    
    
 
@@ -34,6 +34,6 @@ regelum.callback.ControllerStepLogger
 
    .. autosummary::
    
-      ~ControllerStepLogger.cooldown
+      ~PipelineStepLogger.cooldown
    
    

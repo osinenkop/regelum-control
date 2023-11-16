@@ -37,7 +37,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 10 seconds
-- The sampling rate of the controller is set to 100 Hz
+- The sampling rate of the pipeline is set to 100 Hz
 - Initial state is set to 
 
 .. math::
@@ -87,7 +87,7 @@ The two-tank systems consists of two tanks which are connected by an open valve.
 governed by a pump and there is an interconnection between the tanks. In addition, there is a permanent leak from tank 2. The
 goal is to keep both tanks exactly 40% full. Below :math:`\tau_1, \tau_2, Q_1, Q_2`  respectively denote base area of the first tank, base area
 of the second tank and two coefficients that determine the magnitude of inbound and outbound flow for the second tank. The
-duration of one episode is set to 80 seconds, while the sampling rate of the controller is set to 10 Hz.
+duration of one episode is set to 80 seconds, while the sampling rate of the pipeline is set to 10 Hz.
 
 .. math::
 
@@ -117,7 +117,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 80 seconds
-- The sampling rate of the controller is set to 10 Hz
+- The sampling rate of the pipeline is set to 10 Hz
 - Initial state is set to 
 
 .. math::
@@ -195,7 +195,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 5 seconds
-- The sampling rate of the controller is set to 100 Hz
+- The sampling rate of the pipeline is set to 100 Hz
 - Initial state is set to 
 
 .. math::
@@ -277,7 +277,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 10 seconds
-- The sampling rate of the controller is set to 100 Hz
+- The sampling rate of the pipeline is set to 100 Hz
 - Initial state is set to 
 
 .. math::
@@ -329,7 +329,7 @@ Description
 A pole is attached by an unactuated joint to a cart, which moves along a frictionless track. The goal is to balance the pole by
 applying a positive or a negative force :math:`A_t` to the left side of the cart. Below :math:`l`, :math:`m_c` , :math:`m_p` , :math:`g` respectively denote the length of the
 pole, the mass of the cart, the mass of the pole and the acceleration of gravity (in SI). The duration of one episode is set to 30
-seconds, while the sampling rate of the controller is set to 100 Hz.
+seconds, while the sampling rate of the pipeline is set to 100 Hz.
 
 .. math::
     \begin{array}{ll}
@@ -361,7 +361,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 5 seconds
-- The sampling rate of the controller is set to 100 Hz
+- The sampling rate of the pipeline is set to 100 Hz
 - Initial state is set to 
 
 .. math::
@@ -413,7 +413,7 @@ A jet-powered spaceship is approaching the surface of the moon. It can activate 
 direction opposite to which the activated engine is facing. The goal is to land at the desired location at the appropriate speed
 and angle. Below :math:`m`, :math:`J`, :math:`g` respectively denote the mass of the spaceship, the moment of inertia of the spaceship with respect
 to its axis of rotation and acceleration of gravity. The duration of one episode is set to 1.5 seconds, while the sampling rate of
-the controller is set to 100 Hz.
+the pipeline is set to 100 Hz.
 
 .. math::
     \mathrm{d}\left(\begin{array}{c}x \\ y \\ \theta \\ v_x \\ v_y \\ \omega\end{array}\right)=\left(\begin{array}{c}v_x \\ v_y \\ \omega \\ \frac{1}{m}\left(A_t^1 \cos \theta-A_t^2 \sin \theta\right) \\ \frac{1}{m}\left(A_t^1 \sin \theta+A_t^2 \cos \theta\right)-g \\ \frac{4 A_t^1}{J}\end{array}\right) \mathrm{d} t
@@ -443,7 +443,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 1.5 seconds
-- The sampling rate of the controller is set to 100 Hz
+- The sampling rate of the pipeline is set to 100 Hz
 - Initial state is set to 
 
 .. math::
@@ -492,7 +492,7 @@ Kinematic Point
 Description
 -----------
 
-A massless point moves on a plane in the direction pointed to by :math:`A_t` with speed :math:`\left\|A_t\right\|`. The goal is to drive the point to the origin. The duration of one episode is set to 5 seconds, while the sampling rate of the controller is set to :math:`100 \mathrm{~Hz}`.
+A massless point moves on a plane in the direction pointed to by :math:`A_t` with speed :math:`\left\|A_t\right\|`. The goal is to drive the point to the origin. The duration of one episode is set to 5 seconds, while the sampling rate of the pipeline is set to :math:`100 \mathrm{~Hz}`.
 
 .. math::
 
@@ -521,7 +521,7 @@ Default configuration of simulator
 ----------------------------------
 
 - The duration of one episode is set to 10 seconds
-- The sampling rate of the controller is set to 100 Hz
+- The sampling rate of the pipeline is set to 100 Hz
 - Initial state is set to 
 
 .. math::

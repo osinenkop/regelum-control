@@ -1,0 +1,15 @@
+_target_: regelum.policy.SDPG
+
+defaults:
+  - model: perceptron_with_normal_noise
+  - optimizer_config: policy_gradient
+
+
+system: ~ system
+critic: ~ pipeline.critic
+discount_factor: $ pipeline.discount_factor
+device: cpu
+sampling_time: $ system_specific.sampling_time
+model:
+  dim_hidden: 4
+  n_hidden_layers: 2

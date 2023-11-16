@@ -1,3 +1,0 @@
-_target_: regelum.policy.InvertedPendulumStabilizingPolicy
-
-controller_gain: 20

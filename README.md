@@ -3,7 +3,7 @@
 # About
 
 `regelum` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
-reinforcement learning controllers. It is made for researchers and engineers in reinforcement learning and control theory.
+reinforcement learning pipelines. It is made for researchers and engineers in reinforcement learning and control theory.
 A detailed documentation is available [here](https://aidynamicaction.github.io/rcognita/).
 
 ## Example run with a mobile robot simulation
@@ -80,7 +80,7 @@ pip3 install .[CASADI]
 ![image](https://gitflic.ru/project/aidynamicaction/regelum/blob/raw?file=gfx%2Fflowchart.png&commit=76314f91ccd6d5273b3c1feccca2a5655714cb0d)
 
 `regelum` Python package is designed for hybrid simulation of agents
-and environments (i.e. controllers and control-systems). `regelum` allows one to
+and environments (i.e. pipelines and control-systems). `regelum` allows one to
 simulate either discrete-time systems (environments) or continuous-time systems (environments)
 with sampled feedback (agents that react to their observations at a finite frequency).
 
@@ -92,22 +92,22 @@ issuing its actions at a given rate.
 import numpy as np
 from regelum.simulator import Simulator
 from regelum.system import System
-from regelum.controller import Controller
+from regelum.pipeline import Pipeline
 from regelum.scenario import OnlineScenario
 
 class MyRobotSystem(System):
     ...  ## Define the robot
 
-class MyAgent(Controller):
+class MyAgent(Pipeline):
     ...  ## Define what your agent does
 
 rate = 0.1  ## The agent performs actions once every 100ms
 initial_state = np.zeros(...) ## In which state the robot will start
 
 robot = MyRobotSystem(...)
-controller = MyAgent(...)
+pipeline = MyAgent(...)
 simulator = Simulator(robot, initial_state, sampling_time=rate)
-scenario = OnlineScenario(simulator, controller)
+scenario = OnlineScenario(simulator, pipeline)
 scenario.run()
 ```
 
@@ -119,7 +119,7 @@ manage your training pipeline for RL (if needed):
 import numpy as np
 from regelum.simulator import Simulator
 from regelum.systems import System
-from regelum.controllers import RLController
+from regelum.pipelines import RLPipeline
 from regelum.actors import Actor
 from regelum.critics import Critic
 from regelum.scenarios import OnlineScenario
@@ -142,9 +142,9 @@ initial_state = np.zeros(...) ## In which state the robot will start
 robot = MyRobotSystem(...)
 actor = MyActor(...)
 critic = MyCritic(...)
-controller = RLController(actor=actor, critic=critic)
+pipeline = RLPipeline(actor=actor, critic=critic)
 simulator = Simulator(robot, initial_state, sampling_time=rate)
-scenario = OnlineScenario(simulator, controller, objective=my_reward)
+scenario = OnlineScenario(simulator, pipeline, objective=my_reward)
 scenario.run()
 ```
 
@@ -160,7 +160,7 @@ class MySimulator(Simulator):
 This applies to just about any entity in `regelum`. Want a more advanced
 training pipeline? All it takes is too derive your own `Scenario`.
 Want to push the boundaries of what an RL agent looks like? Say no more:
-just derive a child from `RLController` and modify it to your heart's content.
+just derive a child from `RLPipeline` and modify it to your heart's content.
 
 Be sure to hit the API docs (or the source code) if you want figure out the
 best way of deriving something yourself. In most cases you'll find that
@@ -199,7 +199,7 @@ Consider the following files in your hypothetical project.
 
 ```
 from regelum.systems import System
-from regelum.controllers import Controller
+from regelum.pipelines import Pipeline
 
 class MyRobotSystem(System):
     def __init__(self, x, y, z):
@@ -207,7 +207,7 @@ class MyRobotSystem(System):
 
     def ...
 
-class MyAgent(Controller):
+class MyAgent(Pipeline):
     def __init__(self, a, b, c):
         ...
 
@@ -251,12 +251,12 @@ import numpy
 )
 def my_app(config):
     robot = ~config.robot      # '~' instantiates the object
-    controller = ~config.agent # described in the corresponding
+    pipeline = ~config.agent # described in the corresponding
                                # field. It makes use of '_target_'.
     simulator = Simulator(robot,
                           config.initial_state,
                           sampling_time=config.rate)
-    scenario = OnlineScenario(simulator, controller)
+    scenario = OnlineScenario(simulator, pipeline)
     scenario.run()
 
 
@@ -296,7 +296,7 @@ almost empty. Here's an example of how this can be done:
 
 ```
 from regelum.systems import System
-from regelum.controllers import Controller
+from regelum.pipelines import Pipeline
 
 class MyRobotSystem(System):
     def __init__(self, x, y, z):
@@ -304,7 +304,7 @@ class MyRobotSystem(System):
 
     def ...
 
-class MyAgent(Controller):
+class MyAgent(Pipeline):
     def __init__(self, a, b, c):
         ...
 
@@ -326,7 +326,7 @@ simulator:
     initial_state: = numpy.zeros(5)
     sampling_time: 0.1
 
-controller:
+pipeline:
     _target_: my_utilities.MyAgent
     a: 3
     b: 4
@@ -358,7 +358,7 @@ This way of doing it has numerous advantages. Notably, you can now
 conveniently override any input parameters, when running the script like so
 
 ```
-python3 main.py controller.a=10
+python3 main.py pipeline.a=10
 ```
 
 or even
@@ -404,11 +404,11 @@ the presets:
 
 | Parameter               | Type      | Description                                             |
 | ----------------------- | --------- | ------------------------------------------------------- |
-| `sampling_time` *      | `float`   | Controller sampling time                                |
+| `sampling_time` *      | `float`   | Pipeline sampling time                                |
 | `time_final` *         | `float`   | Final time                                              |
 | `state_init`            | `ndarray` | Initial state                                           |
 | `no_visual`             | `bool`    | Flag to supress graphical output                        |
-| `prediction_horizon` * | `int`     | Horizon length (in steps) for predictive controllers    |
+| `prediction_horizon` * | `int`     | Horizon length (in steps) for predictive pipelines    |
 | `data_buffer_size`      | `int`     | Critic stack size (number of TDs)                       |
 | `discount_factor`       | `float`   | Discount factor                                         |
 | `ode_backend` *        | `str`     | ODE solving backend for simulation. "SCIPY" or "CASADI" |

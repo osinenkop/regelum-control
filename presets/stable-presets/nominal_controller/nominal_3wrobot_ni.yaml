@@ -1,4 +1,4 @@
-_target_: regelum.controller.Controller3WRobotNIMotionPrimitive
+_target_: regelum.pipeline.Pipeline3WRobotNIMotionPrimitive
 
 ###---Constructor arguments---###
 

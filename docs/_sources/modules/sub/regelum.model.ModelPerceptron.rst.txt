@@ -79,5 +79,6 @@ regelum.model.ModelPerceptron
       ~ModelPerceptron.call_super_init
       ~ModelPerceptron.dump_patches
       ~ModelPerceptron.weights
+      ~ModelPerceptron.training
    
    

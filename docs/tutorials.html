@@ -9,8 +9,7 @@
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
       <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
-      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-      <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -19,10 +18,12 @@
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="REINFORCE Algorithm" href="controllers.html" />
+    <link rel="next" title="REINFORCE Algorithm" href="pipelines.html" />
     <link rel="prev" title="About" href="introduction.html" /> 
 </head>
 
@@ -55,7 +56,7 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#closing-remarks">Closing remarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#for-developers">For developers</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Tutorials</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#example-1-basics">Example 1: Basics</a></li>
@@ -78,52 +79,28 @@
 <li class="toctree-l1"><a class="reference internal" href="#callbacks-and-logging">Callbacks and Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Controllers</span></p>
+<p class="caption" role="heading"><span class="caption-text">Pipelines</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="controllers.html">REINFORCE Algorithm</a></li>
-<li class="toctree-l1"><a class="reference internal" href="controllers.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
-<li class="toctree-l1"><a class="reference internal" href="controllers.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipelines.html">REINFORCE Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipelines.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipelines.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Systems</span></p>
+<p class="caption" role="heading"><span class="caption-text">Systems</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="systems.html">Avaliable systems</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Optimizable</span></p>
+<p class="caption" role="heading"><span class="caption-text">Optimizable</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="optimizable.html">Optimizable Subpackage Tutorial</a></li>
 </ul>
-<p class="caption"><span class="caption-text">rc singletone</span></p>
+<p class="caption" role="heading"><span class="caption-text">rc singletone</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
 </ul>
-<p class="caption"><span class="caption-text">API Documentation</span></p>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.animation.html"><code class="docutils literal notranslate"><span class="pre">regelum.animation</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.callback.html"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.configure.html"><code class="docutils literal notranslate"><span class="pre">regelum.configure</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.constraint_parser.html"><code class="docutils literal notranslate"><span class="pre">regelum.constraint_parser</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.critic.html"><code class="docutils literal notranslate"><span class="pre">regelum.critic</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.batch_sampler.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.batch_sampler</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.data_buffer.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.data_buffer</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.fifo_list.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.fifo_list</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.types.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.types</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.event.html"><code class="docutils literal notranslate"><span class="pre">regelum.event</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.model.html"><code class="docutils literal notranslate"><span class="pre">regelum.model</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.objective.html"><code class="docutils literal notranslate"><span class="pre">regelum.objective</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.observer.html"><code class="docutils literal notranslate"><span class="pre">regelum.observer</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.configs.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.configs</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.entities.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.entities</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.hooks.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.hooks</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.optimizers.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.optimizers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.policy.html"><code class="docutils literal notranslate"><span class="pre">regelum.policy</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.predictor.html"><code class="docutils literal notranslate"><span class="pre">regelum.predictor</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.simulator.html"><code class="docutils literal notranslate"><span class="pre">regelum.simulator</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.system.html"><code class="docutils literal notranslate"><span class="pre">regelum.system</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Regelum API</a></li>
 </ul>
 
         </div>
@@ -176,7 +153,7 @@ be sure to skip them if you’ve already seen them.</p>
 <p>Consider the following files in your hypothetical project.</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">regelum.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -184,7 +161,7 @@ be sure to skip them if you’ve already seen them.</p>
 
     <span class="k">def</span> <span class="o">...</span>
 
-<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="o">...</span>
 
@@ -224,12 +201,12 @@ be sure to skip them if you’ve already seen them.</p>
 <span class="p">)</span>
 <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
     <span class="n">robot</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">robot</span>      <span class="c1"># &#39;~&#39; instantiates the object</span>
-    <span class="n">controller</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">agent</span> <span class="c1"># described in the corresponding</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">agent</span> <span class="c1"># described in the corresponding</span>
                                <span class="c1"># field. It makes use of &#39;_target_&#39;.</span>
     <span class="n">simulator</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span>
                           <span class="n">config</span><span class="o">.</span><span class="n">initial_state</span><span class="p">,</span>
                           <span class="n">sampling_time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rate</span><span class="p">)</span>
-    <span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">controller</span><span class="p">)</span>
+    <span class="n">scenario</span> <span class="o">=</span> <span class="n">EpisodicScenario</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">)</span>
     <span class="n">scenario</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 
 
@@ -261,7 +238,7 @@ and we would like to instantiate it
 almost empty. Here’s an example of how this can be done:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">regelum.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -269,7 +246,7 @@ almost empty. Here’s an example of how this can be done:</p>
 
     <span class="k">def</span> <span class="o">...</span>
 
-<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="o">...</span>
 
@@ -289,7 +266,7 @@ almost empty. Here’s an example of how this can be done:</p>
     <span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
 
-<span class="n">controller</span><span class="p">:</span>
+<span class="n">pipeline</span><span class="p">:</span>
     <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
     <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>
     <span class="n">b</span><span class="p">:</span> <span class="mi">4</span>
@@ -317,7 +294,7 @@ almost empty. Here’s an example of how this can be done:</p>
 </div>
 <p>This way of doing it has numerous advantages. Notably, you can now
 conveniently override any input parameters, when running the script like so</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">.</span><span class="n">a</span><span class="o">=</span><span class="mi">10</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">a</span><span class="o">=</span><span class="mi">10</span>
 </pre></div>
 </div>
 <p>or even</p>
@@ -355,7 +332,7 @@ rewriting the whole config?</p>
 <p>Consider the following example:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">regelum.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -363,13 +340,13 @@ rewriting the whole config?</p>
 
     <span class="k">def</span> <span class="o">...</span>
 
-<span class="k">class</span> <span class="nc">MyAgentReliable</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span> <span class="c1">## You already know this one works</span>
+<span class="k">class</span> <span class="nc">MyAgentReliable</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span> <span class="c1">## You already know this one works</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="o">...</span>
 
     <span class="k">def</span> <span class="o">...</span>
 
-<span class="k">class</span> <span class="nc">MyAgentExperimental</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span> <span class="c1">## Perhaps this one works even better</span>
+<span class="k">class</span> <span class="nc">MyAgentExperimental</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span> <span class="c1">## Perhaps this one works even better</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
         <span class="o">...</span>
 
@@ -380,7 +357,7 @@ rewriting the whole config?</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">scenario</span><span class="o">.</span><span class="n">Scenario</span>
 
 <span class="n">defaults</span><span class="p">:</span>
-    <span class="o">-</span> <span class="n">controller</span><span class="p">:</span> <span class="n">reliable</span>
+    <span class="o">-</span> <span class="n">pipeline</span><span class="p">:</span> <span class="n">reliable</span>
 
 <span class="n">simulator</span><span class="p">:</span>
     <span class="n">_target_</span><span class="p">:</span> <span class="n">regelum</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">Simulator</span>
@@ -393,14 +370,14 @@ rewriting the whole config?</p>
     <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">controller/reliable.yaml</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pipeline/reliable.yaml</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgentReliable</span>
 <span class="n">a</span><span class="p">:</span> <span class="mi">4</span>
 <span class="n">b</span><span class="p">:</span> <span class="mi">5</span>
 <span class="n">c</span><span class="p">:</span> <span class="mi">6</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">controller/experimental.yaml</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pipeline/experimental.yaml</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgentExperimental</span>
 <span class="n">e</span><span class="p">:</span> <span class="mi">7</span>
 <span class="n">f</span><span class="p">:</span> <span class="mi">8</span>
@@ -427,18 +404,18 @@ rewriting the whole config?</p>
      <span class="n">my_app</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>In the above project we are looking two alternative agents (controller):
+<p>In the above project we are looking two alternative agents (pipeline):
 the first one called <code class="docutils literal notranslate"><span class="pre">MyAgentReliable</span></code> and the other called <code class="docutils literal notranslate"><span class="pre">MyAgentExperimental</span></code>.</p>
-<p>Observe the <code class="docutils literal notranslate"><span class="pre">default</span></code> syntax in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.  The line <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">controller:</span> <span class="pre">reliable</span></code>
-makes it so that the node <code class="docutils literal notranslate"><span class="pre">config.controller</span></code> is populated by the contents of
-<code class="docutils literal notranslate"><span class="pre">controller/reliable.yaml</span></code>. In this case if you wanted to instead try out the
-experimental agent (described by <code class="docutils literal notranslate"><span class="pre">controller/experimental.yaml</span></code>) you would simply
+<p>Observe the <code class="docutils literal notranslate"><span class="pre">default</span></code> syntax in <code class="docutils literal notranslate"><span class="pre">my_config.yaml</span></code>.  The line <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">pipeline:</span> <span class="pre">reliable</span></code>
+makes it so that the node <code class="docutils literal notranslate"><span class="pre">config.pipeline</span></code> is populated by the contents of
+<code class="docutils literal notranslate"><span class="pre">pipeline/reliable.yaml</span></code>. In this case if you wanted to instead try out the
+experimental agent (described by <code class="docutils literal notranslate"><span class="pre">pipeline/experimental.yaml</span></code>) you would simply
 need to execute the following:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">=</span><span class="n">experimental</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">pipeline</span><span class="o">=</span><span class="n">experimental</span>
 </pre></div>
 </div>
 <p>As simple as that!</p>
-<p>Note that the directory <code class="docutils literal notranslate"><span class="pre">controller</span></code> matches the name of the node it populates.</p>
+<p>Note that the directory <code class="docutils literal notranslate"><span class="pre">pipeline</span></code> matches the name of the node it populates.</p>
 <section id="additional-remarks-on-defaults">
 <h3>Additional remarks on defaults<a class="headerlink" href="#additional-remarks-on-defaults" title="Permalink to this headline"></a></h3>
 <p>Consider the following:</p>
@@ -452,18 +429,18 @@ This feature can help you avoid a lot of unnecessary
 rewriting and duplication.</p>
 <p>Also, if you want to override a nested config group you need
 to use <code class="docutils literal notranslate"><span class="pre">/</span></code> instead of <code class="docutils literal notranslate"><span class="pre">.</span></code>. For instance, like so</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">/</span><span class="n">something_inside_my_controller</span><span class="o">=</span><span class="n">experimental</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">pipeline</span><span class="o">/</span><span class="n">something_inside_my_pipeline</span><span class="o">=</span><span class="n">experimental</span>
 </pre></div>
 </div>
 <p>Yes, this syntax is a bit strange since some of the things in between those <code class="docutils literal notranslate"><span class="pre">/</span></code> may
 not even be actual directories, but rather just names of nodes. This however lets
 <code class="docutils literal notranslate"><span class="pre">hydra</span></code> distinguish between overriding a variable and overriding a config. So if you
 were to instead execute</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">controller</span><span class="o">.</span><span class="n">something_inside_the_controller</span><span class="o">=</span><span class="n">experimental</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">something_inside_the_pipeline</span><span class="o">=</span><span class="n">experimental</span>
 </pre></div>
 </div>
 <p>this would simply assign the string <code class="docutils literal notranslate"><span class="pre">&quot;experimental&quot;</span></code> to
-<code class="docutils literal notranslate"><span class="pre">config.controller.something_inside_my_controller</span></code> as opposed to swapping out the
+<code class="docutils literal notranslate"><span class="pre">config.pipeline.something_inside_my_pipeline</span></code> as opposed to swapping out the
 respective config file to <code class="docutils literal notranslate"><span class="pre">experimental.yaml</span></code>.</p>
 </section>
 </section>
@@ -477,7 +454,7 @@ To be able to extract the necessary data it needs to have access to the simulato
 Here’s how you could go about doing it.</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">regelum.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -485,7 +462,7 @@ Here’s how you could go about doing it.</p>
 
     <span class="k">def</span> <span class="o">...</span>
 
-<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">simulator</span>
         <span class="o">...</span>
@@ -506,7 +483,7 @@ Here’s how you could go about doing it.</p>
     <span class="n">initial_state</span><span class="p">:</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
     <span class="n">sampling_time</span><span class="p">:</span> <span class="mf">0.1</span>
 
-<span class="n">controller</span><span class="p">:</span>
+<span class="n">pipeline</span><span class="p">:</span>
     <span class="n">_target_</span><span class="p">:</span> <span class="n">my_utilities</span><span class="o">.</span><span class="n">MyAgent</span>
     <span class="n">simulator</span><span class="p">:</span> <span class="o">~</span> <span class="n">simulator</span>  <span class="c1">## This is where the magic happens.</span>
     <span class="n">a</span><span class="p">:</span> <span class="mi">3</span>                    <span class="c1">## &#39;~&#39; instantiates config.simulator.</span>
@@ -526,8 +503,8 @@ Here’s how you could go about doing it.</p>
      <span class="n">config_name</span><span class="o">=</span><span class="s2">&quot;my_config&quot;</span><span class="p">,</span>
  <span class="p">)</span>
  <span class="k">def</span> <span class="nf">my_app</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
-     <span class="nb">print</span><span class="p">(</span><span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">is</span> <span class="n">config</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>    <span class="c1">## Will output True</span>
-     <span class="nb">print</span><span class="p">((</span><span class="o">~</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">is</span> <span class="n">config</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>   <span class="c1">## Will output True</span>
+     <span class="nb">print</span><span class="p">(</span><span class="o">~</span><span class="n">config</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">is</span> <span class="n">config</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>    <span class="c1">## Will output True</span>
+     <span class="nb">print</span><span class="p">((</span><span class="o">~</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">is</span> <span class="n">config</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>   <span class="c1">## Will output True</span>
 
 
  <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
@@ -554,7 +531,7 @@ to account for the accuracy of simulation, then one could implement that in
 the following way:</p>
 <p><code class="docutils literal notranslate"><span class="pre">my_utilities.py</span></code>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">System</span>
-<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">Controller</span>
+<span class="kn">from</span> <span class="nn">regelum.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>
 
 <span class="k">class</span> <span class="nc">MyRobotSystem</span><span class="p">(</span><span class="n">System</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
@@ -562,7 +539,7 @@ the following way:</p>
 
     <span class="k">def</span> <span class="o">...</span>
 
-<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Controller</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyAgent</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="o">...</span>
 
@@ -583,7 +560,7 @@ simulator:
     sampling_time: 0.1
     atol: 0.001
 
-controller:
+pipeline:
     _target_: my_utilities.MyAgent
     atol: $ simulator.atol  ## This will insert 0.001
     a: 3
@@ -699,7 +676,7 @@ your own projects.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="introduction.html" class="btn btn-neutral float-left" title="About" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="controllers.html" class="btn btn-neutral float-right" title="REINFORCE Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="pipelines.html" class="btn btn-neutral float-right" title="REINFORCE Algorithm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

@@ -1,4 +1,4 @@
-"""Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into controllers (agents).
+"""Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into pipelines (agents).
 
 Remarks: 
 
@@ -46,7 +46,7 @@ except ImportError:
 class Policy(Optimizable, ABC):
     """Class of policies.
 
-    These are to be passed to a `controller`.
+    These are to be passed to a `pipeline`.
     """
 
     def __init__(
@@ -902,14 +902,14 @@ class CALFLegacy(RLPolicy):
 
     def __init__(
         self,
-        safe_controller,
+        safe_pipeline,
         *args,
         **kwargs,
     ):
-        """Initialize thepolicy with a safe controller, and optional arguments for constraint handling, penalty term, andpolicy regularization.
+        """Initialize thepolicy with a safe pipeline, and optional arguments for constraint handling, penalty term, andpolicy regularization.
 
-        :param safe_controller: controller used to compute a safe action in case the optimization is rejected
-        :type safe_controller: Controller
+        :param safe_pipeline: pipeline used to compute a safe action in case the optimization is rejected
+        :type safe_pipeline: Pipeline
         :param policy_constraints_on: whether to use the CALF constraints in the optimization
         :type policy_constraints_on: bool
         :param penalty_param: penalty term for the optimization objective
@@ -918,7 +918,7 @@ class CALFLegacy(RLPolicy):
         :type policy_regularization_param: float
         """
         super().__init__(*args, **kwargs)
-        self.safe_controller = safe_controller
+        self.safe_pipeline = safe_pipeline
         self.penalty_param = penalty_param
         self.policy_regularization_param = policy_regularization_param
         self.predictive_constraint_violations = []
@@ -931,7 +931,7 @@ class CALFLegacy(RLPolicy):
             else []
         )
         self.weights_acceptance_status = False
-        safe_action = self.safe_controller.compute_action(
+        safe_action = self.safe_pipeline.compute_action(
             self.state_init, self.critic.observation_last_good
         )
         self.action_init = self.action = safe_action
@@ -991,7 +991,7 @@ class CALFLegacy(RLPolicy):
 
 
 class KinPointStabilizingPolicy(Policy):
-    """Controller for kinematic point stabilization."""
+    """Pipeline for kinematic point stabilization."""
 
     def __init__(self, gain):
         """Initialize an instance of the class with the given gain.
@@ -1008,12 +1008,12 @@ class KinPointStabilizingPolicy(Policy):
 
 
 class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
-    """Controller for non-inertial three-wheeled robot composed of three PID controllers."""
+    """Pipeline for non-inertial three-wheeled robot composed of three PID pipelines."""
 
     def __init__(self, K):
-        """Initialize an instance of controller.
+        """Initialize an instance of pipeline.
 
-        :param K: gain of controller
+        :param K: gain of pipeline
         """
         super().__init__()
         self.K = K
@@ -1052,37 +1052,32 @@ class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
 
 
 class InvertedPendulumStabilizingPolicy(Policy):
-    """A nominal policy for inverted pendulum representing a PD controller."""
+    """A nominal policy for inverted pendulum representing a PD pipeline."""
 
-    def __init__(self, controller_gain):
+    def __init__(self, pipeline_gain):
         """Initialize an instance of policy.
 
-        :param controller_gain: gain of controller
+        :param pipeline_gain: gain of pipeline
         """
         super().__init__()
-        self.controller_gain = controller_gain
+        self.pipeline_gain = pipeline_gain
 
     def get_action(self, observation):
         return np.array(
-            [
-                [
-                    -((observation[0, 0]) + 0.1 * (observation[0, 1]))
-                    * self.controller_gain
-                ]
-            ]
+            [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.pipeline_gain]]
         )
 
 
 class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
-    """Nominal parking controller for NI using disassembled control Lyapunov function."""
+    """Nominal parking pipeline for NI using disassembled control Lyapunov function."""
 
-    def __init__(self, controller_gain=10):
-        """Initialize an instance of disassembled-clf controller.
+    def __init__(self, pipeline_gain=10):
+        """Initialize an instance of disassembled-clf pipeline.
 
-        :param controller_gain: gain of controller
+        :param pipeline_gain: gain of pipeline
         """
         super().__init__()
-        self.controller_gain = controller_gain
+        self.pipeline_gain = pipeline_gain
 
     def _zeta(self, xNI):
         """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
@@ -1143,7 +1138,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
             return nablaL
 
     def _kappa(self, xNI):
-        """Stabilizing controller for NI-part."""
+        """Stabilizing pipeline for NI-part."""
         kappa_val = rc.zeros(2)
 
         G = rc.zeros([3, 2])
@@ -1199,10 +1194,10 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         return uCart
 
     def get_action(self, observation):
-        """Perform the same computation as :func:`~Controller3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
+        """Perform the same computation as :func:`~Pipeline3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
         xNI = self._Cart2NH(observation[0])
         kappa_val = self._kappa(xNI)
-        uNI = self.controller_gain * kappa_val
+        uNI = self.pipeline_gain * kappa_val
 
         return self._NH2ctrl_Cart(xNI, uNI).reshape(1, -1)
 
@@ -1216,9 +1211,9 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
 
 
 class MemoryPIDPolicy(Policy):
-    """A base class for PID controller.
+    """A base class for PID pipeline.
 
-    This controller is able to use stored data in order to detect whether system is stabilized or not.
+    This pipeline is able to use stored data in order to detect whether system is stabilized or not.
     """
 
     def __init__(
@@ -1231,7 +1226,7 @@ class MemoryPIDPolicy(Policy):
         initial_point=(-5, -5),
         buffer_length=30,
     ):
-        """Initialize an instance of ControllerMemoryPID.
+        """Initialize an instance of PipelineMemoryPID.
 
         Whatever
         :param P: proportional gain
@@ -1327,9 +1322,9 @@ class MemoryPIDPolicy(Policy):
 
 
 class ThreeWheeledRobotMemoryPIDPolicy:
-    """PID controller for a 3-wheeled robot.
+    """PID pipeline for a 3-wheeled robot.
 
-    Uses ControllerMemoryPID controllers wiring.
+    Uses PipelineMemoryPID pipelines wiring.
     """
 
     def __init__(
@@ -1340,7 +1335,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         sampling_time=0.01,
         action_bounds=None,
     ):
-        """Initialize an instance of Controller3WRobotMemoryPID.
+        """Initialize an instance of Pipeline3WRobotMemoryPID.
 
         :param state_init: state at which simulation starts
         :param params: parameters of a 3-wheeled robot
@@ -1359,7 +1354,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
-        self.controller_clock = time_start
+        self.pipeline_clock = time_start
         self.sampling_time = sampling_time
         self.time_start = time_start
 
@@ -1490,7 +1485,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
 
         return rc.array([np.squeeze(clipped_F), np.squeeze(clipped_M)]).reshape(1, -1)
 
-    def reset_all_PID_controllers(self):
+    def reset_all_PID_pipelines(self):
         self.PID_x_y_origin.reset()
         self.PID_x_y_origin.reset_buffer()
         self.PID_angle_arctan.reset()
@@ -1517,7 +1512,7 @@ class ThreeWheeledRobotPIDPolicy:
         to_origin_bounds=(0.0, 0.1),
         to_arctan_bounds=(0.01, 0.2),
     ):
-        """Initialize Controller3WRobotPID.
+        """Initialize Pipeline3WRobotPID.
 
         :param state_init: initial state of 3wrobot
         :param params: mass and moment of inertia `(M, I)`
@@ -1525,13 +1520,13 @@ class ThreeWheeledRobotPIDPolicy:
         :param time_start: time start
         :param sampling_time: sampling time
         :param action_bounds: bounds that actions should not exceed `[[lower_bound, upper_bound], ...]`
-        :param PID_arctg_params: coefficients for PD controller which sets the direction of robot to origin
-        :param PID_v_zero_params: coefficients for PD controller which forces speed to zero as robot moves to origin
-        :param PID_x_y_origin_params: coefficients for PD controller which moves robot to origin
-        :param PID_angle_origin_params: coefficients for PD controller which sets angle to zero near origin
-        :param v_to_zero_bounds: bounds for enabling controller which decelerates
-        :param to_origin_bounds: bounds for enabling controller which moves robot to origin
-        :param to_arctan_bounds: bounds for enabling controller which direct robot to origin
+        :param PID_arctg_params: coefficients for PD pipeline which sets the direction of robot to origin
+        :param PID_v_zero_params: coefficients for PD pipeline which forces speed to zero as robot moves to origin
+        :param PID_x_y_origin_params: coefficients for PD pipeline which moves robot to origin
+        :param PID_angle_origin_params: coefficients for PD pipeline which sets angle to zero near origin
+        :param v_to_zero_bounds: bounds for enabling pipeline which decelerates
+        :param to_origin_bounds: bounds for enabling pipeline which moves robot to origin
+        :param to_arctan_bounds: bounds for enabling pipeline which direct robot to origin
         """
         if params is None:
             params = [10, 1]
@@ -1547,7 +1542,7 @@ class ThreeWheeledRobotPIDPolicy:
         self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
-        self.controller_clock = time_start
+        self.pipeline_clock = time_start
         self.sampling_time = sampling_time
         self.time_start = time_start
 
@@ -1657,24 +1652,24 @@ class ThreeWheeledRobotPIDPolicy:
 
 
 class CartPoleEnergyBasedPolicy(Policy):
-    """An energy-based controller for cartpole."""
+    """An energy-based pipeline for cartpole."""
 
     def __init__(
         self,
-        controller_gain=10,
+        pipeline_gain=10,
     ):
-        """Initialize an instance of ControllerCartPoleEnergyBased.
+        """Initialize an instance of PipelineCartPoleEnergyBased.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param time_start: time at which computations start
         :param sampling_time: time interval between two consecutive actions
-        :param controller_gain: controller gain
+        :param pipeline_gain: pipeline gain
         :param system: an instance of Cartpole system
         """
         super().__init__()
         from regelum.system import CartPole
 
-        self.controller_gain = controller_gain
+        self.pipeline_gain = pipeline_gain
         self.m_c, self.m_p, self.g, self.l = (
             CartPole.parameters["m_c"],
             system.parameters["m_p"],
@@ -1695,13 +1690,13 @@ class CartPoleEnergyBasedPolicy(Policy):
         self.action = (
             self.m_p * self.g * rc.cos(theta) * rc.sin(theta)
             + self.m_p * self.l * theta_dot * rc.sin(theta)
-            - self.controller_gain * theta_dot * rc.cos(theta)
+            - self.pipeline_gain * theta_dot * rc.cos(theta)
         )
         return self.action.reshape(1, -1)
 
 
 class LunarLanderPIDPolicy:
-    """Nominal PID controller for lunar lander."""
+    """Nominal PID pipeline for lunar lander."""
 
     def __init__(
         self,
@@ -1709,15 +1704,15 @@ class LunarLanderPIDPolicy:
         PID_height_parameters=None,
         PID_x_parameters=None,
     ):
-        """Initialize an instance of PID controller for lunar lander.
+        """Initialize an instance of PID pipeline for lunar lander.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param time_start: time at which computations start
         :param state_init: state at which simulation has begun
         :param sampling_time: time interval between two consecutive actions
-        :param PID_angle_parameters: parameters for PID controller stabilizing angle of lander
-        :param PID_height_parameters: parameters for PID controller stabilizing y-coordinate of lander
-        :param PID_x_parameters: parameters for PID controller stabilizing x-coordinate of lander
+        :param PID_angle_parameters: parameters for PID pipeline stabilizing angle of lander
+        :param PID_height_parameters: parameters for PID pipeline stabilizing y-coordinate of lander
+        :param PID_x_parameters: parameters for PID pipeline stabilizing x-coordinate of lander
         """
         if PID_angle_parameters is None:
             PID_angle_parameters = [1, 0, 0]
@@ -1768,7 +1763,7 @@ class LunarLanderPIDPolicy:
 
 
 class TwoTankPIDPolicy:
-    """PID controller for double tank system."""
+    """PID pipeline for double tank system."""
 
     def __init__(
         self,
@@ -1776,15 +1771,15 @@ class TwoTankPIDPolicy:
         PID_2tank_parameters_x1=(1, 0, 0),
         PID_2tank_parameters_x2=(1, 0, 0),
     ):
-        """Initialize an instance of Controller2TankPID.
+        """Initialize an instance of Pipeline2TankPID.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param params: parameters of double tank system
         :param time_start: time at which computations start
         :param state_init: state at which simulation has begun
         :param sampling_time: time interval between two consecutive actions
-        :param PID_2tank_parameters_x1: parameters for PID controller stabilizing first component of system's state
-        :param PID_2tank_parameters_x2: parameters for PID controller stabilizing second component of system's state
+        :param PID_2tank_parameters_x1: parameters for PID pipeline stabilizing first component of system's state
+        :param PID_2tank_parameters_x2: parameters for PID pipeline stabilizing second component of system's state
         :param observation_target: ...
         """
         from regelum.system import TwoTank
@@ -1825,23 +1820,23 @@ class TwoTankPIDPolicy:
 
 
 class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
-    """Nominal controller for 3-wheel robots used for benchmarking of other controllers.
+    """Nominal pipeline for 3-wheel robots used for benchmarking of other pipelines.
 
-    The controller is sampled.
+    The pipeline is sampled.
 
     For a 3-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended non-holonomic double integrator) [[1]_], we use here
-    a controller designed by non-smooth backstepping (read more in [[2]_], [[3]_]).
+    a pipeline designed by non-smooth backstepping (read more in [[2]_], [[3]_]).
 
     Attributes
     ----------
     m, moment_of_inertia : : numbers
         Mass and moment of inertia around vertical axis of the robot.
-    controller_gain : : number
-        Controller gain.
+    pipeline_gain : : number
+        Pipeline gain.
     time_start : : number
-        Initial value of the controller's __internal clock.
+        Initial value of the pipeline's __internal clock.
     sampling_time : : number
-        Controller's sampling time (in seconds).
+        Pipeline's sampling time (in seconds).
 
     References
     ----------
@@ -1858,7 +1853,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
     def __init__(
         self,
         optimizer_config,
-        controller_gain=10,
+        pipeline_gain=10,
     ):
         """Initialize an instance of stabilizing policy for three wheeled robot."""
         super().__init__(optimizer_config=optimizer_config)
@@ -1866,7 +1861,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
 
         self.m = ThreeWheeledRobot.parameters["m"]
         self.moment_of_inertia = ThreeWheeledRobot.parameters["I"]
-        self.controller_gain = controller_gain
+        self.pipeline_gain = pipeline_gain
         self.xNI_var = self.create_variable(3, 1, name="xNI", is_constant=True)
         self.eta_var = self.create_variable(2, 1, name="eta", is_constant=True)
         self.theta_var = self.create_variable(
@@ -1907,7 +1902,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         return nablaF
 
     def _kappa(self, xNI, theta):
-        """Stabilizing controller for NI-part."""
+        """Stabilizing pipeline for NI-part."""
         G = rc.zeros([2, 3], prototype=xNI)
         G[0, :] = rc.hstack([1, 0, xNI[1]])
         G[1, :] = rc.hstack([0, 1, -xNI[0]])
@@ -1997,7 +1992,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         return uCart
 
     def get_action(self, observation):
-        """Perform the same computation as :func:`~Controller3WRobotDisassembledCLF.compute_action`, but without invoking the __internal clock."""
+        """Perform the same computation as :func:`~Pipeline3WRobotDisassembledCLF.compute_action`, but without invoking the __internal clock."""
         observation = observation[0]
         xNI, eta = self._Cart2NH(observation)
         theta_star = self.optimize(xNI=xNI, eta=eta)
@@ -2005,7 +2000,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
             theta_star = theta_star["theta"]
         kappa_val = self._kappa(xNI, theta_star)
         z = eta - kappa_val
-        uNI = -self.controller_gain * z
+        uNI = -self.pipeline_gain * z
         action = self._NH2ctrl_Cart(xNI, eta, uNI)
         self.action_old = action
         return action.reshape(1, -1)

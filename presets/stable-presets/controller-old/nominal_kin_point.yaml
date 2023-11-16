@@ -1,0 +1,14 @@
+_target_: regelum.pipeline.Pipeline
+
+name%%: nominal_kin_point
+
+defaults:
+  - policy: policy_nominal_kin_point
+
+action_bounds: $ system_specific.action_bounds
+sampling_time: $ system_specific.sampling_time
+running_objective: ~ running_objective
+discount_factor: 1.0 
+simulator: ~ simulator
+N_episodes: 1
+N_iterations: 1

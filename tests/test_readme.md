@@ -29,16 +29,16 @@ At the end of the module you'll see lists of the following kind:
 
 ```angular2html
 basic = [MPCTest(system="2tank"),
-         TestSetup(system="3wrobot", controller="rpo"),
-         TestSetup(system="3wrobot_ni", controller="rpo"),
-         TestSetup(system="cartpole", controller="rql"),
-         TestSetup(system="inv_pendulum", controller="rpo"),
+         TestSetup(system="3wrobot", pipeline="rpo"),
+         TestSetup(system="3wrobot_ni", pipeline="rpo"),
+         TestSetup(system="cartpole", pipeline="rql"),
+         TestSetup(system="inv_pendulum", pipeline="rpo"),
          MPCTest(system="kin_point"),
          MPCTest(system="lunar_lander")]
 
 extended = basic + \
-           [TestSetup(system="kin_point", controller="ddpg"),
-            TestSetup(system="kin_point", controller="sarsa")]
+           [TestSetup(system="kin_point", pipeline="ddpg"),
+            TestSetup(system="kin_point", pipeline="sarsa")]
 ```
 
 Each of those lists corresponds to a set of tests. Each entry is an individual test.
@@ -51,7 +51,7 @@ You can add your own lists of this kind and their names will be recognized when 
 The default value for `--mode` is `basic`.
 
 The keyword arguments for `TestSetup` are `config_path` and `config_name` and they correspond to respective paths and
-names as if your current dir was `presets`. Other keyword arguments like `system` and `controller` will create overrides with respective values.
+names as if your current dir was `presets`. Other keyword arguments like `system` and `pipeline` will create overrides with respective values.
 For instance `TestSetup(simulator="x")` would change the simulator configuration to `x.yaml`.
 
 All other classes that you see instantiated inside these lists (like `MPCTest`) are merely derived from `TestSetup` for convenience.

@@ -1,5 +1,0 @@
-defaults:
-  - policy_rl
-
-critic: ~ controller.critic
-algorithm: rql

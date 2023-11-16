@@ -79,5 +79,6 @@ regelum.model.ModelNN
       ~ModelNN.call_super_init
       ~ModelNN.dump_patches
       ~ModelNN.weights
+      ~ModelNN.training
    
    

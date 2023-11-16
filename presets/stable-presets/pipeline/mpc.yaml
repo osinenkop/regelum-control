@@ -1,0 +1,14 @@
+_target_: regelum.pipeline.MPCPipeline
+
+name%%: mpc
+
+defaults:
+  - predictor: euler
+
+running_objective: ~ running_objective
+simulator: ~ simulator
+prediction_horizon: 4
+sampling_time: $ system_specific.sampling_time
+observer: $ system_specific.observer
+constraint_parser: ~ constraint_parser
+discount_factor: 1.0

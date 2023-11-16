@@ -1,8 +1,0 @@
-defaults:
-  - policy_rl
-
-critic: ~ controller.critic
-algorithm: rpo
-
-model:
-  weights_init: = numpy.zeros((${controller.policy.prediction_horizon}, ${.dim_output}))

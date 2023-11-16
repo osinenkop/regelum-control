@@ -1,0 +1,9 @@
+_target_: regelum.policy.Reinforce
+
+defaults:
+  - model: perceptron_with_normal_noise
+  - optimizer_config: policy_gradient
+
+system: ~ system
+discount_factor: $ pipeline.discount_factor
+device: cpu

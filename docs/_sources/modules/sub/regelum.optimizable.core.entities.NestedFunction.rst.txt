@@ -38,5 +38,9 @@ regelum.optimizable.core.entities.NestedFunction
       ~NestedFunction.data
       ~NestedFunction.is_constant
       ~NestedFunction.metadata
+      ~NestedFunction.nested_variables
+      ~NestedFunction.name
+      ~NestedFunction.dims
+      ~NestedFunction.hooks
    
    

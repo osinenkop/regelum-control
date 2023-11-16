@@ -1,9 +1,9 @@
-regelum.controller.MPCTorchController
+regelum.pipeline.MPCTorchPipeline
 =====================================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
-.. autoclass:: MPCTorchController
+.. autoclass:: MPCTorchPipeline
 
    
    .. automethod:: __init__
@@ -13,25 +13,25 @@ regelum.controller.MPCTorchController
 
    .. autosummary::
    
-      ~MPCTorchController.__init__
-      ~MPCTorchController.calculate_total_objective
-      ~MPCTorchController.compute_action
-      ~MPCTorchController.compute_action_sampled
-      ~MPCTorchController.issue_action
-      ~MPCTorchController.on_action_issued
-      ~MPCTorchController.on_observation_received
-      ~MPCTorchController.optimize
-      ~MPCTorchController.optimize_or_skip_on_event
-      ~MPCTorchController.post_compute_action
-      ~MPCTorchController.pre_optimize
-      ~MPCTorchController.reload_pipeline
-      ~MPCTorchController.reset
-      ~MPCTorchController.reset_episode
-      ~MPCTorchController.reset_iteration
-      ~MPCTorchController.reset_simulation
-      ~MPCTorchController.run
-      ~MPCTorchController.step
-      ~MPCTorchController.substitute_constraint_parameters
+      ~MPCTorchPipeline.__init__
+      ~MPCTorchPipeline.calculate_total_objective
+      ~MPCTorchPipeline.compute_action
+      ~MPCTorchPipeline.compute_action_sampled
+      ~MPCTorchPipeline.issue_action
+      ~MPCTorchPipeline.on_action_issued
+      ~MPCTorchPipeline.on_observation_received
+      ~MPCTorchPipeline.optimize
+      ~MPCTorchPipeline.optimize_or_skip_on_event
+      ~MPCTorchPipeline.post_compute_action
+      ~MPCTorchPipeline.pre_optimize
+      ~MPCTorchPipeline.reload_pipeline
+      ~MPCTorchPipeline.reset
+      ~MPCTorchPipeline.reset_episode
+      ~MPCTorchPipeline.reset_iteration
+      ~MPCTorchPipeline.reset_simulation
+      ~MPCTorchPipeline.run
+      ~MPCTorchPipeline.step
+      ~MPCTorchPipeline.substitute_constraint_parameters
    
    
 

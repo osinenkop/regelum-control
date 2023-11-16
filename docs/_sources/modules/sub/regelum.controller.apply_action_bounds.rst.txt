@@ -1,6 +1,6 @@
-regelum.controller.apply\_action\_bounds
+regelum.pipeline.apply\_action\_bounds
 ========================================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
 .. autofunction:: apply_action_bounds

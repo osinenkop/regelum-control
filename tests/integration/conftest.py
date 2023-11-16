@@ -24,8 +24,8 @@ def setup(request):
 def launch(setup):
     @rc.main(**setup())
     def launch(cfg):
-        controller = ~cfg.controller
-        controller.run()
+        pipeline = ~cfg.pipeline
+        pipeline.run()
 
     return launch
 

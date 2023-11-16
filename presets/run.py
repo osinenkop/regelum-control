@@ -10,7 +10,7 @@ from regelum.simulator import CasADi
 @rg(config_path="stable-presets", config_name="main")
 def launch(cfg):
     system = InvertedPendulumPD()
-    controller = rg.controller.PPOController(
+    pipeline = rg.pipeline.PPOPipeline(
         policy_model=rg.model.PerceptronWithTruncatedNormalNoise(
             dim_input=system.dim_observation,
             dim_hidden=4,
@@ -44,7 +44,7 @@ def launch(cfg):
         ),
     )
 
-    controller.run()
+    pipeline.run()
 
 
 if __name__ == "__main__":

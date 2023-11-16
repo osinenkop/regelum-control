@@ -33,10 +33,10 @@ you'd like to browse releases or fork the repository.
 
 .. toctree::
    :hidden:
-   :caption: Controllers
+   :caption: Pipelines
    :maxdepth: 1
 
-   controllers
+   pipelines
 
 .. toctree::
    :hidden:
@@ -63,11 +63,11 @@ you'd like to browse releases or fork the repository.
 
 .. toctree::
    :hidden:
-   :caption: API Documentation
-   :maxdepth: 5
+   :caption: Reference
+   :maxdepth: 2
    :glob:
 
-   modules/regelum.*
+   api
 
 
 .. include:: modules/regelum.rst

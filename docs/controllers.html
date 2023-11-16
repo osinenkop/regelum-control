@@ -9,8 +9,7 @@
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
       <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
-      <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-      <link rel="stylesheet" href="_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -19,7 +18,9 @@
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -56,13 +57,13 @@
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#closing-remarks">Closing remarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html#for-developers">For developers</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Tutorials</span></p>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Controllers</span></p>
+<p class="caption" role="heading"><span class="caption-text">Pipelines</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">REINFORCE Algorithm</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
@@ -88,46 +89,22 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Systems</span></p>
+<p class="caption" role="heading"><span class="caption-text">Systems</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="systems.html">Avaliable systems</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Optimizable</span></p>
+<p class="caption" role="heading"><span class="caption-text">Optimizable</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="optimizable.html">Optimizable Subpackage Tutorial</a></li>
 </ul>
-<p class="caption"><span class="caption-text">rc singletone</span></p>
+<p class="caption" role="heading"><span class="caption-text">rc singletone</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
 </ul>
-<p class="caption"><span class="caption-text">API Documentation</span></p>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.animation.html"><code class="docutils literal notranslate"><span class="pre">regelum.animation</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.callback.html"><code class="docutils literal notranslate"><span class="pre">regelum.callback</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.configure.html"><code class="docutils literal notranslate"><span class="pre">regelum.configure</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.constraint_parser.html"><code class="docutils literal notranslate"><span class="pre">regelum.constraint_parser</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.controller.html"><code class="docutils literal notranslate"><span class="pre">regelum.controller</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.critic.html"><code class="docutils literal notranslate"><span class="pre">regelum.critic</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.batch_sampler.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.batch_sampler</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.data_buffer.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.data_buffer</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.fifo_list.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.fifo_list</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.data_buffers.types.html"><code class="docutils literal notranslate"><span class="pre">regelum.data_buffers.types</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.event.html"><code class="docutils literal notranslate"><span class="pre">regelum.event</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.model.html"><code class="docutils literal notranslate"><span class="pre">regelum.model</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.objective.html"><code class="docutils literal notranslate"><span class="pre">regelum.objective</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.observer.html"><code class="docutils literal notranslate"><span class="pre">regelum.observer</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.configs.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.configs</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.entities.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.entities</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.core.hooks.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.core.hooks</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.optimizable.optimizers.html"><code class="docutils literal notranslate"><span class="pre">regelum.optimizable.optimizers</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.policy.html"><code class="docutils literal notranslate"><span class="pre">regelum.policy</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.predictor.html"><code class="docutils literal notranslate"><span class="pre">regelum.predictor</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.simulator.html"><code class="docutils literal notranslate"><span class="pre">regelum.simulator</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="modules/regelum.system.html"><code class="docutils literal notranslate"><span class="pre">regelum.system</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Regelum API</a></li>
 </ul>
 
         </div>
@@ -157,7 +134,7 @@
 <h1>REINFORCE Algorithm<a class="headerlink" href="#reinforce-algorithm" title="Permalink to this headline"></a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline"></a></h2>
-<p>The <strong>ReinforceController</strong> implements the <strong>REINFORCE</strong> algorithm, which is a Monte Carlo policy gradient method used in reinforcement learning. This method seeks to optimize the policy by updating parameters in the direction that maximizes expected rewards (or minimizes the expected costs).</p>
+<p>The <strong>ReinforcePipeline</strong> implements the <strong>REINFORCE</strong> algorithm, which is a Monte Carlo policy gradient method used in reinforcement learning. This method seeks to optimize the policy by updating parameters in the direction that maximizes expected rewards (or minimizes the expected costs).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>We provide functionality for policy actions to be generated from a truncated normal distribution that is truncated to the action bounds provided in the system as default parameters.</p>
@@ -232,7 +209,7 @@ c(y_{k'}^j, u_{k'}^j) - b^i_k\right)\nabla_\theta \ln\rho^\theta(u_k^j | y_k^j)\
 <span class="kn">from</span> <span class="nn">regelum.system</span> <span class="kn">import</span> <span class="n">InvertedPendulumPD</span>
 <span class="kn">from</span> <span class="nn">regelum.objective</span> <span class="kn">import</span> <span class="n">RunningObjective</span>
 <span class="kn">from</span> <span class="nn">regelum.simulator</span> <span class="kn">import</span> <span class="n">CasADi</span>
-<span class="kn">from</span> <span class="nn">regelum.controller</span> <span class="kn">import</span> <span class="n">ReinforceController</span>
+<span class="kn">from</span> <span class="nn">regelum.pipeline</span> <span class="kn">import</span> <span class="n">ReinforcePipeline</span>
 
 <span class="c1"># Initialize the system and running cost</span>
 <span class="n">system</span> <span class="o">=</span> <span class="n">InvertedPendulumPD</span><span class="p">()</span>
@@ -240,8 +217,8 @@ c(y_{k'}^j, u_{k'}^j) - b^i_k\right)\nabla_\theta \ln\rho^\theta(u_k^j | y_k^j)\
     <span class="n">model</span><span class="o">=</span><span class="n">rg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ModelQuadLin</span><span class="p">(</span><span class="s2">&quot;diagonal&quot;</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
 <span class="p">)</span>
 
-<span class="c1"># Instantiate the ReinforceController</span>
-<span class="n">controller</span> <span class="o">=</span> <span class="n">ReinforceController</span><span class="p">(</span>
+<span class="c1"># Instantiate the ReinforcePipeline</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">ReinforcePipeline</span><span class="p">(</span>
     <span class="n">policy_model</span><span class="o">=</span><span class="n">rg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">PerceptronWithTruncatedNormalNoise</span><span class="p">(</span>
         <span class="n">dim_input</span><span class="o">=</span><span class="n">system</span><span class="o">.</span><span class="n">dim_observation</span><span class="p">,</span>
         <span class="n">dim_hidden</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
@@ -271,7 +248,7 @@ c(y_{k'}^j, u_{k'}^j) - b^i_k\right)\nabla_\theta \ln\rho^\theta(u_k^j | y_k^j)\
 <span class="p">)</span>
 
 <span class="c1"># Run the training process</span>
-<span class="n">controller</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
@@ -280,7 +257,7 @@ c(y_{k'}^j, u_{k'}^j) - b^i_k\right)\nabla_\theta \ln\rho^\theta(u_k^j | y_k^j)\
 <h1>Proximal Policy Optimization (PPO) Algorithm<a class="headerlink" href="#proximal-policy-optimization-ppo-algorithm" title="Permalink to this headline"></a></h1>
 <section id="id1">
 <h2>Overview<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h2>
-<p>The PPOController implements the Proximal Policy Optimization (PPO) algorithm, a policy gradient method for reinforcement learning that balances exploration and exploitation by clipping the policy update. PPO aims to take the biggest possible improvement step on a policy without causing performance collapse, thus ensuring a monotonic improvement.</p>
+<p>The PPOPipeline implements the Proximal Policy Optimization (PPO) algorithm, a policy gradient method for reinforcement learning that balances exploration and exploitation by clipping the policy update. PPO aims to take the biggest possible improvement step on a policy without causing performance collapse, thus ensuring a monotonic improvement.</p>
 </section>
 <section id="gradient-optimization-formulas">
 <h2>Gradient Optimization Formulas<a class="headerlink" href="#gradient-optimization-formulas" title="Permalink to this headline"></a></h2>
@@ -400,6 +377,10 @@ calculate <span class="math notranslate nohighlight">\(\rho^{\theta_{i}}(u^j_k |
 <p>and <span class="math notranslate nohighlight">\(\text{PolicyObjective}\)</span>:</p>
 <div class="math notranslate nohighlight">
 \[\frac{1}{M}\sum\limits_{j=1}^{M}\sum\limits_{k=0}^{N-2}\gamma^k \max\left(\hat{A}^{w}(y^j_k, u^j_k)   \frac{\rho^{\theta}(u^j_k \mid y^j_k)}{\rho^{\theta_{i}}(u^j_k \mid y^j_k)}, \hat{A}^{w}(y^j_k, u^j_k) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\rho^{\theta}(u^j_k \mid y^j_k)}{\rho^{\theta_{i}}(u^j_k \mid y^j_k)}\right) \right).\]</div>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}\newcommand{\clip}{clip_{1 - \varepsilon}^{1 + \varepsilon}}\\\clip + 1\end{aligned}\end{align} \]</div>
+<div class="math notranslate nohighlight">
+\[\clip + 2\]</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">regelum</span> <span class="k">as</span> <span class="nn">rg</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -408,7 +389,7 @@ calculate <span class="math notranslate nohighlight">\(\rho^{\theta_{i}}(u^j_k |
 <span class="kn">from</span> <span class="nn">regelum.simulator</span> <span class="kn">import</span> <span class="n">CasADi</span>
 
 <span class="n">system</span> <span class="o">=</span> <span class="n">InvertedPendulumPD</span><span class="p">()</span>
-<span class="n">controller</span> <span class="o">=</span> <span class="n">rg</span><span class="o">.</span><span class="n">controller</span><span class="o">.</span><span class="n">PPOController</span><span class="p">(</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">rg</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">PPOPipeline</span><span class="p">(</span>
     <span class="n">policy_model</span><span class="o">=</span><span class="n">rg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">PerceptronWithTruncatedNormalNoise</span><span class="p">(</span>
         <span class="n">dim_input</span><span class="o">=</span><span class="n">system</span><span class="o">.</span><span class="n">dim_observation</span><span class="p">,</span>
         <span class="n">dim_hidden</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
@@ -442,9 +423,51 @@ calculate <span class="math notranslate nohighlight">\(\rho^{\theta_{i}}(u^j_k |
     <span class="p">),</span>
 <span class="p">)</span>
 
-<span class="n">controller</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<!DOCTYPE html> 
+<html xml:lang='en-US' lang='en-US'> 
+<head> <title></title> 
+<meta charset='iso-8859-1' /> 
+<meta name='generator' content='TeX4ht (http://www.tug.org/tex4ht/)' /> 
+<meta name='viewport' content='width=device-width,initial-scale=1' /> 
+<link href='Osinenko2023habil.css' rel='stylesheet' type='text/css' /> 
+<meta name='src' content='Osinenko2023habil.tex' /> 
+ <script type='text/x-mathjax-config'> MathJax.Hub.Config({ 'fast-preview': {disabled: true}, TeX: { extensions: ["color.js","AMSmath.js"], equationNumbers: { autoNumber: "AMS" } }, extensions: ["tex2jax.js"], tex2jax: {  inlineMath: [ ["\\\(","\\\)"] ], displayMath: [ ['$$','$$'], ["\\[","\\]"] ], processEscapes: true, processEnvironments: true } }); </script> 
+ <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML'></script>  
+</head><body>
+   \( \newcommand{\state}{s}
+
+\newcommand{\E}[2][{}]{\mathbb E_{#1}\left[#2\right]}			% Mean
+\newcommand{\Es}[2][{}]{\hat {\mathbb E}_{#1}\left[#2\right]}	% Sample mean
+\newcommand{\policy}{\pi}
+\newcommand{\Cost}{C}
+\newcommand{\Traj}{Z}
+\newcommand{\la}{\leftarrow}
+ \)
+   <div class='algorithmic'>
+<a id='x1-2r1'></a>
+ <span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>Input:</span> \(\theta _0\) <a id='x1-3r2'></a>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>for</span> Learning iteration \(i := 0 \dots \mathcal I\) <span class='cmbx-12'>do</span><span class='for-body'>
+<a id='x1-4r3'></a>
+ <br /><span class='ALCitem'></span><span style='width:17.62482pt;' class='ALIndent'> </span>   Policy weight update <a id='x1-5r4'></a>
+ <br /><span class='ALCitem'></span><span style='width:17.62482pt;' class='ALIndent'> </span>   \(\theta _{i+1} \la \theta _i - \alpha _i \Es [\rho ^{\policy ^{\theta _i}}]{ \Cost ^\gamma _{0:T} \nabla _\theta \log \policy ^{\theta _i} ( \Traj _{0:T} ) }\) <a id='x1-6r5'></a>
+ <br /><span class='ALCitem'></span><span style='width:17.62482pt;' class='ALIndent'> </span>   \(\alpha _i &gt; 0\), learning rate
+  </span><a id='x1-7r6'></a>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>end</span> <span class='cmbx-12'>for</span><a id='x1-8r7'></a>
+<a id='x1-9r8'></a>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'> </span>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>return </span> Near-optimal policy \(\policy ^{\theta _{\mathcal I}}\)
+   </div>
+    
+</body> 
+</html></div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="_images/file.svg"><img alt="_images/file.svg" src="_images/file.svg" width="100%" /></a>
+</figure>
 </section>
 
 

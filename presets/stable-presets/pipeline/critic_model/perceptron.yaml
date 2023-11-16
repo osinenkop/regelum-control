@@ -1,0 +1,6 @@
+_target_: regelum.model.ModelPerceptron
+dim_input: $ system_specific.dim_observation
+dim_output: 1
+dim_hidden: 4
+n_hidden_layers: 1
+hidden_activation: = torch.nn.LeakyReLU(.2)

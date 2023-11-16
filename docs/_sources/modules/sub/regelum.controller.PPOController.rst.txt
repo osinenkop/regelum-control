@@ -1,9 +1,9 @@
-regelum.controller.PPOController
+regelum.pipeline.PPOPipeline
 ================================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
-.. autoclass:: PPOController
+.. autoclass:: PPOPipeline
 
    
    .. automethod:: __init__
@@ -13,25 +13,25 @@ regelum.controller.PPOController
 
    .. autosummary::
    
-      ~PPOController.__init__
-      ~PPOController.calculate_total_objective
-      ~PPOController.compute_action
-      ~PPOController.compute_action_sampled
-      ~PPOController.issue_action
-      ~PPOController.on_action_issued
-      ~PPOController.on_observation_received
-      ~PPOController.optimize
-      ~PPOController.optimize_or_skip_on_event
-      ~PPOController.post_compute_action
-      ~PPOController.pre_optimize
-      ~PPOController.reload_pipeline
-      ~PPOController.reset
-      ~PPOController.reset_episode
-      ~PPOController.reset_iteration
-      ~PPOController.reset_simulation
-      ~PPOController.run
-      ~PPOController.step
-      ~PPOController.substitute_constraint_parameters
+      ~PPOPipeline.__init__
+      ~PPOPipeline.calculate_total_objective
+      ~PPOPipeline.compute_action
+      ~PPOPipeline.compute_action_sampled
+      ~PPOPipeline.issue_action
+      ~PPOPipeline.on_action_issued
+      ~PPOPipeline.on_observation_received
+      ~PPOPipeline.optimize
+      ~PPOPipeline.optimize_or_skip_on_event
+      ~PPOPipeline.post_compute_action
+      ~PPOPipeline.pre_optimize
+      ~PPOPipeline.reload_pipeline
+      ~PPOPipeline.reset
+      ~PPOPipeline.reset_episode
+      ~PPOPipeline.reset_iteration
+      ~PPOPipeline.reset_simulation
+      ~PPOPipeline.run
+      ~PPOPipeline.step
+      ~PPOPipeline.substitute_constraint_parameters
    
    
 

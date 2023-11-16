@@ -1,0 +1,43 @@
+_target_: regelum.pipeline.RLPipeline
+
+name%%: rql_torch
+
+defaults:
+  - policy: policy_rql_torch
+  - critic: critic
+
+action_bounds: $ system_specific.action_bounds
+sampling_time: $ system_specific.sampling_time
+is_critic_first: True 
+running_objective: ~ running_objective
+discount_factor: 1.0 
+policy_optimization_event: = regelum.Event.compute_action
+data_buffer_nullify_event: = regelum.Event.reset_episode
+critic_optimization_event: = regelum.Event.compute_action
+simulator: ~ simulator
+N_episodes: 4 
+N_iterations: 100
+constraint_parser: ~ constraint_parser
+observer: $ system_specific.observer
+
+policy:
+  prediction_horizon: 1
+
+critic:
+  model:
+    dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+  is_on_policy: True
+  is_value_function: False
+  optimizer_config:
+    opt_options: 
+      lr: 3.0E-4
+    config_options:
+      n_epochs: 5
+      is_reinstantiate_optimizer: False
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs: 
+        batch_sampler: = regelum.data_buffers.batch_sampler.RollingBatchSampler
+        dtype: = torch.FloatTensor
+        batch_size: 20
+        n_batches: 1
+        mode: backward

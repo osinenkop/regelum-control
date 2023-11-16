@@ -37,5 +37,8 @@ regelum.optimizable.core.entities.OptimizationVariable
       ~OptimizationVariable.data
       ~OptimizationVariable.is_constant
       ~OptimizationVariable.metadata
+      ~OptimizationVariable.name
+      ~OptimizationVariable.dims
+      ~OptimizationVariable.hooks
    
    

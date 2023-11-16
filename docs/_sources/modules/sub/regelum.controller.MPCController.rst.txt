@@ -1,9 +1,9 @@
-regelum.controller.MPCController
+regelum.pipeline.MPCPipeline
 ================================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
-.. autoclass:: MPCController
+.. autoclass:: MPCPipeline
 
    
    .. automethod:: __init__
@@ -13,25 +13,25 @@ regelum.controller.MPCController
 
    .. autosummary::
    
-      ~MPCController.__init__
-      ~MPCController.calculate_total_objective
-      ~MPCController.compute_action
-      ~MPCController.compute_action_sampled
-      ~MPCController.issue_action
-      ~MPCController.on_action_issued
-      ~MPCController.on_observation_received
-      ~MPCController.optimize
-      ~MPCController.optimize_or_skip_on_event
-      ~MPCController.post_compute_action
-      ~MPCController.pre_optimize
-      ~MPCController.reload_pipeline
-      ~MPCController.reset
-      ~MPCController.reset_episode
-      ~MPCController.reset_iteration
-      ~MPCController.reset_simulation
-      ~MPCController.run
-      ~MPCController.step
-      ~MPCController.substitute_constraint_parameters
+      ~MPCPipeline.__init__
+      ~MPCPipeline.calculate_total_objective
+      ~MPCPipeline.compute_action
+      ~MPCPipeline.compute_action_sampled
+      ~MPCPipeline.issue_action
+      ~MPCPipeline.on_action_issued
+      ~MPCPipeline.on_observation_received
+      ~MPCPipeline.optimize
+      ~MPCPipeline.optimize_or_skip_on_event
+      ~MPCPipeline.post_compute_action
+      ~MPCPipeline.pre_optimize
+      ~MPCPipeline.reload_pipeline
+      ~MPCPipeline.reset
+      ~MPCPipeline.reset_episode
+      ~MPCPipeline.reset_iteration
+      ~MPCPipeline.reset_simulation
+      ~MPCPipeline.run
+      ~MPCPipeline.step
+      ~MPCPipeline.substitute_constraint_parameters
    
    
 

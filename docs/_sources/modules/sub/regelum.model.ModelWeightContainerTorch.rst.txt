@@ -79,5 +79,6 @@ regelum.model.ModelWeightContainerTorch
       ~ModelWeightContainerTorch.call_super_init
       ~ModelWeightContainerTorch.dump_patches
       ~ModelWeightContainerTorch.weights
+      ~ModelWeightContainerTorch.training
    
    

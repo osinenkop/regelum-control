@@ -1,0 +1,72 @@
+_target_: regelum.pipeline.RLPipeline
+
+name%%: sarsa
+
+defaults:
+  - policy: policy_rl_torch
+  - critic: critic
+
+action_bounds: $ system_specific.action_bounds
+max_data_buffer_size: 10000
+sampling_time: $ system_specific.sampling_time
+is_critic_first: False
+running_objective: ~ running_objective
+discount_factor: 1.0 
+critic_optimization_event: = regelum.Event.compute_action
+policy_optimization_event: = regelum.Event.compute_action
+data_buffer_nullify_event: = regelum.Event.reset_episode
+simulator: ~ simulator
+N_episodes: 4 
+N_iterations: 100
+constraint_parser: ~ constraint_parser
+observer: $ system_specific.observer
+
+
+device%%: cpu
+
+critic:
+  is_on_policy: True
+  is_same_critic: False
+  is_value_function: False
+  device: $ pipeline.device%%
+  optimizer_config: 
+    _target_: regelum.OptimizerConfig
+    kind: tensor
+    opt_method: = torch.optim.Adam
+    opt_options: 
+      lr: 0.001
+    config_options:
+      n_epochs: 2
+      is_reinstantiate_optimizer: False
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs: 
+        batch_sampler: = regelum.data_buffers.batch_sampler.RollingBatchSampler
+        dtype: = torch.FloatTensor
+        batch_size: 20
+        n_batches: 20
+        mode: backward
+
+policy:
+  device: $ pipeline.device%%
+  epsilon_random_parameter: 0.05
+  prediction_horizon: 0 
+  algorithm: rql
+
+  optimizer_config: 
+    _target_: regelum.OptimizerConfig
+    kind: tensor
+    opt_method: = torch.optim.Adam
+    opt_options: 
+      lr: 0.01
+    config_options:
+      n_epochs: 10
+      is_reinstantiate_optimizer: True
+      data_buffer_sampling_method: iter_batches
+      data_buffer_sampling_kwargs: 
+        batch_sampler: = regelum.data_buffers.batch_sampler.RollingBatchSampler
+        dtype: = torch.FloatTensor
+        batch_size: 1
+        mode: backward
+        n_batches: 1
+
+        

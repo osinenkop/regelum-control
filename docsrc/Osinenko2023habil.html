@@ -1,0 +1,37 @@
+<!DOCTYPE html> 
+<html xml:lang='en-US' lang='en-US'> 
+<head> <title></title> 
+<meta charset='iso-8859-1' /> 
+<meta name='generator' content='TeX4ht (http://www.tug.org/tex4ht/)' /> 
+<meta name='viewport' content='width=device-width,initial-scale=1' /> 
+<link href='Osinenko2023habil.css' rel='stylesheet' type='text/css' /> 
+<meta name='src' content='Osinenko2023habil.tex' /> 
+ <script type='text/x-mathjax-config'> MathJax.Hub.Config({ 'fast-preview': {disabled: true}, TeX: { extensions: ["color.js","AMSmath.js"], equationNumbers: { autoNumber: "AMS" } }, extensions: ["tex2jax.js"], tex2jax: {  inlineMath: [ ["\\\(","\\\)"] ], displayMath: [ ['$$','$$'], ["\\[","\\]"] ], processEscapes: true, processEnvironments: true } }); </script> 
+ <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML'></script>  
+</head><body>
+   \( \newcommand{\state}{s}
+
+\newcommand{\E}[2][{}]{\mathbb E_{#1}\left[#2\right]}			% Mean
+\newcommand{\Es}[2][{}]{\hat {\mathbb E}_{#1}\left[#2\right]}	% Sample mean
+\newcommand{\policy}{\pi}
+\newcommand{\Cost}{C}
+\newcommand{\Traj}{Z}
+\newcommand{\la}{\leftarrow}
+ \)
+   <div class='algorithmic'>
+<a id='x1-2r1'></a>
+ <span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>Input:</span> \(\theta _0\) <a id='x1-3r2'></a>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>for</span> Learning iteration \(i := 0 \dots \mathcal I\) <span class='cmbx-12'>do</span><span class='for-body'>
+<a id='x1-4r3'></a>
+ <br /><span class='ALCitem'></span><span style='width:17.62482pt;' class='ALIndent'> </span>   Policy weight update <a id='x1-5r4'></a>
+ <br /><span class='ALCitem'></span><span style='width:17.62482pt;' class='ALIndent'> </span>   \(\theta _{i+1} \la \theta _i - \alpha _i \Es [\rho ^{\policy ^{\theta _i}}]{ \Cost ^\gamma _{0:T} \nabla _\theta \log \policy ^{\theta _i} ( \Traj _{0:T} ) }\) <a id='x1-6r5'></a>
+ <br /><span class='ALCitem'></span><span style='width:17.62482pt;' class='ALIndent'> </span>   \(\alpha _i &gt; 0\), learning rate
+  </span><a id='x1-7r6'></a>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>end</span> <span class='cmbx-12'>for</span><a id='x1-8r7'></a>
+<a id='x1-9r8'></a>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'> </span>
+ <br /><span class='ALCitem'></span><span style='width:5.87494pt;' class='ALIndent'>  </span><span class='cmbx-12'>return </span> Near-optimal policy \(\policy ^{\theta _{\mathcal I}}\)
+   </div>
+    
+</body> 
+</html>

@@ -1,6 +1,6 @@
-ReinforceController is an implementation of the REINFORCE algorithm, a Monte Carlo policy gradient method for reinforcement learning.
+ReinforcePipeline is an implementation of the REINFORCE algorithm, a Monte Carlo policy gradient method for reinforcement learning.
 
-This controller updates policies via gradient descent on expected costs. The implementation can include a baseline to reduce variance and can
+This pipeline updates policies via gradient descent on expected costs. The implementation can include a baseline to reduce variance and can
 be configured to avoid letting past decisions affect current updates.
 
 Below we provide the full listing of the algorithm:
@@ -47,7 +47,7 @@ where :math:`B_k` is the so-called baseline --- a random variable independent on
     from regelum.system import InvertedPendulumPD
     from regelum.objective import RunningObjective
     from regelum.simulator import CasADi
-    from regelum.controller import ReinforceController
+    from regelum.pipeline import ReinforcePipeline
 
     # Initialize the system and running objective
     system = InvertedPendulumPD()
@@ -55,8 +55,8 @@ where :math:`B_k` is the so-called baseline --- a random variable independent on
         model=rg.model.ModelQuadLin("diagonal", weights=[10, 3.0, 0.0])
     )
 
-    # Instantiate the ReinforceController
-    controller = ReinforceController(
+    # Instantiate the ReinforcePipeline
+    pipeline = ReinforcePipeline(
         policy_model=rg.model.PerceptronWithTruncatedNormalNoise(
             dim_input=system.dim_observation,
             dim_hidden=4,
@@ -89,5 +89,5 @@ where :math:`B_k` is the so-called baseline --- a random variable independent on
     )
 
     # Run the training process
-    controller.run()
+    pipeline.run()
     

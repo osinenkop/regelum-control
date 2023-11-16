@@ -57,7 +57,7 @@
    regelum.callback
    regelum.configure
    regelum.constraint_parser
-   regelum.controller
+   regelum.pipeline
    regelum.critic
    regelum.data_buffers
    regelum.event

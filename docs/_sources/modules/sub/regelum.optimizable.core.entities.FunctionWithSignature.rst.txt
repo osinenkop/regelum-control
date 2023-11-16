@@ -34,5 +34,7 @@ regelum.optimizable.core.entities.FunctionWithSignature
       ~FunctionWithSignature.metadata
       ~FunctionWithSignature.occupied
       ~FunctionWithSignature.signature
+      ~FunctionWithSignature.func
+      ~FunctionWithSignature.variables
    
    

@@ -18,7 +18,112 @@ from typing import Optional, Union, List
 from typing_extensions import Self
 
 
-class ComposedSystem(regelum.RegelumBase):
+class SystemInterface(regelum.RegelumBase, ABC):
+    """System Interface."""
+
+    _name: Optional[str] = None
+    _system_type: Optional[str] = None
+    _dim_state: Optional[int] = None
+    _dim_inputs: Optional[int] = None
+    _dim_observation: Optional[int] = None
+    _parameters = {}
+    _observation_naming = _state_naming = None
+    _inputs_naming = None
+    _action_bounds = None
+
+    @property
+    def name(self) -> str:
+        if self._name is None:
+            raise ValueError("system._name should be set")
+        return self._name
+
+    @property
+    def system_type(self) -> str:
+        if self._system_type is None:
+            raise ValueError("system._system_type should be set")
+        return self._system_type
+
+    @property
+    def dim_state(self) -> int:
+        if self._dim_state is None:
+            raise ValueError("system._dim_state should be set")
+        return self._dim_state
+
+    @property
+    def dim_observation(self) -> int:
+        if self._dim_observation is None:
+            raise ValueError("system._dim_observation should be set")
+        return self._dim_observation
+
+    @property
+    def dim_inputs(self):
+        if self._dim_inputs is None:
+            raise ValueError("system._dim_inputs should be set")
+        return self._dim_inputs
+
+    @property
+    def parameters(self):
+        return self._parameters
+
+    @property
+    def state_naming(self):
+        return self._state_naming
+
+    @property
+    def observation_naming(self):
+        return self._observation_naming
+
+    @property
+    def inputs_naming(self):
+        return self._inputs_naming
+
+    @property
+    def action_bounds(self):
+        return self._action_bounds
+
+    @abstractmethod
+    def _compute_state_dynamics(time, state, inputs):
+        pass
+
+    def compute_state_dynamics(
+        self, time, state, inputs, _native_dim=False
+    ) -> np.ndarray:
+        if not _native_dim:
+            return rc.force_row(
+                self._compute_state_dynamics(
+                    time, rc.force_column(state), rc.force_column(inputs)
+                )
+            )
+        else:
+            return self._compute_state_dynamics(time, state, inputs)
+
+    @abstractmethod
+    def _get_observation(self, time, state, inputs):
+        pass
+
+    def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
+        if not is_batch:
+            if not _native_dim:
+                return rc.force_row(
+                    self._get_observation(
+                        time, rc.force_column(state), rc.force_column(inputs)
+                    )
+                )
+            else:
+                return self._get_observation(time, state, inputs)
+        else:
+            observations = rc.zeros(state.shape, prototype=state)
+            for i in range(state.shape[0]):
+                observations[i, :] = self.get_observation(
+                    time=time,
+                    state=state[i, :],
+                    inputs=inputs[i, :],
+                    is_batch=False,
+                )
+            return observations
+
+
+class ComposedSystem(SystemInterface):
     """Base class for composed systems.
 
     An instance of this class is being created automatically when applying a `@` operation on two systems.
@@ -46,9 +151,10 @@ class ComposedSystem(regelum.RegelumBase):
         :param output_mode: How to combine the result outputs, defaults to "right"
         :type output_mode: str, optional
         """
-        self.state_naming = state_naming
-        self.inputs_naming = inputs_naming
-        self.observation_naming = observation_naming
+        self._state_naming = state_naming
+        self._inputs_naming = inputs_naming
+        self._observation_naming = observation_naming
+        self._action_bounds = action_bounds
 
         if io_mapping is None:
             io_mapping = np.arange(min(sys_left.dim_state, sys_right.dim_inputs))
@@ -60,31 +166,29 @@ class ComposedSystem(regelum.RegelumBase):
         ], "output_mode must be 'state', 'right' or 'both'"
 
         if "diff_eqn" in [sys_left.system_type, sys_right.system_type]:
-            self.system_type = "diff_eqn"
+            self._system_type = "diff_eqn"
         else:
-            self.system_type = sys_right.system_type
-
-        self.system_type = "diff_eqn"
+            self._system_type = sys_right.system_type
 
         self.sys_left = sys_left
         self.sys_right = sys_right
-        self.parameters = sys_left.parameters | sys_right.parameters
-        self.dim_state = self.sys_right.dim_state + self.sys_left.dim_state
+        self._parameters = sys_left.parameters | sys_right.parameters
+        self._dim_state = self.sys_right.dim_state + self.sys_left.dim_state
         if output_mode == "state":
-            self.dim_observation = self.sys_left.dim_state + self.sys_right.dim_state
+            self._dim_observation = self.sys_left.dim_state + self.sys_right.dim_state
         elif output_mode == "right":
-            self.dim_observation = self.sys_right.dim_observation
+            self._dim_observation = self.sys_right.dim_observation
         elif output_mode == "both":
-            self.dim_observation = (
+            self._dim_observation = (
                 self.sys_left.dim_observation + self.sys_right.dim_observation
             )
         self.rout_idx, self.occupied_idx = self.__get_routing(io_mapping)
-        self.dim_inputs = (
+        self._dim_inputs = (
             self.sys_right.dim_inputs
             + self.sys_left.dim_inputs
             - len(self.occupied_idx)
         )
-        self.name = self.sys_left.name + " + " + self.sys_right.name
+        self._name = self.sys_left.name + " + " + self.sys_right.name
 
         self.free_right_input_indices = np.setdiff1d(
             np.arange(self.sys_right.dim_inputs).astype(int),
@@ -120,45 +224,7 @@ class ComposedSystem(regelum.RegelumBase):
         rout_idx, occupied_idx = rc.array(io_mapping_extended).astype(int).T
         return rout_idx, occupied_idx
 
-    def compute_state_dynamics(
-        self, time, state, inputs, _native_dim=False
-    ) -> np.ndarray:
-        if not _native_dim:
-            return rc.force_row(
-                self._compute_state_dynamics(
-                    time,
-                    rc.force_column(state),
-                    rc.force_column(inputs),
-                    _native_dim=_native_dim,
-                )
-            )
-        else:
-            return self._compute_state_dynamics(
-                time, state, inputs, _native_dim=_native_dim
-            )
-
-    def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
-        if not is_batch:
-            if not _native_dim:
-                return rc.force_row(
-                    self._get_observation(
-                        time, rc.force_column(state), rc.force_column(inputs)
-                    )
-                )
-            else:
-                return self._get_observation(time, state, inputs)
-        else:
-            observations = rc.zeros(state.shape, prototype=state)
-            for i in range(state.shape[0]):
-                observations[i, :] = self.get_observation(
-                    time=time,
-                    state=state[i, :],
-                    inputs=inputs[i, :],
-                    is_batch=False,
-                )
-            return observations
-
-    def _compute_state_dynamics(self, time, state, inputs, _native_dim):
+    def _compute_state_dynamics(self, time, state, inputs, _native_dim=True):
         state = rc.array(state, prototype=state)
         inputs = rc.array(inputs, prototype=state)
         state = state[self.forward_permutation]
@@ -267,17 +333,6 @@ class ComposedSystem(regelum.RegelumBase):
         self.sys_left.update_system_parameters(inputs)
         self.sys_right.update_system_parameters(inputs)
 
-    # TODO: get rid of it
-    def compute_closed_loop_rhs(self, time, state):
-        action = self.inputs
-
-        rhs_full_state = self.compute_state_dynamics(time, state, action)
-
-        return rhs_full_state
-
-    def reset(self):
-        pass
-
     def permute_state(self, permutation: Union[list, np.array]) -> Self:
         """Permute an order at which the system outputs are returned.
 
@@ -306,18 +361,8 @@ class ComposedSystem(regelum.RegelumBase):
         return self.compose(sys_right)
 
 
-class System(regelum.RegelumBase, ABC):
+class System(SystemInterface):
     """Base class for controlled systems implementation."""
-
-    _name: Optional[str] = None
-    _system_type: Optional[str] = None
-    _dim_state: Optional[int] = None
-    _dim_inputs: Optional[int] = None
-    _dim_observation: Optional[int] = None
-    _parameters = {}
-    _observation_naming = _state_naming = None
-    _inputs_naming = None
-    _action_bounds = None
 
     def __init__(
         self,
@@ -360,93 +405,6 @@ class System(regelum.RegelumBase, ABC):
         else:
             self.inputs = inputs_init
 
-    @property
-    def name(self) -> str:
-        if self._name is None:
-            raise ValueError("system._name should be set")
-        return self._name
-
-    @property
-    def system_type(self) -> str:
-        if self._system_type is None:
-            raise ValueError("system._system_type should be set")
-        return self._system_type
-
-    @property
-    def dim_state(self) -> int:
-        if self._dim_state is None:
-            raise ValueError("system._dim_state should be set")
-        return self._dim_state
-
-    @property
-    def dim_observation(self) -> int:
-        if self._dim_observation is None:
-            raise ValueError("system._dim_observation should be set")
-        return self._dim_observation
-
-    @property
-    def dim_inputs(self):
-        if self._dim_inputs is None:
-            raise ValueError("system._dim_inputs should be set")
-        return self._dim_inputs
-
-    @property
-    def parameters(self):
-        return self._parameters
-
-    @property
-    def state_naming(self):
-        return self._state_naming
-
-    @property
-    def observation_naming(self):
-        return self._observation_naming
-
-    @property
-    def inputs_naming(self):
-        return self._inputs_naming
-
-    @property
-    def action_bounds(self):
-        return self._action_bounds
-
-    def compute_state_dynamics(
-        self, time, state, inputs, _native_dim=False
-    ) -> np.ndarray:
-        if not _native_dim:
-            return rc.force_row(
-                self._compute_state_dynamics(
-                    time, rc.force_column(state), rc.force_column(inputs)
-                )
-            )
-        else:
-            return self._compute_state_dynamics(time, state, inputs)
-
-    @abstractmethod
-    def _compute_state_dynamics(time, state, inputs):
-        pass
-
-    def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
-        if not is_batch:
-            if not _native_dim:
-                return rc.force_row(
-                    self._get_observation(
-                        time, rc.force_column(state), rc.force_column(inputs)
-                    )
-                )
-            else:
-                return self._get_observation(time, state, inputs)
-        else:
-            observations = rc.zeros(state.shape, prototype=state)
-            for i in range(state.shape[0]):
-                observations[i, :] = self.get_observation(
-                    time=time,
-                    state=state[i, :],
-                    inputs=inputs[i, :],
-                    is_batch=False,
-                )
-            return observations
-
     def _get_observation(self, time, state, inputs):
         return state
 
@@ -458,24 +416,6 @@ class System(regelum.RegelumBase, ABC):
         self._parameters.update(inputs)
         return self.parameters
 
-    def compute_closed_loop_rhs(self, time, state):
-        """Legacy code.
-
-        Right-hand side of the closed-loop system description.
-        Combines everything into a single vector that corresponds to the right-hand side of the closed-loop system description for further use by simulators.
-
-        Attributes
-        ----------
-        state_full : : vector
-            Current closed-loop system state
-
-        """
-        action = self.inputs
-
-        rhs_full_state = self.compute_state_dynamics(time, state, action)
-
-        return rhs_full_state
-
     def compose(self, sys_right, io_mapping=None, output_mode="state"):
         return ComposedSystem(
             self, sys_right, io_mapping=io_mapping, output_mode=output_mode
@@ -483,9 +423,6 @@ class System(regelum.RegelumBase, ABC):
 
     def __matmul__(self, sys_right):
         return self.compose(sys_right)
-
-    def reset(self):
-        self.update_system_parameters(self.system_parameters_init)
 
 
 class KinematicPoint(System):
@@ -526,7 +463,7 @@ class InvertedPendulumPID(System):
     _action_bounds = [[-20.0, 20.0]]
 
     def __init__(self, *args, **kwargs):
-        """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID controller."""
+        """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID pipeline."""
         super().__init__(*args, **kwargs)
 
         self.time_old = 0

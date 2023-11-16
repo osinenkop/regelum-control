@@ -82,5 +82,6 @@ regelum.model.BoundsHandler
       ~BoundsHandler.call_super_init
       ~BoundsHandler.dump_patches
       ~BoundsHandler.weights
+      ~BoundsHandler.training
    
    

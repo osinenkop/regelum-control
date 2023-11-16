@@ -23,7 +23,7 @@ scenario:
   N_episodes: 10
   N_iterations: 20
   speedup: 75
-  controller: ${same:controller}
+  pipeline: ${same:pipeline}
   observation_target: ${system_specific.observation_target}
   observation_components_naming: ${observation_naming.observation}
   total_objective_threshold: ${system_specific.total_objective_threshold}
@@ -36,25 +36,25 @@ simulator:
   disturb_init: ${get:None}
   time_start: 0
   time_final: ${system_specific.time_final}
-  sampling_time: ${controller.sampling_time}
-  max_step: ${get:${controller.sampling_time} / 10.}
+  sampling_time: ${pipeline.sampling_time}
+  max_step: ${get:${pipeline.sampling_time} / 10.}
   first_step: 1.0e-06
   atol: 1.0e-05
   rtol: 0.001
   ode_backend: CASADI
-nominal_controller:
-  _target_: regelum.controller.NominalControllerInvertedPendulum
+nominal_pipeline:
+  _target_: regelum.pipeline.NominalPipelineInvertedPendulum
   time_start: ${simulator.time_start}
   sampling_time: 0.01
   action_bounds: ${system.action_bounds__IGNORE__}
-  controller_gain: 20
-controller:
+  pipeline_gain: 20
+pipeline:
   actor:
     model:
       _target_: regelum.model.GaussianPDFModel
-      dim_observation: ${controller.actor.dim_input}
-      dim_action: ${controller.actor.dim_output}
-      use_derivative: ${controller.actor.is_use_derivative}
+      dim_observation: ${pipeline.actor.dim_input}
+      dim_action: ${pipeline.actor.dim_output}
+      use_derivative: ${pipeline.actor.is_use_derivative}
       diag_scale_coef: ${system_specific.diag_scale_coef }
       weight_max: 20.0
       weight_min: -20.0
@@ -64,7 +64,7 @@ controller:
       opt_options:
         lr: 5.0
       opt_method: ${get:torch.optim.Adam}
-      model: ${same:controller.actor.model}
+      model: ${same:pipeline.actor.model}
       sheduler_method: ${get:torch.optim.lr_scheduler.StepLR}
       sheduler_options:
         gamma: 0.25
@@ -79,7 +79,7 @@ controller:
     action_bounds: ${system.action_bounds__IGNORE__}
     action_init: ${scenario.action_init}
     state_init: ${scenario.state_init}
-    critic: ${same:controller.critic}
+    critic: ${same:pipeline.critic}
     observation_target: ${system_specific.observation_target}
     running_objective: ${running_objective}
     device: cuda:0
@@ -100,7 +100,7 @@ controller:
     is_cat_action: true
     is_tail_sum_running_objectives: false
   name__IGNORE__: pg
-  _target_: regelum.controller.RLController
+  _target_: regelum.pipeline.RLPipeline
   time_start: ${simulator.time_start}
   sampling_time: ${system_specific.sampling_time}
   is_fixed_critic_weights: false

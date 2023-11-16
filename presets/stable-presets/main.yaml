@@ -1,17 +1,17 @@
 defaults:
   - system: inv_pendulum 
   - simulator: casadi
-  - optional nominal_controller: nominal_${system}
-  - controller: reinforce
+  - optional nominal_pipeline: nominal_${system}
+  - pipeline: reinforce
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
   - system_specific: spec_${system}
   - constraint_parser: trivial_parser
   # - optional animator: animator_${system}
-  # - ${controller}_${system}
+  # - ${pipeline}_${system}
 
 callbacks:
-  - regelum.callback.ControllerStepLogger
+  - regelum.callback.PipelineStepLogger
   - regelum.callback.TotalObjectiveCallback
   - regelum.callback.HistoricalDataCallback
   - regelum.callback.CriticObjectiveSaver
@@ -25,4 +25,4 @@ prefix%%: ""
 
 rehydra:
   sweep:
-    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${prefix%%}_${controller.name%%}_${system_specific.name}
+    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${prefix%%}_${pipeline.name%%}_${system_specific.name}

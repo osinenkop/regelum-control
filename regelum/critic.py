@@ -1,4 +1,4 @@
-"""Contains critics, which are integrated in controllers (agents).
+"""Contains critics, which are integrated in pipelines (agents).
 
 Remarks: 
 
@@ -75,7 +75,7 @@ class Critic(Optimizable, ABC):
         :type size_mesh: Optional[int], optional
         :param discount_factor: discount factor to use in temporal difference loss, defaults to 1.0
         :type discount_factor: float, optional
-        :param sampling_time: controller sampling time. Needed in temporal difference loos, defaults to 0.01
+        :param sampling_time: pipeline sampling time. Needed in temporal difference loos, defaults to 0.01
         :type sampling_time: float, optional
         """
         Optimizable.__init__(self, optimizer_config=optimizer_config)
@@ -422,7 +422,7 @@ class CriticCALF(Critic):
         ######
         safe_decay_param=1e-4,
         is_dynamic_decay_rate=True,
-        safe_controller=None,
+        safe_pipeline=None,
         lb_parameter=1e-6,
         ub_parameter=1e3,
     ):
@@ -454,8 +454,8 @@ class CriticCALF(Critic):
         :type safe_decay_param: _type_, optional
         :param is_dynamic_decay_rate: _description_, defaults to True
         :type is_dynamic_decay_rate: bool, optional
-        :param safe_controller: _description_, defaults to None
-        :type safe_controller: _type_, optional
+        :param safe_pipeline: _description_, defaults to None
+        :type safe_pipeline: _type_, optional
         :param lb_parameter: _description_, defaults to 1e-6
         :type lb_parameter: _type_, optional
         :param ub_parameter: _description_, defaults to 1e3
@@ -482,7 +482,7 @@ class CriticCALF(Critic):
 
         self.lb_parameter = lb_parameter
         self.ub_parameter = ub_parameter
-        self.safe_controller = safe_controller
+        self.safe_pipeline = safe_pipeline
 
         self.observation_last_good_var = self.create_variable(
             self.batch_size,
@@ -566,7 +566,7 @@ class CriticCALF(Critic):
         :return: constraint violation
         :rtype: float
         """
-        action = self.safe_controller.compute_action(self.current_observation)
+        action = self.safe_pipeline.compute_action(self.current_observation)
         predicted_observation = self.predictor.system.get_observation(
             time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
@@ -598,7 +598,7 @@ class CriticCALF(Critic):
         """
         observation_last_good = self.observation_last_good
 
-        self.safe_action = action = self.safe_controller.compute_action(
+        self.safe_action = action = self.safe_pipeline.compute_action(
             self.current_observation
         )
         self.predicted_observation = (

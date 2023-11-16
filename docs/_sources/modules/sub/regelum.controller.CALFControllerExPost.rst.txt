@@ -1,9 +1,9 @@
-regelum.controller.CALFControllerExPost
+regelum.pipeline.CALFPipelineExPost
 =======================================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
-.. autoclass:: CALFControllerExPost
+.. autoclass:: CALFPipelineExPost
 
    
    .. automethod:: __init__
@@ -13,27 +13,27 @@ regelum.controller.CALFControllerExPost
 
    .. autosummary::
    
-      ~CALFControllerExPost.__init__
-      ~CALFControllerExPost.calculate_total_objective
-      ~CALFControllerExPost.compute_action
-      ~CALFControllerExPost.compute_action_sampled
-      ~CALFControllerExPost.invoke_safe_action
-      ~CALFControllerExPost.issue_action
-      ~CALFControllerExPost.on_action_issued
-      ~CALFControllerExPost.on_observation_received
-      ~CALFControllerExPost.optimize
-      ~CALFControllerExPost.optimize_or_skip_on_event
-      ~CALFControllerExPost.post_compute_action
-      ~CALFControllerExPost.pre_optimize
-      ~CALFControllerExPost.reload_pipeline
-      ~CALFControllerExPost.reset
-      ~CALFControllerExPost.reset_episode
-      ~CALFControllerExPost.reset_iteration
-      ~CALFControllerExPost.reset_simulation
-      ~CALFControllerExPost.run
-      ~CALFControllerExPost.step
-      ~CALFControllerExPost.substitute_constraint_parameters
-      ~CALFControllerExPost.update_data_buffer_with_action_stats
+      ~CALFPipelineExPost.__init__
+      ~CALFPipelineExPost.calculate_total_objective
+      ~CALFPipelineExPost.compute_action
+      ~CALFPipelineExPost.compute_action_sampled
+      ~CALFPipelineExPost.invoke_safe_action
+      ~CALFPipelineExPost.issue_action
+      ~CALFPipelineExPost.on_action_issued
+      ~CALFPipelineExPost.on_observation_received
+      ~CALFPipelineExPost.optimize
+      ~CALFPipelineExPost.optimize_or_skip_on_event
+      ~CALFPipelineExPost.post_compute_action
+      ~CALFPipelineExPost.pre_optimize
+      ~CALFPipelineExPost.reload_pipeline
+      ~CALFPipelineExPost.reset
+      ~CALFPipelineExPost.reset_episode
+      ~CALFPipelineExPost.reset_iteration
+      ~CALFPipelineExPost.reset_simulation
+      ~CALFPipelineExPost.run
+      ~CALFPipelineExPost.step
+      ~CALFPipelineExPost.substitute_constraint_parameters
+      ~CALFPipelineExPost.update_data_buffer_with_action_stats
    
    
 

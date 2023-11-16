@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Contains one single class that simulates controller-system (agent-environment) loops.
+"""Contains one single class that simulates pipeline-system (agent-environment) loops.
 
 The system can be of three types:
     
@@ -144,7 +144,6 @@ class Simulator(regelum.RegelumBase, ABC):
             self.observation = self.get_observation(
                 time=self.time, state=self.state_init, inputs=self.action_init
             )
-            self.system.reset()
         else:
             self.time = self.time_start
             self.observation = self.get_observation(

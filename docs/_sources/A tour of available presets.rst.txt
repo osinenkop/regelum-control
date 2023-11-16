@@ -38,33 +38,33 @@ CALF and MPC
 For quick start go to playground via ``cd playground`` and run
 ::
 
-    python preset_endpoint.py system=3wrobot_ni controller=mpc cenario.howanim=live animator.fps=100 scenario.N_episodes=1
+    python preset_endpoint.py system=3wrobot_ni pipeline=mpc cenario.howanim=live animator.fps=100 scenario.N_episodes=1
 
 and see how the Model Predictive Control is stabilizing 3wrobot_ni system in live animation. If you want to turn off the animation just delete the flags 
 ``scenario.howanim=live animator.fps=100``: 
 :: 
 
-    python preset_endpoint.py controller=mpc system=3wrobot scenario.N_episodes=1
+    python preset_endpoint.py pipeline=mpc system=3wrobot scenario.N_episodes=1
 
 This command run MPC algorithm for stabilizing of 3wrobot_ni system. If you want to stabilize another system, for instance, inverted pendulum, you 
 should override ``system=`` flag like this:
 ::
 
-    python preset_endpoint.py controller=mpc system=inv_pendulum scenario.N_episodes=1
+    python preset_endpoint.py pipeline=mpc system=inv_pendulum scenario.N_episodes=1
 
 The list of available systems is the following: ``2tank``, ``3wrobot_ni``, ``3wrobot``, ``cartpole``. ``inv_pendulum``, ``kin_point``, ``lunar_lander``.
 
 To run CALF alogorithm just write
 :: 
 
-    python preset_endpoint.py controller=calf_ex_post system=3wrobot scenario.N_episodes=10
+    python preset_endpoint.py pipeline=calf_ex_post system=3wrobot scenario.N_episodes=10
 
 This command runs CALF algorithm for stabilizing of 3wrobot system. Again, if you want to stabilize another system just override ``system=`` flag. To run 
-the CALF stabilizing policy one should use flag ``+controller.safe_only=True`` with ``scenario.N_episodes=1``
+the CALF stabilizing policy one should use flag ``+pipeline.safe_only=True`` with ``scenario.N_episodes=1``
 
 :: 
 
-    python preset_endpoint.py controller=calf_ex_post system=3wrobot scenario.N_episodes=1 +controller.safe_only=True
+    python preset_endpoint.py pipeline=calf_ex_post system=3wrobot scenario.N_episodes=1 +pipeline.safe_only=True
 
 RL algorithms
 ~~~~~~~~~~~~
@@ -74,14 +74,14 @@ DQN on 3wrobot_ni:
 
     python preset_endpoint.py  \                                                                                                                                                                                         ─╯
         system=3wrobot_ni \
-        controller=dqn \
+        pipeline=dqn \
         initial_conditions=ic_3wrobot_ni_stochastic \
         scenario.N_episodes=50 \
-        controller.actor.discount_factor=0.99 \
-        controller.critic.optimizer.opt_options.lr=0.001 \
-        controller.critic.optimizer.iterations=1 \
-        controller.critic.batch_size=30 \
-        controller.critic.td_n=30 \
+        pipeline.actor.discount_factor=0.99 \
+        pipeline.critic.optimizer.opt_options.lr=0.001 \
+        pipeline.critic.optimizer.iterations=1 \
+        pipeline.critic.batch_size=30 \
+        pipeline.critic.td_n=30 \
         +seed=1
 
 SDPG on inverted pendulum
@@ -89,7 +89,7 @@ SDPG on inverted pendulum
 
     python preset_endpoint.py \
         system=inv_pendulum \
-        controller=acpg \
+        pipeline=acpg \
         +seed=8 \
         scenario=episodic_reinforce \
         scenario.N_episodes=5
@@ -99,7 +99,7 @@ SDPG on inverted pendulum
 
     python preset_endpoint.py \
         system=inv_pendulum \
-        controller=acpg \
+        pipeline=acpg \
         +seed=8 \
         scenario=episodic_reinforce \
         scenario.N_episodes=5
@@ -117,8 +117,8 @@ Useful Flags
  - ``simulator.time_final=10`` - set time_final 
  - ``animator.fps=20`` - use this parameter for changing fps for animation
  - ``system_specific.sampling_time=0.03`` - set the sampling time
- - ``controller=dqn`` - possible variants are ``[dqn,mpc,calf_ex_post,calf_predictive,rql,sarsa,ddqn,sql,ddqn,acpg,ddpg]``
+ - ``pipeline=dqn`` - possible variants are ``[dqn,mpc,calf_ex_post,calf_predictive,rql,sarsa,ddqn,sql,ddqn,acpg,ddpg]``
  - ``--cooldown-factor=0.1`` - decrease all cooldowns 10-fold
  - ``system=2tank`` - possible variants are ``[2tank,3wrobot,3wrobot_ni,cartpole,inv_pendulum,kin_point,lunar_lander]``
  - ``system_specific.calf_data_buffer_size=200``--- change calf buffer to 200
- - ``system=inv_pendulum controller=mpc controller.actor.predictor.prediction_horizon=3`` --- run mpc with prediction horizon 3
+ - ``system=inv_pendulum pipeline=mpc pipeline.actor.predictor.prediction_horizon=3`` --- run mpc with prediction horizon 3

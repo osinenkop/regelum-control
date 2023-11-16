@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to Sphinxcontrib-pseudocode demo &mdash; regelum 0.2.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/fonts.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="../../_static/katex_autorenderer_index.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home" style="color: #8cc770;">
+            regelum
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">About</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#what-is-regelum">What is <code class="docutils literal notranslate"><span class="pre">regelum</span></code>?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#regelum-s-config-pipeline"><code class="docutils literal notranslate"><span class="pre">regelum</span></code>’s config pipeline</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#presets">Presets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#related-literature">Related literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#closing-remarks">Closing remarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html#for-developers">For developers</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Configs and basic <code class="docutils literal notranslate"><span class="pre">regelum</span></code> applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#callbacks-and-logging">Callbacks and Logging</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html#what-if-i-still-don-t-know-what-i-m-doing">What if I still don’t know what I’m doing?</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Pipelines</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../pipelines.html">REINFORCE Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipelines.html#proximal-policy-optimization-ppo-algorithm">Proximal Policy Optimization (PPO) Algorithm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pipelines.html#proximal-policy-optimization-algorithm">Proximal Policy Optimization Algorithm</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Systems</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../systems_tutorial.html">Tutorial: Implementing Custom Systems in Regelum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../systems.html">Avaliable systems</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Optimizable</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../optimizable.html">Optimizable Subpackage Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">rc singletone</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../rc.html">The <strong>rc</strong> Singleton Tutorial</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">Regelum API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">regelum</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" style="color: #8cc770;" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Welcome to Sphinxcontrib-pseudocode demo</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="welcome-to-sphinxcontrib-pseudocode-demo">
+<h1>Welcome to Sphinxcontrib-pseudocode demo<a class="headerlink" href="#welcome-to-sphinxcontrib-pseudocode-demo" title="Permalink to this headline"></a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<section id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline"></a></h2>
+<p>Below shows various rendered algorithms, which are copied from corresponding <a class="reference external" href="https://github.com/SaswatPadhi/pseudocode.js/blob/master/static/body.html.part">pseudocode.js examples</a>.
+The source code of those algorithms can be found <a class="reference external" href="https://github.com/xxks-kkk/sphinxcontrib-pseudocode/blob/master/docs/demo.rst">here</a>.</p>
+<p>We can also reference any particular algorithm. For example, we can also reference each algorithm:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">:numref:`quick-sort`</span></code> produces <code class="xref std std-numref docutils literal notranslate"><span class="pre">quick-sort</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">:numref:`Here</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">algorithm</span> <span class="pre">{number}</span> <span class="pre">&lt;quick-sort&gt;`</span></code> produces <code class="xref std std-numref docutils literal notranslate"><span class="pre">Here</span> <span class="pre">is</span> <span class="pre">my</span> <span class="pre">algorithm</span> <span class="pre">{number}</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">:ref:`test</span> <span class="pre">control</span> <span class="pre">blocks</span> <span class="pre">&lt;test-control-blocks&gt;`</span></code> produces <a class="reference internal" href="#test-control-blocks"><span class="std std-ref">test control blocks</span></a></p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We assume each <code class="docutils literal notranslate"><span class="pre">pcode</span></code> directive contains exactly one <span class="math notranslate nohighlight">\(\LaTeX\)</span> algorithmic block:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>\<span class="n">begin</span><span class="p">{</span><span class="n">algorithm</span><span class="p">}</span>
+\<span class="n">caption</span><span class="p">{</span><span class="n">Test</span> <span class="n">atoms</span><span class="p">}</span>
+\<span class="n">begin</span><span class="p">{</span><span class="n">algorithmic</span><span class="p">}</span>
+\<span class="n">STATE</span> <span class="n">my</span> <span class="n">algorithm</span> <span class="mi">1</span>
+\<span class="n">END</span><span class="p">{</span><span class="n">ALGORITHMIC</span><span class="p">}</span>
+\<span class="n">END</span><span class="p">{</span><span class="n">ALGORITHM</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>You still can have multiple algorithmic blocks but the numbering will be messed up.</p>
+</div>
+<p>By default, each <code class="docutils literal notranslate"><span class="pre">pcode</span></code> is mapped to ‘Algorithm %s’ when referenced via <code class="docutils literal notranslate"><span class="pre">numref</span></code>. You can change this
+behavior by overriding the corresponding string of <code class="docutils literal notranslate"><span class="pre">'pseudocode'</span></code> key in <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-numfig_format">numfig_format</a>.</p>
+<div class="pseudocode" id="id1">
+<span id="hello-world-algo"></span><div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+             \begin{algorithmic}
+ \PRINT \texttt{'hello world'}
+ \end{algorithmic}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div><div class="pseudocode" id="id2">
+<span id="quick-sort"></span><div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+             % This quicksort algorithm is extracted from Chapter 7, Introduction to Algorithms (3rd edition)
+ \begin{algorithm}
+ \caption{Quicksort}
+ \begin{algorithmic}
+ \PROCEDURE{Quicksort}{$A, p, r$}
+     \IF{$p &lt; r$}
+         \STATE $q = $ \CALL{Partition}{$A, p, r$}
+         \STATE \CALL{Quicksort}{$A, p, q - 1$}
+         \STATE \CALL{Quicksort}{$A, q + 1, r$}
+     \ENDIF
+ \ENDPROCEDURE
+ \PROCEDURE{Partition}{$A, p, r$}
+     \STATE $x = A[r]$
+     \STATE $i = p - 1$
+     \FOR{$j = p$ \TO $r - 1$}
+         \IF{$A[j] &lt; x$}
+             \STATE $i = i + 1$
+             \STATE exchange
+             $A[i]$ with     $A[j]$
+         \ENDIF
+         \STATE exchange $A[i]$ with $A[r]$
+     \ENDFOR
+ \ENDPROCEDURE
+ \end{algorithmic}
+ \end{algorithm}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div><div class="pseudocode" id="id3">
+<div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+            \begin{algorithm}
+\caption{Test text-style}
+\begin{algorithmic}
+\REQUIRE some preconditions
+\ENSURE some postconditions
+\INPUT some inputs
+\OUTPUT some outputs
+\PROCEDURE{Test-Declarations}{}
+    \STATE font families: {\sffamily sffamily, \ttfamily ttfamily, \normalfont normalfont, \rmfamily rmfamily.}
+    \STATE font weights: {normal weight, \bfseries bold, \mdseries
+    medium, \lfseries lighter. }
+    \STATE font shapes: {\itshape itshape \scshape Small-Caps \slshape slshape \upshape upshape.}
+    \STATE font sizes: \tiny tiny \scriptsize scriptsize \footnotesize
+    footnotesize \small small \normalsize normal \large large \Large Large
+    \LARGE LARGE \huge huge \Huge Huge \normalsize
+\ENDPROCEDURE
+\PROCEDURE{Test-Commands}{}
+    \STATE \textnormal{textnormal,} \textrm{textrm,} \textsf{textsf,} \texttt{texttt.}
+    \STATE \textbf{textbf,} \textmd{textmd,} \textlf{textlf.}
+    \STATE \textup{textup,} \textit{textit,} \textsc{textsc,} \textsl{textsl.}
+    \STATE \uppercase{uppercase,} \lowercase{LOWERCASE.}
+\ENDPROCEDURE
+\PROCEDURE{Test-Colors}{}
+% feature not implemented
+\ENDPROCEDURE
+\end{algorithmic}
+\end{algorithm}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div><div class="pseudocode" id="id4">
+<div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+            \begin{algorithm}
+\caption{Test atoms}
+\begin{algorithmic}
+\STATE \textbf{Specials:} \{ \} \$ \&amp; \# \% \_
+\STATE \textbf{Bools:} \AND \OR \NOT \TRUE \FALSE
+\STATE \textbf{Carriage return:} first line \\ second line
+\STATE \textbf{Text-symbols:} \textbackslash
+\STATE \textbf{Quote-symbols:} `single quotes', ``double quotes''
+\STATE \textbf{Math:} $(\mathcal{C}_m)$, $i \gets i + 1$, $E=mc^2$, \( x^n + y^n = z^n \), $\$$, \(\$\)
+\END{ALGORITHMIC}
+\END{ALGORITHM}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div><div class="pseudocode" id="id5">
+<span id="test-control-blocks"></span><div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+            \begin{algorithm}
+\caption{Test control blocks}
+\begin{algorithmic}
+\PROCEDURE{Test-If}{}
+    \IF{ &lt;cond&gt;}
+        \STATE &lt;block&gt;;
+    \ELIF{&lt;cond&gt;}
+        \STATE &lt;block&gt;;
+    \ELSE
+        \STATE &lt;block&gt;;
+    \ENDIF
+\ENDPROCEDURE
+\PROCEDURE{Test-For}{$n$}
+    \STATE $i \gets 0$
+    \FOR{$i &lt; n$}
+        \PRINT $i$
+        \STATE $i \gets i + 1$
+    \ENDFOR
+\ENDPROCEDURE
+\PROCEDURE{Test-For-To}{$n$}
+    \STATE $i \gets 0$
+    \FOR{$i$ \TO $n$}
+        \PRINT $i$
+    \ENDFOR
+\ENDPROCEDURE
+\PROCEDURE{Test-For-DownTo}{$n$}
+    \FOR{$i \gets n$ \DOWNTO $0$}
+        \PRINT $i$
+    \ENDFOR
+\ENDPROCEDURE
+\PROCEDURE{Test-For-All}{$n$}
+    \FORALL{$i \in \{0, 1, \cdots, n\}$}
+        \PRINT $i$
+    \ENDFOR
+\ENDPROCEDURE
+\PROCEDURE{Test-While}{$n$}
+    \STATE $i \gets 0$
+    \WHILE{$i &lt; n$}
+        \PRINT $i$
+        \STATE $i \gets i + 1$
+    \ENDWHILE
+\ENDPROCEDURE
+\PROCEDURE{Test-Repeat}{$n$}
+    \STATE $i \gets 0$
+    \REPEAT
+        \PRINT $i$
+        \STATE $i \gets i + 1$
+    \UNTIL{$i&gt;n$}
+\ENDPROCEDURE
+\PROCEDURE{Test-Break-Continue}{$n$}
+    \FOR{$i = 0$ \TO $2n$}
+        \IF{$i &lt; n/2$}
+            \CONTINUE
+        \ELIF{$i &gt; n$}
+            \BREAK
+        \ENDIF
+        \PRINT $i$
+    \ENDFOR
+\ENDPROCEDURE
+\end{algorithmic}
+\end{algorithm}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div><div class="pseudocode" id="id6">
+<div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+            \begin{algorithm}
+\caption{Test statements and comments}
+\begin{algorithmic}
+\PROCEDURE{Test-Statements}{}
+    \STATE This line is a normal statement
+    \PRINT \texttt{`this is print statement'}
+    \RETURN $retval$
+\ENDPROCEDURE
+
+\PROCEDURE{Test-Comments}{} \COMMENT{comment for procedure}
+    \STATE a statement \COMMENT{inline comment}
+    \STATE \COMMENT{line comment}
+    \IF{some condition}\COMMENT{comment for if}
+        \RETURN \TRUE \COMMENT{another inline comment}
+    \ELSE \COMMENT{comment for else}
+        \RETURN \FALSE \COMMENT{yet another inline comment}
+    \ENDIF
+\ENDPROCEDURE
+\end{algorithmic}
+\end{algorithm}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div><div class="pseudocode" id="id7">
+<div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="" class="pseudocode">
+            % This quicksort algorithm is extracted from Chapter 7, Introduction
+% to Algorithms (3rd edition)
+\begin{algorithm}
+\caption{Quicksort}
+\begin{algorithmic}
+\PROCEDURE{Quicksort}{$A, p, r$}
+    \IF{$p &lt; r$}
+        \STATE $q = $ \CALL{Partition}{$A, p, r$}
+        \STATE \CALL{Quicksort}{$A, p, q - 1$}
+        \STATE \CALL{Quicksort}{$A, q + 1, r$}
+    \ENDIF
+\ENDPROCEDURE
+\PROCEDURE{Partition}{$A, p, r$}
+    \STATE $x = A[r]$
+    \STATE $i = p - 1$
+    \FOR{$j = p$ \TO $r - 1$}
+        \IF{$A[j] &lt; x$}
+            \STATE $i = i + 1$
+            \STATE exchange
+            $A[i]$ with $A[j]$
+        \ENDIF
+        \STATE exchange $A[i]$ with $A[r]$
+    \ENDFOR
+\ENDPROCEDURE
+\end{algorithmic}
+\end{algorithm}
+        </pre>
+        <script>
+            pseudocode.renderElement(document.getElementById(""));
+        </script></div></div></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, AIDA Lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

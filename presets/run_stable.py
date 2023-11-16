@@ -3,8 +3,8 @@ import regelum as rg
 
 @rg.main(config_path="stable-presets", config_name="main")
 def launch(cfg):
-    controller = ~cfg.controller
-    controller.run()
+    pipeline = ~cfg.pipeline
+    pipeline.run()
 
 
 if __name__ == "__main__":

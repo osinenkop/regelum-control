@@ -1,0 +1,10 @@
+_target_: regelum.policy.DDPG
+
+defaults:
+  - model: perceptron_with_normal_noise
+  - optimizer_config: policy_gradient
+
+system: ~ system
+critic: ~ pipeline.critic
+discount_factor: $ pipeline.discount_factor
+device: cpu

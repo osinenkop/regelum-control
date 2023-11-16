@@ -17,7 +17,7 @@ regelum.optimizable.optimizers.OptStatus
 
    .. autosummary::
    
-      ~OptStatus.failed
       ~OptStatus.success
+      ~OptStatus.failed
    
    

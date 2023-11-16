@@ -2,7 +2,7 @@ rehydra:
   run:
     dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
   sweep:
-    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${controller.name__IGNORE__}_${system_specific.name}
+    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}_${pipeline.name__IGNORE__}_${system_specific.name}
     subdir: ${rehydra.job.num}
   launcher:
     _target_: rehydra_plugins.rehydra_joblib_launcher.joblib_launcher.JoblibLauncher
@@ -126,21 +126,21 @@ rehydra:
     - rehydra.mode=MULTIRUN
     task:
     - system=inv_pendulum
-    - controller=pg
+    - pipeline=pg
     - +seed=1
     - scenario=monte_carlo
     - scenario.N_iterations=20
     - system_specific.time_final=10
-    - controller.actor.model.weight_max=20.0
-    - controller.actor.model.weight_min=-20.0
-    - controller.actor.optimizer.opt_options.lr=5.0
+    - pipeline.actor.model.weight_max=20.0
+    - pipeline.actor.model.weight_min=-20.0
+    - pipeline.actor.optimizer.opt_options.lr=5.0
     - system_specific.diag_scale_coef=3.5
     - scenario.N_episodes=10
     - system_specific.total_objective_threshold=5000
   job:
     name: __init__
     chdir: true
-    override_dirname: +seed=1,controller.actor.model.weight_max=20.0,controller.actor.model.weight_min=-20.0,controller.actor.optimizer.opt_options.lr=5.0,controller=pg,scenario.N_episodes=10,scenario.N_iterations=20,scenario=monte_carlo,system=inv_pendulum,system_specific.diag_scale_coef=3.5,system_specific.time_final=10,system_specific.total_objective_threshold=5000
+    override_dirname: +seed=1,pipeline.actor.model.weight_max=20.0,pipeline.actor.model.weight_min=-20.0,pipeline.actor.optimizer.opt_options.lr=5.0,pipeline=pg,scenario.N_episodes=10,scenario.N_iterations=20,scenario=monte_carlo,system=inv_pendulum,system_specific.diag_scale_coef=3.5,system_specific.time_final=10,system_specific.total_objective_threshold=5000
     id: __init___0
     num: 0
     config_name: main
@@ -154,26 +154,26 @@ rehydra:
   runtime:
     version: 1.3.2
     version_base: '1.3'
-    cwd: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets
+    cwd: /mnt/abolychev/regelum-research-calf/regelum-safe-pipelines/presets
     config_sources:
     - path: rehydra.conf
       schema: pkg
       provider: rehydra
-    - path: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets/general
+    - path: /mnt/abolychev/regelum-research-calf/regelum-safe-pipelines/presets/general
       schema: file
       provider: main
     - path: ''
       schema: structured
       provider: schema
-    output_dir: /mnt/abolychev/regelum-research-calf/regelum-safe-controllers/presets/multirun/2023-05-18/19-01-00_pg_inv_pendulum/0
+    output_dir: /mnt/abolychev/regelum-research-calf/regelum-safe-pipelines/presets/multirun/2023-05-18/19-01-00_pg_inv_pendulum/0
     choices:
-      controller: pg
-      controller/episode_data_buffer: observation_action
-      controller/critic: trivial
-      controller/actor: pg
-      controller/actor/optimizer: torch_dataloader
-      controller/actor/optimizer/batch_sampler: none
-      controller/actor/model: fc_gauss
+      pipeline: pg
+      pipeline/episode_data_buffer: observation_action
+      pipeline/critic: trivial
+      pipeline/actor: pg
+      pipeline/actor/optimizer: torch_dataloader
+      pipeline/actor/optimizer/batch_sampler: none
+      pipeline/actor/model: fc_gauss
       simulator: casadi
       scenario: monte_carlo
       system: inv_pendulum
@@ -183,7 +183,7 @@ rehydra:
       initial_conditions: ic_inv_pendulum_stochastic
       running_objective: quadratic_inv_pendulum
       running_objective/model: quad_form
-      nominal_controller: nominal_inv_pendulum
+      nominal_pipeline: nominal_inv_pendulum
       rehydra/env: default
       rehydra/callbacks: null
       rehydra/job_logging: default

@@ -34,7 +34,7 @@ Consider the following files in your hypothetical project.
 ::
 
     from regelum.system import System
-    from regelum.controller import Controller
+    from regelum.pipeline import Pipeline
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -42,7 +42,7 @@ Consider the following files in your hypothetical project.
 
         def ...
 
-    class MyAgent(Controller):
+    class MyAgent(Pipeline):
         def __init__(self, a, b, c):
             ...
 
@@ -85,12 +85,12 @@ Consider the following files in your hypothetical project.
     )
     def my_app(config):
         robot = ~config.robot      # '~' instantiates the object
-        controller = ~config.agent # described in the corresponding
+        pipeline = ~config.agent # described in the corresponding
                                    # field. It makes use of '_target_'.
         simulator = Simulator(robot,
                               config.initial_state,
                               sampling_time=config.rate)
-        scenario = EpisodicScenario(simulator, controller)
+        scenario = EpisodicScenario(simulator, pipeline)
         scenario.run()
 
 
@@ -126,7 +126,7 @@ almost empty. Here's an example of how this can be done:
 ::
 
     from regelum.system import System
-    from regelum.controller import Controller
+    from regelum.pipeline import Pipeline
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -134,7 +134,7 @@ almost empty. Here's an example of how this can be done:
 
         def ...
 
-    class MyAgent(Controller):
+    class MyAgent(Pipeline):
         def __init__(self, a, b, c):
             ...
 
@@ -156,7 +156,7 @@ almost empty. Here's an example of how this can be done:
         initial_state: = numpy.zeros(5)
         sampling_time: 0.1
 
-    controller:
+    pipeline:
         _target_: my_utilities.MyAgent
         a: 3
         b: 4
@@ -186,7 +186,7 @@ This way of doing it has numerous advantages. Notably, you can now
 conveniently override any input parameters, when running the script like so
 ::
 
-    python3 main.py controller.a=10
+    python3 main.py pipeline.a=10
 
 or even
 
@@ -234,7 +234,7 @@ Consider the following example:
 ::
 
     from regelum.system import System
-    from regelum.controller import Controller
+    from regelum.pipeline import Pipeline
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -242,13 +242,13 @@ Consider the following example:
 
         def ...
 
-    class MyAgentReliable(Controller): ## You already know this one works
+    class MyAgentReliable(Pipeline): ## You already know this one works
         def __init__(self, a, b, c):
             ...
 
         def ...
 
-    class MyAgentExperimental(Controller): ## Perhaps this one works even better
+    class MyAgentExperimental(Pipeline): ## Perhaps this one works even better
         def __init__(self, e, f, g, h):
             ...
 
@@ -260,7 +260,7 @@ Consider the following example:
     _target_: regelum.scenario.Scenario
 
     defaults:
-        - controller: reliable
+        - pipeline: reliable
 
     simulator:
         _target_: regelum.simulator.Simulator
@@ -272,7 +272,7 @@ Consider the following example:
         initial_state: = numpy.zeros(5)
         sampling_time: 0.1
 
-``controller/reliable.yaml``:
+``pipeline/reliable.yaml``:
 ::
 
     _target_: my_utilities.MyAgentReliable
@@ -281,7 +281,7 @@ Consider the following example:
     c: 6
 
 
-``controller/experimental.yaml``:
+``pipeline/experimental.yaml``:
 ::
 
     _target_: my_utilities.MyAgentExperimental
@@ -311,21 +311,21 @@ Consider the following example:
     if __name__ == "__main__":
         my_app()
 
-In the above project we are looking two alternative agents (controller):
+In the above project we are looking two alternative agents (pipeline):
 the first one called ``MyAgentReliable`` and the other called ``MyAgentExperimental``.
 
-Observe the ``default`` syntax in ``my_config.yaml``.  The line ``- controller: reliable``
-makes it so that the node ``config.controller`` is populated by the contents of
-``controller/reliable.yaml``. In this case if you wanted to instead try out the
-experimental agent (described by ``controller/experimental.yaml``) you would simply
+Observe the ``default`` syntax in ``my_config.yaml``.  The line ``- pipeline: reliable``
+makes it so that the node ``config.pipeline`` is populated by the contents of
+``pipeline/reliable.yaml``. In this case if you wanted to instead try out the
+experimental agent (described by ``pipeline/experimental.yaml``) you would simply
 need to execute the following:
 ::
 
-    python3 main.py controller=experimental
+    python3 main.py pipeline=experimental
 
 As simple as that!
 
-Note that the directory ``controller`` matches the name of the node it populates.
+Note that the directory ``pipeline`` matches the name of the node it populates.
 
 Additional remarks on defaults
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -345,7 +345,7 @@ Also, if you want to override a nested config group you need
 to use ``/`` instead of ``.``. For instance, like so
 ::
 
-    python3 main.py controller/something_inside_my_controller=experimental
+    python3 main.py pipeline/something_inside_my_pipeline=experimental
 
 Yes, this syntax is a bit strange since some of the things in between those ``/`` may
 not even be actual directories, but rather just names of nodes. This however lets
@@ -353,10 +353,10 @@ not even be actual directories, but rather just names of nodes. This however let
 were to instead execute
 ::
 
-    python3 main.py controller.something_inside_the_controller=experimental
+    python3 main.py pipeline.something_inside_the_pipeline=experimental
 
 this would simply assign the string ``"experimental"`` to
-``config.controller.something_inside_my_controller`` as opposed to swapping out the
+``config.pipeline.something_inside_my_pipeline`` as opposed to swapping out the
 respective config file to ``experimental.yaml``.
 
 Example 4: Instantiating, referencing and inlining
@@ -374,7 +374,7 @@ Here's how you could go about doing it.
 ::
 
     from regelum.system import System
-    from regelum.controller import Controller
+    from regelum.pipeline import Pipeline
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -382,7 +382,7 @@ Here's how you could go about doing it.
 
         def ...
 
-    class MyAgent(Controller):
+    class MyAgent(Pipeline):
         def __init__(self, simulator, a, b, c):
             self.simulator = simulator
             ...
@@ -405,7 +405,7 @@ Here's how you could go about doing it.
         initial_state: = numpy.zeros(5)
         sampling_time: 0.1
 
-    controller:
+    pipeline:
         _target_: my_utilities.MyAgent
         simulator: ~ simulator  ## This is where the magic happens.
         a: 3                    ## '~' instantiates config.simulator.
@@ -427,8 +427,8 @@ Here's how you could go about doing it.
         config_name="my_config",
     )
     def my_app(config):
-        print(~config.simulator is config.controller.simulator)    ## Will output True
-        print((~config).simulator is config.controller.simulator)   ## Will output True
+        print(~config.simulator is config.pipeline.simulator)    ## Will output True
+        print((~config).simulator is config.pipeline.simulator)   ## Will output True
 
 
     if __name__ == "__main__":
@@ -461,7 +461,7 @@ the following way:
 ::
 
     from regelum.system import System
-    from regelum.controller import Controller
+    from regelum.pipeline import Pipeline
 
     class MyRobotSystem(System):
         def __init__(self, x, y, z):
@@ -469,7 +469,7 @@ the following way:
 
         def ...
 
-    class MyAgent(Controller):
+    class MyAgent(Pipeline):
         def __init__(self, atol, a, b, c):
             ...
 
@@ -492,7 +492,7 @@ the following way:
         sampling_time: 0.1
         atol: 0.001
 
-    controller:
+    pipeline:
         _target_: my_utilities.MyAgent
         atol: $ simulator.atol  ## This will insert 0.001
         a: 3

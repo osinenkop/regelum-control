@@ -1,8 +1,8 @@
-``regelum.controller`` 
+``regelum.pipeline`` 
 ======================
 
 
-.. automodule:: regelum.controller
+.. automodule:: regelum.pipeline
 
    
    
@@ -16,6 +16,7 @@
       :toctree: sub
    
       apply_action_bounds
+      get_policy_gradient_kwargs
    
    
 
@@ -26,13 +27,14 @@
    .. autosummary::
       :toctree: sub
    
-      CALFControllerExPost
-      Controller
-      MPCController
-      MPCTorchController
-      PPOController
-      RLController
-      ReinforceController
+      CALFPipelineExPost
+      Pipeline
+      MPCPipeline
+      MPCTorchPipeline
+      PPOPipeline
+      RLPipeline
+      ReinforcePipeline
+      SPDGPipeline
    
    
 

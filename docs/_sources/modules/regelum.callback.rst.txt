@@ -30,7 +30,7 @@
    
       Callback
       ConfigDiagramCallback
-      ControllerStepLogger
+      PipelineStepLogger
       CriticObjectiveSaver
       HistoricalCallback
       HistoricalDataCallback

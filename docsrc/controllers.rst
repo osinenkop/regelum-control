@@ -3,7 +3,7 @@ REINFORCE Algorithm
 
 Overview
 --------
-The **ReinforceController** implements the **REINFORCE** algorithm, which is a Monte Carlo policy gradient method used in reinforcement learning. This method seeks to optimize the policy by updating parameters in the direction that maximizes expected rewards (or minimizes the expected costs). 
+The **ReinforcePipeline** implements the **REINFORCE** algorithm, which is a Monte Carlo policy gradient method used in reinforcement learning. This method seeks to optimize the policy by updating parameters in the direction that maximizes expected rewards (or minimizes the expected costs). 
 
 .. note::
     We provide functionality for policy actions to be generated from a truncated normal distribution that is truncated to the action bounds provided in the system as default parameters.
@@ -79,7 +79,7 @@ Usage Example (for costs)
     from regelum.system import InvertedPendulumPD
     from regelum.objective import RunningObjective
     from regelum.simulator import CasADi
-    from regelum.controller import ReinforceController
+    from regelum.pipeline import ReinforcePipeline
 
     # Initialize the system and running cost
     system = InvertedPendulumPD()
@@ -87,8 +87,8 @@ Usage Example (for costs)
         model=rg.model.ModelQuadLin("diagonal", weights=[10, 3.0, 0.0])
     )
 
-    # Instantiate the ReinforceController
-    controller = ReinforceController(
+    # Instantiate the ReinforcePipeline
+    pipeline = ReinforcePipeline(
         policy_model=rg.model.PerceptronWithTruncatedNormalNoise(
             dim_input=system.dim_observation,
             dim_hidden=4,
@@ -118,14 +118,14 @@ Usage Example (for costs)
     )
 
     # Run the training process
-    controller.run()
+    pipeline.run()
 
 Proximal Policy Optimization (PPO) Algorithm
 ============================================
 
 Overview
 --------
-The PPOController implements the Proximal Policy Optimization (PPO) algorithm, a policy gradient method for reinforcement learning that balances exploration and exploitation by clipping the policy update. PPO aims to take the biggest possible improvement step on a policy without causing performance collapse, thus ensuring a monotonic improvement.
+The PPOPipeline implements the Proximal Policy Optimization (PPO) algorithm, a policy gradient method for reinforcement learning that balances exploration and exploitation by clipping the policy update. PPO aims to take the biggest possible improvement step on a policy without causing performance collapse, thus ensuring a monotonic improvement.
 
 Gradient Optimization Formulas
 ------------------------------
@@ -228,6 +228,16 @@ and :math:`\text{PolicyObjective}`:
 .. math::
     \frac{1}{M}\sum\limits_{j=1}^{M}\sum\limits_{k=0}^{N-2}\gamma^k \max\left(\hat{A}^{w}(y^j_k, u^j_k)   \frac{\rho^{\theta}(u^j_k \mid y^j_k)}{\rho^{\theta_{i}}(u^j_k \mid y^j_k)}, \hat{A}^{w}(y^j_k, u^j_k) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\rho^{\theta}(u^j_k \mid y^j_k)}{\rho^{\theta_{i}}(u^j_k \mid y^j_k)}\right) \right).
 
+.. math::
+
+    \newcommand{\clip}{clip_{1 - \varepsilon}^{1 + \varepsilon}}
+
+    \clip + 1
+
+.. math::
+
+    \clip + 2
+
 .. code-block:: python
 
     import regelum as rg
@@ -238,7 +248,7 @@ and :math:`\text{PolicyObjective}`:
     from regelum.simulator import CasADi
 
     system = InvertedPendulumPD()
-    controller = rg.controller.PPOController(
+    pipeline = rg.pipeline.PPOPipeline(
         policy_model=rg.model.PerceptronWithTruncatedNormalNoise(
             dim_input=system.dim_observation,
             dim_hidden=4,
@@ -272,4 +282,11 @@ and :math:`\text{PolicyObjective}`:
         ),
     )
 
-    controller.run()
+    pipeline.run()
+
+.. note::
+    .. raw:: html
+        :file: Osinenko2023habil.html
+
+.. figure:: file.svg
+   :width: 100%

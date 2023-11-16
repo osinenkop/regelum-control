@@ -1,9 +1,9 @@
-regelum.controller.Controller
+regelum.pipeline.Pipeline
 =============================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
-.. autoclass:: Controller
+.. autoclass:: Pipeline
 
    
    .. automethod:: __init__
@@ -13,22 +13,22 @@ regelum.controller.Controller
 
    .. autosummary::
    
-      ~Controller.__init__
-      ~Controller.calculate_total_objective
-      ~Controller.compute_action
-      ~Controller.compute_action_sampled
-      ~Controller.issue_action
-      ~Controller.on_action_issued
-      ~Controller.on_observation_received
-      ~Controller.post_compute_action
-      ~Controller.reload_pipeline
-      ~Controller.reset
-      ~Controller.reset_episode
-      ~Controller.reset_iteration
-      ~Controller.reset_simulation
-      ~Controller.run
-      ~Controller.step
-      ~Controller.substitute_constraint_parameters
+      ~Pipeline.__init__
+      ~Pipeline.calculate_total_objective
+      ~Pipeline.compute_action
+      ~Pipeline.compute_action_sampled
+      ~Pipeline.issue_action
+      ~Pipeline.on_action_issued
+      ~Pipeline.on_observation_received
+      ~Pipeline.post_compute_action
+      ~Pipeline.reload_pipeline
+      ~Pipeline.reset
+      ~Pipeline.reset_episode
+      ~Pipeline.reset_iteration
+      ~Pipeline.reset_simulation
+      ~Pipeline.run
+      ~Pipeline.step
+      ~Pipeline.substitute_constraint_parameters
    
    
 

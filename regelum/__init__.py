@@ -1,4 +1,4 @@
-"""A flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe reinforcement learning controllers.
+"""A flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe reinforcement learning pipelines.
 
 It is made for researchers and engineers in reinforcement learning and control theory.
 """
@@ -88,7 +88,7 @@ from . import model
 from . import data_buffers
 from .optimizable import *
 from . import critic
-from . import controller
+from . import pipeline
 from . import policy
 from . import observer
 from .event import Event

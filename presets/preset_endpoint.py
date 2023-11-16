@@ -1,5 +1,5 @@
 """
-This python script is used as a universal means of launching experiments. Systems, controllers and other
+This python script is used as a universal means of launching experiments. Systems, pipelines and other
 parameters are meant to be set via rehydra's override syntax.
 """
 

@@ -1,6 +1,6 @@
 """Module that contains general objectives functions that can be used by various entities of the framework.
 
-For instance, a running objective can be used commonly by a generic optimal controller, an actor, a critic, a logger, an animator, a pipeline etc.
+For instance, a running objective can be used commonly by a generic optimal pipeline, an actor, a critic, a logger, an animator, a pipeline etc.
 
 """
 

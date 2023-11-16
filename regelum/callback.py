@@ -122,7 +122,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
 
     def on_episode_done(
         self,
-        controller,
+        pipeline,
         episode_number,
         episodes_total,
         iteration_number,
@@ -135,7 +135,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
 
     def on_iteration_done(
         self,
-        controller,
+        pipeline,
         episode_number,
         episodes_total,
         iteration_number,
@@ -224,7 +224,7 @@ class OnEpisodeDoneCallback(Callback):
         self.iteration_counter = 1
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.controller.Controller) and (
+        return isinstance(obj, regelum.pipeline.Pipeline) and (
             method == "reload_pipeline"
         )
 
@@ -253,7 +253,7 @@ class OnIterationDoneCallback(Callback):
         self.iteration_counter = 0
 
     def is_target_event(self, obj, method, output):
-        return isinstance(obj, regelum.controller.Controller) and (
+        return isinstance(obj, regelum.pipeline.Pipeline) and (
             method == "reset_iteration"
         )
 
@@ -765,14 +765,14 @@ def method_callback(method_name, class_name=None, log_level="debug"):
     return MethodCallback
 
 
-class ControllerStepLogger(Callback):
+class PipelineStepLogger(Callback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     cooldown = 1.0
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.Controller)
+            isinstance(obj, regelum.pipeline.Pipeline)
             and method == "post_compute_action"
         )
 
@@ -807,7 +807,7 @@ class SaveProgressCallback(Callback):
 
     def on_episode_done(
         self,
-        controller,
+        pipeline,
         episode_number,
         episodes_total,
         iteration_number,
@@ -822,7 +822,7 @@ class SaveProgressCallback(Callback):
         self.log(
             f"Saved callbacks to {os.path.abspath(filename)}. ({int(1000 * (time.time() - start))}ms)"
         )
-        if controller is not None:
+        if pipeline is not None:
             with regelum.main.metadata["report"]() as r:
                 r["episode_current"] = episode_number
                 if "episodes_total" not in r:
@@ -847,7 +847,7 @@ class HistoricalDataCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.Controller)
+            isinstance(obj, regelum.pipeline.Pipeline)
             and method == "post_compute_action"
         )
 
@@ -887,7 +887,7 @@ class HistoricalDataCallback(HistoricalCallback):
 
     def on_episode_done(
         self,
-        controller,
+        pipeline,
         episode_number,
         episodes_total,
         iteration_number,
@@ -938,17 +938,14 @@ class ObjectiveSaver(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.RLController)
-            and (method == "pre_optimize")
+            isinstance(obj, regelum.pipeline.RLPipeline) and (method == "pre_optimize")
         ) or (
             isinstance(obj, regelum.optimizable.Optimizable)
             and (method == "post_epoch" or method == "post_optimize")
         )
 
     def perform(self, obj, method, output):
-        if isinstance(obj, regelum.controller.RLController) and (
-            method == "pre_optimize"
-        ):
+        if isinstance(obj, regelum.pipeline.RLPipeline) and (method == "pre_optimize"):
             which, event, time, episode_counter, iteration_counter = output
             if which == "Critic":
                 self.key = f"B. {which} objective. "
@@ -989,8 +986,7 @@ class CriticObjectiveSaver(ObjectiveSaver):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.RLController)
-            and (method == "pre_optimize")
+            isinstance(obj, regelum.pipeline.RLPipeline) and (method == "pre_optimize")
         ) or (
             isinstance(obj, regelum.critic.Critic)
             and (method == "post_epoch" or method == "post_optimize")
@@ -1002,8 +998,7 @@ class PolicyObjectiveSaver(ObjectiveSaver):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.RLController)
-            and (method == "pre_optimize")
+            isinstance(obj, regelum.pipeline.RLPipeline) and (method == "pre_optimize")
         ) or (
             isinstance(obj, regelum.policy.Policy)
             and (method == "post_epoch" or method == "post_optimize")
@@ -1026,7 +1021,7 @@ class TotalObjectiveCallback(HistoricalCallback):
 
     def on_episode_done(
         self,
-        controller,
+        pipeline,
         episode_number,
         episodes_total,
         iteration_number,
@@ -1035,10 +1030,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.add_datum(
             {
                 "episode": len(self.data) + 1,
-                "objective": controller.recent_total_objective,
+                "objective": pipeline.recent_total_objective,
             }
         )
-        self.total_objectives.append(controller.recent_total_objective)
+        self.total_objectives.append(pipeline.recent_total_objective)
         self.log(
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
@@ -1047,7 +1042,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         )
         mlflow.log_metric(
             f"C. Total objectives in iteration {str(iteration_number).zfill(5)}",
-            controller.recent_total_objective,
+            pipeline.recent_total_objective,
             step=len(self.data),
         )
 
@@ -1103,7 +1098,7 @@ class TimeRemainingCallback(Callback):
 
     def on_episode_done(
         self,
-        controller,
+        pipeline,
         episode_number,
         episodes_total,
         iteration_number,
@@ -1117,13 +1112,12 @@ class TimeRemainingCallback(Callback):
                 average_interval -= current - previous
                 previous = current
             average_interval /= len(self.time_episode[-2:-12:-1])
-            td = datetime.timedelta(
-                seconds=int(
-                    (iterations_total - iteration_number)
-                    * average_interval
-                    * (episodes_total - episode_number)
-                )
+            episodes_left = (
+                episodes_total
+                - episode_number
+                + (iterations_total - iteration_number) * episodes_total
             )
+            td = datetime.timedelta(seconds=int(episodes_left * average_interval))
             remaining = f" Estimated remaining time: {str(td)}."
         else:
             remaining = ""

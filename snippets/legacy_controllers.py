@@ -1,23 +1,23 @@
-class CALFControllerExPostLegacy(RLController):
-    """CALF controller.
+class CALFPipelineExPostLegacy(RLPipeline):
+    """CALF pipeline.
 
     Implements CALF algorithm without predictive constraints.
     """
 
     def __init__(self, *args, safe_only=False, **kwargs):
-        """Initialize an instance of CALFControllerExPost.
+        """Initialize an instance of CALFPipelineExPost.
 
-        :param args: positional arguments for RLController
+        :param args: positional arguments for RLPipeline
         :param safe_only: when safe_only equals True, evaluates actions from safe policy only. Performs CALF updates otherwise.
-        :param kwargs: keyword arguments for RLController
+        :param kwargs: keyword arguments for RLPipeline
         """
         super().__init__(*args, **kwargs)
         if safe_only:
-            self.compute_action = self.policy.safe_controller.compute_action
+            self.compute_action = self.policy.safe_pipeline.compute_action
             self.compute_action_sampled = (
-                self.policy.safe_controller.compute_action_sampled
+                self.policy.safe_pipeline.compute_action_sampled
             )
-            self.reset = self.policy.safe_controller.reset
+            self.reset = self.policy.safe_pipeline.reset
         self.safe_only = safe_only
 
     # TODO: DOCSTRING. RENAME TO HUMAN LANGUAGE. DISPLACEMENT?
@@ -30,7 +30,7 @@ class CALFControllerExPostLegacy(RLController):
     def invoke_safe_action(self, state, observation):
         # self.policy.restore_weights()
         self.critic.restore_weights()
-        action = self.policy.safe_controller.compute_action(None, state, observation)
+        action = self.policy.safe_pipeline.compute_action(None, state, observation)
 
         self.policy.set_action(action)
         self.policy.model.update_and_cache_weights(action)
@@ -88,7 +88,7 @@ class CALFControllerExPostLegacy(RLController):
         self.critic.ub_constraint_violations.append(0)
         self.critic.Ls.append(
             np.squeeze(
-                self.critic.safe_controller.compute_LF(self.critic.current_observation)
+                self.critic.safe_pipeline.compute_LF(self.critic.current_observation)
             )
         )
         self.critic.times.append(time)
@@ -103,8 +103,8 @@ class CALFControllerExPostLegacy(RLController):
 
 
 # TODO: DOCSTRING. CLEANUP: NO COMMENTED OUT CODE! NEED ALL DOCSTRINGS HERE
-class CALFControllerPredictive(CALFControllerExPost):
-    """Predictive CALF controller.
+class CALFPipelinePredictive(CALFPipelineExPost):
+    """Predictive CALF pipeline.
 
     Implements CALF algorithm without predictive constraints.
     """

@@ -1,9 +1,9 @@
-regelum.controller.ReinforceController
+regelum.pipeline.ReinforcePipeline
 ======================================
 
-.. currentmodule:: regelum.controller
+.. currentmodule:: regelum.pipeline
 
-.. autoclass:: ReinforceController
+.. autoclass:: ReinforcePipeline
 
    
    .. automethod:: __init__
@@ -13,25 +13,25 @@ regelum.controller.ReinforceController
 
    .. autosummary::
    
-      ~ReinforceController.__init__
-      ~ReinforceController.calculate_total_objective
-      ~ReinforceController.compute_action
-      ~ReinforceController.compute_action_sampled
-      ~ReinforceController.issue_action
-      ~ReinforceController.on_action_issued
-      ~ReinforceController.on_observation_received
-      ~ReinforceController.optimize
-      ~ReinforceController.optimize_or_skip_on_event
-      ~ReinforceController.post_compute_action
-      ~ReinforceController.pre_optimize
-      ~ReinforceController.reload_pipeline
-      ~ReinforceController.reset
-      ~ReinforceController.reset_episode
-      ~ReinforceController.reset_iteration
-      ~ReinforceController.reset_simulation
-      ~ReinforceController.run
-      ~ReinforceController.step
-      ~ReinforceController.substitute_constraint_parameters
+      ~ReinforcePipeline.__init__
+      ~ReinforcePipeline.calculate_total_objective
+      ~ReinforcePipeline.compute_action
+      ~ReinforcePipeline.compute_action_sampled
+      ~ReinforcePipeline.issue_action
+      ~ReinforcePipeline.on_action_issued
+      ~ReinforcePipeline.on_observation_received
+      ~ReinforcePipeline.optimize
+      ~ReinforcePipeline.optimize_or_skip_on_event
+      ~ReinforcePipeline.post_compute_action
+      ~ReinforcePipeline.pre_optimize
+      ~ReinforcePipeline.reload_pipeline
+      ~ReinforcePipeline.reset
+      ~ReinforcePipeline.reset_episode
+      ~ReinforcePipeline.reset_iteration
+      ~ReinforcePipeline.reset_simulation
+      ~ReinforcePipeline.run
+      ~ReinforcePipeline.step
+      ~ReinforcePipeline.substitute_constraint_parameters
    
    
 

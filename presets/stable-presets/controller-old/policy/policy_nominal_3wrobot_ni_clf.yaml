@@ -1,0 +1,3 @@
+_target_: regelum.policy.ThreeWheeledWRobotNIDisassembledCLFPolicy
+
+pipeline_gain: 0.3

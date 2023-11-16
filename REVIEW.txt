@@ -16,7 +16,7 @@ Comments to methods come right before the method head.
 -- Somewhere needs to be a docu on how callbacks work and how to use them
 -- Remove nasty commented out debug code everywhere
 -- Remove redundant comment where the method name is self-explanatory
--- Where is SMC controller?
+-- Where is SMC pipeline?
 -- Objective methods of policy and objective learners are removed from policy and objective learners. They are now passed externally
 -- Need `TemporalDifferenceObjective` objective in general format which is TD(N)
 -- Unify the format in which callbacks are applied. Sometimes they are there, sometimes not

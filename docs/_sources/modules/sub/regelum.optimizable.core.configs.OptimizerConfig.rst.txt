@@ -24,5 +24,9 @@ regelum.optimizable.core.configs.OptimizerConfig
    .. autosummary::
    
       ~OptimizerConfig.opt_method
+      ~OptimizerConfig.kind
+      ~OptimizerConfig.opt_options
+      ~OptimizerConfig.log_options
+      ~OptimizerConfig.config_options
    
    

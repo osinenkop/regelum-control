@@ -1,0 +1,22 @@
+_target_: regelum.critic.Critic
+
+defaults:
+  - model: perceptron
+  - optimizer_config: online_torch_adam
+
+discount_factor: $ pipeline.discount_factor
+sampling_time: $ pipeline.sampling_time
+td_n: 1
+device: cpu
+is_same_critic: False
+system: ~ system
+
+
+model:
+  dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+  dim_output: 1
+  dim_hidden: 16
+  n_hidden_layers: 2
+  is_force_infinitesimal: True
+  is_bias: True
+  force_positive_def: False

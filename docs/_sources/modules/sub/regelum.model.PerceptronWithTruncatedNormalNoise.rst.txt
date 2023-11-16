@@ -80,5 +80,6 @@ regelum.model.PerceptronWithTruncatedNormalNoise
       ~PerceptronWithTruncatedNormalNoise.call_super_init
       ~PerceptronWithTruncatedNormalNoise.dump_patches
       ~PerceptronWithTruncatedNormalNoise.weights
+      ~PerceptronWithTruncatedNormalNoise.training
    
    

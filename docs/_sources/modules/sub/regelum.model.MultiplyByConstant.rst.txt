@@ -72,5 +72,6 @@ regelum.model.MultiplyByConstant
       ~MultiplyByConstant.T_destination
       ~MultiplyByConstant.call_super_init
       ~MultiplyByConstant.dump_patches
+      ~MultiplyByConstant.training
    
    

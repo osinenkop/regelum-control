@@ -9,7 +9,7 @@ class CALFWeightsCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.Controller)
+            isinstance(obj, regelum.pipeline.Pipeline)
             and method == "compute_action"
             and "calf" in obj.critic.__class__.__name__.lower()
         )
@@ -62,10 +62,7 @@ class CriticWeightsCallback(CALFWeightsCallback):
     """Whatever."""
 
     def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.controller.Controller)
-            and method == "compute_action"
-        )
+        return isinstance(obj, regelum.pipeline.Pipeline) and method == "compute_action"
 
     def on_episode_done(
         self,
@@ -93,7 +90,7 @@ class CalfCallback(HistoricalCallback):
 
     def is_target_event(self, obj, method, output):
         return (
-            isinstance(obj, regelum.controller.Controller)
+            isinstance(obj, regelum.pipeline.Pipeline)
             and method == "compute_action"
             and "calf" in obj.critic.__class__.__name__.lower()
         )
@@ -172,10 +169,7 @@ class CriticCallback(CalfCallback):
     """Watever."""
 
     def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.controller.Controller)
-            and method == "compute_action"
-        )
+        return isinstance(obj, regelum.pipeline.Pipeline) and method == "compute_action"
 
     def perform(self, obj, method, output):
         last_observation = obj.data_buffer.sample_last(
