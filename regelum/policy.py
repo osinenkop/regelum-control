@@ -355,58 +355,50 @@ class Reinforce(PolicyGradient):
     def update_data_buffer(self, data_buffer: DataBuffer):
         data_buffer.update(
             {
-                "total_objective": self.calculate_last_total_objectives(data_buffer),
+                "value": self.calculate_last_values(data_buffer),
             }
         )
-        data_buffer.update(
-            {"tail_total_objective": self.calculate_tail_total_objectives(data_buffer)}
-        )
+        data_buffer.update({"tail_value": self.calculate_tail_values(data_buffer)})
         data_buffer.update({"baseline": self.calculate_baseline(data_buffer)})
 
-    def calculate_last_total_objectives(self, data_buffer: DataBuffer):
-        data = data_buffer.to_pandas(keys=["episode_id", "current_total_objective"])
+    def calculate_last_values(self, data_buffer: DataBuffer):
+        data = data_buffer.to_pandas(keys=["episode_id", "current_value"])
         data["episode_id"] = data["episode_id"].astype(int)
-        data["current_total_objective"] = data["current_total_objective"].astype(float)
+        data["current_value"] = data["current_value"].astype(float)
         return (
-            data.groupby("episode_id")["current_total_objective"]
+            data.groupby("episode_id")["current_value"]
             .last()
             .loc[data["episode_id"]]
             .values.reshape(-1)
         )
 
-    def calculate_tail_total_objectives(
+    def calculate_tail_values(
         self,
         data_buffer: DataBuffer,
     ):
-        data = data_buffer.to_pandas(keys=["episode_id", "current_total_objective"])
+        data = data_buffer.to_pandas(keys=["episode_id", "current_value"])
         data["episode_id"] = data["episode_id"].astype(int)
-        data["current_total_objective"] = data["current_total_objective"].astype(float)
+        data["current_value"] = data["current_value"].astype(float)
 
-        groupby_episode_total_objectives = data.groupby(["episode_id"])[
-            "current_total_objective"
-        ]
+        groupby_episode_values = data.groupby(["episode_id"])["current_value"]
 
-        last_total_objectives = (
-            groupby_episode_total_objectives.last()
-            .loc[data["episode_id"]]
-            .values.reshape(-1)
+        last_values = (
+            groupby_episode_values.last().loc[data["episode_id"]].values.reshape(-1)
         )
-        current_total_objectives_shifted = groupby_episode_total_objectives.shift(
+        current_values_shifted = groupby_episode_values.shift(
             periods=1, fill_value=0.0
         ).values.reshape(-1)
 
-        return last_total_objectives - current_total_objectives_shifted
+        return last_values - current_values_shifted
 
     def calculate_baseline(self, data_buffer: DataBuffer):
         baseline = self.next_baseline
         if not self.is_do_not_let_the_past_distract_you:
-            self.next_baseline = np.mean(
-                data_buffer.to_pandas(keys=["total_objective"]).values
-            )
+            self.next_baseline = np.mean(data_buffer.to_pandas(keys=["value"]).values)
 
         else:
             self.next_baseline = (
-                data_buffer.to_pandas(keys=["tail_total_objective", "step_id"])
+                data_buffer.to_pandas(keys=["tail_value", "step_id"])
                 .astype(float)
                 .groupby("step_id")
                 .mean()
@@ -425,20 +417,18 @@ class Reinforce(PolicyGradient):
         return [
             "observation",
             "action",
-            "tail_total_objective",
-            "total_objective",
+            "tail_value",
+            "value",
             "baseline",
         ]
 
-    def objective_function(
-        self, observation, action, tail_total_objective, total_objective, baseline
-    ):
+    def objective_function(self, observation, action, tail_value, value, baseline):
         return reinforce_objective(
             policy_model=self.model,
             observations=observation,
             actions=action,
-            tail_total_objectives=tail_total_objective,
-            total_objectives=total_objective,
+            tail_values=tail_value,
+            values=value,
             baselines=baseline,
             is_with_baseline=self.is_with_baseline,
             is_do_not_let_the_past_distract_you=self.is_do_not_let_the_past_distract_you,

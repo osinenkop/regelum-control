@@ -146,7 +146,7 @@ class Critic(Optimizable, ABC):
 
     def reset(self):
         """Reset the outcome and current critic loss variables, and re-initialize the buffers."""
-        self.total_objective = 0
+        self.value = 0
         self.current_critic_loss = 0
 
     def initialize_optimize_procedure(self):

@@ -783,7 +783,7 @@ class PipelineStepLogger(Callback):
                 f"state est.: {output['estimated_state'][0]}, "
                 f"observation: {output['observation'][0]}, "
                 f"action: {output['action'][0]}, "
-                f"total objective: {output['current_total_objective']:.4f}, "
+                f"total objective: {output['current_value']:.4f}, "
                 f"time: {output['timestamp']:.4f} ({100 * output['timestamp']/obj.simulator.time_final:.1f}%), "
                 f"episode: {int(output['episode_id']) + 1}/{obj.N_episodes}, "
                 f"iteration: {int(output['iteration_id']) + 1}/{obj.N_iterations}"
@@ -874,7 +874,7 @@ class HistoricalDataCallback(HistoricalCallback):
                 **{
                     "time": output["timestamp"],
                     "running_objective": output["running_objective"],
-                    "current_total_objective": output["current_total_objective"],
+                    "current_value": output["current_value"],
                     "episode_id": output["episode_id"],
                     "iteration_id": output["iteration_id"],
                 },
@@ -1014,7 +1014,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.cache = pd.DataFrame()
         self.xlabel = "Episode"
         self.ylabel = "Total objective"
-        self.total_objectives = []
+        self.values = []
 
     def is_target_event(self, obj, method, output):
         return False
@@ -1030,10 +1030,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.add_datum(
             {
                 "episode": len(self.data) + 1,
-                "objective": pipeline.recent_total_objective,
+                "objective": pipeline.recent_value,
             }
         )
-        self.total_objectives.append(pipeline.recent_total_objective)
+        self.values.append(pipeline.recent_value)
         self.log(
             f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
@@ -1042,7 +1042,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         )
         mlflow.log_metric(
             f"C. Total objectives in iteration {str(iteration_number).zfill(5)}",
-            pipeline.recent_total_objective,
+            pipeline.recent_value,
             step=len(self.data),
         )
 
@@ -1053,10 +1053,10 @@ class TotalObjectiveCallback(HistoricalCallback):
         if episode_number == episodes_total:
             mlflow.log_metric(
                 "A. Avg total objectives",
-                np.mean(self.total_objectives),
+                np.mean(self.values),
                 step=iteration_number,
             )
-            self.total_objectives = []
+            self.values = []
             self.clear_recent_data()
 
     def perform(self, obj, method, output):

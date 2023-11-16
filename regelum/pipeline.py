@@ -71,7 +71,7 @@ class Pipeline(RegelumBase):
         observer: Optional[Observer] = None,
         N_episodes: int = 1,
         N_iterations: int = 1,
-        total_objective_threshold: float = np.inf,
+        value_threshold: float = np.inf,
         discount_factor: float = 1.0,
     ):
         """Initialize the Pipeline with the necessary components for running a reinforcement learning experiment.
@@ -85,7 +85,7 @@ class Pipeline(RegelumBase):
         :param observer: Observer for estimating the system state.
         :param N_episodes: Total number of episodes to run.
         :param N_iterations: Total number of iterations to run.
-        :param total_objective_threshold: Threshold to stop the simulation if the objective is met.
+        :param value_threshold: Threshold to stop the simulation if the objective is met.
         :param discount_factor: Discount factor for future rewards.
         """
         super().__init__()
@@ -94,17 +94,17 @@ class Pipeline(RegelumBase):
         self.simulator = simulator
         self.time_old = 0
         self.delta_time = 0
-        self.total_objective: float = 0.0
-        self.recent_total_objectives_of_episodes = []
-        self.total_objectives_of_episodes = []
-        self.total_objective_episodic_means = []
+        self.value: float = 0.0
+        self.recent_values_of_episodes = []
+        self.values_of_episodes = []
+        self.value_episodic_means = []
         self.action_bounds = np.array(action_bounds)
 
         self.sim_status = 1
         self.episode_counter = 0
         self.iteration_counter = 0
         self.current_scenario_status = "episode_continues"
-        self.total_objective_threshold = total_objective_threshold
+        self.value_threshold = value_threshold
         self.discount_factor = discount_factor
         self.is_episode_ended = False
         self.constraint_parser = (
@@ -164,10 +164,7 @@ class Pipeline(RegelumBase):
                 self.action_init,
             ) = self.simulator.get_init_state_and_action()
 
-        if (
-            not self.is_episode_ended
-            and self.total_objective <= self.total_objective_threshold
-        ):
+        if not self.is_episode_ended and self.value <= self.value_threshold:
             (
                 self.time,
                 self.state,
@@ -219,14 +216,14 @@ class Pipeline(RegelumBase):
     def reset_iteration(self):
         self.episode_counter = 0
         self.iteration_counter += 1
-        self.recent_total_objectives_of_episodes = self.total_objectives_of_episodes
-        self.total_objectives_of_episodes = []
+        self.recent_values_of_episodes = self.values_of_episodes
+        self.values_of_episodes = []
 
     def reset_episode(self):
         self.episode_counter += 1
         self.is_episode_ended = False
 
-        return self.total_objective
+        return self.value
 
     def reset_simulation(self):
         self.current_scenario_status = "episode_continues"
@@ -235,7 +232,7 @@ class Pipeline(RegelumBase):
 
     @apply_callbacks()
     def reload_pipeline(self):
-        self.recent_total_objective = self.total_objective
+        self.recent_value = self.value
         self.observation = self.simulator.observation
         self.sim_status = 1
         self.time = 0
@@ -244,7 +241,7 @@ class Pipeline(RegelumBase):
         self.simulator.reset()
         self.reset()
         self.sim_status = 0
-        return self.recent_total_objective
+        return self.recent_value
 
     @apply_callbacks()
     def post_compute_action(self, observation, estimated_state):
@@ -257,7 +254,7 @@ class Pipeline(RegelumBase):
             "step_id": self.step_counter,
             "action": self.policy.action,
             "running_objective": self.current_running_objective,
-            "current_total_objective": self.total_objective,
+            "current_value": self.value,
         }
 
     @apply_action_bounds
@@ -298,14 +295,12 @@ class Pipeline(RegelumBase):
         self.current_running_objective = self.running_objective(
             observation, self.policy.action
         )
-        self.total_objective = self.calculate_total_objective(
-            self.current_running_objective, self.time
-        )
+        self.value = self.calculate_value(self.current_running_objective, self.time)
         observation_action = np.concatenate((observation, self.policy.action), axis=1)
         return {
             "action": self.policy.action,
             "running_objective": self.current_running_objective,
-            "current_total_objective": self.total_objective,
+            "current_value": self.value,
             "observation_action": observation_action,
         }
 
@@ -323,12 +318,12 @@ class Pipeline(RegelumBase):
     def substitute_constraint_parameters(self, **kwargs):
         self.policy.substitute_parameters(**kwargs)
 
-    def calculate_total_objective(self, running_objective: float, time: float):
-        total_objective = (
-            self.total_objective
+    def calculate_value(self, running_objective: float, time: float):
+        value = (
+            self.value
             + running_objective * self.discount_factor**time * self.sampling_time
         )
-        return total_objective
+        return value
 
     def reset(self):
         """Reset agent for use in multi-episode simulation.
@@ -338,7 +333,7 @@ class Pipeline(RegelumBase):
 
         """
         self.clock.reset()
-        self.total_objective = 0.0
+        self.value = 0.0
         self.is_first_compute_action_call = True
 
 
@@ -367,7 +362,7 @@ class RLPipeline(Pipeline):
         observer: Optional[Observer] = None,
         N_episodes: int = 1,
         N_iterations: int = 1,
-        total_objective_threshold: float = np.inf,
+        value_threshold: float = np.inf,
     ):
         """Instantiate a RLPipeline object.
 
@@ -404,7 +399,7 @@ class RLPipeline(Pipeline):
             observer=observer,
             N_episodes=N_episodes,
             N_iterations=N_iterations,
-            total_objective_threshold=total_objective_threshold,
+            value_threshold=value_threshold,
             discount_factor=discount_factor,
             action_bounds=action_bounds,
         )
@@ -844,7 +839,7 @@ def get_policy_gradient_kwargs(
     observer: Optional[Observer],
     N_episodes: int,
     N_iterations: int,
-    total_objective_threshold: float,
+    value_threshold: float,
     policy_type: Type[Policy],
     policy_model: PerceptronWithTruncatedNormalNoise,
     policy_n_epochs: int,
@@ -913,7 +908,7 @@ def get_policy_gradient_kwargs(
         action_bounds=system.action_bounds,
         observer=observer,
         critic=critic,
-        total_objective_threshold=total_objective_threshold,
+        value_threshold=value_threshold,
         sampling_time=sampling_time,
         policy=policy_type(
             model=policy_model,
@@ -970,7 +965,7 @@ class PPOPipeline(RLPipeline):
         observer: Optional[Observer] = None,
         N_episodes: int = 2,
         N_iterations: int = 100,
-        total_objective_threshold: float = np.inf,
+        value_threshold: float = np.inf,
     ):
         """Initialize the object with the given parameters.
 
@@ -1010,8 +1005,8 @@ class PPOPipeline(RLPipeline):
         :type N_episodes: int
         :param N_iterations: The number of iterations to run in the pipeline.
         :type N_iterations: int
-        :param total_objective_threshold: Threshold of the total objective to end an episode.
-        :type total_objective_threshold: float
+        :param value_threshold: Threshold of the total objective to end an episode.
+        :type value_threshold: float
 
         :raises AssertionError: If the `running_objective_type` is invalid.
 
@@ -1030,7 +1025,7 @@ class PPOPipeline(RLPipeline):
                 observer=observer,
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
-                total_objective_threshold=total_objective_threshold,
+                value_threshold=value_threshold,
                 policy_type=PPO,
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,
@@ -1084,7 +1079,7 @@ class SDPGPipeline(RLPipeline):
         observer: Optional[Observer] = None,
         N_episodes: int = 2,
         N_iterations: int = 100,
-        total_objective_threshold: float = np.inf,
+        value_threshold: float = np.inf,
     ):
         """Initialize SDPGPipeline.
 
@@ -1120,8 +1115,8 @@ class SDPGPipeline(RLPipeline):
         :type N_episodes: int
         :param N_iterations: The total number of iterations for training.
         :type N_iterations: int
-        :param total_objective_threshold: Threshold for the total objective that, once reached, stops the episode, defaults to np.inf.
-        :type total_objective_threshold: float
+        :param value_threshold: Threshold for the total objective that, once reached, stops the episode, defaults to np.inf.
+        :type value_threshold: float
         """
         super().__init__(
             **get_policy_gradient_kwargs(
@@ -1132,7 +1127,7 @@ class SDPGPipeline(RLPipeline):
                 observer=observer,
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
-                total_objective_threshold=total_objective_threshold,
+                value_threshold=value_threshold,
                 policy_type=SDPG,
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,
@@ -1169,7 +1164,7 @@ class ReinforcePipeline(RLPipeline):
         observer: Optional[Observer] = None,
         N_episodes: int = 4,
         N_iterations: int = 100,
-        total_objective_threshold: float = np.inf,
+        value_threshold: float = np.inf,
         is_with_baseline: bool = True,
         is_do_not_let_the_past_distract_you: bool = True,
     ):
@@ -1214,7 +1209,7 @@ class ReinforcePipeline(RLPipeline):
                 observer=observer,
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
-                total_objective_threshold=total_objective_threshold,
+                value_threshold=value_threshold,
                 policy_type=Reinforce,
                 policy_model=policy_model,
                 policy_n_epochs=policy_n_epochs,
@@ -1251,7 +1246,7 @@ class DDPGPipeline(RLPipeline):
         observer: Optional[Observer] = None,
         N_episodes: int = 2,
         N_iterations: int = 100,
-        total_objective_threshold: float = np.inf,
+        value_threshold: float = np.inf,
     ):
         """Instantiate DDPG Pipeline.
 
@@ -1287,8 +1282,8 @@ class DDPGPipeline(RLPipeline):
         :type N_episodes: int
         :param N_iterations: The total number of training iterations for the pipeline.
         :type N_iterations: int
-        :param total_objective_threshold: The threshold for the total cumulative objective value that triggers the end of an episode.
-        :type total_objective_threshold: float
+        :param value_threshold: The threshold for the total cumulative objective value that triggers the end of an episode.
+        :type value_threshold: float
         """
         super().__init__(
             **get_policy_gradient_kwargs(
@@ -1299,7 +1294,7 @@ class DDPGPipeline(RLPipeline):
                 observer=observer,
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
-                total_objective_threshold=total_objective_threshold,
+                value_threshold=value_threshold,
                 policy_type=DDPG,
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,

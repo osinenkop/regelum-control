@@ -61,8 +61,8 @@ def reinforce_objective(
     policy_model: PerceptronWithTruncatedNormalNoise,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
-    tail_total_objectives: torch.FloatTensor,
-    total_objectives: torch.FloatTensor,
+    tail_values: torch.FloatTensor,
+    values: torch.FloatTensor,
     baselines: torch.FloatTensor,
     is_with_baseline: bool,
     is_do_not_let_the_past_distract_you: bool,
@@ -85,10 +85,10 @@ def reinforce_objective(
     :type observations: torch.FloatTensor
     :param actions: The actions tensor.
     :type actions: torch.FloatTensor
-    :param tail_total_objectives: The tail total objectives tensor.
-    :type tail_total_objectives: torch.FloatTensor
-    :param total_objectives: The total objectives tensor.
-    :type total_objectives: torch.FloatTensor
+    :param tail_values: The tail total objectives tensor.
+    :type tail_values: torch.FloatTensor
+    :param values: The total objectives tensor.
+    :type values: torch.FloatTensor
     :param baselines: The baselines tensor.
     :type baselines: torch.FloatTensor
     :param is_with_baseline: Flag indicating whether to subtract baselines from the target objectives.
@@ -105,9 +105,9 @@ def reinforce_objective(
     """
     log_pdfs = policy_model.log_pdf(observations, actions)
     if is_do_not_let_the_past_distract_you:
-        target_objectives = tail_total_objectives
+        target_objectives = tail_values
     else:
-        target_objectives = total_objectives
+        target_objectives = values
     if is_with_baseline:
         target_objectives -= baselines
 
