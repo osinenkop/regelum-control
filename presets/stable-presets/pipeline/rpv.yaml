@@ -1,0 +1,21 @@
+_target_: regelum.pipeline.RPVPipeline
+
+name%%: rpv
+
+running_objective: ~ running_objective
+simulator: ~ simulator
+prediction_horizon: 1
+sampling_time: $ system_specific.sampling_time
+observer: $ system_specific.observer
+constraint_parser: ~ constraint_parser
+discount_factor: 1.0
+critic_regularization_param: 0.
+N_iterations: 5
+critic_td_n: 1
+critic_batch_size: 10
+
+critic_model:
+  _target_: regelum.model.ModelQuadLin
+  quad_matrix_type: diagonal
+  is_with_linear_terms: False
+  dim_inputs: = ${system_specific.dim_observation}

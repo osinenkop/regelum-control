@@ -1,5 +1,4 @@
-"""
-This python script is used as a universal means of launching experiments. Systems, pipelines and other
+"""This python script is used as a universal means of launching experiments. Systems, pipelines and other
 parameters are meant to be set via rehydra's override syntax.
 """
 
@@ -8,10 +7,7 @@ import regelum as rc
 
 @rc(config_path="general", config_name="main")
 def launch(cfg):
-    """
-    General launch script for an arbitrary configuration specified via command line arguments.
-    """
-
+    """General launch script for an arbitrary configuration specified via command line arguments."""
     scenario = ~cfg.scenario
     if scenario.howanim in rc.ANIMATION_TYPES_REQUIRING_ANIMATOR:
         try:

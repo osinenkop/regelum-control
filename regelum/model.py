@@ -188,23 +188,28 @@ class ModelQuadLin(Model):
 
         self.cache_weights(self.weights)
 
+    def get_quad_lin(self, new_weights):
+        if self.quad_matrix_type == "full":
+            quad_matrix = rg.reshape(
+                new_weights[: self.dim_quad], (self.dim_inputs, self.dim_inputs)
+            )
+        elif self.quad_matrix_type == "diagonal":
+            quad_matrix = rg.diag(new_weights[: self.dim_quad])
+        elif self.quad_matrix_type == "symmetric":
+            quad_matrix = ModelQuadLin.quad_matrix_from_flat_weights(
+                new_weights[: self.dim_quad]
+            )
+
+        linear_coefs = (
+            new_weights[None, self.dim_quad :] if self.is_with_linear_terms else None
+        )
+
+        return quad_matrix, linear_coefs
+
     @Model.weights.setter
     def weights(self, new_weights):
         self._weights = new_weights
-        if self.quad_matrix_type == "full":
-            self._quad_matrix = rg.reshape(
-                self.weights[: self.dim_quad], (self.dim_inputs, self.dim_inputs)
-            )
-        elif self.quad_matrix_type == "diagonal":
-            self._quad_matrix = rg.diag(self.weights[: self.dim_quad])
-        elif self.quad_matrix_type == "symmetric":
-            self._quad_matrix = ModelQuadLin.quad_matrix_from_flat_weights(
-                self.weights[: self.dim_quad]
-            )
-
-        self._linear_coefs = (
-            self.weights[None, self.dim_quad :] if self.is_with_linear_terms else None
-        )
+        self._quad_matrix, self._linear_coefs = self.get_quad_lin(new_weights)
 
     @property
     def weight_bounds(self):
@@ -255,10 +260,15 @@ class ModelQuadLin(Model):
     def forward(self, inputs, weights=None):
         if weights is None:
             weights = self.weights
+            quad_matrix = self._quad_matrix
+            linear_coefs = self._linear_coefs
+        else:
+            quad_matrix, linear_coefs = self.get_quad_lin(weights)
+
         return ModelQuadLin.quadratic_linear_form(
             inputs,
-            self.cast_to_inputs_type(self._quad_matrix, inputs),
-            self.cast_to_inputs_type(self._linear_coefs, inputs),
+            quad_matrix,
+            linear_coefs,
         )
 
     @staticmethod

@@ -25,11 +25,13 @@ from .simulator import Simulator
 from .constraint_parser import ConstraintParser, ConstraintParserTrivial
 from .observer import Observer, ObserverTrivial
 from .model import (
+    Model,
     ModelNN,
     ModelPerceptron,
     ModelWeightContainer,
     ModelWeightContainerTorch,
     PerceptronWithTruncatedNormalNoise,
+    ModelQuadLin,
 )
 from .predictor import Predictor, EulerPredictor
 from regelum.optimizable import OptimizerConfig
@@ -732,6 +734,353 @@ class MPCPipeline(RLPipeline):
                     kind="symbolic",
                 ),
             ),
+        )
+
+
+def get_predictive_kwargs(
+    running_objective: RunningObjective,
+    simulator: Simulator,
+    prediction_horizon: int,
+    predictor: Predictor,
+    sampling_time: float,
+    observer: Optional[Observer],
+    constraint_parser: Optional[ConstraintParser],
+    N_iterations: int,
+    discount_factor: float,
+    algorithm_name: str,
+    policy_model: Optional[Model] = None,
+    critic_td_n: Optional[int] = None,
+    critic_is_on_policy: Optional[bool] = None,
+    critic_is_value_function: Optional[bool] = None,
+    critic_regularization_param: Optional[float] = None,
+    critic_is_same_critic: Optional[bool] = None,
+    critic_model: Optional[Model] = None,
+    critic_n_samples: Optional[int] = None,
+):
+    system = simulator.system
+    critic = Critic(
+        system=system,
+        model=critic_model
+        if critic_model is not None
+        else ModelQuadLin("diagonal", is_with_linear_terms=False),
+        td_n=critic_td_n,
+        is_on_policy=critic_is_on_policy,
+        is_value_function=critic_is_value_function,
+        sampling_time=sampling_time,
+        discount_factor=discount_factor,
+        regularization_param=critic_regularization_param,
+        action_bounds=system.action_bounds,
+        is_same_critic=critic_is_same_critic,
+        optimizer_config=OptimizerConfig(
+            log_options={
+                "print_in": False,
+                "print_out": False,
+                "print_time": False,
+            },
+            config_options={
+                "data_buffer_sampling_method": "sample_last",
+                "data_buffer_sampling_kwargs": {
+                    "dtype": casadi.DM,
+                    "n_samples": critic_n_samples,
+                },
+            },
+            opt_method="ipopt",
+            opt_options={"print_level": 0},
+            kind="symbolic",
+        ),
+    )
+
+    policy = RLPolicy(
+        action_bounds=system.action_bounds,
+        model=ModelWeightContainer(
+            weights_init=np.zeros(
+                (
+                    prediction_horizon + (1 if algorithm_name != "rpv" else 0),
+                    system.dim_inputs,
+                ),
+                dtype=np.float64,
+            ),
+            dim_output=system.dim_inputs,
+        )
+        if policy_model is None
+        else policy_model,
+        constraint_parser=constraint_parser,
+        system=system,
+        running_objective=running_objective,
+        prediction_horizon=prediction_horizon,
+        algorithm=algorithm_name,
+        critic=critic,
+        predictor=predictor
+        if predictor is not None
+        else EulerPredictor(system=system, pred_step_size=sampling_time),
+        discount_factor=discount_factor,
+        optimizer_config=OptimizerConfig(
+            log_options={
+                "print_in": False,
+                "print_out": False,
+                "print_time": False,
+            },
+            config_options={
+                "data_buffer_sampling_method": "sample_last",
+                "data_buffer_sampling_kwargs": {
+                    "dtype": casadi.DM,
+                    "n_samples": 1,
+                },
+            },
+            opt_method="ipopt",
+            opt_options={"print_level": 0},
+            kind="symbolic",
+        ),
+    )
+
+    return dict(
+        N_episodes=1,
+        N_iterations=N_iterations,
+        simulator=simulator,
+        data_buffer_nullify_event=Event.reset_episode,
+        policy_optimization_event=Event.compute_action,
+        critic_optimization_event=Event.compute_action,
+        action_bounds=system.action_bounds,
+        critic=critic,
+        running_objective=running_objective,
+        observer=observer,
+        sampling_time=sampling_time,
+        policy=policy,
+        is_critic_first=True,
+    )
+
+
+class SQLPipeline(RLPipeline):
+    """Implements Stacked Q-Learning algorithm."""
+
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        critic_td_n: int,
+        critic_batch_size: int,
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[Model] = None,
+        critic_model: Optional[Model] = None,
+        critic_regularization_param: float = 0.0,
+    ):
+        """Instantiate SQLPipeline.
+
+        :param running_objective: The objective function to assess the costs over the prediction horizon.
+        :type running_objective: RunningObjective
+        :param simulator: The environment simulation for applying and testing the agent.
+        :type simulator: Simulator
+        :param prediction_horizon: The number of steps into the future over which predictions are made.
+        :type prediction_horizon: int
+        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
+        :type critic_td_n: int
+        :param critic_batch_size: The batch size for the critic.
+        :type critic_batch_size: int
+        :param predictor: The prediction model used for forecasting future states. Defaults to None.
+        :type predictor: Optional[Predictor]
+        :param sampling_time: The time step interval for pipeline. Defaults to 0.1.
+        :type sampling_time: float
+        :param observer: The observer object used for the algorithm. Defaults to None.
+        :type observer: Optional[Observer]
+        :param constraint_parser: The component for estimating the system's current state. Defaults to None.
+        :type constraint_parser: Optional[ConstraintParser]
+        :param N_iterations: The number of iterations for the algorithm. Defaults to 1.
+        :type N_iterations: int
+        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
+        :type discount_factor: float
+        :param policy_model: The model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainer` is used.
+        :type policy_model: Optional[Model]
+        :param critic_model:  The model parameterizing the critic. Defaults to None. If `None` then diagonal quadratic form is used.
+        :type critic_model: Optional[Model]
+        :param critic_regularization_param: The regularization parameter for the critic. Defaults to 0.
+        :type critic_regularization_param: float
+
+        :return: None
+        :rtype: None
+        """
+        super().__init__(
+            **get_predictive_kwargs(
+                simulator=simulator,
+                running_objective=running_objective,
+                prediction_horizon=prediction_horizon,
+                predictor=predictor,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="sql",
+                policy_model=policy_model,
+                critic_model=critic_model,
+                critic_regularization_param=critic_regularization_param,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=False,
+                critic_is_same_critic=False,
+                critic_n_samples=critic_batch_size,
+            )
+        )
+
+
+class RQLPipeline(RLPipeline):
+    """Implements Rollout Q-Learning algorithm."""
+
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        critic_td_n: int,
+        critic_batch_size: int,
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[Model] = None,
+        critic_model: Optional[Model] = None,
+        critic_regularization_param: float = 0.0,
+    ):
+        """Instantiate RQLPipeline.
+
+        :param running_objective: The objective function to assess the costs over the prediction horizon.
+        :type running_objective: RunningObjective
+        :param simulator: The environment simulation for applying and testing the agent.
+        :type simulator: Simulator
+        :param prediction_horizon: The number of steps into the future over which predictions are made.
+        :type prediction_horizon: int
+        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
+        :type critic_td_n: int
+        :param critic_batch_size: The batch size for the critic.
+        :type critic_batch_size: int
+        :param predictor: The prediction model used for forecasting future states. Defaults to None.
+        :type predictor: Optional[Predictor]
+        :param sampling_time: The time step interval for pipeline. Defaults to 0.1.
+        :type sampling_time: float
+        :param observer: The observer object used for the algorithm. Defaults to None.
+        :type observer: Optional[Observer]
+        :param constraint_parser: The component for estimating the system's current state. Defaults to None.
+        :type constraint_parser: Optional[ConstraintParser]
+        :param N_iterations: The number of iterations for the algorithm. Defaults to 1.
+        :type N_iterations: int
+        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
+        :type discount_factor: float
+        :param policy_model: The model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainer` is used.
+        :type policy_model: Optional[Model]
+        :param critic_model:  The model parameterizing the critic. Defaults to None. If `None` then diagonal quadratic form is used.
+        :type critic_model: Optional[Model]
+        :param critic_regularization_param: The regularization parameter for the critic. Defaults to 0.
+        :type critic_regularization_param: float
+
+        :return: None
+        :rtype: None
+        """
+        super().__init__(
+            **get_predictive_kwargs(
+                simulator=simulator,
+                running_objective=running_objective,
+                prediction_horizon=prediction_horizon,
+                predictor=predictor,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="rql",
+                policy_model=policy_model,
+                critic_model=critic_model,
+                critic_regularization_param=critic_regularization_param,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=False,
+                critic_is_same_critic=False,
+                critic_n_samples=critic_batch_size,
+            )
+        )
+
+
+class RPVPipeline(RLPipeline):
+    """Implements Reward + Value algorithm."""
+
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        critic_td_n: int,
+        critic_batch_size: int,
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[Model] = None,
+        critic_model: Optional[Model] = None,
+        critic_regularization_param: float = 0.0,
+    ):
+        """Instantiate RPVPipeline.
+
+        :param running_objective: The objective function to assess the costs over the prediction horizon.
+        :type running_objective: RunningObjective
+        :param simulator: The environment simulation for applying and testing the agent.
+        :type simulator: Simulator
+        :param prediction_horizon: The number of steps into the future over which predictions are made.
+        :type prediction_horizon: int
+        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
+        :type critic_td_n: int
+        :param critic_batch_size: The batch size for the critic.
+        :type critic_batch_size: int
+        :param predictor: The prediction model used for forecasting future states. Defaults to None.
+        :type predictor: Optional[Predictor]
+        :param sampling_time: The time step interval for pipeline. Defaults to 0.1.
+        :type sampling_time: float
+        :param observer: The observer object used for the algorithm. Defaults to None.
+        :type observer: Optional[Observer]
+        :param constraint_parser: The component for estimating the system's current state. Defaults to None.
+        :type constraint_parser: Optional[ConstraintParser]
+        :param N_iterations: The number of iterations for the algorithm. Defaults to 1.
+        :type N_iterations: int
+        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
+        :type discount_factor: float
+        :param policy_model: The model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainer` is used.
+        :type policy_model: Optional[Model]
+        :param critic_model:  The model parameterizing the critic. Defaults to None. If `None` then diagonal quadratic form is used.
+        :type critic_model: Optional[Model]
+        :param critic_regularization_param: The regularization parameter for the critic. Defaults to 0.
+        :type critic_regularization_param: float
+
+        :return: None
+        :rtype: None
+        """
+        super().__init__(
+            **get_predictive_kwargs(
+                simulator=simulator,
+                running_objective=running_objective,
+                prediction_horizon=prediction_horizon,
+                predictor=predictor,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="rpv",
+                policy_model=policy_model,
+                critic_model=critic_model,
+                critic_regularization_param=critic_regularization_param,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=True,
+                critic_is_same_critic=False,
+                critic_n_samples=critic_batch_size,
+            )
         )
 
 

@@ -71,47 +71,48 @@ pipelines = (
     "reinforce",
     # "dqn",
     # "sarsa",
-    # "rpv",
-    # "rql",
+    "rpv",
+    "rql",
     # "rql_torch",
-    # "sql",
+    "sql",
     # "sql_torch",
     # "rpv_torch",
     # "mpc_torch",
     "mpc",
-    "mpc",
 )
 systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "2tank", "lunar_lander"
+
+
+def get_kwargs(pipeline):
+    if pipeline == "mpc":
+        return {}
+    elif pipeline in ["reinforce", "ppo", "sdpg", "ddpg"]:
+        return {"pipeline.N_iterations": 2, "pipeline.N_episodes": 2}
+    else:
+        return {"pipeline.N_iterations": 2}
 
 
 basic = [
     TestSetup(
         system=system,
         pipeline=pipeline,
-        **(
-            {"simulator.time_final": 3.0}
-            | (
-                {"pipeline.N_iterations": 2, "pipeline.N_episodes": 2}
-                if pipeline != "mpc"
-                else {}
-            )
-        ),
+        **({"simulator.time_final": 3.0} | get_kwargs(pipeline)),
     )
     for pipeline, system in zip(pipelines, np.tile(systems, len(pipelines)))
 ]
 
-# basic += [
-#     TestSetup(
-#         system="3wrobot_ni",
-#         pipeline=pipeline,
-#         **{
-#             "simulator.time_final": 3.0,
-#             "constraint_parser": "constant_parser",
-#             "prefix": "constraint",
-#         },
-#     )
-#     for pipeline in ["rpv", "sql", "mpc", "rql"]
-# ]
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        pipeline=pipeline,
+        **{
+            "simulator.time_final": 3.0,
+            "constraint_parser": "constant_parser",
+            "prefix": "constraint",
+        },
+    )
+    for pipeline in ["rpv", "sql", "mpc", "rql"]
+]
 
 # basic += [
 #     TestSetup(
