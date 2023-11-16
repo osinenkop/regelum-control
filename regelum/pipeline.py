@@ -1149,7 +1149,7 @@ class SDPGPipeline(RLPipeline):
 
 
 class ReinforcePipeline(RLPipeline):
-    """ReinforcePipeline is an implementation of the REINFORCE algorithm, a Monte Carlo policy gradient method for reinforcement learning."""
+    """Implements the REINFORCE algorithm."""
 
     def __init__(
         self,
