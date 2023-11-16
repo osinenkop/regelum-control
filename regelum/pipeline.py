@@ -385,7 +385,7 @@ class RLPipeline(Pipeline):
         :type data_buffer_nullify_event: str
         :param discount_factor: Discount factor. Used for computing total objective as discounted sum (or integral) of running objectives, defaults to 1.0
         :type discount_factor: float, optional
-        :param is_critic_first: if is True then critic is optimized first then policy (can be usefull in DQN or Predictive Algorithms such as RPO, RQL, SQL). For `False` firstly is policy optimized then critic. defaults to False
+        :param is_critic_first: if is True then critic is optimized first then policy (can be usefull in DQN or Predictive Algorithms such as RPV, RQL, SQL). For `False` firstly is policy optimized then critic. defaults to False
         :type is_critic_first: bool, optional
         :param action_bounds: action bounds. Applied for every generated action as clip, defaults to None
         :type action_bounds: Union[list, np.ndarray, None], optional

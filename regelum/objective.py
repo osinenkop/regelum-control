@@ -397,7 +397,7 @@ def mpc_objective(
     return mpc_objective_value
 
 
-def rpo_objective(
+def rpv_objective(
     observation,
     estimated_state,
     policy_model_weights,
@@ -409,7 +409,7 @@ def rpo_objective(
     critic,
     critic_weights,
 ):
-    rpo_objective_value = 0
+    rpv_objective_value = 0
     (
         state_sequence_predicted,
         action_sequence_predicted,
@@ -439,7 +439,7 @@ def rpo_objective(
         _force_numeric=True,
     )
 
-    rpo_objective_value = rg.sum(
+    rpv_objective_value = rg.sum(
         discount_factors
         * running_objective(
             observation_sequence, action_sequence_predicted, is_save_batch_format=True
@@ -447,12 +447,12 @@ def rpo_objective(
     )
 
     observation_last = observation_sequence_predicted[-1, :]
-    rpo_objective_value += rg.sum(
+    rpv_objective_value += rg.sum(
         discount_factor ** (predictor.pred_step_size * prediction_horizon)
         * critic(observation_last, weights=critic_weights)
     )
 
-    return rpo_objective_value
+    return rpv_objective_value
 
 
 def rql_objective(

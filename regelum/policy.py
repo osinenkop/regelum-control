@@ -28,7 +28,7 @@ from .objective import (
     sdpg_objective,
     ddpg_objective,
     mpc_objective,
-    rpo_objective,
+    rpv_objective,
     sql_objective,
     rql_objective,
     ppo_objective,
@@ -774,7 +774,7 @@ class RLPolicy(Policy):
         )
 
         if len(list(self.constraint_parser.constraint_parameters())) > 0:
-            if self.algorithm == "rpo":
+            if self.algorithm == "rpv":
                 is_predict_last = True
             else:
                 is_predict_last = False
@@ -821,8 +821,8 @@ class RLPolicy(Policy):
                 prediction_horizon=self.prediction_horizon,
                 discount_factor=self.discount_factor,
             )
-        elif self.algorithm == "rpo":
-            return rpo_objective(
+        elif self.algorithm == "rpv":
+            return rpv_objective(
                 estimated_state=estimated_state,
                 observation=observation,
                 policy_model_weights=policy_model_weights,

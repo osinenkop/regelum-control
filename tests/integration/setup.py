@@ -2,7 +2,7 @@ import sys, os
 import numpy as np
 
 # ["2tank", "3wrobot", "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "lunar_lander"])
-# ["ddpg", "ddqn", "dqn", "dqn", "mpc", "pg", "pid", "rpo", "rpo_deep", "rql", "sarsa", "sdpg", "sql"]
+# ["ddpg", "ddqn", "dqn", "dqn", "mpc", "pg", "pid", "rpv", "rpv_deep", "rql", "sarsa", "sdpg", "sql"]
 
 
 class TestSetup:
@@ -71,12 +71,12 @@ pipelines = (
     "reinforce",
     # "dqn",
     # "sarsa",
-    # "rpo",
+    # "rpv",
     # "rql",
     # "rql_torch",
     # "sql",
     # "sql_torch",
-    # "rpo_torch",
+    # "rpv_torch",
     # "mpc_torch",
     "mpc",
     "mpc",
@@ -110,7 +110,7 @@ basic = [
 #             "prefix": "constraint",
 #         },
 #     )
-#     for pipeline in ["rpo", "sql", "mpc", "rql"]
+#     for pipeline in ["rpv", "sql", "mpc", "rql"]
 # ]
 
 # basic += [
@@ -154,7 +154,7 @@ full = sum(
             TestSetup(system=system, pipeline="reinforce"),
             TestSetup(system=system, pipeline="dqn", **{"simulator.time_final": 3.0}),
             TestSetup(system=system, pipeline="sarsa", **{"simulator.time_final": 3.0}),
-            TestSetup(system=system, pipeline="rpo", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, pipeline="rpv", **{"simulator.time_final": 3.0}),
             TestSetup(system=system, pipeline="rql", **{"simulator.time_final": 3.0}),
             TestSetup(
                 system=system, pipeline="rql_torch", **{"simulator.time_final": 3.0}
@@ -165,7 +165,7 @@ full = sum(
             ),
             TestSetup(
                 system=system,
-                pipeline="rpo_torch",
+                pipeline="rpv_torch",
                 **{"simulator.time_final": 3.0},
             ),
             TestSetup(
@@ -189,10 +189,10 @@ full = sum(
 )
 """
 basic = [MPCTest(system="2tank"),
-         TestSetup(system="3wrobot", pipeline="rpo"),
-         TestSetup(system="3wrobot_ni", pipeline="rpo"),
+         TestSetup(system="3wrobot", pipeline="rpv"),
+         TestSetup(system="3wrobot_ni", pipeline="rpv"),
          TestSetup(system="cartpole", pipeline="rql"),
-         TestSetup(system="inv_pendulum", pipeline="rpo"),
+         TestSetup(system="inv_pendulum", pipeline="rpv"),
          MPCTest(system="kin_point"),
          MPCTest(system="lunar_lander")]
 
