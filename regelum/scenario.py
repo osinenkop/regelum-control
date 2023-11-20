@@ -1,4 +1,4 @@
-"""Contains high-level structures of pipelines (agents).
+"""Contains high-level structures of scenarios (agents).
 
 Remarks: 
 
@@ -9,12 +9,11 @@ Remarks:
 """
 
 import numpy as np
-import casadi
 import torch
 
-from .__utilities import rg, Clock, AwaitedParameter
+from .__utilities import Clock, AwaitedParameter
 from regelum import RegelumBase
-from .policy import Policy, RLPolicy, PPO, Reinforce, SDPG, DDPG
+from .policy import Policy, RLPolicy, PolicyPPO, PolicyReinforce, PolicySDPG, PolicyDDPG
 from .critic import Critic, CriticCALF, CriticTrivial
 from typing import Optional, Union, Type, Dict, List, Any
 from .objective import RunningObjective
@@ -34,7 +33,10 @@ from .model import (
     ModelQuadLin,
 )
 from .predictor import Predictor, EulerPredictor
-from regelum.optimizable import OptimizerConfig
+from regelum.optimizable.core.configs import (
+    TorchOptimizerConfig,
+    CasadiOptimizerConfig,
+)
 from regelum.data_buffers.batch_sampler import RollingBatchSampler, EpisodicSampler
 
 
@@ -44,7 +46,7 @@ def apply_action_bounds(method):
         if action is not None:
             self.action = action
 
-        if hasattr(self, "action_bounds") and len(self.action_bounds) > 0:
+        if hasattr(self, "action_bounds") and self.action_bounds is not None:
             action = np.clip(
                 self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
             )
@@ -54,10 +56,10 @@ def apply_action_bounds(method):
     return wrapper
 
 
-class Pipeline(RegelumBase):
-    """Pipeline orchestrator.
+class Scenario(RegelumBase):
+    """Scenario orchestrator.
 
-    A Pipeline orchestrates the training and evaluation cycle of a reinforcement learning agent.
+    A Scenario orchestrates the training and evaluation cycle of a reinforcement learning agent.
     It runs the simulation based on a given policy, collects observations, applies actions, and
     manages the overall simulation loop, including assessing the agent's performance.
     """
@@ -76,7 +78,7 @@ class Pipeline(RegelumBase):
         value_threshold: float = np.inf,
         discount_factor: float = 1.0,
     ):
-        """Initialize the Pipeline with the necessary components for running a reinforcement learning experiment.
+        """Initialize the Scenario with the necessary components for running a reinforcement learning experiment.
 
         :param policy: Policy to generate actions based on observations.
         :param simulator: Simulator to interact with and collect data for training.
@@ -100,7 +102,9 @@ class Pipeline(RegelumBase):
         self.recent_values_of_episodes = []
         self.values_of_episodes = []
         self.value_episodic_means = []
-        self.action_bounds = np.array(action_bounds)
+        self.action_bounds = (
+            np.array(action_bounds) if action_bounds is not None else None
+        )
 
         self.sim_status = 1
         self.episode_counter = 0
@@ -155,7 +159,7 @@ class Pipeline(RegelumBase):
                 ]:
                     self.sim_status = self.step()
 
-                self.reload_pipeline()
+                self.reload_scenario()
 
     def step(self):
         if isinstance(self.action_init, AwaitedParameter) and isinstance(
@@ -233,7 +237,7 @@ class Pipeline(RegelumBase):
         self.episode_counter = 0
 
     @apply_callbacks()
-    def reload_pipeline(self):
+    def reload_scenario(self):
         self.recent_value = self.value
         self.observation = self.simulator.observation
         self.sim_status = 1
@@ -289,8 +293,8 @@ class Pipeline(RegelumBase):
         else:
             return object.__getattribute__(self, name)
 
-    def _issue_action(self, observation):
-        object.__getattribute__(self, "issue_action")(observation)
+    def _issue_action(self, observation, *args, **kwargs):
+        object.__getattribute__(self, "issue_action")(observation, *args, **kwargs)
         self.on_action_issued(observation)
 
     def on_action_issued(self, observation):
@@ -339,10 +343,10 @@ class Pipeline(RegelumBase):
         self.is_first_compute_action_call = True
 
 
-class RLPipeline(Pipeline):
+class RLScenario(Scenario):
     """Incorporates reinforcement learning algorithms.
 
-    The RLPipeline incorporates reinforcement learning algorithms into the Pipeline framework,
+    The RLScenario incorporates reinforcement learning algorithms into the Scenario framework,
     enabling iterative optimization of both policies and value functions as part of the agent's learning process.
     """
 
@@ -366,7 +370,7 @@ class RLPipeline(Pipeline):
         N_iterations: int = 1,
         value_threshold: float = np.inf,
     ):
-        """Instantiate a RLPipeline object.
+        """Instantiate a RLScenario object.
 
         :param policy: Policy object
         :type policy: Policy
@@ -391,7 +395,7 @@ class RLPipeline(Pipeline):
         :param sampling_time: time interval between two consecutive actions, defaults to 0.1
         :type sampling_time: float, optional
         """
-        Pipeline.__init__(
+        Scenario.__init__(
             self,
             simulator=simulator,
             sampling_time=sampling_time,
@@ -432,8 +436,8 @@ class RLPipeline(Pipeline):
         else:
             return object.__getattribute__(self, name)
 
-    def reload_pipeline(self):
-        res = super().reload_pipeline()
+    def reload_scenario(self):
+        res = super().reload_scenario()
         self.critic.reset()
         return res
 
@@ -527,135 +531,182 @@ class RLPipeline(Pipeline):
         return which, event, time, self.episode_counter, self.iteration_counter
 
 
-class CALFPipelineExPost(RLPipeline):
-    """Pipeline for CALF algorithm."""
+class CALF(RLScenario):
+    """Scenario for CALF algorithm."""
 
     def __init__(
         self,
-        policy: Policy,
-        critic: CriticCALF,
-        safe_pipeline: Pipeline,
-        running_objective,
-        critic_optimization_event: str,
-        policy_optimization_event: str,
-        data_buffer_nullify_event: str,
-        discount_factor=1,
-        action_bounds=None,
-        max_data_buffer_size: Optional[int] = None,
+        simulator: Simulator,
+        running_objective: RunningObjective,
+        safe_policy: Policy,
+        critic_td_n: int = 2,
+        observer: Optional[Observer] = None,
+        prediction_horizon: int = 1,
+        policy_model: Optional[Model] = None,
+        critic_model: Optional[Model] = None,
+        predictor: Optional[Predictor] = None,
+        discount_factor=1.0,
         sampling_time: float = 0.1,
+        critic_lb_parameter: float = 0.0,
+        critic_ub_parameter: float = 1.0,
+        critic_safe_decay_param: float = 0.001,
+        critic_is_dynamic_decay_rate: bool = False,
+        critic_batch_size: int = 10,
     ):
-        """Instantiate a CALFPipelineExPost object. The docstring will be completed in the next release.
+        """Instantiate CALF class.
 
-        :param policy: Pol
-        :type policy: Policy
-        :param critic: _description_
-        :type critic: Critic
-        :param safe_pipeline: _description_
-        :type safe_pipeline: Pipeline
-        :param running_objective: _description_
-        :type running_objective: _type_
-        :param critic_optimization_event: _description_
-        :type critic_optimization_event: str
-        :param policy_optimization_event: _description_
-        :type policy_optimization_event: str
-        :param data_buffer_nullify_event: _description_
-        :type data_buffer_nullify_event: str
-        :param discount_factor: _description_, defaults to 1
-        :type discount_factor: int, optional
-        :param action_bounds: _description_, defaults to None
-        :type action_bounds: _type_, optional
-        :param max_data_buffer_size: _description_, defaults to None
-        :type max_data_buffer_size: Optional[int], optional
-        :param sampling_time: _description_, defaults to 0.1
+        :param simulator: The simulator object.
+        :type simulator: Simulator
+        :param running_objective: The running objective.
+        :type running_objective: RunningObjective
+        :param safe_policy: The safe policy.
+        :type safe_policy: Policy
+        :param critic_td_n: The TD-N parameter for the critic. Defaults to 2.
+        :type critic_td_n: int, optional
+        :param observer: The observer object. Defaults to None.
+        :type observer: Optional[Observer], optional
+        :param prediction_horizon: The prediction horizon. Defaults to 1.
+        :type prediction_horizon: int, optional
+        :param policy_model: The policy model. Defaults to None.
+        :type policy_model: Optional[Model], optional
+        :param critic_model: The critic model. Defaults to None.
+        :type critic_model: Optional[Model], optional
+        :param predictor: The predictor object. Defaults to None.
+        :type predictor: Optional[Predictor], optional
+        :param discount_factor: The discount factor. Defaults to 1.0.
+        :type discount_factor: float, optional
+        :param sampling_time: The sampling time. Defaults to 0.1.
         :type sampling_time: float, optional
+        :param critic_lb_parameter: The lower bound parameter for the critic. Defaults to 0.0.
+        :type critic_lb_parameter: float, optional
+        :param critic_ub_parameter: The upper bound parameter for the critic. Defaults to 1.0.
+        :type critic_ub_parameter: float, optional
+        :param critic_safe_decay_param: The safe decay parameter for the critic. Defaults to 0.001.
+        :type critic_safe_decay_param: float, optional
+        :param critic_is_dynamic_decay_rate: Whether the critic has a dynamic decay rate. Defaults to False.
+        :type critic_is_dynamic_decay_rate: bool, optional
+        :param critic_batch_size: The batch size for the critic optimizer. Defaults to 10.
+        :type critic_batch_size: int, optional
+
+        :returns: None
+        :rtype: None
         """
+        system = simulator.system
+        critic = CriticCALF(
+            system=system,
+            model=critic_model,
+            td_n=critic_td_n,
+            is_same_critic=False,
+            is_value_function=True,
+            discount_factor=1.0,
+            sampling_time=sampling_time,
+            safe_decay_param=critic_safe_decay_param,
+            is_dynamic_decay_rate=critic_is_dynamic_decay_rate,
+            safe_policy=safe_policy,
+            lb_parameter=critic_lb_parameter,
+            ub_parameter=critic_ub_parameter,
+            optimizer_config=CasadiOptimizerConfig(critic_batch_size),
+        )
+        policy = RLPolicy(
+            action_bounds=system.action_bounds,
+            model=ModelWeightContainer(
+                weights_init=np.zeros(
+                    (prediction_horizon, system.dim_inputs),
+                    dtype=np.float64,
+                ),
+                dim_output=system.dim_inputs,
+            )
+            if policy_model is None
+            else policy_model,
+            system=system,
+            running_objective=running_objective,
+            prediction_horizon=prediction_horizon,
+            algorithm="rpv",
+            critic=critic,
+            predictor=predictor
+            if predictor is not None
+            else EulerPredictor(system=system, pred_step_size=sampling_time),
+            discount_factor=discount_factor,
+            optimizer_config=CasadiOptimizerConfig(),
+        )
+
         super().__init__(
             policy=policy,
             critic=critic,
+            simulator=simulator,
             running_objective=running_objective,
-            critic_optimization_event=critic_optimization_event,
-            policy_optimization_event=policy_optimization_event,
-            data_buffer_nullify_event=data_buffer_nullify_event,
+            critic_optimization_event=Event.compute_action,
+            policy_optimization_event=Event.compute_action,
+            data_buffer_nullify_event=Event.reset_episode,
             discount_factor=discount_factor,
-            is_critic_first=True,
-            action_bounds=action_bounds,
-            max_data_buffer_size=max_data_buffer_size,
+            action_bounds=system.action_bounds,
             sampling_time=sampling_time,
+            observer=observer,
         )
-        self.safe_pipeline = safe_pipeline
+        self.safe_policy = safe_policy
 
-    def invoke_safe_action(self, state, observation):
-        self.policy.restore_weights()
-        self.critic.restore_weights()
-        action = self.safe_pipeline.compute_action(state, observation)
-        self.policy.set_action(action)
-        self.update_data_buffer_with_action_stats(observation)
+    def issue_action(self, observation, is_safe=False):
+        if is_safe:
+            self.policy.restore_weights()
+            self.critic.restore_weights()
+            safe_action = self.safe_policy.get_action(observation)
+            self.policy.set_action(safe_action)
+        else:
+            self.policy.update_action(observation)
 
-    def update_data_buffer_with_action_stats(self, observation):
-        super().update_data_buffer_with_action_stats(observation)
+    def on_action_issued(self, observation):
+        data = super().on_action_issued(observation)
+        data |= {"observation_last_good": self.critic.observation_last_good}
         self.data_buffer.push_to_end(
             observation_last_good=self.critic.observation_last_good
         )
 
-    def on_observation_received(self, time, estimated_state, observation):
-        self.critic.receive_estimated_state(estimated_state)
-        self.policy.receive_estimated_state(estimated_state)
-        self.policy.receive_observation(observation)
-
-        self.data_buffer.push_to_end(
-            observation=observation,
-            timestamp=time,
-            episode_id=self.episode_counter,
-            iteration_id=self.iteration_counter,
-            step_id=self.step_counter,
-        )
+        return data
 
     @apply_callbacks()
     @apply_action_bounds
     def compute_action(
         self,
-        state,
+        estimated_state,
         observation,
         time=0,
     ):
+        assert np.allclose(
+            estimated_state, self.data_buffer.get_latest("estimated_state")
+        )
+        assert np.allclose(observation, self.data_buffer.get_latest("observation"))
+        assert np.allclose(time, self.data_buffer.get_latest("timestamp"))
+
         if self.is_first_compute_action_call:
             self.critic.observation_last_good = observation
-            self.invoke_safe_action(state, observation)
+            self.issue_action(observation, is_safe=True)
             self.is_first_compute_action_call = False
-            self.step_counter += 1
-            return self.policy.action
-
-        if rg.norm_2(observation) > 0.5:
+        else:
             critic_weights = self.critic.optimize(
                 self.data_buffer, is_update_and_cache_weights=False
             )
             critic_weights_accepted = self.critic.opt_status == OptStatus.success
-        else:
-            critic_weights = self.critic.model.weights
-            critic_weights_accepted = False
 
-        if critic_weights_accepted:
-            self.critic.update_weights(critic_weights)
-            self.policy.optimize(self.data_buffer)
-            policy_weights_accepted = True  # self.policy.opt_status == "success"
-            if policy_weights_accepted:
-                self.policy.update_action(observation)
-                self.critic.observation_last_good = observation
-                self.update_data_buffer_with_action_stats(observation)
-                self.critic.cache_weights(critic_weights)
+            if critic_weights_accepted:
+                self.critic.update_weights(critic_weights)
+                self.policy.optimize(self.data_buffer)
+                policy_weights_accepted = self.policy.opt_status == OptStatus.success
+                if policy_weights_accepted:
+                    self.critic.observation_last_good = observation
+                    self.issue_action(observation, is_safe=False)
+                    self.critic.cache_weights(critic_weights)
+                else:
+                    self.issue_action(observation, is_safe=True)
             else:
-                self.invoke_safe_action(state, observation)
-        else:
-            self.invoke_safe_action(state, observation)
+                self.issue_action(observation, is_safe=True)
 
-        self.step_counter += 1
         return self.policy.action
 
 
-class MPCPipeline(RLPipeline):
-    """Leverages the Model Predictive Control Pipeline.
+class MPC(RLScenario):
+    """Leverages the Model Predictive Control Scenario.
 
-    The MPCPipeline leverages the Model Predictive Control (MPC) approach within the reinforcement learning pipeline,
+    The MPCScenario leverages the Model Predictive Control (MPC) approach within the reinforcement learning scenario,
     utilizing a prediction model to plan and apply sequences of actions that optimize the desired objectives over a time horizon.
     """
 
@@ -680,7 +731,7 @@ class MPCPipeline(RLPipeline):
         :type prediction_horizon: int
         :param predictor: The prediction model used for forecasting future states.
         :type predictor: Optional[Predictor]
-        :param sampling_time:  The time step interval for pipeline.
+        :param sampling_time:  The time step interval for scenario.
         :type sampling_time: float
         :param observer: The component for estimating the system's current state. Defaults to None.
         :type observer: Observer | None
@@ -719,20 +770,7 @@ class MPCPipeline(RLPipeline):
                 if predictor is not None
                 else EulerPredictor(system=system, pred_step_size=sampling_time),
                 discount_factor=discount_factor,
-                optimizer_config=OptimizerConfig(
-                    log_options={
-                        "print_in": False,
-                        "print_out": False,
-                        "print_time": False,
-                    },
-                    config_options={
-                        "data_buffer_sampling_method": "sample_last",
-                        "data_buffer_sampling_kwargs": {"dtype": casadi.DM},
-                    },
-                    opt_method="ipopt",
-                    opt_options={"print_level": 0},
-                    kind="symbolic",
-                ),
+                optimizer_config=CasadiOptimizerConfig(),
             ),
         )
 
@@ -771,23 +809,7 @@ def get_predictive_kwargs(
         regularization_param=critic_regularization_param,
         action_bounds=system.action_bounds,
         is_same_critic=critic_is_same_critic,
-        optimizer_config=OptimizerConfig(
-            log_options={
-                "print_in": False,
-                "print_out": False,
-                "print_time": False,
-            },
-            config_options={
-                "data_buffer_sampling_method": "sample_last",
-                "data_buffer_sampling_kwargs": {
-                    "dtype": casadi.DM,
-                    "n_samples": critic_n_samples,
-                },
-            },
-            opt_method="ipopt",
-            opt_options={"print_level": 0},
-            kind="symbolic",
-        ),
+        optimizer_config=CasadiOptimizerConfig(batch_size=critic_n_samples),
     )
 
     policy = RLPolicy(
@@ -814,23 +836,7 @@ def get_predictive_kwargs(
         if predictor is not None
         else EulerPredictor(system=system, pred_step_size=sampling_time),
         discount_factor=discount_factor,
-        optimizer_config=OptimizerConfig(
-            log_options={
-                "print_in": False,
-                "print_out": False,
-                "print_time": False,
-            },
-            config_options={
-                "data_buffer_sampling_method": "sample_last",
-                "data_buffer_sampling_kwargs": {
-                    "dtype": casadi.DM,
-                    "n_samples": 1,
-                },
-            },
-            opt_method="ipopt",
-            opt_options={"print_level": 0},
-            kind="symbolic",
-        ),
+        optimizer_config=CasadiOptimizerConfig(batch_size=1),
     )
 
     return dict(
@@ -850,7 +856,7 @@ def get_predictive_kwargs(
     )
 
 
-class SQLPipeline(RLPipeline):
+class SQL(RLScenario):
     """Implements Stacked Q-Learning algorithm."""
 
     def __init__(
@@ -870,7 +876,7 @@ class SQLPipeline(RLPipeline):
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
     ):
-        """Instantiate SQLPipeline.
+        """Instantiate SQL.
 
         :param running_objective: The objective function to assess the costs over the prediction horizon.
         :type running_objective: RunningObjective
@@ -884,7 +890,7 @@ class SQLPipeline(RLPipeline):
         :type critic_batch_size: int
         :param predictor: The prediction model used for forecasting future states. Defaults to None.
         :type predictor: Optional[Predictor]
-        :param sampling_time: The time step interval for pipeline. Defaults to 0.1.
+        :param sampling_time: The time step interval for scenario. Defaults to 0.1.
         :type sampling_time: float
         :param observer: The observer object used for the algorithm. Defaults to None.
         :type observer: Optional[Observer]
@@ -928,7 +934,7 @@ class SQLPipeline(RLPipeline):
         )
 
 
-class RQLPipeline(RLPipeline):
+class RQL(RLScenario):
     """Implements Rollout Q-Learning algorithm."""
 
     def __init__(
@@ -948,7 +954,7 @@ class RQLPipeline(RLPipeline):
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
     ):
-        """Instantiate RQLPipeline.
+        """Instantiate RQLScenario.
 
         :param running_objective: The objective function to assess the costs over the prediction horizon.
         :type running_objective: RunningObjective
@@ -962,7 +968,7 @@ class RQLPipeline(RLPipeline):
         :type critic_batch_size: int
         :param predictor: The prediction model used for forecasting future states. Defaults to None.
         :type predictor: Optional[Predictor]
-        :param sampling_time: The time step interval for pipeline. Defaults to 0.1.
+        :param sampling_time: The time step interval for scenario. Defaults to 0.1.
         :type sampling_time: float
         :param observer: The observer object used for the algorithm. Defaults to None.
         :type observer: Optional[Observer]
@@ -1006,7 +1012,7 @@ class RQLPipeline(RLPipeline):
         )
 
 
-class RPVPipeline(RLPipeline):
+class RPV(RLScenario):
     """Implements Reward + Value algorithm."""
 
     def __init__(
@@ -1026,7 +1032,7 @@ class RPVPipeline(RLPipeline):
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
     ):
-        """Instantiate RPVPipeline.
+        """Instantiate RPV.
 
         :param running_objective: The objective function to assess the costs over the prediction horizon.
         :type running_objective: RunningObjective
@@ -1040,7 +1046,7 @@ class RPVPipeline(RLPipeline):
         :type critic_batch_size: int
         :param predictor: The prediction model used for forecasting future states. Defaults to None.
         :type predictor: Optional[Predictor]
-        :param sampling_time: The time step interval for pipeline. Defaults to 0.1.
+        :param sampling_time: The time step interval for scenario. Defaults to 0.1.
         :type sampling_time: float
         :param observer: The observer object used for the algorithm. Defaults to None.
         :type observer: Optional[Observer]
@@ -1084,10 +1090,10 @@ class RPVPipeline(RLPipeline):
         )
 
 
-class MPCTorchPipeline(RLPipeline):
-    """MPCTorchPipeline encapsulates the model predictive control (MPC) approach using PyTorch optimization for reinforcement learning.
+class MPCTorch(RLScenario):
+    """MPCTorchScenario encapsulates the model predictive control (MPC) approach using PyTorch optimization for reinforcement learning.
 
-    It integrates a policy that employs model-based predictions over a specified horizon to optimize actions, taking into account the dynamic nature of the environment. The pipeline coordinates the interaction between the policy, model, critic, and environment.
+    It integrates a policy that employs model-based predictions over a specified horizon to optimize actions, taking into account the dynamic nature of the environment. The scenario coordinates the interaction between the policy, model, critic, and environment.
     """
 
     def __init__(
@@ -1113,7 +1119,7 @@ class MPCTorchPipeline(RLPipeline):
         :type simulator: Simulator
         :param prediction_horizon: The number of steps into the future over which predictions are made.
         :type prediction_horizon: int
-        :param sampling_time: The time step interval for pipeline.
+        :param sampling_time: The time step interval for scenario.
         :type sampling_time: float
         :param n_epochs: The number of training epochs.
         :type n_epochs: int
@@ -1162,19 +1168,16 @@ class MPCTorchPipeline(RLPipeline):
                 if predictor is not None
                 else EulerPredictor(system=system, pred_step_size=sampling_time),
                 discount_factor=discount_factor,
-                optimizer_config=OptimizerConfig(
-                    config_options={
-                        "n_epochs": n_epochs,
-                        "data_buffer_sampling_method": "iter_batches",
-                        "data_buffer_sampling_kwargs": {
-                            "dtype": torch.FloatTensor,
-                            "mode": "backward",
-                            "batch_size": 1,
-                        },
-                    },
+                optimizer_config=TorchOptimizerConfig(
+                    n_epochs=n_epochs,
                     opt_method=opt_method,
-                    opt_options=opt_method_kwargs,
-                    kind="tensor",
+                    opt_method_kwargs=opt_method_kwargs,
+                    data_buffer_iter_bathes_kwargs=dict(
+                        sampler=RollingBatchSampler,
+                        dtype=torch.FloatTensor,
+                        mode="backward",
+                        batch_size=1,
+                    ),
                 ),
             ),
         )
@@ -1204,7 +1207,7 @@ def get_policy_gradient_kwargs(
     critic_is_value_function: Optional[bool] = None,
     is_reinstantiate_critic_optimizer: Optional[bool] = None,
     policy_kwargs: Dict[str, Any] = None,
-    pipeline_kwargs: Dict[str, Any] = None,
+    scenario_kwargs: Dict[str, Any] = None,
     is_use_critic_as_policy_kwarg: bool = True,
 ):
     system = simulator.system
@@ -1226,19 +1229,15 @@ def get_policy_gradient_kwargs(
             is_value_function=critic_is_value_function,
             is_on_policy=True,
             is_same_critic=True,
-            optimizer_config=OptimizerConfig(
-                config_options={
-                    "n_epochs": critic_n_epochs,
-                    "data_buffer_sampling_method": "iter_batches",
-                    "data_buffer_sampling_kwargs": {
-                        "batch_sampler": EpisodicSampler,
-                        "dtype": torch.FloatTensor,
-                    },
-                    "is_reinstantiate_optimizer": is_reinstantiate_critic_optimizer,
-                },
+            optimizer_config=TorchOptimizerConfig(
+                critic_n_epochs,
+                data_buffer_iter_bathes_kwargs=dict(
+                    batch_sampler=EpisodicSampler,
+                    dtype=torch.FloatTensor,
+                ),
+                opt_method_kwargs=critic_opt_method_kwargs,
                 opt_method=critic_opt_method,
-                opt_options=critic_opt_method_kwargs,
-                kind="tensor",
+                is_reinstantiate_optimizer=is_reinstantiate_critic_optimizer,
             ),
             **(critic_kwargs if critic_kwargs is not None else dict()),
         )
@@ -1263,33 +1262,29 @@ def get_policy_gradient_kwargs(
             model=policy_model,
             system=system,
             discount_factor=discount_factor,
-            optimizer_config=OptimizerConfig(
-                config_options={
-                    "n_epochs": policy_n_epochs,
-                    "data_buffer_sampling_method": "iter_batches",
-                    "data_buffer_sampling_kwargs": {
-                        "batch_sampler": RollingBatchSampler,
-                        "dtype": torch.FloatTensor,
-                        "mode": "full",
-                        "n_batches": 1,
-                    },
-                    "is_reinstantiate_optimizer": is_reinstantiate_policy_optimizer,
-                },
+            optimizer_config=TorchOptimizerConfig(
+                n_epochs=policy_n_epochs,
                 opt_method=policy_opt_method,
-                opt_options=policy_opt_method_kwargs,
-                kind="tensor",
+                opt_method_kwargs=policy_opt_method_kwargs,
+                is_reinstantiate_optimizer=is_reinstantiate_policy_optimizer,
+                data_buffer_iter_bathes_kwargs={
+                    "batch_sampler": RollingBatchSampler,
+                    "dtype": torch.FloatTensor,
+                    "mode": "full",
+                    "n_batches": 1,
+                },
             ),
             **(dict(critic=critic) if is_use_critic_as_policy_kwarg else dict()),
             **(policy_kwargs if policy_kwargs is not None else dict()),
         ),
-        **(pipeline_kwargs if pipeline_kwargs is not None else dict()),
+        **(scenario_kwargs if scenario_kwargs is not None else dict()),
     )
 
 
-class PPOPipeline(RLPipeline):
-    """Pipeline for Proximal Polizy Optimization.
+class PPO(RLScenario):
+    """Scenario for Proximal Polizy Optimization.
 
-    PPOPipeline is a reinforcement learning pipeline implementing the Proximal Policy Optimization (PPO) algorithm.
+    PPOScenario is a reinforcement learning scenario implementing the Proximal Policy Optimization (PPO) algorithm.
     This algorithm uses a policy gradient approach with an objective function designed to reduce the variance
     of policy updates, while ensuring that the new policy does not deviate significantly from the old one.
     """
@@ -1352,7 +1347,7 @@ class PPOPipeline(RLPipeline):
         :type observer: Optional[Observer]
         :param N_episodes: The number of episodes to run in every iteration.
         :type N_episodes: int
-        :param N_iterations: The number of iterations to run in the pipeline.
+        :param N_iterations: The number of iterations to run in the scenario.
         :type N_iterations: int
         :param value_threshold: Threshold of the total objective to end an episode.
         :type value_threshold: float
@@ -1375,7 +1370,7 @@ class PPOPipeline(RLPipeline):
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
                 value_threshold=value_threshold,
-                policy_type=PPO,
+                policy_type=PolicyPPO,
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,
                 policy_opt_method_kwargs=policy_opt_method_kwargs,
@@ -1397,15 +1392,15 @@ class PPOPipeline(RLPipeline):
         )
 
 
-class SDPGPipeline(RLPipeline):
+class SDPG(RLScenario):
     """Implements the Stochastic Deep Policy Gradient (SDPG) algorithm.
 
-    SDPGPipeline implements the Stochastic Deep Policy Gradient (SDPG) algorithm,
+    SDPGScenario implements the Stochastic Deep Policy Gradient (SDPG) algorithm,
     an off-policy actor-critic method using a deep policy to model stochastic policies and
     a deep network as the critic that approximates a value Function.
 
     The SDPG algorithm performs policy updates by maximizing the critic's output and updates
-    the critic using temporal-difference learning. This pipeline orchestrates the training
+    the critic using temporal-difference learning. This scenario orchestrates the training
     process, including interaction with the simulation environment, handling of the experience
     replay buffer, and coordination of policy and critic improvements.
     """
@@ -1430,7 +1425,7 @@ class SDPGPipeline(RLPipeline):
         N_iterations: int = 100,
         value_threshold: float = np.inf,
     ):
-        """Initialize SDPGPipeline.
+        """Initialize SDPG.
 
         :param policy_model: The policy network model that defines the policy architecture.
         :type policy_model: PerceptronWithTruncatedNormalNoise
@@ -1477,7 +1472,7 @@ class SDPGPipeline(RLPipeline):
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
                 value_threshold=value_threshold,
-                policy_type=SDPG,
+                policy_type=PolicySDPG,
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,
                 policy_opt_method_kwargs=policy_opt_method_kwargs,
@@ -1497,7 +1492,7 @@ class SDPGPipeline(RLPipeline):
         )
 
 
-class ReinforcePipeline(RLPipeline):
+class REINFORCE(RLScenario):
     """Implements the REINFORCE algorithm."""
 
     def __init__(
@@ -1517,9 +1512,9 @@ class ReinforcePipeline(RLPipeline):
         is_with_baseline: bool = True,
         is_do_not_let_the_past_distract_you: bool = True,
     ):
-        """Initialize an RLPipeline object.
+        """Initialize an REINFORCE object.
 
-        :param policy_model: he policy network model that defines the policy architecture.
+        :param policy_model: The policy network model that defines the policy architecture.
         :type policy_model: PerceptronWithTruncatedNormalNoise
         :param sampling_time: The time step between agent actions in the environment.
         :type sampling_time: float
@@ -1533,7 +1528,7 @@ class ReinforcePipeline(RLPipeline):
         :type policy_opt_method: Type[torch.optim.Optimizer], optional
         :param n_epochs: The number of epochs used by the policy optimizer. Defaults to 1.
         :type n_epochs: int, optional
-        :param discount_factor: The discount factor used by the RLPipeline. Defaults to 1.0.
+        :param discount_factor: The discount factor used by the RLScenario. Defaults to 1.0.
         :type discount_factor: float, optional
         :param observer: The observer object that estimates the state of the environment from observations. Defaults to None.
         :type observer: Optional[Observer], optional
@@ -1559,7 +1554,7 @@ class ReinforcePipeline(RLPipeline):
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
                 value_threshold=value_threshold,
-                policy_type=Reinforce,
+                policy_type=PolicyReinforce,
                 policy_model=policy_model,
                 policy_n_epochs=policy_n_epochs,
                 policy_opt_method=policy_opt_method,
@@ -1574,8 +1569,8 @@ class ReinforcePipeline(RLPipeline):
         )
 
 
-class DDPGPipeline(RLPipeline):
-    """Implements a pipeline for interacting with an environment using the Deep Deterministic Policy Gradients (DDPG) algorithm."""
+class DDPG(RLScenario):
+    """Implements a scenario for interacting with an environment using the Deep Deterministic Policy Gradients (DDPG) algorithm."""
 
     def __init__(
         self,
@@ -1597,7 +1592,7 @@ class DDPGPipeline(RLPipeline):
         N_iterations: int = 100,
         value_threshold: float = np.inf,
     ):
-        """Instantiate DDPG Pipeline.
+        """Instantiate DDPG Scenario.
 
         :param policy_model: The policy (actor) neural network model with input as state and output as action.
         :type policy_model: PerceptronWithTruncatedNormalNoise
@@ -1629,7 +1624,7 @@ class DDPGPipeline(RLPipeline):
         :type observer: Optional[Observer]
         :param N_episodes: The number of episodes to be executed in each training iteration.
         :type N_episodes: int
-        :param N_iterations: The total number of training iterations for the pipeline.
+        :param N_iterations: The total number of training iterations for the scenario.
         :type N_iterations: int
         :param value_threshold: The threshold for the total cumulative objective value that triggers the end of an episode.
         :type value_threshold: float
@@ -1644,7 +1639,7 @@ class DDPGPipeline(RLPipeline):
                 N_episodes=N_episodes,
                 N_iterations=N_iterations,
                 value_threshold=value_threshold,
-                policy_type=DDPG,
+                policy_type=PolicyDDPG,
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,
                 policy_opt_method_kwargs=policy_opt_method_kwargs,

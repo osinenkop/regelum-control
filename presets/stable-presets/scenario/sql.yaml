@@ -1,4 +1,4 @@
-_target_: regelum.pipeline.SQLPipeline
+_target_: regelum.scenario.SQL
 
 name%%: sql
 

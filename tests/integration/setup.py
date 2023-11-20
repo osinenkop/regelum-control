@@ -34,9 +34,9 @@ class TestSetup:
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
         sys.argv.insert(1, "simulator.time_final=1")
-        sys.argv.insert(1, "pipeline.sampling_time=0.1")
-        # sys.argv.insert(1, "pipeline.N_episodes=2")
-        # sys.argv.insert(1, "pipeline.N_iterations=2")
+        sys.argv.insert(1, "scenario.sampling_time=0.1")
+        # sys.argv.insert(1, "scenario.N_episodes=2")
+        # sys.argv.insert(1, "scenario.N_iterations=2")
         sys.argv.insert(1, "--experiment=TESTS")
 
     def __call__(self):
@@ -50,21 +50,21 @@ class TestSetup:
         return {"config_path": self.config_path, "config_name": self.config_name}
 
     def __str__(self):
-        return f"{self.params['system']}_{self.params['pipeline']}"
+        return f"{self.params['system']}_{self.params['scenario']}"
 
 
 class MPCTest(TestSetup):
     def __init__(self, system):
         super().__init__(
             system=system,
-            pipeline="mpc",
-            **{"pipeline.actor.predictor.prediction_horizon": 2},
+            scenario="mpc",
+            **{"scenario.actor.predictor.prediction_horizon": 2},
         )
 
 
 #######################################################################################################################
 #######################################################################################################################
-pipelines = (
+scenarios = (
     "sdpg",
     "ppo",
     "ddpg",
@@ -83,98 +83,112 @@ pipelines = (
 systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "2tank", "lunar_lander"
 
 
-def get_kwargs(pipeline):
-    if pipeline == "mpc":
+def get_kwargs(scenario):
+    if scenario == "mpc":
         return {}
-    elif pipeline in ["reinforce", "ppo", "sdpg", "ddpg"]:
-        return {"pipeline.N_iterations": 2, "pipeline.N_episodes": 2}
+    elif scenario in ["reinforce", "ppo", "sdpg", "ddpg"]:
+        return {"scenario.N_iterations": 2, "scenario.N_episodes": 2}
     else:
-        return {"pipeline.N_iterations": 2}
+        return {"scenario.N_iterations": 2}
 
 
 basic = [
     TestSetup(
         system=system,
-        pipeline=pipeline,
-        **({"simulator.time_final": 3.0} | get_kwargs(pipeline)),
+        scenario=scenario,
+        **({"simulator.time_final": 3.0} | get_kwargs(scenario)),
     )
-    for pipeline, system in zip(pipelines, np.tile(systems, len(pipelines)))
+    for scenario, system in zip(scenarios, np.tile(systems, len(scenarios)))
 ]
 
 basic += [
     TestSetup(
         system="3wrobot_ni",
-        pipeline=pipeline,
+        scenario=scenario,
         **{
             "simulator.time_final": 3.0,
             "constraint_parser": "constant_parser",
             "prefix": "constraint",
         },
     )
-    for pipeline in ["rpv", "sql", "mpc", "rql"]
+    for scenario in ["rpv", "sql", "mpc", "rql"]
+]
+
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        scenario="calf",
+    )
+]
+
+basic += [
+    TestSetup(
+        system="3wrobot_ni",
+        scenario="nominal",
+    )
 ]
 
 # basic += [
 #     TestSetup(
 #         system="3wrobot_ni",
-#         pipeline=pipeline,
+#         scenario=scenario,
 #         **{
 #             "simulator.time_final": 0.5,
 #             "constraint_parser": "constant_parser",
 #             "prefix": "constraint_torch",
-#             "pipeline.policy.prediction_horizon": 1,
-#             "pipeline/policy/optimizer_config": "online_torch_sgd",
-#             "pipeline.policy.optimizer_config.config_options.n_epochs": 1,
-#             "pipeline.policy.optimizer_config.config_options.constrained_optimization_policy.defaults.n_epochs_per_constraint": 1,
+#             "scenario.policy.prediction_horizon": 1,
+#             "scenario/policy/optimizer_config": "online_torch_sgd",
+#             "scenario.policy.optimizer_config.config_options.n_epochs": 1,
+#             "scenario.policy.optimizer_config.config_options.constrained_optimization_policy.defaults.n_epochs_per_constraint": 1,
 #         },
 #     )
-#     for pipeline in ["mpc_torch"]
+#     for scenario in ["mpc_torch"]
 # ]
 
 # basic += [
 #     TestSetup(
 #         system="3wrobot_ni",
-#         pipeline=pipeline,
+#         scenario=scenario,
 #         **{
 #             "simulator.time_final": 3.0,
 #             "prefix": "truncated_noise",
-#             "pipeline/policy/model": "perceptron_with_truncated_normal_noise",
-#             "pipeline.sampling_time": 0.1,
+#             "scenario/policy/model": "perceptron_with_truncated_normal_noise",
+#             "scenario.sampling_time": 0.1,
 #         },
 #     )
-#     for pipeline in ["ppo", "reinforce", "sdpg"]
+#     for scenario in ["ppo", "reinforce", "sdpg"]
 # ]
 
 
 full = sum(
     [
         [
-            TestSetup(system=system, pipeline="sdpg", **{"simulator.time_final": 3.0}),
-            TestSetup(system=system, pipeline="ppo", **{"simulator.time_final": 3.0}),
-            TestSetup(system=system, pipeline="ddpg"),
-            TestSetup(system=system, pipeline="reinforce"),
-            TestSetup(system=system, pipeline="dqn", **{"simulator.time_final": 3.0}),
-            TestSetup(system=system, pipeline="sarsa", **{"simulator.time_final": 3.0}),
-            TestSetup(system=system, pipeline="rpv", **{"simulator.time_final": 3.0}),
-            TestSetup(system=system, pipeline="rql", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="sdpg", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="ppo", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="ddpg"),
+            TestSetup(system=system, scenario="reinforce"),
+            TestSetup(system=system, scenario="dqn", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="sarsa", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="rpv", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="rql", **{"simulator.time_final": 3.0}),
             TestSetup(
-                system=system, pipeline="rql_torch", **{"simulator.time_final": 3.0}
+                system=system, scenario="rql_torch", **{"simulator.time_final": 3.0}
             ),
-            TestSetup(system=system, pipeline="sql", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="sql", **{"simulator.time_final": 3.0}),
             TestSetup(
-                system=system, pipeline="sql_torch", **{"simulator.time_final": 3.0}
+                system=system, scenario="sql_torch", **{"simulator.time_final": 3.0}
             ),
             TestSetup(
                 system=system,
-                pipeline="rpv_torch",
+                scenario="rpv_torch",
                 **{"simulator.time_final": 3.0},
             ),
             TestSetup(
                 system=system,
-                pipeline="mpc_torch",
+                scenario="mpc_torch",
                 **{"simulator.time_final": 3.0},
             ),
-            TestSetup(system=system, pipeline="mpc", **{"simulator.time_final": 3.0}),
+            TestSetup(system=system, scenario="mpc", **{"simulator.time_final": 3.0}),
         ]
         for system in [
             # "2tank",
@@ -190,14 +204,14 @@ full = sum(
 )
 """
 basic = [MPCTest(system="2tank"),
-         TestSetup(system="3wrobot", pipeline="rpv"),
-         TestSetup(system="3wrobot_ni", pipeline="rpv"),
-         TestSetup(system="cartpole", pipeline="rql"),
-         TestSetup(system="inv_pendulum", pipeline="rpv"),
+         TestSetup(system="3wrobot", scenario="rpv"),
+         TestSetup(system="3wrobot_ni", scenario="rpv"),
+         TestSetup(system="cartpole", scenario="rql"),
+         TestSetup(system="inv_pendulum", scenario="rpv"),
          MPCTest(system="kin_point"),
          MPCTest(system="lunar_lander")]
 
 extended = basic + \
-           [TestSetup(system="kin_point", pipeline="ddpg"),
-            TestSetup(system="kin_point", pipeline="sarsa")]
+           [TestSetup(system="kin_point", scenario="ddpg"),
+            TestSetup(system="kin_point", scenario="sarsa")]
 """

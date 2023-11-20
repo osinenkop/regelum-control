@@ -1,4 +1,4 @@
-_target_: regelum.pipeline.RQLPipeline
+_target_: regelum.scenario.RQL
 
 name%%: rql
 

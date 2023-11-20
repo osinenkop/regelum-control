@@ -1,4 +1,4 @@
-"""Contains critics, which are integrated in pipelines (agents).
+"""Contains critics, which are integrated in scenarios (agents).
 
 Remarks: 
 
@@ -75,7 +75,7 @@ class Critic(Optimizable, ABC):
         :type size_mesh: Optional[int], optional
         :param discount_factor: discount factor to use in temporal difference loss, defaults to 1.0
         :type discount_factor: float, optional
-        :param sampling_time: pipeline sampling time. Needed in temporal difference loos, defaults to 0.01
+        :param sampling_time: scenario sampling time. Needed in temporal difference loos, defaults to 0.01
         :type sampling_time: float, optional
         """
         Optimizable.__init__(self, optimizer_config=optimizer_config)
@@ -410,19 +410,17 @@ class CriticCALF(Critic):
         self,
         system,
         model: Union[Model, ModelNN],
+        is_same_critic: bool,
+        is_value_function: bool,
         td_n: int = 1,
-        device: Union[str, torch.device] = "cpu",
         predictor: Optional[Model] = None,
-        is_same_critic: bool = False,
-        is_value_function: bool = False,
-        is_on_policy: bool = False,
         optimizer_config: Optional[OptimizerConfig] = None,
         discount_factor: float = 1.0,
         sampling_time: float = 0.01,
         ######
         safe_decay_param=1e-4,
         is_dynamic_decay_rate=True,
-        safe_pipeline=None,
+        safe_policy=None,
         lb_parameter=1e-6,
         ub_parameter=1e3,
     ):
@@ -454,8 +452,8 @@ class CriticCALF(Critic):
         :type safe_decay_param: _type_, optional
         :param is_dynamic_decay_rate: _description_, defaults to True
         :type is_dynamic_decay_rate: bool, optional
-        :param safe_pipeline: _description_, defaults to None
-        :type safe_pipeline: _type_, optional
+        :param safe_scenario: _description_, defaults to None
+        :type safe_scenario: _type_, optional
         :param lb_parameter: _description_, defaults to 1e-6
         :type lb_parameter: _type_, optional
         :param ub_parameter: _description_, defaults to 1e3
@@ -465,10 +463,9 @@ class CriticCALF(Critic):
             system=system,
             model=model,
             td_n=td_n,
-            device=device,
             is_same_critic=is_same_critic,
             is_value_function=is_value_function,
-            is_on_policy=is_on_policy,
+            is_on_policy=True,
             optimizer_config=optimizer_config,
             discount_factor=discount_factor,
             sampling_time=sampling_time,
@@ -482,7 +479,7 @@ class CriticCALF(Critic):
 
         self.lb_parameter = lb_parameter
         self.ub_parameter = ub_parameter
-        self.safe_pipeline = safe_pipeline
+        self.safe_policy = safe_policy
 
         self.observation_last_good_var = self.create_variable(
             self.batch_size,
@@ -519,6 +516,8 @@ class CriticCALF(Critic):
             self.CALF_critic_lower_bound_constraint,
             variables=[self.critic_model_output, self.observation_var],
         )
+
+        self.observation_last_good = None
 
     def data_buffer_objective_keys(self) -> List[str]:
         keys = super().data_buffer_objective_keys()
@@ -566,7 +565,7 @@ class CriticCALF(Critic):
         :return: constraint violation
         :rtype: float
         """
-        action = self.safe_pipeline.compute_action(self.current_observation)
+        action = self.safe_scenario.compute_action(self.current_observation)
         predicted_observation = self.predictor.system.get_observation(
             time=None, state=self.predictor.predict(self.state, action), inputs=action
         )
@@ -598,7 +597,7 @@ class CriticCALF(Critic):
         """
         observation_last_good = self.observation_last_good
 
-        self.safe_action = action = self.safe_pipeline.compute_action(
+        self.safe_action = action = self.safe_scenario.compute_action(
             self.current_observation
         )
         self.predicted_observation = (

@@ -1,4 +1,4 @@
-"""Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into pipelines (agents).
+"""Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into scenarios (agents).
 
 Remarks: 
 
@@ -50,7 +50,7 @@ class Policy(Optimizable, ABC):
 
     The Policy calculates actions based on observations from the environment and the current state of the model. It can be optimized using various optimization techniques, adjusting the model's parameters to improve the chosen actions over time.
 
-    Policies are integrated into pipelines, allowing them to operate within agents that interact with dynamic environments, like those found in reinforcement learning.
+    Policies are integrated into scenarios, allowing them to operate within agents that interact with dynamic environments, like those found in reinforcement learning.
     """
 
     def __init__(
@@ -308,7 +308,7 @@ class PolicyGradient(Policy, ABC):
         pass
 
 
-class Reinforce(PolicyGradient):
+class PolicyReinforce(PolicyGradient):
     """The Reinforce class extends the PolicyGradient class and implements the REINFORCE algorithm."""
 
     def __init__(
@@ -436,7 +436,7 @@ class Reinforce(PolicyGradient):
         )
 
 
-class SDPG(PolicyGradient):
+class PolicySDPG(PolicyGradient):
     """Policy for Stochastic Deep Policy Gradient (SDPG)."""
 
     def __init__(
@@ -498,7 +498,7 @@ class SDPG(PolicyGradient):
         )
 
 
-class PPO(PolicyGradient):
+class PolicyPPO(PolicyGradient):
     """Proximal Policy Optimization."""
 
     def __init__(
@@ -595,7 +595,7 @@ class PPO(PolicyGradient):
         )
 
 
-class DDPG(PolicyGradient):
+class PolicyDDPG(PolicyGradient):
     """Policy for Deterministic Deep Policy Gradient (DDPG)."""
 
     def __init__(
@@ -894,14 +894,14 @@ class CALFLegacy(RLPolicy):
 
     def __init__(
         self,
-        safe_pipeline,
+        safe_scenario,
         *args,
         **kwargs,
     ):
-        """Initialize thepolicy with a safe pipeline, and optional arguments for constraint handling, penalty term, andpolicy regularization.
+        """Initialize thepolicy with a safe scenario, and optional arguments for constraint handling, penalty term, andpolicy regularization.
 
-        :param safe_pipeline: pipeline used to compute a safe action in case the optimization is rejected
-        :type safe_pipeline: Pipeline
+        :param safe_scenario: scenario used to compute a safe action in case the optimization is rejected
+        :type safe_scenario: Scenario
         :param policy_constraints_on: whether to use the CALF constraints in the optimization
         :type policy_constraints_on: bool
         :param penalty_param: penalty term for the optimization objective
@@ -910,7 +910,7 @@ class CALFLegacy(RLPolicy):
         :type policy_regularization_param: float
         """
         super().__init__(*args, **kwargs)
-        self.safe_pipeline = safe_pipeline
+        self.safe_scenario = safe_scenario
         self.penalty_param = penalty_param
         self.policy_regularization_param = policy_regularization_param
         self.predictive_constraint_violations = []
@@ -923,7 +923,7 @@ class CALFLegacy(RLPolicy):
             else []
         )
         self.weights_acceptance_status = False
-        safe_action = self.safe_pipeline.compute_action(
+        safe_action = self.safe_scenario.compute_action(
             self.state_init, self.critic.observation_last_good
         )
         self.action_init = self.action = safe_action
@@ -983,7 +983,7 @@ class CALFLegacy(RLPolicy):
 
 
 class KinPointStabilizingPolicy(Policy):
-    """Pipeline for kinematic point stabilization."""
+    """Scenario for kinematic point stabilization."""
 
     def __init__(self, gain):
         """Initialize an instance of the class with the given gain.
@@ -1000,12 +1000,12 @@ class KinPointStabilizingPolicy(Policy):
 
 
 class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
-    """Pipeline for non-inertial three-wheeled robot composed of three PID pipelines."""
+    """Scenario for non-inertial three-wheeled robot composed of three PID scenarios."""
 
     def __init__(self, K):
-        """Initialize an instance of pipeline.
+        """Initialize an instance of scenario.
 
-        :param K: gain of pipeline
+        :param K: gain of scenario
         """
         super().__init__()
         self.K = K
@@ -1044,32 +1044,32 @@ class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
 
 
 class InvertedPendulumStabilizingPolicy(Policy):
-    """A nominal policy for inverted pendulum representing a PD pipeline."""
+    """A nominal policy for inverted pendulum representing a PD scenario."""
 
-    def __init__(self, pipeline_gain):
+    def __init__(self, scenario_gain):
         """Initialize an instance of policy.
 
-        :param pipeline_gain: gain of pipeline
+        :param scenario_gain: gain of scenario
         """
         super().__init__()
-        self.pipeline_gain = pipeline_gain
+        self.scenario_gain = scenario_gain
 
     def get_action(self, observation):
         return np.array(
-            [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.pipeline_gain]]
+            [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.scenario_gain]]
         )
 
 
 class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
-    """Nominal parking pipeline for NI using disassembled control Lyapunov function."""
+    """Nominal parking scenario for NI using disassembled control Lyapunov function."""
 
-    def __init__(self, pipeline_gain=10):
-        """Initialize an instance of disassembled-clf pipeline.
+    def __init__(self, scenario_gain=10):
+        """Initialize an instance of disassembled-clf scenario.
 
-        :param pipeline_gain: gain of pipeline
+        :param scenario_gain: gain of scenario
         """
         super().__init__()
-        self.pipeline_gain = pipeline_gain
+        self.scenario_gain = scenario_gain
 
     def _zeta(self, xNI):
         """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
@@ -1130,7 +1130,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
             return nablaL
 
     def _kappa(self, xNI):
-        """Stabilizing pipeline for NI-part."""
+        """Stabilizing scenario for NI-part."""
         kappa_val = rg.zeros(2)
 
         G = rg.zeros([3, 2])
@@ -1186,10 +1186,10 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         return uCart
 
     def get_action(self, observation):
-        """Perform the same computation as :func:`~Pipeline3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
+        """Perform the same computation as :func:`~Scenario3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
         xNI = self._Cart2NH(observation[0])
         kappa_val = self._kappa(xNI)
-        uNI = self.pipeline_gain * kappa_val
+        uNI = self.scenario_gain * kappa_val
 
         return self._NH2ctrl_Cart(xNI, uNI).reshape(1, -1)
 
@@ -1203,9 +1203,9 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
 
 
 class MemoryPIDPolicy(Policy):
-    """A base class for PID pipeline.
+    """A base class for PID scenario.
 
-    This pipeline is able to use stored data in order to detect whether system is stabilized or not.
+    This scenario is able to use stored data in order to detect whether system is stabilized or not.
     """
 
     def __init__(
@@ -1218,7 +1218,7 @@ class MemoryPIDPolicy(Policy):
         initial_point=(-5, -5),
         buffer_length=30,
     ):
-        """Initialize an instance of PipelineMemoryPID.
+        """Initialize an instance of ScenarioMemoryPID.
 
         Whatever
         :param P: proportional gain
@@ -1313,9 +1313,9 @@ class MemoryPIDPolicy(Policy):
 
 
 class ThreeWheeledRobotMemoryPIDPolicy:
-    """PID pipeline for a 3-wheeled robot.
+    """PID scenario for a 3-wheeled robot.
 
-    Uses PipelineMemoryPID pipelines wiring.
+    Uses ScenarioMemoryPID scenarios wiring.
     """
 
     def __init__(
@@ -1325,7 +1325,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         sampling_time=0.01,
         action_bounds=None,
     ):
-        """Initialize an instance of Pipeline3WRobotMemoryPID.
+        """Initialize an instance of Scenario3WRobotMemoryPID.
 
         :param state_init: state at which simulation starts
         :param params: parameters of a 3-wheeled robot
@@ -1472,7 +1472,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
 
         return rg.array([np.squeeze(clipped_F), np.squeeze(clipped_M)]).reshape(1, -1)
 
-    def reset_all_PID_pipelines(self):
+    def reset_all_PID_scenarios(self):
         self.PID_x_y_origin.reset()
         self.PID_x_y_origin.reset_buffer()
         self.PID_angle_arctan.reset()
@@ -1498,20 +1498,20 @@ class ThreeWheeledRobotPIDPolicy:
         to_origin_bounds=(0.0, 0.1),
         to_arctan_bounds=(0.01, 0.2),
     ):
-        """Initialize Pipeline3WRobotPID.
+        """Initialize Scenario3WRobotPID.
 
         :param state_init: initial state of 3wrobot
         :param params: mass and moment of inertia `(M, I)`
         :type params: tuple
         :param sampling_time: sampling time
         :param action_bounds: bounds that actions should not exceed `[[lower_bound, upper_bound], ...]`
-        :param PID_arctg_params: coefficients for PD pipeline which sets the direction of robot to origin
-        :param PID_v_zero_params: coefficients for PD pipeline which forces speed to zero as robot moves to origin
-        :param PID_x_y_origin_params: coefficients for PD pipeline which moves robot to origin
-        :param PID_angle_origin_params: coefficients for PD pipeline which sets angle to zero near origin
-        :param v_to_zero_bounds: bounds for enabling pipeline which decelerates
-        :param to_origin_bounds: bounds for enabling pipeline which moves robot to origin
-        :param to_arctan_bounds: bounds for enabling pipeline which direct robot to origin
+        :param PID_arctg_params: coefficients for PD scenario which sets the direction of robot to origin
+        :param PID_v_zero_params: coefficients for PD scenario which forces speed to zero as robot moves to origin
+        :param PID_x_y_origin_params: coefficients for PD scenario which moves robot to origin
+        :param PID_angle_origin_params: coefficients for PD scenario which sets angle to zero near origin
+        :param v_to_zero_bounds: bounds for enabling scenario which decelerates
+        :param to_origin_bounds: bounds for enabling scenario which moves robot to origin
+        :param to_arctan_bounds: bounds for enabling scenario which direct robot to origin
         """
         if params is None:
             params = [10, 1]
@@ -1635,23 +1635,23 @@ class ThreeWheeledRobotPIDPolicy:
 
 
 class CartPoleEnergyBasedPolicy(Policy):
-    """An energy-based pipeline for cartpole."""
+    """An energy-based scenario for cartpole."""
 
     def __init__(
         self,
-        pipeline_gain=10,
+        scenario_gain=10,
     ):
-        """Initialize an instance of PipelineCartPoleEnergyBased.
+        """Initialize an instance of ScenarioCartPoleEnergyBased.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param sampling_time: time interval between two consecutive actions
-        :param pipeline_gain: pipeline gain
+        :param scenario_gain: scenario gain
         :param system: an instance of Cartpole system
         """
         super().__init__()
         from regelum.system import CartPole
 
-        self.pipeline_gain = pipeline_gain
+        self.scenario_gain = scenario_gain
         self.m_c, self.m_p, self.g, self.l = (
             CartPole.parameters["m_c"],
             system.parameters["m_p"],
@@ -1672,13 +1672,13 @@ class CartPoleEnergyBasedPolicy(Policy):
         self.action = (
             self.m_p * self.g * rg.cos(theta) * rg.sin(theta)
             + self.m_p * self.l * theta_dot * rg.sin(theta)
-            - self.pipeline_gain * theta_dot * rg.cos(theta)
+            - self.scenario_gain * theta_dot * rg.cos(theta)
         )
         return self.action.reshape(1, -1)
 
 
 class LunarLanderPIDPolicy:
-    """Nominal PID pipeline for lunar lander."""
+    """Nominal PID scenario for lunar lander."""
 
     def __init__(
         self,
@@ -1686,14 +1686,14 @@ class LunarLanderPIDPolicy:
         PID_height_parameters=None,
         PID_x_parameters=None,
     ):
-        """Initialize an instance of PID pipeline for lunar lander.
+        """Initialize an instance of PID scenario for lunar lander.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param state_init: state at which simulation has begun
         :param sampling_time: time interval between two consecutive actions
-        :param PID_angle_parameters: parameters for PID pipeline stabilizing angle of lander
-        :param PID_height_parameters: parameters for PID pipeline stabilizing y-coordinate of lander
-        :param PID_x_parameters: parameters for PID pipeline stabilizing x-coordinate of lander
+        :param PID_angle_parameters: parameters for PID scenario stabilizing angle of lander
+        :param PID_height_parameters: parameters for PID scenario stabilizing y-coordinate of lander
+        :param PID_x_parameters: parameters for PID scenario stabilizing x-coordinate of lander
         """
         if PID_angle_parameters is None:
             PID_angle_parameters = [1, 0, 0]
@@ -1744,7 +1744,7 @@ class LunarLanderPIDPolicy:
 
 
 class TwoTankPIDPolicy:
-    """PID pipeline for double tank system."""
+    """PID scenario for double tank system."""
 
     def __init__(
         self,
@@ -1752,14 +1752,14 @@ class TwoTankPIDPolicy:
         PID_2tank_parameters_x1=(1, 0, 0),
         PID_2tank_parameters_x2=(1, 0, 0),
     ):
-        """Initialize an instance of Pipeline2TankPID.
+        """Initialize an instance of Scenario2TankPID.
 
         :param action_bounds: upper and lower bounds for action yielded from policy
         :param params: parameters of double tank system
         :param state_init: state at which simulation has begun
         :param sampling_time: time interval between two consecutive actions
-        :param PID_2tank_parameters_x1: parameters for PID pipeline stabilizing first component of system's state
-        :param PID_2tank_parameters_x2: parameters for PID pipeline stabilizing second component of system's state
+        :param PID_2tank_parameters_x1: parameters for PID scenario stabilizing first component of system's state
+        :param PID_2tank_parameters_x2: parameters for PID scenario stabilizing second component of system's state
         :param observation_target: ...
         """
         from regelum.system import TwoTank
@@ -1800,12 +1800,12 @@ class TwoTankPIDPolicy:
 
 
 class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
-    """Nominal pipeline for 3-wheel robots used for benchmarking of other pipelines.
+    """Nominal scenario for 3-wheel robots used for benchmarking of other scenarios.
 
-    The pipeline is sampled.
+    The scenario is sampled.
 
     For a 3-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended non-holonomic double integrator) [[1]_], we use here
-    a pipeline designed by non-smooth backstepping (read more in [[2]_], [[3]_]).
+    a scenario designed by non-smooth backstepping (read more in [[2]_], [[3]_]).
 
     Attributes
     ----------
@@ -1815,7 +1815,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         Controller gain.
         Initial value of the controller's __internal clock.
     sampling_time : : number
-        Pipeline's sampling time (in seconds).
+        Scenario's sampling time (in seconds).
 
     References
     ----------
@@ -1832,7 +1832,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
     def __init__(
         self,
         optimizer_config,
-        pipeline_gain=10,
+        scenario_gain=10,
     ):
         """Initialize an instance of stabilizing policy for three wheeled robot."""
         super().__init__(optimizer_config=optimizer_config)
@@ -1840,7 +1840,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
 
         self.m = ThreeWheeledRobot.parameters["m"]
         self.moment_of_inertia = ThreeWheeledRobot.parameters["I"]
-        self.pipeline_gain = pipeline_gain
+        self.scenario_gain = scenario_gain
         self.xNI_var = self.create_variable(3, 1, name="xNI", is_constant=True)
         self.eta_var = self.create_variable(2, 1, name="eta", is_constant=True)
         self.theta_var = self.create_variable(
@@ -1881,7 +1881,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         return nablaF
 
     def _kappa(self, xNI, theta):
-        """Stabilizing pipeline for NI-part."""
+        """Stabilizing scenario for NI-part."""
         G = rg.zeros([2, 3], prototype=xNI)
         G[0, :] = rg.hstack([1, 0, xNI[1]])
         G[1, :] = rg.hstack([0, 1, -xNI[0]])
@@ -1971,7 +1971,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         return uCart
 
     def get_action(self, observation):
-        """Perform the same computation as :func:`~Pipeline3WRobotDisassembledCLF.compute_action`, but without invoking the __internal clock."""
+        """Perform the same computation as :func:`~Scenario3WRobotDisassembledCLF.compute_action`, but without invoking the __internal clock."""
         observation = observation[0]
         xNI, eta = self._Cart2NH(observation)
         theta_star = self.optimize(xNI=xNI, eta=eta)
@@ -1979,7 +1979,7 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
             theta_star = theta_star["theta"]
         kappa_val = self._kappa(xNI, theta_star)
         z = eta - kappa_val
-        uNI = -self.pipeline_gain * z
+        uNI = -self.scenario_gain * z
         action = self._NH2ctrl_Cart(xNI, eta, uNI)
         self.action_old = action
         return action.reshape(1, -1)

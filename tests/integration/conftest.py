@@ -24,8 +24,8 @@ def setup(request):
 def launch(setup):
     @rc.main(**setup())
     def launch(cfg):
-        pipeline = ~cfg.pipeline
-        pipeline.run()
+        scenario = ~cfg.scenario
+        scenario.run()
 
     return launch
 

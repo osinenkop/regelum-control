@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Contains one single class that simulates pipeline-system (agent-environment) loops.
+"""Contains one single class that simulates scenario-system (agent-environment) loops.
 
 The system can be of three types:
     

@@ -4,7 +4,7 @@ import torch
 from regelum.system import InvertedPendulumPD
 from regelum.objective import RunningObjective
 from regelum.simulator import CasADi
-from regelum.pipeline import ReinforcePipeline
+from regelum.scenario import REINFORCE
 
 # Initialize the system and running objective
 system = InvertedPendulumPD()
@@ -12,8 +12,8 @@ running_objective = RunningObjective(
     model=rg.model.ModelQuadLin("diagonal", weights=[10, 3.0, 0.0])
 )
 
-# Instantiate the ReinforcePipeline
-pipeline = ReinforcePipeline(
+# Instantiate the ReinforceScenario
+scenario = REINFORCE(
     policy_model=rg.model.PerceptronWithTruncatedNormalNoise(
         dim_input=system.dim_observation,
         dim_hidden=4,
@@ -46,4 +46,4 @@ pipeline = ReinforcePipeline(
 )
 
 # Run the training process
-pipeline.run()
+scenario.run()

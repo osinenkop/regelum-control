@@ -1,15 +1,12 @@
-_target_: regelum.pipeline.DDPGPipeline
+_target_: regelum.scenario.SDPG
 
-name%%: ddpg
+name%%: sdpg
 std%%: 0.1
 normalize_output_coef%%: 0.01
 
 defaults:
-  - policy_model: perceptron_with_truncated_normal_noise
-  - critic_model: perceptron
-
-critic_model:
-  dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+  - policy_model : perceptron_with_truncated_normal_noise
+  - critic_model : perceptron
 
 sampling_time: $ system_specific.sampling_time
 running_objective: ~ running_objective
@@ -25,7 +22,7 @@ critic_opt_method: = torch.optim.Adam
 critic_opt_method_kwargs: 
   lr: 0.001
 
-policy_n_epochs: 50
+policy_n_epochs: 1
 policy_opt_method: = torch.optim.Adam
 policy_opt_method_kwargs: 
-  lr: 0.01
+  lr: 0.1

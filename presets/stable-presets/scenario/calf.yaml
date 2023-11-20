@@ -1,0 +1,18 @@
+_target_: regelum.scenario.CALF
+
+name%%: calf
+
+running_objective: ~ running_objective
+simulator: ~ simulator
+prediction_horizon: 4
+sampling_time: $ system_specific.sampling_time
+observer: $ system_specific.observer
+discount_factor: 1.0
+safe_policy: ~ nominal_policy
+
+
+critic_model:
+  _target_: regelum.model.ModelQuadLin
+  quad_matrix_type: diagonal
+  is_with_linear_terms: False
+  dim_inputs: = ${system_specific.dim_observation}

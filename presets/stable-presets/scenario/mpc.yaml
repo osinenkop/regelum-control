@@ -1,4 +1,4 @@
-_target_: regelum.pipeline.MPCPipeline
+_target_: regelum.scenario.MPC
 
 name%%: mpc
 

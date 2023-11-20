@@ -1,6 +1,6 @@
-_target_: regelum.pipeline.PPOPipeline
+_target_: regelum.scenario.DDPG
 
-name%%: ppo
+name%%: ddpg
 std%%: 0.1
 normalize_output_coef%%: 0.01
 
@@ -8,11 +8,13 @@ defaults:
   - policy_model: perceptron_with_truncated_normal_noise
   - critic_model: perceptron
 
+critic_model:
+  dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action}
+
 sampling_time: $ system_specific.sampling_time
 running_objective: ~ running_objective
 simulator: ~ simulator
 observer: $ system_specific.observer
-running_objective_type: cost
 discount_factor: 0.7
 N_iterations: 100
 N_episodes: 2

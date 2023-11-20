@@ -1,4 +1,4 @@
-_target_: regelum.pipeline.RPVPipeline
+_target_: regelum.scenario.RPV
 
 name%%: rpv
 

@@ -463,7 +463,7 @@ class InvertedPendulumPID(System):
     _action_bounds = [[-20.0, 20.0]]
 
     def __init__(self, *args, **kwargs):
-        """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID pipeline."""
+        """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID scenario."""
         super().__init__(*args, **kwargs)
 
         self.time_old = 0

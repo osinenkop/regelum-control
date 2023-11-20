@@ -1,28 +1,20 @@
-_target_: regelum.pipeline.SDPGPipeline
+_target_: regelum.scenario.REINFORCE
 
-name%%: sdpg
-std%%: 0.1
-normalize_output_coef%%: 0.01
+name%%: reinforce
 
 defaults:
   - policy_model : perceptron_with_truncated_normal_noise
-  - critic_model : perceptron
 
 sampling_time: $ system_specific.sampling_time
 running_objective: ~ running_objective
 simulator: ~ simulator
 observer: $ system_specific.observer
 discount_factor: 0.7
-N_iterations: 100
-N_episodes: 2
-
-
-critic_n_epochs: 50
-critic_opt_method: = torch.optim.Adam
-critic_opt_method_kwargs: 
-  lr: 0.001
 
 policy_n_epochs: 1
 policy_opt_method: = torch.optim.Adam
 policy_opt_method_kwargs: 
   lr: 0.1
+
+N_iterations: 200
+N_episodes: 3

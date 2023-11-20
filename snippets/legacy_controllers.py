@@ -1,23 +1,23 @@
-class CALFPipelineExPostLegacy(RLPipeline):
-    """CALF pipeline.
+class CALFScenarioExPostLegacy(RLScenario):
+    """CALF scenario.
 
     Implements CALF algorithm without predictive constraints.
     """
 
     def __init__(self, *args, safe_only=False, **kwargs):
-        """Initialize an instance of CALFPipelineExPost.
+        """Initialize an instance of CALFScenarioExPost.
 
-        :param args: positional arguments for RLPipeline
+        :param args: positional arguments for RLScenario
         :param safe_only: when safe_only equals True, evaluates actions from safe policy only. Performs CALF updates otherwise.
-        :param kwargs: keyword arguments for RLPipeline
+        :param kwargs: keyword arguments for RLScenario
         """
         super().__init__(*args, **kwargs)
         if safe_only:
-            self.compute_action = self.policy.safe_pipeline.compute_action
+            self.compute_action = self.policy.safe_scenario.compute_action
             self.compute_action_sampled = (
-                self.policy.safe_pipeline.compute_action_sampled
+                self.policy.safe_scenario.compute_action_sampled
             )
-            self.reset = self.policy.safe_pipeline.reset
+            self.reset = self.policy.safe_scenario.reset
         self.safe_only = safe_only
 
     # TODO: DOCSTRING. RENAME TO HUMAN LANGUAGE. DISPLACEMENT?
@@ -30,7 +30,7 @@ class CALFPipelineExPostLegacy(RLPipeline):
     def invoke_safe_action(self, state, observation):
         # self.policy.restore_weights()
         self.critic.restore_weights()
-        action = self.policy.safe_pipeline.compute_action(None, state, observation)
+        action = self.policy.safe_scenario.compute_action(None, state, observation)
 
         self.policy.set_action(action)
         self.policy.model.update_and_cache_weights(action)
@@ -88,7 +88,7 @@ class CALFPipelineExPostLegacy(RLPipeline):
         self.critic.ub_constraint_violations.append(0)
         self.critic.Ls.append(
             np.squeeze(
-                self.critic.safe_pipeline.compute_LF(self.critic.current_observation)
+                self.critic.safe_scenario.compute_LF(self.critic.current_observation)
             )
         )
         self.critic.times.append(time)
@@ -103,8 +103,8 @@ class CALFPipelineExPostLegacy(RLPipeline):
 
 
 # TODO: DOCSTRING. CLEANUP: NO COMMENTED OUT CODE! NEED ALL DOCSTRINGS HERE
-class CALFPipelinePredictive(CALFPipelineExPost):
-    """Predictive CALF pipeline.
+class CALFScenarioPredictive(CALFScenarioExPost):
+    """Predictive CALF scenario.
 
     Implements CALF algorithm without predictive constraints.
     """
