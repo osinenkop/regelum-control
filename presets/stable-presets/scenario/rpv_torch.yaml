@@ -1,6 +1,6 @@
-_target_: regelum.scenario.SQLTorch
+_target_: regelum.scenario.RPVTorch
 
-name%%: sql_torch
+name%%: rpv_torch
 
 defaults:
   - critic_model: perceptron
@@ -21,8 +21,6 @@ observer: $ system_specific.observer
 constraint_parser: ~ constraint_parser
 discount_factor: 1.0
 N_iterations: 20
-
-
-
+ 
 critic_model:
-  dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action} 
+  dim_input: = ${system_specific.dim_observation}

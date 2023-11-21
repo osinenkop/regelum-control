@@ -1,13 +1,12 @@
-_target_: regelum.scenario.SQLTorch
+_target_: regelum.scenario.SARSA
 
-name%%: sql_torch
+name%%: sarsa
 
 defaults:
   - critic_model: perceptron
 
 running_objective: ~ running_objective
 simulator: ~ simulator
-prediction_horizon: 2
 critic_td_n: 1
 critic_batch_size: 10 
 policy_n_epochs: 20
@@ -21,7 +20,7 @@ observer: $ system_specific.observer
 constraint_parser: ~ constraint_parser
 discount_factor: 1.0
 N_iterations: 20
-
+epsilon_random_parameter: 0.05
 
 
 critic_model:
