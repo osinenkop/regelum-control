@@ -9,7 +9,7 @@ sampling_time: $ system_specific.sampling_time
 running_objective: ~ running_objective
 simulator: ~ simulator
 observer: $ system_specific.observer
-discount_factor: 0.7
+discount_factor: 1.0 
 
 policy_n_epochs: 1
 policy_opt_method: = torch.optim.Adam

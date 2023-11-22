@@ -1,29 +1,28 @@
 python run_stable.py \
 +seed=5,6 \
-pipeline=ppo \
+scenario=ppo \
 system=3wrobot_ni,lunar_lander,2tank,kin_point,inv_pendulum \
---experiment=PPO_TRUNCATED_vs_NORMAL \
+--experiment=SCENARIO_PPO \
 --jobs=-1
 
 python run_stable.py \
 +seed=5,6 \
-pipeline=sdpg \
+scenario=sdpg \
 system=3wrobot_ni,lunar_lander,2tank,kin_point,inv_pendulum \
---experiment=SDPG_TRUNCATED_vs_NORMAL \
+--experiment=SCENARIO_SDPG \
 --jobs=-1 
 
 
 python run_stable.py \
 +seed=5,6 \
-pipeline=ddpg \
+scenario=ddpg \
 system=3wrobot_ni,lunar_lander,2tank,kin_point,inv_pendulum \
---experiment=DDPG_TRUNCATED_vs_NORMAL \
+--experiment=SCENARIO_DDPG \
 --jobs=-1
 
 python run_stable.py \
 +seed=5,6 \
-pipeline=reinforce \
+scenario=reinforce \
 system=3wrobot_ni,lunar_lander,2tank,kin_point,inv_pendulum \
---experiment=REINFORCE_TRUNCATED_vs_NORMAL \
-pipeline.discount_factor=1.0 \
+--experiment=SCENARIO_REINFORCE \
 --jobs=-1
