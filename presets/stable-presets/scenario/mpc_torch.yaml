@@ -1,0 +1,15 @@
+_target_: regelum.scenario.MPCTorch
+
+name%%: mpc_torch
+
+running_objective: ~ running_objective
+simulator: ~ simulator
+prediction_horizon: 2
+n_epochs: 20
+opt_method_kwargs: 
+  lr: 0.1
+sampling_time: $ system_specific.sampling_time
+observer: $ system_specific.observer
+constraint_parser: ~ constraint_parser
+discount_factor: 1.0
+ 

@@ -262,6 +262,10 @@ class ModelQuadLin(Model):
             weights = self.weights
             quad_matrix = self._quad_matrix
             linear_coefs = self._linear_coefs
+            if isinstance(inputs, torch.Tensor):
+                quad_matrix = torch.FloatTensor(quad_matrix).to(inputs.device)
+                if linear_coefs is not None:
+                    linear_coefs = torch.FloatTensor(linear_coefs).to(inputs.device)
         else:
             quad_matrix, linear_coefs = self.get_quad_lin(weights)
 

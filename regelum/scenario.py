@@ -531,7 +531,92 @@ class RLScenario(Scenario):
         return which, event, time, self.episode_counter, self.iteration_counter
 
 
-class CALF(RLScenario):
+class CALFScenario(RLScenario):
+    def __init__(
+        self,
+        policy: Policy,
+        critic: CriticCALF,
+        safe_policy: Policy,
+        simulator: Simulator,
+        running_objective: RunningObjective,
+        discount_factor: float,
+        sampling_time: float,
+        observer: Optional[Observer] = None,
+    ):
+        super().__init__(
+            policy=policy,
+            critic=critic,
+            simulator=simulator,
+            running_objective=running_objective,
+            critic_optimization_event=Event.compute_action,
+            policy_optimization_event=Event.compute_action,
+            data_buffer_nullify_event=Event.reset_episode,
+            discount_factor=discount_factor,
+            action_bounds=simulator.system.action_bounds,
+            sampling_time=sampling_time,
+            observer=observer,
+        )
+        self.safe_policy = safe_policy
+
+    def issue_action(self, observation, is_safe=False):
+        if is_safe:
+            self.policy.restore_weights()
+            self.critic.restore_weights()
+            safe_action = self.safe_policy.get_action(observation)
+            self.policy.set_action(safe_action)
+        else:
+            self.policy.update_action(observation)
+
+    def on_action_issued(self, observation):
+        data = super().on_action_issued(observation)
+        data |= {"observation_last_good": self.critic.observation_last_good}
+        self.data_buffer.push_to_end(
+            observation_last_good=self.critic.observation_last_good
+        )
+
+        return data
+
+    @apply_callbacks()
+    @apply_action_bounds
+    def compute_action(
+        self,
+        estimated_state,
+        observation,
+        time=0,
+    ):
+        assert np.allclose(
+            estimated_state, self.data_buffer.get_latest("estimated_state")
+        )
+        assert np.allclose(observation, self.data_buffer.get_latest("observation"))
+        assert np.allclose(time, self.data_buffer.get_latest("timestamp"))
+
+        if self.is_first_compute_action_call:
+            self.critic.observation_last_good = observation
+            self.issue_action(observation, is_safe=True)
+            self.is_first_compute_action_call = False
+        else:
+            critic_weights = self.critic.optimize(
+                self.data_buffer, is_update_and_cache_weights=False
+            )
+            critic_weights_accepted = self.critic.opt_status == OptStatus.success
+
+            if critic_weights_accepted:
+                self.critic.update_weights(critic_weights)
+                self.policy.optimize(self.data_buffer)
+                policy_weights_accepted = self.policy.opt_status == OptStatus.success
+                if policy_weights_accepted:
+                    self.critic.observation_last_good = observation
+                    self.issue_action(observation, is_safe=False)
+                    self.critic.cache_weights(critic_weights)
+                else:
+                    self.issue_action(observation, is_safe=True)
+            else:
+                self.issue_action(observation, is_safe=True)
+
+        return self.policy.action
+
+
+class CALF(CALFScenario):
     """Scenario for CALF algorithm."""
 
     def __init__(
@@ -633,74 +718,149 @@ class CALF(RLScenario):
         super().__init__(
             policy=policy,
             critic=critic,
+            safe_policy=safe_policy,
             simulator=simulator,
             running_objective=running_objective,
-            critic_optimization_event=Event.compute_action,
-            policy_optimization_event=Event.compute_action,
-            data_buffer_nullify_event=Event.reset_episode,
             discount_factor=discount_factor,
-            action_bounds=system.action_bounds,
             sampling_time=sampling_time,
             observer=observer,
         )
-        self.safe_policy = safe_policy
 
-    def issue_action(self, observation, is_safe=False):
-        if is_safe:
-            self.policy.restore_weights()
-            self.critic.restore_weights()
-            safe_action = self.safe_policy.get_action(observation)
-            self.policy.set_action(safe_action)
-        else:
-            self.policy.update_action(observation)
 
-    def on_action_issued(self, observation):
-        data = super().on_action_issued(observation)
-        data |= {"observation_last_good": self.critic.observation_last_good}
-        self.data_buffer.push_to_end(
-            observation_last_good=self.critic.observation_last_good
-        )
-
-        return data
-
-    @apply_callbacks()
-    @apply_action_bounds
-    def compute_action(
+class CALFTorch(CALFScenario):
+    def __init__(
         self,
-        estimated_state,
-        observation,
-        time=0,
+        simulator: Simulator,
+        running_objective: RunningObjective,
+        safe_policy: Policy,
+        policy_n_epochs: int,
+        critic_n_epochs: int,
+        critic_n_epochs_per_constraint: int,
+        policy_opt_method_kwargs: Dict[str, Any],
+        critic_opt_method_kwargs: Dict[str, Any],
+        policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_td_n: int = 2,
+        observer: Optional[Observer] = None,
+        prediction_horizon: int = 1,
+        policy_model: Optional[Model] = None,
+        critic_model: Optional[Model] = None,
+        predictor: Optional[Predictor] = None,
+        discount_factor=1.0,
+        sampling_time: float = 0.1,
+        critic_lb_parameter: float = 0.0,
+        critic_ub_parameter: float = 1.0,
+        critic_safe_decay_param: float = 0.001,
+        critic_is_dynamic_decay_rate: bool = False,
+        critic_batch_size: int = 10,
     ):
-        assert np.allclose(
-            estimated_state, self.data_buffer.get_latest("estimated_state")
+        """Instantiate CALF class.
+
+        :param simulator: The simulator object.
+        :type simulator: Simulator
+        :param running_objective: The running objective.
+        :type running_objective: RunningObjective
+        :param safe_policy: The safe policy.
+        :type safe_policy: Policy
+        :param critic_td_n: The TD-N parameter for the critic. Defaults to 2.
+        :type critic_td_n: int, optional
+        :param observer: The observer object. Defaults to None.
+        :type observer: Optional[Observer], optional
+        :param prediction_horizon: The prediction horizon. Defaults to 1.
+        :type prediction_horizon: int, optional
+        :param policy_model: The policy model. Defaults to None.
+        :type policy_model: Optional[Model], optional
+        :param critic_model: The critic model. Defaults to None.
+        :type critic_model: Optional[Model], optional
+        :param predictor: The predictor object. Defaults to None.
+        :type predictor: Optional[Predictor], optional
+        :param discount_factor: The discount factor. Defaults to 1.0.
+        :type discount_factor: float, optional
+        :param sampling_time: The sampling time. Defaults to 0.1.
+        :type sampling_time: float, optional
+        :param critic_lb_parameter: The lower bound parameter for the critic. Defaults to 0.0.
+        :type critic_lb_parameter: float, optional
+        :param critic_ub_parameter: The upper bound parameter for the critic. Defaults to 1.0.
+        :type critic_ub_parameter: float, optional
+        :param critic_safe_decay_param: The safe decay parameter for the critic. Defaults to 0.001.
+        :type critic_safe_decay_param: float, optional
+        :param critic_is_dynamic_decay_rate: Whether the critic has a dynamic decay rate. Defaults to False.
+        :type critic_is_dynamic_decay_rate: bool, optional
+        :param critic_batch_size: The batch size for the critic optimizer. Defaults to 10.
+        :type critic_batch_size: int, optional
+
+        :returns: None
+        :rtype: None
+        """
+        system = simulator.system
+        critic = CriticCALF(
+            system=system,
+            model=critic_model,
+            td_n=critic_td_n,
+            is_same_critic=False,
+            is_value_function=True,
+            discount_factor=1.0,
+            sampling_time=sampling_time,
+            safe_decay_param=critic_safe_decay_param,
+            is_dynamic_decay_rate=critic_is_dynamic_decay_rate,
+            safe_policy=safe_policy,
+            lb_parameter=critic_lb_parameter,
+            ub_parameter=critic_ub_parameter,
+            optimizer_config=TorchOptimizerConfig(
+                n_epochs=critic_n_epochs,
+                opt_method=critic_opt_method,
+                opt_method_kwargs=critic_opt_method_kwargs,
+                data_buffer_iter_bathes_kwargs=dict(
+                    batch_sampler=RollingBatchSampler,
+                    dtype=torch.FloatTensor,
+                    mode="backward",
+                    batch_size=critic_batch_size,
+                ),
+                n_epochs_per_constraint=critic_n_epochs_per_constraint,
+            ),
         )
-        assert np.allclose(observation, self.data_buffer.get_latest("observation"))
-        assert np.allclose(time, self.data_buffer.get_latest("timestamp"))
-
-        if self.is_first_compute_action_call:
-            self.critic.observation_last_good = observation
-            self.issue_action(observation, is_safe=True)
-            self.is_first_compute_action_call = False
-        else:
-            critic_weights = self.critic.optimize(
-                self.data_buffer, is_update_and_cache_weights=False
+        policy = RLPolicy(
+            action_bounds=system.action_bounds,
+            model=ModelWeightContainerTorch(
+                dim_weights=(prediction_horizon, system.dim_inputs),
+                output_bounds=system.action_bounds,
+                output_bounding_type="clip",
             )
-            critic_weights_accepted = self.critic.opt_status == OptStatus.success
+            if policy_model is None
+            else policy_model,
+            system=system,
+            running_objective=running_objective,
+            prediction_horizon=prediction_horizon,
+            algorithm="rpv",
+            critic=critic,
+            predictor=predictor
+            if predictor is not None
+            else EulerPredictor(system=system, pred_step_size=sampling_time),
+            discount_factor=discount_factor,
+            optimizer_config=TorchOptimizerConfig(
+                n_epochs=policy_n_epochs,
+                opt_method=policy_opt_method,
+                opt_method_kwargs=policy_opt_method_kwargs,
+                data_buffer_iter_bathes_kwargs=dict(
+                    batch_sampler=RollingBatchSampler,
+                    dtype=torch.FloatTensor,
+                    mode="backward",
+                    batch_size=1,
+                    n_batches=1,
+                ),
+            ),
+        )
 
-            if critic_weights_accepted:
-                self.critic.update_weights(critic_weights)
-                self.policy.optimize(self.data_buffer)
-                policy_weights_accepted = self.policy.opt_status == OptStatus.success
-                if policy_weights_accepted:
-                    self.critic.observation_last_good = observation
-                    self.issue_action(observation, is_safe=False)
-                    self.critic.cache_weights(critic_weights)
-                else:
-                    self.issue_action(observation, is_safe=True)
-            else:
-                self.issue_action(observation, is_safe=True)
-
-        return self.policy.action
+        super().__init__(
+            policy=policy,
+            critic=critic,
+            safe_policy=safe_policy,
+            simulator=simulator,
+            running_objective=running_objective,
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+            observer=observer,
+        )
 
 
 class MPC(RLScenario):
@@ -794,6 +954,7 @@ def get_predictive_kwargs(
     critic_is_same_critic: Optional[bool] = None,
     critic_model: Optional[Model] = None,
     critic_n_samples: Optional[int] = None,
+    epsilon_random_parameter: Optional[float] = None,
 ):
     system = simulator.system
     critic = Critic(
@@ -837,6 +998,7 @@ def get_predictive_kwargs(
         else EulerPredictor(system=system, pred_step_size=sampling_time),
         discount_factor=discount_factor,
         optimizer_config=CasadiOptimizerConfig(batch_size=1),
+        epsilon_random_parameter=epsilon_random_parameter,
     )
 
     return dict(
@@ -875,6 +1037,7 @@ class SQL(RLScenario):
         policy_model: Optional[Model] = None,
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
+        epsilon_random_parameter: Optional[float] = None,
     ):
         """Instantiate SQL.
 
@@ -930,6 +1093,7 @@ class SQL(RLScenario):
                 critic_is_value_function=False,
                 critic_is_same_critic=False,
                 critic_n_samples=critic_batch_size,
+                epsilon_random_parameter=epsilon_random_parameter,
             )
         )
 
@@ -953,6 +1117,7 @@ class RQL(RLScenario):
         policy_model: Optional[Model] = None,
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
+        epsilon_random_parameter: Optional[float] = None,
     ):
         """Instantiate RQLScenario.
 
@@ -1008,6 +1173,7 @@ class RQL(RLScenario):
                 critic_is_value_function=False,
                 critic_is_same_critic=False,
                 critic_n_samples=critic_batch_size,
+                epsilon_random_parameter=epsilon_random_parameter,
             )
         )
 
@@ -1142,6 +1308,7 @@ class MPCTorch(RLScenario):
         """
         system = simulator.system
         super().__init__(
+            simulator=simulator,
             N_episodes=1,
             N_iterations=1,
             data_buffer_nullify_event=Event.reset_episode,
@@ -1152,6 +1319,7 @@ class MPCTorch(RLScenario):
             observer=observer,
             sampling_time=sampling_time,
             policy=RLPolicy(
+                action_bounds=system.action_bounds,
                 model=ModelWeightContainerTorch(
                     dim_weights=(prediction_horizon + 1, system.dim_inputs),
                     output_bounds=system.action_bounds,
@@ -1173,13 +1341,390 @@ class MPCTorch(RLScenario):
                     opt_method=opt_method,
                     opt_method_kwargs=opt_method_kwargs,
                     data_buffer_iter_bathes_kwargs=dict(
-                        sampler=RollingBatchSampler,
+                        batch_sampler=RollingBatchSampler,
                         dtype=torch.FloatTensor,
                         mode="backward",
                         batch_size=1,
                     ),
                 ),
             ),
+        )
+
+
+def get_predictive_torch_kwargs(
+    running_objective: RunningObjective,
+    simulator: Simulator,
+    prediction_horizon: int,
+    predictor: Predictor,
+    sampling_time: float,
+    observer: Optional[Observer],
+    constraint_parser: Optional[ConstraintParser],
+    N_iterations: int,
+    discount_factor: float,
+    algorithm_name: str,
+    policy_model: Optional[ModelNN] = None,
+    policy_n_epochs: Optional[int] = None,
+    policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+    policy_opt_method_kwargs: Optional[Dict[str, Any]] = None,
+    critic_td_n: Optional[int] = None,
+    critic_is_on_policy: Optional[bool] = None,
+    critic_is_value_function: Optional[bool] = None,
+    critic_is_same_critic: Optional[bool] = None,
+    critic_model: Optional[ModelNN] = None,
+    critic_n_epochs: Optional[int] = None,
+    critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+    critic_opt_method_kwargs: Optional[Dict[str, Any]] = None,
+    critic_batch_size: Optional[int] = None,
+    epsilon_random_parameter: Optional[float] = None,
+    size_mesh: Optional[int] = None,
+):
+    system = simulator.system
+    critic = Critic(
+        system=system,
+        model=critic_model,
+        td_n=critic_td_n,
+        is_on_policy=critic_is_on_policy,
+        is_value_function=critic_is_value_function,
+        sampling_time=sampling_time,
+        discount_factor=discount_factor,
+        action_bounds=system.action_bounds,
+        is_same_critic=critic_is_same_critic,
+        optimizer_config=TorchOptimizerConfig(
+            n_epochs=critic_n_epochs,
+            opt_method=critic_opt_method,
+            opt_method_kwargs=critic_opt_method_kwargs,
+            data_buffer_iter_bathes_kwargs=dict(
+                batch_sampler=RollingBatchSampler,
+                dtype=torch.FloatTensor,
+                mode="backward",
+                batch_size=critic_batch_size,
+            ),
+        ),
+        size_mesh=size_mesh,
+    )
+
+    if algorithm_name == "greedy":
+        predictor_argument = None
+    elif predictor is None:
+        predictor_argument = EulerPredictor(system=system, pred_step_size=sampling_time)
+    else:
+        predictor_argument = predictor
+
+    policy = RLPolicy(
+        action_bounds=system.action_bounds,
+        model=ModelWeightContainerTorch(
+            dim_weights=(
+                prediction_horizon + (1 if algorithm_name != "rpv" else 0),
+                system.dim_inputs,
+            ),
+            output_bounds=system.action_bounds,
+            output_bounding_type="clip",
+        )
+        if policy_model is None
+        else policy_model,
+        constraint_parser=constraint_parser,
+        system=system,
+        running_objective=running_objective,
+        prediction_horizon=prediction_horizon,
+        algorithm=algorithm_name,
+        critic=critic,
+        predictor=predictor_argument,
+        discount_factor=discount_factor,
+        optimizer_config=TorchOptimizerConfig(
+            n_epochs=policy_n_epochs,
+            opt_method=policy_opt_method,
+            opt_method_kwargs=policy_opt_method_kwargs,
+            data_buffer_iter_bathes_kwargs=dict(
+                batch_sampler=RollingBatchSampler,
+                dtype=torch.FloatTensor,
+                mode="backward",
+                batch_size=1,
+                n_batches=1,
+            ),
+        ),
+        epsilon_random_parameter=epsilon_random_parameter,
+    )
+
+    return dict(
+        N_episodes=1,
+        N_iterations=N_iterations,
+        simulator=simulator,
+        data_buffer_nullify_event=Event.reset_episode,
+        policy_optimization_event=Event.compute_action,
+        critic_optimization_event=Event.compute_action,
+        action_bounds=system.action_bounds,
+        critic=critic,
+        running_objective=running_objective,
+        observer=observer,
+        sampling_time=sampling_time,
+        policy=policy,
+        is_critic_first=True,
+    )
+
+
+class SQLTorch(RLScenario):
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        critic_td_n: int,
+        critic_batch_size: int,
+        policy_n_epochs: int,
+        critic_n_epochs: int,
+        policy_opt_method_kwargs: Optional[Dict[str, Any]],
+        critic_opt_method_kwargs: Optional[Dict[str, Any]],
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[ModelNN] = None,
+        policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_model: Optional[ModelNN] = None,
+    ):
+        super().__init__(
+            **get_predictive_torch_kwargs(
+                running_objective=running_objective,
+                simulator=simulator,
+                prediction_horizon=prediction_horizon,
+                predictor=predictor,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="sql",
+                policy_model=policy_model,
+                policy_n_epochs=policy_n_epochs,
+                policy_opt_method=policy_opt_method,
+                policy_opt_method_kwargs=policy_opt_method_kwargs,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=False,
+                critic_is_same_critic=False,
+                critic_model=critic_model,
+                critic_n_epochs=critic_n_epochs,
+                critic_opt_method=critic_opt_method,
+                critic_opt_method_kwargs=critic_opt_method_kwargs,
+                critic_batch_size=critic_batch_size,
+            )
+        )
+
+
+class RQLTorch(RLScenario):
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        critic_td_n: int,
+        critic_batch_size: int,
+        policy_n_epochs: int,
+        critic_n_epochs: int,
+        policy_opt_method_kwargs: Optional[Dict[str, Any]],
+        critic_opt_method_kwargs: Optional[Dict[str, Any]],
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[ModelNN] = None,
+        policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_model: Optional[ModelNN] = None,
+        epsilon_random_parameter: Optional[float] = None,
+    ):
+        super().__init__(
+            **get_predictive_torch_kwargs(
+                running_objective=running_objective,
+                simulator=simulator,
+                prediction_horizon=prediction_horizon,
+                predictor=predictor,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="rql",
+                policy_model=policy_model,
+                policy_n_epochs=policy_n_epochs,
+                policy_opt_method=policy_opt_method,
+                policy_opt_method_kwargs=policy_opt_method_kwargs,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=False,
+                critic_is_same_critic=False,
+                critic_model=critic_model,
+                critic_n_epochs=critic_n_epochs,
+                critic_opt_method=critic_opt_method,
+                critic_opt_method_kwargs=critic_opt_method_kwargs,
+                critic_batch_size=critic_batch_size,
+                epsilon_random_parameter=epsilon_random_parameter,
+            )
+        )
+
+
+class RPVTorch(RLScenario):
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        prediction_horizon: int,
+        critic_td_n: int,
+        critic_batch_size: int,
+        policy_n_epochs: int,
+        critic_n_epochs: int,
+        policy_opt_method_kwargs: Optional[Dict[str, Any]],
+        critic_opt_method_kwargs: Optional[Dict[str, Any]],
+        predictor: Optional[Predictor] = None,
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[ModelNN] = None,
+        policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_model: Optional[ModelNN] = None,
+        epsilon_random_parameter: Optional[float] = None,
+    ):
+        super().__init__(
+            **get_predictive_torch_kwargs(
+                running_objective=running_objective,
+                simulator=simulator,
+                prediction_horizon=prediction_horizon,
+                predictor=predictor,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="rpv",
+                policy_model=policy_model,
+                policy_n_epochs=policy_n_epochs,
+                policy_opt_method=policy_opt_method,
+                policy_opt_method_kwargs=policy_opt_method_kwargs,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=True,
+                critic_is_same_critic=False,
+                critic_model=critic_model,
+                critic_n_epochs=critic_n_epochs,
+                critic_opt_method=critic_opt_method,
+                critic_opt_method_kwargs=critic_opt_method_kwargs,
+                critic_batch_size=critic_batch_size,
+                epsilon_random_parameter=epsilon_random_parameter,
+            )
+        )
+
+
+class SARSA(RLScenario):
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        critic_td_n: int,
+        critic_batch_size: int,
+        policy_n_epochs: int,
+        critic_n_epochs: int,
+        critic_model: Optional[ModelNN],
+        policy_opt_method_kwargs: Optional[Dict[str, Any]],
+        critic_opt_method_kwargs: Optional[Dict[str, Any]],
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[ModelNN] = None,
+        policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        epsilon_random_parameter: Optional[float] = None,
+    ):
+        super().__init__(
+            **get_predictive_torch_kwargs(
+                running_objective=running_objective,
+                simulator=simulator,
+                prediction_horizon=0,
+                predictor=None,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="greedy",
+                policy_model=policy_model,
+                policy_n_epochs=policy_n_epochs,
+                policy_opt_method=policy_opt_method,
+                policy_opt_method_kwargs=policy_opt_method_kwargs,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=True,
+                critic_is_value_function=False,
+                critic_is_same_critic=False,
+                critic_model=critic_model,
+                critic_n_epochs=critic_n_epochs,
+                critic_opt_method=critic_opt_method,
+                critic_opt_method_kwargs=critic_opt_method_kwargs,
+                critic_batch_size=critic_batch_size,
+                epsilon_random_parameter=epsilon_random_parameter,
+            )
+        )
+
+
+class DQN(RLScenario):
+    def __init__(
+        self,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        critic_td_n: int,
+        critic_batch_size: int,
+        policy_n_epochs: int,
+        critic_n_epochs: int,
+        critic_model: Optional[ModelNN],
+        policy_opt_method_kwargs: Optional[Dict[str, Any]],
+        critic_opt_method_kwargs: Optional[Dict[str, Any]],
+        sampling_time: float = 0.1,
+        observer: Optional[Observer] = None,
+        constraint_parser: Optional[ConstraintParser] = None,
+        N_iterations: int = 1,
+        discount_factor: float = 1.0,
+        policy_model: Optional[ModelNN] = None,
+        policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
+        epsilon_random_parameter: Optional[float] = None,
+        size_mesh: int = 100,
+    ):
+        super().__init__(
+            **get_predictive_torch_kwargs(
+                running_objective=running_objective,
+                simulator=simulator,
+                prediction_horizon=0,
+                predictor=None,
+                sampling_time=sampling_time,
+                observer=observer,
+                constraint_parser=constraint_parser,
+                N_iterations=N_iterations,
+                discount_factor=discount_factor,
+                algorithm_name="greedy",
+                policy_model=policy_model,
+                policy_n_epochs=policy_n_epochs,
+                policy_opt_method=policy_opt_method,
+                policy_opt_method_kwargs=policy_opt_method_kwargs,
+                critic_td_n=critic_td_n,
+                critic_is_on_policy=False,
+                critic_is_value_function=False,
+                critic_is_same_critic=False,
+                critic_model=critic_model,
+                critic_n_epochs=critic_n_epochs,
+                critic_opt_method=critic_opt_method,
+                critic_opt_method_kwargs=critic_opt_method_kwargs,
+                critic_batch_size=critic_batch_size,
+                epsilon_random_parameter=epsilon_random_parameter,
+                size_mesh=size_mesh,
+            )
         )
 
 
