@@ -1,8 +1,0 @@
-_target_: regelum.pipeline.Pipeline3WRobotNIMotionPrimitive
-
-###---Constructor arguments---###
-
-K: 3
-time_start: 0
-sampling_time: 1.0E-2
-action_bounds: $ system_specific.action_bounds

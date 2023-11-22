@@ -1,0 +1,3 @@
+_target_: regelum.policy.InvertedPendulumStabilizingPolicy
+
+gain: 20

@@ -1044,19 +1044,19 @@ class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
 
 
 class InvertedPendulumStabilizingPolicy(Policy):
-    """A nominal policy for inverted pendulum representing a PD scenario."""
+    """A nominal policy for inverted pendulum representing a PD controller."""
 
-    def __init__(self, scenario_gain):
+    def __init__(self, gain):
         """Initialize an instance of policy.
 
-        :param scenario_gain: gain of scenario
+        :param gain: gain of PID controller.
         """
         super().__init__()
-        self.scenario_gain = scenario_gain
+        self.gain = gain
 
     def get_action(self, observation):
         return np.array(
-            [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.scenario_gain]]
+            [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.gain]]
         )
 
 
@@ -1213,7 +1213,7 @@ class MemoryPIDPolicy(Policy):
         P,
         I,
         D,
-        setpoint=None,
+        setpoint=0.0,
         sampling_time=0.01,
         initial_point=(-5, -5),
         buffer_length=30,
@@ -1677,11 +1677,12 @@ class CartPoleEnergyBasedPolicy(Policy):
         return self.action.reshape(1, -1)
 
 
-class LunarLanderPIDPolicy:
+class LunarLanderPIDPolicy(Policy):
     """Nominal PID scenario for lunar lander."""
 
     def __init__(
         self,
+        state_init,
         PID_angle_parameters=None,
         PID_height_parameters=None,
         PID_x_parameters=None,
@@ -1695,29 +1696,31 @@ class LunarLanderPIDPolicy:
         :param PID_height_parameters: parameters for PID scenario stabilizing y-coordinate of lander
         :param PID_x_parameters: parameters for PID scenario stabilizing x-coordinate of lander
         """
+        super().__init__()
+
         if PID_angle_parameters is None:
             PID_angle_parameters = [1, 0, 0]
         if PID_height_parameters is None:
             PID_height_parameters = [10, 0, 0]
         if PID_x_parameters is None:
             PID_x_parameters = [10, 0, 0]
-        self.PID_angle = PolicyMemoryPID(
+        self.PID_angle = MemoryPIDPolicy(
             *PID_angle_parameters,
             initial_point=rg.array([state_init[2]]),
             setpoint=rg.array([0]),
         )
-        self.PID_height = PolicyMemoryPID(
+        self.PID_height = MemoryPIDPolicy(
             *PID_height_parameters,
             initial_point=rg.array([state_init[1]]),
             setpoint=rg.array([0]),
         )
-        self.PID_x = PolicyMemoryPID(
+        self.PID_x = MemoryPIDPolicy(
             *PID_x_parameters,
             initial_point=rg.array([state_init[2]]),
             setpoint=rg.array([0]),
         )
         self.threshold_1 = 0.05
-        self.threshold_2 = 1.2
+        self.threshold_2 = 2.2
         self.threshold = self.threshold_1
 
     def get_action(self, observation):
@@ -1727,23 +1730,23 @@ class LunarLanderPIDPolicy:
         if abs(observation[2]) > self.threshold:
             self.threshold = self.threshold_1
             self.action[0] = self.PID_angle.compute_signal(
-                [rg.array(observation[2])], error_derivative=observation[5]
+                rg.array([observation[2]]), error_derivative=observation[5]
             )[0]
 
         else:
-            self.threshold = self.threshold_2
             self.action[0] = self.PID_x.compute_signal(
-                [rg.array(observation[0])], error_derivative=observation[3]
+                rg.array([observation[0]]), error_derivative=observation[3]
             )[0]
             self.action[1] = self.PID_height.compute_signal(
-                [rg.array(observation[1])], error_derivative=observation[4]
+                rg.array([observation[1]]), error_derivative=observation[4]
             )[0]
 
         self.action = rg.array(self.action).reshape(1, -1)
+
         return self.action
 
 
-class TwoTankPIDPolicy:
+class TwoTankPIDPolicy(Policy):
     """PID scenario for double tank system."""
 
     def __init__(
@@ -1760,41 +1763,48 @@ class TwoTankPIDPolicy:
         :param sampling_time: time interval between two consecutive actions
         :param PID_2tank_parameters_x1: parameters for PID scenario stabilizing first component of system's state
         :param PID_2tank_parameters_x2: parameters for PID scenario stabilizing second component of system's state
-        :param observation_target: ...
         """
         from regelum.system import TwoTank
 
         super().__init__()
-        self.__dict__.update(**TwoTank.parameters)
+        params = TwoTank().parameters
+
+        self.K1 = params["K1"]
+        self.K2 = params["K2"]
+        self.K3 = params["K3"]
+        self.tau1 = params["tau1"]
+        self.tau2 = params["tau2"]
+
         self.state_init = state_init
-        self.sampling_time = sampling_time
-        self.PID_2tank_x1 = PolicyMemoryPID(
+        self.PID_2tank_x1 = MemoryPIDPolicy(
             *PID_2tank_parameters_x1,
             initial_point=rg.array([state_init[0]]),
         )
-        self.PID_2tank_x2 = PolicyMemoryPID(
+        self.PID_2tank_x2 = MemoryPIDPolicy(
             *PID_2tank_parameters_x2,
             initial_point=rg.array([state_init[1]]),
         )
 
+        self.action = np.zeros((1, 1))
+
     def get_action(self, observation):
         error_derivative_x1 = -(
-            1 / (self.tau1) * (-observation[0] + self.K1 * self.action[0])
+            1 / (self.tau1) * (-observation[0][0] + self.K1 * self.action[0][0])
         )
         error_derivative_x2 = (
             -1
             / (self.tau2)
             * (
-                -observation[1]
-                + self.K2 * observation[0]
-                + self.K3 * observation[1] ** 2
+                -observation[0][1]
+                + self.K2 * observation[0][0]
+                + self.K3 * observation[0][1] ** 2
             )
         )
 
         self.action = self.PID_2tank_x1.compute_signal(
-            [rg.array(observation[0])], error_derivative=error_derivative_x1
+            rg.array([[observation[0][0]]]), error_derivative=error_derivative_x1
         ) + self.PID_2tank_x2.compute_signal(
-            [rg.array(observation[1])], error_derivative=error_derivative_x2
+            rg.array([[observation[0][1]]]), error_derivative=error_derivative_x2
         )
         return self.action
 

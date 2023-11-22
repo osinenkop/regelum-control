@@ -390,6 +390,15 @@ class DirectionalPlanarMotionAnimation(TriangleAnimation, callback.StateTracker)
         )
 
 
+class DirectionalPlanarMotionAnimationLander(DirectionalPlanarMotionAnimation):
+    """Animates dynamics of Lunar Lander that can be viewed as a triangle moving on a plane."""
+
+    def on_trigger(self, _):
+        self.add_frame(
+            x=self.system_state[1], y=self.system_state[2], theta=self.system_state[0]
+        )
+
+
 class PendulumAnimation(DirectionalPlanarMotionAnimation):
     """Animates the head of a swinging pendulum.
 

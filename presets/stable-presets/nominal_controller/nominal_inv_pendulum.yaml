@@ -1,8 +1,0 @@
-_target_: regelum.pipeline.NominalPipelineInvertedPendulum
-
-###---Constructor arguments---###
-
-time_start: 0
-sampling_time: 1.0E-2
-action_bounds: $ system_specific.action_bounds
-pipeline_gain: 20

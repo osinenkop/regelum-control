@@ -1,0 +1,5 @@
+_target_: regelum.policy.TwoTankPIDPolicy
+
+state_init: $ initial_conditions.state_init
+PID_2tank_parameters_x1: = [3, 0, 4]
+PID_2tank_parameters_x2: = [3, 0, 4]
