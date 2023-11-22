@@ -208,8 +208,9 @@ class ModelQuadLin(Model):
 
     @Model.weights.setter
     def weights(self, new_weights):
-        self._weights = new_weights
-        self._quad_matrix, self._linear_coefs = self.get_quad_lin(new_weights)
+        if new_weights is not None:
+            self._weights = new_weights
+            self._quad_matrix, self._linear_coefs = self.get_quad_lin(new_weights)
 
     @property
     def weight_bounds(self):
@@ -617,6 +618,8 @@ class ModelWeightContainerTorch(ModelNN):
             torch.FloatTensor(torch.zeros(self.dim_weights)),
             requires_grad=True,
         )
+
+        self.cache_weights()
 
     def forward(self, inputs, weights=None):
         if self.bounds_handler is not None:

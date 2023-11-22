@@ -4,7 +4,7 @@ observer: = regelum.observer.ObserverTrivial()
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 
-time_final: 5.
+time_final: 30.
 sampling_time: 0.01
 
 F_min: -50.

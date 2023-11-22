@@ -58,7 +58,6 @@ class CALFWeightsCallback(HistoricalCallback):
 
 
 class CriticWeightsCallback(CALFWeightsCallback):
-
     """Whatever."""
 
     def is_target_event(self, obj, method, output):

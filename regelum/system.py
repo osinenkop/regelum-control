@@ -800,7 +800,7 @@ class CartPole(System):
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
     _observation_naming = _state_naming = ["angle", "x", "angle_dot", "x_dot"]
     _inputs_naming = ["force"]
-    _action_bounds = [[-50.0, 50.0]]
+    _action_bounds = [[-300.0, 300.0]]
 
     def _compute_state_dynamics(self, time, state, inputs, disturb=None):
         Dstate = rg.zeros(
@@ -825,13 +825,19 @@ class CartPole(System):
 
         Dstate[1] = x_dot
 
+        Dstate[2] = (
+            (
+                g * sin_theta
+                - cos_theta
+                * (inputs[0] + m_p * l * theta_dot**2 * sin_theta)
+                / (m_c + m_p)
+            )
+            / l
+            / (4 / 3 - m_p * (cos_theta**2) / (m_c + m_p))
+        )
         Dstate[3] = (
-            -m_p * g * cos_theta * sin_theta
-            - m_p * l * theta_dot**2 * sin_theta
-            + inputs[0]
-        ) / (m_c + m_p * sin_theta**2)
-
-        Dstate[2] = -g / l * sin_theta + Dstate[3] / l * cos_theta
+            inputs[0] + m_p * l * (theta_dot**2 * sin_theta - Dstate[0] * cos_theta)
+        ) / (m_c + m_p)
 
         return Dstate
 
@@ -961,13 +967,13 @@ class LunarLander(System):
 
         x = self.l * rg.sin(angle)
         y = self.l * rg.cos(angle)
-
-        Dstate[5] = g / self.l**2 * x
+        angular_acceleration = g / self.l**2 * x
+        Dstate[5] = angular_acceleration
         Dstate[0] = angle_dot * y
         Dstate[1] = -angle_dot * x
         Dstate[2] = -angle_dot
-        Dstate[3] = y * Dstate[5] - angle_dot**2 * x
-        Dstate[4] = -x * Dstate[5] - angle_dot**2 * y
+        Dstate[3] = y * angular_acceleration - angle_dot**2 * x
+        Dstate[4] = -x * angular_acceleration - angle_dot**2 * y
 
         return Dstate
 

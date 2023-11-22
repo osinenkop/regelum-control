@@ -542,6 +542,7 @@ class CALFScenario(RLScenario):
         discount_factor: float,
         sampling_time: float,
         observer: Optional[Observer] = None,
+        N_iterations: int = 5,
     ):
         super().__init__(
             policy=policy,
@@ -555,6 +556,7 @@ class CALFScenario(RLScenario):
             action_bounds=simulator.system.action_bounds,
             sampling_time=sampling_time,
             observer=observer,
+            N_iterations=N_iterations,
         )
         self.safe_policy = safe_policy
 
@@ -595,6 +597,7 @@ class CALFScenario(RLScenario):
             self.issue_action(observation, is_safe=True)
             self.is_first_compute_action_call = False
         else:
+            self.pre_optimize(self.critic, Event.compute_action, time)
             critic_weights = self.critic.optimize(
                 self.data_buffer, is_update_and_cache_weights=False
             )
@@ -602,6 +605,7 @@ class CALFScenario(RLScenario):
 
             if critic_weights_accepted:
                 self.critic.update_weights(critic_weights)
+                self.pre_optimize(self.policy, Event.compute_action, time)
                 self.policy.optimize(self.data_buffer)
                 policy_weights_accepted = self.policy.opt_status == OptStatus.success
                 if policy_weights_accepted:
@@ -637,6 +641,7 @@ class CALF(CALFScenario):
         critic_safe_decay_param: float = 0.001,
         critic_is_dynamic_decay_rate: bool = False,
         critic_batch_size: int = 10,
+        N_iterations=5,
     ):
         """Instantiate CALF class.
 
@@ -724,6 +729,7 @@ class CALF(CALFScenario):
             discount_factor=discount_factor,
             sampling_time=sampling_time,
             observer=observer,
+            N_iterations=N_iterations,
         )
 
 
@@ -753,45 +759,8 @@ class CALFTorch(CALFScenario):
         critic_safe_decay_param: float = 0.001,
         critic_is_dynamic_decay_rate: bool = False,
         critic_batch_size: int = 10,
+        N_iterations=5,
     ):
-        """Instantiate CALF class.
-
-        :param simulator: The simulator object.
-        :type simulator: Simulator
-        :param running_objective: The running objective.
-        :type running_objective: RunningObjective
-        :param safe_policy: The safe policy.
-        :type safe_policy: Policy
-        :param critic_td_n: The TD-N parameter for the critic. Defaults to 2.
-        :type critic_td_n: int, optional
-        :param observer: The observer object. Defaults to None.
-        :type observer: Optional[Observer], optional
-        :param prediction_horizon: The prediction horizon. Defaults to 1.
-        :type prediction_horizon: int, optional
-        :param policy_model: The policy model. Defaults to None.
-        :type policy_model: Optional[Model], optional
-        :param critic_model: The critic model. Defaults to None.
-        :type critic_model: Optional[Model], optional
-        :param predictor: The predictor object. Defaults to None.
-        :type predictor: Optional[Predictor], optional
-        :param discount_factor: The discount factor. Defaults to 1.0.
-        :type discount_factor: float, optional
-        :param sampling_time: The sampling time. Defaults to 0.1.
-        :type sampling_time: float, optional
-        :param critic_lb_parameter: The lower bound parameter for the critic. Defaults to 0.0.
-        :type critic_lb_parameter: float, optional
-        :param critic_ub_parameter: The upper bound parameter for the critic. Defaults to 1.0.
-        :type critic_ub_parameter: float, optional
-        :param critic_safe_decay_param: The safe decay parameter for the critic. Defaults to 0.001.
-        :type critic_safe_decay_param: float, optional
-        :param critic_is_dynamic_decay_rate: Whether the critic has a dynamic decay rate. Defaults to False.
-        :type critic_is_dynamic_decay_rate: bool, optional
-        :param critic_batch_size: The batch size for the critic optimizer. Defaults to 10.
-        :type critic_batch_size: int, optional
-
-        :returns: None
-        :rtype: None
-        """
         system = simulator.system
         critic = CriticCALF(
             system=system,
@@ -860,6 +829,7 @@ class CALFTorch(CALFScenario):
             discount_factor=discount_factor,
             sampling_time=sampling_time,
             observer=observer,
+            N_iterations=N_iterations,
         )
 
 

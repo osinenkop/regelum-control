@@ -69,22 +69,24 @@ scenarios = (
     "ppo",
     "ddpg",
     "reinforce",
-    # "dqn",
-    # "sarsa",
+    "dqn",
+    "sarsa",
     "rpv",
     "rql",
-    # "rql_torch",
+    "rql_torch",
     "sql",
-    # "sql_torch",
-    # "rpv_torch",
-    # "mpc_torch",
+    "sql_torch",
+    "rpv_torch",
+    "mpc_torch",
     "mpc",
+    "calf",
+    "calf_torch",
 )
 systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "2tank", "lunar_lander"
 
 
 def get_kwargs(scenario):
-    if scenario == "mpc":
+    if scenario == "mpc" or scenario == "mpc_torch":
         return {}
     elif scenario in ["reinforce", "ppo", "sdpg", "ddpg"]:
         return {"scenario.N_iterations": 2, "scenario.N_episodes": 2}
@@ -115,17 +117,8 @@ basic += [
 ]
 
 basic += [
-    TestSetup(
-        system="3wrobot_ni",
-        scenario="calf",
-    )
-]
-
-basic += [
-    TestSetup(
-        system="3wrobot_ni",
-        scenario="nominal",
-    )
+    TestSetup(system=system, scenario="nominal", **{"simulator.time_final": 1.0})
+    for system in systems
 ]
 
 # basic += [

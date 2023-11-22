@@ -9,7 +9,7 @@ sampling_time: $ system_specific.sampling_time
 observer: $ system_specific.observer
 discount_factor: 1.0
 safe_policy: ~ nominal_policy
-
+N_iterations: 5
 
 critic_model:
   _target_: regelum.model.ModelQuadLin

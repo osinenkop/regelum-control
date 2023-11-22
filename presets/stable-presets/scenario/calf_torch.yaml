@@ -15,13 +15,13 @@ safe_policy: ~ nominal_policy
 policy_n_epochs: 10
 critic_n_epochs: 10
 critic_n_epochs_per_constraint: 20
-critic_td_n: 10
+critic_td_n: 2
 critic_batch_size: 10
 policy_opt_method_kwargs: 
   lr: 0.1
 critic_opt_method_kwargs:
   lr: 0.1
-
+N_iterations: 5
 
 critic_model:
   dim_input: = ${system_specific.dim_observation}

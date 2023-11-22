@@ -1,5 +1,4 @@
 import glob
-import os
 
 to_replace = {
     "55a5d9": "8cc770",

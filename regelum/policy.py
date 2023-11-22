@@ -1640,6 +1640,11 @@ class CartPoleEnergyBasedPolicy(Policy):
     def __init__(
         self,
         scenario_gain=10,
+        upright_gain=None,
+        swingup_gain=10,
+        pid_loc_thr=0.35,
+        pid_scale_thr=10.0,
+        clip_bounds=(-1, 1),
     ):
         """Initialize an instance of ScenarioCartPoleEnergyBased.
 
@@ -1653,28 +1658,42 @@ class CartPoleEnergyBasedPolicy(Policy):
 
         self.scenario_gain = scenario_gain
         self.m_c, self.m_p, self.g, self.l = (
-            CartPole.parameters["m_c"],
-            system.parameters["m_p"],
-            system.parameters["g"],
-            system.parameters["l"],
+            CartPole().parameters["m_c"],
+            CartPole().parameters["m_p"],
+            CartPole().parameters["g"],
+            CartPole().parameters["l"],
         )
-        self.system = system
+        self.upright_gain = upright_gain
+        self.swingup_gain = swingup_gain
+        self.pid_loc_thr = pid_loc_thr
+        self.pid_scale_thr = pid_scale_thr
+        self.clip_bounds = clip_bounds
 
     def get_action(self, observation):
         observation = observation[0]
-        theta, _, theta_dot, _ = (
-            observation[0],
-            observation[1],
-            observation[2],
-            observation[3],
+
+        theta_observed, x, theta_dot, x_dot = observation
+
+        E_total = (
+            self.m_p * self.l**2 * theta_dot**2 / 2
+            + self.m_p * self.g * self.l * (rg.cos(theta_observed) - 1)
         )
 
-        self.action = (
-            self.m_p * self.g * rg.cos(theta) * rg.sin(theta)
-            + self.m_p * self.l * theta_dot * rg.sin(theta)
-            - self.scenario_gain * theta_dot * rg.cos(theta)
+        lbd = (
+            1 - rg.tanh((theta_observed - self.pid_loc_thr) * self.pid_scale_thr)
+        ) / 2
+
+        low, high = self.clip_bounds
+        x_clipped = rg.clip(x, low, high)
+        x_dot_clipped = rg.clip(x_dot, low, high)
+        self.action = (1 - lbd) * (
+            self.swingup_gain * E_total * rg.sign(rg.cos(theta_observed) * theta_dot)
+        ) + lbd * self.upright_gain.T @ rg.array(
+            [theta_observed, x_clipped, theta_dot, x_dot_clipped]
         )
-        return self.action.reshape(1, -1)
+
+        self.action = self.action.reshape(1, -1)
+        return self.action
 
 
 class LunarLanderPIDPolicy(Policy):
