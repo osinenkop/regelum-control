@@ -15,7 +15,7 @@ repos:
       #   require_serial: true
       - id: pytest-check
         name: Full test 
-        entry: pytest -n 5
+        entry: pytest -n 5 -v
         language: system
         pass_filenames: false
         always_run: true
