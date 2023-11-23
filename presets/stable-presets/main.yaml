@@ -1,7 +1,8 @@
 defaults:
   - system: inv_pendulum 
   - simulator: casadi
-  - optional nominal_policy: nominal_${system}
+  - nominal_policy: nominal_${system}
+  - stopping_criterion: stopping_${system}
   - scenario: reinforce
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}

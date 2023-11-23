@@ -33,7 +33,7 @@ class TestSetup:
         sys.argv.insert(1, "--single-thread")
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
-        sys.argv.insert(1, "simulator.time_final=1")
+        sys.argv.insert(1, "simulator.time_final=1.3")
         sys.argv.insert(1, "scenario.sampling_time=0.1")
         # sys.argv.insert(1, "scenario.N_episodes=2")
         # sys.argv.insert(1, "scenario.N_iterations=2")
@@ -64,62 +64,133 @@ class MPCTest(TestSetup):
 
 #######################################################################################################################
 #######################################################################################################################
-scenarios = (
-    "sdpg",
-    "ppo",
-    "ddpg",
-    "reinforce",
-    "dqn",
-    "sarsa",
-    "rpv",
-    "rql",
-    "rql_torch",
-    "sql",
-    "sql_torch",
-    "rpv_torch",
-    "mpc_torch",
-    "mpc",
-    "calf",
-    "calf_torch",
-)
+
 systems = "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "2tank", "lunar_lander"
 
-
-def get_kwargs(scenario):
-    if scenario == "mpc" or scenario == "mpc_torch":
-        return {}
-    elif scenario in ["reinforce", "ppo", "sdpg", "ddpg"]:
-        return {"scenario.N_iterations": 2, "scenario.N_episodes": 2}
-    else:
-        return {"scenario.N_iterations": 2}
+scenarios_overrides = {
+    "sdpg": {
+        "scenario.critic_n_epochs": 1,
+        "scenario.policy_n_epochs": 1,
+        "scenario.N_episodes": 2,
+        "scenario.N_iterations": 2,
+        "scenario.critic_td_n": 2,
+    },
+    "ppo": {
+        "scenario.critic_n_epochs": 1,
+        "scenario.policy_n_epochs": 1,
+        "scenario.N_episodes": 1,
+        "scenario.N_iterations": 1,
+    },
+    "ddpg": {
+        "scenario.critic_n_epochs": 1,
+        "scenario.policy_n_epochs": 1,
+        "scenario.N_episodes": 1,
+        "scenario.N_iterations": 1,
+    },
+    "reinforce": {
+        "scenario.policy_n_epochs": 1,
+        "scenario.N_episodes": 1,
+        "scenario.N_iterations": 1,
+    },
+    "sql": {
+        "scenario.prediction_horizon": 2,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+    },
+    "rql": {
+        "scenario.prediction_horizon": 2,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+    },
+    "rpv": {
+        "scenario.prediction_horizon": 2,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+    },
+    "mpc": {"scenario.prediction_horizon": 2},
+    "mpc_torch": {"scenario.n_epochs": 1, "scenario.prediction_horizon": 2},
+    "calf": {
+        "scenario.prediction_horizon": 1,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+    },
+    "calf_torch": {
+        "scenario.prediction_horizon": 1,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+        "scenario.policy_n_epochs": 1,
+        "scenario.critic_n_epochs": 1,
+        "scenario.critic_n_epochs_per_constraint": 1,
+    },
+    "sql_torch": {
+        "scenario.prediction_horizon": 2,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+        "scenario.policy_n_epochs": 1,
+    },
+    "rpv_torch": {
+        "scenario.prediction_horizon": 2,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+        "scenario.policy_n_epochs": 1,
+    },
+    "sql_torch": {
+        "scenario.prediction_horizon": 2,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+        "scenario.policy_n_epochs": 1,
+    },
+    "dqn": {
+        "scenario.N_iterations": 1,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+        "scenario.policy_n_epochs": 1,
+        "scenario.critic_n_epochs": 1,
+        "scenario.size_mesh": 5,
+    },
+    "sarsa": {
+        "scenario.N_iterations": 1,
+        "scenario.N_iterations": 1,
+        "scenario.critic_batch_size": 2,
+        "scenario.critic_td_n": 1,
+        "scenario.policy_n_epochs": 1,
+        "scenario.critic_n_epochs": 1,
+    },
+}
 
 
 basic = [
-    TestSetup(
-        system=system,
-        scenario=scenario,
-        **({"simulator.time_final": 3.0} | get_kwargs(scenario)),
+    TestSetup(system=system, scenario=scenario, **scenarios_overrides[scenario])
+    for scenario, system in zip(
+        scenarios_overrides.keys(), np.tile(systems, len(scenarios_overrides))
     )
-    for scenario, system in zip(scenarios, np.tile(systems, len(scenarios)))
 ]
 
 basic += [
     TestSetup(
         system="3wrobot_ni",
         scenario=scenario,
-        **{
-            "simulator.time_final": 3.0,
-            "constraint_parser": "constant_parser",
-            "prefix": "constraint",
-        },
+        **(
+            {
+                "constraint_parser": "constant_parser",
+                "prefix": "constraint",
+            }
+            | scenarios_overrides[scenario]
+        ),
     )
     for scenario in ["rpv", "sql", "mpc", "rql"]
 ]
 
-basic += [
-    TestSetup(system=system, scenario="nominal", **{"simulator.time_final": 1.0})
-    for system in systems
-]
+basic += [TestSetup(system=system, scenario="nominal") for system in systems]
 
 # basic += [
 #     TestSetup(

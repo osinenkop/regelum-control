@@ -22,7 +22,7 @@ discount_factor: 1.0
 N_iterations: 20
 epsilon_random_parameter: 0.05
 size_mesh: 100
-
+stopping_criterion: ~ stopping_criterion
 
 critic_model:
   dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action} 

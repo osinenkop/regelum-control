@@ -122,6 +122,17 @@ class SystemInterface(regelum.RegelumBase, ABC):
                 )
             return observations
 
+    def apply_action_bounds(self, action: np.array):
+        return (
+            np.clip(
+                action,
+                np.array(self.action_bounds)[:, 0],
+                np.array(self.action_bounds)[:, 1],
+            )
+            if self.action_bounds is not None
+            else action
+        )
+
 
 class ComposedSystem(SystemInterface):
     """Base class for composed systems.

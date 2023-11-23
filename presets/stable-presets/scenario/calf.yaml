@@ -4,12 +4,14 @@ name%%: calf
 
 running_objective: ~ running_objective
 simulator: ~ simulator
-prediction_horizon: 4
+prediction_horizon: 1
 sampling_time: $ system_specific.sampling_time
 observer: $ system_specific.observer
 discount_factor: 1.0
 safe_policy: ~ nominal_policy
 N_iterations: 5
+critic_td_n: 2
+critic_batch_size: 10
 
 critic_model:
   _target_: regelum.model.ModelQuadLin

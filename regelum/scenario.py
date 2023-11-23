@@ -15,7 +15,7 @@ from .__utilities import Clock, AwaitedParameter
 from regelum import RegelumBase
 from .policy import Policy, RLPolicy, PolicyPPO, PolicyReinforce, PolicySDPG, PolicyDDPG
 from .critic import Critic, CriticCALF, CriticTrivial
-from typing import Optional, Union, Type, Dict, List, Any
+from typing import Optional, Union, Type, Dict, List, Any, Callable
 from .objective import RunningObjective
 from .data_buffers import DataBuffer
 from .event import Event
@@ -40,22 +40,6 @@ from regelum.optimizable.core.configs import (
 from regelum.data_buffers.batch_sampler import RollingBatchSampler, EpisodicSampler
 
 
-def apply_action_bounds(method):
-    def wrapper(self, *args, **kwargs):
-        action = method(self, *args, **kwargs)
-        if action is not None:
-            self.action = action
-
-        if hasattr(self, "action_bounds") and self.action_bounds is not None:
-            action = np.clip(
-                self.action, self.action_bounds[:, 0], self.action_bounds[:, 1]
-            )
-            self.action = action
-        return self.action
-
-    return wrapper
-
-
 class Scenario(RegelumBase):
     """Scenario orchestrator.
 
@@ -69,7 +53,6 @@ class Scenario(RegelumBase):
         policy: Policy,
         simulator: Simulator,
         sampling_time: float = 0.1,
-        action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         running_objective: Optional[RunningObjective] = None,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -83,7 +66,6 @@ class Scenario(RegelumBase):
         :param policy: Policy to generate actions based on observations.
         :param simulator: Simulator to interact with and collect data for training.
         :param sampling_time: Time interval between action updates.
-        :param action_bounds: Boundaries for valid actions.
         :param running_objective: Objective function for evaluating performance.
         :param constraint_parser: Tool for parsing constraints during policy optimization.
         :param observer: Observer for estimating the system state.
@@ -100,16 +82,10 @@ class Scenario(RegelumBase):
         self.delta_time = 0
         self.value: float = 0.0
         self.recent_values_of_episodes = []
-        self.values_of_episodes = []
-        self.value_episodic_means = []
-        self.action_bounds = (
-            np.array(action_bounds) if action_bounds is not None else None
-        )
 
         self.sim_status = 1
         self.episode_counter = 0
         self.iteration_counter = 0
-        self.current_scenario_status = "episode_continues"
         self.value_threshold = value_threshold
         self.discount_factor = discount_factor
         self.is_episode_ended = False
@@ -160,6 +136,8 @@ class Scenario(RegelumBase):
                     self.sim_status = self.step()
 
                 self.reload_scenario()
+            if self.sim_status == "simulation_ended":
+                break
 
     def step(self):
         if isinstance(self.action_init, AwaitedParameter) and isinstance(
@@ -208,10 +186,12 @@ class Scenario(RegelumBase):
             if is_iteration_ended:
                 self.reset_iteration()
 
-                is_simulation_ended = self.iteration_counter >= self.N_iterations
+                is_simulation_ended = (
+                    self.iteration_counter >= self.N_iterations
+                    or self.sim_status == "simulation_ended"
+                )
 
                 if is_simulation_ended:
-                    self.reset_simulation()
                     return "simulation_ended"
                 else:
                     return "iteration_ended"
@@ -220,21 +200,11 @@ class Scenario(RegelumBase):
 
     @apply_callbacks()
     def reset_iteration(self):
-        self.episode_counter = 0
-        self.iteration_counter += 1
-        self.recent_values_of_episodes = self.values_of_episodes
-        self.values_of_episodes = []
+        pass
 
     def reset_episode(self):
-        self.episode_counter += 1
         self.is_episode_ended = False
-
         return self.value
-
-    def reset_simulation(self):
-        self.current_scenario_status = "episode_continues"
-        self.iteration_counter = 0
-        self.episode_counter = 0
 
     @apply_callbacks()
     def reload_scenario(self):
@@ -263,15 +233,16 @@ class Scenario(RegelumBase):
             "current_value": self.value,
         }
 
-    @apply_action_bounds
     def compute_action_sampled(self, time, estimated_state, observation):
         self.is_time_for_new_sample = self.clock.check_time(time)
         if self.is_time_for_new_sample:
             self.on_observation_received(time, estimated_state, observation)
-            action = self.compute_action(
-                time=time,
-                estimated_state=estimated_state,
-                observation=observation,
+            action = self.simulator.system.apply_action_bounds(
+                self.compute_action(
+                    time=time,
+                    estimated_state=estimated_state,
+                    observation=observation,
+                )
             )
             self.post_compute_action(observation, estimated_state)
             self.step_counter += 1
@@ -357,11 +328,9 @@ class RLScenario(Scenario):
         running_objective: RunningObjective,
         simulator: Simulator,
         policy_optimization_event: Event,
-        data_buffer_nullify_event: Event,
         critic_optimization_event: Event = None,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
-        action_bounds: Optional[Union[List[List[float]], np.ndarray]] = None,
         max_data_buffer_size: Optional[int] = None,
         sampling_time: float = 0.1,
         constraint_parser: Optional[ConstraintParser] = None,
@@ -369,6 +338,7 @@ class RLScenario(Scenario):
         N_episodes: int = 1,
         N_iterations: int = 1,
         value_threshold: float = np.inf,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Instantiate a RLScenario object.
 
@@ -382,8 +352,6 @@ class RLScenario(Scenario):
         :type critic_optimization_event: str
         :param policy_optimization_event: moments when to optimize critic. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
         :type policy_optimization_event: str
-        :param data_buffer_nullify_event: moments for DataBuffer nullifying. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
-        :type data_buffer_nullify_event: str
         :param discount_factor: Discount factor. Used for computing total objective as discounted sum (or integral) of running objectives, defaults to 1.0
         :type discount_factor: float, optional
         :param is_critic_first: if is True then critic is optimized first then policy (can be usefull in DQN or Predictive Algorithms such as RPV, RQL, SQL). For `False` firstly is policy optimized then critic. defaults to False
@@ -407,25 +375,33 @@ class RLScenario(Scenario):
             N_iterations=N_iterations,
             value_threshold=value_threshold,
             discount_factor=discount_factor,
-            action_bounds=action_bounds,
         )
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
-        self.data_buffer_nullify_event = data_buffer_nullify_event
         self.data_buffer = DataBuffer(max_data_buffer_size)
         self.critic = critic
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
+        self.stopping_criterion = stopping_criterion
 
     def _reset_whatever(self, suffix):
         def wrapped(*args, **kwargs):
             res = object.__getattribute__(self, f"reset_{suffix}")(*args, **kwargs)
             if self.sim_status != "simulation_ended":
                 self.optimize(event=getattr(Event, f"reset_{suffix}"))
+            if suffix == "iteration":
+                self.data_buffer.nullify_buffer()
             return res
 
         return wrapped
+
+    @apply_callbacks()
+    def reset_iteration(self):
+        super().reset_iteration()
+        if self.stopping_criterion is not None:
+            if self.stopping_criterion(self.data_buffer):
+                self.sim_status = "simulation_ended"
 
     def __getattribute__(self, name):
         if name == "issue_action":
@@ -435,11 +411,6 @@ class RLScenario(Scenario):
             return self._reset_whatever(suffix)
         else:
             return object.__getattribute__(self, name)
-
-    def reload_scenario(self):
-        res = super().reload_scenario()
-        self.critic.reset()
-        return res
 
     def on_observation_received(self, time, estimated_state, observation):
         self.critic.receive_estimated_state(estimated_state)
@@ -458,7 +429,6 @@ class RLScenario(Scenario):
         self.data_buffer.push_to_end(**received_data)
         return received_data
 
-    @apply_action_bounds
     @apply_callbacks()
     def compute_action(
         self,
@@ -491,9 +461,6 @@ class RLScenario(Scenario):
             if event == Event.compute_action:
                 self.issue_action(self.data_buffer.get_latest("observation"))
             self.optimize_or_skip_on_event(self.critic, event)
-
-        if event == self.data_buffer_nullify_event:
-            self.data_buffer.nullify_buffer()
 
     def optimize_or_skip_on_event(
         self,
@@ -551,9 +518,7 @@ class CALFScenario(RLScenario):
             running_objective=running_objective,
             critic_optimization_event=Event.compute_action,
             policy_optimization_event=Event.compute_action,
-            data_buffer_nullify_event=Event.reset_episode,
             discount_factor=discount_factor,
-            action_bounds=simulator.system.action_bounds,
             sampling_time=sampling_time,
             observer=observer,
             N_iterations=N_iterations,
@@ -579,7 +544,6 @@ class CALFScenario(RLScenario):
         return data
 
     @apply_callbacks()
-    @apply_action_bounds
     def compute_action(
         self,
         estimated_state,
@@ -875,9 +839,7 @@ class MPC(RLScenario):
             N_episodes=1,
             N_iterations=1,
             simulator=simulator,
-            data_buffer_nullify_event=Event.reset_episode,
             policy_optimization_event=Event.compute_action,
-            action_bounds=system.action_bounds,
             critic=CriticTrivial(),
             running_objective=running_objective,
             observer=observer,
@@ -916,6 +878,7 @@ def get_predictive_kwargs(
     N_iterations: int,
     discount_factor: float,
     algorithm_name: str,
+    stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     policy_model: Optional[Model] = None,
     critic_td_n: Optional[int] = None,
     critic_is_on_policy: Optional[bool] = None,
@@ -972,13 +935,12 @@ def get_predictive_kwargs(
     )
 
     return dict(
+        stopping_criterion=stopping_criterion,
         N_episodes=1,
         N_iterations=N_iterations,
         simulator=simulator,
-        data_buffer_nullify_event=Event.reset_episode,
         policy_optimization_event=Event.compute_action,
         critic_optimization_event=Event.compute_action,
-        action_bounds=system.action_bounds,
         critic=critic,
         running_objective=running_objective,
         observer=observer,
@@ -1008,6 +970,7 @@ class SQL(RLScenario):
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
         epsilon_random_parameter: Optional[float] = None,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Instantiate SQL.
 
@@ -1064,6 +1027,7 @@ class SQL(RLScenario):
                 critic_is_same_critic=False,
                 critic_n_samples=critic_batch_size,
                 epsilon_random_parameter=epsilon_random_parameter,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1088,6 +1052,7 @@ class RQL(RLScenario):
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
         epsilon_random_parameter: Optional[float] = None,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Instantiate RQLScenario.
 
@@ -1125,6 +1090,7 @@ class RQL(RLScenario):
         """
         super().__init__(
             **get_predictive_kwargs(
+                stopping_criterion=stopping_criterion,
                 simulator=simulator,
                 running_objective=running_objective,
                 prediction_horizon=prediction_horizon,
@@ -1167,6 +1133,7 @@ class RPV(RLScenario):
         policy_model: Optional[Model] = None,
         critic_model: Optional[Model] = None,
         critic_regularization_param: float = 0.0,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Instantiate RPV.
 
@@ -1204,6 +1171,7 @@ class RPV(RLScenario):
         """
         super().__init__(
             **get_predictive_kwargs(
+                stopping_criterion=stopping_criterion,
                 simulator=simulator,
                 running_objective=running_objective,
                 prediction_horizon=prediction_horizon,
@@ -1281,9 +1249,7 @@ class MPCTorch(RLScenario):
             simulator=simulator,
             N_episodes=1,
             N_iterations=1,
-            data_buffer_nullify_event=Event.reset_episode,
             policy_optimization_event=Event.compute_action,
-            action_bounds=system.action_bounds,
             critic=CriticTrivial(),
             running_objective=running_objective,
             observer=observer,
@@ -1347,6 +1313,7 @@ def get_predictive_torch_kwargs(
     critic_batch_size: Optional[int] = None,
     epsilon_random_parameter: Optional[float] = None,
     size_mesh: Optional[int] = None,
+    stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
 ):
     system = simulator.system
     critic = Critic(
@@ -1419,16 +1386,15 @@ def get_predictive_torch_kwargs(
         N_episodes=1,
         N_iterations=N_iterations,
         simulator=simulator,
-        data_buffer_nullify_event=Event.reset_episode,
         policy_optimization_event=Event.compute_action,
         critic_optimization_event=Event.compute_action,
-        action_bounds=system.action_bounds,
         critic=critic,
         running_objective=running_objective,
         observer=observer,
         sampling_time=sampling_time,
         policy=policy,
         is_critic_first=True,
+        stopping_criterion=stopping_criterion,
     )
 
 
@@ -1454,6 +1420,7 @@ class SQLTorch(RLScenario):
         policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         critic_model: Optional[ModelNN] = None,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         super().__init__(
             **get_predictive_torch_kwargs(
@@ -1480,6 +1447,7 @@ class SQLTorch(RLScenario):
                 critic_opt_method=critic_opt_method,
                 critic_opt_method_kwargs=critic_opt_method_kwargs,
                 critic_batch_size=critic_batch_size,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1507,6 +1475,7 @@ class RQLTorch(RLScenario):
         critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         critic_model: Optional[ModelNN] = None,
         epsilon_random_parameter: Optional[float] = None,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         super().__init__(
             **get_predictive_torch_kwargs(
@@ -1534,6 +1503,7 @@ class RQLTorch(RLScenario):
                 critic_opt_method_kwargs=critic_opt_method_kwargs,
                 critic_batch_size=critic_batch_size,
                 epsilon_random_parameter=epsilon_random_parameter,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1561,6 +1531,7 @@ class RPVTorch(RLScenario):
         critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         critic_model: Optional[ModelNN] = None,
         epsilon_random_parameter: Optional[float] = None,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         super().__init__(
             **get_predictive_torch_kwargs(
@@ -1588,6 +1559,7 @@ class RPVTorch(RLScenario):
                 critic_opt_method_kwargs=critic_opt_method_kwargs,
                 critic_batch_size=critic_batch_size,
                 epsilon_random_parameter=epsilon_random_parameter,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1613,6 +1585,7 @@ class SARSA(RLScenario):
         policy_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         epsilon_random_parameter: Optional[float] = None,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         super().__init__(
             **get_predictive_torch_kwargs(
@@ -1640,6 +1613,7 @@ class SARSA(RLScenario):
                 critic_opt_method_kwargs=critic_opt_method_kwargs,
                 critic_batch_size=critic_batch_size,
                 epsilon_random_parameter=epsilon_random_parameter,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1666,6 +1640,7 @@ class DQN(RLScenario):
         critic_opt_method: Optional[Type[torch.optim.Optimizer]] = torch.optim.Adam,
         epsilon_random_parameter: Optional[float] = None,
         size_mesh: int = 100,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         super().__init__(
             **get_predictive_torch_kwargs(
@@ -1694,6 +1669,7 @@ class DQN(RLScenario):
                 critic_batch_size=critic_batch_size,
                 epsilon_random_parameter=epsilon_random_parameter,
                 size_mesh=size_mesh,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1724,6 +1700,7 @@ def get_policy_gradient_kwargs(
     policy_kwargs: Dict[str, Any] = None,
     scenario_kwargs: Dict[str, Any] = None,
     is_use_critic_as_policy_kwarg: bool = True,
+    stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
 ):
     system = simulator.system
     if critic_model is not None:
@@ -1760,15 +1737,14 @@ def get_policy_gradient_kwargs(
         critic = CriticTrivial()
 
     return dict(
+        stopping_criterion=stopping_criterion,
         simulator=simulator,
         discount_factor=discount_factor,
-        data_buffer_nullify_event=Event.reset_iteration,
         policy_optimization_event=Event.reset_iteration,
         critic_optimization_event=Event.reset_iteration,
         N_episodes=N_episodes,
         N_iterations=N_iterations,
         running_objective=running_objective,
-        action_bounds=system.action_bounds,
         observer=observer,
         critic=critic,
         value_threshold=value_threshold,
@@ -1825,6 +1801,7 @@ class PPO(RLScenario):
         N_episodes: int = 2,
         N_iterations: int = 100,
         value_threshold: float = np.inf,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Initialize the object with the given parameters.
 
@@ -1903,6 +1880,7 @@ class PPO(RLScenario):
                 critic_n_epochs=critic_n_epochs,
                 critic_is_value_function=True,
                 is_reinstantiate_critic_optimizer=True,
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -1939,6 +1917,7 @@ class SDPG(RLScenario):
         N_episodes: int = 2,
         N_iterations: int = 100,
         value_threshold: float = np.inf,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Initialize SDPG.
 
@@ -2003,6 +1982,7 @@ class SDPG(RLScenario):
                 policy_kwargs=dict(
                     sampling_time=sampling_time,
                 ),
+                stopping_criterion=stopping_criterion,
             )
         )
 
@@ -2026,6 +2006,7 @@ class REINFORCE(RLScenario):
         value_threshold: float = np.inf,
         is_with_baseline: bool = True,
         is_do_not_let_the_past_distract_you: bool = True,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Initialize an REINFORCE object.
 
@@ -2080,6 +2061,7 @@ class REINFORCE(RLScenario):
                     is_do_not_let_the_past_distract_you=is_do_not_let_the_past_distract_you,
                 ),
                 is_use_critic_as_policy_kwarg=False,
+                stopping_criterion=stopping_criterion,
             ),
         )
 
@@ -2106,6 +2088,7 @@ class DDPG(RLScenario):
         N_episodes: int = 2,
         N_iterations: int = 100,
         value_threshold: float = np.inf,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     ):
         """Instantiate DDPG Scenario.
 
@@ -2167,6 +2150,7 @@ class DDPG(RLScenario):
                 critic_n_epochs=critic_n_epochs,
                 critic_is_value_function=False,
                 is_reinstantiate_critic_optimizer=True,
+                stopping_criterion=stopping_criterion,
             )
         )
 

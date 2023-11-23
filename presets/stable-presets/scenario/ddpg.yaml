@@ -18,14 +18,15 @@ observer: $ system_specific.observer
 discount_factor: 0.7
 N_iterations: 100
 N_episodes: 2
-
+stopping_criterion: ~ stopping_criterion
+critic_td_n: 1
 
 critic_n_epochs: 50
 critic_opt_method: = torch.optim.Adam
 critic_opt_method_kwargs: 
   lr: 0.001
 
-policy_n_epochs: 50
+policy_n_epochs: 1 
 policy_opt_method: = torch.optim.Adam
 policy_opt_method_kwargs: 
   lr: 0.01

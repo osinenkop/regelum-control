@@ -43,6 +43,8 @@ import regelum.__internal.base
 import numpy as np
 from typing import Dict, Any
 
+from regelum.event import Event
+
 
 def is_in_debug_mode():
     return sys.gettrace() is not None
@@ -768,7 +770,7 @@ def method_callback(method_name, class_name=None, log_level="debug"):
 class ScenarioStepLogger(Callback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
-    cooldown = 1.0
+    cooldown = 0.1
 
     def is_target_event(self, obj, method, output):
         return (
@@ -947,18 +949,19 @@ class ObjectiveSaver(HistoricalCallback):
     def perform(self, obj, method, output):
         if isinstance(obj, regelum.scenario.RLScenario) and (method == "pre_optimize"):
             which, event, time, episode_counter, iteration_counter = output
+            time = float(time)
             if which == "Critic":
                 self.key = f"B. {which} objective. "
             else:
                 self.key = f"C. {which} objective. "
 
-            if event == "compute_action":
+            if event == Event.compute_action:
                 if time is None:
                     raise ValueError("Time should be passed if one uses compute action")
                 self.key += f"Time {str(round(time, 4))}. Ep {str(episode_counter).zfill(5)}. It {str(iteration_counter).zfill(5)}"
-            elif event == "reset_episode":
+            elif event == Event.reset_episode:
                 self.key += f"Ep {str(episode_counter).zfill(5)}. It {str(iteration_counter).zfill(5)}"
-            elif event == "reset_iteration":
+            elif event == Event.reset_iteration:
                 self.key += f"It {str(iteration_counter).zfill(5)}"
 
         if isinstance(obj, regelum.optimizable.Optimizable) and (

@@ -7,7 +7,7 @@ defaults:
 
 running_objective: ~ running_objective
 simulator: ~ simulator
-prediction_horizon: 4
+prediction_horizon: 1
 sampling_time: $ system_specific.sampling_time
 observer: $ system_specific.observer
 discount_factor: 1.0

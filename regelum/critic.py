@@ -144,11 +144,6 @@ class Critic(Optimizable, ABC):
         """
         self.update_and_cache_weights(weights)
 
-    def reset(self):
-        """Reset the outcome and current critic loss variables, and re-initialize the buffers."""
-        self.value = 0
-        self.current_critic_loss = 0
-
     def initialize_optimize_procedure(self):
         self.batch_size = self.get_data_buffer_batch_size()
         (
@@ -523,10 +518,6 @@ class CriticCALF(Critic):
         keys = super().data_buffer_objective_keys()
         keys.append("observation_last_good")
         return keys
-
-    def reset(self):
-        """Reset the critic to its initial state."""
-        super().reset()
 
     def CALF_decay_constraint_no_prediction(
         self,

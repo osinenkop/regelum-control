@@ -21,6 +21,7 @@ observer: $ system_specific.observer
 constraint_parser: ~ constraint_parser
 discount_factor: 1.0
 N_iterations: 20
+stopping_criterion: ~ stopping_criterion
 
 
 critic_model:

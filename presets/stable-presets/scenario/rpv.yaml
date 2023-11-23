@@ -13,6 +13,7 @@ critic_regularization_param: 0.
 N_iterations: 5
 critic_td_n: 1
 critic_batch_size: 10
+stopping_criterion: ~ stopping_criterion
 
 critic_model:
   _target_: regelum.model.ModelQuadLin
