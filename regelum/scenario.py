@@ -124,9 +124,9 @@ class Scenario(RegelumBase):
         self.reset()
 
     def run(self):
-        for iteration_counter in range(self.N_iterations):
+        for iteration_counter in range(1, self.N_iterations + 1):
             self.iteration_counter = iteration_counter
-            for episode_counter in range(self.N_episodes):
+            for episode_counter in range(1, self.N_episodes + 1):
                 self.episode_counter = episode_counter
                 while self.sim_status not in [
                     "episode_ended",
@@ -148,7 +148,7 @@ class Scenario(RegelumBase):
                 self.action_init,
             ) = self.simulator.get_init_state_and_action()
 
-        if not self.is_episode_ended and self.value <= self.value_threshold:
+        if (not self.is_episode_ended) and (self.value <= self.value_threshold):
             (
                 self.time,
                 self.state,

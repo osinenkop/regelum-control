@@ -770,7 +770,7 @@ def method_callback(method_name, class_name=None, log_level="debug"):
 class ScenarioStepLogger(Callback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
-    cooldown = 0.1
+    cooldown = 1.0
 
     def is_target_event(self, obj, method, output):
         return (
