@@ -1,6 +1,0 @@
-regelum.pipeline.get\_policy\_gradient\_kwargs
-================================================
-
-.. currentmodule:: regelum.pipeline
-
-.. autofunction:: get_policy_gradient_kwargs

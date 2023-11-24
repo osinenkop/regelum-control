@@ -1,6 +1,0 @@
-regelum.optimizable.core.hooks.metadata\_closure
-================================================
-
-.. currentmodule:: regelum.optimizable.core.hooks
-
-.. autofunction:: metadata_closure

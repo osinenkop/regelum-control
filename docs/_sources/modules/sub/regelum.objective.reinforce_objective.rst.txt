@@ -1,6 +1,0 @@
-regelum.objective.reinforce\_objective
-======================================
-
-.. currentmodule:: regelum.objective
-
-.. autofunction:: reinforce_objective

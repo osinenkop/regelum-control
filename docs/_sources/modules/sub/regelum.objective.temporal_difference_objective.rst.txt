@@ -1,6 +1,0 @@
-regelum.objective.temporal\_difference\_objective
-=================================================
-
-.. currentmodule:: regelum.objective
-
-.. autofunction:: temporal_difference_objective
