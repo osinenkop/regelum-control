@@ -1,6 +1,0 @@
-regelum.objective.sql\_objective
-================================
-
-.. currentmodule:: regelum.objective
-
-.. autofunction:: sql_objective

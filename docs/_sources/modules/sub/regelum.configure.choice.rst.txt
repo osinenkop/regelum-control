@@ -1,6 +1,0 @@
-regelum.configure.choice
-========================
-
-.. currentmodule:: regelum.configure
-
-.. autofunction:: choice

@@ -1,6 +1,0 @@
-regelum.constraint\_parser.row\_wise
-====================================
-
-.. currentmodule:: regelum.constraint_parser
-
-.. autofunction:: row_wise

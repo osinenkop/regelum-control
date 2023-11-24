@@ -1,6 +1,0 @@
-regelum.objective.mpc\_objective
-================================
-
-.. currentmodule:: regelum.objective
-
-.. autofunction:: mpc_objective
