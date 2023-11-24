@@ -183,10 +183,11 @@ def ppo_objective(
     discount_factor: float,
     N_episodes: int,
     running_objectives: torch.FloatTensor,
-    epsilon: float,
+    cliprange: float,
     initial_log_probs: torch.FloatTensor,
     running_objective_type: str,
     sampling_time: float,
+    gae_lambda: float,
 ) -> torch.FloatTensor:
     """Calculate PPO objective.
 
@@ -229,15 +230,29 @@ def ppo_objective(
     prob_ratios = torch.exp(
         policy_model.log_pdf(observations, actions) - initial_log_probs.reshape(-1)
     ).reshape(-1, 1)
-    clipped_prob_ratios = torch.clamp(prob_ratios, 1 - epsilon, 1 + epsilon)
+    clipped_prob_ratios = torch.clamp(prob_ratios, 1 - cliprange, 1 + cliprange)
     objective_value = 0.0
     for episode_idx in torch.unique(episode_ids):
         mask = episode_ids.reshape(-1) == episode_idx
-        advantages = (
+        deltas = (
             running_objectives[mask][:-1]
             + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
         ).detach()
+
+        if gae_lambda == 0.0:
+            advantages = deltas
+        else:
+            gae_discount_factors = (gae_lambda * discount_factor) ** timestamps[mask][
+                :-1
+            ]
+            reversed_gae_discounted_deltas = torch.flip(
+                gae_discount_factors * deltas, dims=[0, 1]
+            )
+            advantages = (
+                torch.flip(reversed_gae_discounted_deltas.cumsum(dim=0), dims=[0, 1])
+                / gae_discount_factors
+            )
 
         objective_value += (
             torch.sum(

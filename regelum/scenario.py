@@ -1795,13 +1795,14 @@ class PPO(RLScenario):
         policy_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
         running_objective_type: str = "cost",
         critic_td_n: int = 1,
-        epsilon: float = 0.2,
+        cliprange: float = 0.2,
         discount_factor: float = 0.7,
         observer: Optional[Observer] = None,
         N_episodes: int = 2,
         N_iterations: int = 100,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+        gae_lambda: float = 0.0,
     ):
         """Initialize the object with the given parameters.
 
@@ -1831,8 +1832,8 @@ class PPO(RLScenario):
         :type running_objective_type: str
         :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
         :type critic_td_n: int
-        :param epsilon: Clipping parameter that restricts the deviation of the new policy from the old policy.
-        :type epsilon: float
+        :param cliprange: Clipping parameter that restricts the deviation of the new policy from the old policy.
+        :type cliprange: float
         :param discount_factor: A factor applied to future rewards or costs to discount their value relative to immediate ones.
         :type discount_factor: float
         :param observer: Object responsible for state estimation from observations.
@@ -1868,9 +1869,10 @@ class PPO(RLScenario):
                 policy_opt_method_kwargs=policy_opt_method_kwargs,
                 is_reinstantiate_policy_optimizer=True,
                 policy_kwargs=dict(
-                    epsilon=epsilon,
+                    cliprange=cliprange,
                     running_objective_type=running_objective_type,
                     sampling_time=sampling_time,
+                    gae_lambda=gae_lambda,
                 ),
                 policy_n_epochs=policy_n_epochs,
                 critic_model=critic_model,

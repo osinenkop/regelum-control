@@ -510,8 +510,9 @@ class PolicyPPO(PolicyGradient):
         sampling_time: float,
         discount_factor: float = 1.0,
         device: str = "cpu",
+        gae_lambda: float = 0.0,
         running_objective_type="cost",
-        epsilon: float = 0.2,
+        cliprange: float = 0.2,
     ):
         """Instantiate PPO policy class.
 
@@ -529,8 +530,8 @@ class PolicyPPO(PolicyGradient):
         :type discount_factor: float, optional
         :param device: Device to proceed the optimization process, defaults to "cpu"
         :type device: str, optional
-        :param epsilon: Epsilon parameter, defaults to 0.2
-        :type epsilon: float, optional
+        :param cliprange: Epsilon parameter, defaults to 0.2
+        :type cliprange: float, optional
         """
         PolicyGradient.__init__(
             self,
@@ -542,8 +543,9 @@ class PolicyPPO(PolicyGradient):
             optimizer_config=optimizer_config,
         )
         self.sampling_time = sampling_time
-        self.epsilon = epsilon
+        self.cliprange = cliprange
         self.running_objective_type = running_objective_type
+        self.gae_lambda = gae_lambda
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -576,9 +578,10 @@ class PolicyPPO(PolicyGradient):
             episode_ids=episode_id.long(),
             running_objectives=running_objective,
             initial_log_probs=initial_log_probs,
-            epsilon=self.epsilon,
+            cliprange=self.cliprange,
             running_objective_type=self.running_objective_type,
             sampling_time=self.sampling_time,
+            gae_lambda=self.gae_lambda,
         )
 
     def update_data_buffer(self, data_buffer: DataBuffer):
