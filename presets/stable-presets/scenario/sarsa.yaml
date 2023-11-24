@@ -7,14 +7,14 @@ defaults:
 
 running_objective: ~ running_objective
 simulator: ~ simulator
-critic_td_n: 1
-critic_batch_size: 10 
+critic_td_n: 50
+critic_batch_size: 100 
 policy_n_epochs: 20
-critic_n_epochs: 1
+critic_n_epochs: 10
 policy_opt_method_kwargs: 
   lr: 0.1
 critic_opt_method_kwargs:
-  lr: 0.1
+  lr: 0.0001
 sampling_time: $ system_specific.sampling_time
 observer: $ system_specific.observer
 constraint_parser: ~ constraint_parser

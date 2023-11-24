@@ -421,10 +421,12 @@ class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):
 
     _pic = "3wrobot.svg"
     _rot = 225
+    # _ms = 250
+    _frames = 500
 
     def lim(self, *args, **kwargs):
-        self.ax.set_xlim(-15, 15)
-        self.ax.set_ylim(-15, 15)
+        self.ax.set_xlim(-7, 7)
+        self.ax.set_ylim(-7, 7)
 
 
 class BarAnimation(AnimationCallback, callback.StateTracker):

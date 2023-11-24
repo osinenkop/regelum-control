@@ -787,8 +787,8 @@ class ScenarioStepLogger(Callback):
                 f"action: {output['action'][0]}, "
                 f"total objective: {output['current_value']:.4f}, "
                 f"time: {output['timestamp']:.4f} ({100 * output['timestamp']/obj.simulator.time_final:.1f}%), "
-                f"episode: {int(output['episode_id']) + 1}/{obj.N_episodes}, "
-                f"iteration: {int(output['iteration_id']) + 1}/{obj.N_iterations}"
+                f"episode: {int(output['episode_id'])}/{obj.N_episodes}, "
+                f"iteration: {int(output['iteration_id'])}/{obj.N_iterations}"
             )
 
 
