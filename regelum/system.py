@@ -19,20 +19,23 @@ from typing_extensions import Self
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
-    """
-    Generic interface for systems (environments).
+    """Abstract base class defining the interface for system environments.
+
+    This interface sets the foundation for specific system implementations,
+    providing properties for common attributes and abstract methods that
+    must be implemented by subclasses to define system dynamics and observations.
 
     Attributes:
-        _name (Optional[str]): The name of the system.
-        _system_type (Optional[str]): The type of the system. For example, "diff_eqn" for a differential equation system.
-        _dim_state (Optional[int]): The dimensionality of the system's state.
-        _dim_inputs (Optional[int]): The dimensionality of the system's inputs. Inputs mostly are interpreted as control inputs.
-        _dim_observation (Optional[int]): The dimensionality of the system's observation.
-        _parameters (Optional[dict]): The parameters of the system.
-        _observation_naming (Optional[List[str]]): The naming of the observation dimensions.
-        _inputs_naming (Optional[List[str]]): The naming of the inputs dimensions.
-        _action_naming (Optional[List[str]]): The naming of the action dimensions.
-        _action_bounds (Optional[List[List[float]]]): The bounds for each action dimension.
+        _name: Name identifier for the system.
+        _system_type: A string representing the type of the system (e.g., "diff_eqn").
+        _dim_state: The number of state variables of the system.
+        _dim_inputs: The number of input variables, typically control inputs.
+        _dim_observation: The number of observation variables.
+        _parameters: A dictionary of system parameters.
+        _observation_naming: A list of strings naming each observation dimension.
+        _states_naming: A list of strings naming each state dimension.
+        _inputs_naming: A list of strings naming each input dimension.
+        _action_bounds: A list of pairs defining the lower and upper bounds for each action dimension.
     """
 
     _name: Optional[str] = None
@@ -161,7 +164,13 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
 
 class ComposedSystem(SystemInterface):
-    """Base class for composed systems.
+    """Represents a composed system created from combining two subsystems.
+
+    The composed system allows for creating complex system dynamics by
+    combining simpler subsystems. The outputs of one subsystem can be
+    connected to the inputs of another through an input/output mapping.
+
+    Attributes are inherited and further defined based on the combination of subsystems.
 
     An instance of this class is being created automatically when applying a `@` operation on two systems.
     """
@@ -403,7 +412,12 @@ class ComposedSystem(SystemInterface):
 
 
 class System(SystemInterface):
-    """Base class for controlled systems implementation."""
+    """Class representing a controllable system with predefined dynamics and observations.
+
+    Attributes and methods are inherited from SystemInterface. This class
+    serves as a base implementation of a system with additional functionality
+    to receive control inputs and update system parameters.
+    """
 
     def __init__(
         self,
@@ -468,7 +482,7 @@ class System(SystemInterface):
 
 
 class KinematicPoint(System):
-    """System representing Kinematic Point (omnibot)."""
+    """System representing a simple 2D kinematic point that can move in any direction."""
 
     _name = "kinematic-point"
     _system_type = "diff_eqn"
@@ -491,25 +505,18 @@ class KinematicPoint(System):
         return Dstate
 
 
-class InvertedPendulumPID(System):
-    """System class: mathematical pendulum."""
+class InvertedPendulum(System):
+    """System representing an inverted pendulum, with state representing angle and angular velocity."""
 
     _name = "inverted-pendulum"
     _system_type = "diff_eqn"
     _dim_state = 2
     _dim_inputs = 1
-    _dim_observation = 3
+    _dim_observation = 2
     _parameters = {"m": 1, "g": 9.8, "l": 1}
     _observation_naming = _state_naming = ["angle", "angular velocity"]
     _inputs_naming = ["momentum"]
     _action_bounds = [[-20.0, 20.0]]
-
-    def __init__(self, *args, **kwargs):
-        """Initialize an instance of an Inverted Pendulum, which gives an observation suitable for PID scenario."""
-        super().__init__(*args, **kwargs)
-
-        self.time_old = 0
-        self.integral_alpha = 0
 
     def _compute_state_dynamics(self, time, state, inputs):
         Dstate = rg.zeros(
@@ -528,24 +535,45 @@ class InvertedPendulumPID(System):
 
         return Dstate
 
-    def _get_observation(self, time, state, inputs):
-        delta_time = time - self.time_old if time is not None else 0
-        self.integral_alpha += delta_time * state[0]
 
-        return rg.hstack([state[0], self.integral_alpha, state[1]])
+class ThreeWheeledRobotNI(System):
+    r"""Implements the ThreeWheeledRobotNI (Non-holonomic robot a.k.a. Brockett integrator).
 
-    def reset(self):
-        self.time_old = 0
-        self.integral_alpha = 0
+    This system class defines the dynamics of a 3-wheeled robot with non-holonomic constraints.
+    The robot's dynamics are given by the following differential equations:
 
+    .. math::
+        \begin{aligned}
+            &  \dot{x}_{\text{rob}} = v \cos(\\vartheta), \\
+            &  \dot{y}_{\text{rob}} = v \sin(\\vartheta), \\
+            & \dot{\\vartheta} = \\mega.
+        \end{aligned}
 
-class InvertedPendulumPD(InvertedPendulumPID):
-    """System class: ordinary mathematical pendulum."""
+    Where:
+    - :math:`\dot{x}_{\text{rob}}` is the rate of change of the robot's x-position.
+    - :math:`\dot{y}_{\text{rob}}` is the rate of change of the robot's y-position.
+    - :math:`\vartheta` is the robot's orientation.
+    - :math:`v` is the linear velocity input.
+    - :math:`\omega` is the angular velocity input.
+    """
 
-    _dim_observation = 2
+    _name = "three-wheeled-robot-ni"
+    _system_type = "diff_eqn"
+    _dim_state = 3
+    _dim_inputs = 2
+    _dim_observation = 3
+    _observation_naming = _state_naming = ["x", "y", "angle"]
+    _inputs_naming = ["velocity", "angular velocity"]
+    _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
 
-    def _get_observation(self, time, state, inputs):
-        return rg.hstack([state[0], state[1]])
+    def _compute_state_dynamics(self, time, state, inputs):
+        Dstate = rg.zeros(self.dim_state, prototype=(state, inputs))
+
+        Dstate[0] = inputs[0] * rg.cos(state[2])
+        Dstate[1] = inputs[0] * rg.sin(state[2])
+        Dstate[2] = inputs[1]
+
+        return Dstate
 
 
 class ThreeWheeledRobot(System):
@@ -624,7 +652,7 @@ class ThreeWheeledRobot(System):
 
 
 class Integrator(System):
-    """System yielding Non-holonomic double integrator when composed with kinematic thre-wheeled robot."""
+    """System yielding Non-holonomic double integrator when composed with non-holomonic three-wheeled robot."""
 
     _name = "integral-parts"
     _system_type = "diff_eqn"
@@ -647,189 +675,9 @@ class Integrator(System):
         return Dstate
 
 
-class ThreeWheeledRobotNI(System):
-    r"""Implements the ThreeWheeledRobotNI (Non-holonomic robot a.k.a. Brockett integrator).
-
-    This system class defines the dynamics of a 3-wheeled robot with non-holonomic constraints.
-    The robot's dynamics are given by the following differential equations:
-
-    .. math::
-        \begin{aligned}
-            &  \dot{x}_{\text{rob}} = v \cos(\\vartheta), \\
-            &  \dot{y}_{\text{rob}} = v \sin(\\vartheta), \\
-            & \dot{\\vartheta} = \\mega.
-        \end{aligned}
-
-    Where:
-    - :math:`\dot{x}_{\text{rob}}` is the rate of change of the robot's x-position.
-    - :math:`\dot{y}_{\text{rob}}` is the rate of change of the robot's y-position.
-    - :math:`\vartheta` is the robot's orientation.
-    - :math:`v` is the linear velocity input.
-    - :math:`\omega` is the angular velocity input.
-    """
-
-    _name = "three-wheeled-robot-ni"
-    _system_type = "diff_eqn"
-    _dim_state = 3
-    _dim_inputs = 2
-    _dim_observation = 3
-    _observation_naming = _state_naming = ["x", "y", "angle"]
-    _inputs_naming = ["velocity", "angular velocity"]
-    _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
-
-    def _compute_state_dynamics(self, time, state, inputs):
-        Dstate = rg.zeros(self.dim_state, prototype=(state, inputs))
-
-        Dstate[0] = inputs[0] * rg.cos(state[2])
-        Dstate[1] = inputs[0] * rg.sin(state[2])
-        Dstate[2] = inputs[1]
-
-        return Dstate
-
-
-ThreeWheeledRobotComposed = (Integrator() @ ThreeWheeledRobotNI()).permute_state(
+three_wheeled_robot_alternative = (Integrator() @ ThreeWheeledRobotNI()).permute_state(
     [3, 4, 0, 1, 2]
 )
-
-
-class TwoTank(System):
-    """Two-tank system with nonlinearity."""
-
-    _name = "two-tank"
-    _system_type = "diff_eqn"
-    _dim_state = 2
-    _dim_inputs = 1
-    _dim_observation = 2
-    _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
-    _observation_naming = _state_naming = ["h1", "h2"]
-    _inputs_naming = ["P"]
-    _action_bounds = [[0.0, 1.0]]
-
-    def _compute_state_dynamics(self, time, state, inputs):
-        tau1, tau2, K1, K2, K3 = (
-            self.parameters["tau1"],
-            self.parameters["tau2"],
-            self.parameters["K1"],
-            self.parameters["K2"],
-            self.parameters["K3"],
-        )
-
-        Dstate = rg.zeros(
-            self.dim_state,
-            prototype=(state, inputs),
-        )
-        Dstate[0] = 1 / (tau1) * (-state[0] + K1 * inputs[0])
-        Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
-
-        return Dstate
-
-
-class ConstantReference(System):
-    """Subtracts reference from system."""
-
-    name = "constant_reference"
-    _system_type = "diff_eqn"
-    _dim_state = 0
-    _dim_inputs = 2
-    _dim_observation = 2
-    _parameters = {"reference": np.array([[0.4], [0.4]])}
-
-    def __init__(self, reference: Optional[Union[List[float], np.array]] = None):
-        """Instantiate ConstantReference.
-
-        Args:
-            reference (Optional[Union[List[float], np.array]], optional):
-                reference to be substracted from inputs, defaults to
-                None
-        """
-        if reference is None:
-            super().__init__(
-                system_parameters_init=None, state_init=None, inputs_init=None
-            )
-        else:
-            super().__init__(
-                system_parameters_init={
-                    "reference": np.array(reference).reshape(-1, 1)
-                },
-                state_init=None,
-                inputs_init=None,
-            )
-            self._dim_inputs = self._dim_observation = (
-                np.array(reference).reshape(-1).shape[0]
-            )
-
-    def _get_observation(self, time, state, inputs):
-        return inputs - rg.array(
-            self.parameters["reference"], prototype=inputs, _force_numeric=True
-        )
-
-    def _compute_state_dynamics(self, time, state, inputs):
-        return inputs
-
-
-class SystemWithConstantReference(ComposedSystem):
-    """Creates system with that substracts from state a reference value."""
-
-    def __init__(self, system: System, state_reference: Union[List[float], np.array]):
-        """Instantiate System with ConstantReference.
-
-        The result ComposedSystem's method get_observation subtracts from state reference value state_reference.
-
-        Args:
-            system (System): system
-            state_reference (Union[List[float], np.array]): reference to
-                be subtracted from state.
-        """
-        constant_reference = ConstantReference(state_reference)
-
-        assert (
-            system.dim_state == constant_reference.dim_inputs
-        ), "state_reference should have the same length as dimension of state of system"
-
-        super().__init__(
-            sys_left=system,
-            sys_right=constant_reference,
-            io_mapping=None,
-            output_mode="right",
-            inputs_naming=system.inputs_naming,
-            state_naming=system.state_naming,
-            observation_naming=[s + "-ref" for s in system.state_naming],
-            action_bounds=system.action_bounds,
-        )
-
-
-class GridWorld(System):
-    """A simple 2-dimensional grid world with five actions: left, right, up, down and do nothing.
-
-    The inputs encoding rule is as follows: right, left, up, down, do nothing -> 0, 1, 2, 3, 4.
-    """
-
-    def __init__(self, dims, terminal_state):
-        """Initialize an instance of GridWorld.
-
-        Args:
-            dims (tuple): grid dimensions (height, width)
-            terminal_state (list): coordinates of goal cell
-        """
-        self.dims = dims
-        self.terminal_state = terminal_state
-
-    def _compute_state_dynamics(self, current_state, inputs):
-        if tuple(self.terminal_state) == tuple(current_state):
-            return current_state
-        if inputs == 0:
-            if current_state[1] < self.dims[1] - 1:
-                return (current_state[0], current_state[1] + 1)
-        elif inputs == 2:
-            if current_state[0] > 0:
-                return (current_state[0] - 1, current_state[1])
-        elif inputs == 1:
-            if current_state[1] > 0:
-                return (current_state[0], current_state[1] - 1)
-        elif inputs == 3:
-            if current_state[0] < self.dims[0] - 1:
-                return (current_state[0] + 1, current_state[1])
-        return current_state
 
 
 class CartPole(System):
@@ -898,6 +746,38 @@ class CartPole(System):
         )
 
         return rg.hstack([theta_observed, x, theta_dot, x_dot])
+
+
+class TwoTank(System):
+    """Two-tank system with nonlinearity."""
+
+    _name = "two-tank"
+    _system_type = "diff_eqn"
+    _dim_state = 2
+    _dim_inputs = 1
+    _dim_observation = 2
+    _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
+    _observation_naming = _state_naming = ["h1", "h2"]
+    _inputs_naming = ["P"]
+    _action_bounds = [[0.0, 1.0]]
+
+    def _compute_state_dynamics(self, time, state, inputs):
+        tau1, tau2, K1, K2, K3 = (
+            self.parameters["tau1"],
+            self.parameters["tau2"],
+            self.parameters["K1"],
+            self.parameters["K2"],
+            self.parameters["K3"],
+        )
+
+        Dstate = rg.zeros(
+            self.dim_state,
+            prototype=(state, inputs),
+        )
+        Dstate[0] = 1 / (tau1) * (-state[0] + K1 * inputs[0])
+        Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
+
+        return Dstate
 
 
 class LunarLander(System):
@@ -1063,3 +943,94 @@ class LunarLander(System):
             rg.array([0.0, 0.0]),
         )
         return -reaction
+
+
+class ConstantReference(System):
+    """Subtracts reference from system."""
+
+    name = "constant_reference"
+    _system_type = "diff_eqn"
+    _dim_state = 0
+    _dim_inputs = 2
+    _dim_observation = 2
+    _parameters = {"reference": np.array([[0.4], [0.4]])}
+
+    def __init__(self, reference: Optional[Union[List[float], np.array]] = None):
+        """Instantiate ConstantReference.
+
+        Args:
+            reference (Optional[Union[List[float], np.array]], optional):
+                reference to be substracted from inputs, defaults to
+                None
+        """
+        if reference is None:
+            super().__init__(
+                system_parameters_init=None, state_init=None, inputs_init=None
+            )
+        else:
+            super().__init__(
+                system_parameters_init={
+                    "reference": np.array(reference).reshape(-1, 1)
+                },
+                state_init=None,
+                inputs_init=None,
+            )
+            self._dim_inputs = self._dim_observation = (
+                np.array(reference).reshape(-1).shape[0]
+            )
+
+    def _get_observation(self, time, state, inputs):
+        return inputs - rg.array(
+            self.parameters["reference"], prototype=inputs, _force_numeric=True
+        )
+
+    def _compute_state_dynamics(self, time, state, inputs):
+        return inputs
+
+
+class SystemWithConstantReference(ComposedSystem):
+    """Composed system created by combining a system with a constant reference subtraction."""
+
+    def __init__(self, system: System, state_reference: Union[List[float], np.array]):
+        """Instantiate System with ConstantReference.
+
+        The result ComposedSystem's method get_observation subtracts from state reference value state_reference.
+
+        Args:
+            system (System): system
+            state_reference (Union[List[float], np.array]): reference to
+                be subtracted from state.
+        """
+        constant_reference = ConstantReference(state_reference)
+
+        assert (
+            system.dim_state == constant_reference.dim_inputs
+        ), "state_reference should have the same length as dimension of state of system"
+        np_constant_reference = np.array(constant_reference).reshape(-1)
+        super().__init__(
+            sys_left=system,
+            sys_right=constant_reference,
+            io_mapping=None,
+            output_mode="right",
+            inputs_naming=system.inputs_naming,
+            state_naming=system.state_naming,
+            observation_naming=[
+                s + f"-{np_constant_reference[i]}"
+                for i, s in enumerate(system.state_naming)
+            ],
+            action_bounds=system.action_bounds,
+        )
+
+
+class LunarLanderReferenced(SystemWithConstantReference):
+    def __init__(self):
+        """Instantiate TwoTankReferenced."""
+        super().__init__(
+            system=LunarLander(), state_reference=[0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+        )
+
+
+class TwoTankReferenced(SystemWithConstantReference):
+    def __init__(self):
+        """Instantiate TwoTankReferenced."""
+        super().__init__(system=TwoTank(), state_reference=[0.4, 0.4])
