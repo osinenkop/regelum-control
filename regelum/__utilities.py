@@ -124,7 +124,10 @@ class Clock:
         self.delta_time = time - self.current_time
         self.current_time = time
 
-        if self.is_first_time_called or abs(self.current_time % self.period) < 1e-5:
+        if (
+            self.is_first_time_called
+            or self.current_time > self.last_sampled_time + self.period - self.eps
+        ):
             self.last_sampled_time = time
             result = True
         else:
