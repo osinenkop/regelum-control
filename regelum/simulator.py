@@ -19,7 +19,7 @@ Remarks:
 import numpy as np
 
 import regelum
-from .__utilities import rg
+from .utilis import rg
 from .system import System, ComposedSystem
 from typing import Union, Optional
 from abc import ABC

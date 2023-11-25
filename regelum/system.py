@@ -9,13 +9,14 @@ Remarks:
 """
 from __future__ import annotations
 import numpy as np
-
+import casadi as cs
 
 import regelum
 from abc import ABC, abstractmethod
-from .__utilities import rg
-from typing import Optional, Union, List
+from .utilis import rg
+from typing import Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
+from regelum.typing import RgArray
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
@@ -27,7 +28,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
     Attributes:
         _name: Name identifier for the system.
-        _system_type: A string representing the type of the system (e.g., "diff_eqn").
+        _system_type: A string representing the type of the system (e.g., `"diff_eqn"`).
         _dim_state: The number of state variables of the system.
         _dim_inputs: The number of input variables, typically control inputs.
         _dim_observation: The number of observation variables.
@@ -43,9 +44,9 @@ class SystemInterface(regelum.RegelumBase, ABC):
     _dim_state: Optional[int] = None
     _dim_inputs: Optional[int] = None
     _dim_observation: Optional[int] = None
-    _parameters: Optional[dict] = {}
+    _parameters: Optional[Dict[str, float]] = {}
     _observation_naming: Optional[List[str]] = None
-    _states_naming: Optional[List[str]] = None
+    _state_naming: Optional[List[str]] = None
     _inputs_naming: Optional[List[str]] = None
     _action_bounds: Optional[List[List[float]]] = None
 
@@ -74,13 +75,13 @@ class SystemInterface(regelum.RegelumBase, ABC):
         return self._dim_observation
 
     @property
-    def dim_inputs(self):
+    def dim_inputs(self) -> int:
         if self._dim_inputs is None:
             raise ValueError("system._dim_inputs should be set")
         return self._dim_inputs
 
     @property
-    def parameters(self):
+    def parameters(self) -> dict:
         return self._parameters
 
     @property
@@ -100,23 +101,57 @@ class SystemInterface(regelum.RegelumBase, ABC):
         return self._action_bounds
 
     @abstractmethod
-    def _compute_state_dynamics(time, state, inputs):
-        """Compute the dynamics of the state at a given time.
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
+        """Compute the derivative of the state with respect to time given the current state and inputs.
 
-        Parameters:
-            time (float): The time at which to compute the state dynamics.
-            state (object): The current state of the system.
-            inputs (object): The inputs to the system, e.g. control inputs.
+        This abstract method must be implemented by the inheriting system classes to define the specific system
+        dynamics for the simulation. It provides the fundamental mathematical model that describes how the state
+        of the system evolves over time in response to (e.g control or noisy) inputs.
+
+        It is intended to be used internally by the `regelum.system.SystemInterface.compute_state_dynamics` method which provides a public interface,
+        handling dimensionality enforcement and batch processing if necessary. The '_compute_state_dynamics' method
+        ensures that the core dynamics calculations are encapsulated within each system's subclass, promoting a clear
+        separation of the dynamics computation from any input preprocessing or other wrapping functionality.
+
+        The implementation of this method in derived classes will typically involve evaluating the differential equations
+        that govern the system's dynamics, returning the rate of change of the system's state variables.
+
+        Args:
+            time: The current simulation time.
+            state: The current state vector of the system, where state[i] corresponds to the i-th state variable.
+            inputs: The current input vector to the system, where inputs[i] corresponds to the i-th control input.
 
         Returns:
+            The computed rate of change of the system's state vector.
 
-
+        Note:
+            This method does not update the state of the system. It only returns the derivative which may then
+            be used by a numerical integrator to simulate the system's behavior over time.
         """
         pass
 
     def compute_state_dynamics(
-        self, time, state, inputs, _native_dim=False
-    ) -> np.ndarray:
+        self,
+        time: Union[float, cs.MX],
+        state: RgArray,
+        inputs: RgArray,
+        _native_dim: bool = False,
+    ) -> RgArray:
+        """Computes the state dynamics of the system given the current state and inputs.
+
+        This method is a public wrapper for the abstract method `_compute_state_dynamics`, which must be implemented by derived classes.
+
+        Arguments:
+            time: Current simulation time.
+            state: The current state of the system.
+            inputs: The current inputs to the system.
+            _native_dim (optional): A flag indicating whether the method should maintain the original dimensionality of its inputs.
+
+        Returns:
+            The computed state dynamics.
+        """
         if not _native_dim:
             return rg.force_row(
                 self._compute_state_dynamics(
@@ -127,10 +162,19 @@ class SystemInterface(regelum.RegelumBase, ABC):
             return self._compute_state_dynamics(time, state, inputs)
 
     @abstractmethod
-    def _get_observation(self, time, state, inputs):
+    def _get_observation(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         pass
 
-    def get_observation(self, time, state, inputs, _native_dim=False, is_batch=False):
+    def get_observation(
+        self,
+        time: Union[float, cs.MX],
+        state: RgArray,
+        inputs: RgArray,
+        _native_dim: bool = False,
+        is_batch: bool = False,
+    ) -> RgArray:
         if not is_batch:
             if not _native_dim:
                 return rg.force_row(
@@ -151,7 +195,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
                 )
             return observations
 
-    def apply_action_bounds(self, action: np.array):
+    def apply_action_bounds(self, action: np.array) -> np.array:
         return (
             np.clip(
                 action,
@@ -179,12 +223,12 @@ class ComposedSystem(SystemInterface):
         self,
         sys_left: Union[System, Self],
         sys_right: Union[System, Self],
-        io_mapping: Optional[list] = None,
+        io_mapping: Optional[List[int]] = None,
         output_mode="right",
-        state_naming=None,
-        inputs_naming=None,
-        observation_naming=None,
-        action_bounds=None,
+        state_naming: List[str] = None,
+        inputs_naming: List[str] = None,
+        observation_naming: List[str] = None,
+        action_bounds: List[List[float]] = None,
     ):
         """Initialize a composed system by specifying systems to compose.
 
@@ -247,7 +291,7 @@ class ComposedSystem(SystemInterface):
         self.inverse_permutation = np.arange(self.dim_observation).astype(int)
 
     @staticmethod
-    def __get_routing(io_mapping):
+    def __get_routing(io_mapping: List[int]):
         io_mapping_extended = []
 
         for i, outputs in enumerate(io_mapping):
@@ -272,7 +316,13 @@ class ComposedSystem(SystemInterface):
         rout_idx, occupied_idx = rg.array(io_mapping_extended).astype(int).T
         return rout_idx, occupied_idx
 
-    def _compute_state_dynamics(self, time, state, inputs, _native_dim=True):
+    def _compute_state_dynamics(
+        self,
+        time: Union[float, cs.MX],
+        state: RgArray,
+        inputs: RgArray,
+        _native_dim: bool = True,
+    ) -> RgArray:
         state = rg.array(state, prototype=state)
         inputs = rg.array(inputs, prototype=state)
         state = state[self.forward_permutation]
@@ -327,7 +377,13 @@ class ComposedSystem(SystemInterface):
             final_dstate_vector = rg.force_row(final_dstate_vector)
         return final_dstate_vector
 
-    def _get_observation(self, time, state, inputs, _native_dim=False):
+    def _get_observation(
+        self,
+        time: Union[float, cs.MX],
+        state: RgArray,
+        inputs: RgArray,
+        _native_dim: bool = False,
+    ) -> RgArray:
         state = rg.array(state, prototype=state)
         inputs = rg.array(inputs, prototype=state)
 
@@ -373,15 +429,15 @@ class ComposedSystem(SystemInterface):
 
         return output
 
-    def receive_action(self, action):
+    def receive_action(self, action: np.array) -> None:
         self.inputs = action
 
-    def update_system_parameters(self, inputs):
+    def update_system_parameters(self, inputs: Dict[str, float]) -> None:
         assert isinstance(inputs, dict)
         self.sys_left.update_system_parameters(inputs)
         self.sys_right.update_system_parameters(inputs)
 
-    def permute_state(self, permutation: Union[list, np.array]) -> Self:
+    def permute_state(self, permutation: Union[List[int], np.array]) -> Self:
         """Permute an order at which the system outputs are returned.
 
         Args:
@@ -395,19 +451,26 @@ class ComposedSystem(SystemInterface):
         self.inverse_permutation = self.get_inverse_permutation(permutation)
         return self
 
-    def get_inverse_permutation(self, permutation):
+    def get_inverse_permutation(
+        self, permutation: Union[List[int], np.array]
+    ) -> np.array:
         self.current_permutation = permutation
         permutation = np.asanyarray(permutation)
         inverse_permutation = np.empty_like(permutation)
         inverse_permutation[permutation] = np.arange(permutation.size)
         return inverse_permutation
 
-    def compose(self, sys_right, io_mapping=None, output_mode="state"):
+    def compose(
+        self,
+        sys_right: SystemInterface,
+        io_mapping: Optional[List[int]] = None,
+        output_mode: str = "state",
+    ) -> ComposedSystem:
         return ComposedSystem(
             self, sys_right, io_mapping=io_mapping, output_mode=output_mode
         )
 
-    def __matmul__(self, sys_right):
+    def __matmul__(self, sys_right: SystemInterface) -> Self:
         return self.compose(sys_right)
 
 
@@ -421,7 +484,7 @@ class System(SystemInterface):
 
     def __init__(
         self,
-        system_parameters_init=None,
+        system_parameters_init: Dict[str, float] = None,
         state_init: Optional[np.ndarray] = None,
         inputs_init: Optional[np.ndarray] = None,
     ):
@@ -461,23 +524,30 @@ class System(SystemInterface):
         else:
             self.inputs = inputs_init
 
-    def _get_observation(self, time, state, inputs):
+    def _get_observation(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ):
         return state
 
-    def receive_action(self, action):
+    def receive_action(self, action: np.array) -> None:
         self.inputs = action
 
-    def update_system_parameters(self, inputs):
+    def update_system_parameters(self, inputs: Dict[str, float]) -> Dict[str, float]:
         assert isinstance(inputs, dict)
         self._parameters.update(inputs)
         return self.parameters
 
-    def compose(self, sys_right, io_mapping=None, output_mode="state"):
+    def compose(
+        self,
+        sys_right: SystemInterface,
+        io_mapping: Optional[List[int]] = None,
+        output_mode: str = "state",
+    ):
         return ComposedSystem(
             self, sys_right, io_mapping=io_mapping, output_mode=output_mode
         )
 
-    def __matmul__(self, sys_right):
+    def __matmul__(self, sys_right: SystemInterface) -> Self:
         return self.compose(sys_right)
 
 
@@ -493,7 +563,9 @@ class KinematicPoint(System):
     _inputs_naming = ["v_x", "v_y"]
     _action_bounds = [[-10.0, 10.0], [-10.0, 10.0]]
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -518,7 +590,9 @@ class InvertedPendulum(System):
     _inputs_naming = ["momentum"]
     _action_bounds = [[-20.0, 20.0]]
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -566,7 +640,9 @@ class ThreeWheeledRobotNI(System):
     _inputs_naming = ["velocity", "angular velocity"]
     _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         Dstate = rg.zeros(self.dim_state, prototype=(state, inputs))
 
         Dstate[0] = inputs[0] * rg.cos(state[2])
@@ -634,7 +710,9 @@ class ThreeWheeledRobot(System):
     _inputs_naming = ["Force", "Momentum"]
     _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -661,7 +739,9 @@ class Integrator(System):
     _dim_observation = 2
     _parameters = {"m": 10, "I": 1}
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -693,7 +773,9 @@ class CartPole(System):
     _inputs_naming = ["force"]
     _action_bounds = [[-300.0, 300.0]]
 
-    def _compute_state_dynamics(self, time, state, inputs, disturb=None):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -732,7 +814,9 @@ class CartPole(System):
 
         return Dstate
 
-    def _get_observation(self, time, state, inputs):
+    def _get_observation(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ):
         theta = state[0]
         x = state[1]
         theta_dot = state[2]
@@ -761,7 +845,9 @@ class TwoTank(System):
     _inputs_naming = ["P"]
     _action_bounds = [[0.0, 1.0]]
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         tau1, tau2, K1, K2, K3 = (
             self.parameters["tau1"],
             self.parameters["tau2"],
@@ -783,7 +869,10 @@ class TwoTank(System):
 class LunarLander(System):
     """Lunar lander system.
 
-    link: https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf.
+    The basis of this system is taken from the [following paper](https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf).
+
+    The LunarLander class simulates a lunar lander during its descent to the moon's surface. It models both the
+    vertical and lateral dynamics as well as the lander's rotation.
     """
 
     _name = "lander"
@@ -810,7 +899,23 @@ class LunarLander(System):
         self.l = np.sqrt(self.parameters["a"] ** 2 + self.parameters["r"] ** 2)
         self.is_landed = False
 
-    def _compute_state_dynamics(self, time, state, inputs, disturb=None):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
+        """Compute the state dynamics of the lunar lander based on its physical model.
+
+        This method calculates the derivative of the lander's state variables, considering the applied forces from
+        thrusters and the gravitational forces. It checks for landing conditions to alter the dynamics accordingly, such
+        as setting velocities to zero upon touching down.
+
+        Args:
+            time: The current simulation time.
+            state: The current state of the lunar lander.
+            inputs: The current inputs to the lander.
+
+        Returns:
+            The state vector's derivative with respect to time.
+        """
         Dstate_before_landing = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -827,7 +932,7 @@ class LunarLander(System):
         y_dot = state[4]
         theta_dot = state[5]
 
-        left_support, right_support = self.compute_supports_geometry(state[:2], theta)
+        left_support, right_support = self._compute_supports_geometry(state[:2], theta)
 
         self.is_landed = (
             rg.if_else(left_support[1] <= 0, 1, 0)
@@ -881,7 +986,25 @@ class LunarLander(System):
 
         return Dstate
 
-    def _compute_pendulum_dynamics(self, angle, angle_dot, prototype):
+    def _compute_pendulum_dynamics(
+        self,
+        angle: Union[RgArray, float],
+        angle_dot: Union[RgArray, float],
+        prototype: RgArray,
+    ) -> RgArray:
+        """Compute the dynamics of the lander when it is in contact with the ground, constrained like a pendulum.
+
+        This method is used internally to modify the dynamics of the lander when one of its extremities touches down,
+        causing it to behave like a pendulum.
+
+        Args:
+            angle: The angle of the pendulum.
+            angle_dot: The derivative of the pendulum angle.
+            prototype: A prototype array indicating the desired shape and type for the returned state derivative.
+
+        Returns:
+            The computed state vector's derivative with pendulum-like constraints applied.
+        """
         Dstate = rg.zeros(
             self.dim_state,
             prototype=prototype,
@@ -900,15 +1023,26 @@ class LunarLander(System):
 
         return Dstate
 
-    def compute_supports_geometry(self, xi, theta):
-        A = rg.zeros((2, 2), prototype=xi)
+    def _compute_supports_geometry(
+        self, xi: Union[RgArray, float], theta: Union[RgArray, float]
+    ) -> Tuple[Union[RgArray, float], Union[RgArray, float]]:
+        """Calculate the positions of the left and right supports of the lander.
+
+        Args:
+            xi: The position vector of the lander's center of gravity.
+            theta: The current orientation angle of the lander.
+
+        Returns:
+            The positions of the left and right supports.
+        """
+        rotation_operator = rg.zeros((2, 2), prototype=xi)
         xi_2 = rg.zeros((2, 1), prototype=xi)
         xi_3 = rg.zeros((2, 1), prototype=xi)
 
-        A[0, 0] = rg.cos(theta)
-        A[0, 1] = -rg.sin(theta)
-        A[1, 0] = rg.sin(theta)
-        A[1, 1] = rg.cos(theta)
+        rotation_operator[0, 0] = rg.cos(theta)
+        rotation_operator[0, 1] = -rg.sin(theta)
+        rotation_operator[1, 0] = rg.sin(theta)
+        rotation_operator[1, 1] = rg.cos(theta)
 
         a, r = self.parameters["a"], self.parameters["r"]
         xi_2[0, 0] = xi[0, 0] - a
@@ -919,17 +1053,26 @@ class LunarLander(System):
         xi_2_d = xi_2 - xi
         xi_3_d = xi_3 - xi
 
-        xi_2_d_rot = A @ xi_2_d
-        xi_3_d_rot = A @ xi_3_d
+        xi_2_d_rot = rotation_operator @ xi_2_d
+        xi_3_d_rot = rotation_operator @ xi_3_d
         xi_2_new = xi + xi_2_d_rot
         xi_3_new = xi + xi_3_d_rot
         return xi_2_new, xi_3_new
 
-    def compute_reaction(
+    def _compute_reaction(
         self,
-        r,
-        r_support,
-    ):
+        r: Union[RgArray, float],
+        r_support: Union[RgArray, float],
+    ) -> Union[RgArray, float]:
+        """Compute the reaction forces when the lander's supports are in contact with the ground.
+
+        Args:
+            r: The position vector of the lander's center of gravity.
+            r_support: The position vector of one of the lander's supports.
+
+        Returns:
+            np.array: The computed reaction forces at the point of contact.
+        """
         m, g, sigma = (
             self.parameters["m"],
             self.parameters["g"],
@@ -979,12 +1122,16 @@ class ConstantReference(System):
                 np.array(reference).reshape(-1).shape[0]
             )
 
-    def _get_observation(self, time, state, inputs):
+    def _get_observation(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         return inputs - rg.array(
             self.parameters["reference"], prototype=inputs, _force_numeric=True
         )
 
-    def _compute_state_dynamics(self, time, state, inputs):
+    def _compute_state_dynamics(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ) -> RgArray:
         return inputs
 
 

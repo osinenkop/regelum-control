@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 import regelum
-from .__utilities import rg
+from .utilis import rg
 from .system import System
 from .model import ModelWeightContainer, ModelWeightContainerTorch
 import torch

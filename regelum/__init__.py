@@ -34,7 +34,7 @@ from omegaconf.errors import ConfigKeyError, InterpolationResolutionError
 
 import hashlib
 
-from . import __utilities
+from . import utilis
 
 
 import rehydra
@@ -995,8 +995,8 @@ warnings.filterwarnings("ignore", category=pd.io.pytables.PerformanceWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-array = __utilities.rg.array
-rg = __utilities.rg
+array = utilis.rg.array
+rg = utilis.rg
 
 
 class _FancyModule(types.ModuleType):

@@ -10,7 +10,7 @@ from scipy.stats import truncnorm
 import regelum
 
 
-from .__utilities import rg
+from .utilis import rg
 
 try:
     import torch

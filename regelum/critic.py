@@ -10,7 +10,7 @@ Remarks:
 
 from unittest.mock import MagicMock
 import numpy as np
-from .__utilities import rg
+from .utilis import rg
 from abc import ABC
 from .optimizable import Optimizable
 from .objective import temporal_difference_objective

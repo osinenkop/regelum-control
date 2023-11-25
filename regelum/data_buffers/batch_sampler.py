@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Union
-from .types import RgArrayType, RgArray
+from regelum.typing import RgArrayType, RgArray
 import numpy as np
 import torch
 

@@ -13,7 +13,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Optional
 import casadi as cs
-from .__utilities import rg, AwaitedParameter
+from .utilis import rg, AwaitedParameter
 
 from .predictor import Predictor
 from .model import ModelNN, Model, ModelWeightContainer

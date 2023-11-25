@@ -1,7 +1,7 @@
 """Contains a tool box for parsing constraints that are injected outside."""
 
 from . import RegelumBase
-from .__utilities import rg
+from .utilis import rg
 from abc import abstractmethod, ABC
 import numpy as np
 from itertools import groupby

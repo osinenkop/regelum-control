@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from enum import Enum, auto
 
-from regelum.__utilities import rg
+from regelum.utilis import rg
 
 try:
     from casadi import Opti

@@ -41,7 +41,7 @@ plugins:
               ignore_init_summary: true
             members_order: source
             docstring_section_style: list
-            # filters: ["!^_"]
+            filters: [""]
             heading_level: 1
             inherited_members: false
             merge_init_into_class: true

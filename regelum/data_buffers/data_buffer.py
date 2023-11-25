@@ -1,21 +1,13 @@
 """Contains DataBuffer class."""
 
-try:
-    import torch
-    from torch.utils.data import Sampler
-except ImportError:
-    from unittest.mock import MagicMock
-
-    torch = MagicMock()
-
 import numpy as np
 import pandas as pd
 import casadi as cs
+import torch
 
 from typing import Optional, List, Union, Any, Type, Iterable
-from .types import RgArray, RgArrayType
-from .batch_sampler import RollingBatchSampler
-from .fifo_list import FifoList
+from regelum.typing import RgArray, RgArrayType
+from .batch_sampler import RollingBatchSampler, BatchSampler
 from collections import defaultdict
 from ..optimizable import OptimizerConfig
 
@@ -30,16 +22,8 @@ class DataBuffer:
 
     def __init__(
         self,
-        max_buffer_size: Optional[int] = None,
     ):
-        """Instantiate a DataBuffer.
-
-        Args:
-            max_buffer_size (Optional[int], optional): maximum size of
-                the buffer. If None the DataBuffer is not limited in
-                size, defaults to None
-        """
-        self.max_buffer_size = max_buffer_size
+        """Instantiate a DataBuffer."""
         self.nullify_buffer()
 
     def delete_key(self, key) -> None:
@@ -49,7 +33,7 @@ class DataBuffer:
         return list(self.data.keys())
 
     def nullify_buffer(self) -> None:
-        self.data = defaultdict(lambda: FifoList(max_size=self.max_buffer_size))
+        self.data = defaultdict(list)
         self.keys_for_indexing = None
         self.dtype_for_indexing = None
         self.device_for_indexing = None
@@ -198,7 +182,7 @@ class DataBuffer:
     def iter_batches(
         self,
         keys: List[str],
-        batch_sampler: Type[Sampler] = RollingBatchSampler,
+        batch_sampler: Type[BatchSampler] = RollingBatchSampler,
         **batch_sampler_kwargs,
     ) -> Iterable[RgArray]:
         return batch_sampler(data_buffer=self, keys=keys, **batch_sampler_kwargs)

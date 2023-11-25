@@ -11,7 +11,7 @@ Remarks:
 import numpy as np
 import torch
 
-from .__utilities import Clock, AwaitedParameter
+from .utilis import Clock, AwaitedParameter
 from regelum import RegelumBase
 from .policy import Policy, RLPolicy, PolicyPPO, PolicyReinforce, PolicySDPG, PolicyDDPG
 from .critic import Critic, CriticCALF, CriticTrivial
