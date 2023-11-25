@@ -26,7 +26,7 @@ except ModuleNotFoundError:
     torch = MagicMock()
     UpdatableSampler = MagicMock()
 
-from typing import Callable, List, Tuple, Optional, Union, Dict
+from typing import Any, Callable, List, Tuple, Optional, Union, Dict
 
 from .core.configs import OptimizerConfig
 from .core.entities import (
@@ -40,6 +40,44 @@ from .core.entities import (
 from .core.hooks import requires_grad, detach, data_closure
 
 import regelum
+
+
+class source_data_hook:
+    def __init__(self, source, source_kwargs, func):
+        self.source = source
+        self.source_kwargs = source_kwargs
+        self.func = func
+        self.__name__ = "source_data_hook"
+
+    def __call__(self, whatever):
+        kwargs = {
+            kwarg: var(True) if isinstance(var, OptimizationVariable) else var
+            for kwarg, var in self.source_kwargs.items()
+        }
+        if self.source is None:
+            return self.func(**kwargs)
+        else:
+            return self.func(self.source(True), **kwargs)
+
+
+class source_metadata_hook:
+    def __init__(self, source, source_kwargs, func):
+        self.source = source
+        self.source_kwargs = source_kwargs
+        self.func = func
+        self.__name__ = "source_metadata_hook"
+
+    def __call__(self, whatever):
+        kwargs = {
+            kwarg: var(with_metadata=True)
+            if isinstance(var, OptimizationVariable)
+            else var
+            for kwarg, var in self.source_kwargs.items()
+        }
+        if self.source is None:
+            return self.func(**kwargs)
+        else:
+            return self.func(self.source(with_metadata=True), **kwargs)
 
 
 class Optimizable(regelum.RegelumBase):
@@ -509,31 +547,10 @@ class Optimizable(regelum.RegelumBase):
         :param discard_prev_sources: If True, previous sources connected to `connect_to` will be discarded. Defaults to True.
         :param source_kwargs: Additional keyword arguments to pass to the function alongside the source variable.
         """
-
-        def source_hook(whatever):
-            kwargs = {
-                kwarg: var() if isinstance(var, OptimizationVariable) else var
-                for kwarg, var in source_kwargs.items()
-            }
-            if source is None:
-                return func(**kwargs)
-            else:
-                return func(source(), **kwargs)
-
-        def source_metadata_hook(whatever):
-            kwargs = {
-                kwarg: var(with_metadata=True)
-                if isinstance(var, OptimizationVariable)
-                else var
-                for kwarg, var in source_kwargs.items()
-            }
-            if source is None:
-                return func(**kwargs)
-            else:
-                return func(source(with_metadata=True), **kwargs)
-
-        data_hook = Hook(source_hook, act_on="data")
-        metadata_hook = Hook(source_metadata_hook, act_on="metadata")
+        data_hook = Hook(source_data_hook(source, source_kwargs, func), act_on="data")
+        metadata_hook = Hook(
+            source_metadata_hook(source, source_kwargs, func), act_on="metadata"
+        )
 
         if discard_prev_sources:
             for hook in connect_to.hooks:

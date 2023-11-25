@@ -204,10 +204,7 @@ class OptimizationVariable:
         """
         if not isinstance(hook, Hook):
             hook = Hook(hook, act_on=act_on)
-        if (
-            self.hooks.hooks_container is not None
-            and hook.name in self.hooks.hooks_container.names
-        ):
+        if self.hooks.hooks_container and hook.name in self.hooks.hooks_container.names:
             if first:
                 hook_to_delete = [
                     hook_tmp
