@@ -46,8 +46,11 @@ class DataBuffer:
     def keys(self) -> List[str]:
         return list(self.data.keys())
 
+    def fifo_list(self):
+        return FifoList(max_size=self.max_buffer_size)
+
     def nullify_buffer(self) -> None:
-        self.data = defaultdict(lambda: FifoList(max_size=self.max_buffer_size))
+        self.data = defaultdict(self.fifo_list)
         self.keys_for_indexing = None
         self.dtype_for_indexing = None
         self.device_for_indexing = None

@@ -124,10 +124,7 @@ class Clock:
         self.delta_time = time - self.current_time
         self.current_time = time
 
-        if (
-            self.is_first_time_called
-            or self.current_time > self.last_sampled_time + self.period - self.eps
-        ):
+        if self.is_first_time_called or abs(self.current_time % self.period) < 1e-5:
             self.last_sampled_time = time
             result = True
         else:
@@ -148,6 +145,7 @@ class AwaitedParameter:
 
     name: str
     awaited_from: Optional[str]
+    _string_to_show: str = ""
 
     def __post_init__(self):
         self._string_to_show = f"Parameter {self.name}'s value is awaited from the source {self.awaited_from}"
@@ -167,10 +165,17 @@ class AwaitedParameter:
             "_string_to_show",
             "__post_init__",
             "__instancecheck__",
+            "__reduce_ex__",
+            "__reduce__",
+            "__getstate__",
+            "__setstate__",
+            "__dict__",
+            "__class__",
+            "__deepcopy__",
         ]:
             return object.__getattribute__(self, name)
         else:
-            raise Exception(str(self))
+            raise Exception(str(self) + f" Attempted to get {name}")
 
 
 # TODO: ADD DOCSTRING
