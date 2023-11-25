@@ -1,6 +1,6 @@
 """Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
-Remarks: 
+Remarks:
 
 - All vectors are treated as of type [n,]
 - All buffers are treated as of type [L, n] where each row is a vector
@@ -19,17 +19,32 @@ from typing_extensions import Self
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
-    """System Interface."""
+    """
+    Generic interface for systems (environments).
+
+    Attributes:
+        _name (Optional[str]): The name of the system.
+        _system_type (Optional[str]): The type of the system. For example, "diff_eqn" for a differential equation system.
+        _dim_state (Optional[int]): The dimensionality of the system's state.
+        _dim_inputs (Optional[int]): The dimensionality of the system's inputs. Inputs mostly are interpreted as control inputs.
+        _dim_observation (Optional[int]): The dimensionality of the system's observation.
+        _parameters (Optional[dict]): The parameters of the system.
+        _observation_naming (Optional[List[str]]): The naming of the observation dimensions.
+        _inputs_naming (Optional[List[str]]): The naming of the inputs dimensions.
+        _action_naming (Optional[List[str]]): The naming of the action dimensions.
+        _action_bounds (Optional[List[List[float]]]): The bounds for each action dimension.
+    """
 
     _name: Optional[str] = None
     _system_type: Optional[str] = None
     _dim_state: Optional[int] = None
     _dim_inputs: Optional[int] = None
     _dim_observation: Optional[int] = None
-    _parameters = {}
-    _observation_naming = _state_naming = None
-    _inputs_naming = None
-    _action_bounds = None
+    _parameters: Optional[dict] = {}
+    _observation_naming: Optional[List[str]] = None
+    _states_naming: Optional[List[str]] = None
+    _inputs_naming: Optional[List[str]] = None
+    _action_bounds: Optional[List[List[float]]] = None
 
     @property
     def name(self) -> str:
@@ -83,6 +98,17 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
     @abstractmethod
     def _compute_state_dynamics(time, state, inputs):
+        """Compute the dynamics of the state at a given time.
+
+        Parameters:
+            time (float): The time at which to compute the state dynamics.
+            state (object): The current state of the system.
+            inputs (object): The inputs to the system, e.g. control inputs.
+
+        Returns:
+
+
+        """
         pass
 
     def compute_state_dynamics(
@@ -153,14 +179,16 @@ class ComposedSystem(SystemInterface):
     ):
         """Initialize a composed system by specifying systems to compose.
 
-        :param sys_left: System outputs of which are to connected to the inputs of the right system
-        :type sys_left: Union[System, Self]
-        :param sys_right: Second system that can be connected to the inputs of the left system
-        :type sys_right: Union[System, Self]
-        :param io_mapping: Mapping of inputs of the right system to inputs of the left system, defaults to None
-        :type io_mapping: Optional[list], optional
-        :param output_mode: How to combine the result outputs, defaults to "right"
-        :type output_mode: str, optional
+        Args:
+            sys_left (Union[System, Self]): System outputs of which are
+                to connected to the inputs of the right system
+            sys_right (Union[System, Self]): Second system that can be
+                connected to the inputs of the left system
+            io_mapping (Optional[list], optional): Mapping of inputs of
+                the right system to inputs of the left system, defaults
+                to None
+            output_mode (str, optional): How to combine the result
+                outputs, defaults to "right"
         """
         self._state_naming = state_naming
         self._inputs_naming = inputs_naming
@@ -347,10 +375,12 @@ class ComposedSystem(SystemInterface):
     def permute_state(self, permutation: Union[list, np.array]) -> Self:
         """Permute an order at which the system outputs are returned.
 
-        :param permutation: Permutation represented as an array of indices
-        :type permutation: Union[list, np.array]
-        :return: link to self
-        :rtype: Self
+        Args:
+            permutation (Union[list, np.array]): Permutation represented
+                as an array of indices
+
+        Returns:
+            Self: link to self
         """
         self.forward_permutation = rg.array(permutation).astype(int)
         self.inverse_permutation = self.get_inverse_permutation(permutation)
@@ -383,12 +413,13 @@ class System(SystemInterface):
     ):
         """Initialize an instance of a system.
 
-        :param system_parameters_init: Set system parameters manually, defaults to {}
-        :type system_parameters_init: dict, optional
-        :param state_init: Set initial state manually, defaults to None
-        :type state_init: Optional[np.ndarray], optional
-        :param inputs_init: Set initial inputs manually, defaults to None
-        :type inputs_init: Optional[np.ndarray], optional
+        Args:
+            system_parameters_init (dict, optional): Set system
+                parameters manually, defaults to {}
+            state_init (Optional[np.ndarray], optional): Set initial
+                state manually, defaults to None
+            inputs_init (Optional[np.ndarray], optional): Set initial
+                inputs manually, defaults to None
         """
         if system_parameters_init is None:
             system_parameters_init = {}
@@ -706,8 +737,10 @@ class ConstantReference(System):
     def __init__(self, reference: Optional[Union[List[float], np.array]] = None):
         """Instantiate ConstantReference.
 
-        :param reference: reference to be substracted from inputs, defaults to None
-        :type reference: Optional[Union[List[float], np.array]], optional
+        Args:
+            reference (Optional[Union[List[float], np.array]], optional):
+                reference to be substracted from inputs, defaults to
+                None
         """
         if reference is None:
             super().__init__(
@@ -742,10 +775,10 @@ class SystemWithConstantReference(ComposedSystem):
 
         The result ComposedSystem's method get_observation subtracts from state reference value state_reference.
 
-        :param system: system
-        :type system: System
-        :param state_reference: reference to be subtracted from state.
-        :type state_reference: Union[List[float], np.array]
+        Args:
+            system (System): system
+            state_reference (Union[List[float], np.array]): reference to
+                be subtracted from state.
         """
         constant_reference = ConstantReference(state_reference)
 
@@ -774,10 +807,9 @@ class GridWorld(System):
     def __init__(self, dims, terminal_state):
         """Initialize an instance of GridWorld.
 
-        :param dims: grid dimensions (height, width)
-        :type dims: tuple
-        :param terminal_state: coordinates of goal cell
-        :type terminal_state: list
+        Args:
+            dims (tuple): grid dimensions (height, width)
+            terminal_state (list): coordinates of goal cell
         """
         self.dims = dims
         self.terminal_state = terminal_state

@@ -53,9 +53,12 @@ def is_in_debug_mode():
 def passdown(CallbackClass):
     """Decorate a callback class in such a way that its event handling is inherited by derived classes.
 
-    :param CallbackClass:
-    :type CallbackClass: type
-    :return: altered class that passes down its handlers to derived classes (regardless of whether handling methods are overriden)
+    Args:
+        CallbackClass (type)
+
+    Returns:
+        altered class that passes down its handlers to derived classes
+        (regardless of whether handling methods are overriden)
     """
 
     class PassdownCallback(CallbackClass):
@@ -736,13 +739,13 @@ class HistoricalCallback(Callback, ABC):
 def method_callback(method_name, class_name=None, log_level="debug"):
     """Create a callback class that logs the output of a specific method of a class or any class.
 
-    :param method_name: Name of the method to log output for.
-    :type method_name: str
-    :param class_name: (Optional) Name of the class the method belongs to. If not specified, the callback will log the output for the method of any class.
-    :type class_name: str or class
-    :param log_level: (Optional) The level of logging to use. Default is "debug".
-    :type log_level: str
-
+    Args:
+        method_name (str): Name of the method to log output for.
+        class_name (str or class): (Optional) Name of the class the
+            method belongs to. If not specified, the callback will log
+            the output for the method of any class.
+        log_level (str): (Optional) The level of logging to use. Default
+            is "debug".
     """
     if class_name is not None:
         class_name = (

@@ -216,9 +216,12 @@ class ComplementedConfig:
     def __init__(self, cfg, config_path=""):
         """Initialize a complemented config.
 
-        :param cfg: rehydra config object
-        :param config_path: path to a config file
-        :return: The self object
+        Args:
+            cfg: rehydra config object
+            config_path: path to a config file
+
+        Returns:
+            The self object
         :doc-author: Trelent
         """
         self._rehydra_config = cfg

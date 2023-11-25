@@ -34,8 +34,10 @@ class DataBuffer:
     ):
         """Instantiate a DataBuffer.
 
-        :param max_buffer_size: maximum size of the buffer. If None the DataBuffer is not limited in size, defaults to None
-        :type max_buffer_size: Optional[int], optional
+        Args:
+            max_buffer_size (Optional[int], optional): maximum size of
+                the buffer. If None the DataBuffer is not limited in
+                size, defaults to None
         """
         self.max_buffer_size = max_buffer_size
         self.nullify_buffer()

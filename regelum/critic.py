@@ -1,6 +1,6 @@
 """Contains critics, which are integrated in scenarios (agents).
 
-Remarks: 
+Remarks:
 
 - All vectors are treated as of type [n,]
 - All buffers are treated as of type [L, n] where each row is a vector
@@ -53,30 +53,37 @@ class Critic(Optimizable, ABC):
     ):
         """Initialize a critic object.
 
-        :param system: system environmen that is used in RL problem. The system is mainly used for extraction of `dim_observation` and `dim_action`
-        :type system: Union[System, ComposedSystem]
-        :param model: Model to use for the critic
-        :type model: Union[Model, ModelNN]
-        :param td_n: How many running_objective terms to use for temporal difference, defaults to 1
-        :type td_n: int, optional
-        :param device: Device to use for optimization, defaults to "cpu"
-        :type device: Union[str, torch.device], optional
-        :param is_same_critic: whether to use the undetached critic in temporal difference loss, defaults to False
-        :type is_same_critic: bool, optional
-        :param is_value_function: whether critis is Value function (i.e. depends on observation only) or Q-function (i.e. depends on observation and action). For `True` the critic is Value function. For `False` the critic is Q-function, defaults to False
-        :type is_value_function: bool, optional
-        :param is_on_policy: whether critic is on policy or off policy optimized, defaults to False
-        :type is_on_policy: bool, optional
-        :param optimizer_config: optimizer configuration, defaults to None
-        :type optimizer_config: Optional[OptimizerConfig], optional
-        :param action_bounds: action bounds. Needed for DQN algorithm for constraint optimization problem, defaults to None
-        :type action_bounds: Optional[Union[List, np.array]], optional
-        :param size_mesh: action grid mesh size, needed for DQN algorithm for constraint optimization problem, defaults to None
-        :type size_mesh: Optional[int], optional
-        :param discount_factor: discount factor to use in temporal difference loss, defaults to 1.0
-        :type discount_factor: float, optional
-        :param sampling_time: scenario sampling time. Needed in temporal difference loos, defaults to 0.01
-        :type sampling_time: float, optional
+        Args:
+            system (Union[System, ComposedSystem]): system environmen
+                that is used in RL problem. The system is mainly used
+                for extraction of `dim_observation` and `dim_action`
+            model (Union[Model, ModelNN]): Model to use for the critic
+            td_n (int, optional): How many running_objective terms to
+                use for temporal difference, defaults to 1
+            device (Union[str, torch.device], optional): Device to use
+                for optimization, defaults to "cpu"
+            is_same_critic (bool, optional): whether to use the
+                undetached critic in temporal difference loss, defaults
+                to False
+            is_value_function (bool, optional): whether critis is Value
+                function (i.e. depends on observation only) or
+                Q-function (i.e. depends on observation and action). For
+                `True` the critic is Value function. For `False` the
+                critic is Q-function, defaults to False
+            is_on_policy (bool, optional): whether critic is on policy
+                or off policy optimized, defaults to False
+            optimizer_config (Optional[OptimizerConfig], optional):
+                optimizer configuration, defaults to None
+            action_bounds (Optional[Union[List, np.array]], optional):
+                action bounds. Needed for DQN algorithm for constraint
+                optimization problem, defaults to None
+            size_mesh (Optional[int], optional): action grid mesh size,
+                needed for DQN algorithm for constraint optimization
+                problem, defaults to None
+            discount_factor (float, optional): discount factor to use in
+                temporal difference loss, defaults to 1.0
+            sampling_time (float, optional): scenario sampling time.
+                Needed in temporal difference loos, defaults to 0.01
         """
         Optimizable.__init__(self, optimizer_config=optimizer_config)
 
@@ -103,12 +110,15 @@ class Critic(Optimizable, ABC):
     def __call__(self, *args, use_stored_weights=False, weights=None):
         """Compute the value of the critic function for a given observation and/or action.
 
-        :param args: tuple of the form (observation, action) or (observation,)
-        :type args: tuple
-        :param use_stored_weights: flag indicating whether to use the stored weights of the critic model or the current weights
-        :type use_stored_weights: bool
-        :return: value of the critic function
-        :rtype: float
+        Args:
+            *args (tuple): tuple of the form (observation, action) or
+                (observation,)
+            use_stored_weights (bool): flag indicating whether to use
+                the stored weights of the critic model or the current
+                weights
+
+        Returns:
+            float: value of the critic function
         """
         return self.model(*args, use_stored_weights=use_stored_weights, weights=weights)
 
@@ -120,16 +130,20 @@ class Critic(Optimizable, ABC):
     def update_weights(self, weights=None):
         """Update the weights of the critic model.
 
-        :param weights: new weights to be used for the critic model, if not provided the optimized weights will be used
-        :type weights: numpy array
+        Args:
+            weights (numpy array): new weights to be used for the critic
+                model, if not provided the optimized weights will be
+                used
         """
         self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
         """Store a copy of the current model weights.
 
-        :param weights: An optional ndarray of weights to store. If not provided, the current
-            model weights are stored. Default is None.
+        Args:
+            weights: An optional ndarray of weights to store. If not
+                provided, the current model weights are stored. Default
+                is None.
         """
         self.model.cache_weights(weights)
 
@@ -140,7 +154,8 @@ class Critic(Optimizable, ABC):
     def update_and_cache_weights(self, weights=None):
         """Update the model's weights and cache the new values.
 
-        :param weights: new weights for the model (optional)
+        Args:
+            weights: new weights for the model (optional)
         """
         self.update_and_cache_weights(weights)
 
@@ -421,38 +436,36 @@ class CriticCALF(Critic):
     ):
         """Instantiate a CriticCALF object. The docstring will be completed in the next release.
 
-        :param system: _description_
-        :type system: _type_
-        :param model: _description_
-        :type model: Union[Model, ModelNN]
-        :param td_n: _description_, defaults to 1
-        :type td_n: int, optional
-        :param device: _description_, defaults to "cpu"
-        :type device: Union[str, torch.device], optional
-        :param predictor: _description_, defaults to None
-        :type predictor: Optional[Model], optional
-        :param is_same_critic: _description_, defaults to False
-        :type is_same_critic: bool, optional
-        :param is_value_function: _description_, defaults to False
-        :type is_value_function: bool, optional
-        :param is_on_policy: _description_, defaults to False
-        :type is_on_policy: bool, optional
-        :param optimizer_config: _description_, defaults to None
-        :type optimizer_config: Optional[OptimizerConfig], optional
-        :param discount_factor: _description_, defaults to 1.0
-        :type discount_factor: float, optional
-        :param sampling_time: _description_, defaults to 0.01
-        :type sampling_time: float, optional
-        :param safe_decay_param: _description_, defaults to 1e-3
-        :type safe_decay_param: _type_, optional
-        :param is_dynamic_decay_rate: _description_, defaults to True
-        :type is_dynamic_decay_rate: bool, optional
-        :param safe_scenario: _description_, defaults to None
-        :type safe_scenario: _type_, optional
-        :param lb_parameter: _description_, defaults to 1e-6
-        :type lb_parameter: _type_, optional
-        :param ub_parameter: _description_, defaults to 1e3
-        :type ub_parameter: _type_, optional
+        Args:
+            system (_type_): _description_
+            model (Union[Model, ModelNN]): _description_
+            td_n (int, optional): _description_, defaults to 1
+            device (Union[str, torch.device], optional): _description_,
+                defaults to "cpu"
+            predictor (Optional[Model], optional): _description_,
+                defaults to None
+            is_same_critic (bool, optional): _description_, defaults to
+                False
+            is_value_function (bool, optional): _description_, defaults
+                to False
+            is_on_policy (bool, optional): _description_, defaults to
+                False
+            optimizer_config (Optional[OptimizerConfig], optional):
+                _description_, defaults to None
+            discount_factor (float, optional): _description_, defaults
+                to 1.0
+            sampling_time (float, optional): _description_, defaults to
+                0.01
+            safe_decay_param (_type_, optional): _description_, defaults
+                to 1e-3
+            is_dynamic_decay_rate (bool, optional): _description_,
+                defaults to True
+            safe_scenario (_type_, optional): _description_, defaults to
+                None
+            lb_parameter (_type_, optional): _description_, defaults to
+                1e-6
+            ub_parameter (_type_, optional): _description_, defaults to
+                1e3
         """
         super().__init__(
             system=system,
@@ -535,10 +548,12 @@ class CriticCALF(Critic):
         """Constraint that ensures that the value of the critic is above a certain lower bound.
 
         The lower bound is determined by the `current_observation` and a certain constant.
-        :param weights: critic weights to be evaluated
-        :type weights: ndarray
-        :return: constraint violation
-        :rtype: float
+
+        Args:
+            weights (ndarray): critic weights to be evaluated
+
+        Returns:
+            float: constraint violation
         """
         self.lb_constraint_violation = (
             self.lb_parameter * rg.norm_2(observation[:-1, :])
@@ -551,10 +566,12 @@ class CriticCALF(Critic):
 
         The lower bound is determined by
         the `current_observation` and a certain constant.
-        :param weights: critic weights to be evaluated
-        :type weights: ndarray
-        :return: constraint violation
-        :rtype: float
+
+        Args:
+            weights (ndarray): critic weights to be evaluated
+
+        Returns:
+            float: constraint violation
         """
         action = self.safe_scenario.compute_action(self.current_observation)
         predicted_observation = self.predictor.system.get_observation(
@@ -568,10 +585,11 @@ class CriticCALF(Critic):
     def CALF_critic_upper_bound_constraint(self, weights=None):
         """Calculate the constraint violation for the CALF decay constraint when no prediction is made.
 
-        :param weights: critic weights
-        :type weights: ndarray
-        :return: constraint violation
-        :rtype: float
+        Args:
+            weights (ndarray): critic weights
+
+        Returns:
+            float: constraint violation
         """
         self.ub_constraint_violation = self.model(
             self.current_observation, weights=weights
@@ -581,10 +599,11 @@ class CriticCALF(Critic):
     def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
         """Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.
 
-        :param weights: critic weights
-        :type weights: ndarray
-        :return: constraint violation
-        :rtype: float
+        Args:
+            weights (ndarray): critic weights
+
+        Returns:
+            float: constraint violation
         """
         observation_last_good = self.observation_last_good
 
@@ -612,10 +631,12 @@ class CriticCALF(Critic):
 
         This constraint is used when prediction is done using the last action taken.
 
-        :param weights: Current weights of the critic network.
-        :type weights: ndarray
-        :return: Violation of the constraint. A positive value indicates violation.
-        :rtype: float
+        Args:
+            weights (ndarray): Current weights of the critic network.
+
+        Returns:
+            float: Violation of the constraint. A positive value
+            indicates violation.
         """
         action = self.action_buffer[:, -1]
         predicted_observation = self.predictor.system.get_observation(

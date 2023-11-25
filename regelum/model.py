@@ -154,18 +154,19 @@ class ModelQuadLin(Model):
     ):
         """Initialize an instance of quadratic-linear model.
 
-        :param quad_matrix_type: Type of quadratic matrix. Can be 'diagonal', 'full' or 'symmetric'.
-        :type quad_matrix_type: str
-        :param is_with_linear_terms: Whether include linear terms or not, defaults to False
-        :type is_with_linear_terms: bool, optional
-        :param dim_inputs: Dimension of system's (agent's) inputs, defaults to None
-        :type dim_inputs: int, optional
-        :param weights: Manual set of model weights, defaults to None
-        :type weights: _type_, optional
-        :param weight_min: Lower bound for weights, defaults to 1.0e-6
-        :type weight_min: float, optional
-        :param weight_max: Upper bound for weights, defaults to 1.0e3
-        :type weight_max: float, optional
+        Args:
+            quad_matrix_type (str): Type of quadratic matrix. Can be
+                'diagonal', 'full' or 'symmetric'.
+            is_with_linear_terms (bool, optional): Whether include
+                linear terms or not, defaults to False
+            dim_inputs (int, optional): Dimension of system's (agent's)
+                inputs, defaults to None
+            weights (_type_, optional): Manual set of model weights,
+                defaults to None
+            weight_min (float, optional): Lower bound for weights,
+                defaults to 1.0e-6
+            weight_max (float, optional): Upper bound for weights,
+                defaults to 1.0e3
         """
         assert (
             dim_inputs is not None or weights is not None
@@ -348,9 +349,10 @@ class ModelWeightContainer(Model):
     def __init__(self, dim_output, weights_init=None):
         """Initialize an instance of a model returns weights on call independent of input.
 
-        :param dim_input: input dimension
-        :param single_weight_min: lower bound for every weight
-        :param single_weight_max: upper bound for every weight
+        Args:
+            dim_input: input dimension
+            single_weight_min: lower bound for every weight
+            single_weight_max: upper bound for every weight
         """
         self.dim_output = dim_output
         self._weights = weights_init
@@ -433,8 +435,9 @@ class WeightClipper:
     def __init__(self, weight_min=None, weight_max=None):
         """Initialize a weight clipper.
 
-        :param weight_min: minimum value for weight
-        :param weight_max: maximum value for weight
+        Args:
+            weight_min: minimum value for weight
+            weight_max: maximum value for weight
         """
         self.weight_min = weight_min
         self.weight_max = weight_max
@@ -470,40 +473,47 @@ class ModelPerceptron(ModelNN):
     ):
         """Initialize an instance of a fully-connected model.
 
-        :param dim_input: The dimensionality of the input.
-        :type dim_input: int
-        :param dim_output: The dimensionality of the output.
-        :type dim_output: int
-        :param dim_hidden: The dimensionality of the hidden linear layers (dim_hidden * dim_hidden).
-        :type dim_hidden: int
-        :param n_hidden_layers: The number of hidden layers.
-        :type n_hidden_layers: int
-        :param hidden_activation: The activation function for the hidden layers. (Optional, defaults to None). If None then nn.LeakyReLU(0.2) is used.
-        :type hidden_activation: Optional[nn.Module]
-        :param output_activation: The activation function for the output layer. (Optional, defaults to None)
-        :type output_activation: Optional[nn.Module]
-        :param force_positive_def: Whether to force perceptron to be positive definite (if True softabs is used). (Optional, defaults to False)
-        :type force_positive_def: bool
-        :param is_force_infinitesimal: Whether to force perceptron to be equal to 0 with zero input. (Optional, defaults to False)
-        :type is_force_infinitesimal: bool
-        :param is_bias: Whether to include bias terms. (Optional, defaults to True)
-        :type is_bias: bool
-        :param weight_max: The maximum value for the weights. (Optional, defaults to None)
-        :type weight_max: Optional[float]
-        :param weight_min: The minimum value for the weights. (Optional, defaults to None)
-        :type weight_min: Optional[float]
-        :param linear_weights_init: The weight initialization function for the linear layers. (Optional, defaults to None)
-        :type linear_weights_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
-        :param linear_weights_init_kwargs: Additional keyword arguments for the linear weight initialization function. (Optional, defaults to None)
-        :type linear_weights_init_kwargs: Optional[Dict[str, Any]]
-        :param biases_init: The bias initialization function for the linear layers. (Optional, defaults to None)
-        :type biases_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
-        :param biases_init_kwargs: Additional keyword arguments for the bias initialization function. (Optional, defaults to None)
-        :type biases_init_kwargs: Optional[Dict[str, Any]]
-        :param output_bounds: The bounds for the output values. (Optional, defaults to None)
-        :type output_bounds: Union[List[List[float]], np.array]
-        :param weights: Pre-trained weights for the model. (Optional, defaults to None)
-        :type weights: Optional
+        Args:
+            dim_input (int): The dimensionality of the input.
+            dim_output (int): The dimensionality of the output.
+            dim_hidden (int): The dimensionality of the hidden linear
+                layers (dim_hidden * dim_hidden).
+            n_hidden_layers (int): The number of hidden layers.
+            hidden_activation (Optional[nn.Module]): The activation
+                function for the hidden layers. (Optional, defaults to
+                None). If None then nn.LeakyReLU(0.2) is used.
+            output_activation (Optional[nn.Module]): The activation
+                function for the output layer. (Optional, defaults to
+                None)
+            force_positive_def (bool): Whether to force perceptron to be
+                positive definite (if True softabs is used). (Optional,
+                defaults to False)
+            is_force_infinitesimal (bool): Whether to force perceptron
+                to be equal to 0 with zero input. (Optional, defaults to
+                False)
+            is_bias (bool): Whether to include bias terms. (Optional,
+                defaults to True)
+            weight_max (Optional[float]): The maximum value for the
+                weights. (Optional, defaults to None)
+            weight_min (Optional[float]): The minimum value for the
+                weights. (Optional, defaults to None)
+            linear_weights_init (Optional[Callable[[torch.Tensor], torch.Tensor]]):
+                The weight initialization function for the linear
+                layers. (Optional, defaults to None)
+            linear_weights_init_kwargs (Optional[Dict[str, Any]]):
+                Additional keyword arguments for the linear weight
+                initialization function. (Optional, defaults to None)
+            biases_init (Optional[Callable[[torch.Tensor], torch.Tensor]]):
+                The bias initialization function for the linear layers.
+                (Optional, defaults to None)
+            biases_init_kwargs (Optional[Dict[str, Any]]): Additional
+                keyword arguments for the bias initialization function.
+                (Optional, defaults to None)
+            output_bounds (Union[List[List[float]], np.array]): The
+                bounds for the output values. (Optional, defaults to
+                None)
+            weights (Optional): Pre-trained weights for the model.
+                (Optional, defaults to None)
         """
         ModelNN.__init__(self)
         self.weight_clipper = WeightClipper(weight_min, weight_max)
@@ -594,12 +604,14 @@ class ModelWeightContainerTorch(ModelNN):
     ):
         """Instantiate ModelWeightContainerTorch.
 
-        :param dim_weights: The dimensionality of the weights.
-        :type dim_weights: Union[int, Tuple[int, int]]
-        :param output_bounds: Optional bounds of the output. If `None`, the output is not bounded. Defaults to None.
-        :type output_bounds: Optional[List[Any]]
-        :param output_bounding_type: The type of output bounding. Must be either "clip" or "tanh". Defaults to "clip".
-        :type output_bounding_type: str
+        Args:
+            dim_weights (Union[int, Tuple[int, int]]): The
+                dimensionality of the weights.
+            output_bounds (Optional[List[Any]]): Optional bounds of the
+                output. If `None`, the output is not bounded. Defaults
+                to None.
+            output_bounding_type (str): The type of output bounding.
+                Must be either "clip" or "tanh". Defaults to "clip".
         """
         assert (
             output_bounding_type == "clip" or output_bounding_type == "tanh"
@@ -663,12 +675,12 @@ class BoundsHandler(ModelNN):
     def __init__(self, bounds: Union[List[List[float]], np.array], is_unscale=True):
         """Initialize a new instance of the BoundsHandler class.
 
-        :param bounds: Bounds of the model's output.
-        :type bounds: Union[List[List[float]], np.array]
-            The bounds should be provided as a 2-column array-like object.
-            The first column represents the left bounds, and the second column represents the right bounds.
-        :param is_unscale: Flag indicating whether to unscale (from [-1, 1] to bounds) or scale (from bounds to [-1, 1]) in forward. Defaults to True.
-        :type is_unscale: bool, optional
+        Args:
+            bounds (Union[List[List[float]], np.array] The bounds should be provided as a 2-column array-like object. The first column represents the left bounds, and the second column represents the right bounds.):
+                Bounds of the model's output.
+            is_unscale (bool, optional): Flag indicating whether to
+                unscale (from [-1, 1] to bounds) or scale (from bounds
+                to [-1, 1]) in forward. Defaults to True.
         """
         ModelNN.__init__(self)
         self.is_unscale = is_unscale
@@ -717,10 +729,13 @@ class MultiplyByConstant(nn.Module):
     def __init__(self, constant: float) -> None:
         """Instatiate MultiplyByConstant.
 
-        :param constant: The constant value to multiply the input by.
-        :type constant: float
-        :return: The tensor resulting from multiplying the input by the constant value.
-        :rtype: torch.Tensor
+        Args:
+            constant (float): The constant value to multiply the input
+                by.
+
+        Returns:
+            torch.Tensor: The tensor resulting from multiplying the
+            input by the constant value.
         """
         super().__init__()
         self.constant = constant
@@ -762,51 +777,53 @@ class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
     ):
         """Instantiate PerceptronWithTruncatedNormalNoise.
 
-        :param dim_input: The dimensionality of the input.
-        :type dim_input: int
-        :param dim_output: The dimensionality of the output.
-        :type dim_output: int
-        :param dim_hidden: The dimensionality of the hidden linear layers (dim_hidden * dim_hidden).
-        :type dim_hidden: int
-        :param n_hidden_layers: The number of hidden layers.
-        :type n_hidden_layers: int
-        :param hidden_activation: The activation function for the hidden layers.
-            If None, nn.LeakyReLU(0.2) is used. (Optional, defaults to None)
-        :type hidden_activation: Optional[nn.Module]
-        :param output_activation: The activation function for the output layer. (Optional, defaults to None)
-        :type output_activation: Optional[nn.Module]
-        :param force_positive_def: Whether to force the perceptron to be positive definite
-            (if True, softabs is used). (Optional, defaults to False)
-        :type force_positive_def: bool
-        :param is_force_infinitesimal: Whether to force the perceptron to be equal to 0 with zero input.
-            (Optional, defaults to False)
-        :type is_force_infinitesimal: bool
-        :param is_bias: Whether to include bias terms. (Optional, defaults to True)
-        :type is_bias: bool
-        :param weight_max: The maximum value for the weights. (Optional, defaults to None)
-        :type weight_max: Optional[float]
-        :param weight_min: The minimum value for the weights. (Optional, defaults to None)
-        :type weight_min: Optional[float]
-        :param linear_weights_init: The weight initialization function for the linear layers.
-            (Optional, defaults to None)
-        :type linear_weights_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
-        :param linear_weights_init_kwargs: Additional keyword arguments for the linear weight initialization function.
-            (Optional, defaults to None)
-        :type linear_weights_init_kwargs: Optional[Dict[str, Any]]
-        :param biases_init: The bias initialization function for the linear layers. (Optional, defaults to None)
-        :type biases_init: Optional[Callable[[torch.Tensor], torch.Tensor]]
-        :param biases_init_kwargs: Additional keyword arguments for the bias initialization function.
-            (Optional, defaults to None)
-        :type biases_init_kwargs: Optional[Dict[str, Any]]
-        :param output_bounds: The bounds for the output values. (Optional, defaults to None)
-        :type output_bounds: Union[List[List[float]], np.array]
-        :param weights: Pre-trained weights for the model. (Optional, defaults to None)
-        :type weights: Optional
-        :param stds: The standard deviations for sampling the normal distribution. (Optional, defaults to None)
-        :type stds: Optional[np.array]
-        :param is_truncated_to_output_bounds: Whether to truncate the samples to the output bounds.
-            (Optional, defaults to False)
-        :type is_truncated_to_output_bounds: bool
+        Args:
+            dim_input (int): The dimensionality of the input.
+            dim_output (int): The dimensionality of the output.
+            dim_hidden (int): The dimensionality of the hidden linear
+                layers (dim_hidden * dim_hidden).
+            n_hidden_layers (int): The number of hidden layers.
+            hidden_activation (Optional[nn.Module]): The activation
+                function for the hidden layers. If None,
+                nn.LeakyReLU(0.2) is used. (Optional, defaults to None)
+            output_activation (Optional[nn.Module]): The activation
+                function for the output layer. (Optional, defaults to
+                None)
+            force_positive_def (bool): Whether to force the perceptron
+                to be positive definite (if True, softabs is used).
+                (Optional, defaults to False)
+            is_force_infinitesimal (bool): Whether to force the
+                perceptron to be equal to 0 with zero input. (Optional,
+                defaults to False)
+            is_bias (bool): Whether to include bias terms. (Optional,
+                defaults to True)
+            weight_max (Optional[float]): The maximum value for the
+                weights. (Optional, defaults to None)
+            weight_min (Optional[float]): The minimum value for the
+                weights. (Optional, defaults to None)
+            linear_weights_init (Optional[Callable[[torch.Tensor], torch.Tensor]]):
+                The weight initialization function for the linear
+                layers. (Optional, defaults to None)
+            linear_weights_init_kwargs (Optional[Dict[str, Any]]):
+                Additional keyword arguments for the linear weight
+                initialization function. (Optional, defaults to None)
+            biases_init (Optional[Callable[[torch.Tensor], torch.Tensor]]):
+                The bias initialization function for the linear layers.
+                (Optional, defaults to None)
+            biases_init_kwargs (Optional[Dict[str, Any]]): Additional
+                keyword arguments for the bias initialization function.
+                (Optional, defaults to None)
+            output_bounds (Union[List[List[float]], np.array]): The
+                bounds for the output values. (Optional, defaults to
+                None)
+            weights (Optional): Pre-trained weights for the model.
+                (Optional, defaults to None)
+            stds (Optional[np.array]): The standard deviations for
+                sampling the normal distribution. (Optional, defaults to
+                None)
+            is_truncated_to_output_bounds (bool): Whether to truncate
+                the samples to the output bounds. (Optional, defaults to
+                False)
         """
         super().__init__(
             dim_input=dim_input,

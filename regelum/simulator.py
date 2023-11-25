@@ -3,12 +3,12 @@
 """Contains one single class that simulates scenario-system (agent-environment) loops.
 
 The system can be of three types:
-    
+
 - discrete-time deterministic
 - continuous-time deterministic or stochastic
 - discrete-time stochastic (to model Markov decision processes)
 
-Remarks: 
+Remarks:
 
 - All vectors are treated as of type [n,]
 - All buffers are treated as of type [L, n] where each row is a vector
@@ -48,22 +48,24 @@ class Simulator(regelum.RegelumBase, ABC):
     ):
         """Initialize an instance of Simulator.
 
-        :param system: A controlled system to be simulated
-        :type system: Union[System, ComposedSystem]
-        :param state_init: Set initial state manually, defaults to None
-        :type state_init: Optional[np.ndarray], optional
-        :param action_init: Set initial action manually, defaults to None
-        :type action_init: Optional[np.ndarray], optional
-        :param time_final: Time at which simulation ends, defaults to 1
-        :type time_final: Optional[float], optional
-        :param max_step: Total duration of one simulation step, defaults to 1e-3
-        :type max_step: Optional[float], optional
-        :param first_step: Used with integrators with changing simulation steps, defaults to 1e-6
-        :type first_step: Optional[float], optional
-        :param atol: Absolute tollerance of integrator, defaults to 1e-5
-        :type atol: Optional[float], optional
-        :param rtol: Relative tollerance of integrator, defaults to 1e-3
-        :type rtol: Optional[float], optional
+        Args:
+            system (Union[System, ComposedSystem]): A controlled system
+                to be simulated
+            state_init (Optional[np.ndarray], optional): Set initial
+                state manually, defaults to None
+            action_init (Optional[np.ndarray], optional): Set initial
+                action manually, defaults to None
+            time_final (Optional[float], optional): Time at which
+                simulation ends, defaults to 1
+            max_step (Optional[float], optional): Total duration of one
+                simulation step, defaults to 1e-3
+            first_step (Optional[float], optional): Used with
+                integrators with changing simulation steps, defaults to
+                1e-6
+            atol (Optional[float], optional): Absolute tollerance of
+                integrator, defaults to 1e-5
+            rtol (Optional[float], optional): Relative tollerance of
+                integrator, defaults to 1e-3
         """
         self.system = system
         assert hasattr(
@@ -193,18 +195,15 @@ class CasADi(Simulator):
         ):
             """Initialize a CasADiSolver object.
 
-            :param integrator: A CasADi integrator object.
-            :type integrator: casadi.integrator
-            :param time_final: The final time for the solver.
-            :type time_final: float
-            :param step_size: The step size for the solver.
-            :type step_size: float
-            :param state_init: The initial state for the solver.
-            :type state_init: np.array
-            :param action_init: The initial action for the solver.
-            :type action_init: np.array
-            :param system: The system object for the solver.
-            :type system: System
+            Args:
+                integrator (casadi.integrator): A CasADi integrator
+                    object.
+                time_final (float): The final time for the solver.
+                step_size (float): The step size for the solver.
+                state_init (np.array): The initial state for the solver.
+                action_init (np.array): The initial action for the
+                    solver.
+                system (System): The system object for the solver.
             """
             self.integrator = integrator
             self.time_final = time_final

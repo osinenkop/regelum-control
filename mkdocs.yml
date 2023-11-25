@@ -1,8 +1,12 @@
 site_name: Regelum
 # site_url: https://james-willett.github.io/mkdocs-material-youtube-tutorial/
+repo_name: Regelum
+repo_url: https://github.com/AIDynamicAction/rcognita
+
 theme:
   name: material
-  logo: regelum_r_i.svg
+  favicon: gfx/favicon_light.svg
+  logo: gfx/logo.svg
   features:
     - navigation.tabs
     # - navigation.expand
@@ -17,21 +21,13 @@ theme:
     - content.code.copy
   language: en
   palette:
-    # - scheme: default
-    #   toggle:
-    #     icon: material/toggle-switch-off-outline 
-    #     name: Switch to dark mode
-    #   primary: green
-    #   accent: purple 
     scheme: regelum
-    toggle:
-      icon: material/toggle-switch
-      name: Switch to light mode    
-    # accent: purple
-
+  
 
 plugins:
   - search
+  - macros:
+      include_dir: docs/_internal/include
   - gen-files:
       scripts:
       - scripts/gen_ref_pages.py
@@ -43,6 +39,7 @@ plugins:
           options:
             docstring_options:
               ignore_init_summary: true
+            members_order: source
             docstring_section_style: list
             # filters: ["!^_"]
             heading_level: 1
@@ -60,7 +57,7 @@ plugins:
             # show_symbol_type_toc: true
             # show_symbol_type_heading: true
             # docstring_section_style: list
-            docstring_style: sphinx
+            docstring_style: google
             # show_submodules: true
             # show_source: true
             # heading_level: 3
@@ -71,17 +68,25 @@ plugins:
   - section-index
 nav:
   - Home: index.md
-  - Tutorial: tutorial.md
-  - Code Reference: reference/
+  - Main features: features/
+  - Getting started: getting_started.md
+  - Basic concepts: basic_concepts.md
+  - Tutorials: tutorials/
+  - Scenarios: scenarios/
+  - Reference API: reference/
+  - Authors: authors.md
+
   # - Code Reference 2: references.md
 
 extra_javascript:
-  - javascripts/mathjax.js
+  - _internal/javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js
+  # - javascripts/preamble.js
 
 extra_css:
-  - stylesheets/colors.css
+  - _internal/stylesheets/colors.css
 
 # extra:
 #   social:
@@ -93,6 +98,7 @@ extra_css:
 #       link: https://www.linkedin.com/in/willettjames/
 
 markdown_extensions:
+  - md_in_html
   - toc:
       toc_depth: 3
       permalink: ⚓︎
@@ -101,7 +107,6 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.arithmatex:
       generic: true
-
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite

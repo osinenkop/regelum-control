@@ -1,6 +1,6 @@
 """Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into scenarios (agents).
 
-Remarks: 
+Remarks:
 
 - All vectors are treated as of type [n,]
 - All buffers are treated as of type [L, n] where each row is a vector
@@ -64,18 +64,22 @@ class Policy(Optimizable, ABC):
     ):
         """Initialize an instance of Policy class.
 
-        :param model: The model representing the policy's decision-making mechanism.
-        :type model: Union[Model, ModelNN]
-        :param system: System in which the policy will be deployed, defaults to None
-        :type system: Union[System, ComposedSystem], optional
-        :param action_bounds: Limits to the range of actions the policy can generate, defaults to None
-        :type action_bounds: Union[list, np.ndarray, None], optional
-        :param optimizer_config: Configuration settings for the optimization procedure, defaults to None
-        :type optimizer_config: Optional[OptimizerConfig], optional
-        :param discount_factor: Discount factor for the future running objectives, defaults to 1.0
-        :type discount_factor: Optional[float], optional
-        :param epsilon_random_parameter: Parameter that defines the randomness in action selection to encourage exploration, defaults to None
-        :type epsilon_random_parameter: float, optional
+        Args:
+            model (Union[Model, ModelNN]): The model representing the
+                policy's decision-making mechanism.
+            system (Union[System, ComposedSystem], optional): System in
+                which the policy will be deployed, defaults to None
+            action_bounds (Union[list, np.ndarray, None], optional):
+                Limits to the range of actions the policy can generate,
+                defaults to None
+            optimizer_config (Optional[OptimizerConfig], optional):
+                Configuration settings for the optimization procedure,
+                defaults to None
+            discount_factor (Optional[float], optional): Discount factor
+                for the future running objectives, defaults to 1.0
+            epsilon_random_parameter (float, optional): Parameter that
+                defines the randomness in action selection to encourage
+                exploration, defaults to None
         """
         self.system = system
         self.model = model
@@ -132,24 +136,24 @@ class Policy(Optimizable, ABC):
     def receive_observation(self, observation):
         """Update the current observation of the policy.
 
-        :param observation: The current observation.
-        :type observation: numpy array.
+        Args:
+            observation (numpy array.): The current observation.
         """
         self.observation = observation
 
     def receive_estimated_state(self, state):
         """Update the current observation of the policy.
 
-        :param observation: The current observation.
-        :type observation: numpy array
+        Args:
+            observation (numpy array): The current observation.
         """
         self.state = state
 
     def set_action(self, action):
         """Set the current action of the policy.
 
-        :param action: The current action.
-        :type action: numpy array
+        Args:
+            action (numpy array): The current action.
         """
         self.action = action
 
@@ -158,8 +162,11 @@ class Policy(Optimizable, ABC):
 
         This method uses the current model to compute a new action, possibly incorporating random elements for exploration purposes. If no observation is provided, the method uses the last received observation.
 
-        :param observation: The most recent observation received from the environment. If not provided, the previously received observation will be used.
-        :type observation: numpy array, optional
+        Args:
+            observation (numpy array, optional): The most recent
+                observation received from the environment. If not
+                provided, the previously received observation will be
+                used.
         """
         if observation is None:
             observation = self.observation
@@ -199,24 +206,30 @@ class Policy(Optimizable, ABC):
     def update_weights(self, weights=None):
         """Update the weights of the model of the policy.
 
-        :param weights: The weights to update the model with. If not provided, the previously optimized weights will be used.
-        :type weights: numpy array, optional
+        Args:
+            weights (numpy array, optional): The weights to update the
+                model with. If not provided, the previously optimized
+                weights will be used.
         """
         self.model.update_weights(weights)
 
     def cache_weights(self, weights=None):
         """Cache the current weights of the model of the policy.
 
-        :param weights: The weights to cache. If not provided, the previously optimized weights will be used.
-        :type weights: numpy array, optional
+        Args:
+            weights (numpy array, optional): The weights to cache. If
+                not provided, the previously optimized weights will be
+                used.
         """
         self.model.cache_weights(weights)
 
     def update_and_cache_weights(self, weights=None):
         """Update and cache the weights of the model of the policy.
 
-        :param weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
-        :type weights: numpy array, optional
+        Args:
+            weights (numpy array, optional): The weights to update and
+                cache. If not provided, the previously optimized weights
+                will be used.
         """
         self.model.update_and_cache_weights(weights)
 
@@ -239,22 +252,19 @@ class PolicyGradient(Policy, ABC):
     ):
         """Instantiate PolicyGradient base class.
 
-        :param model: Policy model object.
-        :type model: ModelNN
-        :param system: Agent environment.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Action bounds.
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param optimizer_config: Configuration of the optimizing procedure.
-        :type optimizer_config: OptimizerConfig
-        :param batch_keys: Keys for objective function.
-        :type batch_keys: List[str]
-        :param discount_factor: Discount factor for future running objectives, defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Device to proceed the optimization on, defaults to "cpu"
-        :type device: str, optional
-        :param critic: Critic object, defaults to None
-        :type critic: Critic, optional
+        Args:
+            model (ModelNN): Policy model object.
+            system (Union[System, ComposedSystem]): Agent environment.
+            action_bounds (Union[list, np.ndarray, None]): Action
+                bounds.
+            optimizer_config (OptimizerConfig): Configuration of the
+                optimizing procedure.
+            batch_keys (List[str]): Keys for objective function.
+            discount_factor (float, optional): Discount factor for
+                future running objectives, defaults to 1.0
+            device (str, optional): Device to proceed the optimization
+                on, defaults to "cpu"
+            critic (Critic, optional): Critic object, defaults to None
         """
         Policy.__init__(
             self,
@@ -323,20 +333,21 @@ class PolicyReinforce(PolicyGradient):
     ):
         """Instantiate Reinforce class.
 
-        :param model: Policy model.
-        :type model: ModelNN
-        :param system: Agent environment.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Action bounds for the Agent.
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param discount_factor: Discount factor for discounting future running objectives, defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Device for gradient step optimization, defaults to "cpu"
-        :type device: str, optional
-        :param is_with_baseline: Whether to use baseline in surrogate objective. Baseline is taken as total objective from the last iteration, defaults to True
-        :type is_with_baseline: bool, optional
-        :param is_do_not_let_the_past_distract_you: Whether to use tail total objectives in surrogate objective or not, defaults to False
-        :type is_do_not_let_the_past_distract_you: bool, optional
+        Args:
+            model (ModelNN): Policy model.
+            system (Union[System, ComposedSystem]): Agent environment.
+            action_bounds (Union[list, np.ndarray, None]): Action bounds
+                for the Agent.
+            discount_factor (float, optional): Discount factor for
+                discounting future running objectives, defaults to 1.0
+            device (str, optional): Device for gradient step
+                optimization, defaults to "cpu"
+            is_with_baseline (bool, optional): Whether to use baseline
+                in surrogate objective. Baseline is taken as total
+                objective from the last iteration, defaults to True
+            is_do_not_let_the_past_distract_you (bool, optional):
+                Whether to use tail total objectives in surrogate
+                objective or not, defaults to False
         """
         PolicyGradient.__init__(
             self,
@@ -451,20 +462,19 @@ class PolicySDPG(PolicyGradient):
     ):
         """Instantiate SDPG class.
 
-        :param model: Policy Model.
-        :type model: ModelNN
-        :param critic: Critic object that is optmized via temporal difference objective.
-        :type critic: Critic
-        :param system: Agent environment.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Action bounds for the Agent.
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param optimizer_config: Configuration of the optimization procedure.
-        :type optimizer_config: OptimizerConfig
-        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Device to proceed the optimization process, defaults to "cpu"
-        :type device: str, optional
+        Args:
+            model (ModelNN): Policy Model.
+            critic (Critic): Critic object that is optmized via temporal
+                difference objective.
+            system (Union[System, ComposedSystem]): Agent environment.
+            action_bounds (Union[list, np.ndarray, None]): Action bounds
+                for the Agent.
+            optimizer_config (OptimizerConfig): Configuration of the
+                optimization procedure.
+            discount_factor (float, optional): Discounting factor for
+                discounting future running objectives, defaults to 1.0
+            device (str, optional): Device to proceed the optimization
+                process, defaults to "cpu"
         """
         PolicyGradient.__init__(
             self,
@@ -515,22 +525,21 @@ class PolicyPPO(PolicyGradient):
     ):
         """Instantiate PPO policy class.
 
-        :param model: Policy Model.
-        :type model: ModelNN
-        :param critic: Critic object that is optmized via temporal difference objective.
-        :type critic: Critic
-        :param system: Agent environment.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Action bounds for the Agent.
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param optimizer_config: Configuration of the optimization procedure.
-        :type optimizer_config: OptimizerConfig
-        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Device to proceed the optimization process, defaults to "cpu"
-        :type device: str, optional
-        :param epsilon: Epsilon parameter, defaults to 0.2
-        :type epsilon: float, optional
+        Args:
+            model (ModelNN): Policy Model.
+            critic (Critic): Critic object that is optmized via temporal
+                difference objective.
+            system (Union[System, ComposedSystem]): Agent environment.
+            action_bounds (Union[list, np.ndarray, None]): Action bounds
+                for the Agent.
+            optimizer_config (OptimizerConfig): Configuration of the
+                optimization procedure.
+            discount_factor (float, optional): Discounting factor for
+                discounting future running objectives, defaults to 1.0
+            device (str, optional): Device to proceed the optimization
+                process, defaults to "cpu"
+            epsilon (float, optional): Epsilon parameter, defaults to
+                0.2
         """
         PolicyGradient.__init__(
             self,
@@ -609,20 +618,19 @@ class PolicyDDPG(PolicyGradient):
     ):
         """Instantiate DDPG class.
 
-        :param model: Policy Model.
-        :type model: ModelNN
-        :param critic: Critic object that is optmized via temporal difference objective.
-        :type critic: Critic
-        :param system: Agent environment.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Action bounds for the Agent.
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param optimizer_config: Configuration of the optimization procedure.
-        :type optimizer_config: OptimizerConfig
-        :param discount_factor: Discounting factor for discounting future running objectives, defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Device to proceed the optimization process, defaults to "cpu"
-        :type device: str, optional
+        Args:
+            model (ModelNN): Policy Model.
+            critic (Critic): Critic object that is optmized via temporal
+                difference objective.
+            system (Union[System, ComposedSystem]): Agent environment.
+            action_bounds (Union[list, np.ndarray, None]): Action bounds
+                for the Agent.
+            optimizer_config (OptimizerConfig): Configuration of the
+                optimization procedure.
+            discount_factor (float, optional): Discounting factor for
+                discounting future running objectives, defaults to 1.0
+            device (str, optional): Device to proceed the optimization
+                process, defaults to "cpu"
         """
         PolicyGradient.__init__(
             self,
@@ -667,32 +675,41 @@ class RLPolicy(Policy):
     ):
         """Initialize an instance of RLPolicy class.
 
-        :param model: Model for predictive policy
-        :type model: Union[ModelNN, Model]
-        :param critic: Critic for predictive policy (Can be used either Value or Action-Value critic variants)
-        :type critic: Critic
-        :param system:  a.k.a. environment. A class that represents the environment and contains dimensions of action and state space.
-        :type system: Union[System, ComposedSystem]
-        :param action_bounds: Bounds of actions represented by a list or numpy array, where first column is a minimal action and second column is a maximal action
-        :type action_bounds: Union[list, np.ndarray, None]
-        :param optimizer_config: A config for Optimizable
-        :type optimizer_config: OptimizerConfig
-        :param predictor: Predictor utilizing by policy to obtain a sequence of predictions, defaults to None.
-        :type predictor: Optional[Predictor], optional
-        :param prediction_horizon: length of predicted state sequence (needed for Predictior), defaults to None
-        :type prediction_horizon: Optional[int], optional
-        :param running_objective: Running objective of the control problem, defaults to None.
-        :type running_objective: Optional[RunningObjective], optional
-        :param discount_factor: Discounting factor for control problem. Defaults to 1.0
-        :type discount_factor: float, optional
-        :param device: Keyword argument specifying the device for torch (tensor) optimization. Defaults to "cpu"
-        :type device: str, optional
-        :param epsilon_random: If set to True, policy becomes epsilon-greedy with probability epsilon_random_parameter. Defaults to False
-        :type epsilon_random: bool, optional
-        :param epsilon_random_parameter: Probability of taking a random action during epsilon-greedy policy update phase. Defaults to 0.0
-        :type epsilon_random_parameter: float, optional
-        :param algorithm: Specifying the algorithm to which policy belongs and which objective function to optimize. Defaults to "mpc".
-        :type algorithm: str, optional
+        Args:
+            model (Union[ModelNN, Model]): Model for predictive policy
+            critic (Critic): Critic for predictive policy (Can be used
+                either Value or Action-Value critic variants)
+            system (Union[System, ComposedSystem]): a.k.a. environment.
+                A class that represents the environment and contains
+                dimensions of action and state space.
+            action_bounds (Union[list, np.ndarray, None]): Bounds of
+                actions represented by a list or numpy array, where
+                first column is a minimal action and second column is a
+                maximal action
+            optimizer_config (OptimizerConfig): A config for Optimizable
+            predictor (Optional[Predictor], optional): Predictor
+                utilizing by policy to obtain a sequence of predictions,
+                defaults to None.
+            prediction_horizon (Optional[int], optional): length of
+                predicted state sequence (needed for Predictior),
+                defaults to None
+            running_objective (Optional[RunningObjective], optional):
+                Running objective of the control problem, defaults to
+                None.
+            discount_factor (float, optional): Discounting factor for
+                control problem. Defaults to 1.0
+            device (str, optional): Keyword argument specifying the
+                device for torch (tensor) optimization. Defaults to
+                "cpu"
+            epsilon_random (bool, optional): If set to True, policy
+                becomes epsilon-greedy with probability
+                epsilon_random_parameter. Defaults to False
+            epsilon_random_parameter (float, optional): Probability of
+                taking a random action during epsilon-greedy policy
+                update phase. Defaults to 0.0
+            algorithm (str, optional): Specifying the algorithm to which
+                policy belongs and which objective function to optimize.
+                Defaults to "mpc".
         """
         Policy.__init__(
             self,
@@ -900,14 +917,15 @@ class CALFLegacy(RLPolicy):
     ):
         """Initialize thepolicy with a safe scenario, and optional arguments for constraint handling, penalty term, andpolicy regularization.
 
-        :param safe_scenario: scenario used to compute a safe action in case the optimization is rejected
-        :type safe_scenario: Scenario
-        :param policy_constraints_on: whether to use the CALF constraints in the optimization
-        :type policy_constraints_on: bool
-        :param penalty_param: penalty term for the optimization objective
-        :type penalty_param: float
-        :param policy_regularization_param: regularization term for thepolicy weights
-        :type policy_regularization_param: float
+        Args:
+            safe_scenario (Scenario): scenario used to compute a safe
+                action in case the optimization is rejected
+            policy_constraints_on (bool): whether to use the CALF
+                constraints in the optimization
+            penalty_param (float): penalty term for the optimization
+                objective
+            policy_regularization_param (float): regularization term for
+                thepolicy weights
         """
         super().__init__(*args, **kwargs)
         self.safe_scenario = safe_scenario
@@ -932,10 +950,13 @@ class CALFLegacy(RLPolicy):
     def CALF_decay_constraint_for_policy(self, weights=None):
         """Constraint for the policy optimization, ensuring that the critic value will not decrease by less than the required decay rate.
 
-        :param weights:policy weights to be evaluated
-        :type weights: numpy.ndarray
-        :return: difference between the predicted critic value and the current critic value, plus the sampling time times the required decay rate
-        :rtype: float
+        Args:
+            weights (numpy.ndarray): policy weights to be evaluated
+
+        Returns:
+            float: difference between the predicted critic value and the
+            current critic value, plus the sampling time times the
+            required decay rate
         """
         action = self.model(self.observation, weights=weights)
 
@@ -963,10 +984,11 @@ class CALFLegacy(RLPolicy):
         This function calculates the violation of the "CALF decay constraint" which is used to ensure that the critic's value function
         (as a Lyapunov function) decreases over time. This helps to guarantee that the system remains stable.
 
-        :param weights: (array) Weights for thepolicy model.
-        :type weights: np.ndarray
-        :return: (float) Predictive constraint violation.
-        :rtype: float
+        Args:
+            weights (np.ndarray): (array) Weights for thepolicy model.
+
+        Returns:
+            float: (float) Predictive constraint violation.
         """
         action = self.model(self.observation, weights=weights)
 
@@ -988,9 +1010,11 @@ class KinPointStabilizingPolicy(Policy):
     def __init__(self, gain):
         """Initialize an instance of the class with the given gain.
 
-        :param gain: The gain value to set for the instance.
-        :type gain: float
-        :return: None
+        Args:
+            gain (float): The gain value to set for the instance.
+
+        Returns:
+            None
         """
         super().__init__()
         self.gain = gain
@@ -1005,7 +1029,8 @@ class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
     def __init__(self, K):
         """Initialize an instance of scenario.
 
-        :param K: gain of scenario
+        Args:
+            K: gain of scenario
         """
         super().__init__()
         self.K = K
@@ -1049,7 +1074,8 @@ class InvertedPendulumStabilizingPolicy(Policy):
     def __init__(self, gain):
         """Initialize an instance of policy.
 
-        :param gain: gain of PID controller.
+        Args:
+            gain: gain of PID controller.
         """
         super().__init__()
         self.gain = gain
@@ -1066,7 +1092,8 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
     def __init__(self, scenario_gain=10):
         """Initialize an instance of disassembled-clf scenario.
 
-        :param scenario_gain: gain of scenario
+        Args:
+            scenario_gain: gain of scenario
         """
         super().__init__()
         self.scenario_gain = scenario_gain
@@ -1221,13 +1248,15 @@ class MemoryPIDPolicy(Policy):
         """Initialize an instance of ScenarioMemoryPID.
 
         Whatever
-        :param P: proportional gain
-        :param I: integral gain
-        :param D: differential gain
-        :param setpoint: point using as target turing error evaluation
-        :param sampling_time: time interval between two consecutive actions
-        :param initial_point: point at which computations has begun
-        :param buffer_length: length of stored buffer
+
+        Args:
+            P: proportional gain
+            I: integral gain
+            D: differential gain
+            setpoint: point using as target turing error evaluation
+            sampling_time: time interval between two consecutive actions
+            initial_point: point at which computations has begun
+            buffer_length: length of stored buffer
         """
         super().__init__()
         self.P = P
@@ -1327,10 +1356,13 @@ class ThreeWheeledRobotMemoryPIDPolicy:
     ):
         """Initialize an instance of Scenario3WRobotMemoryPID.
 
-        :param state_init: state at which simulation starts
-        :param params: parameters of a 3-wheeled robot
-        :param sampling_time: time interval between two consecutive computations
-        :param action_bounds: upper and lower bounds for action yielded from policy
+        Args:
+            state_init: state at which simulation starts
+            params: parameters of a 3-wheeled robot
+            sampling_time: time interval between two consecutive
+                computations
+            action_bounds: upper and lower bounds for action yielded
+                from policy
         """
         super().__init__()
         if params is None:
@@ -1500,18 +1532,26 @@ class ThreeWheeledRobotPIDPolicy:
     ):
         """Initialize Scenario3WRobotPID.
 
-        :param state_init: initial state of 3wrobot
-        :param params: mass and moment of inertia `(M, I)`
-        :type params: tuple
-        :param sampling_time: sampling time
-        :param action_bounds: bounds that actions should not exceed `[[lower_bound, upper_bound], ...]`
-        :param PID_arctg_params: coefficients for PD scenario which sets the direction of robot to origin
-        :param PID_v_zero_params: coefficients for PD scenario which forces speed to zero as robot moves to origin
-        :param PID_x_y_origin_params: coefficients for PD scenario which moves robot to origin
-        :param PID_angle_origin_params: coefficients for PD scenario which sets angle to zero near origin
-        :param v_to_zero_bounds: bounds for enabling scenario which decelerates
-        :param to_origin_bounds: bounds for enabling scenario which moves robot to origin
-        :param to_arctan_bounds: bounds for enabling scenario which direct robot to origin
+        Args:
+            state_init: initial state of 3wrobot
+            params (tuple): mass and moment of inertia `(M, I)`
+            sampling_time: sampling time
+            action_bounds: bounds that actions should not exceed
+                `[[lower_bound, upper_bound], ...]`
+            PID_arctg_params: coefficients for PD scenario which sets
+                the direction of robot to origin
+            PID_v_zero_params: coefficients for PD scenario which forces
+                speed to zero as robot moves to origin
+            PID_x_y_origin_params: coefficients for PD scenario which
+                moves robot to origin
+            PID_angle_origin_params: coefficients for PD scenario which
+                sets angle to zero near origin
+            v_to_zero_bounds: bounds for enabling scenario which
+                decelerates
+            to_origin_bounds: bounds for enabling scenario which moves
+                robot to origin
+            to_arctan_bounds: bounds for enabling scenario which direct
+                robot to origin
         """
         if params is None:
             params = [10, 1]
@@ -1648,10 +1688,12 @@ class CartPoleEnergyBasedPolicy(Policy):
     ):
         """Initialize an instance of ScenarioCartPoleEnergyBased.
 
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        :param sampling_time: time interval between two consecutive actions
-        :param scenario_gain: scenario gain
-        :param system: an instance of Cartpole system
+        Args:
+            action_bounds: upper and lower bounds for action yielded
+                from policy
+            sampling_time: time interval between two consecutive actions
+            scenario_gain: scenario gain
+            system: an instance of Cartpole system
         """
         super().__init__()
         from regelum.system import CartPole
@@ -1708,12 +1750,17 @@ class LunarLanderPIDPolicy(Policy):
     ):
         """Initialize an instance of PID scenario for lunar lander.
 
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        :param state_init: state at which simulation has begun
-        :param sampling_time: time interval between two consecutive actions
-        :param PID_angle_parameters: parameters for PID scenario stabilizing angle of lander
-        :param PID_height_parameters: parameters for PID scenario stabilizing y-coordinate of lander
-        :param PID_x_parameters: parameters for PID scenario stabilizing x-coordinate of lander
+        Args:
+            action_bounds: upper and lower bounds for action yielded
+                from policy
+            state_init: state at which simulation has begun
+            sampling_time: time interval between two consecutive actions
+            PID_angle_parameters: parameters for PID scenario
+                stabilizing angle of lander
+            PID_height_parameters: parameters for PID scenario
+                stabilizing y-coordinate of lander
+            PID_x_parameters: parameters for PID scenario stabilizing
+                x-coordinate of lander
         """
         super().__init__()
 
@@ -1776,12 +1823,16 @@ class TwoTankPIDPolicy(Policy):
     ):
         """Initialize an instance of Scenario2TankPID.
 
-        :param action_bounds: upper and lower bounds for action yielded from policy
-        :param params: parameters of double tank system
-        :param state_init: state at which simulation has begun
-        :param sampling_time: time interval between two consecutive actions
-        :param PID_2tank_parameters_x1: parameters for PID scenario stabilizing first component of system's state
-        :param PID_2tank_parameters_x2: parameters for PID scenario stabilizing second component of system's state
+        Args:
+            action_bounds: upper and lower bounds for action yielded
+                from policy
+            params: parameters of double tank system
+            state_init: state at which simulation has begun
+            sampling_time: time interval between two consecutive actions
+            PID_2tank_parameters_x1: parameters for PID scenario
+                stabilizing first component of system's state
+            PID_2tank_parameters_x2: parameters for PID scenario
+                stabilizing second component of system's state
         """
         from regelum.system import TwoTank
 
@@ -1985,7 +2036,6 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
         ----------
         .. [1] Watanabe, K., Yamamoto, T., Izumi, K., & Maeyama, S. (2010, October). Underactuated control for nonholonomic mobile robots by using double
                integrator model and invariant manifold theory. In 2010 IEEE/RSJ International Conference on Intelligent Robots and Systems (pp. 2862-2867)
-
 
         """
         uCart = rg.zeros(2)

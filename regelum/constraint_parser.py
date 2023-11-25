@@ -152,16 +152,17 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
     ) -> None:
         """Instantiate ThreeWheeledRobotNIConstantContstraintsParser.
 
-        :param centers: centers of circles, defaults to None
-        :type centers: Optional[np.ndarray], optional
-        :param coefs: circle coeficients, defaults to None
-        :type coefs: Optional[np.ndarray], optional
-        :param radii: radii of circles, defaults to None
-        :type radii: Optional[np.ndarray], optional
-        :param weights: lines' coefficients, defaults to None
-        :type weights: Optional[np.ndarray], optional
-        :param biases: lines' biases, defaults to None
-        :type biases: Optional[np.ndarray], optional
+        Args:
+            centers (Optional[np.ndarray], optional): centers of
+                circles, defaults to None
+            coefs (Optional[np.ndarray], optional): circle coeficients,
+                defaults to None
+            radii (Optional[np.ndarray], optional): radii of circles,
+                defaults to None
+            weights (Optional[np.ndarray], optional): lines'
+                coefficients, defaults to None
+            biases (Optional[np.ndarray], optional): lines' biases,
+                defaults to None
         """
         self.radii = np.array(radii) if radii is not None else radii
         self.centers = np.array(centers) if centers is not None else centers

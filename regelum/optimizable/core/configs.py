@@ -17,16 +17,22 @@ class OptimizerConfig:
     ) -> None:
         """Instantiate OptimizerConfig object.
 
-        :param kind: The optimization kind. Can be either of ["symbolic", "tensor", "numeric"]
-        :type kind: str
-        :param opt_method: What method to use. For `kind="tensor"` this is `torch.optim.Adam`, for instance. For kind="symbolic" this is "ipopt", defaults to None
-        :type opt_method: Optional[Any], optional
-        :param opt_options: Options to pass to the optimizer. For `kind="tensor"` this is `{"lr": 0.001}`, for instance. For `kind="symbolic"` this is `{"print_level": 0}`, defaults to None
-        :type opt_options: Optional[dict], optional
-        :param log_options: Needed only for `kind="symbolic"`, defaults to None
-        :type log_options: Optional[dict], optional
-        :param config_options: Other global options. `n_epochs`, `data_buffer_sampling_method`, `data_buffer_sampling_kwargs`, etc., defaults to None
-        :type config_options: Optional[dict], optional
+        Args:
+            kind (str): The optimization kind. Can be either of
+                ["symbolic", "tensor", "numeric"]
+            opt_method (Optional[Any], optional): What method to use.
+                For `kind="tensor"` this is `torch.optim.Adam`, for
+                instance. For kind="symbolic" this is "ipopt", defaults
+                to None
+            opt_options (Optional[dict], optional): Options to pass to
+                the optimizer. For `kind="tensor"` this is `{"lr":
+                0.001}`, for instance. For `kind="symbolic"` this is
+                `{"print_level": 0}`, defaults to None
+            log_options (Optional[dict], optional): Needed only for
+                `kind="symbolic"`, defaults to None
+            config_options (Optional[dict], optional): Other global
+                options. `n_epochs`, `data_buffer_sampling_method`,
+                `data_buffer_sampling_kwargs`, etc., defaults to None
         """
         self.kind = kind
         self.opt_method = opt_method
@@ -49,18 +55,20 @@ class TorchOptimizerConfig(OptimizerConfig):
     ) -> None:
         """Instantiate TorchOptimizerConfig object.
 
-        :param n_epochs: How many epochs to use during optimization.
-        :type n_epochs: int.
-        :param data_buffer_iter_bathes_kwargs: kwargs for `DataBuffer.iter_batches`.
-        :type data_buffer_iter_bathes_kwargs: Dict[str, Any]
-        :param opt_method_kwargs: What options to pass to the optimizer
-        :type opt_method_kwargs: Dict[str, Any]
-        :param opt_method: What optimizer method to use, defaults to torch.optim.Adam
-        :type opt_method: Type[torch.optim.Optimizer], optional
-        :param is_reinstantiate_optimizer: Whether to reinstantiate optimizer every time `optimize()` is called, defaults to True
-        :type is_reinstantiate_optimizer: bool, optional
-        :param n_epochs_per_constraint: How many gradient steps to take to find a constraint feasible domain, defaults to None
-        :type n_epochs_per_constraint: Optional[int], optional
+        Args:
+            n_epochs (int.): How many epochs to use during optimization.
+            data_buffer_iter_bathes_kwargs (Dict[str, Any]): kwargs for
+                `DataBuffer.iter_batches`.
+            opt_method_kwargs (Dict[str, Any]): What options to pass to
+                the optimizer
+            opt_method (Type[torch.optim.Optimizer], optional): What
+                optimizer method to use, defaults to torch.optim.Adam
+            is_reinstantiate_optimizer (bool, optional): Whether to
+                reinstantiate optimizer every time `optimize()` is
+                called, defaults to True
+            n_epochs_per_constraint (Optional[int], optional): How many
+                gradient steps to take to find a constraint feasible
+                domain, defaults to None
         """
         super().__init__(
             kind="tensor",
@@ -97,8 +105,9 @@ class CasadiOptimizerConfig(OptimizerConfig):
     ) -> None:
         """Instantiate CasadiOptimizerConfig object.
 
-        :param batch_size: How many latest samples to use from `DataBuffer`, defaults to 1
-        :type batch_size: int, optional
+        Args:
+            batch_size (int, optional): How many latest samples to use
+                from `DataBuffer`, defaults to 1
         """
         super().__init__(
             kind="symbolic",

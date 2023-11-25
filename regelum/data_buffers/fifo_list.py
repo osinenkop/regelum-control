@@ -9,8 +9,10 @@ class FifoList(list):
     def __init__(self, *args, max_size: Optional[int] = None, **kwargs):
         """Instantiate a FifoList.
 
-        :param max_size: maximum size of the list. If `None` the list is not limited in size, defaults to None
-        :type max_size: Optional[int], optional
+        Args:
+            max_size (Optional[int], optional): maximum size of the
+                list. If `None` the list is not limited in size,
+                defaults to None
         """
         super().__init__(*args, **kwargs)
         self.max_size = max_size
