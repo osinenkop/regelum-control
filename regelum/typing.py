@@ -14,7 +14,7 @@ algorithms that can leverage the strengths of each of these libraries.
 import torch
 import numpy as np
 import casadi as cs
-from typing import Union, Type
+from typing import Union, Type, OrderedDict
 
 
 RgArrayType = Union[
@@ -54,3 +54,6 @@ Attributes:
     cs.DM: An instance of CasADi's DM matrix.
     cs.MX: An instance of CasADi's MX matrix.
 """
+
+Weights = Union[RgArray, OrderedDict[str, torch.Tensor]]
+"""Type alias for the instances of model's weights. For ModelNN weights are `OrderedDict[str, torch.Tensor]`. For Model weights are `RgArray`."""

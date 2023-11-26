@@ -336,7 +336,6 @@ class RLScenario(Scenario):
         critic_optimization_event: Event = None,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
-        max_data_buffer_size: Optional[int] = None,
         sampling_time: float = 0.1,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -373,9 +372,6 @@ class RLScenario(Scenario):
             action_bounds (Union[list, np.ndarray, None], optional):
                 action bounds. Applied for every generated action as
                 clip, defaults to None
-            max_data_buffer_size (Optional[int], optional): max size of
-                DataBuffer, if is `None` the DataBuffer is unlimited.
-                defaults to None
             sampling_time (float, optional): time interval between two
                 consecutive actions, defaults to 0.1
         """
@@ -395,7 +391,7 @@ class RLScenario(Scenario):
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
-        self.data_buffer = DataBuffer(max_data_buffer_size)
+        self.data_buffer = DataBuffer()
         self.critic = critic
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first

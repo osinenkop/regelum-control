@@ -25,6 +25,7 @@ from typing import Optional, Union, List
 from .optimizable import OptimizerConfig
 from .data_buffers import DataBuffer
 from .system import System, ComposedSystem
+from regelum.typing import RgArray, Weights
 
 
 class Critic(Optimizable, ABC):
@@ -107,7 +108,9 @@ class Critic(Optimizable, ABC):
     def receive_estimated_state(self, state):
         self.state = state
 
-    def __call__(self, *args, use_stored_weights=False, weights=None):
+    def __call__(
+        self, *args, use_stored_weights: bool = False, weights: Optional[Weights] = None
+    ) -> Union[RgArray, float]:
         """Compute the value of the critic function for a given observation and/or action.
 
         Args:
@@ -118,7 +121,7 @@ class Critic(Optimizable, ABC):
                 weights
 
         Returns:
-            float: value of the critic function
+            Value of the critic function (either value or Q-function)
         """
         return self.model(*args, use_stored_weights=use_stored_weights, weights=weights)
 
@@ -127,17 +130,16 @@ class Critic(Optimizable, ABC):
         """Get the weights of the critic model."""
         return self.model.weights
 
-    def update_weights(self, weights=None):
+    def update_weights(self, weights: Optional[Weights] = None) -> None:
         """Update the weights of the critic model.
 
         Args:
-            weights (numpy array): new weights to be used for the critic
-                model, if not provided the optimized weights will be
-                used
+            weights: new weights to be used for the critic
+                model, if not provided the method does nothing.
         """
         self.model.update_weights(weights)
 
-    def cache_weights(self, weights=None):
+    def cache_weights(self, weights: Optional[Weights] = None):
         """Store a copy of the current model weights.
 
         Args:
@@ -151,7 +153,7 @@ class Critic(Optimizable, ABC):
         """Restores the model weights to the cached weights."""
         self.model.restore_weights()
 
-    def update_and_cache_weights(self, weights=None):
+    def update_and_cache_weights(self, weights: Optional[Weights] = None):
         """Update the model's weights and cache the new values.
 
         Args:
@@ -160,6 +162,8 @@ class Critic(Optimizable, ABC):
         self.update_and_cache_weights(weights)
 
     def initialize_optimize_procedure(self):
+        """Instantilize optimization procedure via Optimizable functionality."""
+
         self.batch_size = self.get_data_buffer_batch_size()
         (
             self.running_objective_var,
@@ -274,6 +278,11 @@ class Critic(Optimizable, ABC):
         )
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Return a list of `regelum.data_buffers.DataBuffer` keys to be used for the substitution to the objective function.
+
+        Returns:
+            List of keys.
+        """
         if self.is_value_function:
             keys = ["observation", "running_objective"]
         else:
@@ -428,45 +437,13 @@ class CriticCALF(Critic):
         discount_factor: float = 1.0,
         sampling_time: float = 0.01,
         ######
-        safe_decay_param=1e-4,
-        is_dynamic_decay_rate=True,
+        safe_decay_param: float = 1e-4,
+        is_dynamic_decay_rate: bool = True,
         safe_policy=None,
-        lb_parameter=1e-6,
-        ub_parameter=1e3,
+        lb_parameter: float = 1e-6,
+        ub_parameter: float = 1e3,
     ):
-        """Instantiate a CriticCALF object. The docstring will be completed in the next release.
-
-        Args:
-            system (_type_): _description_
-            model (Union[Model, ModelNN]): _description_
-            td_n (int, optional): _description_, defaults to 1
-            device (Union[str, torch.device], optional): _description_,
-                defaults to "cpu"
-            predictor (Optional[Model], optional): _description_,
-                defaults to None
-            is_same_critic (bool, optional): _description_, defaults to
-                False
-            is_value_function (bool, optional): _description_, defaults
-                to False
-            is_on_policy (bool, optional): _description_, defaults to
-                False
-            optimizer_config (Optional[OptimizerConfig], optional):
-                _description_, defaults to None
-            discount_factor (float, optional): _description_, defaults
-                to 1.0
-            sampling_time (float, optional): _description_, defaults to
-                0.01
-            safe_decay_param (_type_, optional): _description_, defaults
-                to 1e-3
-            is_dynamic_decay_rate (bool, optional): _description_,
-                defaults to True
-            safe_scenario (_type_, optional): _description_, defaults to
-                None
-            lb_parameter (_type_, optional): _description_, defaults to
-                1e-6
-            ub_parameter (_type_, optional): _description_, defaults to
-                1e3
-        """
+        """Instantiate a CriticCALF object."""
         super().__init__(
             system=system,
             model=model,
@@ -528,6 +505,11 @@ class CriticCALF(Critic):
         self.observation_last_good = None
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Return a list of `regelum.data_buffers.DataBuffer` keys to be used for the substitution to the objective function.
+
+        Returns:
+            List of keys.
+        """
         keys = super().data_buffer_objective_keys()
         keys.append("observation_last_good")
         return keys
@@ -544,13 +526,15 @@ class CriticCALF(Critic):
         )
         return stabilizing_constraint_violation
 
-    def CALF_critic_lower_bound_constraint(self, critic_model_output, observation):
+    def CALF_critic_lower_bound_constraint(
+        self, critic_model_output: RgArray, observation: RgArray
+    ):
         """Constraint that ensures that the value of the critic is above a certain lower bound.
 
         The lower bound is determined by the `current_observation` and a certain constant.
 
         Args:
-            weights (ndarray): critic weights to be evaluated
+            critic_model_output: output of a critic
 
         Returns:
             float: constraint violation
@@ -560,94 +544,3 @@ class CriticCALF(Critic):
             - critic_model_output[-1, :]
         )
         return self.lb_constraint_violation
-
-    def CALF_critic_lower_bound_constraint_predictive(self, weights=None):
-        """Constraint that ensures that the value of the critic is above a certain lower bound.
-
-        The lower bound is determined by
-        the `current_observation` and a certain constant.
-
-        Args:
-            weights (ndarray): critic weights to be evaluated
-
-        Returns:
-            float: constraint violation
-        """
-        action = self.safe_scenario.compute_action(self.current_observation)
-        predicted_observation = self.predictor.system.get_observation(
-            time=None, state=self.predictor.predict(self.state, action), inputs=action
-        )
-        self.lb_constraint_violation = self.lb_parameter * rg.norm_2(
-            predicted_observation
-        ) - self.model(predicted_observation, weights=weights)
-        return self.lb_constraint_violation
-
-    def CALF_critic_upper_bound_constraint(self, weights=None):
-        """Calculate the constraint violation for the CALF decay constraint when no prediction is made.
-
-        Args:
-            weights (ndarray): critic weights
-
-        Returns:
-            float: constraint violation
-        """
-        self.ub_constraint_violation = self.model(
-            self.current_observation, weights=weights
-        ) - self.ub_parameter * rg.norm_2(self.current_observation)
-        return self.ub_constraint_violation
-
-    def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
-        """Calculate the constraint violation for the CALF decay constraint when a predicted safe policy is used.
-
-        Args:
-            weights (ndarray): critic weights
-
-        Returns:
-            float: constraint violation
-        """
-        observation_last_good = self.observation_last_good
-
-        self.safe_action = action = self.safe_scenario.compute_action(
-            self.current_observation
-        )
-        self.predicted_observation = (
-            predicted_observation
-        ) = self.predictor.system.get_observation(
-            time=None, state=self.predictor.predict(self.state, action), inputs=action
-        )
-
-        self.critic_next = self.model(predicted_observation, weights=weights)
-        self.critic_current = self.model(observation_last_good, use_stored_weights=True)
-
-        self.stabilizing_constraint_violation = (
-            self.critic_next
-            - self.critic_current
-            + self.predictor.pred_step_size * self.safe_decay_param
-        )
-        return self.stabilizing_constraint_violation
-
-    def CALF_decay_constraint_predicted_on_policy(self, weights=None):
-        """Constraint for ensuring that the CALF function decreases at each iteration.
-
-        This constraint is used when prediction is done using the last action taken.
-
-        Args:
-            weights (ndarray): Current weights of the critic network.
-
-        Returns:
-            float: Violation of the constraint. A positive value
-            indicates violation.
-        """
-        action = self.action_buffer[:, -1]
-        predicted_observation = self.predictor.system.get_observation(
-            time=None, state=self.predictor.predict(self.state, action), inputs=action
-        )
-        self.stabilizing_constraint_violation = (
-            self.model(predicted_observation, weights=weights)
-            - self.model(
-                self.observation_last_good,
-                use_stored_weights=True,
-            )
-            + self.predictor.pred_step_size * self.safe_decay_param
-        )
-        return self.stabilizing_constraint_violation

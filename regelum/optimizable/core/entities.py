@@ -844,7 +844,7 @@ class FunctionWithSignature:
 
     def __call__(
         self, *args, with_metadata: bool = False, raw_eval: bool = False, **kwargs
-    ):
+    ) -> Any:
         """Call the wrapped function with the provided arguments and keyword arguments.
 
         Args:
@@ -853,7 +853,7 @@ class FunctionWithSignature:
                 Defaults to False.
             raw_eval: If True, evaluate the function with raw data.
                 Defaults to False.
-            **kwargs: Keyword arguments to be passed to the function.
+            **kwargs (Dict[str, Any]) : Keyword arguments to be passed to the function.
 
         Returns:
             The result of the function call.
@@ -951,7 +951,7 @@ class FunctionWithSignature:
     def declare_variables(
         self,
         variables: Union[VarContainer, OptimizationVariable],
-        replace=False,
+        replace: bool = False,
     ) -> Self:
         """Declare variables for the function, optionally replacing existing ones.
 
@@ -986,7 +986,7 @@ class FunctionWithSignature:
         """Set parameters for the function.
 
         Args:
-            **kwargs: Keyword arguments representing the parameters to
+            **kwargs (Dict[str, Any]): Keyword arguments representing the parameters to
                 set.
 
         Raises:
@@ -1064,7 +1064,7 @@ class FunctionWithSignature:
 
         return tuple(signature_list)
 
-    def __radd__(self, other):
+    def __radd__(self, other: Self) -> FuncContainer:
         """Support the right-adding of this function to another object to form a FuncContainer.
 
         Args:
@@ -1075,7 +1075,7 @@ class FunctionWithSignature:
         """
         return FuncContainer((self,))
 
-    def __add__(self, other) -> Optional[FuncContainer]:
+    def __add__(self, other: Self) -> Optional[FuncContainer]:
         """Add another function or container to this function to form a FuncContainer.
 
         Args:

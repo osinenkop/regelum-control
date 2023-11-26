@@ -228,8 +228,8 @@ class ComposedAnimationCallback(AnimationCallback):
         """Initialize an instance of ComposedAnimationCallback.
 
         Args:
-            *animations: animation classes to be composed
-            **kwargs: keyword arguments to be passed to __init__ of said
+            *animations (*List[AnimationCallback]): animation classes to be composed
+            **kwargs (**Dict[str, Any]): keyword arguments to be passed to __init__ of said
                 animations and the base class
         """
         callback.Callback.__init__(self, **kwargs)

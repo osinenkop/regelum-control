@@ -54,11 +54,11 @@ def passdown(CallbackClass):
     """Decorate a callback class in such a way that its event handling is inherited by derived classes.
 
     Args:
-        CallbackClass (type)
+        CallbackClass (type): class to be decorated
 
     Returns:
-        altered class that passes down its handlers to derived classes
-        (regardless of whether handling methods are overriden)
+        CallbackClass: altered class that passes down its handlers to derived classes
+            (regardless of whether handling methods are overriden)
     """
 
     class PassdownCallback(CallbackClass):
