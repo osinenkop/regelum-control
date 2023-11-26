@@ -1,6 +1,0 @@
-regelum.objective.ppo\_objective
-================================
-
-.. currentmodule:: regelum.objective
-
-.. autofunction:: ppo_objective

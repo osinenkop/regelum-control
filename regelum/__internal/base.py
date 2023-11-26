@@ -12,13 +12,16 @@ class apply_callbacks:
 
     If the object has no list of callbacks specified, the default callbacks are used.
 
-    :param method: The method to which the callbacks should be applied.
+    Args:
+        method: The method to which the callbacks should be applied.
     """
 
     def __init__(self, callbacks=None):
         """Initialize a decorator that applies callbacks.
 
-        :param callbacks: list of callbacks to apply (applies all default callbacks if omitted)
+        Args:
+            callbacks: list of callbacks to apply (applies all default
+                callbacks if omitted)
         """
         self.callbacks = callbacks
 
@@ -86,8 +89,9 @@ class ClassPropertyDescriptor(object):
     def __init__(self, fget, fset=None):
         """Initialize an instance of ClassPropertyDescriptor.
 
-        :param fget: class getter
-        :param fset: class setter
+        Args:
+            fget: class getter
+            fset: class setter
         """
         self.fget = fget
         self.fset = fset
@@ -113,8 +117,11 @@ class ClassPropertyDescriptor(object):
 def classproperty(func):
     """Decorate a method in such a way that it becomes a class property.
 
-    :param func: method to decorate
-    :return:
+    Args:
+        func: method to decorate
+
+    Returns:
+
     """
     if not isinstance(func, (classmethod, staticmethod)):
         func = classmethod(func)
@@ -163,8 +170,9 @@ class Node(abc.ABC):
     def __init__(self, input_type):
         """Initialize a node.
 
-        :param input_type: type of messages sent/received by the node
-        :type input_type: type
+        Args:
+            input_type (type): type of messages sent/received by the
+                node
         """
         self.__subscribers = []
         self.__subscribees = []
@@ -283,9 +291,11 @@ class port:
     def __init__(self, input_type=object, hooks=None):
         """Initialize a decorator that transforms methods into handled ports.
 
-        :param input_type: type of messages accepted by the resulting port
-        :type input_type: type
-        :param hooks: hooks to add in addition to the handler obtained from the decorated method
+        Args:
+            input_type (type): type of messages accepted by the
+                resulting port
+            hooks: hooks to add in addition to the handler obtained from
+                the decorated method
         """
         if hooks is None:
             hooks = []
@@ -306,9 +316,11 @@ class publisher:
     def __init__(self, input_type=object, hooks=None):
         """Initialize a decorator that transforms methods into hooked publishers.
 
-        :param input_type: type of messages sent by the resulting publisher
-        :type input_type: type
-        :param hooks: hooks to add in addition to the hook obtained from the decorated method
+        Args:
+            input_type (type): type of messages sent by the resulting
+                publisher
+            hooks: hooks to add in addition to the hook obtained from
+                the decorated method
         """
         if hooks is None:
             hooks = []
@@ -329,8 +341,8 @@ class Port(Node):
     def __init__(self, input_type):
         """Initialize a Port.
 
-        :param input_type: type of messages received by the port.
-        :type input_type: type
+        Args:
+            input_type (type): type of messages received by the port.
         """
         super().__init__(input_type)
         self.__inbox = []

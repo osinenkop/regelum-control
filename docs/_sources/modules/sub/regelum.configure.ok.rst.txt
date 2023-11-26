@@ -1,6 +1,0 @@
-regelum.configure.ok
-====================
-
-.. currentmodule:: regelum.configure
-
-.. autofunction:: ok

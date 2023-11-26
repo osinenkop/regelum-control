@@ -1,6 +1,0 @@
-regelum.configure.form
-======================
-
-.. currentmodule:: regelum.configure
-
-.. autofunction:: form

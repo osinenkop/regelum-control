@@ -1,6 +1,6 @@
 """Contains high-level structures of scenarios (agents).
 
-Remarks: 
+Remarks:
 
 - All vectors are treated as of type [n,]
 - All buffers are treated as of type [L, n] where each row is a vector
@@ -11,7 +11,7 @@ Remarks:
 import numpy as np
 import torch
 
-from .__utilities import Clock, AwaitedParameter
+from .utilis import Clock, AwaitedParameter
 from regelum import RegelumBase
 from .policy import Policy, RLPolicy, PolicyPPO, PolicyReinforce, PolicySDPG, PolicyDDPG
 from .critic import Critic, CriticCALF, CriticTrivial
@@ -63,16 +63,21 @@ class Scenario(RegelumBase):
     ):
         """Initialize the Scenario with the necessary components for running a reinforcement learning experiment.
 
-        :param policy: Policy to generate actions based on observations.
-        :param simulator: Simulator to interact with and collect data for training.
-        :param sampling_time: Time interval between action updates.
-        :param running_objective: Objective function for evaluating performance.
-        :param constraint_parser: Tool for parsing constraints during policy optimization.
-        :param observer: Observer for estimating the system state.
-        :param N_episodes: Total number of episodes to run.
-        :param N_iterations: Total number of iterations to run.
-        :param value_threshold: Threshold to stop the simulation if the objective is met.
-        :param discount_factor: Discount factor for future rewards.
+        Args:
+            policy: Policy to generate actions based on observations.
+            simulator: Simulator to interact with and collect data for
+                training.
+            sampling_time: Time interval between action updates.
+            running_objective: Objective function for evaluating
+                performance.
+            constraint_parser: Tool for parsing constraints during
+                policy optimization.
+            observer: Observer for estimating the system state.
+            N_episodes: Total number of episodes to run.
+            N_iterations: Total number of iterations to run.
+            value_threshold: Threshold to stop the simulation if the
+                objective is met.
+            discount_factor: Discount factor for future rewards.
         """
         super().__init__()
         self.N_episodes = N_episodes
@@ -331,7 +336,6 @@ class RLScenario(Scenario):
         critic_optimization_event: Event = None,
         discount_factor: float = 1.0,
         is_critic_first: bool = False,
-        max_data_buffer_size: Optional[int] = None,
         sampling_time: float = 0.1,
         constraint_parser: Optional[ConstraintParser] = None,
         observer: Optional[Observer] = None,
@@ -342,26 +346,34 @@ class RLScenario(Scenario):
     ):
         """Instantiate a RLScenario object.
 
-        :param policy: Policy object
-        :type policy: Policy
-        :param critic: Cricic
-        :type critic: Critic
-        :param running_objective: Function to calculate the running objective.
-        :type running_objective: RunningObjective
-        :param critic_optimization_event: moments when to optimize critic. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
-        :type critic_optimization_event: str
-        :param policy_optimization_event: moments when to optimize critic. Can be either 'compute_action' for online learning, or 'reset_episode' for optimizing after each episode, or 'reset_iteration' for optimizing after each iteration
-        :type policy_optimization_event: str
-        :param discount_factor: Discount factor. Used for computing total objective as discounted sum (or integral) of running objectives, defaults to 1.0
-        :type discount_factor: float, optional
-        :param is_critic_first: if is True then critic is optimized first then policy (can be usefull in DQN or Predictive Algorithms such as RPV, RQL, SQL). For `False` firstly is policy optimized then critic. defaults to False
-        :type is_critic_first: bool, optional
-        :param action_bounds: action bounds. Applied for every generated action as clip, defaults to None
-        :type action_bounds: Union[list, np.ndarray, None], optional
-        :param max_data_buffer_size: max size of DataBuffer, if is `None` the DataBuffer is unlimited. defaults to None
-        :type max_data_buffer_size: Optional[int], optional
-        :param sampling_time: time interval between two consecutive actions, defaults to 0.1
-        :type sampling_time: float, optional
+        Args:
+            policy (Policy): Policy object
+            critic (Critic): Cricic
+            running_objective (RunningObjective): Function to calculate
+                the running objective.
+            critic_optimization_event (str): moments when to optimize
+                critic. Can be either 'compute_action' for online
+                learning, or 'reset_episode' for optimizing after each
+                episode, or 'reset_iteration' for optimizing after each
+                iteration
+            policy_optimization_event (str): moments when to optimize
+                critic. Can be either 'compute_action' for online
+                learning, or 'reset_episode' for optimizing after each
+                episode, or 'reset_iteration' for optimizing after each
+                iteration
+            discount_factor (float, optional): Discount factor. Used for
+                computing total objective as discounted sum (or
+                integral) of running objectives, defaults to 1.0
+            is_critic_first (bool, optional): if is True then critic is
+                optimized first then policy (can be usefull in DQN or
+                Predictive Algorithms such as RPV, RQL, SQL). For
+                `False` firstly is policy optimized then critic.
+                defaults to False
+            action_bounds (Union[list, np.ndarray, None], optional):
+                action bounds. Applied for every generated action as
+                clip, defaults to None
+            sampling_time (float, optional): time interval between two
+                consecutive actions, defaults to 0.1
         """
         Scenario.__init__(
             self,
@@ -379,7 +391,7 @@ class RLScenario(Scenario):
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
-        self.data_buffer = DataBuffer(max_data_buffer_size)
+        self.data_buffer = DataBuffer()
         self.critic = critic
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
@@ -609,41 +621,39 @@ class CALF(CALFScenario):
     ):
         """Instantiate CALF class.
 
-        :param simulator: The simulator object.
-        :type simulator: Simulator
-        :param running_objective: The running objective.
-        :type running_objective: RunningObjective
-        :param safe_policy: The safe policy.
-        :type safe_policy: Policy
-        :param critic_td_n: The TD-N parameter for the critic. Defaults to 2.
-        :type critic_td_n: int, optional
-        :param observer: The observer object. Defaults to None.
-        :type observer: Optional[Observer], optional
-        :param prediction_horizon: The prediction horizon. Defaults to 1.
-        :type prediction_horizon: int, optional
-        :param policy_model: The policy model. Defaults to None.
-        :type policy_model: Optional[Model], optional
-        :param critic_model: The critic model. Defaults to None.
-        :type critic_model: Optional[Model], optional
-        :param predictor: The predictor object. Defaults to None.
-        :type predictor: Optional[Predictor], optional
-        :param discount_factor: The discount factor. Defaults to 1.0.
-        :type discount_factor: float, optional
-        :param sampling_time: The sampling time. Defaults to 0.1.
-        :type sampling_time: float, optional
-        :param critic_lb_parameter: The lower bound parameter for the critic. Defaults to 0.0.
-        :type critic_lb_parameter: float, optional
-        :param critic_ub_parameter: The upper bound parameter for the critic. Defaults to 1.0.
-        :type critic_ub_parameter: float, optional
-        :param critic_safe_decay_param: The safe decay parameter for the critic. Defaults to 0.001.
-        :type critic_safe_decay_param: float, optional
-        :param critic_is_dynamic_decay_rate: Whether the critic has a dynamic decay rate. Defaults to False.
-        :type critic_is_dynamic_decay_rate: bool, optional
-        :param critic_batch_size: The batch size for the critic optimizer. Defaults to 10.
-        :type critic_batch_size: int, optional
+        Args:
+            simulator (Simulator): The simulator object.
+            running_objective (RunningObjective): The running objective.
+            safe_policy (Policy): The safe policy.
+            critic_td_n (int, optional): The TD-N parameter for the
+                critic. Defaults to 2.
+            observer (Optional[Observer], optional): The observer
+                object. Defaults to None.
+            prediction_horizon (int, optional): The prediction horizon.
+                Defaults to 1.
+            policy_model (Optional[Model], optional): The policy model.
+                Defaults to None.
+            critic_model (Optional[Model], optional): The critic model.
+                Defaults to None.
+            predictor (Optional[Predictor], optional): The predictor
+                object. Defaults to None.
+            discount_factor (float, optional): The discount factor.
+                Defaults to 1.0.
+            sampling_time (float, optional): The sampling time. Defaults
+                to 0.1.
+            critic_lb_parameter (float, optional): The lower bound
+                parameter for the critic. Defaults to 0.0.
+            critic_ub_parameter (float, optional): The upper bound
+                parameter for the critic. Defaults to 1.0.
+            critic_safe_decay_param (float, optional): The safe decay
+                parameter for the critic. Defaults to 0.001.
+            critic_is_dynamic_decay_rate (bool, optional): Whether the
+                critic has a dynamic decay rate. Defaults to False.
+            critic_batch_size (int, optional): The batch size for the
+                critic optimizer. Defaults to 10.
 
-        :returns: None
-        :rtype: None
+        Returns:
+            None: None
         """
         system = simulator.system
         critic = CriticCALF(
@@ -817,22 +827,23 @@ class MPC(RLScenario):
     ):
         """Initialize the MPC agent, setting up the required structures for MPC.
 
-        :param running_objective: The objective function to assess the costs over the prediction horizon.
-        :type running_objective: RunningObjective
-        :param simulator: The environment simulation for applying and testing the agent.
-        :type simulator: Simulator
-        :param prediction_horizon: The number of steps into the future over which predictions are made.
-        :type prediction_horizon: int
-        :param predictor: The prediction model used for forecasting future states.
-        :type predictor: Optional[Predictor]
-        :param sampling_time:  The time step interval for scenario.
-        :type sampling_time: float
-        :param observer: The component for estimating the system's current state. Defaults to None.
-        :type observer: Observer | None
-        :param constraint_parser: The mechanism for enforcing operational constraints. Defaults to None.
-        :type constraint_parser: Optional[ConstraintParser]
-        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
-        :type discount_factor: float
+        Args:
+            running_objective (RunningObjective): The objective function
+                to assess the costs over the prediction horizon.
+            simulator (Simulator): The environment simulation for
+                applying and testing the agent.
+            prediction_horizon (int): The number of steps into the
+                future over which predictions are made.
+            predictor (Optional[Predictor]): The prediction model used
+                for forecasting future states.
+            sampling_time (float): The time step interval for scenario.
+            observer (Observer | None): The component for estimating the
+                system's current state. Defaults to None.
+            constraint_parser (Optional[ConstraintParser]): The
+                mechanism for enforcing operational constraints.
+                Defaults to None.
+            discount_factor (float): The factor for discounting the
+                value of future costs. Defaults to 1.0.
         """
         system = simulator.system
         super().__init__(
@@ -974,37 +985,40 @@ class SQL(RLScenario):
     ):
         """Instantiate SQL.
 
-        :param running_objective: The objective function to assess the costs over the prediction horizon.
-        :type running_objective: RunningObjective
-        :param simulator: The environment simulation for applying and testing the agent.
-        :type simulator: Simulator
-        :param prediction_horizon: The number of steps into the future over which predictions are made.
-        :type prediction_horizon: int
-        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
-        :type critic_td_n: int
-        :param critic_batch_size: The batch size for the critic.
-        :type critic_batch_size: int
-        :param predictor: The prediction model used for forecasting future states. Defaults to None.
-        :type predictor: Optional[Predictor]
-        :param sampling_time: The time step interval for scenario. Defaults to 0.1.
-        :type sampling_time: float
-        :param observer: The observer object used for the algorithm. Defaults to None.
-        :type observer: Optional[Observer]
-        :param constraint_parser: The component for estimating the system's current state. Defaults to None.
-        :type constraint_parser: Optional[ConstraintParser]
-        :param N_iterations: The number of iterations for the algorithm. Defaults to 1.
-        :type N_iterations: int
-        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
-        :type discount_factor: float
-        :param policy_model: The model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainer` is used.
-        :type policy_model: Optional[Model]
-        :param critic_model:  The model parameterizing the critic. Defaults to None. If `None` then diagonal quadratic form is used.
-        :type critic_model: Optional[Model]
-        :param critic_regularization_param: The regularization parameter for the critic. Defaults to 0.
-        :type critic_regularization_param: float
+        Args:
+            running_objective (RunningObjective): The objective function
+                to assess the costs over the prediction horizon.
+            simulator (Simulator): The environment simulation for
+                applying and testing the agent.
+            prediction_horizon (int): The number of steps into the
+                future over which predictions are made.
+            critic_td_n (int): The n-step temporal-difference parameter
+                used for critic updates.
+            critic_batch_size (int): The batch size for the critic.
+            predictor (Optional[Predictor]): The prediction model used
+                for forecasting future states. Defaults to None.
+            sampling_time (float): The time step interval for scenario.
+                Defaults to 0.1.
+            observer (Optional[Observer]): The observer object used for
+                the algorithm. Defaults to None.
+            constraint_parser (Optional[ConstraintParser]): The
+                component for estimating the system's current state.
+                Defaults to None.
+            N_iterations (int): The number of iterations for the
+                algorithm. Defaults to 1.
+            discount_factor (float): The factor for discounting the
+                value of future costs. Defaults to 1.0.
+            policy_model (Optional[Model]): The model parameterizing the
+                policy. Defaults to None. If `None` then
+                `ModelWeightContainer` is used.
+            critic_model (Optional[Model]): The model parameterizing the
+                critic. Defaults to None. If `None` then diagonal
+                quadratic form is used.
+            critic_regularization_param (float): The regularization
+                parameter for the critic. Defaults to 0.
 
-        :return: None
-        :rtype: None
+        Returns:
+            None: None
         """
         super().__init__(
             **get_predictive_kwargs(
@@ -1056,37 +1070,40 @@ class RQL(RLScenario):
     ):
         """Instantiate RQLScenario.
 
-        :param running_objective: The objective function to assess the costs over the prediction horizon.
-        :type running_objective: RunningObjective
-        :param simulator: The environment simulation for applying and testing the agent.
-        :type simulator: Simulator
-        :param prediction_horizon: The number of steps into the future over which predictions are made.
-        :type prediction_horizon: int
-        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
-        :type critic_td_n: int
-        :param critic_batch_size: The batch size for the critic.
-        :type critic_batch_size: int
-        :param predictor: The prediction model used for forecasting future states. Defaults to None.
-        :type predictor: Optional[Predictor]
-        :param sampling_time: The time step interval for scenario. Defaults to 0.1.
-        :type sampling_time: float
-        :param observer: The observer object used for the algorithm. Defaults to None.
-        :type observer: Optional[Observer]
-        :param constraint_parser: The component for estimating the system's current state. Defaults to None.
-        :type constraint_parser: Optional[ConstraintParser]
-        :param N_iterations: The number of iterations for the algorithm. Defaults to 1.
-        :type N_iterations: int
-        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
-        :type discount_factor: float
-        :param policy_model: The model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainer` is used.
-        :type policy_model: Optional[Model]
-        :param critic_model:  The model parameterizing the critic. Defaults to None. If `None` then diagonal quadratic form is used.
-        :type critic_model: Optional[Model]
-        :param critic_regularization_param: The regularization parameter for the critic. Defaults to 0.
-        :type critic_regularization_param: float
+        Args:
+            running_objective (RunningObjective): The objective function
+                to assess the costs over the prediction horizon.
+            simulator (Simulator): The environment simulation for
+                applying and testing the agent.
+            prediction_horizon (int): The number of steps into the
+                future over which predictions are made.
+            critic_td_n (int): The n-step temporal-difference parameter
+                used for critic updates.
+            critic_batch_size (int): The batch size for the critic.
+            predictor (Optional[Predictor]): The prediction model used
+                for forecasting future states. Defaults to None.
+            sampling_time (float): The time step interval for scenario.
+                Defaults to 0.1.
+            observer (Optional[Observer]): The observer object used for
+                the algorithm. Defaults to None.
+            constraint_parser (Optional[ConstraintParser]): The
+                component for estimating the system's current state.
+                Defaults to None.
+            N_iterations (int): The number of iterations for the
+                algorithm. Defaults to 1.
+            discount_factor (float): The factor for discounting the
+                value of future costs. Defaults to 1.0.
+            policy_model (Optional[Model]): The model parameterizing the
+                policy. Defaults to None. If `None` then
+                `ModelWeightContainer` is used.
+            critic_model (Optional[Model]): The model parameterizing the
+                critic. Defaults to None. If `None` then diagonal
+                quadratic form is used.
+            critic_regularization_param (float): The regularization
+                parameter for the critic. Defaults to 0.
 
-        :return: None
-        :rtype: None
+        Returns:
+            None: None
         """
         super().__init__(
             **get_predictive_kwargs(
@@ -1137,37 +1154,40 @@ class RPV(RLScenario):
     ):
         """Instantiate RPV.
 
-        :param running_objective: The objective function to assess the costs over the prediction horizon.
-        :type running_objective: RunningObjective
-        :param simulator: The environment simulation for applying and testing the agent.
-        :type simulator: Simulator
-        :param prediction_horizon: The number of steps into the future over which predictions are made.
-        :type prediction_horizon: int
-        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
-        :type critic_td_n: int
-        :param critic_batch_size: The batch size for the critic.
-        :type critic_batch_size: int
-        :param predictor: The prediction model used for forecasting future states. Defaults to None.
-        :type predictor: Optional[Predictor]
-        :param sampling_time: The time step interval for scenario. Defaults to 0.1.
-        :type sampling_time: float
-        :param observer: The observer object used for the algorithm. Defaults to None.
-        :type observer: Optional[Observer]
-        :param constraint_parser: The component for estimating the system's current state. Defaults to None.
-        :type constraint_parser: Optional[ConstraintParser]
-        :param N_iterations: The number of iterations for the algorithm. Defaults to 1.
-        :type N_iterations: int
-        :param discount_factor: The factor for discounting the value of future costs. Defaults to 1.0.
-        :type discount_factor: float
-        :param policy_model: The model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainer` is used.
-        :type policy_model: Optional[Model]
-        :param critic_model:  The model parameterizing the critic. Defaults to None. If `None` then diagonal quadratic form is used.
-        :type critic_model: Optional[Model]
-        :param critic_regularization_param: The regularization parameter for the critic. Defaults to 0.
-        :type critic_regularization_param: float
+        Args:
+            running_objective (RunningObjective): The objective function
+                to assess the costs over the prediction horizon.
+            simulator (Simulator): The environment simulation for
+                applying and testing the agent.
+            prediction_horizon (int): The number of steps into the
+                future over which predictions are made.
+            critic_td_n (int): The n-step temporal-difference parameter
+                used for critic updates.
+            critic_batch_size (int): The batch size for the critic.
+            predictor (Optional[Predictor]): The prediction model used
+                for forecasting future states. Defaults to None.
+            sampling_time (float): The time step interval for scenario.
+                Defaults to 0.1.
+            observer (Optional[Observer]): The observer object used for
+                the algorithm. Defaults to None.
+            constraint_parser (Optional[ConstraintParser]): The
+                component for estimating the system's current state.
+                Defaults to None.
+            N_iterations (int): The number of iterations for the
+                algorithm. Defaults to 1.
+            discount_factor (float): The factor for discounting the
+                value of future costs. Defaults to 1.0.
+            policy_model (Optional[Model]): The model parameterizing the
+                policy. Defaults to None. If `None` then
+                `ModelWeightContainer` is used.
+            critic_model (Optional[Model]): The model parameterizing the
+                critic. Defaults to None. If `None` then diagonal
+                quadratic form is used.
+            critic_regularization_param (float): The regularization
+                parameter for the critic. Defaults to 0.
 
-        :return: None
-        :rtype: None
+        Returns:
+            None: None
         """
         super().__init__(
             **get_predictive_kwargs(
@@ -1217,32 +1237,35 @@ class MPCTorch(RLScenario):
     ):
         """Initialize the object with the given parameters.
 
-        :param running_objective: The objective function to assess the costs over the prediction horizon.
-        :type running_objective: RunningObjective
-        :param simulator: The environment simulation for applying and testing the agent.
-        :type simulator: Simulator
-        :param prediction_horizon: The number of steps into the future over which predictions are made.
-        :type prediction_horizon: int
-        :param sampling_time: The time step interval for scenario.
-        :type sampling_time: float
-        :param n_epochs: The number of training epochs.
-        :type n_epochs: int
-        :param opt_method_kwargs: Additional keyword arguments for the optimization method.
-        :type opt_method_kwargs: Dict[str, Any]
-        :param opt_method: The optimization method to use. Defaults to torch.optim.Adam.
-        :type opt_method: Type[torch.optim.Optimizer]
-        :param predictor: The predictor object to use. Defaults to None.
-        :type predictor: Optional[Predictor]
-        :param model: The neural network model parameterizing the policy. Defaults to None. If `None` then `ModelWeightContainerTorch` is used, but you can implement any neural network you want.
-        :type model: Optional[ModelNN]
-        :param observer: Object responsible for state estimation from observations. Defaults to None.
-        :type observer: Optional[Observer]
-        :param constraint_parser: The mechanism for enforcing operational constraints. Defaults to None.
-        :type constraint_parser: Optional[ConstraintParser]
-        :param discount_factor: The discount factor for future costs. Defaults to 1.0.
-        :type discount_factor: float
+        Args:
+            running_objective (RunningObjective): The objective function
+                to assess the costs over the prediction horizon.
+            simulator (Simulator): The environment simulation for
+                applying and testing the agent.
+            prediction_horizon (int): The number of steps into the
+                future over which predictions are made.
+            sampling_time (float): The time step interval for scenario.
+            n_epochs (int): The number of training epochs.
+            opt_method_kwargs (Dict[str, Any]): Additional keyword
+                arguments for the optimization method.
+            opt_method (Type[torch.optim.Optimizer]): The optimization
+                method to use. Defaults to torch.optim.Adam.
+            predictor (Optional[Predictor]): The predictor object to
+                use. Defaults to None.
+            model (Optional[ModelNN]): The neural network model
+                parameterizing the policy. Defaults to None. If `None`
+                then `ModelWeightContainerTorch` is used, but you can
+                implement any neural network you want.
+            observer (Optional[Observer]): Object responsible for state
+                estimation from observations. Defaults to None.
+            constraint_parser (Optional[ConstraintParser]): The
+                mechanism for enforcing operational constraints.
+                Defaults to None.
+            discount_factor (float): The discount factor for future
+                costs. Defaults to 1.0.
 
-        :return: None
+        Returns:
+            None
         """
         system = simulator.system
         super().__init__(
@@ -1806,48 +1829,56 @@ class PPO(RLScenario):
     ):
         """Initialize the object with the given parameters.
 
-        :param policy_model: The neural network model parameterizing the policy.
-        :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param critic_model: The neural network model used for the value function approximation.
-        :type critic_model: ModelPerceptron
-        :param sampling_time: Time interval between two consecutive actions.
-        :type sampling_time: float
-        :param running_objective: A function that returns the scalar running cost or reward associated with an observation-action pair.
-        :type running_objective: RunningObjective
-        :param simulator: The simulation environment where the agent performs actions.
-        :type simulator: Simulator
-        :param critic_n_epochs: The number of epochs for which the critic is trained per iteration.
-        :type critic_n_epochs: int
-        :param policy_n_epochs: The number of epochs for which the policy is trained per iteration.
-        :type policy_n_epochs: int
-        :param critic_opt_method_kwargs: A dictionary of keyword arguments for the optimizer used for the critic.
-        :type critic_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method_kwargs: A dictionary of keyword arguments for the optimizer used for the policy.
-        :type policy_opt_method_kwargs: Dict[str, Any]
-        :param critic_opt_method: The optimization algorithm class used for training the critic, e.g. torch.optim.Adam.
-        :type critic_opt_method: Type[torch.optim.Optimizer]
-        :param policy_opt_method: The optimization algorithm class used for training the policy, e.g. torch.optim.Adam.
-        :type policy_opt_method: Type[torch.optim.Optimizer]
-        :param running_objective_type: Specifies whether the running objective represents a 'cost' to minimize or a 'reward' to maximize.
-        :type running_objective_type: str
-        :param critic_td_n: The n-step temporal-difference parameter used for critic updates.
-        :type critic_td_n: int
-        :param cliprange: Clipping parameter that restricts the deviation of the new policy from the old policy.
-        :type cliprange: float
-        :param discount_factor: A factor applied to future rewards or costs to discount their value relative to immediate ones.
-        :type discount_factor: float
-        :param observer: Object responsible for state estimation from observations.
-        :type observer: Optional[Observer]
-        :param N_episodes: The number of episodes to run in every iteration.
-        :type N_episodes: int
-        :param N_iterations: The number of iterations to run in the scenario.
-        :type N_iterations: int
-        :param value_threshold: Threshold of the total objective to end an episode.
-        :type value_threshold: float
+        Args:
+            policy_model (PerceptronWithTruncatedNormalNoise): The
+                neural network model parameterizing the policy.
+            critic_model (ModelPerceptron): The neural network model
+                used for the value function approximation.
+            sampling_time (float): Time interval between two consecutive
+                actions.
+            running_objective (RunningObjective): A function that
+                returns the scalar running cost or reward associated
+                with an observation-action pair.
+            simulator (Simulator): The simulation environment where the
+                agent performs actions.
+            critic_n_epochs (int): The number of epochs for which the
+                critic is trained per iteration.
+            policy_n_epochs (int): The number of epochs for which the
+                policy is trained per iteration.
+            critic_opt_method_kwargs (Dict[str, Any]): A dictionary of
+                keyword arguments for the optimizer used for the critic.
+            policy_opt_method_kwargs (Dict[str, Any]): A dictionary of
+                keyword arguments for the optimizer used for the policy.
+            critic_opt_method (Type[torch.optim.Optimizer]): The
+                optimization algorithm class used for training the
+                critic, e.g. torch.optim.Adam.
+            policy_opt_method (Type[torch.optim.Optimizer]): The
+                optimization algorithm class used for training the
+                policy, e.g. torch.optim.Adam.
+            running_objective_type (str): Specifies whether the running
+                objective represents a 'cost' to minimize or a 'reward'
+                to maximize.
+            critic_td_n (int): The n-step temporal-difference parameter
+                used for critic updates.
+            epsilon (float): Clipping parameter that restricts the
+                deviation of the new policy from the old policy.
+            discount_factor (float): A factor applied to future rewards
+                or costs to discount their value relative to immediate
+                ones.
+            observer (Optional[Observer]): Object responsible for state
+                estimation from observations.
+            N_episodes (int): The number of episodes to run in every
+                iteration.
+            N_iterations (int): The number of iterations to run in the
+                scenario.
+            value_threshold (float): Threshold of the total objective to
+                end an episode.
 
-        :raises AssertionError: If the `running_objective_type` is invalid.
+        Raises:
+            AssertionError: If the `running_objective_type` is invalid.
 
-        :return: None
+        Returns:
+            None
         """
         assert (
             running_objective_type == "cost" or running_objective_type == "reward"
@@ -1923,40 +1954,47 @@ class SDPG(RLScenario):
     ):
         """Initialize SDPG.
 
-        :param policy_model: The policy network model that defines the policy architecture.
-        :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param critic_model: The critic network model that defines the value function architecture.
-        :type critic_model: ModelPerceptron
-        :param sampling_time: The time step between agent actions in the environment.
-        :type sampling_time: float
-        :param running_objective: Function calculating the reward or cost at each time step when an action is taken.
-        :type running_objective: RunningObjective
-        :param simulator: The environment in which the agent operates, providing observation.
-        :type simulator: Simulator
-        :param critic_n_epochs: Number of epochs for which the critic network is trained at each iteration.
-        :type critic_n_epochs: int
-        :param policy_n_epochs: Number of epochs for which the policy network is trained at each iteration.
-        :type policy_n_epochs: int
-        :param critic_opt_method_kwargs: Parameters for the critic's optimization algorithm.
-        :type critic_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method_kwargs: Parameters for the policy's optimization algorithm.
-        :type policy_opt_method_kwargs: Dict[str, Any]
-        :param critic_opt_method: Class of the optimizer to use for optimizing the critic,  defaults to torch.optim.Adam
-        :type critic_opt_method: Type[torch.optim.Optimizer]
-        :param policy_opt_method: Class of the optimizer to use for optimizing the policy, , defaults to torch.optim.Adam
-        :type policy_opt_method: Type[torch.optim.Optimizer]
-        :param critic_td_n: The number of steps to look ahead in the TD-target for the critic.
-        :type critic_td_n: int
-        :param discount_factor: The factor by which future rewards or costs are discounted relative to immediate running objectives.
-        :type discount_factor: float
-        :param observer: The observer object that estimates the state of the environment from observations.
-        :type observer: Optional[Observer]
-        :param N_episodes: The number of episodes per iteration.
-        :type N_episodes: int
-        :param N_iterations: The total number of iterations for training.
-        :type N_iterations: int
-        :param value_threshold: Threshold for the total objective that, once reached, stops the episode, defaults to np.inf.
-        :type value_threshold: float
+        Args:
+            policy_model: The
+                policy network model that defines the policy
+                architecture.
+            critic_model: The critic network model
+                that defines the value function architecture.
+            sampling_time (float): The time step between agent actions
+                in the environment.
+            running_objective (RunningObjective): Function calculating
+                the reward or cost at each time step when an action is
+                taken.
+            simulator (Simulator): The environment in which the agent
+                operates, providing observation.
+            critic_n_epochs (int): Number of epochs for which the critic
+                network is trained at each iteration.
+            policy_n_epochs (int): Number of epochs for which the policy
+                network is trained at each iteration.
+            critic_opt_method_kwargs (Dict[str, Any]): Parameters for
+                the critic's optimization algorithm.
+            policy_opt_method_kwargs (Dict[str, Any]): Parameters for
+                the policy's optimization algorithm.
+            critic_opt_method (Type[torch.optim.Optimizer]): Class of
+                the optimizer to use for optimizing the critic,
+                defaults to torch.optim.Adam
+            policy_opt_method (Type[torch.optim.Optimizer]): Class of
+                the optimizer to use for optimizing the policy, ,
+                defaults to torch.optim.Adam
+            critic_td_n (int): The number of steps to look ahead in the
+                TD-target for the critic.
+            discount_factor (float): The factor by which future rewards
+                or costs are discounted relative to immediate running
+                objectives.
+            observer (Optional[Observer]): The observer object that
+                estimates the state of the environment from
+                observations.
+            N_episodes (int): The number of episodes per iteration.
+            N_iterations (int): The total number of iterations for
+                training.
+            value_threshold (float): Threshold for the total objective
+                that, once reached, stops the episode, defaults to
+                np.inf.
         """
         super().__init__(
             **get_policy_gradient_kwargs(
@@ -2012,35 +2050,36 @@ class REINFORCE(RLScenario):
     ):
         """Initialize an REINFORCE object.
 
-        :param policy_model: The policy network model that defines the policy architecture.
-        :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param sampling_time: The time step between agent actions in the environment.
-        :type sampling_time: float
-        :param running_objective: Function calculating the reward or cost at each time step when an action is taken.
-        :type running_objective: RunningObjective
-        :param simulator: The environment in which the agent operates, providing state, observation.
-        :type simulator: Simulator
-        :param policy_opt_method_kwargs: The keyword arguments for the policy optimizer method.
-        :type policy_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method: The policy optimizer method. Defaults to torch.optim.Adam.
-        :type policy_opt_method: Type[torch.optim.Optimizer], optional
-        :param n_epochs: The number of epochs used by the policy optimizer. Defaults to 1.
-        :type n_epochs: int, optional
-        :param discount_factor: The discount factor used by the RLScenario. Defaults to 1.0.
-        :type discount_factor: float, optional
-        :param observer: The observer object that estimates the state of the environment from observations. Defaults to None.
-        :type observer: Optional[Observer], optional
-        :param N_episodes: The number of episodes per iteration. Defaults to 4.
-        :type N_episodes: int, optional
-        :param N_iterations: The total number of iterations for training. Defaults to 100.
-        :type N_iterations: int, optional
-        :param is_with_baseline: Whether to use baseline as value (i.e. cumulative cost or reward) from previous iteration. Defaults to True.
-        :type is_with_baseline: bool, optional
-        :param is_do_not_let_the_past_distract_you: Whether to use tail total costs or not. Defaults to True.
-        :type is_do_not_let_the_past_distract_you: bool, optional
+        Args:
+            policy_model: The
+                policy network model that defines the policy
+                architecture.
+            sampling_time: The time step between agent actions
+                in the environment.
+            running_objective: Function calculating
+                the reward or cost at each time step when an action is
+                taken.
+            simulator: The environment in which the agent
+                operates, providing state, observation.
+            policy_opt_method_kwargs: The keyword
+                arguments for the policy optimizer method.
+            policy_opt_method (Type[torch.optim.Optimizer], optional):
+                The policy optimizer method.
+            n_epochs: The number of epochs used by the
+                policy optimizer.
+            discount_factor: The discount factor used
+                by the RLScenario. Defaults to 1.0.
+            observer: The observer object
+                that estimates the state of the environment from observations.
+            N_episodes: The number of episodes per iteration.
+            N_iterations: The total number of iterations
+                for training.
+            is_with_baseline: Whether to use baseline as value (i.e. cumulative cost or reward)
+                from previous iteration.
+            is_do_not_let_the_past_distract_you: Whether to use tail total costs or not.
 
-        :return: None
-        :rtype: None
+        Returns:
+            None: None
         """
         super().__init__(
             **get_policy_gradient_kwargs(
@@ -2094,40 +2133,47 @@ class DDPG(RLScenario):
     ):
         """Instantiate DDPG Scenario.
 
-        :param policy_model: The policy (actor) neural network model with input as state and output as action.
-        :type policy_model: PerceptronWithTruncatedNormalNoise
-        :param critic_model: The critic neural network model with input as state-action pair and output as Q-value estimate.
-        :type critic_model: ModelPerceptron
-        :param sampling_time: The time interval between each action taken by the policy.
-        :type sampling_time: float
-        :param running_objective: Th function calculating the running cost at each time step when an action is taken.
-        :type running_objective: RunningObjective
-        :param simulator: The environment simulator in which the agent operates.
-        :type simulator: Simulator
-        :param critic_n_epochs: The number of epochs for training the critic model during each optimization.
-        :type critic_n_epochs: int
-        :param policy_n_epochs: The number of epochs for training the policy model during each optimization.
-        :type policy_n_epochs: int
-        :param critic_opt_method_kwargs: Keyword arguments for the critic optimizer method.
-        :type critic_opt_method_kwargs: Dict[str, Any]
-        :param policy_opt_method_kwargs: Keyword arguments for the policy optimizer method.
-        :type policy_opt_method_kwargs: Dict[str, Any]
-        :param critic_opt_method: The optimizer class to be used for the critic. Defaults to torch.nn.Adam.
-        :type critic_opt_method: Type[torch.optim.Optimizer]
-        :param policy_opt_method: The optimizer class to be used for the policy. Defaults to torch.nn.Adam.
-        :type policy_opt_method: Type[torch.optim.Optimizer]
-        :param critic_td_n: The n-step return for temporal-difference learning for the critic estimator.
-        :type critic_td_n: int
-        :param discount_factor: The discount factor that weighs future costs lower compared to immediate costs.
-        :type discount_factor: float
-        :param observer: An observer object used for deriving state estimations from raw observations.
-        :type observer: Optional[Observer]
-        :param N_episodes: The number of episodes to be executed in each training iteration.
-        :type N_episodes: int
-        :param N_iterations: The total number of training iterations for the scenario.
-        :type N_iterations: int
-        :param value_threshold: The threshold for the total cumulative objective value that triggers the end of an episode.
-        :type value_threshold: float
+        Args:
+            policy_model (PerceptronWithTruncatedNormalNoise): The
+                policy (actor) neural network model with input as state
+                and output as action.
+            critic_model (ModelPerceptron): The critic neural network
+                model with input as state-action pair and output as
+                Q-value estimate.
+            sampling_time (float): The time interval between each action
+                taken by the policy.
+            running_objective (RunningObjective): Th function
+                calculating the running cost at each time step when an
+                action is taken.
+            simulator (Simulator): The environment simulator in which
+                the agent operates.
+            critic_n_epochs (int): The number of epochs for training the
+                critic model during each optimization.
+            policy_n_epochs (int): The number of epochs for training the
+                policy model during each optimization.
+            critic_opt_method_kwargs (Dict[str, Any]): Keyword arguments
+                for the critic optimizer method.
+            policy_opt_method_kwargs (Dict[str, Any]): Keyword arguments
+                for the policy optimizer method.
+            critic_opt_method (Type[torch.optim.Optimizer]): The
+                optimizer class to be used for the critic. Defaults to
+                torch.nn.Adam.
+            policy_opt_method (Type[torch.optim.Optimizer]): The
+                optimizer class to be used for the policy. Defaults to
+                torch.nn.Adam.
+            critic_td_n (int): The n-step return for temporal-difference
+                learning for the critic estimator.
+            discount_factor (float): The discount factor that weighs
+                future costs lower compared to immediate costs.
+            observer (Optional[Observer]): An observer object used for
+                deriving state estimations from raw observations.
+            N_episodes (int): The number of episodes to be executed in
+                each training iteration.
+            N_iterations (int): The total number of training iterations
+                for the scenario.
+            value_threshold (float): The threshold for the total
+                cumulative objective value that triggers the end of an
+                episode.
         """
         super().__init__(
             **get_policy_gradient_kwargs(

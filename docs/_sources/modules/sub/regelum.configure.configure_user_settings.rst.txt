@@ -1,6 +1,0 @@
-regelum.configure.configure\_user\_settings
-===========================================
-
-.. currentmodule:: regelum.configure
-
-.. autofunction:: configure_user_settings

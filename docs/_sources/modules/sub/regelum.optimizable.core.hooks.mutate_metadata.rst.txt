@@ -1,6 +1,0 @@
-regelum.optimizable.core.hooks.mutate\_metadata
-===============================================
-
-.. currentmodule:: regelum.optimizable.core.hooks
-
-.. autofunction:: mutate_metadata

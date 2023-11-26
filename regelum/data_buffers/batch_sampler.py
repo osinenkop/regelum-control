@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Union
-from .types import RgArrayType, RgArray
+from regelum.typing import RgArrayType, RgArray
 import numpy as np
 import torch
 
@@ -20,16 +20,17 @@ class BatchSampler(ABC):
     ):
         """Instantiate a BatchSampler.
 
-        :param data_buffer: Data Buffer instance
-        :type data_buffer: DataBuffer
-        :param keys: keys to sample
-        :type keys: Optional[List[str]]
-        :param dtype: dtype for sample, can be either cs.DM, np.array, torch.Tensor, defaults to torch.FloatTensor
-        :type dtype: RgArrayType, optional
-        :param device: device for sampling, needed for torch.FloatTensor defaults to None
-        :type device: Optional[Union[str, torch.device]], optional
-        :param fill_na: fill value for np.nan, defaults to 0.0
-        :type fill_na: Optional[float], optional, defaults to 0.0
+        Args:
+            data_buffer (DataBuffer): Data Buffer instance
+            keys (Optional[List[str]]): keys to sample
+            dtype (RgArrayType, optional): dtype for sample, can be
+                either cs.DM, np.array, torch.Tensor, defaults to
+                torch.FloatTensor
+            device (Optional[Union[str, torch.device]], optional):
+                device for sampling, needed for torch.FloatTensor
+                defaults to None
+            fill_na (Optional[float], optional, defaults to 0.0): fill
+                value for np.nan, defaults to 0.0
         """
         self.keys = keys
         self.dtype = dtype
@@ -83,22 +84,29 @@ class RollingBatchSampler(BatchSampler):
     ):
         """Instantiate a RollingBatchSampler.
 
-        :param mode: mode for batch sampling. Can be either 'uniform', 'backward', 'forward', 'full'. 'forward' for sampling of rolling batches from the beginning of DataBuffer. 'backward' for sampling of rolling batches from the end of DataBuffer. 'uniform' for sampling random uniformly batches. 'full' for sampling the full DataBuffer
-        :type mode: str
-        :param data_buffer: DataBuffer instance
-        :type data_buffer: DataBuffer
-        :param keys: DataBuffer keys for sampling
-        :type keys: Optional[List[str]]
-        :param batch_size: batch size, needed for 'uniform', 'backward', 'forward', defaults to None
-        :type batch_size: Optional[int], optional
-        :param n_batches: how many batches to sample, can be used for all modes. Note that sampling procedure stops in case if DataBuffer is exhausted for 'forward' and 'backward' modes,  defaults to None
-        :type n_batches: Optional[int], optional
-        :param dtype: dtype for sampling, can be either of cs.DM, np.array, torch.Tensor, defaults to torch.FloatTensor
-        :type dtype: RgArrayType, optional
-        :param device: device to sample from, defaults to None
-        :type device: Optional[Union[str, torch.device]], optional
-        :param fill_na: fill value for np.nan, defaults to 0.0
-        :type fill_na: Optional[float], optional
+        Args:
+            mode (str): mode for batch sampling. Can be either
+                'uniform', 'backward', 'forward', 'full'. 'forward' for
+                sampling of rolling batches from the beginning of
+                DataBuffer. 'backward' for sampling of rolling batches
+                from the end of DataBuffer. 'uniform' for sampling
+                random uniformly batches. 'full' for sampling the full
+                DataBuffer
+            data_buffer (DataBuffer): DataBuffer instance
+            keys (Optional[List[str]]): DataBuffer keys for sampling
+            batch_size (Optional[int], optional): batch size, needed for
+                'uniform', 'backward', 'forward', defaults to None
+            n_batches (Optional[int], optional): how many batches to
+                sample, can be used for all modes. Note that sampling
+                procedure stops in case if DataBuffer is exhausted for
+                'forward' and 'backward' modes,  defaults to None
+            dtype (RgArrayType, optional): dtype for sampling, can be
+                either of cs.DM, np.array, torch.Tensor, defaults to
+                torch.FloatTensor
+            device (Optional[Union[str, torch.device]], optional):
+                device to sample from, defaults to None
+            fill_na (Optional[float], optional): fill value for np.nan,
+                defaults to 0.0
         """
         if batch_size is None and mode in ["uniform", "backward", "forward"]:
             raise ValueError(
@@ -197,16 +205,16 @@ class EpisodicSampler(BatchSampler):
     ):
         """Instantiate a EpisodicSampler.
 
-        :param data_buffer: instance of DataBuffer
-        :type data_buffer: DataBuffer
-        :param keys: keys for sampling
-        :type keys: List[str]
-        :param dtype: batch dtype for sampling, can be either of cs.DM, np.array, torch.Tensor, defaults to torch.FloatTensor
-        :type dtype: RgArrayType, optional
-        :param device: torch.Tensor device for sampling, defaults to None
-        :type device: Optional[Union[str, torch.device]], optional
-        :param fill_na: fill value for np.nan, defaults to 0.0
-        :type fill_na: Optional[float], optional
+        Args:
+            data_buffer (DataBuffer): instance of DataBuffer
+            keys (List[str]): keys for sampling
+            dtype (RgArrayType, optional): batch dtype for sampling, can
+                be either of cs.DM, np.array, torch.Tensor, defaults to
+                torch.FloatTensor
+            device (Optional[Union[str, torch.device]], optional):
+                torch.Tensor device for sampling, defaults to None
+            fill_na (Optional[float], optional): fill value for np.nan,
+                defaults to 0.0
         """
         BatchSampler.__init__(
             self,

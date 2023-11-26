@@ -1,7 +1,5 @@
-_target_: regelum.system.SystemWithConstantReference
+_target_: regelum.system.LunarLanderReferenced
 
-system: = regelum.system.LunarLander()
-state_reference: $ system_specific.reference 
 
 # animations%%:
 #   - DirectionalPlanarMotionAnimation

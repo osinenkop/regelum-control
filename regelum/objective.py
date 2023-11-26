@@ -10,7 +10,7 @@ import regelum
 from .model import Model, PerceptronWithTruncatedNormalNoise, ModelNN
 from typing import Optional
 import torch
-from .__utilities import rg
+from .utilis import rg
 from .predictor import Predictor
 
 
@@ -35,20 +35,21 @@ class RunningObjective(Objective):
     def __init__(self, model: Optional[Model] = None):
         """Initialize a RunningObjective instance.
 
-        :param model: function that calculates the running objective for a given observation and action.
-        :type model: function
+        Args:
+            model (function): function that calculates the running
+                objective for a given observation and action.
         """
         self.model = (lambda observation, action: 0) if model is None else model
 
     def __call__(self, observation, action, is_save_batch_format=False):
         """Calculate the running objective for a given observation and action.
 
-        :param observation: current observation.
-        :type observation: numpy array
-        :param action: current action.
-        :type action: numpy array
-        :return: running objective value.
-        :rtype: float
+        Args:
+            observation (numpy array): current observation.
+            action (numpy array): current action.
+
+        Returns:
+            float: running objective value.
         """
         running_objective = self.model(observation, action)
         if not is_save_batch_format:
@@ -78,30 +79,25 @@ def reinforce_objective(
     :math: `B_k` is the baseline, which equals 0 if `is_with_baseline` is `False` and the total objective from previous iteration if `is_with_baseline` is `True`,
     :math: `M` is the number of episodes, :math:`N` is the number of actions.
 
+    Args:
+        policy_model (GaussianPDFModel): The policy model used to
+            calculate the log probabilities.
+        observations (torch.FloatTensor): The observations tensor.
+        actions (torch.FloatTensor): The actions tensor.
+        tail_values (torch.FloatTensor): The tail total objectives
+            tensor.
+        values (torch.FloatTensor): The total objectives tensor.
+        baselines (torch.FloatTensor): The baselines tensor.
+        is_with_baseline (bool): Flag indicating whether to subtract
+            baselines from the target objectives.
+        is_do_not_let_the_past_distract_you (bool): Flag indicating
+            whether to use tail total objectives.
+        device (Union[str, torch.device]): The device to use for the
+            calculations.
+        N_episodes (int): The number of episodes.
 
-    :param policy_model: The policy model used to calculate the log probabilities.
-    :type policy_model: GaussianPDFModel
-    :param observations: The observations tensor.
-    :type observations: torch.FloatTensor
-    :param actions: The actions tensor.
-    :type actions: torch.FloatTensor
-    :param tail_values: The tail total objectives tensor.
-    :type tail_values: torch.FloatTensor
-    :param values: The total objectives tensor.
-    :type values: torch.FloatTensor
-    :param baselines: The baselines tensor.
-    :type baselines: torch.FloatTensor
-    :param is_with_baseline: Flag indicating whether to subtract baselines from the target objectives.
-    :type is_with_baseline: bool
-    :param is_do_not_let_the_past_distract_you: Flag indicating whether to use tail total objectives.
-    :type is_do_not_let_the_past_distract_you: bool
-    :param device: The device to use for the calculations.
-    :type device: Union[str, torch.device]
-    :param N_episodes: The number of episodes.
-    :type N_episodes: int
-
-    :return: surrogate objective value.
-    :rtype: torch.FloatTensor
+    Returns:
+        torch.FloatTensor: surrogate objective value.
     """
     log_pdfs = policy_model.log_pdf(observations, actions)
     if is_do_not_let_the_past_distract_you:
@@ -130,27 +126,27 @@ def sdpg_objective(
 
     TODO: add link to papers + latex code for objective function
 
-    :param policy_model: The policy model that represents the probability density function (PDF) of the action given the observation.
-    :type policy_model: PerceptronWithNormalNoise
-    :param critic_model: The critic model that estimates the Q-function for a given observation-action pair.
-    :type critic_model: ModelNN
-    :param observations: The tensor containing the observations.
-    :type observations: torch.FloatTensor
-    :param actions: The tensor containing the actions.
-    :type actions: torch.FloatTensor
-    :param timestamps: The tensor containing the timestamps.
-    :type timestamps: torch.FloatTensor
-    :param episode_ids: Episode ids.
-    :type episode_ids: torch.LongTensor
-    :param device: The device on which the computations are performed.
-    :type device: Union[str, torch.device]
-    :param discount_factor: The discount factor used to discount future running objectives.
-    :type discount_factor: float
-    :param N_episodes: The number of episodes used to estimate the expected objective function value.
-    :type N_episodes: int
+    Args:
+        policy_model (PerceptronWithNormalNoise): The policy model that
+            represents the probability density function (PDF) of the
+            action given the observation.
+        critic_model (ModelNN): The critic model that estimates the
+            Q-function for a given observation-action pair.
+        observations (torch.FloatTensor): The tensor containing the
+            observations.
+        actions (torch.FloatTensor): The tensor containing the actions.
+        timestamps (torch.FloatTensor): The tensor containing the
+            timestamps.
+        episode_ids (torch.LongTensor): Episode ids.
+        device (Union[str, torch.device]): The device on which the
+            computations are performed.
+        discount_factor (float): The discount factor used to discount
+            future running objectives.
+        N_episodes (int): The number of episodes used to estimate the
+            expected objective function value.
 
-    :return: SDPG surrogate objective.
-    :rtype: torch.FloatTensor
+    Returns:
+        torch.FloatTensor: SDPG surrogate objective.
     """
     critic_values = critic_model(observations)
     log_pdfs = policy_model.log_pdf(observations, actions)
@@ -193,34 +189,25 @@ def ppo_objective(
 
     TODO: Write docsting with for ppo objective.
 
-    :param policy_model: policy model
-    :type policy_model: PerceptronWithNormalNoise
-    :param critic_model: critic model
-    :type critic_model: ModelNN
-    :param observations: tensor of observations in iteration
-    :type observations: torch.FloatTensor
-    :param actions: tensor of actions in iteration
-    :type actions: torch.FloatTensor
-    :param timestamps: timestamps
-    :type timestamps: torch.FloatTensor
-    :param episode_ids: episode ids
-    :type episode_ids: torch.LongTensor
-    :param device: device (cuda or cpu)
-    :type device: Union[str, torch.device]
-    :param discount_factor: discount factor
-    :type discount_factor: float
-    :param N_episodes: number of episodes
-    :type N_episodes: int
-    :param running_objectives: tensor of running objectives (either costs or rewards)
-    :type running_objectives: torch.FloatTensor
-    :param epsilon: epsilon
-    :type epsilon: float
-    :param initial_log_probs:
-    :type initial_log_probs: torch.FloatTensor
-    :param running_objective_type: can be either `cost` or `reward`
-    :type running_objective_type: str
-    :return: objective for PPO
-    :rtype: torch.FloatTensor
+    Args:
+        policy_model (PerceptronWithNormalNoise): policy model
+        critic_model (ModelNN): critic model
+        observations (torch.FloatTensor): tensor of observations in
+            iteration
+        actions (torch.FloatTensor): tensor of actions in iteration
+        timestamps (torch.FloatTensor): timestamps
+        episode_ids (torch.LongTensor): episode ids
+        device (Union[str, torch.device]): device (cuda or cpu)
+        discount_factor (float): discount factor
+        N_episodes (int): number of episodes
+        running_objectives (torch.FloatTensor): tensor of running
+            objectives (either costs or rewards)
+        epsilon (float): epsilon
+        initial_log_probs (torch.FloatTensor)
+        running_objective_type (str): can be either `cost` or `reward`
+
+    Returns:
+        torch.FloatTensor: objective for PPO
     """
     assert (
         running_objective_type == "cost" or running_objective_type == "reward"
@@ -284,17 +271,17 @@ def ddpg_objective(
 
     TODO: add link to papers + latex code for objective function
 
-    :param policy_model: The policy model that generates actions based on observations.
-    :type policy_model: GaussianPDFModel
-    :param critic_model: The critic model that approximates the Q-function.
-    :type critic_model: ModelNN
-    :param observations: The batch of observations.
-    :type observations: torch.FloatTensor
-    :param device: The device to perform computations on.
-    :type device: Union[str, torch.device]
+    Args:
+        policy_model (GaussianPDFModel): The policy model that generates
+            actions based on observations.
+        critic_model (ModelNN): The critic model that approximates the
+            Q-function.
+        observations (torch.FloatTensor): The batch of observations.
+        device (Union[str, torch.device]): The device to perform
+            computations on.
 
-    :return: The objective value.
-    :rtype: torch.FloatTensor
+    Returns:
+        torch.FloatTensor: The objective value.
     """
     return critic_model(
         observations, policy_model.forward(observations, is_means_only=True)
@@ -311,26 +298,24 @@ def temporal_difference_objective(
 ) -> torch.FloatTensor:
     """Calculate temporal difference objective.
 
-    :param critic_model: Q function model.
-    :type critic_model: ModelNN
-    :param observation: Batch of observations.
-    :type observation: torch.FloatTensor
-    :param action: Batch of actions.
-    :type action: torch.FloatTensor
-    :param running_objective: Batch of running objectives.
-    :type running_objective: torch.FloatTensor
-    :param td_n: Number of temporal difference steps.
-    :type td_n: int
-    :param discount_factor: Discount factor for future running objectives.
-    :type discount_factor: float
-    :param device: Device to proceed computations on.
-    :type device: Union[str, torch.device]
-    :param sampling_time: Sampling time for discounting.
-    :type sampling_time: float
-    :param is_use_same_critic: Whether to use the critic model from the previous iteration or not (`True` for not using, `False` for using).
-    :type is_use_same_critic: bool
-    :return: objective value
-    :rtype: torch.FloatTensor
+    Args:
+        critic_model (ModelNN): Q function model.
+        observation (torch.FloatTensor): Batch of observations.
+        action (torch.FloatTensor): Batch of actions.
+        running_objective (torch.FloatTensor): Batch of running
+            objectives.
+        td_n (int): Number of temporal difference steps.
+        discount_factor (float): Discount factor for future running
+            objectives.
+        device (Union[str, torch.device]): Device to proceed
+            computations on.
+        sampling_time (float): Sampling time for discounting.
+        is_use_same_critic (bool): Whether to use the critic model from
+            the previous iteration or not (`True` for not using, `False`
+            for using).
+
+    Returns:
+        torch.FloatTensor: objective value
     """
     batch_size = running_objective.shape[0]
     assert batch_size > td_n, f"batch size {batch_size} too small for such td_n {td_n}"

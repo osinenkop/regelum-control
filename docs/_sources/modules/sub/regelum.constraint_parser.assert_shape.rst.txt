@@ -1,6 +1,0 @@
-regelum.constraint\_parser.assert\_shape
-========================================
-
-.. currentmodule:: regelum.constraint_parser
-
-.. autofunction:: assert_shape

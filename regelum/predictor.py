@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 
 import regelum
-from .__utilities import rg
+from .utilis import rg
 from .system import System
 from .model import ModelWeightContainer, ModelWeightContainerTorch
 import torch
@@ -19,10 +19,10 @@ class Predictor(regelum.RegelumBase, ABC):
     ):
         """Initialize an instance of a predictor.
 
-        :param system: System of which states are predicted
-        :type system: System
-        :param pred_step_size: time interval between successive predictions
-        :type pred_step_size: float
+        Args:
+            system (System): System of which states are predicted
+            pred_step_size (float): time interval between successive
+                predictions
         """
         self.system = system
         self.pred_step_size = pred_step_size
@@ -40,17 +40,21 @@ class Predictor(regelum.RegelumBase, ABC):
     ):
         """Predicts the state sequence from the given action sequence.
 
-        :param state: The initial state.
-        :type state: numpy.ndarray
-        :param action_sequence: The sequence of actions.
-        :type action_sequence: numpy.ndarray
-        :param is_predict_last: Whether to predict the last state or not.
-        :type is_predict_last: bool
-        :param return_predicted_states_only: Whether to return only the predicted states or both the predicted states and the action sequence. Defaults to False.
-        :type return_predicted_states_only: bool, optional
+        Args:
+            state (numpy.ndarray): The initial state.
+            action_sequence (numpy.ndarray): The sequence of actions.
+            is_predict_last (bool): Whether to predict the last state or
+                not.
+            return_predicted_states_only (bool, optional): Whether to
+                return only the predicted states or both the predicted
+                states and the action sequence. Defaults to False.
 
-        :return: If `return_predicted_states_only` is False, returns a tuple containing the predicted state sequence and the action sequence. If `return_predicted_states_only` is True, returns only the predicted state sequence.
-        :rtype: tuple or numpy.ndarray
+        Returns:
+            tuple or numpy.ndarray: If `return_predicted_states_only` is
+            False, returns a tuple containing the predicted state
+            sequence and the action sequence. If
+            `return_predicted_states_only` is True, returns only the
+            predicted state sequence.
         """
         len_state_sequence = action_sequence.shape[0] - int(not is_predict_last)
         predicted_state_sequence = rg.zeros(
@@ -81,15 +85,22 @@ class Predictor(regelum.RegelumBase, ABC):
     ):
         """Predicts a sequence of states from a given initial state using a model.
 
-        :param state: The initial state.
-        :param prediction_horizon: The number of steps to predict into the future.
-        :param is_predict_last: A boolean indicating whether to predict the last state.
-        :param model: The model used for prediction.
-        :param model_weights: The weights of the model (optional).
-        :param return_predicted_states_only: A boolean indicating whether to return only the predicted states.
+        Args:
+            state: The initial state.
+            prediction_horizon: The number of steps to predict into the
+                future.
+            is_predict_last: A boolean indicating whether to predict the
+                last state.
+            model: The model used for prediction.
+            model_weights: The weights of the model (optional).
+            return_predicted_states_only: A boolean indicating whether
+                to return only the predicted states.
 
-        :return: If `return_predicted_states_only` is `True`, returns the predicted state sequence.
-                 Otherwise, returns a tuple containing the predicted state sequence and the action sequence.
+        Returns:
+            If `return_predicted_states_only` is `True`, returns the
+            predicted state sequence. Otherwise, returns a tuple
+            containing the predicted state sequence and the action
+            sequence.
         """
         if isinstance(model, ModelWeightContainer):
             if model_weights is not None:
@@ -177,9 +188,10 @@ class EulerPredictorMultistep(EulerPredictor):
     def __init__(self, *args, n_steps=5, **kwargs):
         """Initialize an instance of EulerPredictorMultistep.
 
-        :param args: positional arguments for EulerPredictor
-        :param n_steps: number of estimations to predict a single step
-        :param kwargs: keyword arguments for EulerPredictor
+        Args:
+            *args: positional arguments for EulerPredictor
+            n_steps: number of estimations to predict a single step
+            **kwargs: keyword arguments for EulerPredictor
         """
         super().__init__(*args, **kwargs)
         self.n_steps = n_steps
@@ -200,7 +212,8 @@ class TrivialPredictor(Predictor):
     def __init__(self, system):
         """Initialize an instance of TrivialPredictor.
 
-        :param system: an instance of a discrete system
+        Args:
+            system: an instance of a discrete system
         """
         self.system = system
 
