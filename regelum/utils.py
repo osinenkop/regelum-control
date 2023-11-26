@@ -8,7 +8,7 @@ from enum import IntEnum
 from typing import Union
 from dataclasses import dataclass
 from typing import Optional
-
+import random
 
 try:
     import casadi
@@ -148,6 +148,7 @@ class AwaitedParameter:
 
     name: str
     awaited_from: Optional[str]
+    _string_to_show: str = ""
 
     def __post_init__(self):
         self._string_to_show = f"Parameter {self.name}'s value is awaited from the source {self.awaited_from}"
@@ -167,10 +168,17 @@ class AwaitedParameter:
             "_string_to_show",
             "__post_init__",
             "__instancecheck__",
+            "__reduce_ex__",
+            "__reduce__",
+            "__getstate__",
+            "__setstate__",
+            "__dict__",
+            "__class__",
+            "__deepcopy__",
         ]:
             return object.__getattribute__(self, name)
         else:
-            raise Exception(str(self))
+            raise Exception(str(self) + f" Attempted to get {name}")
 
 
 # TODO: ADD DOCSTRING
@@ -798,3 +806,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
 
 rg = RCTypeHandler()
+
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+
+
+def calculate_value(runnning_objectives, timestamps, discount_factor, sampling_time):
+    return sum(runnning_objectives * discount_factor**timestamps) * sampling_time

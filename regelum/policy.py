@@ -13,7 +13,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Optional
 import casadi as cs
-from .utilis import rg, AwaitedParameter
+from .utils import rg, AwaitedParameter
 
 from .predictor import Predictor
 from .model import ModelNN, Model, ModelWeightContainer
@@ -65,6 +65,7 @@ class Policy(Optimizable, ABC):
         """Initialize an instance of Policy class.
 
         Args:
+        ----
             model (Union[Model, ModelNN]): The model representing the
                 policy's decision-making mechanism.
             system (Union[System, ComposedSystem], optional): System in
@@ -137,6 +138,7 @@ class Policy(Optimizable, ABC):
         """Update the current observation of the policy.
 
         Args:
+        ----
             observation (numpy array.): The current observation.
         """
         self.observation = observation
@@ -145,6 +147,7 @@ class Policy(Optimizable, ABC):
         """Update the current observation of the policy.
 
         Args:
+        ----
             observation (numpy array): The current observation.
         """
         self.state = state
@@ -153,6 +156,7 @@ class Policy(Optimizable, ABC):
         """Set the current action of the policy.
 
         Args:
+        ----
             action (numpy array): The current action.
         """
         self.action = action
@@ -163,6 +167,7 @@ class Policy(Optimizable, ABC):
         This method uses the current model to compute a new action, possibly incorporating random elements for exploration purposes. If no observation is provided, the method uses the last received observation.
 
         Args:
+        ----
             observation (numpy array, optional): The most recent
                 observation received from the environment. If not
                 provided, the previously received observation will be
@@ -207,6 +212,7 @@ class Policy(Optimizable, ABC):
         """Update the weights of the model of the policy.
 
         Args:
+        ----
             weights (numpy array, optional): The weights to update the
                 model with. If not provided, the previously optimized
                 weights will be used.
@@ -217,6 +223,7 @@ class Policy(Optimizable, ABC):
         """Cache the current weights of the model of the policy.
 
         Args:
+        ----
             weights (numpy array, optional): The weights to cache. If
                 not provided, the previously optimized weights will be
                 used.
@@ -227,6 +234,7 @@ class Policy(Optimizable, ABC):
         """Update and cache the weights of the model of the policy.
 
         Args:
+        ----
             weights (numpy array, optional): The weights to update and
                 cache. If not provided, the previously optimized weights
                 will be used.
@@ -253,6 +261,7 @@ class PolicyGradient(Policy, ABC):
         """Instantiate PolicyGradient base class.
 
         Args:
+        ----
             model (ModelNN): Policy model object.
             system (Union[System, ComposedSystem]): Agent environment.
             action_bounds (Union[list, np.ndarray, None]): Action
@@ -334,6 +343,7 @@ class PolicyReinforce(PolicyGradient):
         """Instantiate Reinforce class.
 
         Args:
+        ----
             model (ModelNN): Policy model.
             system (Union[System, ComposedSystem]): Agent environment.
             action_bounds (Union[list, np.ndarray, None]): Action bounds
@@ -463,6 +473,7 @@ class PolicySDPG(PolicyGradient):
         """Instantiate SDPG class.
 
         Args:
+        ----
             model (ModelNN): Policy Model.
             critic (Critic): Critic object that is optmized via temporal
                 difference objective.
@@ -489,17 +500,17 @@ class PolicySDPG(PolicyGradient):
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation", "action", "timestamp", "episode_id", "running_objective"]
+        return ["observation", "action", "time", "episode_id", "running_objective"]
 
     def objective_function(
-        self, observation, action, timestamp, episode_id, running_objective
+        self, observation, action, time, episode_id, running_objective
     ):
         return sdpg_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
             observations=observation,
             actions=action,
-            timestamps=timestamp,
+            times=time,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
@@ -527,6 +538,7 @@ class PolicyPPO(PolicyGradient):
         """Instantiate PPO policy class.
 
         Args:
+        ----
             model (ModelNN): Policy Model.
             critic (Critic): Critic object that is optmized via temporal
                 difference objective.
@@ -561,7 +573,7 @@ class PolicyPPO(PolicyGradient):
         return [
             "observation",
             "action",
-            "timestamp",
+            "time",
             "episode_id",
             "running_objective",
             "initial_log_probs",
@@ -571,7 +583,7 @@ class PolicyPPO(PolicyGradient):
         self,
         observation,
         action,
-        timestamp,
+        time,
         episode_id,
         running_objective,
         initial_log_probs,
@@ -581,7 +593,7 @@ class PolicyPPO(PolicyGradient):
             critic_model=self.critic.model,
             observations=observation,
             actions=action,
-            timestamps=timestamp,
+            times=time,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
@@ -622,6 +634,7 @@ class PolicyDDPG(PolicyGradient):
         """Instantiate DDPG class.
 
         Args:
+        ----
             model (ModelNN): Policy Model.
             critic (Critic): Critic object that is optmized via temporal
                 difference objective.
@@ -679,6 +692,7 @@ class RLPolicy(Policy):
         """Initialize an instance of RLPolicy class.
 
         Args:
+        ----
             model (Union[ModelNN, Model]): Model for predictive policy
             critic (Critic): Critic for predictive policy (Can be used
                 either Value or Action-Value critic variants)
@@ -916,9 +930,11 @@ class KinPointStabilizingPolicy(Policy):
         """Initialize an instance of the class with the given gain.
 
         Args:
+        ----
             gain (float): The gain value to set for the instance.
 
         Returns:
+        -------
             None
         """
         super().__init__()
@@ -935,6 +951,7 @@ class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
         """Initialize an instance of scenario.
 
         Args:
+        ----
             K: gain of scenario
         """
         super().__init__()
@@ -980,6 +997,7 @@ class InvertedPendulumStabilizingPolicy(Policy):
         """Initialize an instance of policy.
 
         Args:
+        ----
             gain: gain of PID controller.
         """
         super().__init__()
@@ -998,6 +1016,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         """Initialize an instance of disassembled-clf scenario.
 
         Args:
+        ----
             scenario_gain: gain of scenario
         """
         super().__init__()
@@ -1155,6 +1174,7 @@ class MemoryPIDPolicy(Policy):
         Whatever
 
         Args:
+        ----
             P: proportional gain
             I: integral gain
             D: differential gain
@@ -1262,6 +1282,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
         """Initialize an instance of Scenario3WRobotMemoryPID.
 
         Args:
+        ----
             state_init: state at which simulation starts
             params: parameters of a 3-wheeled robot
             sampling_time: time interval between two consecutive
@@ -1438,6 +1459,7 @@ class ThreeWheeledRobotPIDPolicy:
         """Initialize Scenario3WRobotPID.
 
         Args:
+        ----
             state_init: initial state of 3wrobot
             params (tuple): mass and moment of inertia `(M, I)`
             sampling_time: sampling time
@@ -1594,6 +1616,7 @@ class CartPoleEnergyBasedPolicy(Policy):
         """Initialize an instance of ScenarioCartPoleEnergyBased.
 
         Args:
+        ----
             action_bounds: upper and lower bounds for action yielded
                 from policy
             sampling_time: time interval between two consecutive actions
@@ -1656,6 +1679,7 @@ class LunarLanderPIDPolicy(Policy):
         """Initialize an instance of PID scenario for lunar lander.
 
         Args:
+        ----
             action_bounds: upper and lower bounds for action yielded
                 from policy
             state_init: state at which simulation has begun
@@ -1729,6 +1753,7 @@ class TwoTankPIDPolicy(Policy):
         """Initialize an instance of Scenario2TankPID.
 
         Args:
+        ----
             action_bounds: upper and lower bounds for action yielded
                 from policy
             params: parameters of double tank system

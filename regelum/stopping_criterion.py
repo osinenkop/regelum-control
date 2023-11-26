@@ -1,9 +1,7 @@
-from typing import Any
 import regelum
 from abc import abstractmethod, ABC
 import numpy as np
 from regelum.data_buffers import DataBuffer
-import pandas as pd
 from typing import Union
 
 

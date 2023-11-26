@@ -20,7 +20,7 @@ N_iterations: 100
 N_episodes: 2
 stopping_criterion: ~ stopping_criterion
 critic_td_n: 1
-
+is_parallel: False
 critic_n_epochs: 50
 critic_opt_method: = torch.optim.Adam
 critic_opt_method_kwargs: 

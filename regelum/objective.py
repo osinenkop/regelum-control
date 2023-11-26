@@ -10,7 +10,7 @@ import regelum
 from .model import Model, PerceptronWithTruncatedNormalNoise, ModelNN
 from typing import Optional
 import torch
-from .utilis import rg
+from .utils import rg
 from .predictor import Predictor
 
 
@@ -36,6 +36,7 @@ class RunningObjective(Objective):
         """Initialize a RunningObjective instance.
 
         Args:
+        ----
             model (function): function that calculates the running
                 objective for a given observation and action.
         """
@@ -45,10 +46,12 @@ class RunningObjective(Objective):
         """Calculate the running objective for a given observation and action.
 
         Args:
+        ----
             observation (numpy array): current observation.
             action (numpy array): current action.
 
         Returns:
+        -------
             float: running objective value.
         """
         running_objective = self.model(observation, action)
@@ -80,6 +83,7 @@ def reinforce_objective(
     :math: `M` is the number of episodes, :math:`N` is the number of actions.
 
     Args:
+    ----
         policy_model (GaussianPDFModel): The policy model used to
             calculate the log probabilities.
         observations (torch.FloatTensor): The observations tensor.
@@ -97,6 +101,7 @@ def reinforce_objective(
         N_episodes (int): The number of episodes.
 
     Returns:
+    -------
         torch.FloatTensor: surrogate objective value.
     """
     log_pdfs = policy_model.log_pdf(observations, actions)
@@ -115,7 +120,7 @@ def sdpg_objective(
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
-    timestamps: torch.FloatTensor,
+    times: torch.FloatTensor,
     episode_ids: torch.LongTensor,
     discount_factor: float,
     N_episodes: int,
@@ -127,6 +132,7 @@ def sdpg_objective(
     TODO: add link to papers + latex code for objective function
 
     Args:
+    ----
         policy_model (PerceptronWithNormalNoise): The policy model that
             represents the probability density function (PDF) of the
             action given the observation.
@@ -146,6 +152,7 @@ def sdpg_objective(
             expected objective function value.
 
     Returns:
+    -------
         torch.FloatTensor: SDPG surrogate objective.
     """
     critic_values = critic_model(observations)
@@ -161,7 +168,7 @@ def sdpg_objective(
         )
 
         objective += (
-            discount_factor ** timestamps[mask][:-1]
+            discount_factor ** times[mask][:-1]
             * advantages
             * log_pdfs[mask.reshape(-1)][:-1]
         ).sum()
@@ -174,7 +181,7 @@ def ppo_objective(
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
-    timestamps: torch.FloatTensor,
+    times: torch.FloatTensor,
     episode_ids: torch.LongTensor,
     discount_factor: float,
     N_episodes: int,
@@ -190,6 +197,7 @@ def ppo_objective(
     TODO: Write docsting with for ppo objective.
 
     Args:
+    ----
         policy_model (PerceptronWithNormalNoise): policy model
         critic_model (ModelNN): critic model
         observations (torch.FloatTensor): tensor of observations in
@@ -207,6 +215,7 @@ def ppo_objective(
         running_objective_type (str): can be either `cost` or `reward`
 
     Returns:
+    -------
         torch.FloatTensor: objective for PPO
     """
     assert (
@@ -230,9 +239,7 @@ def ppo_objective(
         if gae_lambda == 0.0:
             advantages = deltas
         else:
-            gae_discount_factors = (gae_lambda * discount_factor) ** timestamps[mask][
-                :-1
-            ]
+            gae_discount_factors = (gae_lambda * discount_factor) ** times[mask][:-1]
             reversed_gae_discounted_deltas = torch.flip(
                 gae_discount_factors * deltas, dims=[0, 1]
             )
@@ -243,7 +250,7 @@ def ppo_objective(
 
         objective_value += (
             torch.sum(
-                (discount_factor ** timestamps[mask][:-1])
+                (discount_factor ** times[mask][:-1])
                 * (
                     torch.maximum(
                         advantages * prob_ratios[mask][:-1],
@@ -272,6 +279,7 @@ def ddpg_objective(
     TODO: add link to papers + latex code for objective function
 
     Args:
+    ----
         policy_model (GaussianPDFModel): The policy model that generates
             actions based on observations.
         critic_model (ModelNN): The critic model that approximates the
@@ -281,6 +289,7 @@ def ddpg_objective(
             computations on.
 
     Returns:
+    -------
         torch.FloatTensor: The objective value.
     """
     return critic_model(
@@ -299,6 +308,7 @@ def temporal_difference_objective(
     """Calculate temporal difference objective.
 
     Args:
+    ----
         critic_model (ModelNN): Q function model.
         observation (torch.FloatTensor): Batch of observations.
         action (torch.FloatTensor): Batch of actions.
@@ -315,6 +325,7 @@ def temporal_difference_objective(
             for using).
 
     Returns:
+    -------
         torch.FloatTensor: objective value
     """
     batch_size = running_objective.shape[0]

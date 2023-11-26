@@ -4,7 +4,7 @@ from regelum.system import (
     Integrator,
     InvertedPendulum,
 )
-from regelum.utilis import rg
+from regelum.utils import rg
 import numpy as np
 
 robot = ThreeWheeledRobotNI()

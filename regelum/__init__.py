@@ -34,8 +34,6 @@ from omegaconf.errors import ConfigKeyError, InterpolationResolutionError
 
 import hashlib
 
-from . import utilis
-
 from omegaconf import DictConfig
 import rehydra
 from rehydra._internal.utils import _locate
@@ -47,6 +45,7 @@ from rehydra.utils import instantiate as inst
 
 
 import mlflow
+
 from unittest.mock import Mock
 
 
@@ -79,10 +78,12 @@ import pandas as pd
 
 from .configure import get_user_settings, config_file
 
-try:
-    import torch
-except (ModuleNotFoundError, ImportError):
-    torch = MagicMock()
+# try:
+#     import torch
+# except (ModuleNotFoundError, ImportError):
+#     torch = MagicMock()
+
+import torch
 
 from . import model
 from . import data_buffers
@@ -131,6 +132,8 @@ def hash_string(s):
 NEED COMMENT SECTION
 DOES THIS METHOD DO?
 """
+
+from copy import deepcopy
 
 
 def __memorize_instance(resolver):
@@ -219,6 +222,7 @@ class ComplementedConfig:
         """Initialize a complemented config.
 
         Args:
+        ----
             cfg: rehydra config object
             config_path: path to a config file
         """
@@ -864,7 +868,7 @@ class main:
                         "initial_working_directory": initial_working_directory,
                         "initial_pythonpath": initial_pythonpath,
                         "common_dir": common_dir.name,
-                        "id": int(os.getcwd().split("/")[-1]),
+                        "id": os.getcwd().split("/")[-1],
                         "report": lambda: shelve.open(
                             common_dir.name
                             + "/report_"
@@ -993,13 +997,13 @@ warnings.filterwarnings("ignore", category=pd.io.pytables.PerformanceWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-array = utilis.rg.array
-rg = utilis.rg
+array = utils.rg.array
+rg = utils.rg
 
 
-class _FancyModule(types.ModuleType):
-    def __call__(self, *args, **kwargs):
-        return main(*args, **kwargs)
+# class _FancyModule(types.ModuleType):
+#     def __call__(self, *args, **kwargs):
+#         return main(*args, **kwargs)
 
 
-sys.modules[__name__].__class__ = _FancyModule
+# sys.modules[__name__].__class__ = _FancyModule

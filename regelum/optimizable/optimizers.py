@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from enum import Enum, auto
 
-from regelum.utilis import rg
+from regelum.utils import rg
 
 try:
     from casadi import Opti
@@ -42,6 +42,44 @@ from .core.hooks import requires_grad, detach, data_closure
 import regelum
 
 
+class source_data_hook:
+    def __init__(self, source, source_kwargs, func):
+        self.source = source
+        self.source_kwargs = source_kwargs
+        self.func = func
+        self.__name__ = "source_data_hook"
+
+    def __call__(self, whatever):
+        kwargs = {
+            kwarg: var(True) if isinstance(var, OptimizationVariable) else var
+            for kwarg, var in self.source_kwargs.items()
+        }
+        if self.source is None:
+            return self.func(**kwargs)
+        else:
+            return self.func(self.source(True), **kwargs)
+
+
+class source_metadata_hook:
+    def __init__(self, source, source_kwargs, func):
+        self.source = source
+        self.source_kwargs = source_kwargs
+        self.func = func
+        self.__name__ = "source_metadata_hook"
+
+    def __call__(self, whatever):
+        kwargs = {
+            kwarg: var(with_metadata=True)
+            if isinstance(var, OptimizationVariable)
+            else var
+            for kwarg, var in self.source_kwargs.items()
+        }
+        if self.source is None:
+            return self.func(**kwargs)
+        else:
+            return self.func(self.source(with_metadata=True), **kwargs)
+
+
 class Optimizable(regelum.RegelumBase):
     """Base class for all optimizable objects.
 
@@ -49,6 +87,7 @@ class Optimizable(regelum.RegelumBase):
     However, you can also use it as a separate instance and use all methods outside of the `Optimizable` class.
 
     Args:
+    ----
         optimizer_config (OptimizerConfig): An object of the
             OptimizerConfig class that defines the behavior of the
             optimizer.
@@ -58,6 +97,7 @@ class Optimizable(regelum.RegelumBase):
         """Initialize an optimizable object.
 
         Args:
+        ----
             optimizer_config (OptimizerConfig): An object of the
                 OptimizerConfig class that defines the behavior of the
                 optimizer.
@@ -99,7 +139,8 @@ class Optimizable(regelum.RegelumBase):
     def opt_options(self):
         """Get optimization options.
 
-        Returns:
+        Returns
+        -------
             dict: Optimization options
         """
         return self.__opt_options
@@ -108,7 +149,8 @@ class Optimizable(regelum.RegelumBase):
     def log_options(self):
         """Get log options.
 
-        Returns:
+        Returns
+        -------
             dict: Log options
         """
         return self.__log_options
@@ -117,7 +159,8 @@ class Optimizable(regelum.RegelumBase):
     def objective(self):
         """Get the objective.
 
-        Returns:
+        Returns
+        -------
             function/objective: Objective
         """
         assert len(self.objectives) == 1, "Ambiguous objective definition."
@@ -127,7 +170,8 @@ class Optimizable(regelum.RegelumBase):
     def objectives(self):
         """Get all objective functions.
 
-        Returns:
+        Returns
+        -------
             list: Objectives
         """
         return self.__functions.objectives
@@ -136,7 +180,8 @@ class Optimizable(regelum.RegelumBase):
     def constraints(self):
         """Get all constraints.
 
-        Returns:
+        Returns
+        -------
             list: Constraints
         """
         return self.__functions.constraints
@@ -145,7 +190,8 @@ class Optimizable(regelum.RegelumBase):
     def functions(self):
         """Get all functions.
 
-        Returns:
+        Returns
+        -------
             list: Functions
         """
         return self.__functions
@@ -154,7 +200,8 @@ class Optimizable(regelum.RegelumBase):
     def variables(self) -> VarContainer:
         """Get all declared variables.
 
-        Returns:
+        Returns
+        -------
             VarContainer: Variables
         """
         return self.__variables
@@ -230,6 +277,7 @@ class Optimizable(regelum.RegelumBase):
         """Fix variables in case of self.kind == 'tensor' by setting them as constants.
 
         Args:
+        ----
             variables_to_fix (List[str]): List of variable names to be
                 fixed.
             data_dict (dict): Dictionary mapping variable names to their
@@ -243,6 +291,7 @@ class Optimizable(regelum.RegelumBase):
         """Fix variables in case of self.kind == 'symbolic' by setting them as constants.
 
         Args:
+        ----
             variables_to_fix (List[str]): List of variable names to be
                 fixed.
             data_dict (dict): Dictionary mapping variable names to their
@@ -271,6 +320,7 @@ class Optimizable(regelum.RegelumBase):
         """Fix variables by setting them as constants.
 
         Args:
+        ----
             variables_to_fix (List[str]): List of variable names to be
                 fixed.
             data_dict (dict, optional): Optional dictionary mapping
@@ -296,6 +346,7 @@ class Optimizable(regelum.RegelumBase):
         """Unfix tensor variables by setting them as non-constants.
 
         Args:
+        ----
             variables_to_unfix (List[str]): List of variable names to be
                 unfixed.
         """
@@ -307,6 +358,7 @@ class Optimizable(regelum.RegelumBase):
         """Unfix symbolic variables by setting them as non-constants.
 
         Args:
+        ----
             variables_to_unfix (List[str]): List of variable names to be
                 unfixed.
         """
@@ -328,6 +380,7 @@ class Optimizable(regelum.RegelumBase):
         """Unfix variables by setting them as non-constants.
 
         Args:
+        ----
             variables_to_unfix (List[str]): List of variable names to be
                 unfixed.
         """
@@ -346,6 +399,7 @@ class Optimizable(regelum.RegelumBase):
         whether the `like` parameter is used to clone an existing variable's properties.
 
         Args:
+        ----
             *dims: Variable dimensions, can be a series of integers or
                 tuples.
             is_constant: Flag indicating if the variable should be
@@ -355,9 +409,11 @@ class Optimizable(regelum.RegelumBase):
                 provided.
 
         Returns:
+        -------
             The created metadata object for the variable.
 
         Raises:
+        ------
             AssertionError: If `like` doesn't have a `shape` attribute,
                 or if the provided dimensions are invalid for symbolic
                 variables.
@@ -412,6 +468,7 @@ class Optimizable(regelum.RegelumBase):
         variable is then added to the internal variables container.
 
         Args:
+        ----
             *dims: Dimensions of the variable.
             name: The name of the variable.
             is_constant: Specifies if the variable is a constant.
@@ -425,6 +482,7 @@ class Optimizable(regelum.RegelumBase):
                 True.
 
         Returns:
+        -------
             The newly created variable or nested function.
         """
         metadata = None
@@ -465,10 +523,12 @@ class Optimizable(regelum.RegelumBase):
         to infer metadata and register a symbolic prototype of the function.
 
         Args:
+        ----
             func: The function with a signature to infer metadata for.
             variables: A container of variables to use for the function.
 
         Returns:
+        -------
             The function with inferred metadata.
         """
         metadata = func(
@@ -491,12 +551,14 @@ class Optimizable(regelum.RegelumBase):
         the variables are properly contained within a VarContainer.
 
         Args:
+        ----
             func: The objective function to be registered.
             variables: The variables over which the objective function
                 is defined. Can be a single variable, a list of
                 variables, or a VarContainer.
 
         Raises:
+        ------
             AssertionError: If the new container for functions is None
                 after attempting to register the objective.
         """
@@ -536,6 +598,7 @@ class Optimizable(regelum.RegelumBase):
         `source_kwargs`.
 
         Args:
+        ----
             connect_to: The optimization variable to which the source
                 should be connected.
             func: The function to apply to the source variable before
@@ -549,31 +612,10 @@ class Optimizable(regelum.RegelumBase):
             **source_kwargs: Additional keyword arguments to pass to the
                 function alongside the source variable.
         """
-
-        def source_hook(whatever):
-            kwargs = {
-                kwarg: var() if isinstance(var, OptimizationVariable) else var
-                for kwarg, var in source_kwargs.items()
-            }
-            if source is None:
-                return func(**kwargs)
-            else:
-                return func(source(), **kwargs)
-
-        def source_metadata_hook(whatever):
-            kwargs = {
-                kwarg: var(with_metadata=True)
-                if isinstance(var, OptimizationVariable)
-                else var
-                for kwarg, var in source_kwargs.items()
-            }
-            if source is None:
-                return func(**kwargs)
-            else:
-                return func(source(with_metadata=True), **kwargs)
-
-        data_hook = Hook(source_hook, act_on="data")
-        metadata_hook = Hook(source_metadata_hook, act_on="metadata")
+        data_hook = Hook(source_data_hook(source, source_kwargs, func), act_on="data")
+        metadata_hook = Hook(
+            source_metadata_hook(source, source_kwargs, func), act_on="metadata"
+        )
 
         if discard_prev_sources:
             for hook in connect_to.hooks:
@@ -596,6 +638,7 @@ class Optimizable(regelum.RegelumBase):
         to minimize in the symbolic optimizer.
 
         Args:
+        ----
             func: The objective function to be registered and minimized.
             variables: The container holding variables over which the
                 objective function is defined.
@@ -615,6 +658,7 @@ class Optimizable(regelum.RegelumBase):
         returning a tuple with the prepared bounds arrays necessary for the optimization process.
 
         Args:
+        ----
             bounds: The bounds for each dimension of the variable.
                 Defaults to (-inf, inf) if None.
             dim_variable: The number of dimensions of the optimization
@@ -623,6 +667,7 @@ class Optimizable(regelum.RegelumBase):
                 Defaults to 0, meaning no tiling.
 
         Returns:
+        -------
             A tuple containing the processed bounds, initial guess, and
             min-max ranges for the optimization variable.
         """
@@ -743,6 +788,7 @@ class Optimizable(regelum.RegelumBase):
         it as a symbolic constraint that the optimizer is subject to.
 
         Args:
+        ----
             func: The constraint function with a signature.
             variables: The container of variables that the function
                 operates on.
@@ -760,6 +806,7 @@ class Optimizable(regelum.RegelumBase):
         numerical constraints would be processed differently from symbolic ones.
 
         Args:
+        ----
             func: The constraint function with a signature.
             variables: The container of variables that the function
                 operates on.
@@ -775,6 +822,7 @@ class Optimizable(regelum.RegelumBase):
         tensor constraints would be processed differently from symbolic ones.
 
         Args:
+        ----
             func: The constraint function with a signature.
             variables: The container of variables that the function
                 operates on.
@@ -785,7 +833,8 @@ class Optimizable(regelum.RegelumBase):
     def constants(self):
         """Return the constants from the variables container.
 
-        Returns:
+        Returns
+        -------
             An object representing the constants in the optimization
             problem.
         """
@@ -795,7 +844,8 @@ class Optimizable(regelum.RegelumBase):
     def decision_variables(self):
         """Return the decision variables from the variables container.
 
-        Returns:
+        Returns
+        -------
             An object representing the decision variables in the
             optimization problem.
         """
@@ -808,6 +858,7 @@ class Optimizable(regelum.RegelumBase):
         initial guesses for decision variables) before optimization is carried out.
 
         Args:
+        ----
             **parameters: Keyword arguments representing the parameter
                 names and their values to substitute.
         """
@@ -832,9 +883,11 @@ class Optimizable(regelum.RegelumBase):
         """Check if an event is one of the target events for callback.
 
         Args:
+        ----
             event: The event to check.
 
         Returns:
+        -------
             True if the event is a target event, False otherwise.
         """
         if self.__callback_target_events is None:
@@ -848,7 +901,8 @@ class Optimizable(regelum.RegelumBase):
         This method is not implemented and serves as a placeholder for future functionality
         where optimization would be triggered by specific events.
 
-        Raises:
+        Raises
+        ------
             NotImplementedError: Always, as this method is not
                 implemented.
         """
@@ -861,6 +915,7 @@ class Optimizable(regelum.RegelumBase):
         whether it's symbolic (CasADi), numeric (SciPy), or tensor (Torch)-based.
 
         Args:
+        ----
             raw: Determines if the raw optimization results should be
                 returned. Defaults to False.
             is_constrained: Flags if the optimization includes
@@ -869,9 +924,11 @@ class Optimizable(regelum.RegelumBase):
                 process.
 
         Returns:
+        -------
             The result of the optimization process.
 
         Raises:
+        ------
             NotImplementedError: If the optimizer kind is not
                 recognized.
         """
@@ -895,7 +952,8 @@ class Optimizable(regelum.RegelumBase):
     def opt_func(self):
         """Return the optimization function.
 
-        Returns:
+        Returns
+        -------
             The function used for optimization.
         """
         return self.__opt_func
@@ -904,7 +962,8 @@ class Optimizable(regelum.RegelumBase):
     def opti(self):
         """A property that returns the current Opti instance.
 
-        Returns:
+        Returns
+        -------
             The Opti instance used for managing the optimization
             problem.
         """
@@ -918,6 +977,7 @@ class Optimizable(regelum.RegelumBase):
         if the parameters have changed since the last optimization.
 
         Args:
+        ----
             raw: If True, returns the raw optimization result as is. If
                 False, filters the result to only include decision
                 variables' names and their values. Defaults to True.
@@ -927,6 +987,7 @@ class Optimizable(regelum.RegelumBase):
                 substitution before optimization.
 
         Returns:
+        -------
             The optimization result. The structure depends on the `raw`
             parameter.
         """
@@ -993,6 +1054,7 @@ class Optimizable(regelum.RegelumBase):
         If any constraint exceeds the tolerance, the status is set to failed.
 
         Args:
+        ----
             result: The result of the optimization process.
             tol: The tolerance level used to evaluate constraints
                 satisfaction. Defaults to 1e-8.
@@ -1011,6 +1073,7 @@ class Optimizable(regelum.RegelumBase):
         defines constraints, and executes the optimization using the specified numerical method.
 
         Args:
+        ----
             raw: If True, returns the raw `OptimizeResult` object from
                 SciPy's minimize function. If False, returns the
                 optimized decision variables as a NumPy array. Defaults
@@ -1020,10 +1083,12 @@ class Optimizable(regelum.RegelumBase):
                 optimization algorithm.
 
         Returns:
+        -------
             The result of the numeric optimization. The structure
             depends on the `raw` parameter.
 
         Raises:
+        ------
             AssertionError: If the initial guess is not provided and
                 cannot be inferred from the decision variables.
         """
@@ -1056,11 +1121,13 @@ class Optimizable(regelum.RegelumBase):
         This method prepares the optimizer based on the decision variables and the optimization method specified.
         It also validates the configuration and ensures that a single decision variable and a single objective are present (In the current verion we consider optimization problem ambiguous if there are multiple decision variables or multiple objectives).
 
-        Returns:
+        Returns
+        -------
             A tuple containing the number of epochs to run and the
             objective function.
 
-        Raises:
+        Raises
+        ------
             AssertionError: If the optimization method is not callable,
                 if there are multiple or no decision variables, or if
                 multiple objectives are present.
@@ -1102,7 +1169,8 @@ class Optimizable(regelum.RegelumBase):
 
         This method applies a penalty function to each constraint and sums up their values.
 
-        Returns:
+        Returns
+        -------
             The sum of the penalty functions applied to the constraints.
         """
         return sum(
@@ -1161,11 +1229,13 @@ class Optimizable(regelum.RegelumBase):
         This a callback method called after each epoch during tensor-based optimization and is used to perform custom actions after each epoch, such as logging or saving epoch history.
 
         Args:
+        ----
             epoch_idx: The index of the current epoch.
             objective_epoch_history: A list of objective function values
                 from the current epoch.
 
         Returns:
+        -------
             A tuple containing the current epoch index and the objective
             epoch history.
         """
@@ -1188,6 +1258,7 @@ class Optimizable(regelum.RegelumBase):
         optionally including constraint handling if specified.
 
         Args:
+        ----
             batch_sampler: An iterable that provides batch samples for
                 optimization.
             n_epochs: The number of epochs to run the optimization.
@@ -1258,11 +1329,13 @@ class Optimizable(regelum.RegelumBase):
         The method looks up the configuration for the data buffer sampling method and its associated
         keyword arguments to determine the batch size for sampling.
 
-        Returns:
+        Returns
+        -------
             The batch size determined by the data buffer sampling
             method.
 
-        Raises:
+        Raises
+        ------
             AssertionError: If the data_buffer_sampling_method or
                 data_buffer_sampling_kwargs is not specified in the
                 optimizer configuration.

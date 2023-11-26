@@ -78,8 +78,9 @@ scenarios_overrides = {
     "ppo": {
         "scenario.critic_n_epochs": 1,
         "scenario.policy_n_epochs": 1,
-        "scenario.N_episodes": 1,
+        "scenario.N_episodes": 2,
         "scenario.N_iterations": 1,
+        "scenario.is_parallel": True,
     },
     "ddpg": {
         "scenario.critic_n_epochs": 1,
@@ -89,8 +90,9 @@ scenarios_overrides = {
     },
     "reinforce": {
         "scenario.policy_n_epochs": 1,
-        "scenario.N_episodes": 1,
+        "scenario.N_episodes": 2,
         "scenario.N_iterations": 1,
+        "scenario.is_parallel": True,
     },
     "sql": {
         "scenario.prediction_horizon": 2,

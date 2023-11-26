@@ -19,7 +19,7 @@ Remarks:
 import numpy as np
 
 import regelum
-from .utilis import rg
+from .utils import rg
 from .system import System, ComposedSystem
 from typing import Union, Optional
 from abc import ABC
@@ -49,6 +49,7 @@ class Simulator(regelum.RegelumBase, ABC):
         """Initialize an instance of Simulator.
 
         Args:
+        ----
             system (Union[System, ComposedSystem]): A controlled system
                 to be simulated
             state_init (Optional[np.ndarray], optional): Set initial
@@ -196,6 +197,7 @@ class CasADi(Simulator):
             """Initialize a CasADiSolver object.
 
             Args:
+            ----
                 integrator (casadi.integrator): A CasADi integrator
                     object.
                 time_final (float): The final time for the solver.

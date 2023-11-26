@@ -1,5 +1,4 @@
-"""
-Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
+"""Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
 Remarks:
 
@@ -13,20 +12,20 @@ import casadi as cs
 
 import regelum
 from abc import ABC, abstractmethod
-from .utilis import rg
+from .utils import rg
 from typing import Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
 from regelum.typing import RgArray
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
-    """
-    Abstract base class defining the interface for system environments.
+    """Abstract base class defining the interface for system environments.
 
     This interface sets the foundation for specific system implementations, providing properties for common attributes
     and abstract methods that must be implemented by subclasses to define system dynamics and observations.
 
-    Attributes:
+    Attributes
+    ----------
         _name: Name identifier for the system.
         _system_type: A string representing the type of the system (e.g., `"diff_eqn"`).
         _dim_state: The number of state variables of the system.
@@ -105,8 +104,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """
-        Compute the derivative of the state with respect to time given the current state and inputs.
+        """Compute the derivative of the state with respect to time given the current state and inputs.
 
         This abstract method must be implemented by the inheriting system classes to define the specific system
         dynamics for the simulation. It provides the fundamental mathematical model that describes how the state of the
@@ -122,14 +120,17 @@ class SystemInterface(regelum.RegelumBase, ABC):
         equations that govern the system's dynamics, returning the rate of change of the system's state variables.
 
         Args:
+        ----
             time: The current simulation time.
             state: The current state vector of the system, where state[i] corresponds to the i-th state variable.
             inputs: The current input vector to the system, where inputs[i] corresponds to the i-th control input.
 
         Returns:
+        -------
             The computed rate of change of the system's state vector.
 
         Note:
+        ----
             This method does not update the state of the system. It only returns the derivative which may then be used
             by a numerical integrator to simulate the system's behavior over time.
         """
@@ -142,19 +143,20 @@ class SystemInterface(regelum.RegelumBase, ABC):
         inputs: RgArray,
         _native_dim: bool = False,
     ) -> RgArray:
-        """
-        Computes the state dynamics of the system given the current state and inputs.
+        """Computes the state dynamics of the system given the current state and inputs.
 
         This method is a public wrapper for the abstract method `_compute_state_dynamics`, which must be implemented by
         derived classes.
 
         Arguments:
+        ---------
             time: Current simulation time.
             state: The current state of the system.
             inputs: The current inputs to the system.
             _native_dim (optional): A flag indicating whether the method should maintain the original dimensionality of its inputs.
 
         Returns:
+        -------
             The computed state dynamics.
         """
         if not _native_dim:
@@ -170,8 +172,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
     def _get_observation(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """
-        Generate the observation of the system given the current state and inputs.
+        """Generate the observation of the system given the current state and inputs.
 
         This abstract method must be implemented by subclasses and is central to the observation-generating process of
         the system. In reinforcement learning and control systems, observations are the perceivable parts of the
@@ -183,14 +184,17 @@ class SystemInterface(regelum.RegelumBase, ABC):
         sensor models, noise injection, feature extraction, or scaling.
 
         Args:
+        ----
             time: The current simulation time or step.
             state: The current state vector of the system.
             inputs: The current input vector given to the system.
 
         Returns:
+        -------
             An observation vector representing the perceived state of the system at the current time.
 
         Note:
+        ----
             Implementing classes should define what makes up an observation in the context of their specific system.
             The method should aim to represent realistically perceivable quantities
         """
@@ -204,8 +208,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
         _native_dim: bool = False,
         is_batch: bool = False,
     ) -> RgArray:
-        """
-        Public method that wraps around the `_get_observation` abstract method to produce observations.
+        """Public method that wraps around the `_get_observation` abstract method to produce observations.
 
         This public interface method calls the internal abstract method '_get_observation' and applies additional
         formatting or dimensionality adjustments. It provides flexibility in handling observations on a per-instance or
@@ -213,6 +216,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
         implementations.
 
         Args:
+        ----
             time: The current simulation time or step.
             state: The current state of the system.
             inputs: The current inputs given to the system.
@@ -223,6 +227,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
                 This is useful for vectorized operations that consider multiple simulation instances at once.
 
         Returns:
+        -------
             Formatted observation vector(s) consistent with the system's defined observation space structure and
             sizing.
         """
@@ -247,21 +252,23 @@ class SystemInterface(regelum.RegelumBase, ABC):
             return observations
 
     def apply_action_bounds(self, action: np.array) -> np.array:
-        """
-        Apply the system's predefined action bounds to the given action vector.
+        """Apply the system's predefined action bounds to the given action vector.
 
         This method is responsible for ensuring that all actions executed by the system are within the specified safe
         or valid operating ranges. The enforcement of action bounds is a critical safety feature for many physical
         systems and a way to align virtual agent behavior with feasible actions in reinforcement learning environments.
 
         Args:
+        ----
             action: A vector of actions proposed for the system, which may include elements outside the permissible bounds.
 
         Returns:
+        -------
             A clipped action vector where each element is within the predefined action bounds of the system. If no
             bounds are defined, the input vector is returned unchanged.
 
         Note:
+        ----
             The action bounds are typically set during the instantiation of a system class and represent the maximum
             and minimum values allowed for each action variable.
         """
@@ -277,8 +284,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
 
 class ComposedSystem(SystemInterface):
-    """
-    Represents a composed system created from combining two subsystems.
+    """Represents a composed system created from combining two subsystems.
 
     The composed system allows for creating complex system dynamics by combining simpler subsystems. The outputs of one
     subsystem can be connected to the inputs of another through an input/output mapping.
@@ -303,10 +309,10 @@ class ComposedSystem(SystemInterface):
         observation_naming: List[str] = None,
         action_bounds: List[List[float]] = None,
     ):
-        """
-        Initialize a ComposedSystem by combining two subsystems.
+        """Initialize a ComposedSystem by combining two subsystems.
 
         Args:
+        ----
             sys_left: The first subsystem whose outputs can be connected to another system's inputs.
             sys_right: The second subsystem which can receive connections from the 'left' system.
             io_mapping: An optional list defining the connections between the 'left'
@@ -323,6 +329,7 @@ class ComposedSystem(SystemInterface):
                 defined as a list of [min, max] pairs for each action dimension.
 
         Note:
+        ----
             The `output_mode` parameter affects how the state and observation dimensions are defined in the
             ComposedSystem. The composition modifies the routing of signals between systems and, depending on the mode,
             changes the reported system observations.
@@ -383,11 +390,13 @@ class ComposedSystem(SystemInterface):
         to the inputs of the right subsystem during the computation of state dynamics and observations.
 
         Args:
+        ----
             io_mapping: A list defining how outputs (state) of the left subsystem are to be routed
                 to inputs of the right subsystem. Each list item represents an index from the
                 left system's output matched to an index in the right system's input.
 
         Returns:
+        -------
             Two numpy arrays, where the first one contains indices of the left system's
                 outputs, and the second one contains indices of the right system's inputs.
         """
@@ -430,12 +439,14 @@ class ComposedSystem(SystemInterface):
         representing the dynamics of the entire composed system.
 
         Args:
+        ----
             time: The current simulation time.
             state: The combined state vector of both subsystems, concatenated vertically (left subsystem states followed by right subsystem states).
             inputs: The input vector provided to the composed system.
             _native_dim: A boolean indicating whether to preserve the native dimensionality of the state and input vectors.
 
         Returns:
+        -------
             A state dynamics vector for the whole composed system reflecting the rates of change of state variables.
         """
         state = rg.array(state, prototype=state)
@@ -506,12 +517,14 @@ class ComposedSystem(SystemInterface):
         composed system, the observation from the right subsystem only, or the concatenation of both subsystems' observations.
 
         Args:
+        ----
             time: The current simulation time.
             state: The combined state vector for both subsystems.
             inputs: The input vector provided to the composed system.
             _native_dim: A boolean flag to indicate if the method should maintain the native dimensionality of its inputs.
 
         Returns:
+        -------
             An observation vector as per the defined output mode of the composed system.
         """
         state = rg.array(state, prototype=state)
@@ -569,10 +582,12 @@ class ComposedSystem(SystemInterface):
         It is a convenient way to adjust or tune parameters affecting the dynamics and behavior of the overall system.
 
         Args:
+        ----
             inputs: A dictionary where keys represent parameter names to update, and values represent the new parameter values.
             It is expected that both subsystems share a common parameter naming convention if the same parameters are to be updated across both systems.
 
         Note:
+        ----
             Parameters that do not exist in either or both of the subsystems are ignored, and no exception is raised for such cases.
         """
         assert isinstance(inputs, dict)
@@ -580,14 +595,15 @@ class ComposedSystem(SystemInterface):
         self.sys_right.update_system_parameters(inputs)
 
     def permute_state(self, permutation: Union[List[int], np.array]) -> Self:
-        """
-        Permute an order at which the system outputs are returned.
+        """Permute an order at which the system outputs are returned.
 
         Args:
+        ----
             permutation (Union[list, np.array]): Permutation represented
                 as an array of indices
 
         Returns:
+        -------
             Self: link to self
         """
         self.forward_permutation = rg.array(permutation).astype(int)
@@ -603,12 +619,15 @@ class ComposedSystem(SystemInterface):
         needs to be reversed to its original form, such as when unpacking state vectors for separate subsystem processing.
 
         Args:
+        ----
             permutation (Union[List[int], np.array]): The permutation array for which the inverse is to be computed.
 
         Returns:
+        -------
             A numpy array representing the inverse permutation.
 
         Note:
+        ----
             The given permutation array must represent a valid permutation of its indices for the inverse to be calculated correctly.
         """
         self.current_permutation = permutation
@@ -629,11 +648,13 @@ class ComposedSystem(SystemInterface):
         The right system specified will receive a connection from the current one as defined by the input/output mapping.
 
         Args:
+        ----
             sys_right: The system to compose with the current one on the right.
             io_mapping: An optional list defining the state-to-input connections between the current system and the right system.
             output_mode: Determines how to create observations for the resulting composed system. Defaults to `"state"`.
 
         Returns:
+        -------
             A new instance of ComposedSystem containing the current system as the 'left' system and the specified right system as the 'right' system,
             connected according to the specified mapping and output mode.
         """
@@ -648,12 +669,15 @@ class ComposedSystem(SystemInterface):
         By default, the connections between systems are determined based on the indices of their states and inputs if an explicit mapping is not provided.
 
         Args:
+        ----
             sys_right: The system to be connected to the current system.
 
         Returns:
+        -------
             A new ComposedSystem instance representing the composition of the current and right systems.
 
         Example:
+        -------
             ```python
             composed_system = system1 @ system2  # Compose system1 with system2.
             ```
@@ -662,8 +686,7 @@ class ComposedSystem(SystemInterface):
 
 
 class System(SystemInterface):
-    """
-    Class representing a controllable system with predefined dynamics and observations.
+    """Class representing a controllable system with predefined dynamics and observations.
 
     Attributes and methods are inherited from SystemInterface. This class serves as a base implementation of a system
     with additional functionality to receive control inputs and update system parameters.
@@ -679,6 +702,7 @@ class System(SystemInterface):
         initial state, and inputs.
 
         Args:
+        ----
             system_parameters_init: A dictionary containing system parameters
                 that override the default parameters.
 
@@ -692,6 +716,7 @@ class System(SystemInterface):
                 initialized upon creation.
 
         Note:
+        ----
             The current implementation of the system class treats systems as static entities.
             The `state_init` and `inputs_init` parameters are part of the method signature
             for potential future use. As of now, they have no effect on the system's behavior
@@ -729,14 +754,17 @@ class System(SystemInterface):
         """Return state vector by default.
 
         Args:
+        ----
             time: The current simulation time or step.
             state: The current state vector of the system.
             inputs: The current input vector given to the system.
 
         Returns:
+        -------
             An observation vector representing the perceived state of the system at the current time.
 
         Note:
+        ----
             Implementing classes should define what makes up an observation in the context of their specific system.
             The method should aim to represent realistically perceivable quantities
         """
@@ -746,7 +774,7 @@ class System(SystemInterface):
         self.inputs = action
 
     def update_system_parameters(self, inputs: Dict[str, float]) -> Dict[str, float]:
-        """Simply updates `_parameters` dict"""
+        """Simply updates `_parameters` dict."""
         assert isinstance(inputs, dict)
         self._parameters.update(inputs)
         return self.parameters
@@ -760,14 +788,15 @@ class System(SystemInterface):
         """Compose the current system with another system.
 
         Args:
+        ----
             sys_right: The system to be composed with.
             io_mapping: A list specifying the input-output mapping between the current system and sys_right. Defaults to None.
             output_mode: The output mode of the composed system. Defaults to "state".
 
         Returns:
+        -------
             The composed system.
         """
-
         return ComposedSystem(
             self, sys_right, io_mapping=io_mapping, output_mode=output_mode
         )
@@ -779,12 +808,15 @@ class System(SystemInterface):
         By default, the connections between systems are determined based on the indices of their states and inputs if an explicit mapping is not provided.
 
         Args:
+        ----
             sys_right: The system to be connected to the current system.
 
         Returns:
+        -------
             A new ComposedSystem instance representing the composition of the current and right systems.
 
         Example:
+        -------
             composed_system = system1 @ system2  # Compose system1 with system2.
         """
         return self.compose(sys_right)
@@ -817,9 +849,7 @@ class KinematicPoint(System):
 
 
 class InvertedPendulum(System):
-    """
-    System representing an inverted pendulum, with state representing angle and angular velocity.
-    """
+    """System representing an inverted pendulum, with state representing angle and angular velocity."""
 
     _name = "inverted-pendulum"
     _system_type = "diff_eqn"
@@ -852,8 +882,7 @@ class InvertedPendulum(System):
 
 
 class ThreeWheeledRobotNI(System):
-    r"""
-    Implements the ThreeWheeledRobotNI (Non-holonomic robot a.k.a. Brockett integrator).
+    r"""Implements the ThreeWheeledRobotNI (Non-holonomic robot a.k.a. Brockett integrator).
 
     This system class defines the dynamics of a 3-wheeled robot with non-holonomic constraints. The robot's dynamics
     are given by the following differential equations:
@@ -889,11 +918,13 @@ class ThreeWheeledRobotNI(System):
         """Compute rhs of the dynamic system.
 
         Args:
+        ----
             time: Current time.
             state: Current state.
             inputs: Current action.
 
         Returns:
+        -------
             Rate of change of the state.
         """
         Dstate = rg.zeros(self.dim_state, prototype=(state, inputs))
@@ -906,8 +937,7 @@ class ThreeWheeledRobotNI(System):
 
 
 class ThreeWheeledRobot(System):
-    r"""
-    System class: 3-wheeled robot with dynamical actuators.
+    r"""System class: 3-wheeled robot with dynamical actuators.
 
     Description ----------- Three-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended
     non-holonomic double integrator) [[1]_]
@@ -962,14 +992,15 @@ class ThreeWheeledRobot(System):
         """Compute rhs of the dynamic system.
 
         Args:
+        ----
             time: Current time.
             state: Current state.
             inputs: Current action.
 
         Returns:
+        -------
             Rate of change of the state.
         """
-
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -987,9 +1018,7 @@ class ThreeWheeledRobot(System):
 
 
 class Integrator(System):
-    """
-    System yielding Non-holonomic double integrator when composed with non- holomonic three-wheeled robot.
-    """
+    """System yielding Non-holonomic double integrator when composed with non- holomonic three-wheeled robot."""
 
     _name = "integral-parts"
     _system_type = "diff_eqn"
@@ -1004,11 +1033,13 @@ class Integrator(System):
         """Compute rhs of the dynamic system.
 
         Args:
+        ----
             time: Current time.
             state: Current state.
             inputs: Current action.
 
         Returns:
+        -------
             Rate of change of the state.
         """
         Dstate = rg.zeros(
@@ -1048,14 +1079,15 @@ class CartPole(System):
         """Compute rhs of the dynamic system.
 
         Args:
+        ----
             time: Current time.
             state: Current state.
             inputs: Current action.
 
         Returns:
+        -------
             Rate of change of the state.
         """
-
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -1131,14 +1163,15 @@ class TwoTank(System):
         """Compute rhs of the dynamic system.
 
         Args:
+        ----
             time: Current time.
             state: Current state.
             inputs: Current action.
 
         Returns:
+        -------
             Rate of change of the state.
         """
-
         tau1, tau2, K1, K2, K3 = (
             self.parameters["tau1"],
             self.parameters["tau2"],
@@ -1158,8 +1191,7 @@ class TwoTank(System):
 
 
 class LunarLander(System):
-    """
-    Lunar lander system.
+    """Lunar lander system.
 
     The basis of this system is taken from the [following
     paper](https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf).
@@ -1186,9 +1218,7 @@ class LunarLander(System):
     _action_bounds = [[-100.0, 100.0], [-50.0, 50.0]]
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize an instance of LunarLander by specifying relevant physical parameters.
-        """
+        """Initialize an instance of LunarLander by specifying relevant physical parameters."""
         super().__init__(*args, **kwargs)
         self.alpha = np.arctan(self.parameters["a"] / self.parameters["r"])
         self.l = np.sqrt(self.parameters["a"] ** 2 + self.parameters["r"] ** 2)
@@ -1204,11 +1234,13 @@ class LunarLander(System):
         such as setting velocities to zero upon touching down.
 
         Args:
+        ----
             time: The current simulation time.
             state: The current state of the lunar lander.
             inputs: The current inputs to the lander.
 
         Returns:
+        -------
             The state vector's derivative with respect to time.
         """
         Dstate_before_landing = rg.zeros(
@@ -1293,11 +1325,13 @@ class LunarLander(System):
         causing it to behave like a pendulum.
 
         Args:
+        ----
             angle: The angle of the pendulum.
             angle_dot: The derivative of the pendulum angle.
             prototype: A prototype array indicating the desired shape and type for the returned state derivative.
 
         Returns:
+        -------
             The computed state vector's derivative with pendulum-like constraints applied.
         """
         Dstate = rg.zeros(
@@ -1321,14 +1355,15 @@ class LunarLander(System):
     def _compute_supports_geometry(
         self, xi: Union[RgArray, float], theta: Union[RgArray, float]
     ) -> Tuple[Union[RgArray, float], Union[RgArray, float]]:
-        """
-        Calculate the positions of the left and right supports of the lander.
+        """Calculate the positions of the left and right supports of the lander.
 
         Args:
+        ----
             xi: The position vector of the lander's center of gravity.
             theta: The current orientation angle of the lander.
 
         Returns:
+        -------
             The positions of the left and right supports.
         """
         rotation_operator = rg.zeros((2, 2), prototype=xi)
@@ -1363,10 +1398,12 @@ class LunarLander(System):
         """Compute the reaction forces when the lander's supports are in contact with the ground.
 
         Args:
+        ----
             r: The position vector of the lander's center of gravity.
             r_support: The position vector of one of the lander's supports.
 
         Returns:
+        -------
             np.array: The computed reaction forces at the point of contact.
         """
         m, g, sigma = (
@@ -1395,10 +1432,10 @@ class ConstantReference(System):
     _parameters = {"reference": np.array([[0.4], [0.4]])}
 
     def __init__(self, reference: Optional[Union[List[float], np.array]] = None):
-        """
-        Instantiate ConstantReference.
+        """Instantiate ConstantReference.
 
         Args:
+        ----
             reference (Optional[Union[List[float], np.array]], optional):
                 reference to be substracted from inputs, defaults to None
         """
@@ -1432,17 +1469,15 @@ class ConstantReference(System):
 
 
 class SystemWithConstantReference(ComposedSystem):
-    """
-    Composed system created by combining a system with a constant reference subtraction.
-    """
+    """Composed system created by combining a system with a constant reference subtraction."""
 
     def __init__(self, system: System, state_reference: Union[List[float], np.array]):
-        """
-        Instantiate System with ConstantReference.
+        """Instantiate System with ConstantReference.
 
         The result ComposedSystem's method get_observation subtracts from state reference value state_reference.
 
         Args:
+        ----
             system (System): system
             state_reference (Union[List[float], np.array]): reference to
                 be subtracted from state.
@@ -1452,7 +1487,7 @@ class SystemWithConstantReference(ComposedSystem):
         assert (
             system.dim_state == constant_reference.dim_inputs
         ), "state_reference should have the same length as dimension of state of system"
-        np_constant_reference = np.array(constant_reference).reshape(-1)
+        np.array(constant_reference).reshape(-1)
         super().__init__(
             sys_left=system,
             sys_right=constant_reference,
@@ -1460,7 +1495,7 @@ class SystemWithConstantReference(ComposedSystem):
             output_mode="right",
             inputs_naming=system.inputs_naming,
             state_naming=system.state_naming,
-            observation_naming=[s + f"-ref" for i, s in enumerate(system.state_naming)],
+            observation_naming=[s + "-ref" for i, s in enumerate(system.state_naming)],
             action_bounds=system.action_bounds,
         )
 

@@ -1,7 +1,7 @@
 """Contains a tool box for parsing constraints that are injected outside."""
 
 from . import RegelumBase
-from .utilis import rg
+from .utils import rg
 from abc import abstractmethod, ABC
 import numpy as np
 from itertools import groupby
@@ -153,6 +153,7 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
         """Instantiate ThreeWheeledRobotNIConstantContstraintsParser.
 
         Args:
+        ----
             centers (Optional[np.ndarray], optional): centers of
                 circles, defaults to None
             coefs (Optional[np.ndarray], optional): circle coeficients,

@@ -16,6 +16,7 @@ discount_factor: 0.7
 N_iterations: 100
 N_episodes: 2
 stopping_criterion: ~ stopping_criterion
+is_parallel: False
 
 critic_td_n: 1
 critic_n_epochs: 50

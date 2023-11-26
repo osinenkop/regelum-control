@@ -10,8 +10,12 @@ Remarks:
 
 import numpy as np
 import torch
+import torch.multiprocessing as mp
+import random
 
-from .utilis import Clock, AwaitedParameter
+from regelum.data_buffers import DataBuffer
+
+from regelum.utils import Clock, AwaitedParameter, calculate_value
 from regelum import RegelumBase
 from .policy import Policy, RLPolicy, PolicyPPO, PolicyReinforce, PolicySDPG, PolicyDDPG
 from .critic import Critic, CriticCALF, CriticTrivial
@@ -38,6 +42,8 @@ from regelum.optimizable.core.configs import (
     CasadiOptimizerConfig,
 )
 from regelum.data_buffers.batch_sampler import RollingBatchSampler, EpisodicSampler
+from copy import deepcopy
+from typing_extensions import Self
 
 
 class Scenario(RegelumBase):
@@ -64,6 +70,7 @@ class Scenario(RegelumBase):
         """Initialize the Scenario with the necessary components for running a reinforcement learning experiment.
 
         Args:
+        ----
             policy: Policy to generate actions based on observations.
             simulator: Simulator to interact with and collect data for
                 training.
@@ -130,19 +137,21 @@ class Scenario(RegelumBase):
 
     def run(self):
         for iteration_counter in range(1, self.N_iterations + 1):
-            self.iteration_counter = iteration_counter
             for episode_counter in range(1, self.N_episodes + 1):
-                self.episode_counter = episode_counter
-                while self.sim_status not in [
-                    "episode_ended",
-                    "simulation_ended",
-                    "iteration_ended",
-                ]:
-                    self.sim_status = self.step()
-
+                self.run_episode(
+                    episode_counter=episode_counter, iteration_counter=iteration_counter
+                )
                 self.reload_scenario()
+
+            self.reset_iteration()
             if self.sim_status == "simulation_ended":
                 break
+
+    def run_episode(self, episode_counter, iteration_counter):
+        self.episode_counter = episode_counter
+        self.iteration_counter = iteration_counter
+        while self.sim_status != "episode_ended":
+            self.sim_status = self.step()
 
     def step(self):
         if isinstance(self.action_init, AwaitedParameter) and isinstance(
@@ -185,34 +194,15 @@ class Scenario(RegelumBase):
             self.is_episode_ended = self.simulator.do_sim_step() == -1
             return "episode_continues"
         else:
-            self.reset_episode()
-            is_iteration_ended = self.episode_counter >= self.N_episodes
-
-            if is_iteration_ended:
-                self.reset_iteration()
-
-                is_simulation_ended = (
-                    self.iteration_counter >= self.N_iterations
-                    or self.sim_status == "simulation_ended"
-                )
-
-                if is_simulation_ended:
-                    return "simulation_ended"
-                else:
-                    return "iteration_ended"
-            else:
-                return "episode_ended"
+            return "episode_ended"
 
     @apply_callbacks()
     def reset_iteration(self):
         pass
 
-    def reset_episode(self):
-        self.is_episode_ended = False
-        return self.value
-
     @apply_callbacks()
     def reload_scenario(self):
+        self.is_episode_ended = False
         self.recent_value = self.value
         self.observation = self.simulator.observation
         self.sim_status = 1
@@ -229,7 +219,7 @@ class Scenario(RegelumBase):
         return {
             "estimated_state": estimated_state,
             "observation": observation,
-            "timestamp": self.time,
+            "time": self.time,
             "episode_id": self.episode_counter,
             "iteration_id": self.iteration_counter,
             "step_id": self.step_counter,
@@ -291,7 +281,7 @@ class Scenario(RegelumBase):
         return {
             "estimated_state": estimated_state,
             "observation": observation,
-            "timestamp": time,
+            "time": time,
             "episode_id": self.episode_counter,
             "iteration_id": self.iteration_counter,
             "step_id": self.step_counter,
@@ -343,10 +333,12 @@ class RLScenario(Scenario):
         N_iterations: int = 1,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+        is_parallel: bool = False,
     ):
         """Instantiate a RLScenario object.
 
         Args:
+        ----
             policy (Policy): Policy object
             critic (Critic): Cricic
             running_objective (RunningObjective): Function to calculate
@@ -396,6 +388,7 @@ class RLScenario(Scenario):
         self.is_first_compute_action_call = True
         self.is_critic_first = is_critic_first
         self.stopping_criterion = stopping_criterion
+        self.is_parallel = is_parallel
 
     def _reset_whatever(self, suffix):
         def wrapped(*args, **kwargs):
@@ -407,6 +400,96 @@ class RLScenario(Scenario):
             return res
 
         return wrapped
+
+    def run_episode(self, episode_counter, iteration_counter):
+        super().run_episode(
+            episode_counter=episode_counter, iteration_counter=iteration_counter
+        )
+        return self.data_buffer
+
+    @staticmethod
+    def run_ith_scenario(
+        episode_id: int, iteration_id: int, scenarios: List[Self], queue
+    ):
+        seed = torch.initial_seed() + episode_id
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+
+        queue.put(
+            (
+                episode_id,
+                scenarios[episode_id - 1].run_episode(episode_id, iteration_id),
+            )
+        )
+
+    def instantiate_rl_scenarios(self):
+        return [
+            RLScenario(
+                policy=self.policy,
+                critic=self.critic,
+                running_objective=self.running_objective,
+                simulator=deepcopy(self.simulator),
+                policy_optimization_event=self.policy_optimization_event,
+                critic_optimization_event=self.critic_optimization_event,
+                discount_factor=self.discount_factor,
+                is_critic_first=self.is_critic_first,
+                sampling_time=self.sampling_time,
+                constraint_parser=self.constraint_parser,
+                observer=self.observer,
+                N_episodes=self.N_episodes,  # for correct logging
+                N_iterations=self.N_iterations,  # for correct logging
+                value_threshold=self.value_threshold,
+                stopping_criterion=self.stopping_criterion,
+            )
+            for _ in range(self.N_episodes)
+        ]
+
+    @apply_callbacks()
+    def dump_data_buffer(self, episode_id: int, data_buffer: DataBuffer):
+        return episode_id, data_buffer
+
+    def run(self):
+        if not self.is_parallel:
+            return super().run()
+
+        for self.iteration_counter in range(1, self.N_iterations + 1):
+            one_episode_rl_scenarios = self.instantiate_rl_scenarios()
+            result_queue = mp.Queue()
+            args = [
+                (i, self.iteration_counter, one_episode_rl_scenarios, result_queue)
+                for i in range(1, self.N_episodes + 1)
+            ]
+            processes = [
+                mp.Process(target=RLScenario.run_ith_scenario, args=arg) for arg in args
+            ]
+            for p in processes:
+                p.start()
+
+            enumerated_data_buffers = sorted(
+                [result_queue.get() for _ in range(self.N_episodes)], key=lambda x: x[0]
+            )
+
+            for p in processes:
+                p.join()
+
+            for (episode_idx, data_buffer), scenario in zip(
+                enumerated_data_buffers, one_episode_rl_scenarios
+            ):
+                self.dump_data_buffer(episode_idx, data_buffer)
+                self.data_buffer.concat(data_buffer)
+                data = self.data_buffer.to_pandas(["running_objective", "time"])
+                scenario.value = calculate_value(
+                    data["running_objective"],
+                    data["time"],
+                    self.discount_factor,
+                    self.sampling_time,
+                )
+                scenario.reload_scenario()
+
+            self.reset_iteration()
+            if self.sim_status == "simulation_ended":
+                break
 
     @apply_callbacks()
     def reset_iteration(self):
@@ -453,7 +536,7 @@ class RLScenario(Scenario):
             estimated_state, self.data_buffer.get_latest("estimated_state")
         )
         assert np.allclose(observation, self.data_buffer.get_latest("observation"))
-        assert np.allclose(time, self.data_buffer.get_latest("timestamp"))
+        assert np.allclose(time, self.data_buffer.get_latest("time"))
 
         self.optimize(Event.compute_action)
         return self.policy.action
@@ -489,7 +572,7 @@ class RLScenario(Scenario):
             self.pre_optimize(
                 optimizable_object=optimizable_object,
                 event=event,
-                time=self.data_buffer.get_latest("timestamp"),
+                time=self.data_buffer.get_latest("time"),
             )
             optimizable_object.optimize(self.data_buffer)
 
@@ -566,7 +649,7 @@ class CALFScenario(RLScenario):
             estimated_state, self.data_buffer.get_latest("estimated_state")
         )
         assert np.allclose(observation, self.data_buffer.get_latest("observation"))
-        assert np.allclose(time, self.data_buffer.get_latest("timestamp"))
+        assert np.allclose(time, self.data_buffer.get_latest("time"))
 
         if self.is_first_compute_action_call:
             self.critic.observation_last_good = observation
@@ -622,6 +705,7 @@ class CALF(CALFScenario):
         """Instantiate CALF class.
 
         Args:
+        ----
             simulator (Simulator): The simulator object.
             running_objective (RunningObjective): The running objective.
             safe_policy (Policy): The safe policy.
@@ -653,6 +737,7 @@ class CALF(CALFScenario):
                 critic optimizer. Defaults to 10.
 
         Returns:
+        -------
             None: None
         """
         system = simulator.system
@@ -828,6 +913,7 @@ class MPC(RLScenario):
         """Initialize the MPC agent, setting up the required structures for MPC.
 
         Args:
+        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -986,6 +1072,7 @@ class SQL(RLScenario):
         """Instantiate SQL.
 
         Args:
+        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1018,6 +1105,7 @@ class SQL(RLScenario):
                 parameter for the critic. Defaults to 0.
 
         Returns:
+        -------
             None: None
         """
         super().__init__(
@@ -1071,6 +1159,7 @@ class RQL(RLScenario):
         """Instantiate RQLScenario.
 
         Args:
+        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1103,6 +1192,7 @@ class RQL(RLScenario):
                 parameter for the critic. Defaults to 0.
 
         Returns:
+        -------
             None: None
         """
         super().__init__(
@@ -1155,6 +1245,7 @@ class RPV(RLScenario):
         """Instantiate RPV.
 
         Args:
+        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1187,6 +1278,7 @@ class RPV(RLScenario):
                 parameter for the critic. Defaults to 0.
 
         Returns:
+        -------
             None: None
         """
         super().__init__(
@@ -1238,6 +1330,7 @@ class MPCTorch(RLScenario):
         """Initialize the object with the given parameters.
 
         Args:
+        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1265,6 +1358,7 @@ class MPCTorch(RLScenario):
                 costs. Defaults to 1.0.
 
         Returns:
+        -------
             None
         """
         system = simulator.system
@@ -1724,6 +1818,7 @@ def get_policy_gradient_kwargs(
     scenario_kwargs: Dict[str, Any] = None,
     is_use_critic_as_policy_kwarg: bool = True,
     stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+    is_parallel: bool = False,
 ):
     system = simulator.system
     if critic_model is not None:
@@ -1760,6 +1855,7 @@ def get_policy_gradient_kwargs(
         critic = CriticTrivial()
 
     return dict(
+        is_parallel=is_parallel,
         stopping_criterion=stopping_criterion,
         simulator=simulator,
         discount_factor=discount_factor,
@@ -1826,10 +1922,12 @@ class PPO(RLScenario):
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
         gae_lambda: float = 0.0,
+        is_parallel: bool = False,
     ):
         """Initialize the object with the given parameters.
 
         Args:
+        ----
             policy_model (PerceptronWithTruncatedNormalNoise): The
                 neural network model parameterizing the policy.
             critic_model (ModelPerceptron): The neural network model
@@ -1875,15 +1973,16 @@ class PPO(RLScenario):
                 end an episode.
 
         Raises:
+        ------
             AssertionError: If the `running_objective_type` is invalid.
 
         Returns:
+        -------
             None
         """
         assert (
             running_objective_type == "cost" or running_objective_type == "reward"
         ), f"Invalid 'running_objective_type' value: '{running_objective_type}'. It must be either 'cost' or 'reward'."
-
         super().__init__(
             **get_policy_gradient_kwargs(
                 sampling_time=sampling_time,
@@ -1914,6 +2013,7 @@ class PPO(RLScenario):
                 critic_is_value_function=True,
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
+                is_parallel=is_parallel,
             )
         )
 
@@ -1951,10 +2051,12 @@ class SDPG(RLScenario):
         N_iterations: int = 100,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+        is_parallel: bool = False,
     ):
         """Initialize SDPG.
 
         Args:
+        ----
             policy_model: The
                 policy network model that defines the policy
                 architecture.
@@ -2023,6 +2125,7 @@ class SDPG(RLScenario):
                     sampling_time=sampling_time,
                 ),
                 stopping_criterion=stopping_criterion,
+                is_parallel=is_parallel,
             )
         )
 
@@ -2047,10 +2150,12 @@ class REINFORCE(RLScenario):
         is_with_baseline: bool = True,
         is_do_not_let_the_past_distract_you: bool = True,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+        is_parallel: bool = False,
     ):
         """Initialize an REINFORCE object.
 
         Args:
+        ----
             policy_model: The
                 policy network model that defines the policy
                 architecture.
@@ -2079,6 +2184,7 @@ class REINFORCE(RLScenario):
             is_do_not_let_the_past_distract_you: Whether to use tail total costs or not.
 
         Returns:
+        -------
             None: None
         """
         super().__init__(
@@ -2103,6 +2209,7 @@ class REINFORCE(RLScenario):
                 ),
                 is_use_critic_as_policy_kwarg=False,
                 stopping_criterion=stopping_criterion,
+                is_parallel=is_parallel,
             ),
         )
 
@@ -2130,10 +2237,12 @@ class DDPG(RLScenario):
         N_iterations: int = 100,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+        is_parallel: bool = False,
     ):
         """Instantiate DDPG Scenario.
 
         Args:
+        ----
             policy_model (PerceptronWithTruncatedNormalNoise): The
                 policy (actor) neural network model with input as state
                 and output as action.
@@ -2199,6 +2308,7 @@ class DDPG(RLScenario):
                 critic_is_value_function=False,
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
+                is_parallel=is_parallel,
             )
         )
 

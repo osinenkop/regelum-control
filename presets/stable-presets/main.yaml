@@ -11,7 +11,7 @@ defaults:
 
 callbacks:
   - regelum.callback.ScenarioStepLogger
-  - regelum.callback.TotalObjectiveCallback
+  - regelum.callback.ValueCallback
   - regelum.callback.HistoricalDataCallback
   - regelum.callback.CriticObjectiveSaver
   - regelum.callback.PolicyObjectiveSaver

@@ -7,7 +7,6 @@ defaults:
   - critic: critic
 
 action_bounds: $ system_specific.action_bounds
-max_data_buffer_size: 10000
 sampling_time: $ system_specific.sampling_time
 is_critic_first: False
 running_objective: ~ running_objective
