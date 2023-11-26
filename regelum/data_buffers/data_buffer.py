@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import casadi as cs
 
-from typing import Optional, List, Union, Any, Type, Iterable
+from typing import Optional, List, Union, Any, Type, Iterable, Dict
 from .types import RgArray, RgArrayType
 from .batch_sampler import RollingBatchSampler
 from .fifo_list import FifoList
@@ -98,11 +98,30 @@ class DataBuffer:
     def to_dict(self):
         return self.data
 
-    def to_pandas(self, keys: Optional[List[str]] = None) -> pd.DataFrame:
-        if keys is not None:
-            return pd.DataFrame({k: self.data[k] for k in keys})
+    def to_pandas(
+        self,
+        keys: Optional[Union[List[str], Dict[str, Type[Any]]]] = None,
+    ) -> pd.DataFrame:
+        if isinstance(keys, list):
+            _keys = {k: float for k in keys}
+        elif isinstance(keys, dict):
+            assert set(keys.keys()).issubset(
+                self.data.keys()
+            ), "keys must be a subset of data keys"
+            _keys = keys
+        elif keys is None:
+            _keys = {k: float for k in self.data.keys()}
+        else:
+            raise AssertionError("keys must be a list or a dict or None")
 
-        return pd.DataFrame(self.data)
+        return pd.DataFrame(
+            {
+                k: np.array(self.data[k], dtype=_keys[k]).reshape(-1)
+                if self.data[k][0].size == 1
+                else self.data[k]
+                for k in _keys
+            }
+        )
 
     def __len__(self):
         if len(self.data.keys()) == 0:
@@ -192,6 +211,10 @@ class DataBuffer:
             device=self.device_for_indexing,
             fill_na=self.fill_na_for_indexing,
         )
+
+    def concat(self, other):
+        for key in other.keys():
+            self.data[key] += other.data[key]
 
     def get_latest(self, key: str) -> np.array:
         return self.data[key][-1]

@@ -1,5 +1,5 @@
 std%%: 0.1
-normalize_output_coef%%: 0.01
+normalize_output_coef%%: 0.1
 
 _target_: regelum.model.PerceptronWithTruncatedNormalNoise
 dim_input: $ system_specific.dim_observation

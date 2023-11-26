@@ -479,17 +479,17 @@ class PolicySDPG(PolicyGradient):
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
-        return ["observation", "action", "timestamp", "episode_id", "running_objective"]
+        return ["observation", "action", "time", "episode_id", "running_objective"]
 
     def objective_function(
-        self, observation, action, timestamp, episode_id, running_objective
+        self, observation, action, time, episode_id, running_objective
     ):
         return sdpg_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
             observations=observation,
             actions=action,
-            timestamps=timestamp,
+            times=time,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),
@@ -552,7 +552,7 @@ class PolicyPPO(PolicyGradient):
         return [
             "observation",
             "action",
-            "timestamp",
+            "time",
             "episode_id",
             "running_objective",
             "initial_log_probs",
@@ -562,7 +562,7 @@ class PolicyPPO(PolicyGradient):
         self,
         observation,
         action,
-        timestamp,
+        time,
         episode_id,
         running_objective,
         initial_log_probs,
@@ -572,7 +572,7 @@ class PolicyPPO(PolicyGradient):
             critic_model=self.critic.model,
             observations=observation,
             actions=action,
-            timestamps=timestamp,
+            times=time,
             discount_factor=self.discount_factor,
             N_episodes=self.N_episodes,
             episode_ids=episode_id.long(),

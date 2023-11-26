@@ -648,7 +648,7 @@ class HistoricalCallback(Callback, ABC):
         super().__init__(*args, **kwargs)
         self.xlabel = "Time"
         self.ylabel = "Value"
-        self.__data = pd.DataFrame()
+        self.data = pd.DataFrame()
 
         self.save_directory = Path(f".callbacks/{self.__class__.__name__}").resolve()
 
@@ -659,17 +659,14 @@ class HistoricalCallback(Callback, ABC):
         os.mkdir(self.get_save_directory())
 
     def add_datum(self, datum: dict):
-        if self.__data.empty:
-            self.__data = pd.DataFrame({key: [value] for key, value in datum.items()})
+        if self.data.empty:
+            self.data = pd.DataFrame({key: [value] for key, value in datum.items()})
         else:
-            self.__data.loc[len(self.__data)] = datum
-
-    def clear_recent_data(self):
-        self.__data = pd.DataFrame()
+            self.data.loc[len(self.data)] = datum
 
     def dump_data(self, identifier):
-        if not self.__data.empty:
-            self.__data.to_hdf(
+        if not self.data.empty:
+            self.data.to_hdf(
                 f".callbacks/{self.__class__.__name__}/{identifier}.h5", "data"
             )
 
@@ -692,16 +689,15 @@ class HistoricalCallback(Callback, ABC):
             return pd.DataFrame()
 
     def insert_column_left(self, column_name, values):
-        if not self.__data.empty:
-            self.__data.insert(0, column_name, values)
+        if not self.data.empty:
+            self.data.insert(0, column_name, values)
 
     def dump_and_clear_data(self, identifier):
         self.dump_data(identifier)
         self.clear_recent_data()
 
-    @property
-    def data(self):
-        return self.__data
+    def clear_recent_data(self):
+        self.data = pd.DataFrame()
 
     def plot(self, name=None):
         if regelum.main.is_clear_matplotlib_cache_in_callbacks:
@@ -726,7 +722,7 @@ class HistoricalCallback(Callback, ABC):
         mlflow.log_artifact(f"gfx/{name}.svg", "gfx")
 
     def plot_gui(self):
-        self.__data = self.load_data(idx="last")
+        self.data = self.load_data(idx="last")
         if not self.data.empty:
             return self.plot(name=self.__class__.__name__)
         else:
@@ -781,12 +777,12 @@ class ScenarioStepLogger(Callback):
     def perform(self, obj, method: str, output: Dict[str, Any]):
         with np.printoptions(precision=2, suppress=True):
             self.log(
-                f"Current objective: {output['running_objective']:.2f}, "
+                f"runn. objective: {output['running_objective']:.2f}, "
                 f"state est.: {output['estimated_state'][0]}, "
                 f"observation: {output['observation'][0]}, "
                 f"action: {output['action'][0]}, "
-                f"total objective: {output['current_value']:.4f}, "
-                f"time: {output['timestamp']:.4f} ({100 * output['timestamp']/obj.simulator.time_final:.1f}%), "
+                f"value: {output['current_value']:.4f}, "
+                f"time: {output['time']:.4f} ({100 * output['time']/obj.simulator.time_final:.1f}%), "
                 f"episode: {int(output['episode_id'])}/{obj.N_episodes}, "
                 f"iteration: {int(output['iteration_id'])}/{obj.N_iterations}"
             )
@@ -846,11 +842,11 @@ class HistoricalDataCallback(HistoricalCallback):
 
         self.observation_components_naming = None
         self.action_components_naming = None
+        self.state_components_naming = None
 
     def is_target_event(self, obj, method, output):
-        return (
-            isinstance(obj, regelum.scenario.Scenario)
-            and method == "post_compute_action"
+        return isinstance(obj, regelum.scenario.Scenario) and (
+            method == "post_compute_action" or method == "dump_data_buffer"
         )
 
     def perform(self, obj, method, output):
@@ -871,21 +867,64 @@ class HistoricalDataCallback(HistoricalCallback):
                 else obj.simulator.system.inputs_naming
             )
 
-        self.add_datum(
-            {
-                **{
-                    "time": output["timestamp"],
-                    "running_objective": output["running_objective"],
-                    "current_value": output["current_value"],
-                    "episode_id": output["episode_id"],
-                    "iteration_id": output["iteration_id"],
-                },
-                **dict(zip(self.action_components_naming, output["action"][0])),
-                **dict(
-                    zip(self.observation_components_naming, output["observation"][0])
-                ),
-            }
-        )
+        if self.state_components_naming is None:
+            self.state_components_naming = (
+                [f"state_{i + 1}" for i in range(obj.simulator.system.dim_state)]
+                if obj.simulator.system.state_naming is None
+                else obj.simulator.system.state_naming
+            )
+
+        if method == "post_compute_action":
+            self.add_datum(
+                {
+                    **{
+                        "time": output["time"],
+                        "running_objective": output["running_objective"],
+                        "current_value": output["current_value"],
+                        "episode_id": output["episode_id"],
+                        "iteration_id": output["iteration_id"],
+                    },
+                    **dict(zip(self.action_components_naming, output["action"][0])),
+                    **dict(
+                        zip(
+                            self.observation_components_naming, output["observation"][0]
+                        )
+                    ),
+                    # **dict(
+                    #     zip(self.state_components_naming, output["estimated_state"][0])
+                    # ),
+                }
+            )
+        elif method == "dump_data_buffer":
+            _, data_buffer = output
+            self.data = pd.concat(
+                [
+                    data_buffer.to_pandas(
+                        keys={
+                            "time": float,
+                            "running_objective": float,
+                            "current_value": float,
+                            "episode_id": int,
+                            "iteration_id": int,
+                        }
+                    )
+                ]
+                + [
+                    pd.DataFrame(
+                        columns=columns,
+                        data=np.array(
+                            data_buffer.to_pandas([key]).values.tolist(),
+                            dtype=float,
+                        ).squeeze(),
+                    )
+                    for columns, key in [
+                        (self.action_components_naming, "action"),
+                        (self.observation_components_naming, "observation"),
+                        # (self.state_components_naming, "estimated_state"),
+                    ]
+                ],
+                axis=1,
+            )
 
     def on_episode_done(
         self,
@@ -895,8 +934,8 @@ class HistoricalDataCallback(HistoricalCallback):
         iteration_number,
         iterations_total,
     ):
-        if iterations_total == 1:
-            identifier = f"observations_actions_ep_{str(episode_number).zfill(5)}"
+        if episodes_total == 1:
+            identifier = f"observations_actions_it_{str(iteration_number).zfill(5)}"
         else:
             identifier = f"observations_actions_it_{str(iteration_number).zfill(5)}_ep_{str(episode_number).zfill(5)}"
         self.save_plot(identifier)
@@ -1008,7 +1047,7 @@ class PolicyObjectiveSaver(ObjectiveSaver):
         )
 
 
-class TotalObjectiveCallback(HistoricalCallback):
+class ValueCallback(HistoricalCallback):
     """Callback that regularly logs total objective."""
 
     def __init__(self, *args, **kwargs):
@@ -1018,6 +1057,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         self.xlabel = "Episode"
         self.ylabel = "Total objective"
         self.values = []
+        self.mean_iteration_values = []
 
     def is_target_event(self, obj, method, output):
         return False
@@ -1046,7 +1086,7 @@ class TotalObjectiveCallback(HistoricalCallback):
         mlflow.log_metric(
             f"C. Total objectives in iteration {str(iteration_number).zfill(5)}",
             scenario.recent_value,
-            step=len(self.data),
+            step=len(self.values),
         )
 
         self.save_plot(
@@ -1055,11 +1095,24 @@ class TotalObjectiveCallback(HistoricalCallback):
 
         if episode_number == episodes_total:
             mlflow.log_metric(
-                "A. Avg total objectives",
+                "A. Avg value",
                 np.mean(self.values),
                 step=iteration_number,
             )
+            self.mean_iteration_values.append(np.mean(self.values))
             self.values = []
+
+            mlflow.log_metric(
+                "A. Cum max value",
+                np.max(self.mean_iteration_values),
+                step=iteration_number,
+            )
+            mlflow.log_metric(
+                "A. Cum min value",
+                np.min(self.mean_iteration_values),
+                step=iteration_number,
+            )
+
             self.clear_recent_data()
 
     def perform(self, obj, method, output):

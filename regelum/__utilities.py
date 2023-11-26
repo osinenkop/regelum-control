@@ -8,7 +8,7 @@ from enum import IntEnum
 from typing import Union
 from dataclasses import dataclass
 from typing import Optional
-
+import random
 
 try:
     import casadi
@@ -806,3 +806,13 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
 
 
 rg = RCTypeHandler()
+
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+
+
+def calculate_value(runnning_objectives, timestamps, discount_factor, sampling_time):
+    return sum(runnning_objectives * discount_factor**timestamps) * sampling_time

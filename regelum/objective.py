@@ -119,7 +119,7 @@ def sdpg_objective(
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
-    timestamps: torch.FloatTensor,
+    times: torch.FloatTensor,
     episode_ids: torch.LongTensor,
     discount_factor: float,
     N_episodes: int,
@@ -138,8 +138,8 @@ def sdpg_objective(
     :type observations: torch.FloatTensor
     :param actions: The tensor containing the actions.
     :type actions: torch.FloatTensor
-    :param timestamps: The tensor containing the timestamps.
-    :type timestamps: torch.FloatTensor
+    :param times: The tensor containing the timestamps.
+    :type times: torch.FloatTensor
     :param episode_ids: Episode ids.
     :type episode_ids: torch.LongTensor
     :param device: The device on which the computations are performed.
@@ -165,7 +165,7 @@ def sdpg_objective(
         )
 
         objective += (
-            discount_factor ** timestamps[mask][:-1]
+            discount_factor ** times[mask][:-1]
             * advantages
             * log_pdfs[mask.reshape(-1)][:-1]
         ).sum()
@@ -178,7 +178,7 @@ def ppo_objective(
     critic_model: ModelNN,
     observations: torch.FloatTensor,
     actions: torch.FloatTensor,
-    timestamps: torch.FloatTensor,
+    times: torch.FloatTensor,
     episode_ids: torch.LongTensor,
     discount_factor: float,
     N_episodes: int,
@@ -201,8 +201,8 @@ def ppo_objective(
     :type observations: torch.FloatTensor
     :param actions: tensor of actions in iteration
     :type actions: torch.FloatTensor
-    :param timestamps: timestamps
-    :type timestamps: torch.FloatTensor
+    :param times: times
+    :type times: torch.FloatTensor
     :param episode_ids: episode ids
     :type episode_ids: torch.LongTensor
     :param device: device (cuda or cpu)
@@ -243,9 +243,7 @@ def ppo_objective(
         if gae_lambda == 0.0:
             advantages = deltas
         else:
-            gae_discount_factors = (gae_lambda * discount_factor) ** timestamps[mask][
-                :-1
-            ]
+            gae_discount_factors = (gae_lambda * discount_factor) ** times[mask][:-1]
             reversed_gae_discounted_deltas = torch.flip(
                 gae_discount_factors * deltas, dims=[0, 1]
             )
@@ -256,7 +254,7 @@ def ppo_objective(
 
         objective_value += (
             torch.sum(
-                (discount_factor ** timestamps[mask][:-1])
+                (discount_factor ** times[mask][:-1])
                 * (
                     torch.maximum(
                         advantages * prob_ratios[mask][:-1],
