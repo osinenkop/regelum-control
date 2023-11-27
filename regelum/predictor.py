@@ -20,7 +20,6 @@ class Predictor(regelum.RegelumBase, ABC):
         """Initialize an instance of a predictor.
 
         Args:
-        ----
             system (System): System of which states are predicted
             pred_step_size (float): time interval between successive
                 predictions
@@ -42,7 +41,6 @@ class Predictor(regelum.RegelumBase, ABC):
         """Predicts the state sequence from the given action sequence.
 
         Args:
-        ----
             state (numpy.ndarray): The initial state.
             action_sequence (numpy.ndarray): The sequence of actions.
             is_predict_last (bool): Whether to predict the last state or
@@ -52,7 +50,6 @@ class Predictor(regelum.RegelumBase, ABC):
                 states and the action sequence. Defaults to False.
 
         Returns:
-        -------
             tuple or numpy.ndarray: If `return_predicted_states_only` is
             False, returns a tuple containing the predicted state
             sequence and the action sequence. If
@@ -89,7 +86,6 @@ class Predictor(regelum.RegelumBase, ABC):
         """Predicts a sequence of states from a given initial state using a model.
 
         Args:
-        ----
             state: The initial state.
             prediction_horizon: The number of steps to predict into the
                 future.
@@ -101,7 +97,6 @@ class Predictor(regelum.RegelumBase, ABC):
                 to return only the predicted states.
 
         Returns:
-        -------
             If `return_predicted_states_only` is `True`, returns the
             predicted state sequence. Otherwise, returns a tuple
             containing the predicted state sequence and the action
@@ -194,7 +189,6 @@ class EulerPredictorMultistep(EulerPredictor):
         """Initialize an instance of EulerPredictorMultistep.
 
         Args:
-        ----
             *args: positional arguments for EulerPredictor
             n_steps: number of estimations to predict a single step
             **kwargs: keyword arguments for EulerPredictor
@@ -219,7 +213,6 @@ class TrivialPredictor(Predictor):
         """Initialize an instance of TrivialPredictor.
 
         Args:
-        ----
             system: an instance of a discrete system
         """
         self.system = system

@@ -13,7 +13,6 @@ class apply_callbacks:
     If the object has no list of callbacks specified, the default callbacks are used.
 
     Args:
-    ----
         method: The method to which the callbacks should be applied.
     """
 
@@ -21,7 +20,6 @@ class apply_callbacks:
         """Initialize a decorator that applies callbacks.
 
         Args:
-        ----
             callbacks: list of callbacks to apply (applies all default
                 callbacks if omitted)
         """
@@ -92,7 +90,6 @@ class ClassPropertyDescriptor(object):
         """Initialize an instance of ClassPropertyDescriptor.
 
         Args:
-        ----
             fget: class getter
             fset: class setter
         """
@@ -121,11 +118,9 @@ def classproperty(func):
     """Decorate a method in such a way that it becomes a class property.
 
     Args:
-    ----
         func: method to decorate
 
     Returns:
-    -------
 
     """
     if not isinstance(func, (classmethod, staticmethod)):
@@ -176,7 +171,6 @@ class Node(abc.ABC):
         """Initialize a node.
 
         Args:
-        ----
             input_type (type): type of messages sent/received by the
                 node
         """
@@ -298,7 +292,6 @@ class port:
         """Initialize a decorator that transforms methods into handled ports.
 
         Args:
-        ----
             input_type (type): type of messages accepted by the
                 resulting port
             hooks: hooks to add in addition to the handler obtained from
@@ -324,7 +317,6 @@ class publisher:
         """Initialize a decorator that transforms methods into hooked publishers.
 
         Args:
-        ----
             input_type (type): type of messages sent by the resulting
                 publisher
             hooks: hooks to add in addition to the hook obtained from
@@ -350,7 +342,6 @@ class Port(Node):
         """Initialize a Port.
 
         Args:
-        ----
             input_type (type): type of messages received by the port.
         """
         super().__init__(input_type)

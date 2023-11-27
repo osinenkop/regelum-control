@@ -36,7 +36,6 @@ class RunningObjective(Objective):
         """Initialize a RunningObjective instance.
 
         Args:
-        ----
             model (function): function that calculates the running
                 objective for a given observation and action.
         """
@@ -46,12 +45,10 @@ class RunningObjective(Objective):
         """Calculate the running objective for a given observation and action.
 
         Args:
-        ----
             observation (numpy array): current observation.
             action (numpy array): current action.
 
         Returns:
-        -------
             float: running objective value.
         """
         running_objective = self.model(observation, action)
@@ -83,7 +80,6 @@ def reinforce_objective(
     :math: `M` is the number of episodes, :math:`N` is the number of actions.
 
     Args:
-    ----
         policy_model (GaussianPDFModel): The policy model used to
             calculate the log probabilities.
         observations (torch.FloatTensor): The observations tensor.
@@ -101,7 +97,6 @@ def reinforce_objective(
         N_episodes (int): The number of episodes.
 
     Returns:
-    -------
         torch.FloatTensor: surrogate objective value.
     """
     log_pdfs = policy_model.log_pdf(observations, actions)
@@ -132,7 +127,6 @@ def sdpg_objective(
     TODO: add link to papers + latex code for objective function
 
     Args:
-    ----
         policy_model (PerceptronWithNormalNoise): The policy model that
             represents the probability density function (PDF) of the
             action given the observation.
@@ -152,7 +146,6 @@ def sdpg_objective(
             expected objective function value.
 
     Returns:
-    -------
         torch.FloatTensor: SDPG surrogate objective.
     """
     critic_values = critic_model(observations)
@@ -197,7 +190,6 @@ def ppo_objective(
     TODO: Write docsting with for ppo objective.
 
     Args:
-    ----
         policy_model (PerceptronWithNormalNoise): policy model
         critic_model (ModelNN): critic model
         observations (torch.FloatTensor): tensor of observations in
@@ -215,7 +207,6 @@ def ppo_objective(
         running_objective_type (str): can be either `cost` or `reward`
 
     Returns:
-    -------
         torch.FloatTensor: objective for PPO
     """
     assert (
@@ -279,7 +270,6 @@ def ddpg_objective(
     TODO: add link to papers + latex code for objective function
 
     Args:
-    ----
         policy_model (GaussianPDFModel): The policy model that generates
             actions based on observations.
         critic_model (ModelNN): The critic model that approximates the
@@ -289,7 +279,6 @@ def ddpg_objective(
             computations on.
 
     Returns:
-    -------
         torch.FloatTensor: The objective value.
     """
     return critic_model(
@@ -308,7 +297,6 @@ def temporal_difference_objective(
     """Calculate temporal difference objective.
 
     Args:
-    ----
         critic_model (ModelNN): Q function model.
         observation (torch.FloatTensor): Batch of observations.
         action (torch.FloatTensor): Batch of actions.
@@ -325,7 +313,6 @@ def temporal_difference_objective(
             for using).
 
     Returns:
-    -------
         torch.FloatTensor: objective value
     """
     batch_size = running_objective.shape[0]

@@ -55,7 +55,6 @@ class Critic(Optimizable, ABC):
         """Initialize a critic object.
 
         Args:
-        ----
             system (Union[System, ComposedSystem]): system environmen
                 that is used in RL problem. The system is mainly used
                 for extraction of `dim_observation` and `dim_action`
@@ -115,7 +114,6 @@ class Critic(Optimizable, ABC):
         """Compute the value of the critic function for a given observation and/or action.
 
         Args:
-        ----
             *args (tuple): tuple of the form (observation, action) or
                 (observation,)
             use_stored_weights (bool): flag indicating whether to use
@@ -123,7 +121,6 @@ class Critic(Optimizable, ABC):
                 weights
 
         Returns:
-        -------
             Value of the critic function (either value or Q-function)
         """
         return self.model(*args, use_stored_weights=use_stored_weights, weights=weights)
@@ -137,7 +134,6 @@ class Critic(Optimizable, ABC):
         """Update the weights of the critic model.
 
         Args:
-        ----
             weights: new weights to be used for the critic
                 model, if not provided the method does nothing.
         """
@@ -147,7 +143,6 @@ class Critic(Optimizable, ABC):
         """Store a copy of the current model weights.
 
         Args:
-        ----
             weights: An optional ndarray of weights to store. If not
                 provided, the current model weights are stored. Default
                 is None.
@@ -162,7 +157,6 @@ class Critic(Optimizable, ABC):
         """Update the model's weights and cache the new values.
 
         Args:
-        ----
             weights: new weights for the model (optional)
         """
         self.update_and_cache_weights(weights)
@@ -285,8 +279,7 @@ class Critic(Optimizable, ABC):
     def data_buffer_objective_keys(self) -> List[str]:
         """Return a list of `regelum.data_buffers.DataBuffer` keys to be used for the substitution to the objective function.
 
-        Returns
-        -------
+        Returns:
             List of keys.
         """
         if self.is_value_function:
@@ -513,8 +506,7 @@ class CriticCALF(Critic):
     def data_buffer_objective_keys(self) -> List[str]:
         """Return a list of `regelum.data_buffers.DataBuffer` keys to be used for the substitution to the objective function.
 
-        Returns
-        -------
+        Returns:
             List of keys.
         """
         keys = super().data_buffer_objective_keys()
@@ -541,11 +533,9 @@ class CriticCALF(Critic):
         The lower bound is determined by the `current_observation` and a certain constant.
 
         Args:
-        ----
             critic_model_output: output of a critic
 
         Returns:
-        -------
             float: constraint violation
         """
         self.lb_constraint_violation = (

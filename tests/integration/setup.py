@@ -1,4 +1,6 @@
-import sys, os
+import sys
+import os
+
 import numpy as np
 
 # ["2tank", "3wrobot", "3wrobot_ni", "cartpole", "inv_pendulum", "kin_point", "lunar_lander"])
@@ -33,7 +35,7 @@ class TestSetup:
         sys.argv.insert(1, "--single-thread")
         sys.argv.insert(1, "--no-git")
         sys.argv.insert(1, "disallow_uncommitted=False")
-        sys.argv.insert(1, "simulator.time_final=1.3")
+        sys.argv.insert(1, "simulator.time_final=1.0")
         sys.argv.insert(1, "scenario.sampling_time=0.1")
         # sys.argv.insert(1, "scenario.N_episodes=2")
         # sys.argv.insert(1, "scenario.N_iterations=2")
@@ -71,6 +73,10 @@ scenarios_overrides = {
     "sdpg": {
         "scenario.critic_n_epochs": 1,
         "scenario.policy_n_epochs": 1,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
+        "scenario.policy_model.dim_hidden": 2,
+        "scenario.policy_model.n_hidden_layers": 1,
         "scenario.N_episodes": 2,
         "scenario.N_iterations": 2,
         "scenario.critic_td_n": 2,
@@ -78,17 +84,27 @@ scenarios_overrides = {
     "ppo": {
         "scenario.critic_n_epochs": 1,
         "scenario.policy_n_epochs": 1,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
+        "scenario.policy_model.dim_hidden": 2,
+        "scenario.policy_model.n_hidden_layers": 1,
         "scenario.N_episodes": 2,
         "scenario.N_iterations": 1,
         "scenario.is_parallel": True,
     },
     "ddpg": {
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
+        "scenario.policy_model.dim_hidden": 2,
+        "scenario.policy_model.n_hidden_layers": 1,
         "scenario.critic_n_epochs": 1,
         "scenario.policy_n_epochs": 1,
         "scenario.N_episodes": 1,
         "scenario.N_iterations": 1,
     },
     "reinforce": {
+        "scenario.policy_model.dim_hidden": 2,
+        "scenario.policy_model.n_hidden_layers": 1,
         "scenario.policy_n_epochs": 1,
         "scenario.N_episodes": 2,
         "scenario.N_iterations": 1,
@@ -128,6 +144,8 @@ scenarios_overrides = {
         "scenario.policy_n_epochs": 1,
         "scenario.critic_n_epochs": 1,
         "scenario.critic_n_epochs_per_constraint": 1,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
     },
     "sql_torch": {
         "scenario.prediction_horizon": 2,
@@ -135,6 +153,8 @@ scenarios_overrides = {
         "scenario.critic_batch_size": 2,
         "scenario.critic_td_n": 1,
         "scenario.policy_n_epochs": 1,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
     },
     "rpv_torch": {
         "scenario.prediction_horizon": 2,
@@ -142,30 +162,27 @@ scenarios_overrides = {
         "scenario.critic_batch_size": 2,
         "scenario.critic_td_n": 1,
         "scenario.policy_n_epochs": 1,
-    },
-    "sql_torch": {
-        "scenario.prediction_horizon": 2,
-        "scenario.N_iterations": 1,
-        "scenario.critic_batch_size": 2,
-        "scenario.critic_td_n": 1,
-        "scenario.policy_n_epochs": 1,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
     },
     "dqn": {
-        "scenario.N_iterations": 1,
         "scenario.N_iterations": 1,
         "scenario.critic_batch_size": 2,
         "scenario.critic_td_n": 1,
         "scenario.policy_n_epochs": 1,
         "scenario.critic_n_epochs": 1,
         "scenario.size_mesh": 5,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
     },
     "sarsa": {
-        "scenario.N_iterations": 1,
         "scenario.N_iterations": 1,
         "scenario.critic_batch_size": 2,
         "scenario.critic_td_n": 1,
         "scenario.policy_n_epochs": 1,
         "scenario.critic_n_epochs": 1,
+        "scenario.critic_model.dim_hidden": 2,
+        "scenario.critic_model.n_hidden_layers": 1,
     },
 }
 

@@ -155,7 +155,6 @@ class ModelQuadLin(Model):
         """Initialize an instance of quadratic-linear model.
 
         Args:
-        ----
             quad_matrix_type (str): Type of quadratic matrix. Can be
                 'diagonal', 'full' or 'symmetric'.
             is_with_linear_terms (bool, optional): Whether include
@@ -351,7 +350,6 @@ class ModelWeightContainer(Model):
         """Initialize an instance of a model returns weights on call independent of input.
 
         Args:
-        ----
             dim_input: input dimension
             single_weight_min: lower bound for every weight
             single_weight_max: upper bound for every weight
@@ -438,7 +436,6 @@ class WeightClipper:
         """Initialize a weight clipper.
 
         Args:
-        ----
             weight_min: minimum value for weight
             weight_max: maximum value for weight
         """
@@ -477,7 +474,6 @@ class ModelPerceptron(ModelNN):
         """Initialize an instance of a fully-connected model.
 
         Args:
-        ----
             dim_input (int): The dimensionality of the input.
             dim_output (int): The dimensionality of the output.
             dim_hidden (int): The dimensionality of the hidden linear
@@ -609,7 +605,6 @@ class ModelWeightContainerTorch(ModelNN):
         """Instantiate ModelWeightContainerTorch.
 
         Args:
-        ----
             dim_weights (Union[int, Tuple[int, int]]): The
                 dimensionality of the weights.
             output_bounds (Optional[List[Any]]): Optional bounds of the
@@ -681,7 +676,6 @@ class BoundsHandler(ModelNN):
         """Initialize a new instance of the BoundsHandler class.
 
         Args:
-        ----
             bounds (Union[List[List[float]], np.array] The bounds should be provided as a 2-column array-like object. The first column represents the left bounds, and the second column represents the right bounds.):
                 Bounds of the model's output.
             is_unscale (bool, optional): Flag indicating whether to
@@ -736,12 +730,10 @@ class MultiplyByConstant(nn.Module):
         """Instatiate MultiplyByConstant.
 
         Args:
-        ----
             constant (float): The constant value to multiply the input
                 by.
 
         Returns:
-        -------
             torch.Tensor: The tensor resulting from multiplying the
             input by the constant value.
         """
@@ -786,7 +778,6 @@ class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
         """Instantiate PerceptronWithTruncatedNormalNoise.
 
         Args:
-        ----
             dim_input (int): The dimensionality of the input.
             dim_output (int): The dimensionality of the output.
             dim_hidden (int): The dimensionality of the hidden linear

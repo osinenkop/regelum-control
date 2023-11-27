@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Contains one single class that simulates scenario-system (agent-environment) loops.
 
+Contains one single class that simulates scenario-system (agent-environment) loops.
 The system can be of three types:
 
 - discrete-time deterministic
@@ -49,7 +50,6 @@ class Simulator(regelum.RegelumBase, ABC):
         """Initialize an instance of Simulator.
 
         Args:
-        ----
             system (Union[System, ComposedSystem]): A controlled system
                 to be simulated
             state_init (Optional[np.ndarray], optional): Set initial
@@ -197,7 +197,6 @@ class CasADi(Simulator):
             """Initialize a CasADiSolver object.
 
             Args:
-            ----
                 integrator (casadi.integrator): A CasADi integrator
                     object.
                 time_final (float): The final time for the solver.

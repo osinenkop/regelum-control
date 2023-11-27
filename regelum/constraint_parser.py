@@ -153,7 +153,6 @@ class ThreeWheeledRobotNIConstantContstraintsParser(ConstraintParser):
         """Instantiate ThreeWheeledRobotNIConstantContstraintsParser.
 
         Args:
-        ----
             centers (Optional[np.ndarray], optional): centers of
                 circles, defaults to None
             coefs (Optional[np.ndarray], optional): circle coeficients,

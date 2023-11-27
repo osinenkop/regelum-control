@@ -21,7 +21,6 @@ class BatchSampler(ABC):
         """Instantiate a BatchSampler.
 
         Args:
-        ----
             data_buffer (DataBuffer): Data Buffer instance
             keys (Optional[List[str]]): keys to sample
             dtype (RgArrayType, optional): dtype for sample, can be
@@ -86,7 +85,6 @@ class RollingBatchSampler(BatchSampler):
         """Instantiate a RollingBatchSampler.
 
         Args:
-        ----
             mode (str): mode for batch sampling. Can be either
                 'uniform', 'backward', 'forward', 'full'. 'forward' for
                 sampling of rolling batches from the beginning of
@@ -208,7 +206,6 @@ class EpisodicSampler(BatchSampler):
         """Instantiate a EpisodicSampler.
 
         Args:
-        ----
             data_buffer (DataBuffer): instance of DataBuffer
             keys (List[str]): keys for sampling
             dtype (RgArrayType, optional): batch dtype for sampling, can

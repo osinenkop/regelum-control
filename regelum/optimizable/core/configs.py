@@ -18,7 +18,6 @@ class OptimizerConfig:
         """Instantiate OptimizerConfig object.
 
         Args:
-        ----
             kind (str): The optimization kind. Can be either of
                 ["symbolic", "tensor", "numeric"]
             opt_method (Optional[Any], optional): What method to use.
@@ -57,7 +56,6 @@ class TorchOptimizerConfig(OptimizerConfig):
         """Instantiate TorchOptimizerConfig object.
 
         Args:
-        ----
             n_epochs (int.): How many epochs to use during optimization.
             data_buffer_iter_bathes_kwargs (Dict[str, Any]): kwargs for
                 `DataBuffer.iter_batches`.
@@ -108,7 +106,6 @@ class CasadiOptimizerConfig(OptimizerConfig):
         """Instantiate CasadiOptimizerConfig object.
 
         Args:
-        ----
             batch_size (int, optional): How many latest samples to use
                 from `DataBuffer`, defaults to 1
         """

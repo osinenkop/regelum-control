@@ -29,7 +29,6 @@ class OptimizationVariable:
     allowing them to be treated as either constants or decision variables.
 
     Args:
-    ----
         name: The name of the variable.
         dims: The dimensions of the variable as a tuple.
         data: The initial data for the variable. Defaults to None.
@@ -52,12 +51,10 @@ class OptimizationVariable:
         """Retrieve the data or metadata of the variable after applying hooks.
 
         Args:
-        ----
             with_metadata: If True, retrieve metadata; otherwise,
                 retrieve data. Defaults to False.
 
         Returns:
-        -------
             The data or metadata of the variable after hooks
             transformation.
         """
@@ -73,13 +70,11 @@ class OptimizationVariable:
         """Rename the optimization variable.
 
         Args:
-        ----
             new_name: The new name for the variable.
             inplace: If True, modify the variable in place; otherwise,
                 return a new instance. Defaults to True.
 
         Returns:
-        -------
             The optimization variable with the updated name (self or new
             instance).
         """
@@ -99,13 +94,11 @@ class OptimizationVariable:
         """Associate new data with the optimization variable.
 
         Args:
-        ----
             new_data: The new data to associate with the variable.
             inplace: If True, modify the variable in place; otherwise,
                 return a new instance. Defaults to True.
 
         Returns:
-        -------
             The optimization variable with the updated data (self or new
             instance).
         """
@@ -125,14 +118,12 @@ class OptimizationVariable:
         """Associate new metadata with the optimization variable.
 
         Args:
-        ----
             new_metadata: The new metadata to associate with the
                 variable.
             inplace: If True, modify the variable in place; otherwise,
                 return a new instance. Defaults to True.
 
         Returns:
-        -------
             The optimization variable with the updated metadata (self or
             new instance).
         """
@@ -152,13 +143,11 @@ class OptimizationVariable:
         """Mark the variable as a constant.
 
         Args:
-        ----
             inplace: If True, modify the variable in place; otherwise,
                 return a new instance marked as constant. Defaults to
                 True.
 
         Returns:
-        -------
             The optimization variable marked as a constant (self or new
             instance).
         """
@@ -181,13 +170,11 @@ class OptimizationVariable:
         """Mark the variable as a decision variable.
 
         Args:
-        ----
             inplace: If True, modify the variable in place; otherwise,
                 return a new instance marked as a decision variable.
                 Defaults to True.
 
         Returns:
-        -------
             The optimization variable marked as a decision variable
             (self or new instance).
         """
@@ -208,8 +195,7 @@ class OptimizationVariable:
     def as_metadata_dict(self):
         """Convert the variable's metadata to a dictionary.
 
-        Returns
-        -------
+        Returns:
             A dictionary with the variable's name as the key and its
             metadata as the value.
         """
@@ -218,8 +204,7 @@ class OptimizationVariable:
     def as_data_dict(self):
         """Convert the variable's data to a dictionary.
 
-        Returns
-        -------
+        Returns:
             A dictionary with the variable's name as the key and its
             data as the value.
         """
@@ -228,8 +213,7 @@ class OptimizationVariable:
     def as_dims_dict(self):
         """Convert the variable's dimensions to a dictionary.
 
-        Returns
-        -------
+        Returns:
             A dictionary with the variable's name as the key and its
             dimensionsas the value.
         """
@@ -239,11 +223,9 @@ class OptimizationVariable:
         """Support the addition of this variable to another object by returning a VarContainer.
 
         Args:
-        ----
             other: The object to add this variable to.
 
         Returns:
-        -------
             A VarContainer containing this variable.
         """
         return VarContainer((self,))
@@ -252,11 +234,9 @@ class OptimizationVariable:
         """Add another variable or container to this variable to form a VarContainer.
 
         Args:
-        ----
             other: The variable or VarContainer to be added.
 
         Returns:
-        -------
             A VarContainer including this variable and `other`.
         """
         if isinstance(other, OptimizationVariable):
@@ -268,7 +248,6 @@ class OptimizationVariable:
         """Register a hook to the optimization variable.
 
         Args:
-        ----
             hook: The hook or callable to be added as a hook.
             first: If True, the hook will be added at the beginning.
                 Defaults to False.
@@ -295,7 +274,6 @@ class OptimizationVariable:
         """Enable a previously added hook.
 
         Args:
-        ----
             hook: The hook to be enabled.
         """
         self.hooks.enable_hook(hook)
@@ -304,7 +282,6 @@ class OptimizationVariable:
         """Discard or disable a hook from the optimization variable.
 
         Args:
-        ----
             hook: The hook to be discarded or disabled.
             disable_only: If True, the hook will only be disabled, not
                 removed. Defaults to True.
@@ -317,8 +294,7 @@ class OptimizationVariable:
     def __str__(self):
         """Return a string representation of the optimization variable.
 
-        Returns
-        -------
+        Returns:
             A formatted string with the variable's details.
         """
         return (
@@ -335,7 +311,6 @@ class VarContainer(Mapping):
     """A container class for managing multiple optimization variables.
 
     Args:
-    ----
         _variables: A collection of OptimizationVariables to be
             contained.
     """
@@ -354,8 +329,7 @@ class VarContainer(Mapping):
     def variables_hashmap(self):
         """Create a hashmap from variable names to variables.
 
-        Returns
-        -------
+        Returns:
             A dictionary mapping variable names to their respective
             OptimizationVariable objects.
         """
@@ -364,8 +338,7 @@ class VarContainer(Mapping):
     def to_dict(self):
         """Convert the container to a dictionary.
 
-        Returns
-        -------
+        Returns:
             A dictionary representation of the VarContainer.
         """
         return self.variables_hashmap
@@ -373,8 +346,7 @@ class VarContainer(Mapping):
     def __repr__(self):
         """Return a string representation of the VarContainer for debugging.
 
-        Returns
-        -------
+        Returns:
             A debug string of the VarContainer.
         """
         return "VarContainer:\n  " + "".join(
@@ -384,8 +356,7 @@ class VarContainer(Mapping):
     def __str__(self):
         """Return a string representation of the VarContainer.
 
-        Returns
-        -------
+        Returns:
             A formatted string of the VarContainer.
         """
         return "VarContainer:\n  " + "".join(
@@ -396,8 +367,7 @@ class VarContainer(Mapping):
     def metadatas(self):
         """Retrieve the metadata of all contained variables.
 
-        Returns
-        -------
+        Returns:
             A tuple with the metadata of each OptimizationVariable.
         """
         return tuple(var.metadata for var in self.variables)
@@ -405,8 +375,7 @@ class VarContainer(Mapping):
     def to_data_dict(self):
         """Convert variable data to a dictionary.
 
-        Returns
-        -------
+        Returns:
             A dictionary with variable names as keys and their data as
             values.
         """
@@ -415,8 +384,7 @@ class VarContainer(Mapping):
     def to_metadata_dict(self):
         """Convert variable metadata to a dictionary.
 
-        Returns
-        -------
+        Returns:
             A dictionary with variable names as keys and their metadata
             as values.
         """
@@ -426,11 +394,9 @@ class VarContainer(Mapping):
         """Select a subset of variables by names.
 
         Args:
-        ----
             var_names: A list of names of the variables to select.
 
         Returns:
-        -------
             A VarContainer containing only the selected variables.
         """
         return VarContainer([var for var in self.variables if var.name in var_names])
@@ -439,12 +405,10 @@ class VarContainer(Mapping):
         """Substitute data for selected variables.
 
         Args:
-        ----
             **name_data_dict: A dictionary with variable names as keys
                 and new data as values.
 
         Returns:
-        -------
             The current VarContainer with updated data for the selected
             variables.
         """
@@ -457,12 +421,10 @@ class VarContainer(Mapping):
         """Substitute metadata for selected variables.
 
         Args:
-        ----
             **name_metadata_dict: A dictionary with variable names as
                 keys and new metadata as values.
 
         Returns:
-        -------
             The current VarContainer with updated metadata for the
             selected variables.
         """
@@ -480,12 +442,10 @@ class VarContainer(Mapping):
     ]:
         """Retrieve all variables contained within the VarContainer.
 
-        Returns
-        -------
+        Returns:
             A tuple of the contained OptimizationVariables.
 
-        Raises
-        ------
+        Raises:
             TypeError: If the internal variable storage is not a tuple
                 or list.
         """
@@ -500,8 +460,7 @@ class VarContainer(Mapping):
     def constants(self):
         """Retrieve all variables marked as constants from the container.
 
-        Returns
-        -------
+        Returns:
             A VarContainer containing only the variables marked as
             constants.
         """
@@ -513,8 +472,7 @@ class VarContainer(Mapping):
     def decision_variables(self):
         """Retrieve all variables not marked as constants from the container.
 
-        Returns
-        -------
+        Returns:
             A VarContainer containing only the variables not marked as
             constants.
         """
@@ -526,8 +484,7 @@ class VarContainer(Mapping):
     def names(self):
         """Get the names of all variables contained within the VarContainer.
 
-        Returns
-        -------
+        Returns:
             A tuple containing the names of all variables.
         """
         return tuple(var.name for var in self.variables)
@@ -535,8 +492,7 @@ class VarContainer(Mapping):
     def __radd__(self, other) -> Self:
         """Support the right-adding of this container to another object.
 
-        Returns
-        -------
+        Returns:
             The current VarContainer instance.
         """
         return self
@@ -545,16 +501,13 @@ class VarContainer(Mapping):
         """Add another container or variable to this container.
 
         Args:
-        ----
             other: The VarContainer or OptimizationVariable to be added.
 
         Returns:
-        -------
             A new VarContainer instance containing the combined
             variables.
 
         Raises:
-        ------
             NotImplementedError: If the addition operation is not
                 defined for the `other` type.
         """
@@ -576,8 +529,7 @@ class VarContainer(Mapping):
     def __iter__(self):
         """Create an iterator over the contained variables.
 
-        Returns
-        -------
+        Returns:
             An iterator for the container's variables.
         """
         for variable in self.variables:
@@ -586,8 +538,7 @@ class VarContainer(Mapping):
     def __len__(self):
         """Get the number of variables contained within the VarContainer.
 
-        Returns
-        -------
+        Returns:
             The number of contained variables.
         """
         return len(self._variables)
@@ -596,17 +547,14 @@ class VarContainer(Mapping):
         """Retrieve a contained variable by index, slice, or name.
 
         Args:
-        ----
             key: The index, slice, or name used to retrieve the
                 variable(s).
 
         Returns:
-        -------
             The requested OptimizationVariable or a new VarContainer
             with the sliced variables.
 
         Raises:
-        ------
             KeyError: If a variable with the given name is not found.
             NotImplementedError: If the key type is not supported.
         """
@@ -631,7 +579,6 @@ class VarContainer(Mapping):
         """Fix the values of the specified variables and optionally apply a hook.
 
         Args:
-        ----
             variables_to_fix: A list of variable names to be fixed.
             hook: An optional Hook object to be applied to the fixed
                 variables.
@@ -660,7 +607,6 @@ class VarContainer(Mapping):
         """Unfix the values of the specified variables and optionally apply a hook.
 
         Args:
-        ----
             variables_to_unfix: A list of variable names to be unfixed.
             hook: An optional Hook object to be applied to the unfixed
                 variables.
@@ -687,7 +633,6 @@ class NestedFunction(OptimizationVariable):
     This class extends the OptimizationVariable to represent a nested function, including variables on which it depends.
 
     Args:
-    ----
         nested_variables: A container for variables that the nested
             function depends on. Defaults to an empty VarContainer.
     """
@@ -698,7 +643,6 @@ class NestedFunction(OptimizationVariable):
         """Substitute parameters within the nested variables.
 
         Args:
-        ----
             **parameters: A dictionary where keys are variable names and
                 values are the new data to substitute.
         """
@@ -709,14 +653,12 @@ class NestedFunction(OptimizationVariable):
         """Associate new data with the nested function.
 
         Args:
-        ----
             new_data: The new data to associate with the nested
                 function.
             inplace: If True, modify the nested function in place;
                 otherwise, return a new instance. Defaults to True.
 
         Returns:
-        -------
             The nested function with the updated data (self or new
             instance).
         """
@@ -737,14 +679,12 @@ class NestedFunction(OptimizationVariable):
         """Associate new metadata with the nested function.
 
         Args:
-        ----
             new_metadata: The new metadata to associate with the nested
                 function.
             inplace: If True, modify the nested function in place;
                 otherwise, return a new instance. Defaults to True.
 
         Returns:
-        -------
             The nested function with the updated metadata (self or new
             instance).
         """
@@ -765,13 +705,11 @@ class NestedFunction(OptimizationVariable):
         """Rename the nested function.
 
         Args:
-        ----
             new_name: The new name for the nested function.
             inplace: If True, modify the nested function in place;
                 otherwise, return a new instance. Defaults to True.
 
         Returns:
-        -------
             The nested function with the updated name (self or new
             instance).
         """
@@ -792,13 +730,11 @@ class NestedFunction(OptimizationVariable):
         """Mark the nested function as a constant.
 
         Args:
-        ----
             inplace: If True, modify the nested function in place;
                 otherwise, return a new instance marked as constant.
                 Defaults to True.
 
         Returns:
-        -------
             The nested function marked as a constant (self or new
             instance).
         """
@@ -822,13 +758,11 @@ class NestedFunction(OptimizationVariable):
         """Mark the nested function as a decision variable.
 
         Args:
-        ----
             inplace: If True, modify the nested function in place;
                 otherwise, return a new instance marked as a decision
                 variable. Defaults to True.
 
         Returns:
-        -------
             The nested function marked as a decision variable (self or
             new instance).
         """
@@ -855,7 +789,6 @@ class FunctionWithSignature:
     This class parses the function's signature to ensure that it complies with the expected format for the optimization procedure.
 
     Args:
-    ----
         func: The callable function to be wrapped.
         variables: A container of variables that the function operates
             on. Defaults to an empty VarContainer.
@@ -873,8 +806,7 @@ class FunctionWithSignature:
     def __post_init__(self) -> None:
         """Initialize the function wrapper by parsing its signature.
 
-        Raises
-        ------
+        Raises:
             ValueError: If there are unknown variables in the signature
                 that are not in the variable container.
         """
@@ -893,8 +825,7 @@ class FunctionWithSignature:
     def await_constants(self):
         """Determine if there are constants awaiting substitution.
 
-        Returns
-        -------
+        Returns:
             True if there are constants to substitute, False otherwise.
         """
         return not (self.constants_to_substitute == [])
@@ -903,8 +834,7 @@ class FunctionWithSignature:
     def constants_to_substitute(self):
         """List the names of constants that need to be substituted.
 
-        Returns
-        -------
+        Returns:
             A list of constant names that require substitution.
         """
         return [var.name for var in self.variables.constants if var() is None]
@@ -915,7 +845,6 @@ class FunctionWithSignature:
         """Call the wrapped function with the provided arguments and keyword arguments.
 
         Args:
-        ----
             *args: Positional arguments to be passed to the function.
             with_metadata: If True, pass metadata to the function.
                 Defaults to False.
@@ -924,11 +853,9 @@ class FunctionWithSignature:
             **kwargs (Dict[str, Any]) : Keyword arguments to be passed to the function.
 
         Returns:
-        -------
             The result of the function call.
 
         Raises:
-        ------
             ValueError: If not all required constants have been
                 substituted or if excess arguments are provided.
         """
@@ -983,8 +910,7 @@ class FunctionWithSignature:
     def signature(self) -> tuple:
         """Get the signature of the wrapped function.
 
-        Returns
-        -------
+        Returns:
             A tuple representing the function's signature.
         """
         return tuple(self.__signature)
@@ -993,8 +919,7 @@ class FunctionWithSignature:
     def occupied(self) -> tuple:
         """Get the names of constants in the variables.
 
-        Returns
-        -------
+        Returns:
             A tuple containing the names of all constant variables.
         """
         return tuple(self.variables.constants.names)
@@ -1008,8 +933,7 @@ class FunctionWithSignature:
         This method uses the signature of the function
         and the default parameters keys to determine the free variables.
 
-        Returns
-        -------
+        Returns:
             tuple: A list of free variables of the current function.
         """
         signature_set = set(self.__signature)
@@ -1029,17 +953,14 @@ class FunctionWithSignature:
         """Declare variables for the function, optionally replacing existing ones.
 
         Args:
-        ----
             variables: The variables to declare for the function.
             replace: If True, replace any existing variables. Defaults
                 to False.
 
         Returns:
-        -------
             The instance of the function with declared variables.
 
         Raises:
-        ------
             AssertionError: If unknown parameters are provided.
         """
         if isinstance(variables, OptimizationVariable):
@@ -1062,12 +983,10 @@ class FunctionWithSignature:
         """Set parameters for the function.
 
         Args:
-        ----
             **kwargs (Dict[str, Any]): Keyword arguments representing the parameters to
                 set.
 
         Raises:
-        ------
             ValueError: If unknown parameters are encountered.
         """
         kwargs_intersection = kwargs.keys() & self.occupied
@@ -1087,7 +1006,6 @@ class FunctionWithSignature:
         """Fix variables and optionally set their data and metadata.
 
         Args:
-        ----
             variables_to_fix: A list of variable names to be fixed.
             data_dict: Optional dictionary with data to set for fixed
                 variables.
@@ -1109,7 +1027,6 @@ class FunctionWithSignature:
         """Unfix variables and optionally apply a hook.
 
         Args:
-        ----
             variables_to_unfix: A list of variable names to be unfixed.
             hook: Optional hook to be applied to unfixed variables.
         """
@@ -1119,15 +1036,12 @@ class FunctionWithSignature:
         """Parse the signature of the given function.
 
         Args:
-        ----
             func: The function to parse the signature for.
 
         Returns:
-        -------
             A tuple representing the parsed signature.
 
         Raises:
-        ------
             ValueError: If the function has undefined positional or
                 keyword arguments.
         """
@@ -1151,11 +1065,9 @@ class FunctionWithSignature:
         """Support the right-adding of this function to another object to form a FuncContainer.
 
         Args:
-        ----
             other: The object to add this function to.
 
         Returns:
-        -------
             A FuncContainer containing this function.
         """
         return FuncContainer((self,))
@@ -1164,11 +1076,9 @@ class FunctionWithSignature:
         """Add another function or container to this function to form a FuncContainer.
 
         Args:
-        ----
             other: The function or FuncContainer to be added.
 
         Returns:
-        -------
             A FuncContainer including this function and `other`, or None
             if `other` is not of a supported type.
         """

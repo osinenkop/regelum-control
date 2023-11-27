@@ -8,8 +8,7 @@ class Event(Enum):
 
     These events can be used to trigger specific actions or optimizations during the execution of the main loop.
 
-    Attributes
-    ----------
+    Attributes:
         reset_iteration: Indicates that an event occurs after resetting
             the iteration counter.
         reset_episode: Indicates that an event occurs after resetting

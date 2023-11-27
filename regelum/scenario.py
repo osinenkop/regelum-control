@@ -70,7 +70,6 @@ class Scenario(RegelumBase):
         """Initialize the Scenario with the necessary components for running a reinforcement learning experiment.
 
         Args:
-        ----
             policy: Policy to generate actions based on observations.
             simulator: Simulator to interact with and collect data for
                 training.
@@ -338,7 +337,6 @@ class RLScenario(Scenario):
         """Instantiate a RLScenario object.
 
         Args:
-        ----
             policy (Policy): Policy object
             critic (Critic): Cricic
             running_objective (RunningObjective): Function to calculate
@@ -705,7 +703,6 @@ class CALF(CALFScenario):
         """Instantiate CALF class.
 
         Args:
-        ----
             simulator (Simulator): The simulator object.
             running_objective (RunningObjective): The running objective.
             safe_policy (Policy): The safe policy.
@@ -737,7 +734,6 @@ class CALF(CALFScenario):
                 critic optimizer. Defaults to 10.
 
         Returns:
-        -------
             None: None
         """
         system = simulator.system
@@ -913,7 +909,6 @@ class MPC(RLScenario):
         """Initialize the MPC agent, setting up the required structures for MPC.
 
         Args:
-        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1072,7 +1067,6 @@ class SQL(RLScenario):
         """Instantiate SQL.
 
         Args:
-        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1105,7 +1099,6 @@ class SQL(RLScenario):
                 parameter for the critic. Defaults to 0.
 
         Returns:
-        -------
             None: None
         """
         super().__init__(
@@ -1159,7 +1152,6 @@ class RQL(RLScenario):
         """Instantiate RQLScenario.
 
         Args:
-        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1192,7 +1184,6 @@ class RQL(RLScenario):
                 parameter for the critic. Defaults to 0.
 
         Returns:
-        -------
             None: None
         """
         super().__init__(
@@ -1245,7 +1236,6 @@ class RPV(RLScenario):
         """Instantiate RPV.
 
         Args:
-        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1278,7 +1268,6 @@ class RPV(RLScenario):
                 parameter for the critic. Defaults to 0.
 
         Returns:
-        -------
             None: None
         """
         super().__init__(
@@ -1330,7 +1319,6 @@ class MPCTorch(RLScenario):
         """Initialize the object with the given parameters.
 
         Args:
-        ----
             running_objective (RunningObjective): The objective function
                 to assess the costs over the prediction horizon.
             simulator (Simulator): The environment simulation for
@@ -1358,7 +1346,6 @@ class MPCTorch(RLScenario):
                 costs. Defaults to 1.0.
 
         Returns:
-        -------
             None
         """
         system = simulator.system
@@ -1927,7 +1914,6 @@ class PPO(RLScenario):
         """Initialize the object with the given parameters.
 
         Args:
-        ----
             policy_model (PerceptronWithTruncatedNormalNoise): The
                 neural network model parameterizing the policy.
             critic_model (ModelPerceptron): The neural network model
@@ -1973,11 +1959,9 @@ class PPO(RLScenario):
                 end an episode.
 
         Raises:
-        ------
             AssertionError: If the `running_objective_type` is invalid.
 
         Returns:
-        -------
             None
         """
         assert (
@@ -2056,7 +2040,6 @@ class SDPG(RLScenario):
         """Initialize SDPG.
 
         Args:
-        ----
             policy_model: The
                 policy network model that defines the policy
                 architecture.
@@ -2155,7 +2138,6 @@ class REINFORCE(RLScenario):
         """Initialize an REINFORCE object.
 
         Args:
-        ----
             policy_model: The
                 policy network model that defines the policy
                 architecture.
@@ -2184,7 +2166,6 @@ class REINFORCE(RLScenario):
             is_do_not_let_the_past_distract_you: Whether to use tail total costs or not.
 
         Returns:
-        -------
             None: None
         """
         super().__init__(
@@ -2242,7 +2223,6 @@ class DDPG(RLScenario):
         """Instantiate DDPG Scenario.
 
         Args:
-        ----
             policy_model (PerceptronWithTruncatedNormalNoise): The
                 policy (actor) neural network model with input as state
                 and output as action.

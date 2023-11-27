@@ -222,7 +222,6 @@ class ComplementedConfig:
         """Initialize a complemented config.
 
         Args:
-        ----
             cfg: rehydra config object
             config_path: path to a config file
         """

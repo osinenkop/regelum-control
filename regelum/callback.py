@@ -54,11 +54,9 @@ def passdown(CallbackClass):
     """Decorate a callback class in such a way that its event handling is inherited by derived classes.
 
     Args:
-    ----
         CallbackClass (type): class to be decorated
 
     Returns:
-    -------
         CallbackClass: altered class that passes down its handlers to derived classes
             (regardless of whether handling methods are overriden)
     """
@@ -738,7 +736,6 @@ def method_callback(method_name, class_name=None, log_level="debug"):
     """Create a callback class that logs the output of a specific method of a class or any class.
 
     Args:
-    ----
         method_name (str): Name of the method to log output for.
         class_name (str or class): (Optional) Name of the class the
             method belongs to. If not specified, the callback will log

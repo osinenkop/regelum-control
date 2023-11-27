@@ -29,7 +29,6 @@ class ObserverReference(Observer):
         """Instatiate ObserverReference.
 
         Args:
-        ----
             reference (Union[np.ndarray, List[float]]): array for
                 reference
         """
@@ -54,7 +53,6 @@ class KalmanFilter(Observer):
         """Initialize an instance of KalmanFilter.
 
         Args:
-        ----
             t0: time at which simulation starts
             my_sys: an instance of a system of which state is to be
                 observed

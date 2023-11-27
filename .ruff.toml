@@ -22,3 +22,6 @@ unfixable = ["B"]
 "__init__.py" = ["F401", "F403"]
 "callback.py" = ["F403", "E402"]
 #"path/to/file.py" = ["E402"]
+
+[pydocstyle]
+convention = "google"
