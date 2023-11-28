@@ -85,6 +85,8 @@ class AnimationCallback(callback.Callback, ABC):
             f".callbacks/{self.__class__.__name__}@{self.attachee.__name__}"
         ).resolve()
         self.saved_counter = 0
+        self.skip_frames = self._metadata["skip_frames"]
+        self.counter = 0
 
     @abstractmethod
     def setup(self):
@@ -94,6 +96,9 @@ class AnimationCallback(callback.Callback, ABC):
         return str(self.save_directory)
 
     def add_frame(self, **frame_datum):
+        self.counter += 1
+        if (self.counter - 1) % self.skip_frames:
+            return
         self.frame_data.append(frame_datum)
         if hasattr(self, "interactive_status"):
             self.interactive_status["frame"] = frame_datum
@@ -108,11 +113,18 @@ class AnimationCallback(callback.Callback, ABC):
     def __getstate__(self):
         state = copy(self.__dict__)
         del state["mng"]
+
+        del state["attachee"]
+
+        # del state["log"]
+        # del state["exception"]
+        # del state["mng"]
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
         self.mng = Mock()
+        self.attachee = Mock()
 
     def reset(self):
         self.frame_data = []
@@ -217,6 +229,7 @@ class AnimationCallback(callback.Callback, ABC):
         iteration_number,
         iterations_total,
     ):
+        self.counter = 0
         self.animate_and_save(name=str(episode_number))
         self.reset()
 
@@ -302,6 +315,9 @@ class PointAnimation(AnimationCallback, ABC):
 
 class PlanarMotionAnimation(PointAnimation, callback.StateTracker):
     """Animates dynamics of systems that can be viewed as a point moving on a plane."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def on_trigger(self, _):
         self.add_frame(x=self.system_state[0], y=self.system_state[1])

@@ -786,6 +786,8 @@ class main:
 
         self.parser.add_argument("--jobs", trigger=jobs)
 
+        self.parser.add_argument("--skip-frames", action="store", default=1, type=int)
+
         self.tags = {}
         self.experiment_name = "Default"
 
@@ -821,6 +823,7 @@ class main:
             )
             script_path = inspect.getsourcefile(old_app)
             no_git = argv.no_git
+            skip_frames = argv.skip_frames
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])
             os.chdir(path_parent)
@@ -861,6 +864,7 @@ class main:
                 with omegaconf.flag_override(cfg, "allow_objects", True):
                     self.__class__.metadata = {
                         "no_git": no_git,
+                        "skip_frames": skip_frames,
                         "logger": logger,
                         "script_path": script_path,
                         "config_path": path + f"/{self.kwargs['config_name']}.yaml",
