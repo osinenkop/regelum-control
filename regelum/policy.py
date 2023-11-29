@@ -565,6 +565,7 @@ class PolicySDPG(PolicyGradient):
         discount_factor: float = 1.0,
         device: str = "cpu",
         is_normalize_advantages: bool = True,
+        gae_lambda: float = 1.0,
     ):
         """Instantiate SDPG class.
 
@@ -576,6 +577,7 @@ class PolicySDPG(PolicyGradient):
             sampling_time: Time interval used to discretize continuous time into steps.
             discount_factor: Discount factor used to compute the present value of future running objectives.
             device: The computation device ('cpu' or 'cuda') to execute the optimization process.
+            is_normalize_advantages: Whether to normalize the advantages.
         """
         PolicyGradient.__init__(
             self,
@@ -588,6 +590,7 @@ class PolicySDPG(PolicyGradient):
         )
         self.sampling_time = sampling_time
         self.is_normalize_advantages = is_normalize_advantages
+        self.gae_lambda = gae_lambda
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -632,6 +635,7 @@ class PolicySDPG(PolicyGradient):
             running_objectives=running_objective,
             sampling_time=self.sampling_time,
             is_normalize_advantages=self.is_normalize_advantages,
+            gae_lambda=self.gae_lambda,
         )
 
 
@@ -665,6 +669,7 @@ class PolicyPPO(PolicyGradient):
             gae_lambda: Lambda parameter for Generalized Advantage Estimation (GAE).
             running_objective_type: Type of the running objective, can be 'cost' or 'reward'.
             cliprange: Range used for clipping in PPO algorithm.
+            is_normalize_advantages: Whether to normalize the advantages.
         """
         PolicyGradient.__init__(
             self,

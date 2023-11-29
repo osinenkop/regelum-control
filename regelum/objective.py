@@ -110,6 +110,46 @@ def reinforce_objective(
     return (log_pdfs * target_objectives).sum() / N_episodes
 
 
+def get_gae_advantage(
+    gae_lambda: float,
+    running_objectives: torch.FloatTensor,
+    values: torch.FloatTensor,
+    times: torch.FloatTensor,
+    discount_factor: float,
+    sampling_time: float,
+) -> torch.FloatTensor:
+    """Calculate the Generalized Advantage Estimation (GAE) advantage.
+
+    Args:
+        gae_lambda: The GAE lambda parameter.
+        running_objectives: The running objectives tensor.
+        values: The critic values tensor.
+        times: The timestamps tensor.
+        discount_factor: The discount factor.
+        sampling_time: The sampling time between actions
+
+    Returns:
+        GAE advantage tensor.
+    """
+    deltas = (
+        running_objectives[:-1]
+        + discount_factor**sampling_time * values[1:]
+        - values[:-1]
+    )
+    if gae_lambda == 0.0:
+        advantages = deltas
+    else:
+        gae_discount_factors = (gae_lambda * discount_factor) ** times[:-1]
+        reversed_gae_discounted_deltas = torch.flip(
+            gae_discount_factors * deltas, dims=[0, 1]
+        )
+        advantages = (
+            torch.flip(reversed_gae_discounted_deltas.cumsum(dim=0), dims=[0, 1])
+            / gae_discount_factors
+        )
+    return advantages
+
+
 def sdpg_objective(
     policy_model: PerceptronWithTruncatedNormalNoise,
     critic_model: ModelNN,
@@ -122,6 +162,7 @@ def sdpg_objective(
     running_objectives: torch.FloatTensor,
     sampling_time: float,
     is_normalize_advantages: bool,
+    gae_lambda: float,
 ) -> torch.FloatTensor:
     """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
@@ -150,23 +191,27 @@ def sdpg_objective(
         torch.FloatTensor: SDPG surrogate objective.
     """
     critic_values = critic_model(observations)
-    log_pdfs = policy_model.log_pdf(observations, actions)
+    log_pdfs = policy_model.log_pdf(observations, actions).reshape(-1)
 
     objective = 0.0
     for episode_idx in torch.unique(episode_ids):
-        mask = episode_ids == episode_idx
-        advantages = (
-            running_objectives[mask][:-1]
-            + discount_factor**sampling_time * critic_values[mask][1:]
-            - critic_values[mask][:-1]
-        )
+        mask = (episode_ids == episode_idx).reshape(-1)
+        advantages = get_gae_advantage(
+            gae_lambda=gae_lambda,
+            running_objectives=running_objectives[mask],
+            values=critic_values[mask],
+            times=times[mask],
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+        ).reshape(-1)
+
         if is_normalize_advantages:
-            advantages = (advantages - advantages.mean()) / advantages.std()
+            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         objective += (
-            discount_factor ** times[mask][:-1]
+            discount_factor ** times[mask][:-1].reshape(-1)
             * advantages
-            * log_pdfs[mask.reshape(-1)][:-1]
+            * log_pdfs[mask][:-1]
         ).sum()
 
     return objective / N_episodes
@@ -225,23 +270,14 @@ def ppo_objective(
     objective_value = 0.0
     for episode_idx in torch.unique(episode_ids):
         mask = episode_ids.reshape(-1) == episode_idx
-        deltas = (
-            running_objectives[mask][:-1]
-            + discount_factor**sampling_time * critic_values[mask][1:]
-            - critic_values[mask][:-1]
-        ).detach()
-
-        if gae_lambda == 0.0:
-            advantages = deltas
-        else:
-            gae_discount_factors = (gae_lambda * discount_factor) ** times[mask][:-1]
-            reversed_gae_discounted_deltas = torch.flip(
-                gae_discount_factors * deltas, dims=[0, 1]
-            )
-            advantages = (
-                torch.flip(reversed_gae_discounted_deltas.cumsum(dim=0), dims=[0, 1])
-                / gae_discount_factors
-            )
+        advantages = get_gae_advantage(
+            gae_lambda=gae_lambda,
+            running_objectives=running_objectives[mask],
+            values=critic_values[mask],
+            times=times[mask],
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+        )
         if is_normalize_advantages:
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 

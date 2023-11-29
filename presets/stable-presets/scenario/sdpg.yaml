@@ -17,6 +17,8 @@ N_iterations: 100
 N_episodes: 2
 stopping_criterion: ~ stopping_criterion
 is_parallel: False
+gae_lambda: 0.0
+is_normalize_advantages: True
 
 critic_td_n: 1
 critic_n_epochs: 50
@@ -28,5 +30,3 @@ policy_n_epochs: 1
 policy_opt_method: = torch.optim.Adam
 policy_opt_method_kwargs: 
   lr: 0.1
-
-is_normalize_advantages: True
