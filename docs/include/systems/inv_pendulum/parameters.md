@@ -1,0 +1,3 @@
+- $l$ - the length of the pendulum, measured in meters [m]
+- $m$ - the mass of the pendulum, measured in kilogramms [kg]
+- $g \approx 9.81$ - the acceleration of gravity, measured in [m / $\text{s}^2$]

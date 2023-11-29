@@ -42,7 +42,7 @@ class TwoTankCriterion(CoordinateMaxAbsCriterion):
         super().__init__(max_abs=0.1, n_last_observations=10)
 
 
-class ThreeWheeledRobotNICriterion(CoordinateMaxAbsCriterion):
+class ThreeWheeledRobotKinematicCriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
         super().__init__(max_abs=0.3, n_last_observations=10)
 

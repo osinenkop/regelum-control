@@ -29,8 +29,8 @@ At the end of the module you'll see lists of the following kind:
 
 ```angular2html
 basic = [MPCTest(system="2tank"),
-         TestSetup(system="3wrobot", pipeline="rpo"),
-         TestSetup(system="3wrobot_ni", pipeline="rpo"),
+         TestSetup(system="3wrobot_dyn", pipeline="rpo"),
+         TestSetup(system="3wrobot_kin", pipeline="rpo"),
          TestSetup(system="cartpole", pipeline="rql"),
          TestSetup(system="inv_pendulum", pipeline="rpo"),
          MPCTest(system="kin_point"),

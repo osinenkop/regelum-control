@@ -1,10 +1,9 @@
 """Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
-Remarks:
-
-- All vectors are treated as of type [n,]
-- All buffers are treated as of type [L, n] where each row is a vector
-- Buffers are updated from bottom to top
+Note:
+    The classes provided here do not perform any simulation mechanics itself. 
+    It contains only the update rule as defined in this section. The actual simulation routine is executed by a 
+    separate [`Simulator`][regelum.simulator] class, which leverages the update rule to create the corresponding integration scheme.
 """
 from __future__ import annotations
 import numpy as np
@@ -28,7 +27,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
         _name: Name identifier for the system.
         _system_type: A string representing the type of the system (e.g., `"diff_eqn"`).
         _dim_state: The number of state variables of the system.
-        _dim_inputs: The number of input variables, typically control inputs.
+        _dim_inputs: The number of input variables, typically control inputs. In regelum we commonly use inputs parameter for actions.
         _dim_observation: The number of observation variables.
         _parameters: A dictionary of system parameters.
         _observation_naming: A list of strings naming each observation dimension.
@@ -36,6 +35,11 @@ class SystemInterface(regelum.RegelumBase, ABC):
         _inputs_naming: A list of strings naming each input dimension.
         _action_bounds: A list of pairs defining the lower and upper bounds for each action dimension.
             Action bounds are defined as a list of [min, max] pairs for each action dimension
+
+    Note:
+        Naming variables such as `_observation_naming`, `_state_naming`, and `_inputs_naming`, while optional,
+        are highly recommended for their utility, particularly in enhancing the interpretability of results,
+        such as labeling axes in plots generated from callbacks
     """
 
     _name: Optional[str] = None
@@ -51,44 +55,99 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
     @property
     def name(self) -> str:
+        """Return name identifier for the system.
+
+        Returns:
+            The name property value.
+
+        Raises:
+            ValueError: If the name property is not set.
+        """
         if self._name is None:
             raise ValueError("system._name should be set")
         return self._name
 
     @property
     def system_type(self) -> str:
+        """A string representing the type of the system (e.g., `"diff_eqn"`).
+
+        Returns:
+            A string representing the system type.
+
+        Raises:
+            ValueError: If the system type is not set.
+        """
         if self._system_type is None:
             raise ValueError("system._system_type should be set")
         return self._system_type
 
     @property
     def dim_state(self) -> int:
+        """The number of state variables of the system.
+
+        Returns:
+            An integer representing the value of the 'dim_state'.
+
+        Raises:
+            ValueError: If the 'dim_state' property is not set.
+        """
         if self._dim_state is None:
             raise ValueError("system._dim_state should be set")
         return self._dim_state
 
     @property
     def dim_observation(self) -> int:
+        """The number of observation variables.
+
+        Returns:
+            int: The dimension of the observation.
+
+        Raises:
+            ValueError: If the dimension of the observation is not set.
+        """
         if self._dim_observation is None:
             raise ValueError("system._dim_observation should be set")
         return self._dim_observation
 
     @property
     def dim_inputs(self) -> int:
+        """The number of input variables, typically control inputs.
+
+        Returns:
+            int: The dimension of the inputs.
+
+        Raises:
+            ValueError: If the dimension of the inputs is not set.
+        """
         if self._dim_inputs is None:
             raise ValueError("system._dim_inputs should be set")
         return self._dim_inputs
 
     @property
     def parameters(self) -> dict:
+        """Get the system parameters.
+
+        Returns:
+            A dictionary of system parameters.
+        """
         return self._parameters
 
     @property
     def state_naming(self):
+        """A list of strings naming each state dimension.
+
+        Returns:
+            Any: The value of the state_naming property.
+        """
         return self._state_naming
 
     @property
     def observation_naming(self):
+        """A list of strings naming each observation dimension.
+
+        Returns:
+            The value of the `observation_naming` property.
+        """
         return self._observation_naming
 
     @property
@@ -97,6 +156,14 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
     @property
     def action_bounds(self):
+        """Get the system's action bounds.
+
+        A list of pairs defining the lower and upper bounds for each action dimension.
+        Action bounds are defined as a list of [min, max] pairs for each action dimension
+
+        Returns:
+            The action bounds of the object.
+        """
         return self._action_bounds
 
     @abstractmethod
@@ -107,7 +174,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
         This abstract method must be implemented by the inheriting system classes to define the specific system
         dynamics for the simulation. It provides the fundamental mathematical model that describes how the state of the
-        system evolves over time in response to (e.g control or noisy) inputs.
+        system evolves over time in response to (e.g. control or noisy) inputs.
 
         It is intended to be used internally by the [`SystemInterface.compute_state_dynamics`][regelum.system.SystemInterface.compute_state_dynamics] method
         which provides a public interface, handling dimensionality enforcement and batch processing if necessary. The
@@ -201,7 +268,8 @@ class SystemInterface(regelum.RegelumBase, ABC):
     ) -> RgArray:
         """Public method that wraps around the `_get_observation` abstract method to produce observations.
 
-        This public interface method calls the internal abstract method '_get_observation' and applies additional
+        This public interface method calls the internal abstract method
+        [`_get_observation`][regelum.system.SystemInterface._get_observation] and applies additional
         formatting or dimensionality adjustments. It provides flexibility in handling observations on a per-instance or
         batch processing basis, which can be essential for efficiency in various simulations and algorithm
         implementations.
@@ -625,7 +693,7 @@ class ComposedSystem(SystemInterface):
 
         Returns:
             A new instance of ComposedSystem containing the current system as the 'left' system and the specified right system as the 'right' system,
-            connected according to the specified mapping and output mode.
+                and connected according to the specified mapping and output mode.
         """
         return ComposedSystem(
             self, sys_right, io_mapping=io_mapping, output_mode=output_mode
@@ -664,8 +732,7 @@ class System(SystemInterface):
         state_init: Optional[np.ndarray] = None,
         inputs_init: Optional[np.ndarray] = None,
     ):
-        """Initialize an instance of a system with optional overrides for system parameters,
-        initial state, and inputs.
+        """Initialize an instance of a system with optional overrides for system parameters, initial state, and inputs.
 
         Args:
             system_parameters_init: A dictionary containing system parameters
@@ -716,6 +783,9 @@ class System(SystemInterface):
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
         """Return state vector by default.
+
+        In many cases the observation is simply the state vector, so it is quite reasonable to just
+        set the observation to the state vector by default.
 
         Args:
             time: The current simulation time or step.
@@ -779,7 +849,7 @@ class System(SystemInterface):
 
 
 class KinematicPoint(System):
-    """System representing a simple 2D kinematic point that can move in any direction."""
+    """System representing a simple 2D kinematic point (see [here](../systems/kin_point.md) for details)."""
 
     _name = "kinematic-point"
     _system_type = "diff_eqn"
@@ -793,6 +863,17 @@ class KinematicPoint(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
+        """Compute [right-hand side](../systems/kin_point.md#system-dynamics) of kinematic point.
+
+        Args:
+            time: Current time.
+            state: Current state.
+            inputs: Current control inputs (i. e. action).
+
+        Returns:
+            Right-hand side of the kinematic point.
+        """
+
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -805,7 +886,7 @@ class KinematicPoint(System):
 
 
 class InvertedPendulum(System):
-    """System representing an inverted pendulum, with state representing angle and angular velocity."""
+    """System representing an [inverted pendulum](../systems/inv_pendulum.md), with state representing angle and angular velocity."""
 
     _name = "inverted-pendulum"
     _system_type = "diff_eqn"
@@ -820,6 +901,8 @@ class InvertedPendulum(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
+        """Compute [right-hand side](../systems/inv_pendulum.md#system-dynamics) of the inverted pendulum."""
+
         Dstate = rg.zeros(
             self.dim_state,
             prototype=(state, inputs),
@@ -837,27 +920,8 @@ class InvertedPendulum(System):
         return Dstate
 
 
-class ThreeWheeledRobotNI(System):
-    r"""Implements the ThreeWheeledRobotNI (Non-holonomic robot a.k.a. Brockett integrator).
-
-    This system class defines the dynamics of a 3-wheeled robot with non-holonomic constraints. The robot's dynamics
-    are given by the following differential equations:
-
-    .. math::
-        \begin{aligned}
-            &  \dot{x}_{\text{rob}} = v \cos(\\vartheta), \\
-            &  \dot{y}_{\text{rob}} = v \sin(\\vartheta), \\
-            & \dot{\\vartheta} = \\mega.
-        \end{aligned}
-
-    Where:
-
-    - :math:`\dot{x}_{\text{rob}}` is the rate of change of the robot's x-position.
-    - :math:`\dot{y}_{\text{rob}}` is the rate of change of the robot's y-position.
-    - :math:`\vartheta` is the robot's orientation.
-    - :math:`v` is the linear velocity input.
-    - :math:`\omega` is the angular velocity input.
-    """
+class ThreeWheeledRobotKinematic(System):
+    r"""Implements the [kinematic three-wheeled robot](../systems/3wrobot_kin.md) (a.k.a. Brockett integrator)."""
 
     _name = "three-wheeled-robot-ni"
     _system_type = "diff_eqn"
@@ -871,15 +935,15 @@ class ThreeWheeledRobotNI(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute rhs of the dynamic system.
+        """Compute [right-hand side](../systems/3wrobot_kin.md#system-dynamics) of the dynamic system.
 
         Args:
             time: Current time.
             state: Current state.
-            inputs: Current action.
+            inputs: Current control inputs (i. e. action).
 
         Returns:
-            Rate of change of the state.
+            Right-hand side of the non-holonomic robot.
         """
         Dstate = rg.zeros(self.dim_state, prototype=(state, inputs))
 
@@ -890,39 +954,8 @@ class ThreeWheeledRobotNI(System):
         return Dstate
 
 
-class ThreeWheeledRobot(System):
-    r"""System class: 3-wheeled robot with dynamical actuators.
-
-    Description ----------- Three-wheel robot with dynamical pushing force and steering torque (a.k.a. ENDI - extended
-    non-holonomic double integrator) [[1]_]
-
-    .. math::
-        \begin{array}{ll}
-                        \dot x_с & = v \cos \angle \newline
-                        \dot y_с & = v \sin \angle \newline
-                        \dot \angle & = \omega \newline
-                        \dot v & = \left( \frac 1 m F + q_1 \right) \newline
-                        \dot \omega & = \left( \frac 1 I M + q_2 \right)
-        \end{array}
-
-    **Variables**
-
-    | :math:`x_с` : state-coordinate [m] | :math:`y_с` : observation-coordinate [m] | :math:`\angle` : turning angle
-    [rad] | :math:`v` : speed [m/s] | :math:`\omega` : revolution speed [rad/s] | :math:`F` : pushing force [N] |
-    :math:`M` : steering torque [Nm] | :math:`m` : robot mass [kg] | :math:`I` : robot moment of inertia around
-    vertical axis [kg m\ :sup:`2`] | :math:`disturb` : actuator disturbance (see :func:`~RLframe.system.disturbDyn`).
-    Is zero if ``is_disturb = 0``
-
-    :math:`state = [x_c, y_c, \angle, v, \omega]`
-
-    :math:`inputs = [F, M]`
-
-    ``pars`` = :math:`[m, I]`
-
-    References ---------- .. [1] W. Abbasi, F. urRehman, and I. Shah. “Backstepping based nonlinear adaptive control
-    for the extended nonholonomic double integrator”. In: Kybernetika 53.4 (2017), pp. 578–594
-
-    """
+class ThreeWheeledRobotDynamic(System):
+    r"""Implements [dynamic three-wheeled robot](../systems/3wrobot_dyn.md)."""
 
     _name = "three-wheeled-robot"
     _system_type = "diff_eqn"
@@ -943,7 +976,7 @@ class ThreeWheeledRobot(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute rhs of the dynamic system.
+        """Compute [right-hand side](../systems/3wrobot_dyn.md#system-dynamics) of the dynamic system.
 
         Args:
             time: Current time.
@@ -951,7 +984,7 @@ class ThreeWheeledRobot(System):
             inputs: Current action.
 
         Returns:
-            Rate of change of the state.
+            Right-hand side.
         """
         Dstate = rg.zeros(
             self.dim_state,
@@ -970,7 +1003,10 @@ class ThreeWheeledRobot(System):
 
 
 class Integrator(System):
-    """System yielding Non-holonomic double integrator when composed with non- holomonic three-wheeled robot."""
+    """System yielding non-holonomic double integrator when composed with [kinematic three-wheeled robot][regelum.system.ThreeWheeledRobotKinematic].
+
+    See [here](../tutorials/systems.md#example-3-combining-integrator-with-kinematic-robot) for details.
+    """
 
     _name = "integral-parts"
     _system_type = "diff_eqn"
@@ -982,7 +1018,7 @@ class Integrator(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute rhs of the dynamic system.
+        """Compute [right-hand side](../tutorials/systems.md#example-3-combining-integrator-with-kinematic-robot) of the dynamic system.
 
         Args:
             time: Current time.
@@ -990,7 +1026,7 @@ class Integrator(System):
             inputs: Current action.
 
         Returns:
-            Rate of change of the state.
+            Right-hand side.
         """
         Dstate = rg.zeros(
             self.dim_state,
@@ -1005,13 +1041,13 @@ class Integrator(System):
         return Dstate
 
 
-three_wheeled_robot_alternative = (Integrator() @ ThreeWheeledRobotNI()).permute_state(
-    [3, 4, 0, 1, 2]
-)
+three_wheeled_robot_alternative = (
+    Integrator() @ ThreeWheeledRobotKinematic()
+).permute_state([3, 4, 0, 1, 2])
 
 
 class CartPole(System):
-    """Cart pole system without friction."""
+    """[Cart pole system](../systems/cartpole.md) without friction."""
 
     _name = "cartpole"
     _system_type = "diff_eqn"
@@ -1026,7 +1062,7 @@ class CartPole(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute rhs of the dynamic system.
+        """Compute [right-hand side](../systems/cartpole.md#system-dynamics) of the dynamic system.
 
         Args:
             time: Current time.
@@ -1034,7 +1070,7 @@ class CartPole(System):
             inputs: Current action.
 
         Returns:
-            Rate of change of the state.
+            Right-hand side.
         """
         Dstate = rg.zeros(
             self.dim_state,
@@ -1093,7 +1129,20 @@ class CartPole(System):
 
 
 class TwoTank(System):
-    """Two-tank system with nonlinearity."""
+    """This module simulates a [Two-Tank System](../systems/2tank.md).
+
+    Notes:
+        Please be aware that, despite the presence of a link to the [tutorial](../systems/2tank.md),
+        this current system implementation does not replicate the tutorial's version.
+        The primary distinction lies in the handling of observations: in this variant,
+        observations are equivalent to the system's state variables.
+
+        For an alternative version where the observation is differentiated from the state by a
+        reference value (specifically, $(0.4, 0.4)$ subtracted from the state), please consult
+        [`TwoTankReferenced`][regelum.system.TwoTankReferenced].
+        It is this [`TwoTankReferenced`](regelum.system.TwoTankReferenced) model
+        that faithfully reproduces the system outlined in the [tutorial](../systems/2tank.md).
+    """
 
     _name = "two-tank"
     _system_type = "diff_eqn"
@@ -1108,7 +1157,19 @@ class TwoTank(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute rhs of the dynamic system.
+        """Compute [right-hand side](../systems/2tank.md#system-dynamics) of the dynamic system.
+
+        Notes:
+            Please be aware that, despite the presence of a link to the [tutorial](../systems/2tank.md),
+            this current system implementation does not replicate the tutorial's version.
+            The primary distinction lies in the handling of observations: in this variant,
+            observations are equivalent to the system's state variables.
+
+            For an alternative version where the observation is differentiated from the state by a
+            reference value (specifically, $(0.4, 0.4)$ subtracted from the state), please consult
+            [`TwoTankReferenced`][regelum.system.TwoTankReferenced].
+            It is this [`TwoTankReferenced`](regelum.system.TwoTankReferenced) model
+            that faithfully reproduces the system outlined in the [tutorial](../systems/2tank.md).
 
         Args:
             time: Current time.
@@ -1116,7 +1177,7 @@ class TwoTank(System):
             inputs: Current action.
 
         Returns:
-            Rate of change of the state.
+            Right-hand side.
         """
         tau1, tau2, K1, K2, K3 = (
             self.parameters["tau1"],
@@ -1137,13 +1198,25 @@ class TwoTank(System):
 
 
 class LunarLander(System):
-    """Lunar lander system.
+    """[Lunar lander system](../systems/lunar_lander.md).
 
     The basis of this system is taken from the [following
     paper](https://web.aeromech.usyd.edu.au/AMME3500/Course_documents/material/tutorials/Assignment%204%20Lunar%20Lander%20Solution.pdf).
 
     The LunarLander class simulates a lunar lander during its descent to the moon's surface. It models both the
     vertical and lateral dynamics as well as the lander's rotation.
+
+    Notes:
+        Please be aware that, despite the presence of a link to the [tutorial](../systems/lunar_lander.md),
+        this current system implementation does not replicate the tutorial's version.
+        The primary distinction lies in the handling of observations: in this variant,
+        observations are equivalent to the system's state variables.
+
+        For an alternative version where the observation is differentiated from the state by a
+        reference value (specifically, $(0.4, 0.4)$ subtracted from the state), please consult
+        [`LunarLanderReferenced`][regelum.system.LunarLanderReferenced].
+        It is this [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced) model
+        that faithfully reproduces the system outlined in the [tutorial](../systems/lunar_lander.md).
     """
 
     _name = "lander"
@@ -1178,6 +1251,18 @@ class LunarLander(System):
         This method calculates the derivative of the lander's state variables, considering the applied forces from
         thrusters and the gravitational forces. It checks for landing conditions to alter the dynamics accordingly,
         such as setting velocities to zero upon touching down.
+
+        Notes:
+            Please be aware that, despite the presence of a link to the [tutorial](../systems/lunar_lander.md),
+            this current system implementation does not replicate the tutorial's version.
+            The primary distinction lies in the handling of observations: in this variant,
+            observations are equivalent to the system's state variables.
+
+            For an alternative version where the observation is differentiated from the state by a
+            reference value (specifically, $(0.4, 0.4)$ subtracted from the state), please consult
+            [`LunarLanderReferenced`][regelum.system.LunarLanderReferenced].
+            It is this [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced) model
+            that faithfully reproduces the system outlined in the [tutorial](../systems/lunar_lander.md).
 
         Args:
             time: The current simulation time.
@@ -1263,10 +1348,22 @@ class LunarLander(System):
         angle_dot: Union[RgArray, float],
         prototype: RgArray,
     ) -> RgArray:
-        """Compute the dynamics of the lander when it is in contact with the ground, constrained like a pendulum.
+        """Compute the [dynamics](../systems/lunar_lander.md#system-dynamics) of the lander when it is in contact with the ground, constrained like a pendulum.
 
         This method is used internally to modify the dynamics of the lander when one of its extremities touches down,
         causing it to behave like a pendulum.
+
+        Notes:
+            Please be aware that, despite the presence of a link to the [tutorial](../systems/lunar_lander.md),
+            this current system implementation does not replicate the tutorial's version.
+            The primary distinction lies in the handling of observations: in this variant,
+            observations are equivalent to the system's state variables.
+
+            For an alternative version where the observation is differentiated from the state by a
+            reference value (specifically, $(0.4, 0.4)$ subtracted from the state), please consult
+            [`LunarLanderReferenced`][regelum.system.LunarLanderReferenced].
+            It is this [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced) model
+            that faithfully reproduces the system outlined in the [tutorial](../systems/lunar_lander.md).
 
         Args:
             angle: The angle of the pendulum.
@@ -1437,6 +1534,27 @@ class SystemWithConstantReference(ComposedSystem):
 
 
 class LunarLanderReferenced(SystemWithConstantReference):
+    """Lunar lander referenced system.
+
+    This class represents a tailored version of the [`LunarLander`](regelum.system.LunarLander)
+    with specific enhancements to match the instructional framework provided by the [tutorial](../systems/lunar_lander.md).
+
+    Notes:
+        The [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced) system varies from the original
+        [`LunarLander`](regelum.system.LunarLander) in one significant aspect: the computation of the observation.
+        In [`LunarLander`](regelum.system.LunarLander), the observation directly equals the current state.
+        However, in [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced),
+        the observation is calculated by subtracting a fixed reference value of $(0, 1, 0, 0, 0, 0)$ from the current state,
+        resulting in an adjusted observation value. This modification
+        is designed for scenarios where the observation needs to be anchored to a particular reference point.
+
+        Despite this alteration in the observation representation, the core dynamics of the state remain unaltered.
+        They follow the same principles as elucidated in the [system dynamics section of the tutorial](../systems/lunar_lander.md#system-dynamics)
+        and are consistent with the [`LunarLander`][regelum.system.LunarLander] class.
+        This ensures that while the observation method has been modified, the fundamental
+        behavior of the system **state** dynamics stays true to the original model.
+    """
+
     def __init__(self):
         """Instantiate TwoTankReferenced."""
         super().__init__(
@@ -1445,6 +1563,28 @@ class LunarLanderReferenced(SystemWithConstantReference):
 
 
 class TwoTankReferenced(SystemWithConstantReference):
+    """Two tank referenced system.
+
+    This class represents a tailored version of the [`TwoTank`](regelum.system.TwoTank)
+    with specific enhancements to match the instructional framework provided by the [tutorial](../systems/2tank.md).
+
+    Notes:
+        The [`TwoTankReferenced`](regelum.system.TwoTankReferenced) system varies from the original
+        [`TwoTank`](regelum.system.TwoTank) in one significant aspect: the computation of the observation.
+        In [`TwoTank`](regelum.system.TwoTank), the observation directly equals the current state.
+        However, in [`TwoTankReferenced`](regelum.system.TwoTankReferenced),
+        the observation is calculated by subtracting a fixed reference value of $(0.4, 0.4)$ from the current state,
+        resulting in an adjusted observation value. This modification
+        is designed for scenarios where the observation needs to be anchored to a particular reference point.
+
+        Despite this alteration in the observation representation, the core dynamics of the state remain unaltered.
+        They follow the same principles as elucidated in the [system dynamics section of the tutorial](../systems/2tank.md#system-dynamics)
+        and are consistent with the [`TwoTank`][regelum.system.TwoTank] class.
+        This ensures that while the observation method has been modified, the fundamental
+        behavior of the system **state** dynamics stays true to the original model.
+
+    """
+
     def __init__(self):
         """Instantiate TwoTankReferenced."""
         super().__init__(system=TwoTank(), state_reference=[0.4, 0.4])

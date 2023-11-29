@@ -1,5 +1,5 @@
-name: 3wrobot
-target: regelum.system.ThreeWheeledRobot
+name: 3wrobot_dyn
+target: regelum.system.ThreeWheeledRobotDynamic
 observer: = regelum.observer.ObserverTrivial()
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs

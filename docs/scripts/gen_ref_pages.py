@@ -4,7 +4,7 @@ import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
 
-root = Path(__file__).parent.parent
+root = Path(__file__).parent.parent.parent
 src = root / "regelum"
 
 for path in sorted(src.rglob("*.py")):

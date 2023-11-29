@@ -1422,7 +1422,7 @@ class ThreeWheeledRobotMemoryPIDPolicy:
 
 
 class ThreeWheeledRobotPIDPolicy:
-    """Nominal stabilzing policy for 3wrobot inertial system."""
+    """Nominal stabilzing policy for 3wrobot_dyn inertial system."""
 
     def __init__(
         self,
@@ -1441,7 +1441,7 @@ class ThreeWheeledRobotPIDPolicy:
         """Initialize Scenario3WRobotPID.
 
         Args:
-            state_init: initial state of 3wrobot
+            state_init: initial state of 3wrobot_dyn
             params (tuple): mass and moment of inertia `(M, I)`
             sampling_time: sampling time
             action_bounds: bounds that actions should not exceed
@@ -1822,10 +1822,10 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
     ):
         """Initialize an instance of stabilizing policy for three wheeled robot."""
         super().__init__(optimizer_config=optimizer_config)
-        from regelum.system import ThreeWheeledRobot
+        from regelum.system import ThreeWheeledRobotDynamic
 
-        self.m = ThreeWheeledRobot.parameters["m"]
-        self.moment_of_inertia = ThreeWheeledRobot.parameters["I"]
+        self.m = ThreeWheeledRobotDynamic.parameters["m"]
+        self.moment_of_inertia = ThreeWheeledRobotDynamic.parameters["I"]
         self.scenario_gain = scenario_gain
         self.xNI_var = self.create_variable(3, 1, name="xNI", is_constant=True)
         self.eta_var = self.create_variable(2, 1, name="eta", is_constant=True)

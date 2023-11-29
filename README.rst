@@ -399,8 +399,8 @@ assortment of presets, which can be both studied and conveniently repurposed.
 
 The ``presets`` directory contains several working  ``regelum`` projects:
 
-- ``presets/3wrobot``: Parking a three wheeled robot.
-- ``presets/3wrobot_ni``: Parking a massless three wheeled robot.
+- ``presets/3wrobot_dyn``: Parking a three wheeled robot.
+- ``presets/3wrobot_kin``: Parking a massless three wheeled robot.
 - ``presets/grid_world``: Path-finding in a gridworld.
 - ``presets/inverted_pendululm``: Balancing and inverted pendulum.
 - ``presets/2tank``: Equalizing water levels in a two-tank system.
@@ -409,7 +409,7 @@ For instance, if one wanted to run the three wheeled robot parking project,
 all it would take is to execute the following:
 ::
 
-    cd presets/3wrobot
+    cd presets/3wrobot_dyn
     python3 main.py
 
 One could also override some of the global parameters when running the script.
