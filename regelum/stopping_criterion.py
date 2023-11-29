@@ -34,23 +34,23 @@ class CoordinateMaxAbsCriterion(StabilizationCriterion):
 
 class InvertedPendulumCriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
-        super().__init__(max_abs=0.05, n_last_observations=10)
+        super().__init__(np.array([0.1, 0.1]), n_last_observations=10)
 
 
 class TwoTankCriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
-        super().__init__(max_abs=0.05, n_last_observations=10)
+        super().__init__(max_abs=0.1, n_last_observations=10)
 
 
 class ThreeWheeledRobotNICriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
-        super().__init__(max_abs=0.25, n_last_observations=10)
+        super().__init__(max_abs=0.3, n_last_observations=10)
 
 
 class LunarLanderCriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
         super().__init__(
-            max_abs=np.array([0.2, 0.001, 0.001, np.inf, np.inf, np.inf]),
+            max_abs=np.array([0.2, 0.01, 0.001, np.inf, np.inf, np.inf]),
             n_last_observations=10,
         )
 

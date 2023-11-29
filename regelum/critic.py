@@ -13,7 +13,7 @@ import numpy as np
 from .utils import rg
 from abc import ABC
 from .optimizable import Optimizable
-from .objective import temporal_difference_objective
+from .objective import temporal_difference_objective, temporal_difference_objective_full
 
 try:
     import torch
@@ -51,6 +51,7 @@ class Critic(Optimizable, ABC):
         size_mesh: Optional[int] = None,
         discount_factor: float = 1.0,
         sampling_time: float = 0.01,
+        is_full_iteration_epoch: bool = False,
     ):
         """Initialize a critic object.
 
@@ -102,6 +103,7 @@ class Critic(Optimizable, ABC):
         )
         self.regularization_param = regularization_param
         self.size_mesh = size_mesh
+        self.is_full_iteration_epoch = is_full_iteration_epoch
 
         self.initialize_optimize_procedure()
 
@@ -261,9 +263,17 @@ class Critic(Optimizable, ABC):
                     weights=self.critic_stored_weights_var,
                 )
 
+        self.episode_id_var = self.create_variable(
+            self.batch_size,
+            1,
+            name="episode_id",
+            is_constant=True,
+        )
+
         self.register_objective(
             func=self.objective_function,
             variables=[
+                self.episode_id_var,
                 self.running_objective_var,
                 self.critic_model_output,
                 self.critic_weights_var,
@@ -283,9 +293,9 @@ class Critic(Optimizable, ABC):
             List of keys.
         """
         if self.is_value_function:
-            keys = ["observation", "running_objective"]
+            keys = ["observation", "running_objective", "episode_id"]
         else:
-            keys = ["observation_action", "running_objective"]
+            keys = ["observation_action", "running_objective", "episode_id"]
 
         if not self.is_on_policy:
             keys.append("critic_targets")
@@ -303,16 +313,31 @@ class Critic(Optimizable, ABC):
         running_objective,
         critic_stored_weights,
         critic_weights,
+        episode_id,
         critic_targets=None,
     ):
-        td_objective = temporal_difference_objective(
-            critic_model_output=critic_model_output,
-            running_objective=running_objective,
-            td_n=self.td_n,
-            discount_factor=self.discount_factor,
-            sampling_time=self.sampling_time,
-            critic_targets=critic_targets,
-        )
+        if self.is_full_iteration_epoch:
+            assert (
+                self.kind == "tensor"
+            ), "Full iteration epoch only supported for Torch critic"
+            td_objective = temporal_difference_objective_full(
+                critic_model_output=critic_model_output,
+                running_objective=running_objective,
+                episode_ids=episode_id,
+                td_n=self.td_n,
+                discount_factor=self.discount_factor,
+                sampling_time=self.sampling_time,
+                critic_targets=critic_targets,
+            )
+        else:
+            td_objective = temporal_difference_objective(
+                critic_model_output=critic_model_output,
+                running_objective=running_objective,
+                td_n=self.td_n,
+                discount_factor=self.discount_factor,
+                sampling_time=self.sampling_time,
+                critic_targets=critic_targets,
+            )
         if self.kind == "tensor":
             return td_objective
 
