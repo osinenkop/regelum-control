@@ -564,6 +564,7 @@ class PolicySDPG(PolicyGradient):
         sampling_time: float,
         discount_factor: float = 1.0,
         device: str = "cpu",
+        is_normalize_advantages: bool = True,
     ):
         """Instantiate SDPG class.
 
@@ -586,6 +587,7 @@ class PolicySDPG(PolicyGradient):
             optimizer_config=optimizer_config,
         )
         self.sampling_time = sampling_time
+        self.is_normalize_advantages = is_normalize_advantages
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -629,6 +631,7 @@ class PolicySDPG(PolicyGradient):
             episode_ids=episode_id.long(),
             running_objectives=running_objective,
             sampling_time=self.sampling_time,
+            is_normalize_advantages=self.is_normalize_advantages,
         )
 
 
@@ -647,6 +650,7 @@ class PolicyPPO(PolicyGradient):
         gae_lambda: float = 0.0,
         running_objective_type="cost",
         cliprange: float = 0.2,
+        is_normalize_advantages: bool = True,
     ):
         """Instantiate PPO policy class.
 
@@ -675,6 +679,7 @@ class PolicyPPO(PolicyGradient):
         self.cliprange = cliprange
         self.running_objective_type = running_objective_type
         self.gae_lambda = gae_lambda
+        self.is_normalize_advantages = is_normalize_advantages
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -711,6 +716,7 @@ class PolicyPPO(PolicyGradient):
             running_objective_type=self.running_objective_type,
             sampling_time=self.sampling_time,
             gae_lambda=self.gae_lambda,
+            is_normalize_advantages=self.is_normalize_advantages,
         )
 
     def update_data_buffer(self, data_buffer: DataBuffer):

@@ -28,3 +28,5 @@ policy_n_epochs: 1
 policy_opt_method: = torch.optim.Adam
 policy_opt_method_kwargs: 
   lr: 0.1
+
+is_normalize_advantages: True

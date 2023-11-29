@@ -121,6 +121,7 @@ def sdpg_objective(
     N_episodes: int,
     running_objectives: torch.FloatTensor,
     sampling_time: float,
+    is_normalize_advantages: bool,
 ) -> torch.FloatTensor:
     """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
@@ -159,6 +160,8 @@ def sdpg_objective(
             + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
         )
+        if is_normalize_advantages:
+            advantages = (advantages - advantages.mean()) / advantages.std()
 
         objective += (
             discount_factor ** times[mask][:-1]
@@ -184,6 +187,7 @@ def ppo_objective(
     running_objective_type: str,
     sampling_time: float,
     gae_lambda: float,
+    is_normalize_advantages=True,
 ) -> torch.FloatTensor:
     """Calculate PPO objective.
 
@@ -238,6 +242,8 @@ def ppo_objective(
                 torch.flip(reversed_gae_discounted_deltas.cumsum(dim=0), dims=[0, 1])
                 / gae_discount_factors
             )
+        if is_normalize_advantages:
+            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         objective_value += (
             torch.sum(
@@ -284,6 +290,35 @@ def ddpg_objective(
     return critic_model(
         observations, policy_model.forward(observations, is_means_only=True)
     ).mean()
+
+
+def temporal_difference_objective_full(
+    critic_model_output: ModelNN,
+    running_objective: torch.FloatTensor,
+    td_n: int,
+    discount_factor: float,
+    sampling_time: float,
+    episode_ids: torch.LongTensor,
+    critic_targets: Optional[torch.FloatTensor] = None,
+) -> torch.FloatTensor:
+    objective = 0.0
+    n_iterations = torch.unique(episode_ids).shape[0]
+    for iteration_id in torch.unique(episode_ids):
+        mask = (episode_ids == iteration_id).reshape(-1)
+        objective += (
+            temporal_difference_objective(
+                critic_model_output=critic_model_output[mask],
+                running_objective=running_objective[mask],
+                td_n=td_n,
+                discount_factor=discount_factor,
+                sampling_time=sampling_time,
+                critic_targets=critic_targets[mask]
+                if critic_targets is not None
+                else None,
+            )
+            / n_iterations
+        )
+    return objective
 
 
 def temporal_difference_objective(

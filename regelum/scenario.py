@@ -387,6 +387,8 @@ class RLScenario(Scenario):
         self.is_critic_first = is_critic_first
         self.stopping_criterion = stopping_criterion
         self.is_parallel = is_parallel
+        self.seed_increment = 0
+        self.annealing_exploration_factor = 1
 
     def _reset_whatever(self, suffix):
         def wrapped(*args, **kwargs):
@@ -405,14 +407,14 @@ class RLScenario(Scenario):
         )
         return self.data_buffer
 
-    @staticmethod
     def run_ith_scenario(
-        episode_id: int, iteration_id: int, scenarios: List[Self], queue
+        self, episode_id: int, iteration_id: int, scenarios: List[Self], queue
     ):
         seed = torch.initial_seed() + episode_id
         torch.manual_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
+        self.seed_increment += 1
 
         queue.put(
             (
@@ -422,12 +424,25 @@ class RLScenario(Scenario):
         )
 
     def instantiate_rl_scenarios(self):
-        return [
+        simulators = [deepcopy(self.simulator) for _ in range(self.N_episodes)]
+        # for simulator in simulators:
+        #     simulator.state_init = simulator.state + np.random.normal(
+        #         0, 0.5, simulator.state.shape
+        #     )
+        #     simulator.state = simulator.state_init
+        #     simulator.system.state = simulator.state_init
+        #     simulator.observation = simulator.get_observation(
+        #         time=simulator.time,
+        #         state=simulator.state_init,
+        #         inputs=simulator.action_init,
+        #     )
+        # simulator.system.state_init = simulator.state_init
+        scenarios = [
             RLScenario(
                 policy=self.policy,
                 critic=self.critic,
                 running_objective=self.running_objective,
-                simulator=deepcopy(self.simulator),
+                simulator=simulators[i],
                 policy_optimization_event=self.policy_optimization_event,
                 critic_optimization_event=self.critic_optimization_event,
                 discount_factor=self.discount_factor,
@@ -440,8 +455,9 @@ class RLScenario(Scenario):
                 value_threshold=self.value_threshold,
                 stopping_criterion=self.stopping_criterion,
             )
-            for _ in range(self.N_episodes)
+            for i in range(self.N_episodes)
         ]
+        return scenarios
 
     @apply_callbacks()
     def dump_data_buffer(self, episode_id: int, data_buffer: DataBuffer):
@@ -452,6 +468,7 @@ class RLScenario(Scenario):
             return super().run()
 
         for self.iteration_counter in range(1, self.N_iterations + 1):
+            self.policy.model.stds *= self.annealing_exploration_factor
             one_episode_rl_scenarios = self.instantiate_rl_scenarios()
             result_queue = mp.Queue()
             args = [
@@ -459,7 +476,7 @@ class RLScenario(Scenario):
                 for i in range(1, self.N_episodes + 1)
             ]
             processes = [
-                mp.Process(target=RLScenario.run_ith_scenario, args=arg) for arg in args
+                mp.Process(target=self.run_ith_scenario, args=arg) for arg in args
             ]
             for p in processes:
                 p.start()
@@ -476,7 +493,7 @@ class RLScenario(Scenario):
             ):
                 self.dump_data_buffer(episode_idx, data_buffer)
                 self.data_buffer.concat(data_buffer)
-                data = self.data_buffer.to_pandas(["running_objective", "time"])
+                data = data_buffer.to_pandas(["running_objective", "time"])
                 scenario.value = calculate_value(
                     data["running_objective"],
                     data["time"],
@@ -1801,6 +1818,7 @@ def get_policy_gradient_kwargs(
     critic_kwargs: Dict[str, Any] = None,
     critic_is_value_function: Optional[bool] = None,
     is_reinstantiate_critic_optimizer: Optional[bool] = None,
+    is_normalize_advantages: Optional[bool] = None,
     policy_kwargs: Dict[str, Any] = None,
     scenario_kwargs: Dict[str, Any] = None,
     is_use_critic_as_policy_kwarg: bool = True,
@@ -1828,14 +1846,17 @@ def get_policy_gradient_kwargs(
             is_same_critic=True,
             optimizer_config=TorchOptimizerConfig(
                 critic_n_epochs,
-                data_buffer_iter_bathes_kwargs=dict(
-                    batch_sampler=EpisodicSampler,
-                    dtype=torch.FloatTensor,
-                ),
+                data_buffer_iter_bathes_kwargs={
+                    "batch_sampler": RollingBatchSampler,
+                    "dtype": torch.FloatTensor,
+                    "mode": "full",
+                    "n_batches": 1,
+                },
                 opt_method_kwargs=critic_opt_method_kwargs,
                 opt_method=critic_opt_method,
                 is_reinstantiate_optimizer=is_reinstantiate_critic_optimizer,
             ),
+            is_full_iteration_epoch=True,
             **(critic_kwargs if critic_kwargs is not None else dict()),
         )
     else:
@@ -1853,9 +1874,15 @@ def get_policy_gradient_kwargs(
         running_objective=running_objective,
         observer=observer,
         critic=critic,
+        is_critic_first=True,
         value_threshold=value_threshold,
         sampling_time=sampling_time,
         policy=policy_type(
+            **(
+                dict(is_normalize_advantages=is_normalize_advantages)
+                if is_normalize_advantages is not None
+                else dict()
+            ),
             model=policy_model,
             system=system,
             discount_factor=discount_factor,
@@ -1909,6 +1936,7 @@ class PPO(RLScenario):
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
         gae_lambda: float = 0.0,
+        is_normalize_advantages: bool = True,
         is_parallel: bool = False,
     ):
         """Initialize the object with the given parameters.
@@ -1994,6 +2022,7 @@ class PPO(RLScenario):
                 critic_opt_method_kwargs=critic_opt_method_kwargs,
                 critic_td_n=critic_td_n,
                 critic_n_epochs=critic_n_epochs,
+                is_normalize_advantages=is_normalize_advantages,
                 critic_is_value_function=True,
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
@@ -2036,6 +2065,7 @@ class SDPG(RLScenario):
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
         is_parallel: bool = False,
+        is_normalize_advantages=True,
     ):
         """Initialize SDPG.
 
@@ -2109,6 +2139,7 @@ class SDPG(RLScenario):
                 ),
                 stopping_criterion=stopping_criterion,
                 is_parallel=is_parallel,
+                is_normalize_advantages=is_normalize_advantages,
             )
         )
 
