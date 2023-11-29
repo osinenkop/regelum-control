@@ -2,7 +2,8 @@
 Tutorial: Implementing Custom Systems in Regelum
 **************************************************
 
-This tutorial provides a comprehensive guide on leveraging the `system.py` module from the Regelum package. The module offers a framework for defining abstract and concrete classes that represent dynamical systems, tailored for reinforcement learning and control engineering tasks.
+This tutorial provides a comprehensive guide on leveraging the `system.py` module from the Regelum package. 
+The module offers a framework for defining abstract and concrete classes that represent dynamical systems, tailored for reinforcement learning and control engineering tasks.
 
 Implementing Your Own System
 ============================
@@ -72,13 +73,13 @@ Control inputs :math:`(v, \omega)` are utilized in the code as follows:
 
     from regelum.__utilities import rg  # Essential for array computations
 
-    class ThreeWheeledRobotNI(System):
+    class ThreeWheeledRobotKinematic(System):
         """ Non-holonomic three-wheeled robot system implementation. """
 
         # These private variables are leveraged by other components within the codebase.
         # While optional, naming variables enhance usability, especially for plotting.
 
-        _name = 'ThreeWheeledRobotNI'
+        _name = 'ThreeWheeledRobotKinematic'
         _system_type = 'diff_eqn'
         _dim_state = 3
         _dim_inputs = 2
@@ -105,7 +106,7 @@ Control inputs :math:`(v, \omega)` are utilized in the code as follows:
 Example 2: Three-Wheeled Robot with Dynamical Actuators
 --------------------------------------------------------
 
-The `ThreeWheeledRobot` class embodies a three-wheeled robot system equipped with dynamic actuators. 
+The `ThreeWheeledRobotDynamic` class embodies a three-wheeled robot system equipped with dynamic actuators. 
 
 .. math::
     \begin{array}{ll}
@@ -137,7 +138,7 @@ Parameters such as mass (:math:`m`) and moment of inertia (:math:`I`) are stored
 
 .. code-block:: python
 
-    class ThreeWheeledRobot(System):
+    class ThreeWheeledRobotDynamic(System):
         """ Three-Wheeled Robot with dynamic actuators. """
 
         _name = "three-wheeled-robot"
@@ -197,7 +198,7 @@ The state of a composed system is often an assembly of the states of the individ
 However, the ordering of these states may not align with the expectations of downstream processes or system requirements. 
 To address this, the `permute_state` method can be utilized to rearrange the states into the correct order.
 
-Example 3: Combining `Integrator` with `ThreeWheeledRobotNI`
+Example 3: Combining `Integrator` with `ThreeWheeledRobotKinematic`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Our main goal in this example is to derive a system from :ref:`Example 2 <example 2>` by composing the system from :ref:`Example 1 <example 1>` 
@@ -240,15 +241,15 @@ with the simple `Integrator`` system that is represented by the following dynami
 
             return Dstate
 
-When we compose it with the `ThreeWheeledRobotNI` from :ref:`example 1 <example 1>`
+When we compose it with the `ThreeWheeledRobotKinematic` from :ref:`example 1 <example 1>`
 using the `@` operator, we get a new composed system . In this case, the state of the composed system 
-merges the individual states of the `Integrator` and :ref:`ThreeWheeledRobotNI <example 1>`, potentially requiring permutation to align with the dynamics 
-of the intended :ref:`ThreeWheeledRobot <example 2>` system.
+merges the individual states of the `Integrator` and :ref:`ThreeWheeledRobotKinematic <example 1>`, potentially requiring permutation to align with the dynamics 
+of the intended :ref:`ThreeWheeledRobotDynamic <example 2>` system.
 
 .. code-block:: python
 
     # Create the composed system
-    composed_system = Integrator() @ ThreeWheeledRobotNI()
+    composed_system = Integrator() @ ThreeWheeledRobotKinematic()
 
 The resulting state of the composed system is:
 
@@ -257,7 +258,7 @@ The resulting state of the composed system is:
 
 This occurs because the `@` operator concatenates the state of the right system to the state of the left system.
 
-However, for the state to represent the `ThreeWheeledRobot` system correctly, as specified in :ref:`Example 2 <example 2>`, it must be formatted as:
+However, for the state to represent the `ThreeWheeledRobotDynamic` system correctly, as specified in :ref:`Example 2 <example 2>`, it must be formatted as:
 
 .. math:: 
     (x_c, y_c, \theta, v, \omega)
@@ -267,7 +268,7 @@ To achieve the correct state format, we utilize the `permute_state` method to re
 .. code-block:: python
 
     # Create the composed system
-    composed_system = Integrator() @ ThreeWheeledRobotNI()
+    composed_system = Integrator() @ ThreeWheeledRobotKinematic()
     # Permute the states to the correct order
     composed_system = composed_system.permute_state([3, 4, 0, 1, 2])
 
@@ -321,7 +322,7 @@ Let us create the composed system as follows:
 
     # Compose the robot system with the constant reference
     composed_system = ComposedSystem(
-        sys_left=ThreeWheeledRobotNI(),
+        sys_left=ThreeWheeledRobotKinematic(),
         sys_right=ConstantReference(),
         io_mapping=None,
         output_mode="right",
@@ -331,7 +332,7 @@ Let us create the composed system as follows:
         action_bounds=system.action_bounds,
     )
 
-The system has the same state as `ThreeWheeledRobotNI()` and observation that equals state mimus reference (1, 1, 0).
+The system has the same state as `ThreeWheeledRobotKinematic()` and observation that equals state mimus reference (1, 1, 0).
 
 References
 ==========

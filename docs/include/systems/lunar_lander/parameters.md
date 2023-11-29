@@ -1,0 +1,3 @@
+- $m$ - mass of the lander [kg]
+- $g$ - acceleration of gravity [m/$\text{s}^2$]
+- $J$ - moment of inertia of the lander with respect to its axis of rotation [kg $\text{m}^2$]

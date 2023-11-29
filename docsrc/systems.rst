@@ -222,13 +222,13 @@ Usage
 
     import numpy as np    
     from regelum.model import ModelQuadLin
-    from regelum.system import ThreeWheeledRobotNI
+    from regelum.system import ThreeWheeledRobotKinematic
     from regelum.objective import RunningObjective
     from regelum.simulator import CasADi
 
     sampling_time = 0.01
     simulator = CasADi(
-        system=ThreeWheeledRobotNI(),
+        system=ThreeWheeledRobotKinematic(),
         state_init=np.array([[5., 5., 3 * np.pi / 4.]]),
         time_final=5,
         max_step=sampling_time / 10.,
@@ -304,13 +304,13 @@ Usage
 
     import numpy as np    
     from regelum.model import ModelQuadLin
-    from regelum.system import ThreeWheeledRobot
+    from regelum.system import ThreeWheeledRobotDynamic
     from regelum.objective import RunningObjective
     from regelum.simulator import CasADi
 
     sampling_time = 0.01
     simulator = CasADi(
-        system=ThreeWheeledRobot(),
+        system=ThreeWheeledRobotDynamic(),
         state_init=np.array([[5., 5., 3 * np.pi / 4., 0., 0.]]),
         time_final=10,
         max_step=sampling_time / 10.,
@@ -394,7 +394,7 @@ Usage
 
     sampling_time = 0.01
     simulator = CasADi(
-        system=ThreeWheeledRobotNI(),
+        system=ThreeWheeledRobotKinematic(),
         state_init=np.array([[np.pi, 0., 0., 0.]]),
         time_final=5,
         max_step=sampling_time / 10.,
@@ -492,7 +492,9 @@ Kinematic Point
 Description
 -----------
 
-A massless point moves on a plane in the direction pointed to by :math:`A_t` with speed :math:`\left\|A_t\right\|`. The goal is to drive the point to the origin. The duration of one episode is set to 5 seconds, while the sampling rate of the pipeline is set to :math:`100 \mathrm{~Hz}`.
+A massless point moves on a plane in the direction pointed to by $A_t$ with speed $\left\|A_t\right\|$. 
+The goal is to drive the point to the origin. The duration of one episode is set to 5 seconds, while the sampling rate of 
+the pipeline is set to $100 \mathrm{~Hz}$.
 
 .. math::
 

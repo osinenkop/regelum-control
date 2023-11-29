@@ -20,10 +20,16 @@
     --lunar: #fbf2fc;
     --asteroid: #e3cee3;
     --crater: #f0dfdf;
-    --redarkpurple: #480e7f;
-    --repurple: #8551b6;
+    /* --redarkpurple: #a34bcf; */
+    /* --redarkpurple: #480e7f; */
+    --redarkpurple: #9345bf;
+    /* --redarkpurple: #7d3aa8; */
+    /* --repurple: #8551b6; */
+    --repurple: #8057c1;
     --regreen : #7aa453;
-    --amber: #ffac2f;
+    /* --amber: #ffac2f; */
+    --amber: #beab41;
+    /* --amber: #ffc656; */
 }
 
 [data-md-color-scheme="regelum"] {

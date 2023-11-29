@@ -1,10 +1,14 @@
-from regelum.system import TwoTank, ThreeWheeledRobotNI, SystemWithConstantReference
+from regelum.system import (
+    TwoTank,
+    ThreeWheeledRobotKinematic,
+    SystemWithConstantReference,
+)
 from regelum.observer import ObserverReference
 import numpy as np
 
 
 def test_constant_reference():
-    for system in (TwoTank(), ThreeWheeledRobotNI()):
+    for system in (TwoTank(), ThreeWheeledRobotKinematic()):
         system_with_reference = SystemWithConstantReference(
             system, state_reference=np.arange(system.dim_state)
         )

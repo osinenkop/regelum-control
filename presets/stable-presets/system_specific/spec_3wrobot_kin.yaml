@@ -1,7 +1,7 @@
-name: 3wrobot_ni
-target: regelum.system.ThreeWheeledRobotNI
+name: 3wrobot_kin
+target: regelum.system.ThreeWheeledRobotKinematic
 observer: = regelum.observer.ObserverTrivial()
-# target: regelum.system.ThreeWheeledRobotNIWithReference
+# target: regelum.system.ThreeWheeledRobotKinematicWithReference
 # observer: = regelum.observer.ObserverReference([1.0, 2.0, 3.0])
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
