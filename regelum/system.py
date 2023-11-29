@@ -1540,10 +1540,10 @@ class LunarLanderReferenced(SystemWithConstantReference):
     with specific enhancements to match the instructional framework provided by the [tutorial](../systems/lunar_lander.md).
 
     Notes:
-        The [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced) system varies from the original
-        [`LunarLander`](regelum.system.LunarLander) in one significant aspect: the computation of the observation.
-        In [`LunarLander`](regelum.system.LunarLander), the observation directly equals the current state.
-        However, in [`LunarLanderReferenced`](regelum.system.LunarLanderReferenced),
+        The [`LunarLanderReferenced`][regelum.system.LunarLanderReferenced] system varies from the original
+        [`LunarLander`][regelum.system.LunarLander] in one significant aspect: the computation of the observation.
+        In [`LunarLander`][regelum.system.LunarLander], the observation directly equals the current state.
+        However, in [`LunarLanderReferenced`][regelum.system.LunarLanderReferenced],
         the observation is calculated by subtracting a fixed reference value of $(0, 1, 0, 0, 0, 0)$ from the current state,
         resulting in an adjusted observation value. This modification
         is designed for scenarios where the observation needs to be anchored to a particular reference point.
@@ -1565,14 +1565,14 @@ class LunarLanderReferenced(SystemWithConstantReference):
 class TwoTankReferenced(SystemWithConstantReference):
     """Two tank referenced system.
 
-    This class represents a tailored version of the [`TwoTank`](regelum.system.TwoTank)
+    This class represents a tailored version of the [`TwoTank`][regelum.system.TwoTank]
     with specific enhancements to match the instructional framework provided by the [tutorial](../systems/2tank.md).
 
     Notes:
-        The [`TwoTankReferenced`](regelum.system.TwoTankReferenced) system varies from the original
-        [`TwoTank`](regelum.system.TwoTank) in one significant aspect: the computation of the observation.
-        In [`TwoTank`](regelum.system.TwoTank), the observation directly equals the current state.
-        However, in [`TwoTankReferenced`](regelum.system.TwoTankReferenced),
+        The [`TwoTankReferenced`][regelum.system.TwoTankReferenced] system varies from the original
+        [`TwoTank`][regelum.system.TwoTank] in one significant aspect: the computation of the observation.
+        In [`TwoTank`][regelum.system.TwoTank], the observation directly equals the current state.
+        However, in [`TwoTankReferenced`][regelum.system.TwoTankReferenced],
         the observation is calculated by subtracting a fixed reference value of $(0.4, 0.4)$ from the current state,
         resulting in an adjusted observation value. This modification
         is designed for scenarios where the observation needs to be anchored to a particular reference point.
