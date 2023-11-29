@@ -121,6 +121,7 @@ def sdpg_objective(
     N_episodes: int,
     running_objectives: torch.FloatTensor,
     sampling_time: float,
+    is_normalize_advantages: bool,
 ) -> torch.FloatTensor:
     """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
@@ -159,6 +160,8 @@ def sdpg_objective(
             + discount_factor**sampling_time * critic_values[mask][1:]
             - critic_values[mask][:-1]
         )
+        if is_normalize_advantages:
+            advantages = (advantages - advantages.mean()) / advantages.std()
 
         objective += (
             discount_factor ** times[mask][:-1]

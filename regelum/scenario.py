@@ -1818,6 +1818,7 @@ def get_policy_gradient_kwargs(
     critic_kwargs: Dict[str, Any] = None,
     critic_is_value_function: Optional[bool] = None,
     is_reinstantiate_critic_optimizer: Optional[bool] = None,
+    is_normalize_advantages: Optional[bool] = None,
     policy_kwargs: Dict[str, Any] = None,
     scenario_kwargs: Dict[str, Any] = None,
     is_use_critic_as_policy_kwarg: bool = True,
@@ -1877,6 +1878,11 @@ def get_policy_gradient_kwargs(
         value_threshold=value_threshold,
         sampling_time=sampling_time,
         policy=policy_type(
+            **(
+                dict(is_normalize_advantages=is_normalize_advantages)
+                if is_normalize_advantages is not None
+                else dict()
+            ),
             model=policy_model,
             system=system,
             discount_factor=discount_factor,
@@ -1930,6 +1936,7 @@ class PPO(RLScenario):
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
         gae_lambda: float = 0.0,
+        is_normalize_advantages: bool = True,
         is_parallel: bool = False,
     ):
         """Initialize the object with the given parameters.
@@ -2015,6 +2022,7 @@ class PPO(RLScenario):
                 critic_opt_method_kwargs=critic_opt_method_kwargs,
                 critic_td_n=critic_td_n,
                 critic_n_epochs=critic_n_epochs,
+                is_normalize_advantages=is_normalize_advantages,
                 critic_is_value_function=True,
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
@@ -2057,6 +2065,7 @@ class SDPG(RLScenario):
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
         is_parallel: bool = False,
+        is_normalize_advantages=True,
     ):
         """Initialize SDPG.
 
@@ -2130,6 +2139,7 @@ class SDPG(RLScenario):
                 ),
                 stopping_criterion=stopping_criterion,
                 is_parallel=is_parallel,
+                is_normalize_advantages=is_normalize_advantages,
             )
         )
 
