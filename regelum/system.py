@@ -8,11 +8,11 @@ Note:
 from __future__ import annotations
 import numpy as np
 import casadi as cs
-
+import torch
 import regelum
 from abc import ABC, abstractmethod
 from .utils import rg
-from typing import Optional, Union, List, Dict, Tuple
+from typing import Any, Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
 from regelum.typing import RgArray
 
@@ -352,6 +352,14 @@ class ComposedSystem(SystemInterface):
     layering or cascading systems to create a more intricate overall system architecture.
     """
 
+    def __call__(self) -> Any:
+        """Needed for instantiation through _target_ in hydra configs
+
+        Returns:
+            Self
+        """
+        return self
+
     def __init__(
         self,
         sys_left: Union[System, Self],
@@ -389,7 +397,9 @@ class ComposedSystem(SystemInterface):
         self._state_naming = state_naming
         self._inputs_naming = inputs_naming
         self._observation_naming = observation_naming
-        self._action_bounds = action_bounds
+        self._action_bounds = (
+            sys_left.action_bounds if action_bounds is None else action_bounds
+        )
 
         if io_mapping is None:
             io_mapping = np.arange(min(sys_left.dim_state, sys_right.dim_inputs))
@@ -541,7 +551,11 @@ class ComposedSystem(SystemInterface):
                 _native_dim=_native_dim,
             )
         )
-        final_dstate_vector = rg.hstack((dstate_of_left, dstate_of_right))
+        final_dstate_vector = (
+            rg.hstack((rg.force_row(dstate_of_left), rg.force_row(dstate_of_right)))
+            if not isinstance(dstate_of_left, (np.ndarray, torch.Tensor))
+            else rg.hstack((dstate_of_left, dstate_of_right))
+        )
 
         assert (
             final_dstate_vector is not None
@@ -971,7 +985,7 @@ class ThreeWheeledRobotDynamic(System):
         "angular_velocity",
     ]
     _inputs_naming = ["Force", "Momentum"]
-    _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
+    _action_bounds = [[-50.0, 50.0], [-10.0, 10.0]]
 
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
@@ -1014,6 +1028,7 @@ class Integrator(System):
     _dim_inputs = 2
     _dim_observation = 2
     _parameters = {"m": 10, "I": 1}
+    _action_bounds = [[-50.0, 50.0], [-10.0, 10.0]]
 
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
@@ -1032,7 +1047,6 @@ class Integrator(System):
             self.dim_state,
             prototype=(state, inputs),
         )
-
         m, I = self.parameters["m"], self.parameters["I"]
 
         Dstate[0] = 1 / m * inputs[0]
@@ -1041,9 +1055,9 @@ class Integrator(System):
         return Dstate
 
 
-three_wheeled_robot_alternative = (
-    Integrator() @ ThreeWheeledRobotKinematic()
-).permute_state([3, 4, 0, 1, 2])
+ThreeWheeledRobotComposed = (Integrator() @ ThreeWheeledRobotKinematic()).permute_state(
+    [3, 4, 0, 1, 2]
+)
 
 
 class CartPole(System):
