@@ -47,6 +47,11 @@ class ThreeWheeledRobotKinematicCriterion(CoordinateMaxAbsCriterion):
         super().__init__(max_abs=0.3, n_last_observations=10)
 
 
+class ThreeWheeledRobotDynamicCriterion(CoordinateMaxAbsCriterion):
+    def __init__(self):
+        super().__init__(max_abs=0.3, n_last_observations=10)
+
+
 class LunarLanderCriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
         super().__init__(
