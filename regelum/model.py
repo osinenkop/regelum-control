@@ -346,13 +346,12 @@ class ModelQuadLin(Model):
 class ModelWeightContainer(Model):
     """Trivial model, which is typically used in actor in which actions are being optimized directly."""
 
-    def __init__(self, dim_output, weights_init=None):
+    def __init__(self, dim_output: int, weights_init: Optional[np.array] = None):
         """Initialize an instance of a model returns weights on call independent of input.
 
         Args:
-            dim_input: input dimension
-            single_weight_min: lower bound for every weight
-            single_weight_max: upper bound for every weight
+            dim_output: output dimension
+            weights_init: initial weights to set
         """
         self.dim_output = dim_output
         self._weights = weights_init
@@ -432,7 +431,9 @@ class ModelNN(nn.Module):
 class WeightClipper:
     """Weight clipper for pytorch layers."""
 
-    def __init__(self, weight_min=None, weight_max=None):
+    def __init__(
+        self, weight_min: Optional[float] = None, weight_max: Optional[float] = None
+    ):
         """Initialize a weight clipper.
 
         Args:

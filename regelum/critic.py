@@ -552,7 +552,7 @@ class CriticCALF(Critic):
 
     def CALF_critic_lower_bound_constraint(
         self, critic_model_output: RgArray, observation: RgArray
-    ):
+    ) -> RgArray:
         """Constraint that ensures that the value of the critic is above a certain lower bound.
 
         The lower bound is determined by the `current_observation` and a certain constant.
@@ -561,7 +561,7 @@ class CriticCALF(Critic):
             critic_model_output: output of a critic
 
         Returns:
-            float: constraint violation
+            Constraint violation
         """
         self.lb_constraint_violation = (
             self.lb_parameter * rg.norm_2(observation[:-1, :])

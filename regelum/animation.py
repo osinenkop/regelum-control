@@ -437,7 +437,7 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
 class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):
     """Animates the position of a differential platform."""
 
-    _pic = "3wrobot_dyn.svg"
+    _pic = "3wrobot.svg"
     _rot = 225
     # _ms = 250
     _frames = 500

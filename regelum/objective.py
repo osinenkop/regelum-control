@@ -12,6 +12,7 @@ from typing import Optional
 import torch
 from .utils import rg
 from .predictor import Predictor
+from regelum.typing import RgArray
 
 
 class Objective(regelum.RegelumBase, ABC):
@@ -41,16 +42,34 @@ class RunningObjective(Objective):
         """
         self.model = (lambda observation, action: 0) if model is None else model
 
-    def __call__(self, observation, action, is_save_batch_format=False):
-        """Calculate the running objective for a given observation and action.
+    def __call__(
+        self, observation: RgArray, action: RgArray, is_save_batch_format: bool = False
+    ) -> RgArray:
+        """
+        Calculate the running objective for a given observation and action, potentially formatting the output.
+
+        This method computes the objective value based on the current state of the environment as represented
+        by the observation and the action taken by an agent. It can also preprocess the output to be in batch
+        format if specified.
 
         Args:
-            observation (numpy array): current observation.
-            action (numpy array): current action.
+            observation: The current observation from the environment, which should reflect the
+                current state. This is typically a numpy array or an array-like structure that contains
+                numerical data representing the state of the environment the agent is interacting with.
+            action: The action taken by the agent in response to the observation. Similar to the
+                observation, this is typically a numpy array or an array-like structure containing numerical
+                data that represents the action chosen by the agent.
+            is_save_batch_format: A flag to determine if the output should be preprocessed
+                into a batch format. When False, the method does not alter the output. When True, it will
+                preprocess the output into a format that is suitable for batch processing, which is often
+                required for machine learning models that process data in batches. Default is False.
 
         Returns:
-            float: running objective value.
+            The computed running objective value, which is a numerical score representing the
+                performance or the reward of the agent given the observation and the action taken.
+                This value is usually used in reinforcement learning to guide the agent's learning process.
         """
+
         running_objective = self.model(observation, action)
         if not is_save_batch_format:
             return running_objective[0][0]
@@ -69,35 +88,21 @@ def reinforce_objective(
     is_do_not_let_the_past_distract_you: bool,
     N_episodes: int,
 ) -> torch.FloatTensor:
-    r"""Calculate the surrogate objective for REINFORCE algorithm.
-
-    Сalculates the following surrogate objective:
-    :math:`\\frac{1}{M}\\sum_{j=1}^M \\sum_{k=0}^N \\log \\rho_{\\theta}(y_{k|j}, u_{k|j} \\left(\\sum_{k'=f_k}^N \\gamma^{k'} r(y_{k|j}, u_{k|j}) - B_k\\right),`
-    where :math:`y_{k|j}` is the observation at time :math:`k` in episode :math:`j`, :math:`u_{k|j}` is the action at time :math:`k` in episode :math:`j`,
-    :math:`\\rho_{\\theta}(u \\mid y)` is the probability density function of the policy model, :math:`f_k` is equal to :math:`k` if
-    `is_do_not_let_the_past_distract_you` is `True`, and :math:`f_k` is equal to 0 if `is_do_not_let_the_past_distract_you` is `False`,
-    :math: `B_k` is the baseline, which equals 0 if `is_with_baseline` is `False` and the total objective from previous iteration if `is_with_baseline` is `True`,
-    :math: `M` is the number of episodes, :math:`N` is the number of actions.
+    """Calculate the surrogate objective for REINFORCE algorithm.
 
     Args:
-        policy_model (GaussianPDFModel): The policy model used to
-            calculate the log probabilities.
-        observations (torch.FloatTensor): The observations tensor.
-        actions (torch.FloatTensor): The actions tensor.
-        tail_values (torch.FloatTensor): The tail total objectives
-            tensor.
-        values (torch.FloatTensor): The total objectives tensor.
-        baselines (torch.FloatTensor): The baselines tensor.
-        is_with_baseline (bool): Flag indicating whether to subtract
-            baselines from the target objectives.
-        is_do_not_let_the_past_distract_you (bool): Flag indicating
-            whether to use tail total objectives.
-        device (Union[str, torch.device]): The device to use for the
-            calculations.
-        N_episodes (int): The number of episodes.
+        policy_model: The policy model that outputs log probabilities.
+        observations: Observed states from the environment.
+        actions: Actions taken in response to the observations.
+        tail_values: The rewards-to-go or costs-to-go for each step in the episode.
+        values: The total accumulated running objectives for each step in the episode.
+        baselines: The baseline values used for variance reduction.
+        is_with_baseline: If True, subtract baselines from the target objectives.
+        is_do_not_let_the_past_distract_you: If True, use tail values instead of total values.
+        N_episodes: The count of episodes over which the average is taken.
 
     Returns:
-        torch.FloatTensor: surrogate objective value.
+        The computed surrogate objective value as a float tensor.
     """
     log_pdfs = policy_model.log_pdf(observations, actions)
     if is_do_not_let_the_past_distract_you:
@@ -164,31 +169,25 @@ def sdpg_objective(
     is_normalize_advantages: bool,
     gae_lambda: float,
 ) -> torch.FloatTensor:
-    """Calculate the sum of the objective function values for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
-
-    TODO: add link to papers + latex code for objective function
+    """Calculate the surrogate objective for the Stochastic Deterministic Policy Gradient (SDPG) algorithm.
 
     Args:
-        policy_model (PerceptronWithNormalNoise): The policy model that
-            represents the probability density function (PDF) of the
-            action given the observation.
-        critic_model (ModelNN): The critic model that estimates the
-            Q-function for a given observation-action pair.
-        observations (torch.FloatTensor): The tensor containing the
-            observations.
-        actions (torch.FloatTensor): The tensor containing the actions.
-        timestamps (torch.FloatTensor): The tensor containing the
-            timestamps.
-        episode_ids (torch.LongTensor): Episode ids.
-        device (Union[str, torch.device]): The device on which the
-            computations are performed.
-        discount_factor (float): The discount factor used to discount
-            future running objectives.
-        N_episodes (int): The number of episodes used to estimate the
-            expected objective function value.
+        policy_model: The policy model that outputs log probabilities.
+        critic_model: The critic model that estimates Q-values for observation-action pairs.
+        observations: A tensor of observed states from the environment.
+        actions: A tensor of actions taken by the agent.
+        times: A tensor of time steps corresponding to each observation-action pair.
+        episode_ids: A tensor of episode identifiers.
+        discount_factor: A scalar discount factor for future rewards, typically between 0 and 1.
+        N_episodes: The number of episodes to average over for the objective calculation.
+        running_objectives: A tensor of running objective values up to the current time step.
+        sampling_time: The time step used for sampling in the environment.
+        is_normalize_advantages: If True, normalize the advantage estimates.
+        gae_lambda: The lambda parameter for GAE, controlling the trade-off between bias and variance.
+
 
     Returns:
-        torch.FloatTensor: SDPG surrogate objective.
+        SDPG surrogate objective.
     """
     critic_values = critic_model(observations)
     log_pdfs = policy_model.log_pdf(observations, actions).reshape(-1)
@@ -232,31 +231,30 @@ def ppo_objective(
     running_objective_type: str,
     sampling_time: float,
     gae_lambda: float,
-    is_normalize_advantages=True,
+    is_normalize_advantages: bool = True,
 ) -> torch.FloatTensor:
     """Calculate PPO objective.
 
-    TODO: Write docsting with for ppo objective.
-
     Args:
-        policy_model (PerceptronWithNormalNoise): policy model
-        critic_model (ModelNN): critic model
-        observations (torch.FloatTensor): tensor of observations in
-            iteration
-        actions (torch.FloatTensor): tensor of actions in iteration
-        timestamps (torch.FloatTensor): timestamps
-        episode_ids (torch.LongTensor): episode ids
-        device (Union[str, torch.device]): device (cuda or cpu)
-        discount_factor (float): discount factor
-        N_episodes (int): number of episodes
-        running_objectives (torch.FloatTensor): tensor of running
-            objectives (either costs or rewards)
-        epsilon (float): epsilon
-        initial_log_probs (torch.FloatTensor)
-        running_objective_type (str): can be either `cost` or `reward`
+        policy_model: The neural network model representing the policy.
+        critic_model: The neural network model representing the value function (critic).
+        observations: A tensor of observations from the environment.
+        actions: A tensor of actions taken by the agent.
+        times: A tensor with timestamps for each observation-action pair.
+        episode_ids: A tensor with unique identifiers for each episode.
+        discount_factor: The factor by which future rewards are discounted.
+        N_episodes: The total number of episodes over which the objective is averaged.
+        running_objectives: A tensor of accumulated rewards or costs for each timestep.
+        cliprange: The range for clipping the probability ratio in the objective function.
+        initial_log_probs: The log probabilities of taking the actions at the time
+            of sampling, under the policy model before the update.
+        running_objective_type (str): Indicates whether the running objectives are 'cost' or 'reward'.
+        sampling_time: The timestep used for sampling in the environment.
+        gae_lambda: The lambda parameter for GAE, controlling the trade-off between bias and variance.
+        is_normalize_advantages: Flag indicating whether to normalize advantage estimates.
 
     Returns:
-        torch.FloatTensor: objective for PPO
+        objective for PPO
     """
     assert (
         running_objective_type == "cost" or running_objective_type == "reward"
@@ -309,16 +307,10 @@ def ddpg_objective(
 ) -> torch.FloatTensor:
     """Calculate the objective value for the DDPG algorithm.
 
-    TODO: add link to papers + latex code for objective function
-
     Args:
-        policy_model (GaussianPDFModel): The policy model that generates
-            actions based on observations.
-        critic_model (ModelNN): The critic model that approximates the
-            Q-function.
-        observations (torch.FloatTensor): The batch of observations.
-        device (Union[str, torch.device]): The device to perform
-            computations on.
+        policy_model: The policy model that generates actions based on observations.
+        critic_model: The critic model that approximates the Q-function.
+        observations: The batch of observations.
 
     Returns:
         torch.FloatTensor: The objective value.

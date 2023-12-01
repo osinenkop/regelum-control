@@ -41,7 +41,7 @@ import filelock
 import regelum.__internal.base
 
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, Type
 
 from regelum.event import Event
 
@@ -51,15 +51,7 @@ def is_in_debug_mode():
 
 
 def passdown(CallbackClass):
-    """Decorate a callback class in such a way that its event handling is inherited by derived classes.
-
-    Args:
-        CallbackClass (type): class to be decorated
-
-    Returns:
-        CallbackClass: altered class that passes down its handlers to derived classes
-            (regardless of whether handling methods are overriden)
-    """
+    """Decorate a callback class in such a way that its event handling is inherited by derived classes."""
 
     class PassdownCallback(CallbackClass):
         def __call_passdown(self, obj, method, output):

@@ -8,6 +8,7 @@ theme:
   favicon: gfx/favicon_copy.svg
   logo: gfx/logo.svg
   features:
+    - navigation.footer
     - content.code.annotate
     - navigation.tabs
     # - navigation.expand
@@ -26,6 +27,7 @@ theme:
   
 
 plugins:
+  - termynal
   - search
   - autorefs
   - macros:
@@ -70,10 +72,9 @@ plugins:
   - section-index
 nav:
   - Home: index.md
+  - Tutorials: tutorials/
   - Main features: features/
   - Getting started: getting_started.md
-  - Basic concepts: basic_concepts.md
-  - Tutorials: tutorials/
   - Scenarios: scenarios/
   - Reference API: reference/
   - Authors: authors.md
@@ -126,6 +127,10 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 # copyright: |
 #   &copy; 2023 <a href="https://github.com/james-willett"  target="_blank" rel="noopener">James Willett</a>
