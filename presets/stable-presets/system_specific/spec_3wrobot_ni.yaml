@@ -3,8 +3,8 @@ target: regelum.system.ThreeWheeledRobotNI
 observer: = regelum.observer.ObserverTrivial()
 # target: regelum.system.ThreeWheeledRobotNIWithReference
 # observer: = regelum.observer.ObserverReference([1.0, 2.0, 3.0])
-dim_observation: = ${.target}().dim_observation
-dim_action: = ${.target}().dim_inputs
+dim_observation: = ${.target}._dim_observation
+dim_action: = ${.target}._dim_inputs
 
 time_final: 5.
 sampling_time: 0.01

@@ -12,10 +12,13 @@ import casadi as cs
 
 import regelum
 from abc import ABC, abstractmethod
+
+from . import animation
 from .utils import rg
 from typing import Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
 from regelum.typing import RgArray
+
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
@@ -651,6 +654,7 @@ class ComposedSystem(SystemInterface):
         return self.compose(sys_right)
 
 
+@animation.StateAnimation.attach
 class System(SystemInterface):
     """Class representing a controllable system with predefined dynamics and observations.
 
@@ -1005,9 +1009,9 @@ class Integrator(System):
         return Dstate
 
 
-three_wheeled_robot_alternative = (Integrator() @ ThreeWheeledRobotNI()).permute_state(
-    [3, 4, 0, 1, 2]
-)
+#three_wheeled_robot_alternative = (Integrator() @ ThreeWheeledRobotNI()).permute_state(
+#    [3, 4, 0, 1, 2]
+#)
 
 
 class CartPole(System):

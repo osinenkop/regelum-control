@@ -50,7 +50,16 @@ def is_in_debug_mode():
     return sys.gettrace() is not None
 
 
-def passdown(CallbackClass):
+def detach(Attachee):
+    assert hasattr(Attachee, "_attached"), f"Could not detach callbacks from {Attachee}, because no callbacks were attached."
+    class Detachee(Attachee):
+        _attached = []
+        _real_name = Attachee._real_name
+
+    return Detachee
+
+
+def trigger(CallbackClass):
     """Decorate a callback class in such a way that its event handling is inherited by derived classes.
 
     Args:
@@ -67,9 +76,11 @@ def passdown(CallbackClass):
                 True
             ):  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
                 try:
-                    if PassdownCallback.is_target_event(self, obj, method, output):
-                        PassdownCallback.perform(self, obj, method, output)
-                        self.on_trigger(PassdownCallback)
+                    if PassdownCallback.is_target_event(self, obj, method, output, []):
+                        PassdownCallback.on_function_call(self, obj, method, output)
+                        return True
+                    return False
+                        # self.on_trigger(PassdownCallback)
                         # self.trigger_cooldown(t)
                 except regelum.RegelumExitException as e:
                     raise e
@@ -78,6 +89,7 @@ def passdown(CallbackClass):
                         f"Callback {self.__class__.__name__} failed, when executing routines passed down from {CallbackClass.__name__}."
                     )
                     self.exception(e)
+                    return False
 
     PassdownCallback.__name__ = CallbackClass.__name__
     return PassdownCallback
@@ -122,8 +134,11 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
             ].callbacks
 
     @abstractmethod
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         pass
+
+    def is_done_collecting(self):
+        return True
 
     def on_episode_done(
         self,
@@ -163,27 +178,35 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
         pass
 
     @abstractmethod
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         pass
 
     def __call__(self, obj, method, output):
         t = time.time()
+        triggers = []
+        for base in self.__class__.__bases__:
+            if hasattr(base, f"_PassdownCallback__call_passdown"):
+                if base._PassdownCallback__call_passdown(
+                    self, obj, method, output):
+                    triggers.append(base)
         if self.ready(t):
             try:
-                if self.is_target_event(obj, method, output):
-                    self.perform(obj, method, output)
-                    self.on_trigger(self.__class__)
+                if self.is_target_event(obj, method, output, triggers):
+                    self.on_function_call(obj, method, output)
+                    done = True
+                    for base in self.__class__.__bases__:
+                        if hasattr(base, f"_PassdownCallback__call_passdown"):
+                            done = done and base.is_done_collecting(self)
+                    done = done and self.is_done_collecting()
+                    if done and triggers:
+                        self.on_trigger(self.__class__)
                     self.trigger_cooldown(t)
             except regelum.RegelumExitException as e:
                 raise e
             except Exception as e:
                 self.log(f"Callback {self.__class__.__name__} failed.")
                 self.exception(e)
-        for base in self.__class__.__bases__:
-            if hasattr(base, f"_{base.__name__}__call_passdown"):
-                base.__getattribute__(f"_{base.__name__}__call_passdown")(
-                    self, obj, method, output
-                )
+
 
     @classmethod
     def attach(cls, other):
@@ -228,12 +251,12 @@ class OnEpisodeDoneCallback(Callback):
         self.episode_counter = 0
         self.iteration_counter = 1
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return isinstance(obj, regelum.scenario.Scenario) and (
             method == "reload_scenario"
         )
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         self.episode_counter += 1
         for callback in self._metadata["main"].callbacks:
             callback.on_episode_done(
@@ -257,12 +280,12 @@ class OnIterationDoneCallback(Callback):
         super().__init__(*args, **kwargs)
         self.iteration_counter = 0
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return isinstance(obj, regelum.scenario.Scenario) and (
             method == "reset_iteration"
         )
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         self.iteration_counter += 1
         if obj.N_iterations > 1 and self.iteration_counter <= obj.N_iterations:
             for callback in self._metadata["main"].callbacks:
@@ -278,10 +301,10 @@ class OnIterationDoneCallback(Callback):
 class ConfigDiagramCallback(Callback):
     """Callback responsible for constructing SUMMARY.html and relevant data, including the config diagram."""
 
-    def perform(self, *args, **kwargs):
+    def on_function_call(self, *args, **kwargs):
         pass
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return False
 
     @staticmethod
@@ -626,21 +649,66 @@ python3 {metadata["script_path"]} {" ".join(content if content[0] != "[]" else [
             f.write(html)
 
 
-@passdown
+@trigger
 class StateTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
 
     Useful for animations that visualize motion of dynamical systems.
     """
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return (
             isinstance(obj, regelum.simulator.Simulator)
             and method == "get_sim_step_data"
         )
 
-    def perform(self, obj, method, output):
+    def is_done_collecting(self):
+        return hasattr(self, "system_state")
+
+    def on_function_call(self, obj, method, output):
         self.system_state = obj.state
+        self.state_naming = obj.system.state_naming
+
+
+@trigger
+class TimeTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
+    def is_target_event(self, obj, method, output, triggers):
+        return (
+            isinstance(obj, regelum.simulator.Simulator)
+            and method == "get_sim_step_data"
+        )
+
+    def is_done_collecting(self):
+        return hasattr(self, "time")
+
+    def on_function_call(self, obj, method, output):
+        self.time = obj.time
+
+
+@trigger
+class ObservationTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
+    def is_target_event(self, obj, method, output, triggers):
+        return (
+            isinstance(obj, regelum.simulator.Simulator)
+            and method == "get_sim_step_data"
+        )
+
+    def is_done_collecting(self):
+        return hasattr(self, "observation")
+
+    def on_function_call(self, obj, method, output):
+        self.observation = obj.observation
+        self.observation_naming = obj.system.observation_naming
 
 
 class HistoricalCallback(Callback, ABC):
@@ -752,13 +820,13 @@ def method_callback(method_name, class_name=None, log_level="debug"):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
-        def is_target_event(self, obj, method, output):
+        def is_target_event(self, obj, method, output, triggers):
             return method == method_name and class_name in [
                 None,
                 obj.__class__.__name__,
             ]
 
-        def perform(self, obj, method, output):
+        def on_function_call(self, obj, method, output):
             self.log(
                 f"Method '{method}' of class '{obj.__class__.__name__}' returned {output}"
             )
@@ -771,13 +839,13 @@ class ScenarioStepLogger(Callback):
 
     cooldown = 1.0
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return (
             isinstance(obj, regelum.scenario.Scenario)
             and method == "post_compute_action"
         )
 
-    def perform(self, obj, method: str, output: Dict[str, Any]):
+    def on_function_call(self, obj, method: str, output: Dict[str, Any]):
         with np.printoptions(precision=2, suppress=True):
             self.log(
                 f"runn. objective: {output['running_objective']:.2f}, "
@@ -800,10 +868,10 @@ class SaveProgressCallback(Callback):
         with regelum.main.metadata["report"]() as r:
             r["episode_current"] = 0
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return False
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         pass
 
     def on_episode_done(
@@ -847,12 +915,12 @@ class HistoricalDataCallback(HistoricalCallback):
         self.action_components_naming = None
         self.state_components_naming = None
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return isinstance(obj, regelum.scenario.Scenario) and (
             method == "post_compute_action" or method == "dump_data_buffer"
         )
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         if self.observation_components_naming is None:
             self.observation_components_naming = (
                 [
@@ -980,7 +1048,7 @@ class ObjectiveSaver(HistoricalCallback):
         self.cooldown = 0.0
         self.iteration_number = 1
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return (
             isinstance(obj, regelum.scenario.RLScenario) and (method == "pre_optimize")
         ) or (
@@ -988,7 +1056,7 @@ class ObjectiveSaver(HistoricalCallback):
             and (method == "post_epoch" or method == "post_optimize")
         )
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         if isinstance(obj, regelum.scenario.RLScenario) and (method == "pre_optimize"):
             which, event, time, episode_counter, iteration_counter = output
             time = float(time)
@@ -1029,7 +1097,7 @@ class ObjectiveSaver(HistoricalCallback):
 class CriticObjectiveSaver(ObjectiveSaver):
     """A callback which allows to store critic objective values during execution runtime."""
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return (
             isinstance(obj, regelum.scenario.RLScenario) and (method == "pre_optimize")
         ) or (
@@ -1041,7 +1109,7 @@ class CriticObjectiveSaver(ObjectiveSaver):
 class PolicyObjectiveSaver(ObjectiveSaver):
     """A callback which allows to store critic objective values during execution runtime."""
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return (
             isinstance(obj, regelum.scenario.RLScenario) and (method == "pre_optimize")
         ) or (
@@ -1062,7 +1130,7 @@ class ValueCallback(HistoricalCallback):
         self.values = []
         self.mean_iteration_values = []
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return False
 
     def on_episode_done(
@@ -1118,7 +1186,7 @@ class ValueCallback(HistoricalCallback):
 
             self.clear_recent_data()
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         pass
 
     def load_data(self, idx=None):
@@ -1149,10 +1217,10 @@ class TimeRemainingCallback(Callback):
         super().__init__(*args, **kwargs)
         self.time_episode = []
 
-    def is_target_event(self, obj, method, output):
+    def is_target_event(self, obj, method, output, triggers):
         return False
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         pass
 
     def on_episode_done(

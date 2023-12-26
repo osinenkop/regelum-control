@@ -65,6 +65,7 @@ from rehydra import main as rehydramain
 from . import callback
 from regelum.__internal.base import RegelumBase
 from .__internal.metadata import Metadata
+from .animation import StateAnimation
 
 from .callback import (
     OnEpisodeDoneCallback,
