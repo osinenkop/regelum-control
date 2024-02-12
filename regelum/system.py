@@ -5,6 +5,7 @@ Note:
     It contains only the update rule as defined in this section. The actual simulation routine is executed by a
     separate [`Simulator`][regelum.simulator] class, which leverages the update rule to create the corresponding integration scheme.
 """
+
 from __future__ import annotations
 import numpy as np
 import casadi as cs
@@ -17,7 +18,6 @@ from .utils import rg
 from typing import Any, Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
 from regelum.typing import RgArray
-
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
@@ -670,7 +670,7 @@ class ComposedSystem(SystemInterface):
         return self.compose(sys_right)
 
 
-@animation.StateAnimation.attach
+# @animation.StateAnimation.attach
 class System(SystemInterface):
     """Class representing a controllable system with predefined dynamics and observations.
 
@@ -992,11 +992,6 @@ class Integrator(System):
         Dstate[1] = 1 / I * inputs[1]
 
         return Dstate
-
-
-ThreeWheeledRobotComposed = (Integrator() @ ThreeWheeledRobotKinematic()).permute_state(
-    [3, 4, 0, 1, 2]
-)
 
 
 class CartPole(System):

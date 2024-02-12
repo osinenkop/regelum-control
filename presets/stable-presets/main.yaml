@@ -15,8 +15,8 @@ callbacks:
   - regelum.callback.HistoricalDataCallback
   - regelum.callback.CriticObjectiveSaver
   - regelum.callback.PolicyObjectiveSaver
-  - regelum.callback.CalfCallback
-  - regelum.callback.CALFWeightsCallback
+  # - regelum.callback.CalfCallback
+  # - regelum.callback.CALFWeightsCallback
 
 
 disallow_uncommitted%%: False

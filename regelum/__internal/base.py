@@ -79,19 +79,29 @@ class RegelumType(abc.ABCMeta):
         if hasattr(x, "_real_name"):
             x.__name__ = x._real_name
             del x._real_name
-        #callbacks = x._attached if hasattr(x, "_attached") else []
-        #if callbacks:
+        # callbacks = x._attached if hasattr(x, "_attached") else []
+        # if callbacks:
         #    del x._attached
         x._callbacks_registered = False
 
         if x.__init__ is not x.__bases__[0].__init__:
             original_init = x.__init__
 
-            def pre_init(self, *args, _tracked=True, original_init=original_init, **kwargs):
+            def pre_init(
+                self, *args, _tracked=True, original_init=original_init, **kwargs
+            ):
                 if not self._callbacks_registered and _tracked:
                     callbacks = self._attached if hasattr(self, "_attached") else []
-                    animations = [callback for callback in callbacks if issubclass(callback, cb.AnimationCallback)]
-                    non_animations = [callback for callback in callbacks if not issubclass(callback, cb.AnimationCallback)]
+                    animations = [
+                        callback
+                        for callback in callbacks
+                        if issubclass(callback, cb.AnimationCallback)
+                    ]
+                    non_animations = [
+                        callback
+                        for callback in callbacks
+                        if not issubclass(callback, cb.AnimationCallback)
+                    ]
                     for callback in non_animations:
                         callback.register(attachee=x, launch=True)
                     if animations:
@@ -165,7 +175,6 @@ class RegelumBase(metaclass=RegelumType):
             raise ValueError(
                 "Metadata has already been set, yet an attempt to set it again was made."
             )
-
 
     def __init__(self):
         """Initialize an object from regelum."""

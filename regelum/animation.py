@@ -48,7 +48,9 @@ class AnimationCallback(callback.Callback, ABC):
     def _compose(cls_left, cls_right):
         animations = []
         for cls in [cls_left, cls_right]:
-            if issubclass(cls, ComposedAnimationCallback) and not issubclass(cls, DeferredComposedAnimation):
+            if issubclass(cls, ComposedAnimationCallback) and not issubclass(
+                cls, DeferredComposedAnimation
+            ):
                 assert (
                     cls is not ComposedAnimationCallback
                 ), "Adding a composed animation in this way is ambiguous."
@@ -67,9 +69,9 @@ class AnimationCallback(callback.Callback, ABC):
     def __init__(self, *args, interactive=None, fig=None, ax=None, mng=None, **kwargs):
         """Initialize an instance of AnimationCallback."""
         super().__init__(*args, **kwargs)
-        #assert (
+        # assert (
         #    self.attachee is not None
-        #), "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
+        # ), "An animation callback can only be instantiated via attachment, however an attempt to instantiate it otherwise was made."
         self.frame_data = []
         # matplotlib.use('Qt5Agg', force=True)
 
@@ -79,7 +81,6 @@ class AnimationCallback(callback.Callback, ABC):
         if self.interactive_mode:
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
-
 
             self.ax = canvas.figure.add_subplot(111)
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
@@ -91,7 +92,8 @@ class AnimationCallback(callback.Callback, ABC):
             if isinstance(self.ax, SubplotSpec):
                 self.ax = fig.add_subplot(self.ax)
         self.save_directory = Path(
-            f".callbacks/{self.__class__.__name__}" + (f"@{self.attachee.__name__}" if self.attachee is not None else "")
+            f".callbacks/{self.__class__.__name__}"
+            + (f"@{self.attachee.__name__}" if self.attachee is not None else "")
         ).resolve()
         self.saved_counter = 0
         self.skip_frames = self._metadata["skip_frames"]
@@ -260,7 +262,9 @@ class AnimationCallback(callback.Callback, ABC):
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
 
-    def __init__(self, *animations, fig=None, ax=None, mng=None, mode='square', **kwargs):
+    def __init__(
+        self, *animations, fig=None, ax=None, mng=None, mode="square", **kwargs
+    ):
         """Initialize an instance of ComposedAnimationCallback.
 
         Args:
@@ -278,27 +282,30 @@ class ComposedAnimationCallback(AnimationCallback):
             self.mng = mng
 
         # canvas = FigureCanvas(self.fig)
-        if mode == 'square':
+        if mode == "square":
             width = int(len(animations) ** 0.5 + 0.5)
             height = width - (width**2 - len(animations)) // width
-        if mode == 'vstack':
+        if mode == "vstack":
             width = 1
             height = len(animations)
-        elif mode == 'hstack':
+        elif mode == "hstack":
             height = 1
             width = len(animations)
         else:
-            assert mode in ['square', 'vstack', 'hstack']
+            assert mode in ["square", "vstack", "hstack"]
 
         if ax is None:
             gs = GridSpec(width, height, figure=self.fig)
         else:
             gs = GridSpecFromSubplotSpec(width, height, subplot_spec=ax)
 
-
         self.animations = []
         for i, animation in enumerate(animations):
-            self.animations.append(animation(interactive=False, fig=self.fig, ax=gs[i], mng=self.mng, **kwargs))
+            self.animations.append(
+                animation(
+                    interactive=False, fig=self.fig, ax=gs[i], mng=self.mng, **kwargs
+                )
+            )
 
         # self.animations = [Animation(interactive=False, fig=self.fig, ax=gs, **kwargs) for Animation in animations]
 
@@ -340,7 +347,9 @@ class ComposedAnimationCallback(AnimationCallback):
 
 
 class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
-    def __init__(self, *animations, fig=None, ax=None, mode='vstack', mng=None, **kwargs):
+    def __init__(
+        self, *animations, fig=None, ax=None, mode="vstack", mng=None, **kwargs
+    ):
         self.initialized = False
         if "interactive" in kwargs:
             del kwargs["interactive"]
@@ -365,9 +374,7 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
         self._animation_classes = animations
         # canvas = FigureCanvas(self.fig)
 
-
         self._kwargs = kwargs
-
 
     def on_launch(self):
         if self.initialized:
@@ -391,17 +398,17 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
             animation.fig.show()
         """
 
-        if self.mode == 'square':
+        if self.mode == "square":
             width = int(len(self._animation_classes) ** 0.5 + 0.5)
             height = width - (width**2 - len(self._animation_classes)) // width
-        if self.mode == 'vstack':
+        if self.mode == "vstack":
             width = 1
             height = len(self._animation_classes)
-        elif self.mode == 'hstack':
+        elif self.mode == "hstack":
             height = 1
             width = len(self._animation_classes)
         else:
-            assert self.mode in ['square', 'vstack', 'hstack']
+            assert self.mode in ["square", "vstack", "hstack"]
 
         if self.ax is None:
             self.gs = GridSpec(height, width, figure=self.fig)
@@ -410,7 +417,15 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
         self.animations = []
         for i, animation in enumerate(self._animation_classes):
-            self.animations.append(animation(interactive=False, fig=self.fig, ax=self.gs[i], mng=self.mng, **self._kwargs))
+            self.animations.append(
+                animation(
+                    interactive=False,
+                    fig=self.fig,
+                    ax=self.gs[i],
+                    mng=self.mng,
+                    **self._kwargs,
+                )
+            )
 
         # self.animations = [Animation(interactive=False, fig=self.fig, ax=gs, **kwargs) for Animation in animations]
 
@@ -435,8 +450,10 @@ class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
         state_dimension = len(self.system_state)
         self._animation_classes = []
         for i in range(state_dimension):
+
             def stateComponent(*args, component=i, **kwargs):
                 return StateComponentAnimation(*args, component=component, **kwargs)
+
             self._animation_classes.append(stateComponent)
         super().__deferred_init__()
 
@@ -484,10 +501,9 @@ class GraphAnimation(AnimationCallback):
             ts += list(t)[::skip]
             ys += list(y)[::skip]
 
-        left, right, bottom, top = self.lim_from_reference(np.array(ts),
-                                                           np.array(ys),
-                                                           extra_margin,
-                                                           equal=False)
+        left, right, bottom, top = self.lim_from_reference(
+            np.array(ts), np.array(ys), extra_margin, equal=False
+        )
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
@@ -499,9 +515,9 @@ class GraphAnimation(AnimationCallback):
         return self.lines
 
 
-class StateComponentAnimation(GraphAnimation,
-                              callback.StateTracker,
-                              callback.TimeTracker):
+class StateComponentAnimation(
+    GraphAnimation, callback.StateTracker, callback.TimeTracker
+):
     _legend = (None,)
 
     def __init__(self, *args, component=0, **kwargs):
@@ -524,7 +540,9 @@ class StateComponentAnimation(GraphAnimation,
         self.ax.set_ylabel(self.state_naming[self.component])
         self.t.append(self.time)
         self.y.append(self.system_state[self.component])
-        self.add_frame(line_datas=[(self.t[1:], self.y[1:])]) # these slices are there to avoid residual time bug
+        self.add_frame(
+            line_datas=[(self.t[1:], self.y[1:])]
+        )  # these slices are there to avoid residual time bug
 
 
 class PlanarMotionAnimation(PointAnimation, callback.StateTracker):

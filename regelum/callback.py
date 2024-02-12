@@ -52,7 +52,10 @@ def is_in_debug_mode():
 
 
 def detach(Attachee):
-    assert hasattr(Attachee, "_attached"), f"Could not detach callbacks from {Attachee}, because no callbacks were attached."
+    assert hasattr(
+        Attachee, "_attached"
+    ), f"Could not detach callbacks from {Attachee}, because no callbacks were attached."
+
     class Detachee(Attachee):
         _attached = []
         _real_name = Attachee._real_name
@@ -81,8 +84,8 @@ def trigger(CallbackClass):
                         PassdownCallback.on_function_call(self, obj, method, output)
                         return True
                     return False
-                        # self.on_trigger(PassdownCallback)
-                        # self.trigger_cooldown(t)
+                    # self.on_trigger(PassdownCallback)
+                    # self.trigger_cooldown(t)
                 except regelum.RegelumExitException as e:
                     raise e
                 except Exception as e:
@@ -187,8 +190,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
         triggers = []
         for base in self.__class__.__bases__:
             if hasattr(base, f"_PassdownCallback__call_passdown"):
-                if base._PassdownCallback__call_passdown(
-                    self, obj, method, output):
+                if base._PassdownCallback__call_passdown(self, obj, method, output):
                     triggers.append(base)
         if self.ready(t):
             try:
@@ -207,7 +209,6 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
             except Exception as e:
                 self.log(f"Callback {self.__class__.__name__} failed.")
                 self.exception(e)
-
 
     @classmethod
     def attach(cls, other):
