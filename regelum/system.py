@@ -1,8 +1,8 @@
 """Contains a generic interface for systems (environments) as well as concrete systems as realizations of the former.
 
 Note:
-    The classes provided here do not perform any simulation mechanics itself. 
-    It contains only the update rule as defined in this section. The actual simulation routine is executed by a 
+    The classes provided here do not perform any simulation mechanics itself.
+    It contains only the update rule as defined in this section. The actual simulation routine is executed by a
     separate [`Simulator`][regelum.simulator] class, which leverages the update rule to create the corresponding integration scheme.
 """
 from __future__ import annotations
@@ -11,10 +11,13 @@ import casadi as cs
 import torch
 import regelum
 from abc import ABC, abstractmethod
+
+from . import animation
 from .utils import rg
 from typing import Any, Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
 from regelum.typing import RgArray
+
 
 
 class SystemInterface(regelum.RegelumBase, ABC):
@@ -35,11 +38,6 @@ class SystemInterface(regelum.RegelumBase, ABC):
         _inputs_naming: A list of strings naming each input dimension.
         _action_bounds: A list of pairs defining the lower and upper bounds for each action dimension.
             Action bounds are defined as a list of [min, max] pairs for each action dimension
-
-    Note:
-        Naming variables such as `_observation_naming`, `_state_naming`, and `_inputs_naming`, while optional,
-        are highly recommended for their utility, particularly in enhancing the interpretability of results,
-        such as labeling axes in plots generated from callbacks
     """
 
     _name: Optional[str] = None
@@ -55,99 +53,44 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
     @property
     def name(self) -> str:
-        """Return name identifier for the system.
-
-        Returns:
-            The name property value.
-
-        Raises:
-            ValueError: If the name property is not set.
-        """
         if self._name is None:
             raise ValueError("system._name should be set")
         return self._name
 
     @property
     def system_type(self) -> str:
-        """A string representing the type of the system (e.g., `"diff_eqn"`).
-
-        Returns:
-            A string representing the system type.
-
-        Raises:
-            ValueError: If the system type is not set.
-        """
         if self._system_type is None:
             raise ValueError("system._system_type should be set")
         return self._system_type
 
     @property
     def dim_state(self) -> int:
-        """The number of state variables of the system.
-
-        Returns:
-            An integer representing the value of the 'dim_state'.
-
-        Raises:
-            ValueError: If the 'dim_state' property is not set.
-        """
         if self._dim_state is None:
             raise ValueError("system._dim_state should be set")
         return self._dim_state
 
     @property
     def dim_observation(self) -> int:
-        """The number of observation variables.
-
-        Returns:
-            int: The dimension of the observation.
-
-        Raises:
-            ValueError: If the dimension of the observation is not set.
-        """
         if self._dim_observation is None:
             raise ValueError("system._dim_observation should be set")
         return self._dim_observation
 
     @property
     def dim_inputs(self) -> int:
-        """The number of input variables, typically control inputs.
-
-        Returns:
-            int: The dimension of the inputs.
-
-        Raises:
-            ValueError: If the dimension of the inputs is not set.
-        """
         if self._dim_inputs is None:
             raise ValueError("system._dim_inputs should be set")
         return self._dim_inputs
 
     @property
     def parameters(self) -> dict:
-        """Get the system parameters.
-
-        Returns:
-            A dictionary of system parameters.
-        """
         return self._parameters
 
     @property
     def state_naming(self):
-        """A list of strings naming each state dimension.
-
-        Returns:
-            Any: The value of the state_naming property.
-        """
         return self._state_naming
 
     @property
     def observation_naming(self):
-        """A list of strings naming each observation dimension.
-
-        Returns:
-            The value of the `observation_naming` property.
-        """
         return self._observation_naming
 
     @property
@@ -156,14 +99,6 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
     @property
     def action_bounds(self):
-        """Get the system's action bounds.
-
-        A list of pairs defining the lower and upper bounds for each action dimension.
-        Action bounds are defined as a list of [min, max] pairs for each action dimension
-
-        Returns:
-            The action bounds of the object.
-        """
         return self._action_bounds
 
     @abstractmethod
@@ -174,7 +109,7 @@ class SystemInterface(regelum.RegelumBase, ABC):
 
         This abstract method must be implemented by the inheriting system classes to define the specific system
         dynamics for the simulation. It provides the fundamental mathematical model that describes how the state of the
-        system evolves over time in response to (e.g. control or noisy) inputs.
+        system evolves over time in response to (e.g control or noisy) inputs.
 
         It is intended to be used internally by the [`SystemInterface.compute_state_dynamics`][regelum.system.SystemInterface.compute_state_dynamics] method
         which provides a public interface, handling dimensionality enforcement and batch processing if necessary. The
@@ -735,6 +670,7 @@ class ComposedSystem(SystemInterface):
         return self.compose(sys_right)
 
 
+@animation.StateAnimation.attach
 class System(SystemInterface):
     """Class representing a controllable system with predefined dynamics and observations.
 
@@ -1049,6 +985,7 @@ class Integrator(System):
             self.dim_state,
             prototype=(state, inputs),
         )
+
         m, I = self.parameters["m"], self.parameters["I"]
 
         Dstate[0] = 1 / m * inputs[0]

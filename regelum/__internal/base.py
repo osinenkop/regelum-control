@@ -46,6 +46,12 @@ class RegelumType(abc.ABCMeta):
     Used for certain infrastructural and syntactic sugar features.
     """
 
+    def __str__(self):
+        return f"<class '{self.__name__}'>"
+
+    def __repr__(self):
+        return str(self)
+
     @classmethod
     def __register_callback(cls, callback):
         pass
@@ -58,6 +64,10 @@ class RegelumType(abc.ABCMeta):
         assert hasattr(self, "_compose")
         return self._compose(other)
 
+    def __radd__(self, other):
+        if other == 0:
+            return self
+
     def __new__(cls, *args, **kwargs):
         x = super().__new__(cls, *args, **kwargs)
         if (
@@ -69,17 +79,28 @@ class RegelumType(abc.ABCMeta):
         if hasattr(x, "_real_name"):
             x.__name__ = x._real_name
             del x._real_name
-        callbacks = x._attached if hasattr(x, "_attached") else []
-        if callbacks:
-            del x._attached
-        old_init = x.__init__
+        #callbacks = x._attached if hasattr(x, "_attached") else []
+        #if callbacks:
+        #    del x._attached
+        x._callbacks_registered = False
 
-        def new_init(self, *args, **kwargs):
-            for callback in callbacks:
-                callback.register(attachee=x, launch=True)
-            return old_init(self, *args, **kwargs)
+        if x.__init__ is not x.__bases__[0].__init__:
+            original_init = x.__init__
 
-        x.__init__ = new_init
+            def pre_init(self, *args, _tracked=True, original_init=original_init, **kwargs):
+                if not self._callbacks_registered and _tracked:
+                    callbacks = self._attached if hasattr(self, "_attached") else []
+                    animations = [callback for callback in callbacks if issubclass(callback, cb.AnimationCallback)]
+                    non_animations = [callback for callback in callbacks if not issubclass(callback, cb.AnimationCallback)]
+                    for callback in non_animations:
+                        callback.register(attachee=x, launch=True)
+                    if animations:
+                        sum(animations).register(attachee=x, launch=True)
+                self._callbacks_registered = True
+                return original_init(self, *args, **kwargs)
+
+            x.__init__ = pre_init
+
         return x
 
 
@@ -144,6 +165,7 @@ class RegelumBase(metaclass=RegelumType):
             raise ValueError(
                 "Metadata has already been set, yet an attempt to set it again was made."
             )
+
 
     def __init__(self):
         """Initialize an object from regelum."""
