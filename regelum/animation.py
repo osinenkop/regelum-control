@@ -540,6 +540,76 @@ class PlanarMotionAnimation(PointAnimation, callback.StateTracker):
         self.add_frame(x=self.system_state[0], y=self.system_state[1])
 
 
+class MultiSpriteAnimation(AnimationCallback, ABC):
+    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
+
+    _pics = None  # must be svgs located in regelum/img
+    _marker_sizes = 30
+    _rotations = 0
+
+    def setup(self):
+        if self._pics is None:
+            return self.setup_points()
+        else:
+            return self.setup_pic()
+
+    def setup_points(self):
+        (point1,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        (point2,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        (point3,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
+        self.points = (point1, point2, point3)
+        self.ax.grid()
+
+    def setup_pic(self):
+        self.path = regelum.__file__.replace("__init__.py", f"img/{self._pic}")
+        self.pic_data, self.attributes = svg2paths(self.path)
+        parsed = parse_path(self.attributes[0]["d"])
+        parsed.vertices[:, 0] -= parsed.vertices[:, 0].mean(axis=0)
+        self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
+        self.marker._transform = self.marker.get_transform().rotate_deg(self._rot)
+        (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=self._ms)
+        self.original_transform = self.marker.get_transform()
+
+    def lim(self, *args, extra_margin=0.11, **kwargs):
+        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+        left, right, bottom, top = self.lim_from_reference(x, y, extra_margin)
+        self.ax.set_xlim(left, right)
+        self.ax.set_ylim(bottom, top)
+
+    def construct_frame(self, x, y, theta):
+        if self._pic is None:
+            return self.construct_frame_points(x, y, theta)
+        else:
+            return self.construct_frame_pic(x, y, theta)
+
+    def construct_frame_points(self, x, y, theta):
+        offsets = (
+            np.array(
+                [
+                    [
+                        np.cos(theta + i * 2 * np.pi / 3),
+                        np.sin(theta + i * 2 * np.pi / 3),
+                    ]
+                    for i in range(3)
+                ]
+            )
+            / 10
+        )
+        location = np.array([x, y])
+        for point, offset in zip(self.points, offsets):
+            x, y = location + offset
+            point.set_data([x], [y])
+        return self.points
+
+    def construct_frame_pic(self, x, y, theta):
+        self.triangle.set_data([x], [y])
+        self.marker._transform = Affine2D(self.original_transform._mtx.copy())
+        self.marker._transform = self.marker.get_transform().rotate_deg(
+            180 * theta / np.pi
+        )
+        return (self.triangle,)
+
+
 class TriangleAnimation(AnimationCallback, ABC):
     """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
 
