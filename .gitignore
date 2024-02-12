@@ -10,7 +10,6 @@ dist/
 build_script.sh
 test/
 data/
-tutorials/
 rcognita_archive
 .idea/*
 .DS_Store
