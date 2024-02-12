@@ -1,4 +1,12 @@
-"""Module contains policies, i.e., entities that directly calculate actions. Policies are inegrated into scenarios (agents).
+"""Module contains policies, i.e., entities that directly calculate actions. 
+
+The Policy calculates actions based on observations from 
+the environment and the current state of the model. 
+It can be optimized using various optimization techniques, 
+adjusting the model's parameters to improve the chosen actions over time.
+
+Policies are integrated into scenarios, allowing them to operate within agents 
+that interact with dynamic environments, like those found in reinforcement learning.
 
 Remarks:
 
@@ -14,7 +22,7 @@ from abc import ABC, abstractmethod
 from typing import Union, Optional
 import casadi as cs
 from .utils import rg, AwaitedParameter
-
+from regelum.typing import Weights
 from .predictor import Predictor
 from .model import ModelNN, Model, ModelWeightContainer
 from .critic import Critic, CriticTrivial
@@ -33,14 +41,11 @@ from .objective import (
     rql_objective,
     ppo_objective,
 )
-from typing import List
+from typing import List, Tuple
+from regelum.typing import RgArray
+from typing import Any
 
-try:
-    import torch
-except ImportError:
-    from unittest.mock import MagicMock
-
-    torch = MagicMock()
+import torch
 
 
 class Policy(Optimizable, ABC):
@@ -48,9 +53,13 @@ class Policy(Optimizable, ABC):
 
     Policy defines the strategy or rule by which an agent interacts with an environment.
 
-    The Policy calculates actions based on observations from the environment and the current state of the model. It can be optimized using various optimization techniques, adjusting the model's parameters to improve the chosen actions over time.
+    The Policy calculates actions based on observations from
+    the environment and the current state of the model.
+    It can be optimized using various optimization techniques,
+    adjusting the model's parameters to improve the chosen actions over time.
 
-    Policies are integrated into scenarios, allowing them to operate within agents that interact with dynamic environments, like those found in reinforcement learning.
+    Policies are integrated into scenarios, allowing them to operate within agents
+    that interact with dynamic environments, like those found in reinforcement learning.
     """
 
     def __init__(
@@ -65,21 +74,12 @@ class Policy(Optimizable, ABC):
         """Initialize an instance of Policy class.
 
         Args:
-            model (Union[Model, ModelNN]): The model representing the
-                policy's decision-making mechanism.
-            system (Union[System, ComposedSystem], optional): System in
-                which the policy will be deployed, defaults to None
-            action_bounds (Union[list, np.ndarray, None], optional):
-                Limits to the range of actions the policy can generate,
-                defaults to None
-            optimizer_config (Optional[OptimizerConfig], optional):
-                Configuration settings for the optimization procedure,
-                defaults to None
-            discount_factor (Optional[float], optional): Discount factor
-                for the future running objectives, defaults to 1.0
-            epsilon_random_parameter (float, optional): Parameter that
-                defines the randomness in action selection to encourage
-                exploration, defaults to None
+            model: The model representing the policy's decision-making mechanism.
+            system: System in which the policy will be deployed.
+            action_bounds: Limits to the range of actions the policy can generate.
+            optimizer_config: Configuration settings for the optimization procedure.
+            discount_factor: Discount factor for the future running objectives.
+            epsilon_random_parameter: Parameter that defines the randomness in action selection to encourage exploration.
         """
         self.system = system
         self.model = model
@@ -105,19 +105,30 @@ class Policy(Optimizable, ABC):
             "action", awaited_from=self.update_action.__name__
         )
 
-    def __call__(self, observation):
+    def __call__(self, observation: np.array) -> np.array:
+        """Call the get_action method to calculate the action for the given observation.
+
+        Args:
+            observation: The observation based on which the action is to be calculated.
+
+        Returns:
+            The action calculated by the policy.
+        """
         return self.get_action(observation)
 
     @property
     def action(self):
+        """Return the action calculated by the policy."""
         return self._action
 
     @action.setter
     def action(self, value):
+        """Get the action calculated by the policy."""
         self._action = value
 
     @action.getter
     def action(self):
+        """Get the action calculated by the policy."""
         if isinstance(self._action, cs.DM):
             return self._action.full()
         elif isinstance(self._action, torch.Tensor):
@@ -126,47 +137,52 @@ class Policy(Optimizable, ABC):
 
     @property
     def data_buffer_objective_keys(self) -> Optional[List[str]]:
+        """Provide the dictionary keys used for the objective function within data buffers.
+
+        Returns:
+            A list of keys used within the data buffers for objective function calculation.
+        """
         pass
 
     @property
-    def weights(self):
+    def weights(self) -> Weights:
         """Get the weights of the policy model."""
         return self.model.weights
 
-    def receive_observation(self, observation):
+    def receive_observation(self, observation: np.array) -> None:
         """Update the current observation of the policy.
 
         Args:
-            observation (numpy array.): The current observation.
+            observation: The current observation.
         """
         self.observation = observation
 
-    def receive_estimated_state(self, state):
+    def receive_estimated_state(self, state: np.array) -> None:
         """Update the current observation of the policy.
 
         Args:
-            observation (numpy array): The current observation.
+            state: The current state.
         """
         self.state = state
 
-    def set_action(self, action):
+    def set_action(self, action: np.array):
         """Set the current action of the policy.
 
         Args:
-            action (numpy array): The current action.
+            action: The current action.
         """
         self.action = action
 
-    def update_action(self, observation=None):
+    def update_action(self, observation: Optional[np.array] = None) -> np.array:
         """Update the current action of the policy based on the provided observation.
 
-        This method uses the current model to compute a new action, possibly incorporating random elements for exploration purposes. If no observation is provided, the method uses the last received observation.
+        This method uses the current model to compute a new action,
+        possibly incorporating random elements for exploration purposes.
+        If no observation is provided, the method uses the last received observation.
 
         Args:
-            observation (numpy array, optional): The most recent
-                observation received from the environment. If not
-                provided, the previously received observation will be
-                used.
+            observation: The most recent observation received from the environment. If not
+                provided, the previously received observation is used.
         """
         if observation is None:
             observation = self.observation
@@ -196,14 +212,14 @@ class Policy(Optimizable, ABC):
 
         return self.action
 
-    def get_action(self, observation):
+    def get_action(self, observation: np.array) -> np.array:
         if isinstance(self.model, ModelNN):
             action = self.model(torch.FloatTensor(observation)).detach().cpu().numpy()
         else:
             action = self.model(observation)
         return action
 
-    def update_weights(self, weights=None):
+    def update_weights(self, weights: Optional[Weights] = None) -> None:
         """Update the weights of the model of the policy.
 
         Args:
@@ -213,23 +229,19 @@ class Policy(Optimizable, ABC):
         """
         self.model.update_weights(weights)
 
-    def cache_weights(self, weights=None):
+    def cache_weights(self, weights: Optional[Weights] = None) -> None:
         """Cache the current weights of the model of the policy.
 
         Args:
-            weights (numpy array, optional): The weights to cache. If
-                not provided, the previously optimized weights will be
-                used.
+            weights: The weights to cache. If not provided, the current weights will be used.
         """
         self.model.cache_weights(weights)
 
-    def update_and_cache_weights(self, weights=None):
+    def update_and_cache_weights(self, weights: Optional[Weights] = None):
         """Update and cache the weights of the model of the policy.
 
         Args:
-            weights (numpy array, optional): The weights to update and
-                cache. If not provided, the previously optimized weights
-                will be used.
+            weights: The weights to update and cache. If not provided, the previously optimized weights will be used.
         """
         self.model.update_and_cache_weights(weights)
 
@@ -239,7 +251,14 @@ class Policy(Optimizable, ABC):
 
 
 class PolicyGradient(Policy, ABC):
-    """Base Class for policy gradient methods."""
+    """Base Class for policy gradient methods.
+
+    Base class for policy gradient methods. Policy gradients methods
+    optimize policies based on the gradient of some performance measure
+    with respect to policy parameters. These methods typically involve
+    estimating the gradient using a large number of samples (trajectories
+    for which we have either complete values or advantage estimates).
+    """
 
     def __init__(
         self,
@@ -253,18 +272,15 @@ class PolicyGradient(Policy, ABC):
         """Instantiate PolicyGradient base class.
 
         Args:
-            model (ModelNN): Policy model object.
-            system (Union[System, ComposedSystem]): Agent environment.
-            action_bounds (Union[list, np.ndarray, None]): Action
-                bounds.
-            optimizer_config (OptimizerConfig): Configuration of the
-                optimizing procedure.
-            batch_keys (List[str]): Keys for objective function.
-            discount_factor (float, optional): Discount factor for
-                future running objectives, defaults to 1.0
-            device (str, optional): Device to proceed the optimization
-                on, defaults to "cpu"
-            critic (Critic, optional): Critic object, defaults to None
+            model: The neural network representing the policy.
+            system: The system or environment where the policy is deployed.
+            optimizer_config: Configuration for the optimization process.
+            discount_factor: The discount factor for future running objectives. Defaults to 1.0, indicating no discount.
+            device: The device for computations, either 'cpu' or 'cuda:0', etc..
+            critic: The critic object, could be either value or action-value based.
+
+        Raises:
+            NotImplementedError: If the method is used directly without a concrete implementation in a subclass.
         """
         Policy.__init__(
             self,
@@ -278,10 +294,26 @@ class PolicyGradient(Policy, ABC):
 
         self.N_episodes: int
 
-    def update_data_buffer(self, data_buffer: DataBuffer):
+    def update_data_buffer(self, data_buffer: DataBuffer) -> None:
+        """Add precomputed values to the data buffer.
+
+        Args:
+            data_buffer: Data buffer with experience replay.
+        """
+
         pass
 
-    def optimize(self, data_buffer: DataBuffer):
+    def optimize(self, data_buffer: DataBuffer) -> None:
+        """optimize the policy based on the given data buffer.
+
+        Note:
+            Concrete implementations of this method should follow the optimization
+            procedure set by the `optimizer_config`.
+
+        Args:
+            data_buffer: Buffer storing interaction data with the environment used for optimizing the policy.
+        """
+
         # Send to device before optimization
         if self.critic is not None:
             self.critic.model = self.critic.model.to(self.device)
@@ -301,7 +333,8 @@ class PolicyGradient(Policy, ABC):
             self.critic.model = self.critic.model.to(torch.device("cpu"))
         self.model = self.model.to(torch.device("cpu"))
 
-    def initialize_optimization_procedure(self):
+    def initialize_optimization_procedure(self) -> None:
+        """initialize all parameters necessary to carry out the optimization procedure."""
         self.objective_inputs = [
             self.create_variable(name=variable_name, is_constant=True)
             for variable_name in self.data_buffer_objective_keys()
@@ -314,7 +347,19 @@ class PolicyGradient(Policy, ABC):
         )
 
     @abstractmethod
-    def objective_function(self, **kwargs):
+    def objective_function(self, **kwargs: Any) -> torch.Tensor:
+        """Abstract method defining the objective function to be optimized.
+
+        Note:
+            The objective function should be formulated based on kwargs which represent variables needed
+            for computing the function such as observations, actions, estimated advantages, etc.
+
+        Args:
+            **kwargs: Additional keyword arguments that the objective function might need.
+
+        Raises:
+            NotImplementedError: If the method is used directly without concrete implementation in a subclass.
+        """
         pass
 
 
@@ -334,20 +379,13 @@ class PolicyReinforce(PolicyGradient):
         """Instantiate Reinforce class.
 
         Args:
-            model (ModelNN): Policy model.
-            system (Union[System, ComposedSystem]): Agent environment.
-            action_bounds (Union[list, np.ndarray, None]): Action bounds
-                for the Agent.
-            discount_factor (float, optional): Discount factor for
-                discounting future running objectives, defaults to 1.0
-            device (str, optional): Device for gradient step
-                optimization, defaults to "cpu"
-            is_with_baseline (bool, optional): Whether to use baseline
-                in surrogate objective. Baseline is taken as total
-                objective from the last iteration, defaults to True
-            is_do_not_let_the_past_distract_you (bool, optional):
-                Whether to use tail total objectives in surrogate
-                objective or not, defaults to False
+            model: The neural network-based policy model.
+            system: The environment or system where the policy is deployed.
+            optimizer_config: Settings for the associated optimization procedure.
+            discount_factor: Discount factor for future running objectives, usually in the interval [0, 1].
+            device: The device ('cpu' or 'cuda') to conduct the optimization process
+            is_with_baseline (bool, optional): Indicates the use of a baseline to reduce variance in objective computation of gradients.
+            is_do_not_let_the_past_distract_you: Whether to use tail values in objective.
         """
         PolicyGradient.__init__(
             self,
@@ -363,7 +401,16 @@ class PolicyReinforce(PolicyGradient):
 
         self.initialize_optimization_procedure()
 
-    def update_data_buffer(self, data_buffer: DataBuffer):
+    def update_data_buffer(self, data_buffer: DataBuffer) -> None:
+        """Prepares the data buffer for optimization by updating values such as `"value"`, `"tail_value"`, and `"baseline"`.
+
+        Args:
+            data_buffer: The data buffer containing trajectory information for optimization.
+
+        Note:
+            Does not return any values but updates the data buffer in place.
+
+        """
         data_buffer.update(
             {
                 "value": self.calculate_last_values(data_buffer),
@@ -372,7 +419,16 @@ class PolicyReinforce(PolicyGradient):
         data_buffer.update({"tail_value": self.calculate_tail_values(data_buffer)})
         data_buffer.update({"baseline": self.calculate_baseline(data_buffer)})
 
-    def calculate_last_values(self, data_buffer: DataBuffer):
+    def calculate_last_values(self, data_buffer: DataBuffer) -> np.array:
+        """Computes the last observed value in each trajectory and maps it to all steps within the same episode.
+
+        Args:
+            data_buffer: The data buffer containing trajectory information.
+
+        Returns:
+            A numpy array containing the last value of each trajectory for all steps.
+        """
+
         data = data_buffer.to_pandas(keys=["episode_id", "current_value"])
         data["episode_id"] = data["episode_id"].astype(int)
         data["current_value"] = data["current_value"].astype(float)
@@ -386,7 +442,7 @@ class PolicyReinforce(PolicyGradient):
     def calculate_tail_values(
         self,
         data_buffer: DataBuffer,
-    ):
+    ) -> np.array:
         data = data_buffer.to_pandas(keys=["episode_id", "current_value"])
         data["episode_id"] = data["episode_id"].astype(int)
         data["current_value"] = data["current_value"].astype(float)
@@ -402,7 +458,23 @@ class PolicyReinforce(PolicyGradient):
 
         return last_values - current_values_shifted
 
-    def calculate_baseline(self, data_buffer: DataBuffer):
+    def calculate_baseline(self, data_buffer: DataBuffer) -> np.array:
+        r"""Computes the baseline value used for scaling the advantages during optimization.
+
+        Args:
+            data_buffer: The data buffer containing trajectory information.
+
+        Returns:
+            Array of baselines $b_{[0 : T]}$, where
+                $b_t = \frac{1}{N} \sum_{j = 1} ^ {M}  \sum_{t' = t} ^ T \gamma ^ {t \delta t} r(\obs^j_t, \action^j_t)$.
+                $\delta t$ is sampling time, $\obs^j_t$ and $\action^j_t$ are the observation and the action
+                from step t and episode $j$ from the **previous iteration**, $\gamma$ is discount factor,
+                $M$ is the number of episodes.
+
+        Notes:
+            The initial value of baseline is set to zero,
+        """
+
         baseline = self.next_baseline
         if not self.is_do_not_let_the_past_distract_you:
             self.next_baseline = np.mean(data_buffer.to_pandas(keys=["value"]).values)
@@ -425,6 +497,11 @@ class PolicyReinforce(PolicyGradient):
             return baseline
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Define the specific keys required from the data buffer to calculate the objective.
+
+        Returns:
+            A list of string keys corresponding to the required data: observation, action, tail_value, value, and baseline.
+        """
         return [
             "observation",
             "action",
@@ -433,7 +510,30 @@ class PolicyReinforce(PolicyGradient):
             "baseline",
         ]
 
-    def objective_function(self, observation, action, tail_value, value, baseline):
+    def objective_function(
+        self,
+        observation: torch.Tensor,
+        action: torch.Tensor,
+        tail_value: torch.Tensor,
+        value: torch.Tensor,
+        baseline: torch.Tensor,
+    ) -> torch.Tensor:
+        """Calculates the surrogate loss using the reinforcement learning objective, as defined by the REINFORCE algorithm.
+
+        Args:
+            observation: The observations received from the environment.
+            action: The actions taken in the environment.
+            tail_value: The tail values calculated for the trajectories.
+            value: The values of the current state-action pairs.
+            baseline: The baseline values used for scaling.
+
+        Returns:
+            A loss value that, when minimized, leads to policy improvement.
+
+        Note:
+            All the arguments are sampled from [`DataBuffer`][regelum.data_buffers.DataBuffer]
+            via [`iter_bathes`][regelum.data_buffers.DataBuffer.iter_batches] method
+        """
         return reinforce_objective(
             policy_model=self.model,
             observations=observation,
@@ -448,7 +548,9 @@ class PolicyReinforce(PolicyGradient):
 
 
 class PolicySDPG(PolicyGradient):
-    """Policy for Stochastic Deep Policy Gradient (SDPG)."""
+    """Policy for Stochastic Deep Policy Gradient (SDPG)
+
+    Extends PolicyGradient via using a critic for temporal difference objective."""
 
     def __init__(
         self,
@@ -459,22 +561,20 @@ class PolicySDPG(PolicyGradient):
         sampling_time: float,
         discount_factor: float = 1.0,
         device: str = "cpu",
+        is_normalize_advantages: bool = True,
+        gae_lambda: float = 1.0,
     ):
         """Instantiate SDPG class.
 
         Args:
-            model (ModelNN): Policy Model.
-            critic (Critic): Critic object that is optmized via temporal
-                difference objective.
-            system (Union[System, ComposedSystem]): Agent environment.
-            action_bounds (Union[list, np.ndarray, None]): Action bounds
-                for the Agent.
-            optimizer_config (OptimizerConfig): Configuration of the
-                optimization procedure.
-            discount_factor (float, optional): Discounting factor for
-                discounting future running objectives, defaults to 1.0
-            device (str, optional): Device to proceed the optimization
-                process, defaults to "cpu"
+            model: Policy model used to compute actions.
+            critic: Critic object used in the temporal difference objective.
+            system: The environment or system where the policy is deployed.
+            optimizer_config: Settings for the associated optimization procedure.
+            sampling_time: Time interval used to discretize continuous time into steps.
+            discount_factor: Discount factor used to compute the present value of future running objectives.
+            device: The computation device ('cpu' or 'cuda') to execute the optimization process.
+            is_normalize_advantages: Whether to normalize the advantages.
         """
         PolicyGradient.__init__(
             self,
@@ -486,14 +586,45 @@ class PolicySDPG(PolicyGradient):
             optimizer_config=optimizer_config,
         )
         self.sampling_time = sampling_time
+        self.is_normalize_advantages = is_normalize_advantages
+        self.gae_lambda = gae_lambda
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Specifies the keys in the data buffer required for computing the optimization objective.
+
+        Returns:
+            A list of strings that are keys in the data buffer for retrieving necessary data.
+
+        Note:
+            The specified keys are 'observation', 'action', 'time', 'episode_id', and 'running_objective'.
+        """
         return ["observation", "action", "time", "episode_id", "running_objective"]
 
     def objective_function(
-        self, observation, action, time, episode_id, running_objective
-    ):
+        self,
+        observation: torch.Tensor,
+        action: torch.Tensor,
+        time: torch.Tensor,
+        episode_id: torch.Tensor,
+        running_objective: torch.Tensor,
+    ) -> torch.Tensor:
+        """Defines the objective function to optimize policy under the SDPG framework using the provided data buffer components.
+
+        Args:
+            observation: The most recent observations received from the environment.
+            action: The actions executed in the environment based on the policy.
+            time: The timestep or moment when the action is taken.
+            episode_id: Unique identifiers for episodes in the training data.
+            running_objective: Cumulative reward or running objective value of the taken actions.
+
+        Returns:
+            The calculated objective value from the SDPG algorithm for optimization purposes.
+
+        Notes:
+            The objective function gets arguments from data buffer.
+        """
+
         return sdpg_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
@@ -505,11 +636,13 @@ class PolicySDPG(PolicyGradient):
             episode_ids=episode_id.long(),
             running_objectives=running_objective,
             sampling_time=self.sampling_time,
+            is_normalize_advantages=self.is_normalize_advantages,
+            gae_lambda=self.gae_lambda,
         )
 
 
 class PolicyPPO(PolicyGradient):
-    """Proximal Policy Optimization."""
+    """Implements the Proximal Policy Optimization (PPO) algorithm"""
 
     def __init__(
         self,
@@ -521,26 +654,24 @@ class PolicyPPO(PolicyGradient):
         discount_factor: float = 1.0,
         device: str = "cpu",
         gae_lambda: float = 0.0,
-        running_objective_type="cost",
+        running_objective_type: str = "cost",
         cliprange: float = 0.2,
+        is_normalize_advantages: bool = True,
     ):
         """Instantiate PPO policy class.
 
         Args:
-            model (ModelNN): Policy Model.
-            critic (Critic): Critic object that is optmized via temporal
-                difference objective.
-            system (Union[System, ComposedSystem]): Agent environment.
-            action_bounds (Union[list, np.ndarray, None]): Action bounds
-                for the Agent.
-            optimizer_config (OptimizerConfig): Configuration of the
-                optimization procedure.
-            discount_factor (float, optional): Discounting factor for
-                discounting future running objectives, defaults to 1.0
-            device (str, optional): Device to proceed the optimization
-                process, defaults to "cpu"
-            epsilon (float, optional): Epsilon parameter, defaults to
-                0.2
+            model: An instance of the policy model.
+            critic: An instance of the critic used for optimization.
+            system: The environment or system the policy will interact with.
+            optimizer_config: Configuration parameters for the optimizer.
+            sampling_time:  Sampling period used for discretizing continuous domains.
+            discount_factor: Factor to discount future rewards.
+            device: The device to perform computation on (CPU or GPU).
+            gae_lambda: Lambda parameter for Generalized Advantage Estimation (GAE).
+            running_objective_type: Type of the running objective, can be 'cost' or 'reward'.
+            cliprange: Range used for clipping in PPO algorithm.
+            is_normalize_advantages: Whether to normalize the advantages.
         """
         PolicyGradient.__init__(
             self,
@@ -555,9 +686,16 @@ class PolicyPPO(PolicyGradient):
         self.cliprange = cliprange
         self.running_objective_type = running_objective_type
         self.gae_lambda = gae_lambda
+        self.is_normalize_advantages = is_normalize_advantages
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Return a list of data keys that will be used in the objective function of PPO optimization.
+
+        Returns:
+            A list of string keys for retrieving necessary data from the buffer for optimization.
+        """
+
         return [
             "observation",
             "action",
@@ -569,13 +707,26 @@ class PolicyPPO(PolicyGradient):
 
     def objective_function(
         self,
-        observation,
-        action,
-        time,
-        episode_id,
-        running_objective,
-        initial_log_probs,
-    ):
+        observation: torch.Tensor,
+        action: torch.Tensor,
+        time: torch.Tensor,
+        episode_id: torch.Tensor,
+        running_objective: torch.Tensor,
+        initial_log_probs: torch.Tensor,
+    ) -> torch.Tensor:
+        """Define the surrogate objective function used for PPO optimization.
+
+        Args:
+            observation: Observations from the environment.
+            action: Actions taken by the policy.
+            time: Time steps of the action.
+            episode_id: Identifiers for episodes within the buffer.
+            running_objective: Cumulative reward or cost for each step in the episodes.
+            initial_log_probs: Initial policy log probabilities of actions.
+
+        Returns:
+            The surrogate objective function value for the PPO algorithm.
+        """
         return ppo_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
@@ -591,9 +742,16 @@ class PolicyPPO(PolicyGradient):
             running_objective_type=self.running_objective_type,
             sampling_time=self.sampling_time,
             gae_lambda=self.gae_lambda,
+            is_normalize_advantages=self.is_normalize_advantages,
         )
 
-    def update_data_buffer(self, data_buffer: DataBuffer):
+    def update_data_buffer(self, data_buffer: DataBuffer) -> None:
+        """Perform updates to the data buffer, preparing the necessary data for PPO optimization, such as log probabilities.
+
+        Args:
+            data_buffer: The buffer containing interaction data between the agent and the environment.
+
+        """
         data_buffer.update(
             {
                 "initial_log_probs": self.model.log_pdf(
@@ -622,18 +780,12 @@ class PolicyDDPG(PolicyGradient):
         """Instantiate DDPG class.
 
         Args:
-            model (ModelNN): Policy Model.
-            critic (Critic): Critic object that is optmized via temporal
-                difference objective.
-            system (Union[System, ComposedSystem]): Agent environment.
-            action_bounds (Union[list, np.ndarray, None]): Action bounds
-                for the Agent.
-            optimizer_config (OptimizerConfig): Configuration of the
-                optimization procedure.
-            discount_factor (float, optional): Discounting factor for
-                discounting future running objectives, defaults to 1.0
-            device (str, optional): Device to proceed the optimization
-                process, defaults to "cpu"
+            model: The neural network policy model.
+            critic: The critic network used to evaluate the action value function.
+            system: The environment where the policy is deployed.
+            optimizer_config: Configuration for the optimization process.
+            discount_factor: The discount factor for future rewards, generally between 0 and 1.
+            device: The computation device, typically 'cpu' or 'cuda'.
         """
         PolicyGradient.__init__(
             self,
@@ -647,9 +799,23 @@ class PolicyDDPG(PolicyGradient):
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Specify the keys from the data buffer that are required for computing the objective function for DDPG optimization.
+
+        Returns:
+            A list of string keys representing the required data from the data buffer.
+        """
         return ["observation"]
 
-    def objective_function(self, observation):
+    def objective_function(self, observation: torch.Tensor) -> torch.Tensor:
+        """Calculate the objective function for DDPG, using the provided observations data to optimize the policy.
+
+        Args:
+            observation: The observations received from the environment.
+
+        Returns:
+            The objective value based on the DDPG algorithm for policy optimization.
+        """
+
         return ddpg_objective(
             policy_model=self.model,
             critic_model=self.critic.model,
@@ -676,44 +842,24 @@ class RLPolicy(Policy):
         epsilon_random_parameter: Optional[float] = None,
         algorithm: str = "mpc",
     ):
-        """Initialize an instance of RLPolicy class.
+        """Initializes the RLPolicy.
 
         Args:
-            model (Union[ModelNN, Model]): Model for predictive policy
-            critic (Critic): Critic for predictive policy (Can be used
-                either Value or Action-Value critic variants)
-            system (Union[System, ComposedSystem]): a.k.a. environment.
-                A class that represents the environment and contains
-                dimensions of action and state space.
-            action_bounds (Union[list, np.ndarray, None]): Bounds of
-                actions represented by a list or numpy array, where
-                first column is a minimal action and second column is a
-                maximal action
-            optimizer_config (OptimizerConfig): A config for Optimizable
-            predictor (Optional[Predictor], optional): Predictor
-                utilizing by policy to obtain a sequence of predictions,
-                defaults to None.
-            prediction_horizon (Optional[int], optional): length of
-                predicted state sequence (needed for Predictior),
-                defaults to None
-            running_objective (Optional[RunningObjective], optional):
-                Running objective of the control problem, defaults to
-                None.
-            discount_factor (float, optional): Discounting factor for
-                control problem. Defaults to 1.0
-            device (str, optional): Keyword argument specifying the
-                device for torch (tensor) optimization. Defaults to
-                "cpu"
-            epsilon_random (bool, optional): If set to True, policy
-                becomes epsilon-greedy with probability
-                epsilon_random_parameter. Defaults to False
-            epsilon_random_parameter (float, optional): Probability of
-                taking a random action during epsilon-greedy policy
-                update phase. Defaults to 0.0
-            algorithm (str, optional): Specifying the algorithm to which
-                policy belongs and which objective function to optimize.
-                Defaults to "mpc".
+            model: The model representing the predictive policy.
+            critic: The critic used for reinforcement learning, which can be value-based or action-based.
+            system: The environment where the policy operates.
+            action_bounds: Limits on the range of possible actions.
+            optimizer_config: Configuration settings for the optimization procedure.
+            predictor: Optional predictor used to forecast state sequences.
+            prediction_horizon: Duration over which predictions are made.
+            running_objective: The objective function used in control problems.
+            constraint_parser: Optional parser for parsing and handling constraints.
+            discount_factor: Discount factor for future rewards in control problems.
+            device: The computational device to be used, either "cpu" or "cuda".
+            epsilon_random_parameter: The probability parameter for the epsilon-greedy policy.
+            algorithm: The type of RL algorithm to use, such as "mpc", "rpv", "sql", "rql", "greedy".
         """
+
         Policy.__init__(
             self,
             model=model,
@@ -740,9 +886,23 @@ class RLPolicy(Policy):
         self.initial_guess = None
 
     def data_buffer_objective_keys(self) -> List[str]:
+        """Keys to sample from data buffer for optimization.
+
+        Identifies the required keys in the data buffer for calculating the optimization objective under the
+        reinforcement learning policy.
+
+        Returns:
+            A list of string keys required from the data buffer for optimization.
+        """
         return ["observation", "estimated_state"]
 
     def initialize_optimization_procedure(self):
+        """Prepare the optimization environment by setting up the objective function and constraints.
+
+        Note:
+            Initializes problem-specific variables required for the optimization process, which will vary based on the algorithm used.
+        """
+
         objective_variables = []
         self.observation_variable = self.create_variable(
             1, self.system.dim_observation, name="observation", is_constant=True
@@ -818,8 +978,24 @@ class RLPolicy(Policy):
             )
 
     def objective_function(
-        self, estimated_state, observation, policy_model_weights, critic_weights=None
-    ):
+        self,
+        estimated_state: RgArray,
+        observation: RgArray,
+        policy_model_weights: Weights,
+        critic_weights: Optional[Weights] = None,
+    ) -> RgArray:
+        """
+        Provides the interface for calculating the RL-based objective function for policy optimization.
+
+        Args:
+            estimated_state: The estimated current state of the system.
+            observation: Latest observed state from the environment.
+            policy_model_weights: Weights of the policy model, typically obtained from an optimizer.
+            critic_weights: Weights of the critic model, used if the algorithm is critic-based.
+
+        Returns:
+            The calculated objective based on the specified RL algorithm.
+        """
         if self.algorithm == "mpc":
             return mpc_objective(
                 estimated_state=estimated_state,
@@ -879,7 +1055,12 @@ class RLPolicy(Policy):
         else:
             raise AssertionError("RLPolicy: Wrong algorithm name")
 
-    def optimize(self, data_buffer: DataBuffer):
+    def optimize(self, data_buffer: DataBuffer) -> None:
+        """Run the optimization procedure to update the policy model using the specified RL algorithm and data collected in the buffer.
+
+        Args:
+            data_buffer: The data buffer containing trajectories collected during policy execution.
+        """
         opt_kwargs = data_buffer.get_optimization_kwargs(
             keys=self.data_buffer_objective_keys(),
             optimizer_config=self.optimizer_config,
@@ -906,17 +1087,26 @@ class RLPolicy(Policy):
                 super().optimize(**opt_kwargs)
 
     def get_initial_guess(self):
+        """Generates an initial guess for the policy parameters to start the optimization process.
+
+        Returns:
+            A numpy array or similar data structure representing the initial guess for policy weights.
+        """
+
         return self.model.weights
 
 
 class KinPointStabilizingPolicy(Policy):
-    """Scenario for kinematic point stabilization."""
+    r"""Scenario for kinematic point stabilization.
+
+    Implements the following policy: $\action = -\text{gain} \cdot \observation$
+    """
 
     def __init__(self, gain):
         """Initialize an instance of the class with the given gain.
 
         Args:
-            gain (float): The gain value to set for the instance.
+            gain: The gain value to set for the instance.
 
         Returns:
             None
@@ -928,7 +1118,7 @@ class KinPointStabilizingPolicy(Policy):
         return -self.gain * observation
 
 
-class ThreeWheeledWRobotNIStabilizingPolicy(Policy):
+class ThreeWheeledWRobotKinematicStabilizingPolicy(Policy):
     """Scenario for non-inertial three-wheeled robot composed of three PID scenarios."""
 
     def __init__(self, K):
@@ -985,7 +1175,7 @@ class InvertedPendulumStabilizingPolicy(Policy):
         super().__init__()
         self.gain = gain
 
-    def get_action(self, observation):
+    def get_action(self, observation: np.array):
         return np.array(
             [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.gain]]
         )
@@ -1003,8 +1193,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         super().__init__()
         self.scenario_gain = scenario_gain
 
-    def _zeta(self, xNI):
-        """Analytic disassembled supper_bound_constraintradient, without finding minimizer theta."""
+    def _zeta(self, xNI: np.array) -> np.array:
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
 
         nablaL = rg.zeros(3)
@@ -1061,8 +1250,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         else:
             return nablaL
 
-    def _kappa(self, xNI):
-        """Stabilizing scenario for NI-part."""
+    def _kappa(self, xNI: np.array) -> np.array:
         kappa_val = rg.zeros(2)
 
         G = rg.zeros([3, 2])
@@ -1081,7 +1269,6 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         return kappa_val
 
     def _F(self, xNI, eta, theta):
-        """Marginal function for NI."""
         sigma_tilde = (
             xNI[0] * rg.cos(theta) + xNI[1] * rg.sin(theta) + np.sqrt(rg.abs(xNI[2]))
         )
@@ -1093,7 +1280,6 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         return F + 1 / 2 * rg.dot(z, z)
 
     def _Cart2NH(self, coords_Cart):
-        """Transform from Cartesian coordinates to non-holonomic (NH) coordinates."""
         xNI = rg.zeros(3)
 
         xc = coords_Cart[0]
@@ -1109,7 +1295,6 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         return xNI
 
     def _NH2ctrl_Cart(self, xNI, uNI):
-        """Get control for Cartesian NI from NH coordinates."""
         uCart = rg.zeros(2)
 
         uCart[0] = uNI[1] + 1 / 2 * uNI[0] * (xNI[2] + xNI[0] * xNI[1])
@@ -1118,7 +1303,6 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         return uCart
 
     def get_action(self, observation):
-        """Perform the same computation as :func:`~Scenario3WRobotNIDisassembledCLF.compute_action`, but without invoking the __internal clock."""
         xNI = self._Cart2NH(observation[0])
         kappa_val = self._kappa(xNI)
         uNI = self.scenario_gain * kappa_val
@@ -1142,13 +1326,13 @@ class MemoryPIDPolicy(Policy):
 
     def __init__(
         self,
-        P,
-        I,
-        D,
-        setpoint=0.0,
-        sampling_time=0.01,
-        initial_point=(-5, -5),
-        buffer_length=30,
+        P: float,
+        I: float,
+        D: float,
+        setpoint: Union[np.array, float] = 0.0,
+        sampling_time: float = 0.01,
+        initial_point: Union[np.array, List[float]] = (-5, -5),
+        buffer_length: int = 30,
     ):
         """Initialize an instance of ScenarioMemoryPID.
 
@@ -1246,203 +1430,24 @@ class MemoryPIDPolicy(Policy):
         return is_stabilized
 
 
-class ThreeWheeledRobotMemoryPIDPolicy:
-    """PID scenario for a 3-wheeled robot.
-
-    Uses ScenarioMemoryPID scenarios wiring.
-    """
-
-    def __init__(
-        self,
-        state_init,
-        params=None,
-        sampling_time=0.01,
-        action_bounds=None,
-    ):
-        """Initialize an instance of Scenario3WRobotMemoryPID.
-
-        Args:
-            state_init: state at which simulation starts
-            params: parameters of a 3-wheeled robot
-            sampling_time: time interval between two consecutive
-                computations
-            action_bounds: upper and lower bounds for action yielded
-                from policy
-        """
-        super().__init__()
-        if params is None:
-            params = [10, 1]
-
-        self.m, self.I = params
-        if action_bounds is None:
-            action_bounds = []
-
-        self.action_bounds = np.array(action_bounds)
-        self.state_init = state_init
-
-        self.sampling_time = sampling_time
-
-        self.clock = Clock(period=sampling_time)
-        self.Ls = []
-        self.times = []
-        self.action_old = rg.zeros(2)
-        self.PID_angle_arctan = PolicyMemoryPID(
-            35, 0.0, 10, initial_point=self.state_init[2]
-        )
-        self.PID_v_zero = PolicyMemoryPID(
-            35, 0.0, 1.2, initial_point=self.state_init[3], setpoint=0.0
-        )
-        self.PID_x_y_origin = PolicyMemoryPID(
-            35,
-            0.0,
-            35,
-            setpoint=rg.array([0.0, 0.0]),
-            initial_point=self.state_init[:2],
-            # buffer_length=100,
-        )
-        self.PID_angle_origin = PolicyMemoryPID(
-            30, 0.0, 10, setpoint=0.0, initial_point=self.state_init[2]
-        )
-        self.stabilization_tollerance = 1e-3
-        self.current_F = 0
-        self.current_M = 0
-
-    def get_setpoint_for_PID_angle_arctan(self, x, y):
-        return np.arctan2(y, x)
-
-    def compute_square_of_norm(self, x, y):
-        return rg.sqrt(rg.norm_2(rg.array([x, y])))
-
-    def get_action(self, observation):
-        observation = observation[0]
-        x = observation[0]
-        y = observation[1]
-        angle = rg.array([observation[2]])
-        v = rg.array([observation[3]])
-        omega = rg.array([observation[4]])
-
-        angle_setpoint = rg.array([self.get_setpoint_for_PID_angle_arctan(x, y)])
-
-        if self.PID_angle_arctan.setpoint is None:
-            self.PID_angle_arctan.set_setpoint(angle_setpoint)
-
-        ANGLE_STABILIZED_TO_ARCTAN = self.PID_angle_arctan.is_stabilized(
-            stabilization_tollerance=self.stabilization_tollerance
-        )
-        XY_STABILIZED_TO_ORIGIN = self.PID_x_y_origin.is_stabilized(
-            stabilization_tollerance=self.stabilization_tollerance * 10
-        )
-        ROBOT_STABILIZED_TO_ORIGIN = self.PID_angle_origin.is_stabilized(
-            stabilization_tollerance=self.stabilization_tollerance
-        )
-
-        if not ANGLE_STABILIZED_TO_ARCTAN and not np.allclose(
-            [x, y], [0, 0], atol=1e-02
-        ):
-            self.PID_angle_arctan.update_observation_buffer(angle)
-            self.PID_angle_origin.reset()
-            self.PID_x_y_origin.reset()
-
-            if abs(v) > 1e-2:
-                error_derivative = self.current_F / self.m
-                F = self.PID_v_zero.compute_signal(v, error_derivative=error_derivative)
-                M = 0
-            else:
-                error_derivative = omega
-                F = 0
-                M = self.PID_angle_arctan.compute_signal(
-                    angle, error_derivative=error_derivative
-                )
-
-        elif ANGLE_STABILIZED_TO_ARCTAN and not XY_STABILIZED_TO_ORIGIN:
-            self.PID_x_y_origin.update_observation_buffer(rg.array([x, y]))
-            self.PID_angle_arctan.update_observation_buffer(angle)
-
-            self.PID_angle_arctan.reset()
-            self.PID_angle_origin.reset()
-
-            # print(f"Stabilize (x, y) to (0, 0), (x, y) = {(x, y)}")
-
-            error_derivative = (
-                v * (x * rg.cos(angle) + y * rg.sin(angle)) / rg.sqrt(x**2 + y**2)
-            ) * rg.sign(rg.dot(self.PID_x_y_origin.initial_point, [x, y]))
-
-            F = self.PID_x_y_origin.compute_signal(
-                [x, y], error_derivative=error_derivative
-            )
-            self.PID_angle_arctan.set_setpoint(angle_setpoint)
-            M = self.PID_angle_arctan.compute_signal(angle, error_derivative=omega)[0]
-
-        elif XY_STABILIZED_TO_ORIGIN and not ROBOT_STABILIZED_TO_ORIGIN:
-            # print("Stabilize angle to 0")
-
-            self.PID_angle_origin.update_observation_buffer(angle)
-            self.PID_angle_arctan.reset()
-            self.PID_x_y_origin.reset()
-
-            error_derivative = omega
-
-            F = 0
-            M = self.PID_angle_origin.compute_signal(
-                angle, error_derivative=error_derivative
-            )
-
-        else:
-            self.PID_angle_origin.reset()
-            self.PID_angle_arctan.reset()
-            self.PID_x_y_origin.reset()
-
-            if abs(v) > 1e-3:
-                error_derivative = self.current_F / self.m
-
-                F = self.PID_v_zero.compute_signal(v, error_derivative=error_derivative)
-                M = 0
-            else:
-                M = 0
-                F = 0
-
-        clipped_F = np.clip(F, -300.0, 300.0)
-        clipped_M = np.clip(M, -100.0, 100.0)
-
-        self.current_F = clipped_F
-        self.current_M = clipped_M
-
-        return rg.array([np.squeeze(clipped_F), np.squeeze(clipped_M)]).reshape(1, -1)
-
-    def reset_all_PID_scenarios(self):
-        self.PID_x_y_origin.reset()
-        self.PID_x_y_origin.reset_buffer()
-        self.PID_angle_arctan.reset()
-        self.PID_angle_arctan.reset_buffer()
-        self.PID_angle_origin.reset()
-        self.PID_angle_origin.reset_buffer()
-
-
 class ThreeWheeledRobotPIDPolicy:
-    """Nominal stabilzing policy for 3wrobot inertial system."""
+    """Nominal stabilzing policy for ThreeWheeledRobotDynamic inertial system."""
 
     def __init__(
         self,
-        state_init,
-        params=None,
-        sampling_time=0.01,
-        action_bounds=None,
-        PID_arctg_params=(10, 0.0, 3),
-        PID_v_zero_params=(35, 0.0, 1.2),
-        PID_x_y_origin_params=(35, 0.0, 35),
-        PID_angle_origin_params=(30, 0.0, 10),
-        v_to_zero_bounds=(0.0, 0.05),
-        to_origin_bounds=(0.0, 0.1),
-        to_arctan_bounds=(0.01, 0.2),
+        state_init: np.array,
+        PID_arctg_params: Tuple[float, float, float] = (10, 0.0, 3),
+        PID_v_zero_params: Tuple[float, float, float] = (35, 0.0, 1.2),
+        PID_x_y_origin_params: Tuple[float, float, float] = (35, 0.0, 35),
+        PID_angle_origin_params: Tuple[float, float, float] = (30, 0.0, 10),
+        v_to_zero_bounds: Tuple[float, float, float] = (0.0, 0.05),
+        to_origin_bounds: Tuple[float, float, float] = (0.0, 0.1),
+        to_arctan_bounds: Tuple[float, float, float] = (0.01, 0.2),
     ):
-        """Initialize Scenario3WRobotPID.
+        """Initialize object.
 
         Args:
-            state_init: initial state of 3wrobot
-            params (tuple): mass and moment of inertia `(M, I)`
-            sampling_time: sampling time
-            action_bounds: bounds that actions should not exceed
-                `[[lower_bound, upper_bound], ...]`
+            state_init: initial state of 3wrobot_dyn
             PID_arctg_params: coefficients for PD scenario which sets
                 the direction of robot to origin
             PID_v_zero_params: coefficients for PD scenario which forces
@@ -1458,38 +1463,26 @@ class ThreeWheeledRobotPIDPolicy:
             to_arctan_bounds: bounds for enabling scenario which direct
                 robot to origin
         """
-        if params is None:
-            params = [10, 1]
-
-        self.m, self.I = params
-        if action_bounds is None:
-            action_bounds = []
 
         self.v_to_zero_bounds = v_to_zero_bounds
         self.to_origin_bounds = to_origin_bounds
         self.to_arctan_bounds = to_arctan_bounds
 
-        self.action_bounds = np.array(action_bounds)
         self.state_init = state_init
 
-        self.sampling_time = sampling_time
-
-        self.clock = Clock(period=sampling_time)
-        self.Ls = []
-        self.times = []
         self.action_old = rg.zeros(2)
-        self.PID_angle_arctan = PolicyMemoryPID(
+        self.PID_angle_arctan = MemoryPIDPolicy(
             *PID_arctg_params, initial_point=self.state_init[2]
         )
-        self.PID_v_zero = PolicyMemoryPID(
+        self.PID_v_zero = MemoryPIDPolicy(
             *PID_v_zero_params, initial_point=self.state_init[3], setpoint=0.0
         )
-        self.PID_x_y_origin = PolicyMemoryPID(
+        self.PID_x_y_origin = MemoryPIDPolicy(
             *PID_x_y_origin_params,
             setpoint=rg.array([0.0, 0.0]),
             initial_point=self.state_init[:2],
         )
-        self.PID_angle_origin = PolicyMemoryPID(
+        self.PID_angle_origin = MemoryPIDPolicy(
             *PID_angle_origin_params, setpoint=0.0, initial_point=self.state_init[2]
         )
         self.stabilization_tollerance = 1e-3
@@ -1584,7 +1577,7 @@ class CartPoleEnergyBasedPolicy(Policy):
 
     def __init__(
         self,
-        scenario_gain=10,
+        scenario_gain: float = 10,
         upright_gain=None,
         swingup_gain=10,
         pid_loc_thr=0.35,
@@ -1722,7 +1715,7 @@ class TwoTankPIDPolicy(Policy):
 
     def __init__(
         self,
-        state_init=None,
+        state_init: np.array = None,
         PID_2tank_parameters_x1=(1, 0, 0),
         PID_2tank_parameters_x2=(1, 0, 0),
     ):
@@ -1819,10 +1812,10 @@ class ThreeWheeledRobotDisassembledCLFPolicy(Policy):
     ):
         """Initialize an instance of stabilizing policy for three wheeled robot."""
         super().__init__(optimizer_config=optimizer_config)
-        from regelum.system import ThreeWheeledRobot
+        from regelum.system import ThreeWheeledRobotDynamic
 
-        self.m = ThreeWheeledRobot.parameters["m"]
-        self.moment_of_inertia = ThreeWheeledRobot.parameters["I"]
+        self.m = ThreeWheeledRobotDynamic.parameters["m"]
+        self.moment_of_inertia = ThreeWheeledRobotDynamic.parameters["I"]
         self.scenario_gain = scenario_gain
         self.xNI_var = self.create_variable(3, 1, name="xNI", is_constant=True)
         self.eta_var = self.create_variable(2, 1, name="eta", is_constant=True)

@@ -2,12 +2,14 @@ site_name: Regelum
 # site_url: https://james-willett.github.io/mkdocs-material-youtube-tutorial/
 repo_name: Regelum
 repo_url: https://github.com/AIDynamicAction/rcognita
-
+docs_dir: ./docs/src
 theme:
   name: material
-  favicon: gfx/favicon_light.svg
+  favicon: gfx/favicon_copy.svg
   logo: gfx/logo.svg
   features:
+    - navigation.footer
+    - content.code.annotate
     - navigation.tabs
     # - navigation.expand
     - toc.follow
@@ -25,13 +27,14 @@ theme:
   
 
 plugins:
+  - termynal
   - search
   - autorefs
   - macros:
-      include_dir: docs/_internal/include
+      include_dir: docs/include
   - gen-files:
       scripts:
-      - scripts/gen_ref_pages.py
+      - docs/scripts/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
   - mkdocstrings:
@@ -69,13 +72,13 @@ plugins:
   - section-index
 nav:
   - Home: index.md
+  - Tutorials: tutorials/
   - Main features: features/
   - Getting started: getting_started.md
-  - Basic concepts: basic_concepts.md
-  - Tutorials: tutorials/
   - Scenarios: scenarios/
   - Reference API: reference/
   - Authors: authors.md
+  - Systems: systems/
 
   # - Code Reference 2: references.md
 
@@ -84,7 +87,7 @@ extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   - https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js
-  # - javascripts/preamble.js
+
 
 extra_css:
   - _internal/stylesheets/colors.css
@@ -99,6 +102,7 @@ extra_css:
 #       link: https://www.linkedin.com/in/willettjames/
 
 markdown_extensions:
+  - tables
   - md_in_html
   - toc:
       toc_depth: 3
@@ -123,6 +127,10 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 # copyright: |
 #   &copy; 2023 <a href="https://github.com/james-willett"  target="_blank" rel="noopener">James Willett</a>

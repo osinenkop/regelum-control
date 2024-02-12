@@ -1,14 +1,14 @@
 from regelum.system import (
-    ThreeWheeledRobotNI,
-    ThreeWheeledRobot,
+    ThreeWheeledRobotKinematic,
+    ThreeWheeledRobotDynamic,
     Integrator,
     InvertedPendulum,
 )
 from regelum.utils import rg
 import numpy as np
 
-robot = ThreeWheeledRobotNI()
-robot_big = ThreeWheeledRobot()
+robot = ThreeWheeledRobotKinematic()
+robot_big = ThreeWheeledRobotDynamic()
 robot_composed = Integrator() @ robot
 robot_composed.permute_state([3, 4, 0, 1, 2])
 pendulum = InvertedPendulum()

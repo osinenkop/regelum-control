@@ -1,0 +1,42 @@
+:root {
+    --black: #261230;
+    --white: #ffffff;
+    --radiate: #d7ff64;
+    --flare: #6340ac;
+    --rock: #78876e;
+    --galaxy: #261230;
+    --space: #30173d;
+    --comet: #6f5d6f;
+    --cosmic: #de5fe9;
+    --sun: #ffac2f;
+    --electron: #46ebe1;
+    --aurora: #46eb74;
+    --constellation: #5f6de9;
+    --neutron: #cff3cf;
+    --proton: #f6afbc;
+    --nebula: #cdcbfb;
+    --supernova: #f1aff6;
+    --starlight: #f4f4f1;
+    --lunar: #fbf2fc;
+    --asteroid: #e3cee3;
+    --crater: #f0dfdf;
+    /* --redarkpurple: #a34bcf; */
+    /* --redarkpurple: #480e7f; */
+    /* --redarkpurple: #9345bf; */
+    /* --redarkpurple: #7d3aa8; */
+    --redarkpurple: #4d2974;
+    --repurple: #8551b6;
+    /* --repurple: #8057c1; */
+    --regreen : #7aa453;
+    /* --amber: #ffac2f; */
+    --amber: #beab41;
+    /* --amber: #ffc656; */
+}
+
+[data-md-color-scheme="regelum"] {
+    /* --md-default-bg-color--dark: var(--black); */
+    --md-primary-fg-color: var(--redarkpurple);
+    --md-typeset-a-color: var(--repurple);
+    --md-accent-fg-color: var(--amber);
+}
+  

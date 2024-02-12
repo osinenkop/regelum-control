@@ -1,6 +1,0 @@
-_target_: $ system_specific.target
-
-
-#animations%%:
-#  - BarAnimation
-#  - ThreeWheeledRobotAnimation

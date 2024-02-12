@@ -115,7 +115,7 @@ Let's consider the dynamics of a three-wheeled robot, where the **rg** singleton
     from regelum.__utilities import rg  # Essential for array computations
 
     # Implementation of the three-wheeled robot system with **rg**
-    class ThreeWheeledRobotNI(System):
+    class ThreeWheeledRobotKinematic(System):
         ...  # The class definition
 
         def _compute_state_dynamics(self, time, state, inputs):
