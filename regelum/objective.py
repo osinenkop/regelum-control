@@ -77,6 +77,18 @@ class RunningObjective(Objective):
         return running_objective
 
 
+class RunningObjectivePendulum(RunningObjective):
+    def __call__(
+        self, observation: RgArray, action: RgArray, is_save_batch_format: bool = False
+    ) -> RgArray:
+        model_res = super().__call__(observation, action, is_save_batch_format)
+        return (
+            model_res + 15 * observation[0, 0] ** 2
+            if abs(observation[0, 0]) > 0.3
+            else model_res + 15 * observation[0, 1] ** 2
+        )
+
+
 def reinforce_objective(
     policy_model: PerceptronWithTruncatedNormalNoise,
     observations: torch.FloatTensor,
@@ -232,6 +244,7 @@ def ppo_objective(
     sampling_time: float,
     gae_lambda: float,
     is_normalize_advantages: bool = True,
+    entropy_coeff: float = 0.0,
 ) -> torch.FloatTensor:
     """Calculate PPO objective.
 
@@ -264,6 +277,10 @@ def ppo_objective(
     prob_ratios = torch.exp(
         policy_model.log_pdf(observations, actions) - initial_log_probs.reshape(-1)
     ).reshape(-1, 1)
+    if hasattr(policy_model, "entropy"):
+        entropies = entropy_coeff * policy_model.entropy(observations).reshape(-1, 1)
+    else:
+        entropies = torch.zeros_like(prob_ratios)
     clipped_prob_ratios = torch.clamp(prob_ratios, 1 - cliprange, 1 + cliprange)
     objective_value = 0.0
     for episode_idx in torch.unique(episode_ids):
@@ -287,11 +304,13 @@ def ppo_objective(
                         advantages * prob_ratios[mask][:-1],
                         advantages * clipped_prob_ratios[mask][:-1],
                     )
+                    - entropies[mask][:-1]
                     if running_objective_type == "cost"
                     else torch.minimum(
                         advantages * prob_ratios[mask][:-1],
                         advantages * clipped_prob_ratios[mask][:-1],
                     )
+                    + entropies[mask][:-1]
                 )
             )
             / N_episodes
@@ -331,8 +350,8 @@ def temporal_difference_objective_full(
 ) -> torch.FloatTensor:
     objective = 0.0
     n_iterations = torch.unique(episode_ids).shape[0]
-    for iteration_id in torch.unique(episode_ids):
-        mask = (episode_ids == iteration_id).reshape(-1)
+    for episode_id in torch.unique(episode_ids):
+        mask = (episode_ids == episode_id).reshape(-1)
         objective += (
             temporal_difference_objective(
                 critic_model_output=critic_model_output[mask],

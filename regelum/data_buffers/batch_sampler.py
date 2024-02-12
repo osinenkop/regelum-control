@@ -248,3 +248,104 @@ class EpisodicSampler(BatchSampler):
         self.cur_episode_id += 1
         batch_ids = self.get_episode_batch_ids(self.cur_episode_id)
         return self.data_buffer[batch_ids]
+
+
+class RandomSampler(BatchSampler):
+    def __init__(
+        self,
+        data_buffer,
+        keys: List[str],
+        dtype: RgArrayType = torch.FloatTensor,
+        device: Optional[Union[str, torch.device]] = None,
+        fill_na: Optional[float] = 0.0,
+        split_size: int = 100,
+        n_splits_per_episode: int = 1,
+        n_batches: int = 10,
+    ):
+        """Instantiate a EpisodicSampler.
+
+        Args:
+            data_buffer (DataBuffer): instance of DataBuffer
+            keys (List[str]): keys for sampling
+            dtype (RgArrayType, optional): batch dtype for sampling, can
+                be either of cs.DM, np.array, torch.Tensor, defaults to
+                torch.FloatTensor
+            device (Optional[Union[str, torch.device]], optional):
+                torch.Tensor device for sampling, defaults to None
+            fill_na (Optional[float], optional): fill value for np.nan,
+                defaults to 0.0
+        """
+        BatchSampler.__init__(
+            self,
+            data_buffer=data_buffer,
+            keys=keys,
+            dtype=dtype,
+            device=device,
+            fill_na=fill_na,
+        )
+        self.split_size = split_size
+        self.n_splits_per_episode = n_splits_per_episode
+        self.n_batches = n_batches
+        self.nullify_sampler()
+
+    def nullify_sampler(self) -> None:
+        self.episode_ids = (
+            self.data_buffer.to_pandas(keys=["episode_id"])
+            .astype(int)
+            .values.reshape(-1)
+        )
+        self.unique_episode_ids = np.unique(self.episode_ids)
+        self.idx_batch = 0
+
+    def stop_iteration_criterion(self) -> bool:
+        return self.idx_batch >= self.n_batches
+
+    @staticmethod
+    def get_split_indexes_for_episode(
+        episode_size, max_n_splits_per_episode, max_split_size, episode_start_index
+    ) -> list[int]:
+        n_splits_per_episode = min(max_n_splits_per_episode, episode_size)
+        split_gen_range_size = episode_size // n_splits_per_episode
+        split_size = min(max_split_size, split_gen_range_size)
+
+        split_ranges = np.array(
+            [
+                [
+                    i * split_gen_range_size,
+                    (
+                        (i + 1) * split_gen_range_size
+                        if i < n_splits_per_episode - 1
+                        else episode_size
+                    )
+                    - split_size
+                    + 1,
+                ]
+                for i in range(n_splits_per_episode)
+            ]
+        )
+        ids = []
+        for sr in split_ranges:
+            left = np.random.randint(low=sr[0], high=sr[1])
+            right = left + split_size
+            ids.extend(range(episode_start_index + left, episode_start_index + right))
+
+        return ids
+
+    def next(self) -> Dict[str, RgArray]:
+        self.idx_batch += 1
+
+        batch_ids = []
+        for episode_id in self.unique_episode_ids:
+            argwhere_episode = np.argwhere(self.episode_ids == episode_id)
+            episode_start_index = argwhere_episode[0, 0]
+            episode_size = len(argwhere_episode)
+            batch_ids.extend(
+                self.get_split_indexes_for_episode(
+                    episode_size=episode_size,
+                    max_n_splits_per_episode=self.n_splits_per_episode,
+                    max_split_size=self.split_size,
+                    episode_start_index=episode_start_index,
+                )
+            )
+
+        return self.data_buffer[np.array(batch_ids)]

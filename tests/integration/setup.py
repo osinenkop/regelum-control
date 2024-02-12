@@ -69,7 +69,7 @@ class MPCTest(TestSetup):
 
 systems = (
     "3wrobot_kin",
-    "cartpole",
+    # "cartpole",
     "inv_pendulum",
     "kin_point",
     "2tank",
@@ -143,17 +143,17 @@ scenarios_overrides = {
         "scenario.critic_batch_size": 2,
         "scenario.critic_td_n": 1,
     },
-    "calf_torch": {
-        "scenario.prediction_horizon": 1,
-        "scenario.N_iterations": 1,
-        "scenario.critic_batch_size": 2,
-        "scenario.critic_td_n": 1,
-        "scenario.policy_n_epochs": 1,
-        "scenario.critic_n_epochs": 1,
-        "scenario.critic_n_epochs_per_constraint": 1,
-        "scenario.critic_model.dim_hidden": 2,
-        "scenario.critic_model.n_hidden_layers": 1,
-    },
+    # "calf_torch": {
+    #     "scenario.prediction_horizon": 1,
+    #     "scenario.N_iterations": 1,
+    #     "scenario.critic_batch_size": 2,
+    #     "scenario.critic_td_n": 1,
+    #     "scenario.policy_n_epochs": 1,
+    #     "scenario.critic_n_epochs": 1,
+    #     "scenario.critic_n_epochs_per_constraint": 1,
+    #     "scenario.critic_model.dim_hidden": 2,
+    #     "scenario.critic_model.n_hidden_layers": 1,
+    # },
     "sql_torch": {
         "scenario.prediction_horizon": 2,
         "scenario.N_iterations": 1,

@@ -1,9 +1,0 @@
-python run_stable.py \
-+seed=0 \
-pipeline=sdpg \
-scenario.N_episodes=2 \
-scenario.N_iterations=200 \
-system=3wrobot_kin,lunar_lander,2tank,kin_point,inv_pendulum \
---experiment=SDPG_GRID_SEARCH_2 \
-pipeline.discount_factor=0.7 \
---jobs=5

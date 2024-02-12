@@ -1,8 +1,10 @@
-_target_: regelum.policy.LunarLanderPIDPolicy
+_target_: regelum.policy.LunarLanderPIDPolicyNew
 
 
 state_init: $ initial_conditions.state_init
 
-PID_angle_parameters: = [150, 0, 40]
-PID_x_parameters: = [70, 0, 60]
-PID_height_parameters: = [5, 0, 45]
+PID_angle_parameters: = [50, 0, 80]
+PID_omega_parameters: = [30, 0, 40]
+PID_x_parameters: = [10, 0, 40]
+PID_height_parameters: = [73, 0, 80]
+PID_y_dot_parameters: = [53, 0, 40]

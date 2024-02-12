@@ -89,7 +89,7 @@ class Simulator(regelum.RegelumBase, ABC):
 
         self.time = 0.0
         self.state = self.state_init
-        self.observation = self.get_observation(
+        self.observation_init = self.observation = self.get_observation(
             time=self.time, state=self.state_init, inputs=self.action_init
         )
 

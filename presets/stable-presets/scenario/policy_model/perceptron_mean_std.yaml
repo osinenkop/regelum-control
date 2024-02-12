@@ -1,0 +1,28 @@
+_target_: regelum.model.GaussianMeanStd
+
+std%%: 0.1
+stds%%: = ${.std%%} * (np.array(${system_specific.action_bounds})[:, 1] - np.array(${system_specific.action_bounds})[:, 0]) / 2. 
+
+mean:
+  normalize_output_coef%%: 0.1 
+  _target_: regelum.model.ModelPerceptron
+  dim_input: $ system_specific.dim_observation
+  dim_output: $ system_specific.dim_action
+  dim_hidden: = [100, 20]
+  n_hidden_layers: 2
+  hidden_activation: = torch.nn.Tanh()
+  output_bounds: $ system_specific.action_bounds 
+  output_activation: = regelum.model.MultiplyByConstant(${.normalize_output_coef%%})
+
+std:
+  normalize_output_coef%%: 0.1 
+  _target_: regelum.model.ModelPerceptron
+  dim_input: $ system_specific.dim_observation
+  dim_output: $ system_specific.dim_action
+  dim_hidden: = [20, 10]
+  n_hidden_layers: 2
+  hidden_activation: = torch.nn.Tanh()
+  output_bounds: = [[3, 15]]
+  output_activation: = regelum.model.MultiplyByConstant(${.normalize_output_coef%%})
+
+output_bounds: $ system_specific.action_bounds

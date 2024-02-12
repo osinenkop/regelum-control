@@ -38,6 +38,32 @@ class ObserverReference(Observer):
         return observation + self.reference
 
 
+class CartPoleObserverPG(Observer):
+    def __init__(self):
+        pass
+
+    def get_state_estimation(self, t, observation: np.ndarray, action):
+        # sin_theta, one_minus_cos_theta, x, theta_dot, x_dot = observation.reshape(-1)
+        sin_theta, one_minus_cos_theta, theta_dot, x_dot = observation.reshape(-1)
+
+        return np.array(
+            [[np.arctan2(sin_theta, 1 - one_minus_cos_theta), 0, theta_dot, x_dot]]
+        )
+
+
+class CartPoleObserver(Observer):
+    def __init__(self):
+        pass
+
+    def get_state_estimation(self, t, observation: np.ndarray, action):
+        sin_theta, one_minus_cos_theta, x, theta_dot, x_dot = observation.reshape(-1)
+        # sin_theta, one_minus_cos_theta, theta_dot, x_dot = observation.reshape(-1)
+
+        return np.array(
+            [[np.arctan2(sin_theta, 1 - one_minus_cos_theta), x, theta_dot, x_dot]]
+        )
+
+
 class KalmanFilter(Observer):
     """A class implementing Kalman filter."""
 

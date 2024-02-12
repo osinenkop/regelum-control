@@ -2,7 +2,7 @@ defaults:
   - system: inv_pendulum 
   - simulator: casadi
   - optional nominal_policy: nominal_${system}
-  - stopping_criterion: stopping_${system}
+  - stopping_criterion: never #stopping_${system}
   - scenario: reinforce
   - running_objective: quadratic_${system}
   - initial_conditions: ic_${system}
@@ -15,6 +15,8 @@ callbacks:
   - regelum.callback.HistoricalDataCallback
   - regelum.callback.CriticObjectiveSaver
   - regelum.callback.PolicyObjectiveSaver
+  - regelum.callback.CalfCallback
+  - regelum.callback.CALFWeightsCallback
 
 
 disallow_uncommitted%%: False

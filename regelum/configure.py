@@ -11,7 +11,7 @@ from rich import print
 
 from regelum.__internal.cues_fix import RegelumSurvey
 
-user_data_dir = Path.home() / ".regelum"
+user_data_dir = Path(__file__).parent.parent
 config_file = user_data_dir / "user_settings.yaml"
 
 default_user_settings = {

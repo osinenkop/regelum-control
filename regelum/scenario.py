@@ -146,6 +146,9 @@ class Scenario(RegelumBase):
             if self.sim_status == "simulation_ended":
                 break
 
+    def get_action_from_policy(self):
+        return self.simulator.system.apply_action_bounds(self.policy.action)
+
     def run_episode(self, episode_counter, iteration_counter):
         self.episode_counter = episode_counter
         self.iteration_counter = iteration_counter
@@ -222,7 +225,7 @@ class Scenario(RegelumBase):
             "episode_id": self.episode_counter,
             "iteration_id": self.iteration_counter,
             "step_id": self.step_counter,
-            "action": self.policy.action,
+            "action": self.get_action_from_policy(),
             "running_objective": self.current_running_objective,
             "current_value": self.value,
         }
@@ -247,7 +250,7 @@ class Scenario(RegelumBase):
 
     def compute_action(self, time, estimated_state, observation):
         self.issue_action(observation)
-        return self.policy.action
+        return self.get_action_from_policy()
 
     def issue_action(self, observation):
         self.policy.update_action(observation)
@@ -264,12 +267,14 @@ class Scenario(RegelumBase):
 
     def on_action_issued(self, observation):
         self.current_running_objective = self.running_objective(
-            observation, self.policy.action
+            observation, self.get_action_from_policy()
         )
         self.value = self.calculate_value(self.current_running_objective, self.time)
-        observation_action = np.concatenate((observation, self.policy.action), axis=1)
+        observation_action = np.concatenate(
+            (observation, self.get_action_from_policy()), axis=1
+        )
         return {
-            "action": self.policy.action,
+            "action": self.get_action_from_policy(),
             "running_objective": self.current_running_objective,
             "current_value": self.value,
             "observation_action": observation_action,
@@ -352,7 +357,7 @@ class RLScenario(Scenario):
                 episode, or 'reset_iteration' for optimizing after each
                 iteration
             discount_factor (float, optional): Discount factor. Used for
-                computing total objective as discounted sum (or
+                computing value as discounted sum (or
                 integral) of running objectives, defaults to 1.0
             is_critic_first (bool, optional): if is True then critic is
                 optimized first then policy (can be usefull in DQN or
@@ -468,7 +473,7 @@ class RLScenario(Scenario):
             return super().run()
 
         for self.iteration_counter in range(1, self.N_iterations + 1):
-            self.policy.model.stds *= self.annealing_exploration_factor
+            # self.policy.model.stds *= self.annealing_exploration_factor
             one_episode_rl_scenarios = self.instantiate_rl_scenarios()
             result_queue = mp.Queue()
             args = [
@@ -554,7 +559,7 @@ class RLScenario(Scenario):
         assert np.allclose(time, self.data_buffer.get_latest("time"))
 
         self.optimize(Event.compute_action)
-        return self.policy.action
+        return self.get_action_from_policy()
 
     def optimize(self, event):
         if self.is_first_compute_action_call and event == Event.compute_action:
@@ -620,6 +625,12 @@ class CALFScenario(RLScenario):
         sampling_time: float,
         observer: Optional[Observer] = None,
         N_iterations: int = 5,
+        critic_learning_norm_threshold: float = 0.1,
+        store_weights_thr: float = 0.0,
+        weighted_norm_coeffs: Optional[List[float]] = None,
+        weights_disturbance_std_after_iteration: Optional[float] = None,
+        is_mean_weighted: bool = False,
+        is_safe_filter_on: bool = True,
     ):
         super().__init__(
             policy=policy,
@@ -633,7 +644,28 @@ class CALFScenario(RLScenario):
             observer=observer,
             N_iterations=N_iterations,
         )
+        self.is_mean_weighted = is_mean_weighted
         self.safe_policy = safe_policy
+        self.critic_learning_norm_threshold = critic_learning_norm_threshold
+        self.weighted_norm_coeffs = (
+            np.array(weighted_norm_coeffs)
+            if weighted_norm_coeffs is not None
+            else np.ones(self.policy.system.dim_observation)
+        )
+        self.store_weights_thr = store_weights_thr
+        if store_weights_thr > 0.0:
+            self.store_weights_for_next_iteration_trigger = (
+                lambda state, thr: np.linalg.norm(state * self.weighted_norm_coeffs)
+                > thr
+            )
+        else:
+            self.store_weights_for_next_iteration_trigger = lambda state, thr: True
+
+        self.stored_weights = self.critic.weights
+        self.weights_disturbance_std_after_iteration = (
+            weights_disturbance_std_after_iteration
+        )
+        self.is_safe_filter_on = is_safe_filter_on
 
     def issue_action(self, observation, is_safe=False):
         if is_safe:
@@ -653,12 +685,31 @@ class CALFScenario(RLScenario):
 
         return data
 
+    def compute_action_sampled(self, time, estimated_state, observation):
+        self.is_time_for_new_sample = self.clock.check_time(time)
+        if self.is_time_for_new_sample:
+            self.on_observation_received(time, estimated_state, observation)
+            action = self.simulator.system.apply_action_bounds(
+                self.compute_action(
+                    time=time,
+                    estimated_state=estimated_state,
+                    observation=observation,
+                    is_update_critic=np.linalg.norm(
+                        observation * self.weighted_norm_coeffs
+                    )
+                    > self.critic_learning_norm_threshold,
+                )
+            )
+            self.post_compute_action(observation, estimated_state)
+            self.step_counter += 1
+            self.action_old = action
+        else:
+            action = self.action_old
+        return action
+
     @apply_callbacks()
     def compute_action(
-        self,
-        estimated_state,
-        observation,
-        time=0,
+        self, estimated_state, observation, time=0, is_update_critic=True
     ):
         assert np.allclose(
             estimated_state, self.data_buffer.get_latest("estimated_state")
@@ -668,20 +719,37 @@ class CALFScenario(RLScenario):
 
         if self.is_first_compute_action_call:
             self.critic.observation_last_good = observation
+            self.weights_for_next_iteration = self.critic.weights
             self.issue_action(observation, is_safe=True)
             self.is_first_compute_action_call = False
         else:
             self.pre_optimize(self.critic, Event.compute_action, time)
-            critic_weights = self.critic.optimize(
-                self.data_buffer, is_update_and_cache_weights=False
-            )
-            critic_weights_accepted = self.critic.opt_status == OptStatus.success
+            if is_update_critic:
+                critic_weights = self.critic.optimize(
+                    self.data_buffer, is_update_and_cache_weights=False
+                )
+                critic_weights_accepted = (
+                    self.critic.opt_status == OptStatus.success
+                ) or not self.is_safe_filter_on
+
+            else:
+                critic_weights_accepted = False
+                critic_weights = self.critic.weights
+                self.critic.opt_status = OptStatus.failed
 
             if critic_weights_accepted:
                 self.critic.update_weights(critic_weights)
+                if self.store_weights_for_next_iteration_trigger(
+                    observation, self.store_weights_thr
+                ):
+                    # print("STORED")
+                    self.stored_weights = critic_weights
                 self.pre_optimize(self.policy, Event.compute_action, time)
                 self.policy.optimize(self.data_buffer)
-                policy_weights_accepted = self.policy.opt_status == OptStatus.success
+                policy_weights_accepted = (
+                    self.policy.opt_status == OptStatus.success
+                ) or not self.is_safe_filter_on
+
                 if policy_weights_accepted:
                     self.critic.observation_last_good = observation
                     self.issue_action(observation, is_safe=False)
@@ -691,7 +759,30 @@ class CALFScenario(RLScenario):
             else:
                 self.issue_action(observation, is_safe=True)
 
-        return self.policy.action
+            step_id = self.data_buffer.get_latest("step_id")
+            self.weights_for_next_iteration = (
+                self.weights_for_next_iteration * (step_id - 1)
+                + self.critic.weights * np.exp(-step_id)
+            ) / step_id
+
+        return self.get_action_from_policy()
+
+    @apply_callbacks()
+    def reset_iteration(self):
+        super().reset_iteration()
+        if self.stored_weights is not None and self.store_weights_thr > 0.0:
+            self.critic.model.update_and_cache_weights(self.stored_weights)
+        self.critic.observation_last_good = self.simulator.observation_init
+        # if self.weights_disturbance_std_after_iteration is not None:
+        #     (
+        #         self.critic.model.update_and_cache_weights(
+        #             self.critic.weights
+        #             + abs(np.random.randn(self.critic.model.weights.shape[0]))
+        #             * self.weights_disturbance_std_after_iteration
+        #         )
+        #     )
+        if self.is_mean_weighted:
+            self.critic.model.update_and_cache_weights(self.weights_for_next_iteration)
 
 
 class CALF(CALFScenario):
@@ -715,7 +806,14 @@ class CALF(CALFScenario):
         critic_safe_decay_param: float = 0.001,
         critic_is_dynamic_decay_rate: bool = False,
         critic_batch_size: int = 10,
+        critic_regularization_param: float = 0,
+        critic_learning_norm_threshold: float = 0.0,
         N_iterations=5,
+        store_weights_thr=0,
+        weighted_norm_coeffs: Optional[List[float]] = None,
+        weights_disturbance_std_after_iteration: Optional[float] = None,
+        is_mean_weighted: bool = False,
+        is_safe_filter_on: bool = True,
     ):
         """Instantiate CALF class.
 
@@ -768,6 +866,7 @@ class CALF(CALFScenario):
             lb_parameter=critic_lb_parameter,
             ub_parameter=critic_ub_parameter,
             optimizer_config=CasadiOptimizerConfig(critic_batch_size),
+            regularization_param=critic_regularization_param,
         )
         policy = RLPolicy(
             action_bounds=system.action_bounds,
@@ -802,6 +901,12 @@ class CALF(CALFScenario):
             sampling_time=sampling_time,
             observer=observer,
             N_iterations=N_iterations,
+            critic_learning_norm_threshold=critic_learning_norm_threshold,
+            store_weights_thr=store_weights_thr,
+            weighted_norm_coeffs=weighted_norm_coeffs,
+            weights_disturbance_std_after_iteration=weights_disturbance_std_after_iteration,
+            is_mean_weighted=is_mean_weighted,
+            is_safe_filter_on=is_safe_filter_on,
         )
 
 
@@ -1823,6 +1928,7 @@ def get_policy_gradient_kwargs(
     is_use_critic_as_policy_kwarg: bool = True,
     stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
     is_parallel: bool = False,
+    device: str = "cpu",
 ):
     system = simulator.system
     if critic_model is not None:
@@ -1840,6 +1946,7 @@ def get_policy_gradient_kwargs(
             sampling_time=sampling_time,
             model=critic_model,
             td_n=critic_td_n,
+            device=device,
             is_value_function=critic_is_value_function,
             is_on_policy=True,
             is_same_critic=True,
@@ -1850,6 +1957,7 @@ def get_policy_gradient_kwargs(
                     "dtype": torch.FloatTensor,
                     "mode": "full",
                     "n_batches": 1,
+                    "device": device,
                 },
                 opt_method_kwargs=critic_opt_method_kwargs,
                 opt_method=critic_opt_method,
@@ -1879,6 +1987,7 @@ def get_policy_gradient_kwargs(
         policy=policy_type(
             model=policy_model,
             system=system,
+            device=device,
             discount_factor=discount_factor,
             optimizer_config=TorchOptimizerConfig(
                 n_epochs=policy_n_epochs,
@@ -1890,6 +1999,7 @@ def get_policy_gradient_kwargs(
                     "dtype": torch.FloatTensor,
                     "mode": "full",
                     "n_batches": 1,
+                    "device": device,
                 },
             ),
             **(dict(critic=critic) if is_use_critic_as_policy_kwarg else dict()),
@@ -1932,6 +2042,8 @@ class PPO(RLScenario):
         gae_lambda: float = 0.0,
         is_normalize_advantages: bool = True,
         is_parallel: bool = False,
+        device: str = "cpu",
+        entropy_coeff: float = 0.0,
     ):
         """Initialize the object with the given parameters.
 
@@ -1977,7 +2089,7 @@ class PPO(RLScenario):
                 iteration.
             N_iterations (int): The number of iterations to run in the
                 scenario.
-            value_threshold (float): Threshold of the total objective to
+            value_threshold (float): Threshold of the value to
                 end an episode.
 
         Raises:
@@ -2010,6 +2122,7 @@ class PPO(RLScenario):
                     sampling_time=sampling_time,
                     gae_lambda=gae_lambda,
                     is_normalize_advantages=is_normalize_advantages,
+                    entropy_coeff=entropy_coeff,
                 ),
                 policy_n_epochs=policy_n_epochs,
                 critic_model=critic_model,
@@ -2021,6 +2134,7 @@ class PPO(RLScenario):
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
                 is_parallel=is_parallel,
+                device=device,
             )
         )
 
@@ -2102,7 +2216,7 @@ class SDPG(RLScenario):
             N_episodes (int): The number of episodes per iteration.
             N_iterations (int): The total number of iterations for
                 training.
-            value_threshold (float): Threshold for the total objective
+            value_threshold (float): Threshold for the value
                 that, once reached, stops the episode, defaults to
                 np.inf.
         """
@@ -2304,7 +2418,7 @@ class DDPG(RLScenario):
                 policy_model=policy_model,
                 policy_opt_method=policy_opt_method,
                 policy_opt_method_kwargs=policy_opt_method_kwargs,
-                is_reinstantiate_policy_optimizer=False,
+                is_reinstantiate_policy_optimizer=True,
                 policy_n_epochs=policy_n_epochs,
                 critic_model=critic_model,
                 critic_opt_method=critic_opt_method,

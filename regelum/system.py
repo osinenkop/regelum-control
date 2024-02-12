@@ -298,7 +298,9 @@ class SystemInterface(regelum.RegelumBase, ABC):
             else:
                 return self._get_observation(time, state, inputs)
         else:
-            observations = rg.zeros(state.shape, prototype=state)
+            observations = rg.zeros(
+                (state.shape[0], self.dim_observation), prototype=state
+            )
             for i in range(state.shape[0]):
                 observations[i, :] = self.get_observation(
                     time=time,
@@ -1067,11 +1069,11 @@ class CartPole(System):
     _system_type = "diff_eqn"
     _dim_state = 4
     _dim_inputs = 1
-    _dim_observation = 4
+    _dim_observation = 5
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
     _observation_naming = _state_naming = ["angle", "x", "angle_dot", "x_dot"]
     _inputs_naming = ["force"]
-    _action_bounds = [[-300.0, 300.0]]
+    _action_bounds = [[-50.0, 50.0]]
 
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
@@ -1100,26 +1102,25 @@ class CartPole(System):
         theta = state[0]
         theta_dot = state[2]
         x_dot = state[3]
-
+        Force = inputs[0]
         sin_theta = rg.sin(theta)
         cos_theta = rg.cos(theta)
-
-        Dstate[0] = theta_dot
-
-        Dstate[1] = x_dot
-
-        Dstate[2] = (
+        theta_acc = (
             (
                 g * sin_theta
                 - cos_theta
-                * (inputs[0] + m_p * l * theta_dot**2 * sin_theta)
+                * (Force + m_p * l * theta_dot**2 * sin_theta)
                 / (m_c + m_p)
             )
             / l
             / (4 / 3 - m_p * (cos_theta**2) / (m_c + m_p))
         )
+
+        Dstate[0] = theta_dot
+        Dstate[1] = x_dot
+        Dstate[2] = theta_acc
         Dstate[3] = (
-            inputs[0] + m_p * l * (theta_dot**2 * sin_theta - Dstate[0] * cos_theta)
+            Force + m_p * l * (theta_dot**2 * sin_theta - theta_acc * cos_theta)
         ) / (m_c + m_p)
 
         return Dstate
@@ -1132,14 +1133,46 @@ class CartPole(System):
         theta_dot = state[2]
         x_dot = state[3]
 
-        theta_observed = theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi
-        theta_observed = rg.if_else(
-            theta_observed > np.pi,
-            theta_observed - 2 * np.pi,
-            theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi,
-        )
+        # theta_observed = theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi
+        # theta_observed = rg.if_else(
+        #     theta_observed > np.pi,
+        #     theta_observed - 2 * np.pi,
+        #     theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi,
+        # )
+        # return rg.hstack([theta_observed, x, theta_dot, x_dot])
+        # return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), theta_dot, x_dot])
+        # return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), x, theta_dot, x_dot])
+        return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), x, theta_dot, x_dot])
 
-        return rg.hstack([theta_observed, x, theta_dot, x_dot])
+
+class CartPolePG(CartPole):
+    _name = "cartpole_pg"
+    _system_type = "diff_eqn"
+    _dim_state = 4
+    _dim_inputs = 1
+    _dim_observation = 5
+    _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
+    _observation_naming = _state_naming = ["angle", "x", "angle_dot", "x_dot"]
+    _inputs_naming = ["force"]
+    _action_bounds = [[-50.0, 50.0]]
+    _dim_observation = 4
+
+    def _get_observation(
+        self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
+    ):
+        theta = state[0]
+        x = state[1]
+        theta_dot = state[2]
+        x_dot = state[3]
+        # theta_observed = theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi
+        # theta_observed = rg.if_else(
+        #     theta_observed > np.pi,
+        #     theta_observed - 2 * np.pi,
+        #     theta - rg.floor(theta / (2 * np.pi)) * 2 * np.pi,
+        # )
+        # return rg.hstack([theta_observed, x, theta_dot, x_dot])
+        return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), theta_dot, x_dot])
+        # return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), x, theta_dot, x_dot])
 
 
 class TwoTank(System):
@@ -1440,34 +1473,6 @@ class LunarLander(System):
         xi_2_new = xi + xi_2_d_rot
         xi_3_new = xi + xi_3_d_rot
         return xi_2_new, xi_3_new
-
-    def _compute_reaction(
-        self,
-        r: Union[RgArray, float],
-        r_support: Union[RgArray, float],
-    ) -> Union[RgArray, float]:
-        """Compute the reaction forces when the lander's supports are in contact with the ground.
-
-        Args:
-            r: The position vector of the lander's center of gravity.
-            r_support: The position vector of one of the lander's supports.
-
-        Returns:
-            np.array: The computed reaction forces at the point of contact.
-        """
-        m, g, sigma = (
-            self.parameters["m"],
-            self.parameters["g"],
-            self.parameters["sigma"],
-        )
-        lvl = r_support[1]
-        e = (r - r_support) / rg.sqrt(rg.norm_2(r - r_support))
-        reaction = rg.if_else(
-            lvl <= 0,
-            e * rg.dot(e, m * g * rg.array([0, 1])) * lvl * sigma,
-            rg.array([0.0, 0.0]),
-        )
-        return -reaction
 
 
 class ConstantReference(System):

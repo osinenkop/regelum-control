@@ -10,11 +10,12 @@ observer: $ system_specific.observer
 discount_factor: 1.0
 safe_policy: ~ nominal_policy
 N_iterations: 5
-critic_td_n: 2
-critic_batch_size: 10
+critic_td_n: 1
+critic_batch_size: 3
 
 critic_model:
   _target_: regelum.model.ModelQuadLin
   quad_matrix_type: diagonal
   is_with_linear_terms: False
   dim_inputs: = ${system_specific.dim_observation}
+  # weights: = numpy.random.rand(${system_specific.dim_observation} + 1)*0 + 50

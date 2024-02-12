@@ -1,10 +1,10 @@
-name: carpole
+name: cartpole
 target: regelum.system.CartPole
-observer: = regelum.observer.ObserverTrivial()
+observer: = regelum.observer.CartPoleObserver()
 dim_observation: = ${.target}().dim_observation
 dim_action: = ${.target}().dim_inputs
 
-time_final: 30.
+time_final: 15.
 sampling_time: 0.01
 
 F_min: -50.

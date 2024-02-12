@@ -30,6 +30,8 @@ from abc import ABC, abstractmethod
 from typing import Optional, Union, List, Any, Tuple, Dict, Callable
 import numpy as np
 import casadi as cs
+from omegaconf.listconfig import ListConfig
+import math
 
 
 def force_positive_def(func):
@@ -151,6 +153,7 @@ class ModelQuadLin(Model):
         weights: np.array = None,
         weight_min: float = 1.0e-6,
         weight_max: float = 1.0e3,
+        add_random_init_noise: bool = False,
     ):
         """Initialize an instance of quadratic-linear model.
 
@@ -187,6 +190,18 @@ class ModelQuadLin(Model):
             assert self.dim_weights == len(weights), "Wrong shape of dim_weights"
             self.weights = rg.array(weights)
 
+        self.add_random_init_noise = add_random_init_noise
+        if self.add_random_init_noise:
+            self.weight_min = np.random.uniform(
+                self.weight_min, self.weight_max, self.dim_weights
+            )
+            self.weight_max = np.random.uniform(
+                self.weight_min, self.weight_max, self.dim_weights
+            )
+            self.weights = np.random.uniform(
+                self.weight_min, self.weight_max, self.dim_weights
+            )
+
         self.cache_weights(self.weights)
 
     def get_quad_lin(self, new_weights):
@@ -202,7 +217,7 @@ class ModelQuadLin(Model):
             )
 
         linear_coefs = (
-            new_weights[None, self.dim_quad :] if self.is_with_linear_terms else None
+            new_weights[self.dim_quad :] if self.is_with_linear_terms else None
         )
 
         return quad_matrix, linear_coefs
@@ -323,17 +338,17 @@ class ModelQuadLin(Model):
             quadratic_term = rg.diag(quadratic_term)
 
         if linear_coefs is not None:
-            assert (
-                len(linear_coefs.shape) == 2 and linear_coefs.shape[0] == 1
-            ), "Wrong shape of linear coefs. Should be (1,n). Got {}".format(
-                linear_coefs.shape
-            )
+            # assert (
+            #     len(linear_coefs.shape) == 2 and linear_coefs.shape[0] == 1
+            # ), "Wrong shape of linear coefs. Should be (1,n). Got {}".format(
+            #     linear_coefs.shape
+            # )
 
-            assert (
-                quad_matrix.shape[1] == linear_coefs.shape[1]
-            ), "Quad matrix should have same number of columns as linear coefs"
+            # assert (
+            #     quad_matrix.shape[1] == linear_coefs.shape[1]
+            # ), "Quad matrix should have same number of columns as linear coefs"
 
-            linear_term = inputs @ linear_coefs.T
+            linear_term = inputs @ linear_coefs
             output = quadratic_term + linear_term
         else:
             output = quadratic_term
@@ -524,13 +539,30 @@ class ModelPerceptron(ModelNN):
         self.force_positive_def = force_positive_def
         self.is_force_infinitesimal = is_force_infinitesimal
         self.is_bias = is_bias
-        self.input_layer = nn.Linear(dim_input, dim_hidden, bias=is_bias)
-        self.hidden_layers = nn.ModuleList(
-            [
-                nn.Linear(dim_hidden, dim_hidden, bias=is_bias)
-                for _ in range(n_hidden_layers)
-            ]
-        )
+        if isinstance(dim_hidden, int):
+            self.input_layer = nn.Linear(dim_input, dim_hidden, bias=is_bias)
+            self.hidden_layers = nn.ModuleList(
+                [
+                    nn.Linear(dim_hidden, dim_hidden, bias=is_bias)
+                    for _ in range(n_hidden_layers)
+                ]
+            )
+        elif isinstance(dim_hidden, list) or isinstance(dim_hidden, ListConfig):
+            assert (
+                len(dim_hidden) == n_hidden_layers
+            ), "number of passed hidden dimensions is not equal to n_hidden_layers"
+            self.input_layer = nn.Linear(dim_input, dim_hidden[0], bias=is_bias)
+            dim_hidden_full = zip(dim_hidden[:-1], dim_hidden[1:])
+            self.hidden_layers = nn.ModuleList(
+                [
+                    nn.Linear(dim_hidden_first, dim_hidden_second, bias=is_bias)
+                    for dim_hidden_first, dim_hidden_second in dim_hidden_full
+                ]
+            )
+            dim_hidden = dim_hidden[-1]
+
+        else:
+            raise ValueError("inappropriate type of dim_hidden argument passed.")
         self.output_layer = nn.Linear(dim_hidden, dim_output, bias=is_bias)
         self.hidden_activation = (
             hidden_activation if hidden_activation is not None else nn.LeakyReLU(0.15)
@@ -905,3 +937,96 @@ class PerceptronWithTruncatedNormalNoise(ModelPerceptron):
             ).sample()
 
         return sampled_action
+
+
+class GaussianMeanStd(ModelNN):
+    def __init__(
+        self,
+        mean: ModelNN,
+        std: ModelNN,
+        output_bounds: List[Union[List[float], np.ndarray]],
+        is_truncated_to_output_bounds: bool = True,
+    ):
+        super().__init__()
+        self.mean = mean
+        self.std = std
+        self.is_truncated_to_output_bounds = is_truncated_to_output_bounds
+        self.bounds_handler = BoundsHandler(output_bounds)
+        self.output_bounds_array = np.array(output_bounds)
+
+        if is_truncated_to_output_bounds and output_bounds is None:
+            raise ValueError(
+                "output_bounds must be specified when is_truncated_to_output_bounds is True"
+            )
+
+    def forward(self, observation, is_means_only=False):
+        mean, std = self.mean(observation), self.std(observation)
+        # mean, std = self.mean(observation), self.std * torch.linalg.norm(observation)
+
+        if is_means_only:
+            return mean
+
+        if self.is_truncated_to_output_bounds:
+            mean_numpy = mean.detach().cpu().numpy()
+            std_numpy = std.detach().cpu().numpy()
+            left_bounds, right_bounds = (
+                self.output_bounds_array[None, :, 0],
+                self.output_bounds_array[None, :, 1],
+            )
+            sampled_action = torch.FloatTensor(
+                truncnorm(
+                    loc=mean_numpy,
+                    scale=std_numpy,
+                    b=(right_bounds - mean_numpy) / std_numpy,
+                    a=(left_bounds - mean_numpy) / std_numpy,
+                )
+                .rvs()
+                .reshape(1, -1)
+            )
+        else:
+            sampled_action = Normal(loc=mean, scale=std).sample()
+
+        return sampled_action
+
+    def log_pdf(self, distribution_params_input, log_prob_args):
+        means, stds = self.mean(distribution_params_input), self.std(
+            distribution_params_input
+        )
+        normal = Normal(loc=means, scale=stds)
+        if self.is_truncated_to_output_bounds:
+            left_bounds, right_bounds = (
+                self.bounds_handler.bounds[:, 0],
+                self.bounds_handler.bounds[:, 1],
+            )
+            return (
+                normal.log_prob(log_prob_args)
+                - torch.log(
+                    normal.cdf(torch.ones_like(means) * right_bounds)
+                    - normal.cdf(torch.ones_like(means) * left_bounds)
+                )
+            ).sum(axis=1)
+        else:
+            return normal.log_prob(log_prob_args).sum(axis=1)
+
+    def entropy(self, distribution_params_input):
+        means, stds = self.mean(distribution_params_input), self.std(
+            distribution_params_input
+        )
+
+        a = self.bounds_handler.bounds[:, 0] * torch.ones_like(means)
+        b = self.bounds_handler.bounds[:, 1] * torch.ones_like(means)
+        alpha = (a - means) / stds
+        beta = (b - means) / stds
+
+        standard_normal = Normal(
+            loc=torch.zeros_like(means), scale=torch.ones_like(means)
+        )
+        z = standard_normal.cdf(beta) - standard_normal.cdf(alpha)
+
+        phi_alpha = torch.exp(standard_normal.log_prob(alpha))
+        phi_beta = torch.exp(standard_normal.log_prob(beta))
+
+        return (
+            torch.log(math.sqrt(2 * math.pi * math.e) * stds * z)
+            + (alpha * phi_alpha - beta * phi_beta) / (2 * z)
+        ).sum(axis=1)

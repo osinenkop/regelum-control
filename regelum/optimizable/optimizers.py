@@ -1171,6 +1171,8 @@ class Optimizable(regelum.RegelumBase):
         else:
             self.opt_status = OptStatus.success
 
+        print(constr_value)
+
     @apply_callbacks()
     def post_epoch(self, epoch_idx: int, objective_epoch_history: List[float]):
         """Emit post-epoch event.

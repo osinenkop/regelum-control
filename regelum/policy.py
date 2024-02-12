@@ -657,6 +657,7 @@ class PolicyPPO(PolicyGradient):
         running_objective_type: str = "cost",
         cliprange: float = 0.2,
         is_normalize_advantages: bool = True,
+        entropy_coeff: float = 0.0,
     ):
         """Instantiate PPO policy class.
 
@@ -687,6 +688,7 @@ class PolicyPPO(PolicyGradient):
         self.running_objective_type = running_objective_type
         self.gae_lambda = gae_lambda
         self.is_normalize_advantages = is_normalize_advantages
+        self.entropy_coeff = entropy_coeff
         self.initialize_optimization_procedure()
 
     def data_buffer_objective_keys(self) -> List[str]:
@@ -743,6 +745,7 @@ class PolicyPPO(PolicyGradient):
             sampling_time=self.sampling_time,
             gae_lambda=self.gae_lambda,
             is_normalize_advantages=self.is_normalize_advantages,
+            entropy_coeff=self.entropy_coeff,
         )
 
     def update_data_buffer(self, data_buffer: DataBuffer) -> None:
@@ -1612,28 +1615,58 @@ class CartPoleEnergyBasedPolicy(Policy):
     def get_action(self, observation):
         observation = observation[0]
 
-        theta_observed, x, theta_dot, x_dot = observation
-
-        E_total = (
-            self.m_p * self.l**2 * theta_dot**2 / 2
-            + self.m_p * self.g * self.l * (rg.cos(theta_observed) - 1)
-        )
-
-        lbd = (
-            1 - rg.tanh((theta_observed - self.pid_loc_thr) * self.pid_scale_thr)
-        ) / 2
+        # sin_theta, one_minus_cos_theta, x, theta_dot, x_dot = observation
+        sin_theta, one_minus_cos_theta, theta_dot, x_dot = observation
+        x = 0
+        cos_theta = 1 - one_minus_cos_theta
+        theta = rg.atan2(sin_theta, cos_theta)
+        # E_total = (
+        #     self.m_p * self.l**2 * theta_dot**2 / 2
+        #     + self.m_p * self.g * self.l * (1 - cos_theta)
+        # )
+        # print(E_total)
+        lbd = (1 - rg.tanh((theta - self.pid_loc_thr) * self.pid_scale_thr)) / 2
 
         low, high = self.clip_bounds
         x_clipped = rg.clip(x, low, high)
         x_dot_clipped = rg.clip(x_dot, low, high)
-        self.action = (1 - lbd) * (
-            self.swingup_gain * E_total * rg.sign(rg.cos(theta_observed) * theta_dot)
-        ) + lbd * self.upright_gain.T @ rg.array(
-            [theta_observed, x_clipped, theta_dot, x_dot_clipped]
+        # self.action = (1 - lbd) * (
+        #     self.swingup_gain * E_total * rg.sign(cos_theta * theta_dot)
+        # ) + lbd * self.upright_gain.T @ rg.array(
+        #     [theta, x_clipped, theta_dot, x_dot_clipped]
+        # )
+
+        # self.action = self.upright_gain.T @ rg.array(
+        #     [theta, x_clipped, theta_dot, x_dot_clipped]
+        # )
+        self.upswing_gain = 3
+        if cos_theta < 0:
+            action_upswing = rg.sign(theta_dot) * self.upswing_gain
+        else:
+            action_upswing = rg.sign(sin_theta) * self.upswing_gain
+
+        # if (cos_theta > 0 and theta_dot > 0) or (cos_theta > 0 and theta_dot < 0):
+        #     action_upswing = -1 * action_upswing
+
+        # self.upright_gain = np.array([50, 2., 20., 3.])
+        # self.upright_gain = np.array([500, 0.0, 200.0, 0.0])
+
+        action_upright = self.upright_gain.T @ rg.array(
+            [theta, x_clipped, theta_dot, x_dot_clipped]
         )
 
-        self.action = self.action.reshape(1, -1)
-        return self.action
+        self.action = (1 - lbd) * action_upswing + lbd * action_upright
+
+        return self.action.reshape(1, -1)
+
+
+class ConstantPolicy(Policy):
+    def __init__(self, value):
+        super().__init__()
+        self.value = np.array(value).reshape(1, -1)
+
+    def get_action(self, observation):
+        return self.value
 
 
 class LunarLanderPIDPolicy(Policy):
@@ -1683,9 +1716,6 @@ class LunarLanderPIDPolicy(Policy):
             initial_point=rg.array([state_init[2]]),
             setpoint=rg.array([0]),
         )
-        self.threshold_1 = 0.05
-        self.threshold_2 = 2.2
-        self.threshold = self.threshold_1
 
     def get_action(self, observation):
         observation = observation[0]
@@ -1698,6 +1728,7 @@ class LunarLanderPIDPolicy(Policy):
             )[0]
 
         else:
+            self.threshold = self.threshold_2
             self.action[0] = self.PID_x.compute_signal(
                 rg.array([observation[0]]), error_derivative=observation[3]
             )[0]
@@ -1706,6 +1737,101 @@ class LunarLanderPIDPolicy(Policy):
             )[0]
 
         self.action = rg.array(self.action).reshape(1, -1)
+
+        return self.action
+
+
+class LunarLanderPIDPolicyNew(Policy):
+    """Nominal PID scenario for lunar lander."""
+
+    def __init__(
+        self,
+        state_init,
+        PID_angle_parameters=None,
+        PID_omega_parameters=None,
+        PID_height_parameters=None,
+        PID_y_dot_parameters=None,
+        PID_x_parameters=None,
+    ):
+        """Initialize an instance of PID scenario for lunar lander.
+
+        Args:
+            action_bounds: upper and lower bounds for action yielded
+                from policy
+            state_init: state at which simulation has begun
+            sampling_time: time interval between two consecutive actions
+            PID_angle_parameters: parameters for PID scenario
+                stabilizing angle of lander
+            PID_height_parameters: parameters for PID scenario
+                stabilizing y-coordinate of lander
+            PID_x_parameters: parameters for PID scenario stabilizing
+                x-coordinate of lander
+        """
+        super().__init__()
+        self.PID_omega = MemoryPIDPolicy(
+            *PID_omega_parameters,
+            initial_point=rg.array([state_init[5]]),
+            setpoint=rg.array([0]),
+        )
+        self.PID_angle = MemoryPIDPolicy(
+            *PID_angle_parameters,
+            initial_point=rg.array([state_init[5]]),
+            setpoint=rg.array([0]),
+        )
+        self.PID_y_dot = MemoryPIDPolicy(
+            *PID_y_dot_parameters,
+            initial_point=rg.array([state_init[4]]),
+            setpoint=rg.array([0]),
+        )
+        self.PID_height = MemoryPIDPolicy(
+            *PID_height_parameters,
+            initial_point=rg.array([state_init[1]]),
+            setpoint=rg.array([5]),
+        )
+        self.PID_x = MemoryPIDPolicy(
+            *PID_x_parameters,
+            initial_point=rg.array([state_init[0]]),
+            setpoint=rg.array([0]),
+        )
+        self.action = rg.array([0.0, 0.0]).reshape(1, 2)
+
+    def get_action(self, observation):
+        new_support_lvl = rg.min(
+            rg.array(
+                [
+                    10
+                    * rg.sqrt(
+                        rg.norm_2(
+                            rg.hstack((observation[0, 2:5], observation[0, 0])) ** 2
+                        )
+                    ),
+                    3.0,
+                ]
+            )
+        )
+        self.PID_height.set_setpoint(new_support_lvl)
+
+        self.action[0, 0] = self.PID_omega.compute_signal(
+            rg.array([observation[0, 2]]),
+            error_derivative=rg.array([observation[0, 5]]),
+        ).reshape(-1) - rg.cos(observation[0, 2]) ** 2 * self.PID_x.compute_signal(
+            rg.array([observation[0, 0]]),
+            error_derivative=rg.array([observation[0, 3]]),
+        ).reshape(
+            -1
+        )
+        self.action[0, 1] = rg.sign(
+            rg.cos(observation[0, 2])
+        ) * self.PID_y_dot.compute_signal(rg.array([observation[0, 4]])).reshape(
+            -1
+        ) + rg.sign(
+            rg.cos(observation[0, 2])
+        ) * self.PID_height.compute_signal(
+            rg.array([observation[0, 1]]),
+            error_derivative=rg.array([observation[0, 4]]),
+        ).reshape(
+            -1
+        )
 
         return self.action
 

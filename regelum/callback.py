@@ -44,6 +44,7 @@ import numpy as np
 from typing import Dict, Any, Type
 
 from regelum.event import Event
+import torch
 
 
 def is_in_debug_mode():
@@ -724,6 +725,161 @@ class HistoricalCallback(Callback, ABC):
             return None
 
 
+class CalfCallback(HistoricalCallback):
+    """Callback that records various diagnostic data during experiments with CALF-based methods."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize an instance of CalfCallback."""
+        super().__init__(*args, **kwargs)
+        self.cooldown = 1.0
+        self.time = 0.0
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "compute_action"
+            and "calf" in obj.critic.__class__.__name__.lower()
+        )
+
+    def perform(self, obj, method, output):
+        current_CALF = obj.critic(
+            obj.critic.observation_last_good,
+            use_stored_weights=True,
+        )
+        self.log(
+            f"current CALF value:{current_CALF}, decay_rate:{obj.critic.safe_decay_rate}, observation: {obj.data_buffer.sample_last(keys=['observation'], dtype=np.array)['observation']}"
+        )
+        is_calf = (
+            obj.critic.opt_status == regelum.optimizable.optimizers.OptStatus.success
+            and obj.policy.opt_status
+            == regelum.optimizable.optimizers.OptStatus.success
+        )
+        if not self.data.empty:
+            prev_CALF = self.data["J_hat"].iloc[-1]
+        else:
+            prev_CALF = current_CALF
+
+        delta_CALF = prev_CALF - current_CALF
+        self.add_datum(
+            {
+                "time": obj.data_buffer.get_latest("time"),
+                "J_hat": current_CALF[0]
+                if isinstance(current_CALF, (np.ndarray, torch.Tensor))
+                else current_CALF.full()[0],
+                "is_CALF": is_calf,
+                "delta": delta_CALF[0]
+                if isinstance(delta_CALF, (np.ndarray, torch.Tensor))
+                else delta_CALF.full()[0],
+            }
+        )
+
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        identifier = f"CALF_diagnostics_on_episode_{str(iteration_number).zfill(5)}"
+        if not self.data.empty:
+            self.save_plot(identifier)
+            self.insert_column_left("iteration", iteration_number)
+            self.dump_and_clear_data(identifier)
+
+    def plot(self, name=None):
+        if regelum.main.is_clear_matplotlib_cache_in_callbacks:
+            plt.clf()
+            plt.cla()
+            plt.close()
+        if not self.data.empty:
+            fig = plt.figure(figsize=(10, 10))
+
+            ax_calf, ax_switch, ax_delta = ax_array = fig.subplots(1, 3)
+            ax_calf.plot(self.data["time"], self.data["J_hat"], label="CALF")
+            ax_switch.plot(self.data["time"], self.data["is_CALF"], label="CALF on")
+            ax_delta.plot(self.data["time"], self.data["delta"], label="delta decay")
+
+            for ax in ax_array:
+                ax.set_xlabel("Time [s]")
+                ax.grid()
+                ax.legend()
+
+            ax_calf.set_ylabel("J_hat")
+            ax_switch.set_ylabel("Is CALF on")
+            ax_delta.set_ylabel("Decay size")
+
+            plt.legend()
+            return fig
+
+
+class CALFWeightsCallback(HistoricalCallback):
+    """Callback that records the relevant model weights for CALF-based methods."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize an instance of CALFWeightsCallback."""
+        super().__init__(*args, **kwargs)
+        self.cooldown = 0.0
+        self.time = 0.0
+
+    def is_target_event(self, obj, method, output):
+        return (
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "compute_action"
+            and "calf" in obj.critic.__class__.__name__.lower()
+        )
+
+    def perform(self, obj, method, output):
+        try:
+            datum = {
+                **{
+                    "time": obj.data_buffer.get_latest("time"),
+                },
+                **{
+                    f"weight_{i + 1}": weight
+                    for i, weight in enumerate(
+                        obj.critic.model.weights
+                        if isinstance(
+                            obj.critic.model.weights, (np.ndarray, torch.Tensor)
+                        )
+                        else obj.critic.model.weights.full().reshape(-1)
+                    )
+                },
+            }
+
+            # print(datum["time"], obj.critic.model.weights)
+            self.add_datum(datum)
+        finally:
+            pass
+
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        identifier = f"CALF_weights_during_episode_{str(iteration_number).zfill(5)}"
+        if not self.data.empty:
+            self.save_plot(identifier)
+            self.insert_column_left("episode", iteration_number)
+            self.dump_and_clear_data(identifier)
+
+    def plot(self, name=None):
+        if not self.data.empty:
+            if regelum.main.is_clear_matplotlib_cache_in_callbacks:
+                plt.clf()
+                plt.cla()
+                plt.close()
+            if not name:
+                name = self.__class__.__name__
+            res = self.data.set_index("time").plot(
+                subplots=True, grid=True, xlabel="time", title=name
+            )
+            return res[0].figure
+
+
 def method_callback(method_name, class_name=None, log_level="debug"):
     """Create a callback class that logs the output of a specific method of a class or any class.
 
@@ -881,9 +1037,7 @@ class HistoricalDataCallback(HistoricalCallback):
                     },
                     **dict(zip(self.action_components_naming, output["action"][0])),
                     **dict(
-                        zip(
-                            self.observation_components_naming, output["observation"][0]
-                        )
+                        zip(self.state_components_naming, output["estimated_state"][0])
                     ),
                     # **dict(
                     #     zip(self.state_components_naming, output["estimated_state"][0])
@@ -914,7 +1068,7 @@ class HistoricalDataCallback(HistoricalCallback):
                     )
                     for columns, key in [
                         (self.action_components_naming, "action"),
-                        (self.observation_components_naming, "observation"),
+                        (self.state_components_naming, "estimated_state"),
                         # (self.state_components_naming, "estimated_state"),
                     ]
                 ],
@@ -947,15 +1101,13 @@ class HistoricalDataCallback(HistoricalCallback):
 
         axes = (
             self.data[
-                self.observation_components_naming
-                + self.action_components_naming
-                + ["time"]
+                self.state_components_naming + self.action_components_naming + ["time"]
             ]
             .set_index("time")
             .plot(subplots=True, grid=True, xlabel="time", title=name, legend=False)
         )
         for ax, label in zip(
-            axes, self.observation_components_naming + self.action_components_naming
+            axes, self.state_components_naming + self.action_components_naming
         ):
             ax.set_ylabel(label)
 
@@ -1043,14 +1195,14 @@ class PolicyObjectiveSaver(ObjectiveSaver):
 
 
 class ValueCallback(HistoricalCallback):
-    """Callback that regularly logs total objective."""
+    """Callback that regularly logs value."""
 
     def __init__(self, *args, **kwargs):
         """Initialize an instance of TotalObjectiveCallback."""
         super().__init__(*args, **kwargs)
         self.cache = pd.DataFrame()
         self.xlabel = "Episode"
-        self.ylabel = "Total objective"
+        self.ylabel = "value"
         self.values = []
         self.mean_iteration_values = []
 
@@ -1073,13 +1225,13 @@ class ValueCallback(HistoricalCallback):
         )
         self.values.append(scenario.recent_value)
         self.log(
-            f"Final total objective of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
+            f"Final value of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
         self.dump_data(
             f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
         )
         mlflow.log_metric(
-            f"C. Total objectives in iteration {str(iteration_number).zfill(5)}",
+            f"C. values in iteration {str(iteration_number).zfill(5)}",
             scenario.recent_value,
             step=len(self.values),
         )

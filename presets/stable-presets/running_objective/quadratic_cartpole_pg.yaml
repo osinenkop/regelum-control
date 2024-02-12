@@ -1,0 +1,10 @@
+defaults:
+  - model: quad_form
+
+###---Constructor arguments---###
+
+_target_: regelum.objective.RunningObjective
+
+model:
+  R1_diag%%: = [10, 10, 2, 0, 0.]
+  # R1_diag%%: = [10, 0.1, 0.1, 0.1, 0.]

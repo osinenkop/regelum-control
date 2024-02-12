@@ -1,0 +1,21 @@
+python run_stable.py \
++seed=1,2,3,4,5,6,7,8,9,10 \
+scenario=ppo \
+scenario.N_episodes=2 \
+scenario.N_iterations=200 \
+system=kin_point \
+--experiment=ppo_kin_point \
+scenario.discount_factor=0.7 \
+scenario.critic_td_n=1 \
+scenario/policy_model=perceptron_simple \
+scenario.policy_n_epochs=50 \
+scenario.critic_opt_method_kwargs.lr=0.1 \
+scenario.policy_opt_method_kwargs.lr=0.005 \
+scenario.critic_model.n_hidden_layers=3 \
+scenario.critic_model.dim_hidden=[100,50,10] \
+scenario.critic_model.leaky_relu_slope=0.2 \
+scenario.policy_model.n_hidden_layers=1 \
+scenario.policy_model.dim_hidden=4 \
+scenario.policy_model.leaky_relu_slope=0.2 \
+scenario.policy_model.normalize_output_coef=0.05 \
+--jobs=-1 

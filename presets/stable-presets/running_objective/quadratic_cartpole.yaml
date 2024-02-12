@@ -6,4 +6,6 @@ defaults:
 _target_: regelum.objective.RunningObjective
 
 model:
-  R1_diag%%: = [10, 3, 0.05, 0.05, 0]
+  # R1_diag%%: = [10, 10, 0.1, 2.0, 0.1, 0.] # calf works
+  R1_diag%%: = [10, 10, 0.0, 2.0, 0.0, 0.]
+  # R1_diag%%: = [10, 0.1, 0.1, 0.1, 0.]

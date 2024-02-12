@@ -466,6 +466,7 @@ class CriticCALF(Critic):
         safe_policy=None,
         lb_parameter: float = 1e-6,
         ub_parameter: float = 1e3,
+        regularization_param: float = 0,
     ):
         """Instantiate a CriticCALF object."""
         super().__init__(
@@ -479,6 +480,7 @@ class CriticCALF(Critic):
             discount_factor=discount_factor,
             sampling_time=sampling_time,
             action_bounds=None,
+            regularization_param=regularization_param,
         )
         self.predictor = predictor
         self.safe_decay_param = safe_decay_param
@@ -564,7 +566,7 @@ class CriticCALF(Critic):
             Constraint violation
         """
         self.lb_constraint_violation = (
-            self.lb_parameter * rg.norm_2(observation[:-1, :])
+            self.lb_parameter * rg.sum(observation[:-1, :] ** 2)
             - critic_model_output[-1, :]
         )
         return self.lb_constraint_violation

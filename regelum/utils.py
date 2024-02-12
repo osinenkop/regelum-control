@@ -213,6 +213,14 @@ class RCTypeHandler(metaclass=metaclassTypeInferenceDecorator):
         elif rc_type == CASADI:
             return casadi.cos(x)
 
+    def atan2(self, x, y, rc_type: RCType = NUMPY):
+        if rc_type == NUMPY:
+            return np.arctan2(x, y)
+        elif rc_type == TORCH:
+            return torch.atan2(x, y)
+        elif rc_type == CASADI:
+            return casadi.atan2(x, y)
+
     def clip(self, x, l, u, rc_type: RCType = NUMPY):
         if rc_type == NUMPY:
             return np.clip(x, l, u)

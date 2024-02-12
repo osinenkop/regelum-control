@@ -1,0 +1,70 @@
+- bash/nominal/2tank.sh
+- bash/nominal/3wrobot_kin.sh
+- bash/nominal/lunar_lander.sh
+- bash/nominal/cartpole.sh
+- bash/nominal/inv_pendulum.sh
+- bash/nominal/kin_point.sh
+
+- bash/calf/2tank.sh
+- bash/calf/3wrobot_kin.sh
+- bash/calf/lunar_lander.sh
+- bash/calf/cartpole.sh
+- bash/calf/inv_pendulum.sh
+- bash/calf/kin_point.sh
+
+- bash/calfinit/2tank.sh
+- bash/calfinit/3wrobot_kin.sh
+- bash/calfinit/lunar_lander.sh
+- bash/calfinit/cartpole.sh
+- bash/calfinit/inv_pendulum.sh
+- bash/calfinit/kin_point.sh
+
+- bash/mpc3/2tank.sh
+- bash/mpc3/3wrobot_kin.sh
+- bash/mpc3/cartpole.sh
+- bash/mpc3/lunar_lander.sh
+- bash/mpc3/inv_pendulum.sh
+- bash/mpc3/kin_point.sh
+
+- bash/mpc7/2tank.sh
+- bash/mpc7/3wrobot_kin.sh
+- bash/mpc7/cartpole.sh
+- bash/mpc7/lunar_lander.sh
+- bash/mpc7/inv_pendulum.sh
+- bash/mpc7/kin_point.sh
+
+- bash/mpc11/2tank.sh
+- bash/mpc11/3wrobot_kin.sh
+- bash/mpc11/cartpole.sh
+- bash/mpc11/lunar_lander.sh
+- bash/mpc11/inv_pendulum.sh
+- bash/mpc11/kin_point.sh
+
+- bash/reinforce/2tank.sh
+- bash/reinforce/3wrobot_kin.sh
+- bash/reinforce/cartpole.sh
+- bash/reinforce/lunar_lander.sh
+- bash/reinforce/inv_pendulum.sh
+- bash/reinforce/kin_point.sh
+
+- bash/ddpg/2tank.sh
+- bash/ddpg/3wrobot_kin.sh
+- bash/ddpg/cartpole.sh
+- bash/ddpg/lunar_lander.sh
+- bash/ddpg/inv_pendulum.sh
+- bash/ddpg/kin_point.sh
+
+- bash/sdpg/2tank.sh
+- bash/sdpg/3wrobot_kin.sh
+- bash/sdpg/cartpole.sh
+- bash/sdpg/lunar_lander.sh
+- bash/sdpg/inv_pendulum.sh
+- bash/sdpg/kin_point.sh
+
+- bash/ppo/2tank.sh
+- bash/ppo/3wrobot_kin.sh
+- bash/ppo/cartpole.sh
+- bash/ppo/lunar_lander.sh
+- bash/ppo/inv_pendulum.sh
+- bash/ppo/kin_point.sh
+
