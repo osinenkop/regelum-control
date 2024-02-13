@@ -2,7 +2,7 @@
 * [Basic concepts](basic_concepts.md)
 * [Implementing your own dynamical system](system.md)
 * [Run your system in simulator](simulator.md)
-* [Policy](policy.md)
+* [Run the scenario with a custom policy](policy_in_scenario.md)
 * [Model Predictive Control](mpc.md)
 * [Model Predictive Control with constraint parser](contraint_parser.md)
 * [REINFORCE](reinforce.md)

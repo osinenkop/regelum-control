@@ -13,7 +13,7 @@ import torch
 import regelum
 from abc import ABC, abstractmethod
 
-from . import animation
+# from . import animation
 from .utils import rg
 from typing import Any, Optional, Union, List, Dict, Tuple
 from typing_extensions import Self
