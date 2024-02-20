@@ -10,6 +10,8 @@ hide:
 ## Overview
 Regelum stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory. 
 
+--8<-- "scenarios/Osinenko2023habil.html"
+
 <!-- <style>
 .md-content .md-typeset h1 { display: none; }
 </style> -->

@@ -1,0 +1,65 @@
+% \documentclass[12pt,a4paper]{article}
+% \documentclass{minimal}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% IMPORTS
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}						% Load after amsmath and mathspec. Needed for custom delimiters
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{subcaption}
+\usepackage[shortlabels]{enumitem}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{float}
+\usepackage{wrapfig}
+% \usepacakge{color}						
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage{wasysym}
+\usepackage{xspace}							% Provides \xspace 
+
+\usepackage{lipsum}  						% Remove this, it's for the template only
+\usepackage{tabularx}  						% Used in the template. Nice package, but use with care. Remove by default 
+\usepackage{etoolbox}						% Provides \iftoggle
+% \usepackage[mathletters]{ucs}
+\usepackage[utf8]{inputenc}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ENVIRONMENTS
+\newtheorem{dfn}{Definition}
+\newtheorem{asm}{Assumption}
+\newtheorem{prp}{Proposition}
+\newtheorem{thm}{Theorem}
+\newtheorem{crl}{Corollary}
+\newtheorem{rem}{Remark}
+\newtheorem{exm}{Example}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BIBLIOGRAPHY SETUP
+\usepackage[
+	backend=biber,
+	maxnames=5,
+	style=alphabetic,
+	sorting=ydnt,
+	giveninits=true,
+	  doi=false,
+	  url=false,
+	  isbn=false	
+%	citestyle=verbose-ibid
+	]{biblatex}
+\addbibresource{../../bib/AIDA__Nov2023.bib}
+\addbibresource{../../bib/Osinenko__Novp2023.bib}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREAMBLE 
+
+\newtoggle{mlnotation}	% True: use ML notation, false: use control theory notation
+
+\toggletrue{mlnotation}
+\iftoggle{mlnotation}
+{
+\input{../../preambleAIDA_ML__Nov2023}
+}
+{
+\input{../../preambleAIDA_control__Nov2023}
+}

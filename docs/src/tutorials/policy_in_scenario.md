@@ -27,7 +27,7 @@ TODO: Add link to MPC
 
 ## Episode vs. Iteration
 
-The classes [Scenario][regelum.scenario.Scenario] and [RLScenario][regelum.scenario.RLScenario] accept two key parameters upon instantiation:
+The classes [`Scenario`][regelum.scenario.Scenario] and [`RLScenario`][regelum.scenario.RLScenario] accept two key parameters upon instantiation:
 
 - Number of **episodes**. Below the provide the detailed explanation of what is the **episode**:
     

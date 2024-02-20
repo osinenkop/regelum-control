@@ -35,7 +35,6 @@ for their utility, particularly in enhancing the interpretability of results, su
 
 The motion of a non-holonomic robot is governed by the following differential equations:
 
-{% include 'preamble.md' %}
 
 {% include 'systems/3wrobot_kin/state_dynamics.md' %}
 
@@ -96,7 +95,6 @@ class MyThreeWheeledRobotKinematic(System):
 
 The motion of a non-holonomic robot is governed by the following differential equations:
 
-{% include 'preamble.md' %}
 
 {% include 'systems/3wrobot_dyn/state_dynamics.md' %}
 

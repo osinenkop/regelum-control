@@ -17,7 +17,7 @@
 
 The dynamics are captured by the following differential equations, with the physical meaning of each entity described in the subsequent sections:
 
-{% include 'preamble.md' %}
+
 
 {% include state_dynamics_path %}
 

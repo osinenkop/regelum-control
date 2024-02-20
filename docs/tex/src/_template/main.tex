@@ -1,0 +1,113 @@
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+
+\input{../../packages.tex}
+
+\begin{document}
+
+\section{Common AIDA notation}
+
+\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
+\hline
+$\R_{\ge 0}, \Z_{\ge 0}$ & Set of nonnegative reals, resp., integers \\ 
+$\PP{\bullet}$ & Probability measure \\
+$\E[f]{\bullet}$ & Expectation under distribution $f$ \\
+$\nrm{\bullet}$ & Norm (context-dependent) \\
+\hline
+\end{tabularx}
+
+\subsection{Reinforcement learning and control notation.}
+
+\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
+\hline
+$Q$ & Quality function \\ 
+$r, R$ & Running objective (reward or cost) as definite, resp., random value\\
+\hline
+\end{tabularx}
+
+\paragraph{Conditional notation.}
+
+When \texttt{mlnotation} toggle is set \texttt{true}.
+You should set the toggle in \texttt{PREAMBLE} section right after loading the preamble.
+
+\noindent
+\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
+\hline
+$\policy$ & Policy, a law that generates actions from observations \\ 
+$\state, \State$ & State, as definite, resp., random value \\ 
+$\action, \Action$ & Action, as definite, resp., random value \\ 
+$\obs, \Obs$ & Observation, as definite, resp., random value \\ 
+$\states$ & State space \\
+$\actions$ & Action space \\
+$\obses$ & Observation space \\
+$\policies$ & Policy space \\
+$\transit$ & State dynamics law (function or probability distribution) \\ 
+$\Value^\policy$ & Total objective (value or cost) of policy $\policy$ \\
+$\Value^*$ & Optimum total objective (value or cost) under the optimal policy $\policy^*$ \\
+$\Advan^{\policy,\policy'}$ & Advantage of policy $\policy$ relative to policy $\policy'$ \\
+$\policy^\theta$ & Actor network with weights $\theta$ \\
+$\hat \Value^w$ & Critic network (state-valued) with weights $w$ \\
+\hline
+\end{tabularx}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+Reinforcement learning commonly addresses the following infinite-horizon optimal control and/or decision problem:
+\begin{equation}
+	\label{eqn_optctrl_problem}
+	\begin{aligned}
+	& \, \max_{\policy \in \policies} \; \Value^\policy (\state) = \\
+	& \, \max_{\policy \in \policies} \; \E[\Action_t \sim \policy]{\sum\limits_{t=0}^{\infty} \gamma^t r(\State_t, \Action_t) \vert \State_0=\state},
+	\end{aligned}
+\end{equation}
+where $\State_t \in \states$ at a time $t \in \T := \Z_{\ge0}$ is the environment's state with values in the state-space $\states$, $r$ is the reward (in general, running objective) rate, $\gamma$ is the discount factor, $\policy$ is the agent's policy of some function class $\policies$.
+The running objective may be taken as a random variable $R_t$ whose probability distribution depends on the state and action.
+The agent-environment loop dynamics are commonly modeled via the following Markov chain:
+\begin{equation}
+	\label{eqn_sysmarkov}
+	\begin{aligned}
+		& \State_{t+1} \sim \transit(\bullet \vert \state_t, \action_t), \spc t \in \T.
+	\end{aligned}
+\end{equation}
+
+For the problem \eqref{eqn_optctrl_problem}, one can state an important recursive property of the objective optimum $\Value^*(\state)$ in the form of the Hamilton-Jacobi-Bellman (HJB) equation as follows:
+\begin{equation}
+    \label{eqn_hjb}
+    \max_{\action \in \actions}{\{ \mathcal D^\action \Value^*(\state) + r(\state, \action) - \gamma \Value^*(\state)\}} = 0, \forall \state \in \states,
+\end{equation}
+where $\mathcal D^\action \Value^*(\state) := \E[S_+ \sim \transit(\bullet \vert \state, \action)]{\Value^*((\State_{+}))} - \Value^*(\state)$.
+
+The common approaches to \eqref{eqn_optctrl_problem} are dynamic programming \cite{Bertsekas2019Reinforcementl,Lewis2009Reinforcementl} and model-predictive control \cite{Garcia1989Modelpredictiv,Borrelli2011PredictiveCont,Darby2012MPCCurrentpra,Mayne2014Modelpredictiv}.
+The latter cuts the infinite horizon to some finite value $T>0$ thus considering effectively a finite-time optimal control problem.
+Dynamic programming aims directly at the HJB \eqref{eqn_hjb} and solves it iteratively over a mesh in the state space $\states$ and thus belongs to the category of tabular methods.
+The most significant problem with such a discretization is the curse of dimensionality, since the number of nodes in the said mesh grows exponentially with the dimension of the state space.
+Evidently, dynamic programming is in general only applicable when the state-space is compact.
+Furthermore, state-space discretization should be fine enough to avoid undesirable effects that may lead to a loss of stability of the agent-environment closed loop.
+Reinforcement learning essentially approximates the optimum objective $\Value^*$ via a (deep) neural network.
+
+\begin{algorithmic}
+\STATE {\bfseries Input:} $\theta_0$
+\FOR {Learning iteration $i := 0 \dots \mathcal I$}
+	\STATE Policy weight update
+	\STATE $\theta_{i+1} \la \theta_i - \alpha_i \Es[\trajpdf^{\policy^{\theta_i}}]{ \Cost^\gamma_{0:T} \sum \limits_{t=0}^{T-1} \nabla_\theta \log \policy^{\theta_i} ( \Traj_t ) }$
+	\STATE $\alpha_i > 0$, learning rate
+\ENDFOR
+\STATE \RETURN Near-optimal policy $\policy^{\theta_{\mathcal I}}$
+\end{algorithmic}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BIBLIOGRAPHY
+
+\printbibliography
+
+% These commands are in case of plain bibtex
+%\bibliographystyle{plain}
+%\bibliography{
+%bib/AIDA__Sep2023,
+%bib/Osinenko__Sep2023
+%}
+
+\end{document}
