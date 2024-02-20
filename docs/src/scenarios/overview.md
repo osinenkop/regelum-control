@@ -1,4 +1,3 @@
-
 ## Problem statement version 1
 
 

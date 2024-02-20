@@ -3,6 +3,7 @@ from pathlib import Path
 import bs4
 from typing import Annotated
 import numpy as np
+from typing_extensions import Literal
 
 
 def read(html: Path) -> bs4.BeautifulSoup:
@@ -35,6 +36,19 @@ def get_table_of_contents(html: Path) -> list[str]:
             .find_all("a", href=True)
         )
     ]
+
+
+def transform_to_md_heading(
+    heading_type: Literal["h1", "h2", "h3", "h4", "h5", "h6"]
+) -> str:
+    return {
+        "h1": "#",
+        "h2": "##",
+        "h3": "##",
+        "h4": "###",
+        "h5": "####",
+        "h6": "#####",
+    }[heading_type]
 
 
 def save(bs: bs4.BeautifulSoup, html: Path, out: Path = None, help="") -> None:
@@ -166,8 +180,13 @@ def markdown(
         md_heading_meta_tag = read(out / html_source_dir / html_fname).find(
             "meta", {"name": "md-heading"}
         )
-        md += "## " + md_heading_meta_tag.get("md-heading") + "\n"
-        md += "--8<-- " + html_source_dir + "/" + html_fname + "\n\n"
+        md += (
+            transform_to_md_heading(md_heading_meta_tag.get("type"))
+            + " "
+            + md_heading_meta_tag.get("md-heading")
+            + "\n"
+        )
+        md += '--8<-- "' + html_source_dir + "/" + html_fname + '"\n\n'
 
     with open(str(out / html_source_dir) + ".md", "w") as f:
         f.write(md)

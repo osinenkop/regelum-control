@@ -48,4 +48,4 @@ WORKDIR work
 
 
 ENTRYPOINT ["sh", "/entrypoint.sh"]
-CMD ["-h"]
+

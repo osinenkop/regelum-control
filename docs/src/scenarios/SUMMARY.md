@@ -1,5 +1,4 @@
 * [Problem statement](overview.md)
-* [Notation TODO](notation.md)
 * [REINFORCE](reinforce.md)
 * [Proximal policy optimization TODO](ppo.md)
 * [Stochastic deep policy gradient TODO](sdpg.md)
