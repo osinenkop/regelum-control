@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html lang="en-US" xml:lang="en-US">
+<head><title>Introduction</title>
+<meta charset="utf-8"/>
+<meta content="TeX4ht (https://tug.org/tex4ht/)" name="generator"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="template.tex" name="src"/>
+<script>window.MathJax = { tex: { tags: "ams", }, }; </script>
+<script async="async" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<meta md-heading="0.2    Introduction" name="md-heading" type="h3"/></head><body>
+<!-- l. 46 -->
+<!-- l. 47 --><p class="noindent">Reinforcement learning commonly addresses the following infinite-horizon optimal control
+and/or decision problem: \begin {equation}  \label {eqn_optctrl_problem} \begin {aligned} &amp; \, \max _{\policy \in \policies } \; \Value ^\policy (\state ) = \\ &amp; \, \max _{\policy \in \policies } \; \E [\Action _t \sim \policy ]{\sum \limits _{t=0}^{\infty } \gamma ^t r(\State _t, \Action _t) \vert \State _0=\state }, \end {aligned}  \end {equation}<a id="x4-4001r1"></a> where \(\State _t \in \states \) at a time \(t \in \T := \Z _{\ge 0}\) is the environment’s state with values in the
+state-space \(\states \), \(r\) is the reward (in general, running objective) rate, \(\gamma \) is the discount factor, \(\policy \) is
+the agent’s policy of some function class \(\policies \). The running objective may be taken as a random
+variable \(R_t\) whose probability distribution depends on the state and action. The
+agent-environment loop dynamics are commonly modeled via the following Markov chain: \begin {equation}  \label {eqn_sysmarkov} \begin {aligned} &amp; \State _{t+1} \sim \transit (\bullet \vert \state _t, \action _t), \spc t \in \T . \end {aligned}  \end {equation}<a id="x4-4002r2"></a>
+For the problem (\ref{eqn_optctrl_problem}), one can state an important recursive property of the objective
+optimum \(\Value ^*(\state )\) in the form of the Hamilton-Jacobi-Bellman (HJB) equation as follows: \begin {equation}  \label {eqn_hjb} \max _{\action \in \actions }{\{ \mathcal D^\action \Value ^*(\state ) + r(\state , \action ) - \gamma \Value ^*(\state )\}} = 0, \forall \state \in \states ,  \end {equation}<a id="x4-4003r3"></a> where \(\mathcal D^\action \Value ^*(\state ) := \E [S_+ \sim \transit (\bullet \vert \state , \action )]{\Value ^*((\State _{+}))} - \Value ^*(\state )\).
+The common approaches to (\ref{eqn_optctrl_problem}) are dynamic programming [<a id="x4-4004"></a><a href="#cite.0_Bertsekas2019Reinforcementl">Ber19</a>; <a id="x4-4005"></a><a href="#cite.0_Lewis2009Reinforcementl">LV09</a>] and
+model-predictive control [<a id="x4-4006"></a><a href="#cite.0_Garcia1989Modelpredictiv">GPM89</a>; <a id="x4-4007"></a><a href="#cite.0_Borrelli2011PredictiveCont">BBM11</a>; <a id="x4-4008"></a><a href="#cite.0_Darby2012MPCCurrentpra">DN12</a>; <a id="x4-4009"></a><a href="#cite.0_Mayne2014Modelpredictiv">May14</a>]. The latter cuts the infinite
+horizon to some finite value \(T&gt;0\) thus considering effectively a finite-time optimal
+control problem. Dynamic programming aims directly at the HJB (\ref{eqn_hjb}) and solves it
+iteratively over a mesh in the state space \(\states \) and thus belongs to the category of tabular
+methods. The most significant problem with such a discretization is the curse of
+dimensionality, since the number of nodes in the said mesh grows exponentially
+with the dimension of the state space. Evidently, dynamic programming is in
+general only applicable when the state-space is compact. Furthermore, state-space
+discretization should be fine enough to avoid undesirable effects that may lead to a
+loss of stability of the agent-environment closed loop. Reinforcement learning
+essentially approximates the optimum objective \(\Value ^*\) via a (deep) neural network.
+</p><div class="algorithmic">
+<a id="x4-4010r1"></a>
+<span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">Input:</span> \(\theta _0\) <a id="x4-4011r2"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">for</span> Learning iteration \(i := 0 \dots \mathcal I\) <span class="cmbx-12">do</span><span class="for-body">
+<a id="x4-4012r3"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>   Policy weight update <a id="x4-4013r4"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>   \(\theta _{i+1} \la \theta _i - \alpha _i \Es [\trajpdf ^{\policy ^{\theta _i}}]{ \Cost ^\gamma _{0:T} \sum \limits _{t=0}^{T-1} \nabla _\theta \log \policy ^{\theta _i} ( \Traj _t ) }\) <a id="x4-4014r5"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>   \(\alpha _i &gt; 0\), learning rate
+  </span><a id="x4-4015r6"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span><a id="x4-4016r7"></a>
+<a id="x4-4017r8"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;"> </span>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">return </span> Near-optimal policy \(\policy ^{\theta _{\mathcal I}}\)
+   </div>
+<!-- l. 95 -->
+<!-- l. 95 --><p class="indent"> <a id="tailtemplatese2.html"></a> </p>
+</body>
+</html>

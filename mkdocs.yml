@@ -35,9 +35,10 @@ plugins:
   - autorefs
   - macros:
       include_dir: docs/include
-  # - gen-files:
-  #     scripts:
-  #     - docs/scripts/gen_ref_pages.py
+  - gen-files:
+      scripts:
+      - docs/scripts/gen_ref_pages.py
+      - docs/scripts/add_preamble_to_mkdocs_template.py
   - literate-nav:
       nav_file: SUMMARY.md
   # - mkdocstrings:
@@ -94,7 +95,7 @@ extra_javascript:
 
 extra_css:
   # - _internal/javascripts/pseudocode.min.js
-  - _internal/stylesheets/Osinenko2023habil.css
+  - _internal/stylesheets/texhtml.css
   - _internal/stylesheets/colors.css
   # - _internal/stylesheets/f.css
   # - _internal/stylesheets/pseudocode.min.css

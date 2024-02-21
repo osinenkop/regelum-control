@@ -4,6 +4,7 @@ import bs4
 from typing import Annotated
 import numpy as np
 from typing_extensions import Literal
+from bs4 import Comment
 
 
 def read(html: Path) -> bs4.BeautifulSoup:
@@ -125,6 +126,23 @@ def rm_toc(
     save(bs, html, out, help="  - Removed TOC.")
 
 
+rm_stylesheet_app = typer.Typer()
+
+
+@rm_stylesheet_app.callback(invoke_without_command=True)
+def rm_stylesheet(
+    html: Annotated[Path, typer.Argument()],
+    out: Annotated[Path, typer.Option()] = None,
+):
+    bs = read(html)
+    for toc in bs.find("head").find_all(
+        "link", {"rel": "stylesheet", "type": "text/css"}
+    ):
+        toc.decompose()
+
+    save(bs, html, out, help="  - Removed stylesheet.")
+
+
 fix_links_app = typer.Typer()
 
 
@@ -138,6 +156,27 @@ def fix_links(
         if ".html#" in link["href"]:
             link["href"] = link["href"][link["href"].find(".html#") + 5 :]
     save(bs, html, out, help="  - Fixed links.")
+
+
+fix_refs_app = typer.Typer()
+
+
+@fix_refs_app.callback(invoke_without_command=True)
+def fix_refs(
+    html: Annotated[Path, typer.Argument()],
+    out: Annotated[Path, typer.Option()] = None,
+):
+    bs = read(html)
+    for href in bs.find_all("a", href=True):
+        comment = href.find(string=lambda text: isinstance(text, Comment))
+        if comment is not None:
+            if "tex4ht:ref:" in comment:
+                latex_ref = (
+                    comment.replace("tex4ht:ref:", "\\ref{").replace(" ", "") + "}"
+                )
+                href.replace_with(latex_ref)
+
+    save(bs, html, out, help="  - Fixed refs.")
 
 
 process_app = typer.Typer()
@@ -157,9 +196,11 @@ def process(
         print("Processing", html)
         rm_heading(html, out)
         path = get_path(html, out)
+        rm_stylesheet(path, out)
         rm_crosslinks(path, out)
         rm_toc(path, out)
         fix_links(path, out)
+        fix_refs(path, out)
 
 
 md_app = typer.Typer()
@@ -209,10 +250,16 @@ app.add_typer(
     help="Fix links in HTML file that refer to other HTML files",
 )
 app.add_typer(
+    fix_refs_app,
+    name="fix-refs",
+    help="Fixes refs in HTML files (for instance, equation refs)",
+)
+app.add_typer(
     process_app,
     name="process",
     help="Full processing of HTML file or directory with HTML files",
 )
+app.add_typer(rm_stylesheet_app, name="rm-stylesheet", help="Removes link to css file")
 app.add_typer(
     md_app, name="markdown", help="Create markdown file from HTML files in directory"
 )
