@@ -39,6 +39,7 @@ plugins:
       scripts:
       - docs/scripts/gen_ref_pages.py
       - docs/scripts/add_preamble_to_mkdocs_template.py
+      - docs/scripts/include_tex_htmls.py
   - literate-nav:
       nav_file: SUMMARY.md
   # - mkdocstrings:

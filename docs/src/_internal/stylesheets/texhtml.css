@@ -1,13 +1,8 @@
  
 /* start css.sty */
-.cmr-10{font-size:83%;}
 .cmtt-12{font-family: monospace,monospace;}
-.cmtt-12{font-family: monospace,monospace;}
-.cmti-12{ font-style: italic;}
-.cmr-10x-x-109{font-size:90%;}
 .cmbx-12{ font-weight: bold;}
-.cmtt-10{font-size:83%;font-family: monospace,monospace;}
-.cmtt-10{font-family: monospace,monospace;}
+.cmti-12{ font-style: italic;}
 p{margin-top:0;margin-bottom:0}
 p.indent{text-indent:0;}
 p + p{margin-top:1em;}
@@ -29,7 +24,7 @@ h1,h2,h3,h4,h5 { line-height:1.2; }
 .sectionHead, .likesectionHead { font-size: 1.5157em; }
 .subsectionHead, .likesubsectionHead { font-size: 1.3195em; }
 .subsubsectionHead, .likesubsubsectionHead { font-size: 1.1487em; }
- @media (prefers-color-scheme: dark) { img[src^="Osinenko2023habil"]{filter: invert(1); } } 
+ @media (prefers-color-scheme: dark) { img[src^="template"]{filter: invert(1); } } 
 li p.indent { text-indent: 0em }
 li p:first-child{ margin-top:0em; }
 li p:last-child, li div:last-child { margin-bottom:0.5em; }
@@ -203,4 +198,3 @@ dt.thebibliography {float:left; clear:left; margin-right:1em;}
 #TBL-9-1{border-right:1px solid black;}
 #TBL-9-2{border-right:1px solid black;}
 /* end css.sty */
-

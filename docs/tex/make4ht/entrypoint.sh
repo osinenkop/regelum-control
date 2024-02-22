@@ -5,6 +5,8 @@ then
 fi
 
 export TEXINPUTS=.:/root/texmf//:
+export INITDIR=$(pwd)
+
 cd $1
 export TEXFILE=$(ls -R | grep -i *.tex)
 export TEX=${TEXFILE%%.*}
@@ -25,3 +27,7 @@ eval pdflatex -output-directory build $TEXFILE
 
 echo make4ht $TEXFILE "mathjax,4" -B build
 eval make4ht $TEXFILE "mathjax,4" -B build
+
+cd $INITDIR
+echo python3 htmltool.py markdown --out=$1/mdhtml $1/build
+eval python3 htmltool.py markdown --out=$1/mdhtml $1/build

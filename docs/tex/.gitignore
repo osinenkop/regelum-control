@@ -19,3 +19,4 @@ html/*
 __pycache__
 *.python-version
 *.bcf
+*.run.xml

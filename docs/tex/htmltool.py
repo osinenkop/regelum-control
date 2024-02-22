@@ -5,6 +5,7 @@ from typing import Annotated
 import numpy as np
 from typing_extensions import Literal
 from bs4 import Comment
+import re
 
 
 def read(html: Path) -> bs4.BeautifulSoup:
@@ -174,7 +175,13 @@ def fix_refs(
                 latex_ref = (
                     comment.replace("tex4ht:ref:", "\\ref{").replace(" ", "") + "}"
                 )
-                href.replace_with(latex_ref)
+                if "{eq" in latex_ref:
+                    href.replace_with(latex_ref)
+
+    # This block of code replaces all (\ref{some-random-label}) to \eqref{some-random-label}
+    bs = bs4.BeautifulSoup(
+        re.sub(r"\(\\ref\{([^\}]+)\}\)", r"\\eqref{\1}", str(bs)), "html.parser"
+    )
 
     save(bs, html, out, help="  - Fixed refs.")
 
@@ -194,13 +201,13 @@ def process(
             process(html_file, out)
     else:
         print("Processing", html)
-        rm_heading(html, out)
+        fix_refs(html, out)
         path = get_path(html, out)
+        rm_heading(path, out)
         rm_stylesheet(path, out)
         rm_crosslinks(path, out)
         rm_toc(path, out)
         fix_links(path, out)
-        fix_refs(path, out)
 
 
 md_app = typer.Typer()

@@ -4,6 +4,10 @@
 \input{../../packages.tex}
 \begin{document}
 \section{Common AIDA notation}
+
+\begin{table}
+\caption{Table caption}
+\label{table:my-table}
 \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
 \hline
 $\R_{\ge 0}, \Z_{\ge 0}$ & Set of nonnegative reals, resp., integers \\ 
@@ -12,6 +16,9 @@ $\E[f]{\bullet}$ & Expectation under distribution $f$ \\
 $\nrm{\bullet}$ & Norm (context-dependent) \\
 \hline
 \end{tabularx}
+\end{table}
+Here we go \eqref{eqn_optctrl_problem}. Alrorithm \ref{alg:my-alg}
+
 \subsection{Reinforcement learning and control notation.}
 \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
 \hline
@@ -19,10 +26,15 @@ $Q$ & Quality function \\
 $r, R$ & Running objective (reward or cost) as definite, resp., random value\\
 \hline
 \end{tabularx}
+
+
+Referencing to \ref{table:my-table}
 \paragraph{Conditional notation.}
 When \texttt{mlnotation} toggle is set \texttt{true}.
 You should set the toggle in \texttt{PREAMBLE} section right after loading the preamble.
-\noindent
+\begin{table}
+\caption{Another table}
+\label{table:my-another-table}
 \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
 \hline
 $\policy$ & Policy, a law that generates actions from observations \\ 
@@ -41,6 +53,8 @@ $\policy^\theta$ & Actor network with weights $\theta$ \\
 $\hat \Value^w$ & Critic network (state-valued) with weights $w$ \\
 \hline
 \end{tabularx}
+
+\end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
@@ -74,6 +88,13 @@ The most significant problem with such a discretization is the curse of dimensio
 Evidently, dynamic programming is in general only applicable when the state-space is compact.
 Furthermore, state-space discretization should be fine enough to avoid undesirable effects that may lead to a loss of stability of the agent-environment closed loop.
 Reinforcement learning essentially approximates the optimum objective $\Value^*$ via a (deep) neural network.
+
+Reference to \ref{table:my-another-table}
+
+
+\begin{algorithm}
+\caption{My awesome algorithm}
+\label{alg:my-alg}
 \begin{algorithmic}
 \STATE {\bfseries Input:} $\theta_0$
 \FOR {Learning iteration $i := 0 \dots \mathcal I$}
@@ -83,6 +104,7 @@ Reinforcement learning essentially approximates the optimum objective $\Value^*$
 \ENDFOR
 \STATE \RETURN Near-optimal policy $\policy^{\theta_{\mathcal I}}$
 \end{algorithmic}
+\end{algorithm}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BIBLIOGRAPHY
 \printbibliography
