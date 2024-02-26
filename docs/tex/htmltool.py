@@ -54,7 +54,6 @@ def transform_to_md_heading(
 
 
 def save(bs: bs4.BeautifulSoup, html: Path, out: Path = None, help="") -> None:
-
     path = get_path(html, out)
     print(help, "Writing to", path)
 
@@ -70,7 +69,6 @@ def rm_heading(
     html: Path = typer.Argument(),
     out: Annotated[Path, typer.Option()] = None,
 ) -> None:
-
     bs = read(html)
     heading_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
     all_headings = bs.find("body").find_all(heading_tags)
@@ -136,12 +134,12 @@ def rm_stylesheet(
     out: Annotated[Path, typer.Option()] = None,
 ):
     bs = read(html)
-    for toc in bs.find("head").find_all(
+    for stylesheet in bs.find("head").find_all(
         "link", {"rel": "stylesheet", "type": "text/css"}
     ):
-        toc.decompose()
+        stylesheet.href = "texhtml.css"
 
-    save(bs, html, out, help="  - Removed stylesheet.")
+    save(bs, html, out, help="  - Fixed stylesheet.")
 
 
 fix_links_app = typer.Typer()
