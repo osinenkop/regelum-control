@@ -137,7 +137,7 @@ def rm_stylesheet(
     for stylesheet in bs.find("head").find_all(
         "link", {"rel": "stylesheet", "type": "text/css"}
     ):
-        stylesheet.href = "texhtml.css"
+        stylesheet.decompose()
 
     save(bs, html, out, help="  - Fixed stylesheet.")
 
@@ -184,6 +184,22 @@ def fix_refs(
     save(bs, html, out, help="  - Fixed refs.")
 
 
+fix_mathjax_script_app = typer.Typer()
+
+
+def fix_mathjax_script(
+    html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
+    out: Annotated[Path, typer.Option()],
+):
+    bs = read(html)
+    mathjax_script = bs.find("script", {"id": "MathJax-script"})
+
+    del mathjax_script.attrs["async"]
+    del mathjax_script.attrs["id"]
+
+    save(bs, html, out, help="  - Fixed MathJax script.")
+
+
 process_app = typer.Typer()
 
 
@@ -206,6 +222,7 @@ def process(
         rm_crosslinks(path, out)
         rm_toc(path, out)
         fix_links(path, out)
+        fix_mathjax_script(path, out)
 
 
 md_app = typer.Typer()
@@ -268,6 +285,12 @@ app.add_typer(rm_stylesheet_app, name="rm-stylesheet", help="Removes link to css
 app.add_typer(
     md_app, name="markdown", help="Create markdown file from HTML files in directory"
 )
+app.add_typer(
+    fix_mathjax_script_app,
+    name="fix-mathjax-script",
+    help="Removes async load of MathJax.js in HTML file",
+)
+
 
 if __name__ == "__main__":
     app()
