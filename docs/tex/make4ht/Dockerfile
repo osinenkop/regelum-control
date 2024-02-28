@@ -1,16 +1,5 @@
 FROM debian:unstable-slim
 
-LABEL "maintainer"="Michal Hoftich <michal.h21@gmail.com>"
-LABEL "repository"="https://github.com/michal-h21/make4ht"
-LABEL "homepage"="https://github.com/michal-h21/make4ht"
-
-LABEL "com.github.actions.name"="LaTeX to XML"
-LABEL "com.github.actions.description"="Convert LaTeX documents to XML with make4ht."
-LABEL "com.github.actions.icon"="code"
-LABEL "com.github.actions.color"="blue"
-
-ENV DEBIAN_FRONTEND noninteractive
-
 # Fix openjre installation isssue
 RUN mkdir -p /usr/share/man/man1
 
@@ -20,7 +9,7 @@ RUN apt-get update && \
     make luatex texlive texlive-base texlive-luatex texlive-latex-extra context \
     tidy texlive-extra-utils python3-pygments python3-setuptools dvisvgm \
     texlive-science texlive-games texlive-humanities texlive-music texlive-publishers texlive-science \
-    texlive-plain-generic texlive-plain-generic context \
+    texlive-plain-generic texlive-plain-generic context texlive-bibtex-extra biber \
     pandoc latexmk lmodern fonts-lmodern tex-gyre fonts-texgyre \
     default-jre-headless zip git \
     texlive-lang-all && \
@@ -28,8 +17,6 @@ RUN apt-get update && \
     git clone https://github.com/michal-h21/make4ht && \
     cd make4ht && \
     make justinstall SUDO="" 
-
-RUN apt-get install texlive-bibtex-extra biber -y
 
 #ENV filename "sample.tex"
 # extra packages installes using apt-get

@@ -3,7 +3,7 @@
 \documentclass[12pt,twoside]{../../mitthesis}
 \input{../../packages.tex}
 \begin{document}
-\section{Common AIDA notation}
+\section*{Common AIDA notation}
 
 \begin{table}
 \caption{Table caption}
@@ -17,9 +17,9 @@ $\nrm{\bullet}$ & Norm (context-dependent) \\
 \hline
 \end{tabularx}
 \end{table}
-Here we go \eqref{eqn_optctrl_problem}. Alrorithm \ref{alg:my-alg}
+Here we go \eqref{eqn_optctrl_problem}. Alrorithm \ref{alg:my-alg}. Figure \ref{fig:my-fig}. Section \ref{sec:intro}
 
-\subsection{Reinforcement learning and control notation.}
+\subsection*{Reinforcement learning and control notation.}
 \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
 \hline
 $Q$ & Quality function \\ 
@@ -57,7 +57,8 @@ $\hat \Value^w$ & Critic network (state-valued) with weights $w$ \\
 \end{table}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Introduction}
+\section*{Introduction}
+\label{sec:intro}
 Reinforcement learning commonly addresses the following infinite-horizon optimal control and/or decision problem:
 \begin{equation}
     \label{eqn_optctrl_problem}
@@ -107,9 +108,9 @@ Reference to \ref{table:my-another-table}
 \end{algorithm}
 
 \begin{figure}
-    \includegraphics[width=\textwidth]{img.pdf}
-    \caption{My awesome figure}
+    \caption{My awesome figure!!!}
     \label{fig:my-fig}
+    \includegraphics{img.pdf}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

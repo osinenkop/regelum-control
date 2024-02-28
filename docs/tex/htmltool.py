@@ -120,11 +120,14 @@ def rm_toc(
     out: Annotated[Path, typer.Option()] = None,
 ):
     bs = read(html)
-    for toc in bs.find("body").find_all("div", {"class": "subsectionTOCS"}):
-        toc.decompose()
-
-    for toc in bs.find("body").find_all("div", {"class": "sectionTOCS"}):
-        toc.decompose()
+    for toc_type in [
+        "subsectionTOCS",
+        "sectionTOCS",
+        "likesubsectionTOCS",
+        "likesectionTOCS",
+    ]:
+        for toc in bs.find("body").find_all("div", {"class": toc_type}):
+            toc.decompose()
     save(bs, html, out, help="  - Removed TOC.")
 
 
@@ -243,6 +246,7 @@ def fix_img(
                 print("Could not find", img.attrs["src"])
 
         img.attrs["src"] = "data:image/png;base64, " + encoded_string.decode()
+
     save(bs, html, out, help="  - Fixed img src.")
 
 
