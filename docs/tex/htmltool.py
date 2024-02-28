@@ -6,6 +6,9 @@ import numpy as np
 from typing_extensions import Literal
 from bs4 import Comment
 import re
+import base64
+from pdf2image import convert_from_path
+from io import BytesIO
 
 
 def read(html: Path) -> bs4.BeautifulSoup:
@@ -187,6 +190,7 @@ def fix_refs(
 fix_mathjax_script_app = typer.Typer()
 
 
+@fix_mathjax_script_app.callback(invoke_without_command=True)
 def fix_mathjax_script(
     html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
     out: Annotated[Path, typer.Option()],
@@ -198,6 +202,48 @@ def fix_mathjax_script(
     del mathjax_script.attrs["id"]
 
     save(bs, html, out, help="  - Fixed MathJax script.")
+
+
+fix_algorithmic_app = typer.Typer()
+
+
+@fix_algorithmic_app.callback(invoke_without_command=True)
+def fix_algorithmic(
+    html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
+    out: Annotated[Path, typer.Option()],
+):
+    bs = read(html)
+    for figure in bs.find_all("figure"):
+        algorithmic = figure.find("div", {"class": "algorithmic"})
+        if algorithmic is not None:
+            figure.insert_after(algorithmic)
+    save(bs, html, out, help="  - Fixed algorithmic.")
+
+
+def fix_img(
+    html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
+    out: Annotated[Path, typer.Option()],
+):
+    bs = read(html)
+
+    for img in bs.find_all("img"):
+        gfx_path = Path("gfx") / Path(img.attrs["src"]).name
+        if gfx_path.exists():
+            with open(gfx_path, "rb") as gfx_file:
+                encoded_string = base64.b64encode(gfx_file.read())
+        else:
+            gfx_path = Path("gfx") / (Path(img.attrs["src"]).name[:-5] + ".pdf")
+            print(gfx_path)
+            if gfx_path.exists():
+                images = convert_from_path(gfx_path)
+                buffered = BytesIO()
+                images[0].save(buffered, "PNG")
+                encoded_string = base64.b64encode(buffered.getvalue())
+            else:
+                print("Could not find", img.attrs["src"])
+
+        img.attrs["src"] = "data:image/png;base64, " + encoded_string.decode()
+    save(bs, html, out, help="  - Fixed img src.")
 
 
 process_app = typer.Typer()
@@ -223,6 +269,8 @@ def process(
         rm_toc(path, out)
         fix_links(path, out)
         fix_mathjax_script(path, out)
+        fix_algorithmic(path, out)
+        fix_img(path, out)
 
 
 md_app = typer.Typer()
@@ -289,6 +337,11 @@ app.add_typer(
     fix_mathjax_script_app,
     name="fix-mathjax-script",
     help="Removes async load of MathJax.js in HTML file",
+)
+app.add_typer(
+    fix_algorithmic_app,
+    name="fix-algorithmic",
+    help="Extract all algorihtmic blocks from <figure></figure> and place them right after figure",
 )
 
 

@@ -38,9 +38,10 @@ RUN apt-get install texlive-bibtex-extra biber -y
 #ENV output_dir "./"
 # make4ht command to be executed
 #ENV command "make4ht -v"
-RUN apt-get -y install python3-pip
+RUN apt-get -y install python3-pip 
+RUN apt install -y poppler-utils
 RUN python3 -m pip install --upgrade pip --break-system-packages
-RUN python3 -m pip install typer==0.9.0 beautifulsoup4==4.12.3 numpy==1.26.4 --break-system-packages
+RUN python3 -m pip install typer==0.9.0 beautifulsoup4==4.12.3 numpy==1.26.4 pdf2image==1.17.0 --break-system-packages
 
 # ENV TEXINPUTS .:/root/texmf//:
 ADD entrypoint.sh /entrypoint.sh
