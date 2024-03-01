@@ -44,16 +44,23 @@ def get_table_of_contents(html: Path) -> list[str]:
 
 
 def transform_to_md_heading(
-    heading_type: Literal["h1", "h2", "h3", "h4", "h5", "h6"]
+    heading_type: Literal["h1", "h2", "h3", "h4", "h5", "h6"],
+    name: str,
 ) -> str:
-    return {
-        "h1": "#",
-        "h2": "##",
-        "h3": "##",
-        "h4": "###",
-        "h5": "####",
-        "h6": "#####",
-    }[heading_type]
+    heading = (
+        {
+            "h1": "#",
+            "h2": "##",
+            "h3": "##",
+            "h4": "###",
+            "h5": "####",
+            "h6": "#####",
+        }[heading_type]
+        + " "
+        + name
+    )
+
+    return heading
 
 
 def save(bs: bs4.BeautifulSoup, html: Path, out: Path = None, help="") -> None:
@@ -77,21 +84,22 @@ def rm_heading(
     all_headings = bs.find("body").find_all(heading_tags)
     if len(all_headings) >= 1:
         if len(all_headings) > 1:
-            html_name_metatag = bs.find("meta", {"name": "src"})
-            html_name = html_name_metatag.get("content") if html_name_metatag else ""
             print("Warning: more than one heading found in", html_name)
         first_heading = all_headings[0]
         first_heading.text.strip()
-        first_heading_type, first_heading_txt = (
+        first_heading_type, first_heading_txt, first_heading_id, first_heading_link = (
             first_heading.name,
             first_heading.text.strip(),
+            first_heading["id"],
+            first_heading.find("a", id=True)["id"],
         )
-
         first_heading.decompose()
         md_heading_tag = bs.new_tag("meta")
         md_heading_tag.attrs["name"] = "md-heading"
         md_heading_tag.attrs["md-heading"] = first_heading_txt
         md_heading_tag.attrs["type"] = first_heading_type
+        md_heading_tag.attrs["id"] = first_heading_id
+        md_heading_tag.attrs["link"] = first_heading_link
 
         bs.head.append(md_heading_tag)
     save(bs, html, out, help="  - Removed heading.")
@@ -155,12 +163,28 @@ fix_links_app = typer.Typer()
 def fix_links(
     html: Annotated[Path, typer.Argument()],
     out: Annotated[Path, typer.Option()] = None,
+    href_renamings=None,
 ):
     bs = read(html)
     for link in bs.find("body").find_all("a", href=True):
         if ".html#" in link["href"]:
             link["href"] = link["href"][link["href"].find(".html#") + 5 :]
-    save(bs, html, out, help="  - Fixed links.")
+
+        if href_renamings is not None:
+            if link["href"] in href_renamings:
+                link["href"] = href_renamings[link["href"]]
+
+    for link in bs.find("body").find_all("a", id=True):
+        if link["id"].endswith("doc"):
+            link.decompose()
+
+    save(
+        bs,
+        html,
+        out,
+        help="  - Fixed links"
+        + (" with href_renamings." if href_renamings is not None else "."),
+    )
 
 
 fix_refs_app = typer.Typer()
@@ -236,7 +260,6 @@ def fix_img(
                 encoded_string = base64.b64encode(gfx_file.read())
         else:
             gfx_path = Path("gfx") / (Path(img.attrs["src"]).name[:-5] + ".pdf")
-            print(gfx_path)
             if gfx_path.exists():
                 images = convert_from_path(gfx_path)
                 buffered = BytesIO()
@@ -291,14 +314,27 @@ def markdown(
     (out / html_source_dir).mkdir(parents=True, exist_ok=True)
     process(html, out / html_source_dir)
     md = str()
+    href_renamings = {}
     for html_fname in toc:
         md_heading_meta_tag = read(out / html_source_dir / html_fname).find(
             "meta", {"name": "md-heading"}
         )
+        href_renamings["#" + md_heading_meta_tag.get("link") + "doc"] = (
+            "#" + md_heading_meta_tag.get("id")
+        )
+
+    for html_fname in toc:
+        print("Postprocessing", html_fname)
+        fix_links(out / html_source_dir / html_fname, href_renamings=href_renamings)
+
+        md_heading_meta_tag = read(out / html_source_dir / html_fname).find(
+            "meta", {"name": "md-heading"}
+        )
         md += (
-            transform_to_md_heading(md_heading_meta_tag.get("type"))
-            + " "
-            + md_heading_meta_tag.get("md-heading")
+            transform_to_md_heading(
+                md_heading_meta_tag.get("type"),
+                md_heading_meta_tag.get("md-heading"),
+            )
             + "\n"
         )
         md += '--8<-- "' + html_source_dir + "/" + html_fname + '"\n\n'

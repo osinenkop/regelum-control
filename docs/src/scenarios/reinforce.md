@@ -1,7 +1,7 @@
 ## Common AIDA notation
 --8<-- "template/templateli1.html"
 
-### Reinforcement learning and control notation.
+### Reinforcement learning and control notation
 --8<-- "template/templateli2.html"
 
 ## Introduction
@@ -9,4 +9,3 @@
 
 ## Bibliography
 --8<-- "template/templateli4.html"
-
