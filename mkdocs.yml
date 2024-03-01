@@ -1,5 +1,5 @@
 site_name: Regelum
-# site_url: https://james-willett.github.io/mkdocs-material-youtube-tutorial/
+site_url: https://regelum.aidynamic.io/
 repo_name: Regelum
 repo_url: https://github.com/AIDynamicAction/rcognita
 docs_dir: ./docs/src
