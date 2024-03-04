@@ -5,6 +5,9 @@
 \begin{document}
 \section*{Common AIDA notation}
 
+% \hypertarget{label}{target caption}
+% \label{sec:common}
+Hello world
 \begin{table}
 \caption{Table caption}
 \label{table:my-table}
@@ -17,9 +20,12 @@ $\nrm{\bullet}$ & Norm (context-dependent) \\
 \hline
 \end{tabularx}
 \end{table}
-Here we go \eqref{eqn_optctrl_problem}. Alrorithm \ref{alg:my-alg}. Figure \ref{fig:my-fig}. Section \ref{sec:intro}
+Here we go \eqref{eqn_optctrl_problem}. Alrorithm \ref{alg:my-alg}. Figure \ref{fig:my-fig}. %\hyperref[table:my-table]{this table}  % \hyperref[sec:common]{this section}. % \hyperref[eqn_optctrl_problem]{this equation}. \hyperref[sec:notation]{and this section}.
+
+\hyperlink{common-aida-notation}{Hyperlink}
 
 \subsection*{Reinforcement learning and control notation.}
+\label{sec:notation}
 \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
 \hline
 $Q$ & Quality function \\ 
@@ -28,10 +34,8 @@ $r, R$ & Running objective (reward or cost) as definite, resp., random value\\
 \end{tabularx}
 
 
-Referencing to \ref{table:my-table}
-\paragraph{Conditional notation.}
-When \texttt{mlnotation} toggle is set \texttt{true}.
-You should set the toggle in \texttt{PREAMBLE} section right after loading the preamble.
+Referencing to \ref{table:my-table} or \ref{table:my-another-table}
+
 \begin{table}
 \caption{Another table}
 \label{table:my-another-table}
@@ -58,7 +62,7 @@ $\hat \Value^w$ & Critic network (state-valued) with weights $w$ \\
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Introduction}
-\label{sec:intro}
+
 Reinforcement learning commonly addresses the following infinite-horizon optimal control and/or decision problem:
 \begin{equation}
     \label{eqn_optctrl_problem}
