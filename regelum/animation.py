@@ -531,10 +531,16 @@ class PointAnimation(AnimationCallback, ABC):
 
     def setup(self):
         (self.point,) = self.ax.plot(0, 1, marker="o", label="location")
+        self.trajectory_xs = []
+        self.trajectory_ys = []
+        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--')
 
     def construct_frame(self, x, y):
         self.point.set_data([x], [y])
-        return (self.point,)
+        self.trajectory_xs.append(x)
+        self.trajectory_ys.append(y)
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+        return (self.point, self.trajectory)
 
     def lim(self, *args, extra_margin=0.01, **kwargs):
         x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
@@ -865,14 +871,17 @@ class TriangleAnimation(AnimationCallback, ABC):
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
-    def construct_frame(self, x, y, theta):
+    def increment_trajectory(self, x, y, theta):
         self.trajectory_xs.append(x)
         self.trajectory_ys.append(y)
         self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+
+    def construct_frame(self, x, y, theta):
+        self.increment_trajectory(x, y, theta)
         if self._pic is None:
-            return self.construct_frame_points(x, y, theta)
+            return self.construct_frame_points(x, y, theta), self.trajectory
         else:
-            return self.construct_frame_pic(x, y, theta)
+            return self.construct_frame_pic(x, y, theta), self.trajectory
 
     def construct_frame_points(self, x, y, theta):
         offsets = (
@@ -899,7 +908,7 @@ class TriangleAnimation(AnimationCallback, ABC):
         self.marker._transform = self.marker.get_transform().rotate_deg(
             180 * theta / np.pi
         )
-        return (self.triangle,)
+        return self.triangle
 
 
 class DirectionalPlanarMotionAnimation(TriangleAnimation, callback.StateTracker):
@@ -935,8 +944,17 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
     _pic = "pendulum.svg"
     _ms = 250
 
+    def setup(self):
+        super().setup()
+        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--', alpha=0.6)
+
     def on_trigger(self, _):
         self.add_frame(x=0, y=0, theta=self.system_state[0])
+
+    def increment_trajectory(self, x, y, theta):
+        self.trajectory_xs.append(np.cos(theta + np.pi / 2) * 0.9)
+        self.trajectory_ys.append(np.sin(theta + np.pi / 2) * 0.9)
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
 
     def lim(self, *args, **kwargs):
         self.ax.set_xlim(-1, 1)
