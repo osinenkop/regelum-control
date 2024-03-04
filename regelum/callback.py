@@ -660,8 +660,8 @@ class StateTracker(Callback):
 
     def is_target_event(self, obj, method, output, triggers):
         return (
-            isinstance(obj, regelum.simulator.Simulator)
-            and method == "get_sim_step_data"
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "post_compute_action"
         )
 
     def is_done_collecting(self):
@@ -669,7 +669,7 @@ class StateTracker(Callback):
 
     def on_function_call(self, obj, method, output):
         self.system_state = obj.state
-        self.state_naming = obj.system.state_naming
+        self.state_naming = obj.simulator.system.state_naming
 
 
 @trigger
@@ -681,15 +681,15 @@ class TimeTracker(Callback):
 
     def is_target_event(self, obj, method, output, triggers):
         return (
-            isinstance(obj, regelum.simulator.Simulator)
-            and method == "get_sim_step_data"
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "post_compute_action"
         )
 
     def is_done_collecting(self):
         return hasattr(self, "time")
 
     def on_function_call(self, obj, method, output):
-        self.time = obj.time
+        self.time = output["time"]
 
 
 @trigger
@@ -701,16 +701,78 @@ class ObservationTracker(Callback):
 
     def is_target_event(self, obj, method, output, triggers):
         return (
-            isinstance(obj, regelum.simulator.Simulator)
-            and method == "get_sim_step_data"
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "post_compute_action"
         )
 
     def is_done_collecting(self):
         return hasattr(self, "observation")
 
     def on_function_call(self, obj, method, output):
-        self.observation = obj.observation
-        self.observation_naming = obj.system.observation_naming
+        self.observation = output["observation"][0]
+        self.observation_naming = obj.simulator.system.observation_naming
+
+@trigger
+class ObjectiveTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
+    def is_target_event(self, obj, method, output, triggers):
+        return (
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "post_compute_action"
+        )
+
+    def is_done_collecting(self):
+        return hasattr(self, "objective")
+
+    def on_function_call(self, obj, method, output):
+        self.running_objective = output["running_objective"]
+        self.value = output["current_value"]
+        self.objective = np.array([self.value, self.running_objective])
+        self.objective_naming = ["Value", "Running objective"]
+
+@trigger
+class ScoreTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
+    def is_target_event(self, obj, method, output, triggers):
+        return isinstance(obj, regelum.scenario.Scenario) and (
+                method == "reload_scenario"
+        )
+
+    def is_done_collecting(self):
+        return hasattr(self, "score")
+
+    def on_function_call(self, obj, method, output):
+        self.score = obj.recent_value
+
+
+@trigger
+class ActionTracker(Callback):
+    """Records the state of the simulated system into `self.system_state`.
+
+    Useful for animations that visualize motion of dynamical systems.
+    """
+
+    def is_target_event(self, obj, method, output, triggers):
+        return (
+            isinstance(obj, regelum.scenario.Scenario)
+            and method == "post_compute_action"
+        )
+
+    def is_done_collecting(self):
+        return hasattr(self, "action")
+
+    def on_function_call(self, obj, method, output):
+        self.action = output["action"][0]
+        self.action_naming = obj.simulator.system._inputs_naming
+
 
 
 class HistoricalCallback(Callback, ABC):

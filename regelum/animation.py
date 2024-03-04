@@ -465,15 +465,82 @@ class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
         super().on_launch()  # a bit clumsy, I think
 
 
+class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracker):
+    def __deferred_init__(self):
+        observation_dimension = len(self.observation)
+        self._animation_classes = []
+        for i in range(observation_dimension):
+
+            def observationComponent(*args, component=i, **kwargs):
+                return ObservationComponentAnimation(*args, component=component, **kwargs)
+
+            self._animation_classes.append(observationComponent)
+        super().__deferred_init__()
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ObservationTracker in triggers
+
+    def on_trigger(self, _):
+        self.__deferred_init__()
+        super().on_launch()  # a bit clumsy, I think
+
+
+class ActionAnimation(DeferredComposedAnimation, callback.ActionTracker):
+    def __deferred_init__(self):
+        action_dimension = len(self.action)
+        self._animation_classes = []
+        for i in range(action_dimension):
+
+            def actionComponent(*args, component=i, **kwargs):
+                return ActionComponentAnimation(*args, component=component, **kwargs)
+
+            self._animation_classes.append(actionComponent)
+        super().__deferred_init__()
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ActionTracker in triggers
+
+    def on_trigger(self, _):
+        self.__deferred_init__()
+        super().on_launch()  # a bit clumsy, I think
+
+
+class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
+    def __deferred_init__(self):
+        objective_dimension = len(self.objective)
+        self._animation_classes = []
+        for i in range(objective_dimension):
+
+            def objectiveComponent(*args, component=i, **kwargs):
+                return ObjectiveComponentAnimation(*args, component=component, **kwargs)
+
+            self._animation_classes.append(objectiveComponent)
+        super().__deferred_init__()
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ObjectiveTracker in triggers
+
+    def on_trigger(self, _):
+        self.__deferred_init__()
+        super().on_launch()
+
+
+
 class PointAnimation(AnimationCallback, ABC):
     """Animation that sets the location of a planar point at each frame."""
 
     def setup(self):
         (self.point,) = self.ax.plot(0, 1, marker="o", label="location")
+        self.trajectory_xs = []
+        self.trajectory_ys = []
+        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--')
 
     def construct_frame(self, x, y):
         self.point.set_data([x], [y])
-        return (self.point,)
+        self.trajectory_xs.append(x)
+        self.trajectory_ys.append(y)
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+        return (self.point, self.trajectory)
 
     def lim(self, *args, extra_margin=0.01, **kwargs):
         x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
@@ -515,6 +582,50 @@ class GraphAnimation(AnimationCallback):
         return self.lines
 
 
+class ScoreAnimation(GraphAnimation,
+                     callback.ScoreTracker):
+    _legend = (None,)
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("Iteration")
+        self.t = []
+        self.y = []
+        self.scores = []
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ScoreTracker in triggers
+
+    def on_trigger(self, _):
+        self.scores.append(self.score)
+
+    def on_iteration_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        self.ax.set_ylabel("Score")
+        self.t.append(len(self.t))
+        self.y.append(np.mean(self.scores))
+        self.add_frame(
+            line_datas=[(self.t, self.y)]
+        )  # these slices are there to avoid residual time bug
+        self.scores = []
+
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        pass
+
+
 class StateComponentAnimation(
     GraphAnimation, callback.StateTracker, callback.TimeTracker
 ):
@@ -543,6 +654,99 @@ class StateComponentAnimation(
         self.add_frame(
             line_datas=[(self.t[1:], self.y[1:])]
         )  # these slices are there to avoid residual time bug
+
+
+class ObservationComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+    GraphAnimation, callback.ObservationTracker, callback.TimeTracker
+):
+    _legend = (None,)
+
+    def __init__(self, *args, component=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.component = component
+
+    def get_save_directory(self):
+        return super().get_save_directory() + str(self.component)
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("Time")
+        self.t = []
+        self.y = []
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ObservationTracker in triggers
+
+    def on_trigger(self, _):
+        self.ax.set_ylabel(self.observation_naming[self.component])
+        self.t.append(self.time)
+        self.y.append(self.observation[self.component])
+        self.add_frame(
+            line_datas=[(self.t[1:], self.y[1:])]
+        )  # these slices are there to avoid residual time bug
+
+
+class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+    GraphAnimation, callback.ActionTracker, callback.TimeTracker
+):
+    _legend = (None,)
+
+    def __init__(self, *args, component=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.component = component
+
+    def get_save_directory(self):
+        return super().get_save_directory() + str(self.component)
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("Time")
+        self.t = []
+        self.y = []
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ActionTracker in triggers
+
+    def on_trigger(self, _):
+        self.ax.set_ylabel(self.action_naming[self.component])
+        self.t.append(self.time)
+        self.y.append(self.action[self.component])
+        self.add_frame(
+            line_datas=[(self.t[1:], self.y[1:])]
+        )  # these slices are there to avoid residual time bug
+
+
+class ObjectiveComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+    GraphAnimation, callback.ObjectiveTracker, callback.TimeTracker
+):
+    _legend = (None,)
+
+    def __init__(self, *args, component=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.component = component
+
+    def get_save_directory(self):
+        return super().get_save_directory() + str(self.component)
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("Time")
+        self.t = []
+        self.y = []
+
+    def is_target_event(self, obj, method, output, triggers):
+        return callback.ObjectiveTracker in triggers
+
+    def on_trigger(self, _):
+        self.ax.set_ylabel(self.objective_naming[self.component])
+        self.t.append(self.time)
+        self.y.append(self.objective[self.component])
+        self.add_frame(
+            line_datas=[(self.t[1:], self.y[1:])]
+        )  # these slices are there to avoid residual time bug
+
+
+
 
 
 class PlanarMotionAnimation(PointAnimation, callback.StateTracker):
@@ -636,6 +840,9 @@ class TriangleAnimation(AnimationCallback, ABC):
     _rot = 0
 
     def setup(self):
+        self.trajectory_xs = []
+        self.trajectory_ys = []
+        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--')
         if self._pic is None:
             return self.setup_points()
         else:
@@ -664,11 +871,17 @@ class TriangleAnimation(AnimationCallback, ABC):
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
+    def increment_trajectory(self, x, y, theta):
+        self.trajectory_xs.append(x)
+        self.trajectory_ys.append(y)
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+
     def construct_frame(self, x, y, theta):
+        self.increment_trajectory(x, y, theta)
         if self._pic is None:
-            return self.construct_frame_points(x, y, theta)
+            return self.construct_frame_points(x, y, theta), self.trajectory
         else:
-            return self.construct_frame_pic(x, y, theta)
+            return self.construct_frame_pic(x, y, theta), self.trajectory
 
     def construct_frame_points(self, x, y, theta):
         offsets = (
@@ -695,7 +908,7 @@ class TriangleAnimation(AnimationCallback, ABC):
         self.marker._transform = self.marker.get_transform().rotate_deg(
             180 * theta / np.pi
         )
-        return (self.triangle,)
+        return self.triangle
 
 
 class DirectionalPlanarMotionAnimation(TriangleAnimation, callback.StateTracker):
@@ -731,12 +944,24 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
     _pic = "pendulum.svg"
     _ms = 250
 
+    def setup(self):
+        super().setup()
+        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--', alpha=0.6)
+
     def on_trigger(self, _):
         self.add_frame(x=0, y=0, theta=self.system_state[0])
+
+    def increment_trajectory(self, x, y, theta):
+        self.trajectory_xs.append(np.cos(theta + np.pi / 2) * 0.9)
+        self.trajectory_ys.append(np.sin(theta + np.pi / 2) * 0.9)
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
 
     def lim(self, *args, **kwargs):
         self.ax.set_xlim(-1, 1)
         self.ax.set_ylim(-1, 1)
+
+
+
 
 
 class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):
