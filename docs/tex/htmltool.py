@@ -319,9 +319,9 @@ def markdown(
         md_heading_meta_tag = read(out / html_source_dir / html_fname).find(
             "meta", {"name": "md-heading"}
         )
-        href_renamings["#" + md_heading_meta_tag.get("link") + "doc"] = (
-            "#" + md_heading_meta_tag.get("id")
-        )
+        href_renamings[
+            "#" + md_heading_meta_tag.get("link") + "doc"
+        ] = "#" + md_heading_meta_tag.get("id")
 
     for html_fname in toc:
         print("Postprocessing", html_fname)

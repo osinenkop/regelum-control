@@ -10,3 +10,4 @@
 * [Configuring your experiment](config.md)
 * [MLflow](mlflow.md)
 * [Best practices](best_practices.md)
+* [Something](../notebooks/a.md)

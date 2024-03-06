@@ -20,7 +20,7 @@ The central configuration file for our documentation is situated at [../mkdocs.y
 
 The structure of the current [docs](./) directory is as follows:
 
-- [tex/](./tex/): This directory houses the essential content, including Markdown files and the organizational structure of the documentation site (home page, tutorials, systems, etc.). While a full listing is not provided here, we highlight the importance of the following subdirectory for technical purposes:
+- [`src/`](./src/): This directory houses the essential content, including Markdown files and the organizational structure of the documentation site (home page, tutorials, systems, etc.). While a full listing is not provided here, we highlight the importance of the following subdirectory for technical purposes:
     - [`_internal/`](./src/_internal/): Contains JavaScript and CSS files for the project.
         - [`javascripts/`](./src/_internal/javascripts/)
             - [`mathjax.js`](./src/_internal/javascripts/mathjax.js): Configures MathJax, our chosen engine for rendering LaTeX equations. See [here](https://squidfunk.github.io/mkdocs-material/reference/math/?h=mathjax#mathjax) for details.

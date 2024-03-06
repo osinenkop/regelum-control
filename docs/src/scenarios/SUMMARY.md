@@ -1,5 +1,5 @@
 * [Problem statement](overview.md)
-* [REINFORCE](reinforce.md)
+* [REINFORCE](../tex/template.md)
 * [Proximal policy optimization TODO](ppo.md)
 * [Stochastic deep policy gradient TODO](sdpg.md)
 * [Deep deterministic policy gradient TODO](ddpg.md)
@@ -8,4 +8,5 @@
 * [Critic as a Lyapunov Function TODO](calf.md)
 * [Deep Q-network TODO](dqn.md)
 * [SARSA TODO](sarsa.md)
+
 
