@@ -1,3 +1,5 @@
+"""Postprocesses make4ht output HTML files."""
+
 import typer
 from pathlib import Path
 import bs4
@@ -12,14 +14,42 @@ from io import BytesIO
 
 
 def read(html: Path) -> bs4.BeautifulSoup:
+    """Read HTML file and return BeautifulSoup object.
+
+    Args:
+        html: path to HTML file
+
+    Returns:
+        BeautifulSoup object
+    """
     return bs4.BeautifulSoup(html.read_text(), "html.parser")
 
 
 def get_path(html: Path, out: Path = None) -> Path:
+    """Get path to HTML file.
+
+    Args:
+        html: path to html
+        out: if defined function returns out/html
+
+    Returns:
+        path to HTML file. If out is defined returns out/html.
+    """
     return html if out is None else out / html.name
 
 
 def find_main_html(html: Path) -> Path:
+    """Find main HTML file in directory.
+
+    Main file is the one with the shortest name.
+
+
+    Args:
+        html: path to directory
+
+    Returns:
+        path to main HTML file
+    """
     if html.is_dir():
         html_files_in_dir = list(html.glob("*.html"))
         id_min_len = np.argmin([len(str(h)) for h in html_files_in_dir])
@@ -30,6 +60,14 @@ def find_main_html(html: Path) -> Path:
 
 
 def get_table_of_contents(html: Path) -> list[str]:
+    """Extracts table of contents from HTML file.
+
+    Args:
+        html: path to html
+
+    Returns:
+        List of html names
+    """
     bs = read(html)
     bs.find("div", {"class": "tableofcontents"})
 
@@ -47,6 +85,15 @@ def transform_to_md_heading(
     heading_type: Literal["h1", "h2", "h3", "h4", "h5", "h6"],
     name: str,
 ) -> str:
+    """Transforms heading to markdown heading.
+
+    Args:
+        heading_type: type of heading
+        name: name of heading
+
+    Returns:
+        Markdown heading
+    """
     heading = (
         {
             "h1": "#",
@@ -64,6 +111,14 @@ def transform_to_md_heading(
 
 
 def save(bs: bs4.BeautifulSoup, html: Path, out: Path = None, help="") -> None:
+    """Saves BeautifulSoup object to HTML file.
+
+    Args:
+        bs: BeautifulSoup object with HTML content
+        html: path to html
+        out: if defined function saves to out/html
+        help: Help message for logging
+    """
     path = get_path(html, out)
     print(help, "Writing to", path)
 
@@ -76,9 +131,15 @@ rm_heading_app = typer.Typer()
 
 @rm_heading_app.callback(invoke_without_command=True)
 def rm_heading(
-    html: Path = typer.Argument(),
+    html: Annotated[Path, typer.Argument()],
     out: Annotated[Path, typer.Option()] = None,
 ) -> None:
+    """Remove first heading from HTML file.
+
+    Args:
+        html: path to html.
+        out: if defined function saves result to out/html
+    """
     bs = read(html)
     heading_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
     all_headings = bs.find("body").find_all(heading_tags)
@@ -113,6 +174,14 @@ def rm_crosslinks(
     html: Annotated[Path, typer.Argument()],
     out: Annotated[Path, typer.Option()] = None,
 ):
+    """Removes crosslinks from HTML file.
+
+    make4ht by default creates links to other HTML files. We don't need them.
+
+    Args:
+        html: path to html.
+        out: if defined function saves result to out/html
+    """
     bs = read(html)
     for cl in bs.find("body").find_all("div", {"class": "crosslinks"}):
         cl.decompose()
@@ -127,6 +196,14 @@ def rm_toc(
     html: Annotated[Path, typer.Argument()],
     out: Annotated[Path, typer.Option()] = None,
 ):
+    """Removes crosslinks from HTML file.
+
+    make4ht by default creates many tables of contents in separate. We don't need them.
+
+    Args:
+        html: path to html.
+        out: if defined function saves result to out/html
+    """
     bs = read(html)
     for toc_type in [
         "subsectionTOCS",
@@ -147,6 +224,14 @@ def rm_stylesheet(
     html: Annotated[Path, typer.Argument()],
     out: Annotated[Path, typer.Option()] = None,
 ):
+    """Remove stylesheet from HTML file.
+
+    We already have a stylesheet, so we don't need it.
+
+    Args:
+        html: path to html.
+        out: if defined function saves result to out/html.fname
+    """
     bs = read(html)
     for stylesheet in bs.find("head").find_all(
         "link", {"rel": "stylesheet", "type": "text/css"}
@@ -165,6 +250,15 @@ def fix_links(
     out: Annotated[Path, typer.Option()] = None,
     href_renamings=None,
 ):
+    """Fixes links in HTML file.
+
+    make4ht by default creates links to other HTML files, but we place their content in the same file, so we need to fix it.
+
+    Args:
+        html: path to html.
+        out: if defined function saves result to out/html
+        href_renamings: dictionary with old and new hrefs, so we can optionally rename hrefs if needed.
+    """
     bs = read(html)
     for link in bs.find("body").find_all("a", href=True):
         if ".html#" in link["href"]:
@@ -195,6 +289,14 @@ def fix_refs(
     html: Annotated[Path, typer.Argument()],
     out: Annotated[Path, typer.Option()] = None,
 ):
+    r"""Fix eqrefs in HTML file.
+
+    make4ht equation references works badly, so we need to fix it. We replace (\ref{some-random-label}) to \eqref{some-random-label}
+
+    Args:
+        html: _description_
+        out: _description_. Defaults to None.
+    """
     bs = read(html)
     for href in bs.find_all("a", href=True):
         comment = href.find(string=lambda text: isinstance(text, Comment))
@@ -222,6 +324,7 @@ def fix_mathjax_script(
     html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
     out: Annotated[Path, typer.Option()],
 ):
+    """Remove async loading of MathJax script."""
     bs = read(html)
     mathjax_script = bs.find("script", {"id": "MathJax-script"})
 
@@ -239,6 +342,7 @@ def fix_algorithmic(
     html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
     out: Annotated[Path, typer.Option()],
 ):
+    """Fix algorithmic in HTML file by moving it after <figure> tag, so it renders correctly, but not centered."""
     bs = read(html)
     for figure in bs.find_all("figure"):
         algorithmic = figure.find("div", {"class": "algorithmic"})
@@ -251,6 +355,7 @@ def fix_img(
     html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
     out: Annotated[Path, typer.Option()],
 ):
+    """Replace img src with base64 encoded data, so img is embedded."""
     bs = read(html)
 
     for img in bs.find_all("img"):
@@ -283,6 +388,7 @@ def process(
     ],
     out: Annotated[Path, typer.Option()] = None,
 ):
+    """Runs the full pipeline of HTML processing."""
     if html.is_dir():
         for html_file in html.glob("*.html"):
             process(html_file, out)
@@ -308,6 +414,7 @@ def markdown(
     html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
     out: Annotated[Path, typer.Option()],
 ):
+    """Runs the full pipeline of HTML processing and generates Markdown."""
     main_html = find_main_html(html)
     toc = get_table_of_contents(main_html)
     html_source_dir = str(main_html.name).split(".")[0]
@@ -319,9 +426,9 @@ def markdown(
         md_heading_meta_tag = read(out / html_source_dir / html_fname).find(
             "meta", {"name": "md-heading"}
         )
-        href_renamings[
-            "#" + md_heading_meta_tag.get("link") + "doc"
-        ] = "#" + md_heading_meta_tag.get("id")
+        href_renamings["#" + md_heading_meta_tag.get("link") + "doc"] = (
+            "#" + md_heading_meta_tag.get("id")
+        )
 
     for html_fname in toc:
         print("Postprocessing", html_fname)
