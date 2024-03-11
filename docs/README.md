@@ -16,6 +16,14 @@ This section outlines the organization of our documentation.
 
 The central configuration file for our documentation is situated at [../mkdocs.yml](../mkdocs.yml). For guidance on organizing mkdocs.yml, consult the [MkDocs Material documentation](https://squidfunk.github.io/mkdocs-material/) and [this instructional video](https://youtu.be/Q-YA_dA8C20?si=Chl5ifAq95306ZMx).
 
+To host locally the documentation, please go to the root of the repo and write
+
+```bash
+mkdocs serve
+```
+
+This command parses [../mkdocs.yml](../mkdocs.yml) and starts a docs development server on `localhost:8000`
+
 ## Documentation Structure 
 
 The structure of the current [docs](./) directory is as follows:
@@ -33,6 +41,7 @@ The structure of the current [docs](./) directory is as follows:
 - [`scripts/``](./scripts/): Contains scripts for pre-building documentation, executed through [this mkdocs plugin](https://oprypin.github.io/mkdocs-gen-files/index.html).
     - [`add_preamble_to_mkdocs_template.py`](./scripts/add_preamble_to_mkdocs_template.py): Integrates the LaTeX preamble into the main template file [`main.html`](./overrides/main.html).
     - [`gen_ref_pages.py`](./scripts/gen_ref_pages.py): A script for generating API reference pages from docstrings before the build process. We refer the reader to [official plugin](https://mkdocstrings.github.io/), which is used for the purpose.
-    - [`include_tex_htmls.py`](./scripts/include_tex_htmls.py): A utility to copy HTML files derived from LaTeX sources located in the `tex/` directory.
-- [`tex/`](./tex/): Contains LaTeX source files and related documentation resources.
+    - [`include_tex_htmls.py`](./scripts/include_tex_htmls.py): A utility to copy HTML files derived from LaTeX sources located in the `tex/` directory during the prebuild process.
+    - [`include_notebooks.py`](./scripts/include_notebooks.py): A utility to convert ipynb notebooks to markdown format during the prebuild process.
+- [`tex/`](./tex/): Contains LaTeX source files and related documentation resources. For instructions on rendering LaTeX for insertion into the main content, see [tex/README.md](./tex/README.md).
 
