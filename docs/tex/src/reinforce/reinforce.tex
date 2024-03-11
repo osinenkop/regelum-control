@@ -20,7 +20,7 @@
         \STATE  Perform a policy gradient step:
         \begin{equation}
         \label{eqn_reinforce_update_rule}
-            \theta_{i+1} \la \theta_i - \alpha \frac{1}{M}\sum_{j = 1}^M \sum_{t = 0}^{T-1}\sum_{t'=t}^{T-1}\left( \gamma^{t'} \Cost(\State_{t'}^j, \Action_t^j) - B_{t}^i\right) \nabla_{\theta}\log \pi^{\theta}(A_t^j \mid \State_t^j)\rvert_{\theta = \theta_i},
+            \theta_{i+1} \la \theta_i - \alpha \frac{1}{M}\sum_{j = 1}^M \sum_{t = 0}^{T-1}\sum_{t'=t}^{T-1}\left( \gamma^{t'} \Cost(\State_{t'}^j, \Action_{t'}^j) - B_{t}^i\right) \nabla_{\theta}\log \pi^{\theta}(A_t^j \mid \State_t^j)\rvert_{\theta = \theta_i},
         \end{equation}
         \STATE where we describe the all entities in the formula right after the algorithm
     \ENDFOR
@@ -28,7 +28,7 @@
     \end{algorithmic}
 \end{algorithm}
 
-In equation~\eqref{eqn_reinforce_update_rule} $\gamma$ is the discount factor, $\alpha$ is the learning rate, and $\Cost(S_{t'}, A_t)$ denotes the cost associated with state $\State_{t'}$ and action $\Action_t$. The term $B_t^i$ is known as the baseline, which is a random variable conditionally independent of $A_t^j$. The baseline can be any arbitrary function of the state $\State_t^j$ ($B_t^i = f(\State_t^j)$), such as the value function ($B_t^i = \hat\Value(\State_t^j)$) or any random variable. 
+In equation~\eqref{eqn_reinforce_update_rule} $\gamma$ is the discount factor, $\alpha$ is the learning rate, and $\Cost(\State, \Action)$ denotes the cost associated with state $\State$ and action $\Action$. The term $B_t^i$ is known as the baseline, which is a random variable conditionally independent of $A_t^j$. The baseline can be any arbitrary function of the state $\State_t^j$ ($B_t^i = f(\State_t^j)$), such as the value function ($B_t^i = \hat\Value(\State_t^j)$) or any random variable. 
         For instance we can put it as tail total costs from previous iteration (and we do it in regelum):
         $$
             B_t^{i + 1} = \sum_{t'=t}^{T-1}\gamma^{t'} \Cost(\State_{t'}^j, \Action_t^j), 
