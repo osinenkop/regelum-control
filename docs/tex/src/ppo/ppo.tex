@@ -1,0 +1,36 @@
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+
+\begin{document}
+
+\subsection*{General formula}
+$$
+\begin{array}{l}
+    \hphantom{~}
+    \\
+    \theta_{i+1} \la \arg\min_{\theta}\EP{f, \rho^{\theta_i}}{\sum_{k=0}^{\infty} \gamma ^ k \max\left(A^{\rho^{\theta_i}}(Y_k, U_k)   \frac{\rho^{\theta}(U_k \mid Y_k)}{\rho^{\theta_i}(U_k \mid Y_k)}, A^{\rho^{\theta_i}}(Y_k, U_k) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\rho^{\theta}(U_k \mid Y_k)}{\rho^{\theta_i}(U_k \mid Y_k)}\right) \right)}
+    \\
+    \hphantom{~}
+\end{array}
+$$
+
+
+\begin{algorithm}
+    \caption{Proximal policy optimization}
+    \label{alg:my-alg}
+    \begin{algorithmic}
+    \STATE {\bfseries Input:} $\theta_0$
+    \FOR {Learning iteration $i := 0 \dots \mathcal I$}
+        \STATE Policy weight update
+        \STATE $\theta_{i+1} \la $ long equation
+        \STATE $\alpha_i > 0$, learning rate
+    \ENDFOR
+    \STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
+    \end{algorithmic}
+\end{algorithm}
+
+\printbibliography
+
+\end{document}

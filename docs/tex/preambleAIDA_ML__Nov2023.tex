@@ -27,7 +27,6 @@
 \newcommand{\bigo}[1]{\mathcal O\left(#1\right)}			
 \newcommand{\low}{{\text{low}}}										
 \newcommand{\up}{{\text{up}}}										
-
 \newcommand{\ra}{\rightarrow}									
 \newcommand{\la}{\leftarrow}										
 \newcommand{\rra}{\rightrightarrows}								
@@ -41,8 +40,6 @@
 \newcommand{\Z}{{\mathbb{Z}}}							
 \newcommand{\Q}{{\mathbb{Q}}}									
 \newcommand{\R}{{\mathbb{R}}}									
-
-
 \newcommand{\state}{s}												
 \newcommand{\State}{S}												
 \newcommand{\states}{\mathbb S}									
@@ -82,9 +79,6 @@
 \newcommand{\replay}{\mathcal R}										
 \newcommand{\safeset}{\ensuremath{\mathcal{S}}}						
 \newcommand{\dkappa}{\kappa_{\text{dec}}}						
-\DeclarePairedDelimiterX{\infdivx}[2]{(}{)}{
-  #1\;\delimsize\|\;#2%
-}
-\newcommand{\kldiv}{d_{\text{KL}}\infdivx}							
-\newcommand{\barkldiv}{\bar d_{\text{KL}}\infdivx}					
+\newcommand{\kldiv}[2]{d_{\text{KL}}\left(#1\;\middle\|\;#2\right)}
+\newcommand{\barkldiv}[2]{\overline{d}_{\text{KL}}\left(#1 \; \middle\| \; #2\right)}
 \newcommand{\spc}{{\,\,}}											

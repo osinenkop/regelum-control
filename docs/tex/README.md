@@ -54,9 +54,8 @@ is provided [below](#how-the-build-process-works).
 
 For detailed instructions on how to structure your LaTeX document to ensure it renders correctly on the MkDocs website, please consult the comprehensive guide available at:
 
-[/src/_template/build/template.pdf](./src/_template/build/template.pdf)
+[guide.pdf](./guide.pdf)
 
-This guide will provide you with step-by-step instructions and best practices for creating a well-organized document.
 ## How the Build Process Works
 
 The command:

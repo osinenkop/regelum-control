@@ -3,7 +3,6 @@
 *.blg
 *.log
 *.out
-*.pdf
 *.toc
 *.zip
 *.run.xml
@@ -20,3 +19,4 @@ __pycache__
 *.python-version
 *.bcf
 *.run.xml
+texbuild

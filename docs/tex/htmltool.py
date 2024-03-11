@@ -378,6 +378,18 @@ def fix_img(
     save(bs, html, out, help="  - Fixed img src.")
 
 
+def fix_enumerations(
+    html: Annotated[Path, typer.Argument(help="Directory with HTML files to process")],
+    out: Annotated[Path, typer.Option()],
+):
+    bs = read(html)
+
+    for ol in bs.find_all("dd"):
+        ol.attrs["start"] = str(int(ol.attrs["start"]) + 1)
+
+    save(bs, html, out, help="  - Fixed enumerations src.")
+
+
 process_app = typer.Typer()
 
 
