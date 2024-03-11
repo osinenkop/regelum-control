@@ -11,3 +11,4 @@
 * [MLflow](mlflow.md)
 * [Best practices](best_practices.md)
 * [Something](../notebooks/a.md)
+* [Something2](../tex/template.md)
