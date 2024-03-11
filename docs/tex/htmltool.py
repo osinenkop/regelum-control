@@ -283,6 +283,7 @@ def process(
     ],
     out: Annotated[Path, typer.Option()] = None,
 ):
+    """Pipeline of html postprocessing."""
     if html.is_dir():
         for html_file in html.glob("*.html"):
             process(html_file, out)
