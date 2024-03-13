@@ -36,7 +36,13 @@ import regelum.callback as callback
 
 plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 
+import matplotlib.style as mplstyle
+
 plt.style.use(matplotx.styles.dracula)
+#plt.style.use('fast')
+#plt.rcParams['path.simplify'] = True
+
+#plt.rcParams['path.simplify_threshold'] = 1.0
 
 
 class AnimationCallback(callback.Callback, ABC):
@@ -112,9 +118,10 @@ class AnimationCallback(callback.Callback, ABC):
         return str(self.save_directory)
 
     def add_frame(self, **frame_datum):
-        self.counter += 1
-        if (self.counter - 1) % self.skip_frames:
-            return
+        if self.counter is not None:
+            self.counter += 1
+            if (self.counter - 1) % self.skip_frames:
+                return
         self.frame_data.append(frame_datum)
         if hasattr(self, "interactive_status"):
             self.interactive_status["frame"] = frame_datum
@@ -337,6 +344,10 @@ class ComposedAnimationCallback(AnimationCallback):
         for animation in self.animations:
             animation.on_episode_done(*args, **kwargs)
 
+    def on_iteration_done(self, *args, **kwargs):
+        for animation in self.animations:
+            animation.on_iteration_done(*args, **kwargs)
+
     def __del__(self):
         for animation in self.animations:
             del animation
@@ -525,38 +536,15 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
         super().on_launch()
 
 
-
-class PointAnimation(AnimationCallback, ABC):
-    """Animation that sets the location of a planar point at each frame."""
-
-    def setup(self):
-        (self.point,) = self.ax.plot(0, 1, marker="o", label="location")
-        self.trajectory_xs = []
-        self.trajectory_ys = []
-        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--')
-
-    def construct_frame(self, x, y):
-        self.point.set_data([x], [y])
-        self.trajectory_xs.append(x)
-        self.trajectory_ys.append(y)
-        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
-        return (self.point, self.trajectory)
-
-    def lim(self, *args, extra_margin=0.01, **kwargs):
-        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
-        left, right, bottom, top = self.lim_from_reference(x, y, extra_margin)
-        self.ax.set_xlim(left, right)
-        self.ax.set_ylim(bottom, top)
-
-
 class GraphAnimation(AnimationCallback):
     _legend = (None,)
     _vertices = 100
+    _line = '-'
 
     def setup(self):
         self.lines = []
         for name in self._legend:
-            (line,) = self.ax.plot([0], [0], label=name)
+            (line,) = self.ax.plot([0], [0], self._line, label=name)
             self.lines.append(line)
 
     def lim(self, *args, extra_margin=0.01, **kwargs):
@@ -648,7 +636,7 @@ class StateComponentAnimation(
         return callback.StateTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.state_naming[self.component])
+        self.ax.set_ylabel(self.state_naming[self.component].title())
         self.t.append(self.time)
         self.y.append(self.system_state[self.component])
         self.add_frame(
@@ -678,7 +666,7 @@ class ObservationComponentAnimation( #TO DO: introduce an abstract class Observa
         return callback.ObservationTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.observation_naming[self.component])
+        self.ax.set_ylabel(self.observation_naming[self.component].title())
         self.t.append(self.time)
         self.y.append(self.observation[self.component])
         self.add_frame(
@@ -690,6 +678,7 @@ class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesA
     GraphAnimation, callback.ActionTracker, callback.TimeTracker
 ):
     _legend = (None,)
+    _line = 'g-'
 
     def __init__(self, *args, component=0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -708,7 +697,7 @@ class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesA
         return callback.ActionTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.action_naming[self.component])
+        self.ax.set_ylabel(self.action_naming[self.component].title())
         self.t.append(self.time)
         self.y.append(self.action[self.component])
         self.add_frame(
@@ -720,6 +709,7 @@ class ObjectiveComponentAnimation( #TO DO: introduce an abstract class Observabl
     GraphAnimation, callback.ObjectiveTracker, callback.TimeTracker
 ):
     _legend = (None,)
+    _line = 'r-'
 
     def __init__(self, *args, component=0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -738,28 +728,12 @@ class ObjectiveComponentAnimation( #TO DO: introduce an abstract class Observabl
         return callback.ObjectiveTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.objective_naming[self.component])
+        self.ax.set_ylabel(self.objective_naming[self.component].title())
         self.t.append(self.time)
         self.y.append(self.objective[self.component])
         self.add_frame(
             line_datas=[(self.t[1:], self.y[1:])]
         )  # these slices are there to avoid residual time bug
-
-
-
-
-
-class PlanarMotionAnimation(PointAnimation, callback.StateTracker):
-    """Animates dynamics of systems that can be viewed as a point moving on a plane."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def is_target_event(self, obj, method, output, triggers):
-        return callback.StateTracker in triggers
-
-    def on_trigger(self, _):
-        self.add_frame(x=self.system_state[0], y=self.system_state[1])
 
 
 class MultiSpriteAnimation(AnimationCallback, ABC):
@@ -838,6 +812,7 @@ class TriangleAnimation(AnimationCallback, ABC):
     _pic = None  # must be an svg located in regelum/img
     _ms = 30
     _rot = 0
+    _center_vert = False
 
     def setup(self):
         self.trajectory_xs = []
@@ -860,6 +835,8 @@ class TriangleAnimation(AnimationCallback, ABC):
         self.pic_data, self.attributes = svg2paths(self.path)
         parsed = parse_path(self.attributes[0]["d"])
         parsed.vertices[:, 0] -= parsed.vertices[:, 0].mean(axis=0)
+        if self._center_vert:
+            parsed.vertices[:, 1] -= parsed.vertices[:, 1].mean(axis=0)
         self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
         self.marker._transform = self.marker.get_transform().rotate_deg(self._rot)
         (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=self._ms)
@@ -926,13 +903,44 @@ class DirectionalPlanarMotionAnimation(TriangleAnimation, callback.StateTracker)
         )
 
 
-class DirectionalPlanarMotionAnimationLander(DirectionalPlanarMotionAnimation):
+class LunarLanderAnimation(DirectionalPlanarMotionAnimation):
     """Animates dynamics of Lunar Lander that can be viewed as a triangle moving on a plane."""
+    _pic = "lunar_lander.svg"
+    _ms = 30
+    _center_vert = True
+
+    def lim(self, *args, extra_margin=0.11, **kwargs):
+        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
+        x = np.append(x, 0)
+        left, right, bottom, top = self.lim_from_reference(x, np.array([0, 5]), extra_margin, equal=False)
+        self.ax.set_xlim(left, right)
+        self.ax.set_ylim(bottom, top)
+
+    def setup(self):
+        super().setup()
+        self.ground, = self.ax.plot([-100000, 100000], [0, 0], 'r', ms=10)
+        self.target, = self.ax.plot([0], [0], 'g', ms=35, marker='o')
+        self.target_text = self.ax.text(0, 0, "Target", horizontalalignment='center', verticalalignment='center')
 
     def on_trigger(self, _):
         self.add_frame(
-            x=self.system_state[1], y=self.system_state[2], theta=self.system_state[0]
+            x=self.system_state[2], y=self.system_state[1], theta=self.system_state[0]
         )
+
+
+class OmnirobotAnimation(DirectionalPlanarMotionAnimation):
+    _pic = "omnirobot.svg"
+    _ms = 30
+    _center_vert = True
+
+    def on_trigger(self, _):
+        self.add_frame(
+            x=self.system_state[0], y=self.system_state[1], theta=0
+        )
+
+    def lim(self, *args, **kwargs):
+        self.ax.set_xlim(-15, 15)
+        self.ax.set_ylim(-15, 15)
 
 
 class PendulumAnimation(DirectionalPlanarMotionAnimation):
@@ -943,6 +951,7 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
 
     _pic = "pendulum.svg"
     _ms = 250
+
 
     def setup(self):
         super().setup()
@@ -979,13 +988,14 @@ class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):
 
 class BarAnimation(AnimationCallback, callback.StateTracker):
     """Animates the state of a system as a collection of vertical bars."""
+    _naming = None
 
     def setup(self):
         self.bar = None
 
     def construct_frame(self, state):
         if self.bar is None:
-            self.bar = self.ax.bar(range(len(state)), state)
+            self.bar = self.ax.bar(self.state_naming, state)
         else:
             for rect, h in zip(self.bar, state):
                 rect.set_height(h)
@@ -996,3 +1006,4 @@ class BarAnimation(AnimationCallback, callback.StateTracker):
 
     def lim(self):
         pass
+

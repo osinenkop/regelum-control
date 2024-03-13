@@ -808,8 +808,8 @@ class KinematicPoint(System):
     _dim_state = 2
     _dim_inputs = 2
     _dim_observation = 2
-    _observation_naming = _state_naming = ["x", "y"]
-    _inputs_naming = ["v_x", "v_y"]
+    _observation_naming = _state_naming = ["x [m]", "y [m]"]
+    _inputs_naming = ["v_x [m/s]", "v_y [m/s]"]
     _action_bounds = [[-10.0, 10.0], [-10.0, 10.0]]
 
     def _compute_state_dynamics(
@@ -846,8 +846,8 @@ class InvertedPendulum(System):
     _dim_inputs = 1
     _dim_observation = 2
     _parameters = {"m": 1, "g": 9.8, "l": 1}
-    _observation_naming = _state_naming = ["angle", "angular velocity"]
-    _inputs_naming = ["momentum"]
+    _observation_naming = _state_naming = ["angle [rad]", "angular velocity [rad/s]"]
+    _inputs_naming = ["momentum [kg*m/s]"]
     _action_bounds = [[-20.0, 20.0]]
 
     def _compute_state_dynamics(
@@ -880,8 +880,8 @@ class ThreeWheeledRobotKinematic(System):
     _dim_state = 3
     _dim_inputs = 2
     _dim_observation = 3
-    _observation_naming = _state_naming = ["x", "y", "angle"]
-    _inputs_naming = ["velocity", "angular velocity"]
+    _observation_naming = _state_naming = ["x [m]", "y [m]", "angle [rad]"]
+    _inputs_naming = ["velocity [m/s]", "angular velocity [rad/s]"]
     _action_bounds = [[-25.0, 25.0], [-5.0, 5.0]]
 
     def _compute_state_dynamics(
@@ -916,13 +916,13 @@ class ThreeWheeledRobotDynamic(System):
     _dim_observation = 5
     _parameters = {"m": 10, "I": 1}
     _observation_naming = _state_naming = [
-        "x",
-        "y",
-        "angle",
-        "l_velocity",
-        "angular_velocity",
+        "x [m]",
+        "y [m]",
+        "angle [rad]",
+        "l_velocity [m/s]",
+        "angular_velocity [rad/s]",
     ]
-    _inputs_naming = ["Force", "Momentum"]
+    _inputs_naming = ["Force [kg*m/s^2]", "Momentum [kg*m/s]"]
     _action_bounds = [[-50.0, 50.0], [-10.0, 10.0]]
 
     def _compute_state_dynamics(
@@ -1003,8 +1003,8 @@ class CartPole(System):
     _dim_inputs = 1
     _dim_observation = 5
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
-    _observation_naming = _state_naming = ["angle", "x", "angle_dot", "x_dot"]
-    _inputs_naming = ["force"]
+    _observation_naming = _state_naming = ["angle [rad]", "x [m]", "angle_dot [rad/s]", "x_dot [m/s]"]
+    _inputs_naming = ["force [kg*m/s^2]"]
     _action_bounds = [[-50.0, 50.0]]
 
     def _compute_state_dynamics(
@@ -1084,8 +1084,8 @@ class CartPolePG(CartPole):
     _dim_inputs = 1
     _dim_observation = 5
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
-    _observation_naming = _state_naming = ["angle", "x", "angle_dot", "x_dot"]
-    _inputs_naming = ["force"]
+    _observation_naming = _state_naming = ["angle [rad]", "x [m]", "angle_dot [rad/s]", "x_dot [m/s]"]
+    _inputs_naming = ["force [kg*m/s^2]"]
     _action_bounds = [[-50.0, 50.0]]
     _dim_observation = 4
 
@@ -1129,8 +1129,8 @@ class TwoTank(System):
     _dim_inputs = 1
     _dim_observation = 2
     _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
-    _observation_naming = _state_naming = ["h1", "h2"]
-    _inputs_naming = ["P"]
+    _observation_naming = _state_naming = ["Top Tank Level [m]", "Bottom Tank Level [m]"]
+    _inputs_naming = ["Pressure [Pa]"]
     _action_bounds = [[0.0, 1.0]]
 
     def _compute_state_dynamics(
@@ -1205,14 +1205,14 @@ class LunarLander(System):
     _dim_observation = 6
     _parameters = {"m": 10, "J": 3.0, "g": 1.625, "a": 1.0, "r": 1.0, "sigma": 1.0}
     _observation_naming = _state_naming = [
-        "x",
-        "y",
-        "theta",
-        "x_dot",
-        "y_dot",
-        "theta_dot",
+        "x [m]",
+        "y [m]",
+        "theta [rad]",
+        "x_dot [m/s]",
+        "y_dot [m/s]",
+        "theta_dot [rad/s]",
     ]
-    _inputs_naming = ["vertical force", "side force"]
+    _inputs_naming = ["vertical force [kg*m/s^2]", "side force [kg*m/s^2]"]
     _action_bounds = [[-100.0, 100.0], [-50.0, 50.0]]
 
     def __init__(self, *args, **kwargs):

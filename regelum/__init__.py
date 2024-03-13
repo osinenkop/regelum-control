@@ -7,8 +7,10 @@ __version__ = "0.2.1"
 
 import argparse
 import datetime
+import glob
 import platform
 import shelve
+import subprocess
 import sys
 import os
 import inspect
@@ -127,6 +129,19 @@ if "MLFLOW_TRACKING_URI" not in os.environ:
 
 def hash_string(s):
     return int(hashlib.sha1(s.encode("utf-8")).hexdigest(), base=16)
+
+
+import subprocess, os, platform
+
+def start(filepath):
+    if platform.system() == 'Darwin':       # macOS
+        subprocess.run(['open', filepath], check=True)
+    elif platform.system() == 'Windows':    # Windows
+        os.startfile(filepath)
+    else:                                   # linux variants
+        subprocess.run(['xdg-open', filepath], check=True)
+
+
 
 
 """TODO:
@@ -746,6 +761,8 @@ class main:
         self.parser.add_argument("--enable-streamlit", action="store_true")
 
         self.parser.add_argument("--interactive", action="store_true")
+        self.parser.add_argument("--show-plots", action="store_true")
+        self.parser.add_argument("--playback", action="store_true")
 
         self.parser.add_argument("--cooldown-factor", default=1.0)
 
@@ -981,6 +998,11 @@ class main:
                     if argv.sweep:
                         return res
                     else:
+                        if argv.show_plots:
+                            for filename in glob.iglob('.callbacks/**/*.html'):
+                                start(filename)
+                        if argv.playback:
+                            start("SUMMARY.html")
                         return {
                             "result": res,
                             "callbacks": self.callbacks,
