@@ -31,8 +31,8 @@ where
             \[
                 \begin{array}{ll}
                     \min \limits_{\action_t, \dots, \action_{t+N-1}} & \sum \limits_{t^\prime=t}^{t+N-1} \cost( \state_{t^\prime}, \action_{t^\prime} ) \\
-                    & \sut \forall t^\prime \in [t:t+N] \spc \state_{t^\prime} \in \safeset_\state \\
-                    & \hphantom{\sut} \forall t^\prime \in [t:t+N] \spc \action_{t^\prime} \in \safeset_\action
+                    & \sut \forall t^\prime \in [t:t+N] \spc \state_{t^\prime} \in \states \\
+                    & \hphantom{\sut} \forall t^\prime \in [t:t+N] \spc \action_{t^\prime} \in \actions
                 \end{array}
             \]    
             \STATE Apply $\action_t$, the first action from the solution sequence: $\state_{t+1} = \transit(\state_t, \action_t)$
