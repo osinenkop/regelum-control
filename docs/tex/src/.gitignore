@@ -20,3 +20,4 @@ __pycache__
 *.bcf
 *.run.xml
 texbuild
+*.pdf
