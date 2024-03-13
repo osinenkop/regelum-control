@@ -5,6 +5,8 @@ root = Path(__file__).parent.parent.parent
 
 texs = root / "docs" / "tex" / "src"
 include = root / "docs" / "include"
+md = root / "docs" / "src" / "tex"
+
 
 for tex_path in texs.iterdir():
     if tex_path.is_dir():
@@ -16,3 +18,8 @@ for tex_path in texs.iterdir():
                     copy_tree(
                         str(path.absolute()), str((include / path.name).absolute())
                     )
+                else:
+                    md.mkdir(parents=True, exist_ok=True)
+                    md_text = path.read_text()
+                    with Path((md / path.name)).open("w") as f:
+                        f.write(md_text)

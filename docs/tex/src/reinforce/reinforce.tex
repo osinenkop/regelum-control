@@ -1,0 +1,114 @@
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+\begin{document}
+\section*{Problem statement}
+REINFORCE is a policy gradient algorithm that solves the following problem:
+
+\begin{equation}
+    \label{eqn_reinforce_problem}
+    \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} \ra \min_{\theta},
+\end{equation}
+where:
+\begin{enumerate}
+    \item $\gamma \in [0, 1]$ is the \textit{discount factor} of the algorithm and is usually set to 1 in REINFORCE. 
+    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. Precicely, $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
+    $$
+        \State_{t+1} \sim \transit(\bullet \mid \State_t, \Action_t), \quad \text{for all timesteps } t \in \{0, 1, \dots, T-1\} 
+    $$
+    It is also assumed that the initial state $\State_0$ for $t = 0$ is sampled from some distribution with an unconditional density $\transit_0 : \states \ \rightarrow \ \R_{\geq 0}$:
+    $$
+        \State_0 \sim \transit_0(\bullet)
+    $$
+    \item $\policy^{\theta} : \actions \times \states \rightarrow \R_{\geq 0}$ is the \textit{stochastic policy} of the agent that is parameterized by weights $\theta$. Precicely, $\policy^{\theta}(\bullet \mid \state)$ is the probability density of the action conditioned on the current state $\state$:
+    $$
+        \Action_t \sim \policy^{\theta}(\bullet \mid \State_t)
+    $$
+    \item $\Cost(s, a)$ denotes the cost associated with the current state $\state$ and action $\action$
+\end{enumerate}
+
+\section*{Description}
+The underlying theory of the REINFORCE algorithm is captured by the relationship between the gradient of the expected total cost and the policy parameters $\theta$. 
+This relationship is formally stated by the policy gradient theorem, which is mathematically represented as
+\begin{equation}
+    \label{eqn_reinforce_log_lh_trick}
+    \begin{aligned}
+    &\nabla_{\theta} \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} = \\ 
+    &\quad\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1}\left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)}
+    \end{aligned}
+\end{equation}
+\subsection*{General idea of the algorithm}
+The right-hand side of \eqref{eqn_reinforce_log_lh_trick} can be estimated using Monte Carlo sampling.
+Thus, to optimize the policy's performance, we can apply gradient descent on the policy parameters. 
+Starting with an initial set of weights $\theta_1$, we iteratively update the weights for $i = 1, 2, \ldots, \mathcal{I}$ learning iterations. 
+Here, $\mathcal{I}$ is a predefined hyperparameter that denotes the total number of learning iterations. 
+The update rule at each iteration is given by:
+$$
+\theta_{i + 1} = \theta_i - \alpha  \E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1}\left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)},
+$$
+where $\alpha$ is the learning rate, and the term
+$$
+\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1}\left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)}
+$$
+is estimated by Monte Carlo sampling:
+\begin{multline*}
+\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1}\left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)}\approx \\
+\frac{1}{M}\sum_{j = 1}^M \sum_{t = 0}^{T-1} \left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State^j_{t'}, \Action^j_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action^j_t \mid \State^j_t),
+\end{multline*}
+where 
+\begin{enumerate}
+    \item $M$ is a predefined hyperparameter that denotes the total number of Monte Carlo simulations (which we call \textit{episodes}) in each learning iteration.
+    \item $\Action^j_t$ is the action taken in episode $j$ at step $t$.
+    \item $\State^j_t$ is the state in episode $j$ at step $t$.
+\end{enumerate}
+\subsection*{Baseline and "do not let the past distract you" principle}
+Nevertheless, the described update approach on pratice suffers from high variance (even for large $M$), leading to inefficient gradient descent steps. 
+To mitigate this issue, the equation~\eqref{eqn_reinforce_log_lh_trick} can be improved as follows:
+\begin{equation}
+    \label{eqn_reinforce_log_lh_trick_with_baseline_and_tail_costs}
+    \begin{aligned}
+    &\nabla_{\theta} \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} = \\ 
+    &\quad\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1} \left( \sum_{t' = t}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'}) - B_t \right) \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)},
+    \end{aligned}
+\end{equation}
+where $B_t$ is the \textit{baseline}, a random variable independent of action $\Action_t$ \href{https://en.wikipedia.org/wiki/Conditional_independence#Conditional_independence_of_random_vectors}{conditioned on} $\State_t$. 
+
+Note that in formula \eqref{eqn_reinforce_log_lh_trick_with_baseline_and_tail_costs}, as compared to \eqref{eqn_reinforce_log_lh_trick}, we incorporate two significant modifications to improve the formulation. 
+Firslty, we introduce a variance reduction technique by subtracting a baseline $B_t$. 
+Secondly, the full total cost $\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})$ is replaced by the tail total cost $\sum_{t' = t}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})$ (the approach is called \textit{do not let the past distract you}). 
+
+The baseline function can be \textit{any} Borel measurable function of the state $\State_t$ (such as the estimated value function $B_t = \hat{\Value}(\State_t)$), or it could be any other appropriate random variable that is independent of the action $\Action_t$. 
+For example, one could consider the averaged tail total costs from the prior iteration of learning. 
+Specifically, let us denote by iteration $i$ the process where one obtains state-action pairs $(\State_t^j, \Action_t^j)$ for $t = 0, 1, \ldots, T - 1$ and $j = 1, 2, \ldots, M$ through Monte Carlo simulations. 
+The baselines $B_t^{i+1}$ for the subsequent iteration $i+1$ can then be computed as
+$$
+    B_{t}^{i + 1} = \frac{1}{M}\sum_{j = 1}^M \sum_{t' = t}^{T-1} \gamma^{t'} \Cost(\State^j_{t'}, \Action^j_{t'}),
+$$
+Finally, we come up with the final version of REINFORCE algorithm in the subsequent section. 
+
+\section*{REINFORCE algorithm}
+\begin{algorithm}
+    \caption{REINFORCE}
+    \label{alg:my-alg}
+    \begin{algorithmic}
+    \STATE {\bfseries Input:} $\theta_1$ (initial policy weights)
+    \FOR {learning iteration $i := 1 \dots \mathcal I$}
+        \FOR {episode $j := 1 \dots M$}
+            \STATE obtain initial state $\State_0^{j}$
+            \FOR {step $t := 0 \dots T - 1$}
+                \STATE sample action $\Action_t^j \sim \policy^{\theta}(\bullet \mid \State_t^{j})$
+                \STATE obtain state from transition function $\State_{t+1}^j \sim \transit(\bullet \mid \State_t^j, \Action_t^j)$
+            \ENDFOR
+        \ENDFOR
+        \STATE  Perform a policy gradient step:
+        $$
+            \theta_{i+1} \la \theta_i - \alpha \frac{1}{M}\sum_{j = 1}^M \sum_{t = 0}^{T-1}\sum_{t'=t}^{T-1}\left( \gamma^{t'} \Cost(\State_{t'}^j, \Action_{t'}^j) - B_{t}^i\right) \nabla_{\theta}\log \pi^{\theta}(A_t^j \mid \State_t^j)\rvert_{\theta = \theta_i},
+        $$
+        \STATE where the baseline $B_t^i$ may be selected from any of the types specified \hyperlink{baseline-and-do-not-let-the-past-distract-you-principle}{previously}, according to your preference.
+    \ENDFOR
+    \STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
+    \end{algorithmic}
+\end{algorithm}
+\end{document}
+

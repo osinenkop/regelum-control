@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="en-US" xml:lang="en-US">
+<head><title>Model-predictive control algorithm</title>
+<meta charset="utf-8"/>
+<meta content="TeX4ht (https://tug.org/tex4ht/)" name="generator"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="mpc.tex" name="src"/>
+<script>window.MathJax = { tex: { tags: "ams", }, }; </script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<meta id="modelpredictive-control-algorithm" link="x3-2000" md-heading="Model-predictive control algorithm" name="md-heading" type="h3"/></head><body>
+<!-- l. 23 -->
+<p><a id="x3-2001r1"></a>
+</p><!-- l. 25 --><p class="indent"> </p><figure class="float" id="x3-2002r1"><span id="modelpredictive-control-mpc"></span><span></span>
+<span class="cmbx-12">Algorithm 1:</span> Model-Predictive Control (MPC)
+   
+   <a id="x3-2003"></a>
+</figure><div class="algorithmic">
+<a id="x3-2004r1"></a>
+<span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;"> 
+      </span><span class="cmbx-12">Input:</span>
+      horizon
+      \(N \in \N \)
+      <a id="x3-2005r2"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">for</span> Time step \(t := 0 \dots T-1\) <span class="cmbx-12">do</span><span class="for-body">
+<a id="x3-2006r3"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>
+        Solve
+        \[ \begin {array}{ll} \min \limits _{\action _t, \dots , \action _{t+N-1}} &amp; \sum \limits _{t^\prime =t}^{t+N-1} \cost ( \state _{t^\prime }, \action _{t^\prime } ) \\ &amp; \sut \forall t^\prime \in [t:t+N] \spc \state _{t^\prime } \in \states \\ &amp; \hphantom {\sut } \forall t^\prime \in [t:t+N] \spc \action _{t^\prime } \in \actions \end {array} \]
+        <a id="x3-2007r4"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>
+        Apply
+        \(\action _t\),
+        the
+        first
+        action
+        from
+        the
+        solution
+        sequence:
+        \(\state _{t+1} = \transit (\state _t, \action _t)\)
+      </span><a id="x3-2008r5"></a>
+<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span>
+</div>
+<!-- l. 43 -->
+<!-- l. 43 --><p class="indent"> <a id="tailmpcli2.html"></a> </p>
+</body>
+</html>
