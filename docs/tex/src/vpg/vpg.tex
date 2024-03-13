@@ -12,7 +12,7 @@ Vanilla Policy Gradient (VPG) is a policy gradient algorithm that solves the fol
 where:
 \begin{enumerate}
     \item $\gamma \in (0, 1)$ is the \textit{discount factor} of the algorithm. 
-    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. The function $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
+    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. Precicely,  $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
     $$
         \State_{t+1} \sim \transit(\bullet \mid \State_t, \Action_t), \quad \text{for all timesteps } t \in \{0, 1, \dots, T-1\} 
     $$
@@ -40,7 +40,6 @@ The notations used throughout this document are defined as follows:
     Q^{\policy^{\theta}}(s, a) = \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{\infty} \gamma ^ t \Cost(\State_{t}, \Action_{t}) \mid \State_0 = \state, \Action_0 = \action}
     $$
     \item The advantage function is defined as $\Advan^{\policy^{\theta}}(s, a) = Q^{\policy^{\theta}}(s, a) - \Value^{\policy^{\theta}}(s)$.
-    \item The Kullback-Leibler (KL) divergence, denoted by $\kldiv{\bullet_1}{\bullet_2}$ measures the difference between two probability distributions $\bullet_1$ and $\bullet_2$.
 \end{enumerate}
 
 \section*{Description}
@@ -53,13 +52,16 @@ This relationship is formally stated by the policy gradient theorem, which is ma
 In practice, \eqref{eqn_vpg_log_lh_trick} can be approximated using Monte Carlo methods. Specifically, by sampling $M$ trajectories (referred to as \textit{episodes}), which are generated using the policy $\pi^{\theta}$, and then averaging across these episodes, we obtain the following approximation:
 \begin{equation}
     \label{eqn_vpg_objective_est0}
-\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{\infty}\gamma^t\Advan^{\policy^{\theta}} (\State_t, \Action_t)\nabla_{\theta} \log \policy^{\theta}(\Action_t \mid \State_t)} \approx \frac{1}{M} \sum_{j = 1}^M \sum_{t=0}^{T-1} \gamma ^ t \Advan^{\policy^{\theta}}(\State_t^j, \Action_t^j) \nabla_{\theta} \log \policy^{\theta}(\Action_t^j \mid \State_t^j),
+    \begin{aligned}
+&\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{\infty}\gamma^t\Advan^{\policy^{\theta}} (\State_t, \Action_t)\nabla_{\theta} \log \policy^{\theta}(\Action_t \mid \State_t)} \approx \\ 
+&\quad\frac{1}{M} \sum_{j = 1}^M \sum_{t=0}^{T-1} \gamma ^ t \Advan^{\policy^{\theta}}(\State_t^j, \Action_t^j) \nabla_{\theta} \log \policy^{\theta}(\Action_t^j \mid \State_t^j),
+    \end{aligned}
 \end{equation}
 where $T$ denotes the length of an episode, and  $\State_t^j$  and $\Action_t^j$ represent the state and action at time $t$ of the $j$-th episode, respectively.
 However, the advantage function $\Advan^{\policy^{\theta}}(s, a)$ is generally unknown and must be estimated. This estimation can be performed by minimizing the temporal difference (TD) loss for the value function  $\Value^{\policy^{\theta}}$, as described by the following equation:
 \begin{equation}
     \label{eqn_td_loss}
-    \frac{1}{M}\sum_{j=1}^M\sum_{t=0}^{T-1 - N_{\text{TD}}}\left(\hat\Value^w(\State_t^j) - \sum_{t'=t}^{t + N_{\text{TD}} - 1} \gamma^{t'-t}\Cost(\State_{t'}^j, \Action_{t'}^j) - \hat\Value^w(\State_{t + N_{\text{TD}}}^j)\right)^2 \ra \min_{w},
+    \sum_{j=1}^M\sum_{t=0}^{T-1 - N_{\text{TD}}}\left(\hat\Value^w(\State_t^j) - \sum_{t'=t}^{t + N_{\text{TD}} - 1} \gamma^{t'-t}\Cost(\State_{t'}^j, \Action_{t'}^j) - \hat\Value^w(\State_{t + N_{\text{TD}}}^j)\right)^2 \ra \min_{w},
 \end{equation}
 where $N_{\text{TD}}$ is the TD window, a hyperparameter.
 After optimization, we achieve an approximation of the value function, $V^{\pi_{\theta}} \approx \hat{V}^w$, which allows us to estimate the advantage function as follows: 
@@ -70,7 +72,10 @@ After optimization, we achieve an approximation of the value function, $V^{\pi_{
 Substituting this estimated advantage into \eqref{eqn_vpg_objective_est0} yields:
 \begin{equation}
     \label{eqn_vpg_objective_est}
-    \E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{\infty}\gamma^t\Advan^{\policy^{\theta}} (\State_t, \Action_t)\nabla_{\theta} \log \policy^{\theta}(\Action_t \mid \State_t)} \approx \frac{1}{M} \sum_{j = 1}^M \sum_{t=0}^{T-1} \gamma ^ t \hat\Advan^{w}(\State_t^j, \Action_t^j) \nabla_{\theta} \log \policy^{\theta}(\Action_t^j \mid \State_t^j),
+    \begin{aligned}
+    &\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{\infty}\gamma^t\Advan^{\policy^{\theta}} (\State_t, \Action_t)\nabla_{\theta} \log \policy^{\theta}(\Action_t \mid \State_t)} \approx \\ 
+    &\sum_{j = 1}^M \sum_{t=0}^{T-1} \gamma ^ t \hat\Advan^{w}(\State_t^j, \Action_t^j) \nabla_{\theta} \log \policy^{\theta}(\Action_t^j \mid \State_t^j),
+    \end{aligned}
 \end{equation}
 We come up with the final version of VPG algorithm in the subsequent section.
 \section*{VPG algorithm}

@@ -14,7 +14,7 @@ Proximal Policy Optimization (PPO) is a policy gradient algorithm that solves th
 where:
 \begin{enumerate}
     \item $\gamma \in (0, 1)$ is the \textit{discount factor} of the algorithm. 
-    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. The function $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
+    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. Precicely, $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
     $$
         \State_{t+1} \sim \transit(\bullet \mid \State_t, \Action_t), \quad \text{for all timesteps } t \in \{0, 1, 2,\dots\} 
     $$
@@ -47,9 +47,9 @@ The notations used throughout this document are defined as follows:
 \end{enumerate}
 
 
-\section*{Motivation from TRPO}
+\section*{Motivation}
 
-Proximal Policy Optimization (PPO) evolved from Trust Region Policy Optimization (TRPO), and to understand the motivation behind the algorithm, we begin by considering a key theoretical result from TRPO paper.
+Proximal Policy Optimization (PPO) evolved from Trust Region Policy Optimization (TRPO), and to understand the motivation behind the algorithm, we begin by considering a key theoretical result from \href{https://arxiv.org/abs/1502.05477}{TRPO paper}.
 
 Let us consider the following update rule:
 $$
@@ -59,51 +59,60 @@ where
 \begin{enumerate}
     \item $i$ is the number of learning iteration
     \item $C_i := \frac{4 \gamma\max_{s \in \states, a \in \actions}|\Advan^{\policy^{\theta_i}}(s, a)|}{(1 - \gamma)^2}$
-    \item $d_{\text{KL}}^{\max}\left(\policy^{\theta_i}\;\middle\|\;\policy^{\theta}\right)  = \max_{\state \in \states}\kldiv{\policy^{\theta_i}(\bullet \mid s)}{\policy^{\theta}(\bullet \mid s)}$, and 
+    \item $d_{\text{KL}}^{\max}\left(\policy^{\theta_i}\;\middle\|\;\policy^{\theta}\right)  = \max_{\state \in \states}\kldiv{\policy^{\theta_i}(\bullet \mid s)}{\policy^{\theta}(\bullet \mid s)}$
 \end{enumerate}
 According to this rule, it is guaranteed that the expected cumulative cost does not increase with each iteration:
 $$
 \E[\transit, \policy^{\theta_1}]{\sum_{t = 0}^{\infty} \gamma ^ t \Cost(\State_{t}, \Action_{t})} \geq \E[\transit, \policy^{\theta_2}]{\sum_{t = 0}^{\infty} \gamma ^ t \Cost(\State_{t}, \Action_{t})} \geq \E[\transit, \policy^{\theta_3}]{\sum_{t = 0}^{\infty} \gamma ^ t \Cost(\State_{t}, \Action_{t})} \geq ...
 $$
 Despite these guarantees, the straighforward application of this approach is faced with challenges such as computational complexity and slow convergence rates.
-Nevertheless, we can derive significant interpretation of the result: when the optimization steps are sufficiently small, such that $\theta_i \rightarrow \theta_{i+1}$ yields a minimal increase in the maximal Kullback-Leibler divergence $d_{\text{KL}}^{\max}\left(\policy{\theta_i} \,\middle\|\, \policy{\theta_{i + 1}}\right)$, and while the objective 
+Nevertheless, we can derive significant interpretation of the result: when the optimization steps are sufficiently small, such that $\theta_i \rightarrow \theta_{i+1}$ yields a minimal increase in the maximal Kullback-Leibler divergence $d_{\text{KL}}^{\max}\left(\policy^{\theta_i} \,\middle\|\, \policy^{\theta_{i + 1}}\right)$, and while the objective 
 \[
     \E[\transit, \policy^{\theta_i}]{\sum_{t=0}^{\infty} \gamma ^ t \Advan^{\policy^{\theta_i}}(\State_t, \Action_t)   \frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}}
 \]
 is minimized, each subsequent iteration is ensured to be at least as good as the previous one.
-\section*{PPO general formula}
+\section*{Update rule}
 To address practical difficulties and incorporate the proposed interpretation, Proximal Policy Optimization (PPO) introduces the following update rule:
 \begin{equation}
-    \theta_{i+1} \la \arg\min_{\theta}\E[\transit, \policy^{\theta_i}]{\sum_{t=0}^{\infty} \gamma ^ t \max\left(\Advan^{\policy^{\theta_i}}(\State_t, \Action_t)   \frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}, \Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}\right) \right)}
+    \theta_{i+1} \la \arg\min_{\theta}\E[\transit, \policy^{\theta_i}]{\sum_{t=0}^{\infty} \gamma ^ t \max\left(\Advan_t^{\policy^{\theta_i}} r_t(\theta, \theta_i), \Advan_t^{\policy^{\theta_i}}\operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(r_t(\theta, \theta_i) \right)\right)}
 \end{equation}
-where $\varepsilon$ is a hyperparameter, typically set to $\varepsilon = 0.2$. The rationale behind this objective function is as follows:
+where 
+\begin{enumerate}
+    \item $\varepsilon$ is a hyperparameter, typically set to $\varepsilon = 0.2$
+    \item $r_t(\theta, \theta_i) =  \frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}$
+    \item $\Advan_t^{\policy^{\theta_i}} = \Advan^{\policy^{\theta_i}}(\State_t, \Action_t)$
+\end{enumerate}
+The rationale behind this objective function is as follows:
 
 The first term within the $\max$ expression,
 \begin{equation}
-\Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \frac{\policy^{\theta}(\Action_t | \State_t)}{\policy^{\theta_i}(\Action_t | \State_t)},
+    \Advan_t^{\policy^{\theta_i}} r_t(\theta, \theta_i) = \Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \frac{\policy^{\theta}(\Action_t | \State_t)}{\policy^{\theta_i}(\Action_t | \State_t)},
 \end{equation}
 is adopted from Trust Region Policy Optimization (TRPO). The second term,
 \begin{equation}
-\Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \operatorname{clip}_{1-\varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t | \State_t)}{\policy^{\theta_i}(\Action_t | \State_t)}\right),
+    \Advan_t^{\policy^{\theta_i}}\operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(r_t(\theta, \theta_i) \right) = \Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \operatorname{clip}_{1-\varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t | \State_t)}{\policy^{\theta_i}(\Action_t | \State_t)}\right),
 \end{equation}
 modifies the objective by clipping the probability ratio to keep it within the interval $[1 - \varepsilon, 1 + \varepsilon]$. This modification removes the incentive for moving the ratio $\frac{\policy^{\theta}(\Action_t | \State_t)}{\policy^{\theta_i}(\Action_t | \State_t)}$ outside of this interval.
 
 Finally, the maximum between the clipped and unclipped values is computed so that the final objective serves as a conservative or pessimistic bound on the unclipped objective. This approach ensures that changes in the probability ratio are considered only when they do not lead to an improvement in the objective, thereby providing a safeguard against overly aggressive updates.
 
-\section*{PPO objective estimation}
+\section*{Monte Carlo estimation of the update rule}
 In practice, the objective 
 $$
-\E[\transit, \policy^{\theta_i}]{\sum_{t=0}^{\infty} \gamma ^ t \max\left(\Advan^{\policy^{\theta_i}}(\State_t, \Action_t)   \frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}, \Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}\right) \right)}
+\begin{aligned}
+&\E[\transit, \policy^{\theta_i}]{\sum_{t=0}^{\infty} \gamma ^ t \max\left(\Advan_t^{\policy^{\theta_i}} r_t(\theta, \theta_i), \Advan_t^{\policy^{\theta_i}}\operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(r_t(\theta, \theta_i) \right)\right)} = \\
+&\E[\transit, \policy^{\theta_i}]{\sum_{t=0}^{\infty} \gamma ^ t \max\left(\Advan^{\policy^{\theta_i}}(\State_t, \Action_t)   \frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}, \Advan^{\policy^{\theta_i}}(\State_t, \Action_t) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t \mid \State_t)}\right) \right)}
+\end{aligned}
 $$
 can be approximated using Monte Carlo methods. Specifically, by sampling $M$ trajectories (referred to as \textit{episodes}), which are generated using the policy $\pi^{\theta_i}$, and then averaging across these episodes, we obtain the following approximation:
 $$
-    \frac{1}{M} \sum_{j = 1}^M \sum_{t=0}^{T-1} \gamma ^ t \max\left(\Advan^{\policy^{\theta_i}}(\State_t, \Action_t)   \frac{\policy^{\theta}(\Action_t \mid \State_t)}{\policy^{\theta_i}(\Action_t^j \mid \State_t^j)}, \Advan^{\policy^{\theta_i}}(\State_t^j, \Action_t^j) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t^j \mid \State_t^j)}{\policy^{\theta_i}(\Action_t^j \mid \State_t^j)}\right) \right),
+    \frac{1}{M} \sum_{j = 1}^M \sum_{t=0}^{T-1} \gamma ^ t \max\left(\Advan^{\policy^{\theta_i}}(\State_t^j, \Action_t^j)   \frac{\policy^{\theta}(\Action_t^j \mid \State_t^j)}{\policy^{\theta_i}(\Action_t^j \mid \State_t^j)}, \Advan^{\policy^{\theta_i}}(\State_t^j, \Action_t^j) \operatorname{clip}_{1 - \varepsilon}^{1 + \varepsilon}\left(\frac{\policy^{\theta}(\Action_t^j \mid \State_t^j)}{\policy^{\theta_i}(\Action_t^j \mid \State_t^j)}\right) \right),
 $$
 where $T$ denotes the length of an episode, and  $\State_t^j$  and $\Action_t^j$ represent the state and action at time $t$ of the $j$-th episode, respectively.
 However, the advantage function $\Advan^{\policy^{\theta_i}}(s, a)$ is generally unknown and must be estimated. This estimation can be performed by minimizing the temporal difference (TD) loss for the value function  $\Value^{\policy^{\theta_i}}$, as described by the following equation:
 \begin{equation}
     \label{eqn_td_loss}
-    \frac{1}{M}\sum_{j=1}^M\sum_{t=0}^{T-1 - N_{\text{TD}}}\left(\hat\Value^w(\State_t^j) - \sum_{t'=t}^{t + N_{\text{TD}} - 1} \gamma^{t'-t}\Cost(\State_{t'}^j, \Action_{t'}^j) - \hat\Value^w(\State_{t + N_{\text{TD}}}^j)\right)^2 \ra \min_{w},
+    \sum_{j=1}^M\sum_{t=0}^{T-1 - N_{\text{TD}}}\left(\hat\Value^w(\State_t^j) - \sum_{t'=t}^{t + N_{\text{TD}} - 1} \gamma^{t'-t}\Cost(\State_{t'}^j, \Action_{t'}^j) - \hat\Value^w(\State_{t + N_{\text{TD}}}^j)\right)^2 \ra \min_{w},
 \end{equation}
 where $N_{\text{TD}}$ is the TD window, a hyperparameter.
 After optimization, we achieve an approximation of the value function, $V^{\pi_{\theta_i}} \approx \hat{V}^w$, which allows us to estimate the advantage function as follows: 
@@ -133,7 +142,7 @@ Substituting this estimated advantage into the original objective yields the fin
         \ENDFOR
         \STATE Optimize critic $\hat\Value^{w}$ using gradient descent to minimize the temporal difference loss \eqref{eqn_td_loss}
         \STATE Estimate the advantages $\hat\Advan^{w}(\State_t, \Action_t)$ as described in \eqref{eqn_advan_est} 
-        \STATE Update policy weights by performing gradient descent to minimize the PPO objective: $\theta_{i + 1} = \arg\min$ \eqref{eqn_ppo_objective_est}
+        \STATE Update policy weights $\theta_{i + 1} = \arg\min$ \eqref{eqn_ppo_objective_est} by performing gradient descent 
     \ENDFOR
     \STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
     \end{algorithmic}

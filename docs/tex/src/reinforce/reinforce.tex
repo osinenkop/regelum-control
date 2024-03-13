@@ -13,7 +13,7 @@ REINFORCE is a policy gradient algorithm that solves the following problem:
 where:
 \begin{enumerate}
     \item $\gamma \in [0, 1]$ is the \textit{discount factor} of the algorithm and is usually set to 1 in REINFORCE. 
-    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. The function $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
+    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. Precicely, $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
     $$
         \State_{t+1} \sim \transit(\bullet \mid \State_t, \Action_t), \quad \text{for all timesteps } t \in \{0, 1, \dots, T-1\} 
     $$
@@ -21,7 +21,7 @@ where:
     $$
         \State_0 \sim \transit_0(\bullet)
     $$
-    \item $\policy^{\theta} : \actions \times \states \rightarrow \R_{\geq 0}$ is the \textit{stochastic policy} of the agent that is paramenterized by weights $\theta$. Precicely, $\policy^{\theta}(\bullet \mid \state)$ is the probability density of the action conditioned on the current state $\state$:
+    \item $\policy^{\theta} : \actions \times \states \rightarrow \R_{\geq 0}$ is the \textit{stochastic policy} of the agent that is parameterized by weights $\theta$. Precicely, $\policy^{\theta}(\bullet \mid \state)$ is the probability density of the action conditioned on the current state $\state$:
     $$
         \Action_t \sim \policy^{\theta}(\bullet \mid \State_t)
     $$
@@ -33,7 +33,10 @@ The underlying theory of the REINFORCE algorithm is captured by the relationship
 This relationship is formally stated by the policy gradient theorem, which is mathematically represented as
 \begin{equation}
     \label{eqn_reinforce_log_lh_trick}
-    \nabla_{\theta} \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} =  \E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1}\left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)}
+    \begin{aligned}
+    &\nabla_{\theta} \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} = \\ 
+    &\quad\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1}\left(\sum_{t' = 0}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'})\right)  \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)}
+    \end{aligned}
 \end{equation}
 \subsection*{General idea of the algorithm}
 The right-hand side of \eqref{eqn_reinforce_log_lh_trick} can be estimated using Monte Carlo sampling.
@@ -62,10 +65,13 @@ where
 \subsection*{Baseline and "do not let the past distract you" principle}
 Nevertheless, the described update approach on pratice suffers from high variance (even for large $M$), leading to inefficient gradient descent steps. 
 To mitigate this issue, the equation~\eqref{eqn_reinforce_log_lh_trick} can be improved as follows:
-\begin{multline}
+\begin{equation}
     \label{eqn_reinforce_log_lh_trick_with_baseline_and_tail_costs}
-    \nabla_{\theta} \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} = \\ \E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1} \left( \sum_{t' = t}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'}) - B_t \right) \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)},
-\end{multline}
+    \begin{aligned}
+    &\nabla_{\theta} \E[\transit, \policy^{\theta}]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} = \\ 
+    &\quad\E[\transit, \policy^{\theta}]{ \sum_{t = 0}^{T-1} \left( \sum_{t' = t}^{T-1} \gamma ^ {t'} \Cost(\State_{t'}, \Action_{t'}) - B_t \right) \nabla_{\theta}\log \policy^{\theta}(\Action_t \mid \State_t)},
+    \end{aligned}
+\end{equation}
 where $B_t$ is the \textit{baseline}, a random variable independent of action $\Action_t$ \href{https://en.wikipedia.org/wiki/Conditional_independence#Conditional_independence_of_random_vectors}{conditioned on} $\State_t$. 
 
 Note that in formula \eqref{eqn_reinforce_log_lh_trick_with_baseline_and_tail_costs}, as compared to \eqref{eqn_reinforce_log_lh_trick}, we incorporate two significant modifications to improve the formulation. 
@@ -96,11 +102,10 @@ Finally, we come up with the final version of REINFORCE algorithm in the subsequ
             \ENDFOR
         \ENDFOR
         \STATE  Perform a policy gradient step:
-        \begin{equation}
-        \label{eqn_reinforce_update_rule}
+        $$
             \theta_{i+1} \la \theta_i - \alpha \frac{1}{M}\sum_{j = 1}^M \sum_{t = 0}^{T-1}\sum_{t'=t}^{T-1}\left( \gamma^{t'} \Cost(\State_{t'}^j, \Action_{t'}^j) - B_{t}^i\right) \nabla_{\theta}\log \pi^{\theta}(A_t^j \mid \State_t^j)\rvert_{\theta = \theta_i},
-        \end{equation}
-        \STATE where the baseline $B_t^i$ may be selected from any of the types specified \hyperlink{baseline-and-do-not-let-the-past-distract-you- principle}{previously}, according to your preference.
+        $$
+        \STATE where the baseline $B_t^i$ may be selected from any of the types specified \hyperlink{baseline-and-do-not-let-the-past-distract-you-principle}{previously}, according to your preference.
     \ENDFOR
     \STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
     \end{algorithmic}
