@@ -112,7 +112,7 @@ where $T$ denotes the length of an episode, and  $\State_t^j$  and $\Action_t^j$
 However, the advantage function $\Advan^{\policy^{\theta_i}}(s, a)$ is generally unknown and must be estimated. This estimation can be performed by minimizing the temporal difference (TD) loss for the value function  $\Value^{\policy^{\theta_i}}$, as described by the following equation:
 \begin{equation}
     \label{eqn_td_loss}
-    \sum_{j=1}^M\sum_{t=0}^{T-1 - N_{\text{TD}}}\left(\hat\Value^w(\State_t^j) - \sum_{t'=t}^{t + N_{\text{TD}} - 1} \gamma^{t'-t}\Cost(\State_{t'}^j, \Action_{t'}^j) - \hat\Value^w(\State_{t + N_{\text{TD}}}^j)\right)^2 \ra \min_{w},
+    \sum_{j=1}^M\sum_{t=0}^{T-1 - N_{\text{TD}}}\left(\hat\Value^w(\State_t^j) - \sum_{t'=t}^{t + N_{\text{TD}} - 1} \gamma^{t'-t}\Cost(\State_{t'}^j, \Action_{t'}^j) - \gamma^{N_{\text{TD}}}\hat\Value^w(\State_{t + N_{\text{TD}}}^j)\right)^2 \ra \min_{w},
 \end{equation}
 where $N_{\text{TD}}$ is the TD window, a hyperparameter.
 After optimization, we achieve an approximation of the value function, $V^{\pi_{\theta_i}} \approx \hat{V}^w$, which allows us to estimate the advantage function as follows: 
