@@ -715,6 +715,7 @@ class ObservationTracker(Callback):
         self.observation = output["observation"][0]
         self.observation_naming = obj.simulator.system.observation_naming
 
+
 @trigger
 class ObjectiveTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
@@ -737,6 +738,7 @@ class ObjectiveTracker(Callback):
         self.objective = np.array([self.value, self.running_objective])
         self.objective_naming = ["Value", "Running objective"]
 
+
 @trigger
 class ScoreTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
@@ -750,7 +752,7 @@ class ScoreTracker(Callback):
 
     def is_target_event(self, obj, method, output, triggers):
         return isinstance(obj, regelum.scenario.Scenario) and (
-                method == "reload_scenario"
+            method == "reload_scenario"
         )
 
     def is_done_collecting(self):
@@ -779,7 +781,6 @@ class ActionTracker(Callback):
     def on_function_call(self, obj, method, output):
         self.action = output["action"][0]
         self.action_naming = obj.simulator.system._inputs_naming
-
 
 
 class HistoricalCallback(Callback, ABC):

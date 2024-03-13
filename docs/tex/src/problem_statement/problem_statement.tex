@@ -1,0 +1,47 @@
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+
+\begin{document}
+
+\section*{Problem statement}
+
+Reinforcement learning deals with a special kind of Markov Decision Problems (MDPs) which have a normed vector space as a state-space:
+\begin{equation}
+\left(\states, \actions, \transit, \Cost \right),
+\end{equation}
+where:
+\begin{enumerate}
+\item $\states$ is the \textit{state space}, that is a normed vector space of all states of the given environment;
+\item $\actions$ is the \textit{action space}, that is a set of all actions available to the agent;
+\item $\transit : \states \times \actions \times \states \ \rightarrow \ \R$ is the \textit{transition probability density function} of the environment, that is such function that $\transit(\cdot \mid \state_{t}, \action_{t})$ is the probability density of the next state $s_{t + 1}$ conditioned on the current state $\state_{t}$ and current action $\action_{t}$;
+\item $\Cost : \states \times \actions \rightarrow \mathbb{R}$ is the \textit{cost function} of the environment, that is a function that takes a state $\state_{t}$ and an action $\action_{t}$ and returns the immediate cost $\cost_{t}$ incurred upon the agent if it were to perform action $\action_{t}$ while in state $\state_{t}$;
+%\item $\policies$ is the \textit{set of admissible policies}, that is a set of functions $\policy : \states \rightarrow \actions$, such that the distance between $s_t$ and $\G \subset \states$ tends to zero if $\action_{t} = \policy(\state_{t})$ (a set of \textit{stabilizing policies}). Note that it does not necessarilly include all such policies;
+%\item $\G$ is the \textit{target set}, that is a bounded neighbourhood of the origin in $\states$.
+\end{enumerate}
+%Unlike regular Markov decision problems, MDP stabilization only admits stabilizing policies\ie such policies $\policy$ that the distance between $s_t$ and $\G$ tends to zero if $\action_{t} = \policy(\state_{t})$. For convenience we denote the set of all such admissible policies as $\policies_{\G}$.
+\textbf{The goal of reinforcement learning} is to find a policy $\policy$ that minimizes $V^{\policy}(\state_0) = \E{\sum_{t = 0}^{\infty}\gamma^{t}\Cost(\state_{t}, \action_{t})}$ for some $\gamma \in (0, 1]$. The policy $\policy^{\ast}$ that solves this problem is commonly referred to as \textit{the optimal policy}.
+
+\section*{Notation}
+
+\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
+    \hline
+    $\policy$ & Policy, a law that generates actions from observations \\ 
+    $\state, \State$ & State, as definite, resp., random value \\ 
+    $\action, \Action$ & Action, as definite, resp., random value \\ 
+    $\obs, \Obs$ & Observation, as definite, resp., random value \\ 
+    $\states$ & State space \\
+    $\actions$ & Action space \\
+    $\obses$ & Observation space \\
+    $\policies$ & Policy space \\
+    $\transit$ & State dynamics law (function or probability distribution) \\ 
+    $\Value^\policy$ & Total objective (value or cost) of policy $\policy$ \\
+    $\Value^*$ & Optimum total objective (value or cost) under the optimal policy $\policy^*$ \\
+    $\Advan^{\policy,\policy'}$ & Advantage of policy $\policy$ relative to policy $\policy'$ \\
+    $\policy^\theta$ & Actor network with weights $\theta$ \\
+    $\hat \Value^w$ & Critic network (state-valued) with weights $w$ \\
+    \hline
+\end{tabularx}
+
+\end{document}

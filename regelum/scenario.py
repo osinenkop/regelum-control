@@ -870,23 +870,27 @@ class CALF(CALFScenario):
         )
         policy = RLPolicy(
             action_bounds=system.action_bounds,
-            model=ModelWeightContainer(
-                weights_init=np.zeros(
-                    (prediction_horizon, system.dim_inputs),
-                    dtype=np.float64,
-                ),
-                dim_output=system.dim_inputs,
-            )
-            if policy_model is None
-            else policy_model,
+            model=(
+                ModelWeightContainer(
+                    weights_init=np.zeros(
+                        (prediction_horizon, system.dim_inputs),
+                        dtype=np.float64,
+                    ),
+                    dim_output=system.dim_inputs,
+                )
+                if policy_model is None
+                else policy_model
+            ),
             system=system,
             running_objective=running_objective,
             prediction_horizon=prediction_horizon,
             algorithm="rpv",
             critic=critic,
-            predictor=predictor
-            if predictor is not None
-            else EulerPredictor(system=system, pred_step_size=sampling_time),
+            predictor=(
+                predictor
+                if predictor is not None
+                else EulerPredictor(system=system, pred_step_size=sampling_time)
+            ),
             discount_factor=discount_factor,
             optimizer_config=CasadiOptimizerConfig(),
         )
@@ -967,21 +971,25 @@ class CALFTorch(CALFScenario):
         )
         policy = RLPolicy(
             action_bounds=system.action_bounds,
-            model=ModelWeightContainerTorch(
-                dim_weights=(prediction_horizon, system.dim_inputs),
-                output_bounds=system.action_bounds,
-                output_bounding_type="clip",
-            )
-            if policy_model is None
-            else policy_model,
+            model=(
+                ModelWeightContainerTorch(
+                    dim_weights=(prediction_horizon, system.dim_inputs),
+                    output_bounds=system.action_bounds,
+                    output_bounding_type="clip",
+                )
+                if policy_model is None
+                else policy_model
+            ),
             system=system,
             running_objective=running_objective,
             prediction_horizon=prediction_horizon,
             algorithm="rpv",
             critic=critic,
-            predictor=predictor
-            if predictor is not None
-            else EulerPredictor(system=system, pred_step_size=sampling_time),
+            predictor=(
+                predictor
+                if predictor is not None
+                else EulerPredictor(system=system, pred_step_size=sampling_time)
+            ),
             discount_factor=discount_factor,
             optimizer_config=TorchOptimizerConfig(
                 n_epochs=policy_n_epochs,
@@ -1051,7 +1059,7 @@ class MPC(RLScenario):
         system = simulator.system
         super().__init__(
             N_episodes=1,
-            N_iterations=1,
+            N_iterations=5,
             simulator=simulator,
             policy_optimization_event=Event.compute_action,
             critic=CriticTrivial(),
@@ -1072,9 +1080,11 @@ class MPC(RLScenario):
                 prediction_horizon=prediction_horizon,
                 algorithm="mpc",
                 critic=CriticTrivial(),
-                predictor=predictor
-                if predictor is not None
-                else EulerPredictor(system=system, pred_step_size=sampling_time),
+                predictor=(
+                    predictor
+                    if predictor is not None
+                    else EulerPredictor(system=system, pred_step_size=sampling_time)
+                ),
                 discount_factor=discount_factor,
                 optimizer_config=CasadiOptimizerConfig(),
             ),
@@ -1106,9 +1116,11 @@ def get_predictive_kwargs(
     system = simulator.system
     critic = Critic(
         system=system,
-        model=critic_model
-        if critic_model is not None
-        else ModelQuadLin("diagonal", is_with_linear_terms=False),
+        model=(
+            critic_model
+            if critic_model is not None
+            else ModelQuadLin("diagonal", is_with_linear_terms=False)
+        ),
         td_n=critic_td_n,
         is_on_policy=critic_is_on_policy,
         is_value_function=critic_is_value_function,
@@ -1122,27 +1134,31 @@ def get_predictive_kwargs(
 
     policy = RLPolicy(
         action_bounds=system.action_bounds,
-        model=ModelWeightContainer(
-            weights_init=np.zeros(
-                (
-                    prediction_horizon + (1 if algorithm_name != "rpv" else 0),
-                    system.dim_inputs,
+        model=(
+            ModelWeightContainer(
+                weights_init=np.zeros(
+                    (
+                        prediction_horizon + (1 if algorithm_name != "rpv" else 0),
+                        system.dim_inputs,
+                    ),
+                    dtype=np.float64,
                 ),
-                dtype=np.float64,
-            ),
-            dim_output=system.dim_inputs,
-        )
-        if policy_model is None
-        else policy_model,
+                dim_output=system.dim_inputs,
+            )
+            if policy_model is None
+            else policy_model
+        ),
         constraint_parser=constraint_parser,
         system=system,
         running_objective=running_objective,
         prediction_horizon=prediction_horizon,
         algorithm=algorithm_name,
         critic=critic,
-        predictor=predictor
-        if predictor is not None
-        else EulerPredictor(system=system, pred_step_size=sampling_time),
+        predictor=(
+            predictor
+            if predictor is not None
+            else EulerPredictor(system=system, pred_step_size=sampling_time)
+        ),
         discount_factor=discount_factor,
         optimizer_config=CasadiOptimizerConfig(batch_size=1),
         epsilon_random_parameter=epsilon_random_parameter,
@@ -1482,21 +1498,25 @@ class MPCTorch(RLScenario):
             sampling_time=sampling_time,
             policy=RLPolicy(
                 action_bounds=system.action_bounds,
-                model=ModelWeightContainerTorch(
-                    dim_weights=(prediction_horizon + 1, system.dim_inputs),
-                    output_bounds=system.action_bounds,
-                )
-                if model is None
-                else model,
+                model=(
+                    ModelWeightContainerTorch(
+                        dim_weights=(prediction_horizon + 1, system.dim_inputs),
+                        output_bounds=system.action_bounds,
+                    )
+                    if model is None
+                    else model
+                ),
                 constraint_parser=constraint_parser,
                 system=system,
                 running_objective=running_objective,
                 prediction_horizon=prediction_horizon,
                 algorithm="mpc",
                 critic=CriticTrivial(),
-                predictor=predictor
-                if predictor is not None
-                else EulerPredictor(system=system, pred_step_size=sampling_time),
+                predictor=(
+                    predictor
+                    if predictor is not None
+                    else EulerPredictor(system=system, pred_step_size=sampling_time)
+                ),
                 discount_factor=discount_factor,
                 optimizer_config=TorchOptimizerConfig(
                     n_epochs=n_epochs,
@@ -1575,16 +1595,18 @@ def get_predictive_torch_kwargs(
 
     policy = RLPolicy(
         action_bounds=system.action_bounds,
-        model=ModelWeightContainerTorch(
-            dim_weights=(
-                prediction_horizon + (1 if algorithm_name != "rpv" else 0),
-                system.dim_inputs,
-            ),
-            output_bounds=system.action_bounds,
-            output_bounding_type="clip",
-        )
-        if policy_model is None
-        else policy_model,
+        model=(
+            ModelWeightContainerTorch(
+                dim_weights=(
+                    prediction_horizon + (1 if algorithm_name != "rpv" else 0),
+                    system.dim_inputs,
+                ),
+                output_bounds=system.action_bounds,
+                output_bounding_type="clip",
+            )
+            if policy_model is None
+            else policy_model
+        ),
         constraint_parser=constraint_parser,
         system=system,
         running_objective=running_objective,

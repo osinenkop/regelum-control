@@ -483,7 +483,9 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
         for i in range(observation_dimension):
 
             def observationComponent(*args, component=i, **kwargs):
-                return ObservationComponentAnimation(*args, component=component, **kwargs)
+                return ObservationComponentAnimation(
+                    *args, component=component, **kwargs
+                )
 
             self._animation_classes.append(observationComponent)
         super().__deferred_init__()
@@ -570,8 +572,7 @@ class GraphAnimation(AnimationCallback):
         return self.lines
 
 
-class ScoreAnimation(GraphAnimation,
-                     callback.ScoreTracker):
+class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
     _legend = (None,)
 
     def setup(self):
@@ -644,7 +645,7 @@ class StateComponentAnimation(
         )  # these slices are there to avoid residual time bug
 
 
-class ObservationComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+class ObservationComponentAnimation(  # TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
     GraphAnimation, callback.ObservationTracker, callback.TimeTracker
 ):
     _legend = (None,)
@@ -674,7 +675,7 @@ class ObservationComponentAnimation( #TO DO: introduce an abstract class Observa
         )  # these slices are there to avoid residual time bug
 
 
-class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+class ActionComponentAnimation(  # TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
     GraphAnimation, callback.ActionTracker, callback.TimeTracker
 ):
     _legend = (None,)
@@ -705,7 +706,7 @@ class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesA
         )  # these slices are there to avoid residual time bug
 
 
-class ObjectiveComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
     GraphAnimation, callback.ObjectiveTracker, callback.TimeTracker
 ):
     _legend = (None,)
@@ -817,7 +818,7 @@ class TriangleAnimation(AnimationCallback, ABC):
     def setup(self):
         self.trajectory_xs = []
         self.trajectory_ys = []
-        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--')
+        (self.trajectory,) = self.ax.plot(self.trajectory_xs, self.trajectory_ys, "--")
         if self._pic is None:
             return self.setup_points()
         else:
@@ -955,7 +956,9 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
 
     def setup(self):
         super().setup()
-        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--', alpha=0.6)
+        (self.trajectory,) = self.ax.plot(
+            self.trajectory_xs, self.trajectory_ys, "--", alpha=0.6
+        )
 
     def on_trigger(self, _):
         self.add_frame(x=0, y=0, theta=self.system_state[0])
@@ -968,9 +971,6 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
     def lim(self, *args, **kwargs):
         self.ax.set_xlim(-1, 1)
         self.ax.set_ylim(-1, 1)
-
-
-
 
 
 class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):

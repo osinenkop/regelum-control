@@ -2,101 +2,128 @@
 %!BIB program = biber
 \documentclass[12pt,twoside]{../../mitthesis}
 \input{../../packages.tex}
+
 \begin{document}
-\section*{Common AIDA notation}
 
-% \hypertarget{label}{target caption}
-% \label{sec:common}
-Hello world
-\begin{table}
-\caption{Table caption}
-\label{table:my-table}
-\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
-\hline
-$\R_{\ge 0}, \Z_{\ge 0}$ & Set of nonnegative reals, resp., integers \\ 
-$\PP{\bullet}$ & Probability measure \\
-$\E[f]{\bullet}$ & Expectation under distribution $f$ \\
-$\nrm{\bullet}$ & Norm (context-dependent) \\
-\hline
-\end{tabularx}
-\end{table}
-Here we go \eqref{eqn_optctrl_problem}. Alrorithm \ref{alg:my-alg}. Figure \ref{fig:my-fig}. %\hyperref[table:my-table]{this table}  % \hyperref[sec:common]{this section}. % \hyperref[eqn_optctrl_problem]{this equation}. \hyperref[sec:notation]{and this section}.
-
-\hyperlink{common-aida-notation}{Hyperlink}
-
-\subsection*{Reinforcement learning and control notation.}
-\label{sec:notation}
-\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
-\hline
-$Q$ & Quality function \\ 
-$r, R$ & Running objective (reward or cost) as definite, resp., random value\\
-\hline
-\end{tabularx}
-
-
-Referencing to \ref{table:my-table} or \ref{table:my-another-table}
-
-\begin{table}
-\caption{Another table}
-\label{table:my-another-table}
-\begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
-\hline
-$\policy$ & Policy, a law that generates actions from observations \\ 
-$\state, \State$ & State, as definite, resp., random value \\ 
-$\action, \Action$ & Action, as definite, resp., random value \\ 
-$\obs, \Obs$ & Observation, as definite, resp., random value \\ 
-$\states$ & State space \\
-$\actions$ & Action space \\
-$\obses$ & Observation space \\
-$\policies$ & Policy space \\
-$\transit$ & State dynamics law (function or probability distribution) \\ 
-$\Value^\policy$ & Total objective (value or cost) of policy $\policy$ \\
-$\Value^*$ & Optimum total objective (value or cost) under the optimal policy $\policy^*$ \\
-$\Advan^{\policy,\policy'}$ & Advantage of policy $\policy$ relative to policy $\policy'$ \\
-$\policy^\theta$ & Actor network with weights $\theta$ \\
-$\hat \Value^w$ & Critic network (state-valued) with weights $w$ \\
-\hline
-\end{tabularx}
-
-\end{table}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section*{Introduction}
 
-Reinforcement learning commonly addresses the following infinite-horizon optimal control and/or decision problem:
-\begin{equation}
-    \label{eqn_optctrl_problem}
-    \begin{aligned}
-    & \, \max_{\policy \in \policies} \; \Value^\policy (\state) = \\
-    & \, \max_{\policy \in \policies} \; \E[\Action_t \sim \policy]{\sum\limits_{t=0}^{\infty} \gamma^t r(\State_t, \Action_t) \vert \State_0=\state},
-    \end{aligned}
-\end{equation}
-where $\State_t \in \states$ at a time $t \in \T := \Z_{\ge0}$ is the environment's state with values in the state-space $\states$, $r$ is the reward (in general, running objective) rate, $\gamma$ is the discount factor, $\policy$ is the agent's policy of some function class $\policies$.
-The running objective may be taken as a random variable $R_t$ whose probability distribution depends on the state and action.
-The agent-environment loop dynamics are commonly modeled via the following Markov chain:
+This document serves as a template for the creation of standalone documents, which are designed to be compiled and seamlessly integrated into the documentation webpage.
+
+Adherence to specific guidelines is essential to ensure that the end product presents well and that all embedded hyperlinks function correctly.
+
+\section*{Structure}
+First, make sure that your TeX file is organized as follows:
+\begin{verbatim}
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+\begin{document}
+YOUR CONTENT GOES HERE
+\end{document}
+\end{verbatim}
+
+\section*{Sections and subsections}
+
+Sections and subsections can be delineated using the following commands: 
+\begin{verbatim}
+\section*{...} \subsection*{...}
+\end{verbatim}
+For example, this section was initiated with:
+\begin{verbatim}
+\section*{Sections and subsections}
+\end{verbatim}
+And the subsequent \hyperlink{links-sections-and-subsections}{subsection} was generated with 
+\begin{verbatim}
+\section*{Links. Sections and subsections}
+\end{verbatim}
+It is important to use the asterisk \texttt{*} with these commands, such as \verb|\section*{...}| or \verb|\subsection*{...}|, to prevent the automatic numbering of sections.
+
+\subsection*{Links. Sections and subsections}
+
+When creating hyperlinks, it is advisable to use the \verb|\hyperlink|  command to ensure optimal functionality on the website. For instance, to create a hyperlink to \hyperlink{links-sections-and-subsections}{current subsection}, one would use:
+\begin{verbatim}
+\hyperlink{links-sections-and-subsections}{current subsection}
+\end{verbatim}
+Similarly, to link to the \hyperlink{sections-and-subsections}{previous subsection}:
+\begin{verbatim}
+\hyperlink{sections-and-subsections}{previous subsection}
+\end{verbatim}
+Although these links will not be functional within a PDF, they will operate correctly on the website. For accurate linking, follow these steps:
+\begin{itemize}
+    \item Identify the name of the section or subsection to which you wish to link, such as
+    \begin{center} \texttt{Links. Sections and subsections} \end{center}
+    \item Strip all punctuation from it to yield \begin{center}\texttt{Links Sections and subsections}\end{center}
+    \item Convert the text to lowercase: \begin{center}\texttt{links sections and subsections}\end{center}
+    \item Replace spaces with hyphens to form the link identifier: \begin{center} \texttt{links-sections-and-subsections}\end{center}
+    \item Insert this identifier into the first argument of the \texttt{\textbackslash hyperlink} command:
+\begin{verbatim}
+\hyperlink{links-sections-and-subsections}{a hyperlinked text}
+\end{verbatim}
+\end{itemize}
+
+\section*{Tables}
+
+You can define your table by utilizing \texttt{table} environment:
+\begin{verbatim}
+\begin{table}[H]
+    \caption{Table caption}
+    \label{table:my-table}
+    \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
+        \hline
+        $Q$ & Quality function \\ 
+        $r$ & Running objective \\
+        \hline
+    \end{tabularx}
+\end{table}
+\end{verbatim}
+\begin{table}[H]
+    \caption{Table caption}
+    \label{table:my-table}
+    \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| } 
+        \hline
+        $Q$ & Quality function \\ 
+        $r$ & Running objective \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection*{Referencing to tables.}
+To reference a specific table, such as Table \ref{table:my-table}, simply use the command 
+\begin{verbatim}
+\ref{table:my-table}
+\end{verbatim}
+
+\section*{Equations}
+You can define your equation by utilizing \texttt{equation} environment. Thus, the code
+\begin{verbatim}
 \begin{equation}
     \label{eqn_sysmarkov}
     \begin{aligned}
-        & \State_{t+1} \sim \transit(\bullet \vert \state_t, \action_t), \spc t \in \T.
+        & \State_{t+1} \sim \transit(\bullet \vert \state_t, \action_t)
     \end{aligned}
 \end{equation}
-For the problem \eqref{eqn_optctrl_problem}, one can state an important recursive property of the objective optimum $\Value^*(\state)$ in the form of the Hamilton-Jacobi-Bellman (HJB) equation as follows:
+\end{verbatim}
+provides us
 \begin{equation}
-    \label{eqn_hjb}
-    \max_{\action \in \actions}{\{ \mathcal D^\action \Value^*(\state) + r(\state, \action) - \gamma \Value^*(\state)\}} = 0, \forall \state \in \states,
+    \label{eqn_sysmarkov}
+    \begin{aligned}
+        & \State_{t+1} \sim \transit(\bullet \vert \state_t, \action_t)
+    \end{aligned}
 \end{equation}
-where $\mathcal D^\action \Value^*(\state) := \E[S_+ \sim \transit(\bullet \vert \state, \action)]{\Value^*((\State_{+}))} - \Value^*(\state)$.
-The common approaches to \eqref{eqn_optctrl_problem} are dynamic programming \cite{Bertsekas2019Reinforcementl,Lewis2009Reinforcementl} and model-predictive control \cite{Garcia1989Modelpredictiv,Borrelli2011PredictiveCont,Darby2012MPCCurrentpra,Mayne2014Modelpredictiv}.
-The latter cuts the infinite horizon to some finite value $T>0$ thus considering effectively a finite-time optimal control problem.
-Dynamic programming aims directly at the HJB \eqref{eqn_hjb} and solves it iteratively over a mesh in the state space $\states$ and thus belongs to the category of tabular methods.
-The most significant problem with such a discretization is the curse of dimensionality, since the number of nodes in the said mesh grows exponentially with the dimension of the state space.
-Evidently, dynamic programming is in general only applicable when the state-space is compact.
-Furthermore, state-space discretization should be fine enough to avoid undesirable effects that may lead to a loss of stability of the agent-environment closed loop.
-Reinforcement learning essentially approximates the optimum objective $\Value^*$ via a (deep) neural network.
 
-Reference to \ref{table:my-another-table}
+The dollar sign symbol \verb|$| is also supported for denoting equations. For instance, writing \verb|$x ^ 2$| will yield the mathematical expression $x ^ 2$.
 
+\subsection*{Referencing to equations}
+To reference to a specific equation, such as \eqref{eqn_sysmarkov}, you can use 
+\begin{verbatim}
+\eqref{eqn_sysmarkov}
+\end{verbatim}
+\textbf{Please note that it is imperative to prefix your label with \texttt{eqn} for equation references!}
 
+\section*{Algorithms}
+You can define your algorithm by utilizing \texttt{algorithm} environment. Thus, the code
+\begin{verbatim}
 \begin{algorithm}
 \caption{My awesome algorithm}
 \label{alg:my-alg}
@@ -104,26 +131,68 @@ Reference to \ref{table:my-another-table}
 \STATE {\bfseries Input:} $\theta_0$
 \FOR {Learning iteration $i := 0 \dots \mathcal I$}
     \STATE Policy weight update
-    \STATE $\theta_{i+1} \la \theta_i - \alpha_i \Es[\trajpdf^{\policy^{\theta_i}}]{ \Cost^\gamma_{0:T} \sum \limits_{t=0}^{T-1} \nabla_\theta \log \policy^{\theta_i} ( \Traj_t ) }$
+    \STATE $\theta_{i+1} \la $ long equation
     \STATE $\alpha_i > 0$, learning rate
 \ENDFOR
-\STATE \RETURN Near-optimal policy $\policy^{\theta_{\mathcal I}}$
+\STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
 \end{algorithmic}
 \end{algorithm}
+\end{verbatim}
+provides us 
+\begin{algorithm}
+    \caption{My awesome algorithm}
+    \label{alg:my-alg}
+    \begin{algorithmic}
+    \STATE {\bfseries Input:} $\theta_0$
+    \FOR {Learning iteration $i := 0 \dots \mathcal I$}
+        \STATE Policy weight update
+        \STATE $\theta_{i+1} \la $ long equation
+        \STATE $\alpha_i > 0$, learning rate
+    \ENDFOR
+    \STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
+    \end{algorithmic}
+\end{algorithm}
+\subsection*{Referencing to algorithms}
+To reference to a specific algorithm, such as \ref{alg:my-alg}, you can use 
+\begin{verbatim}
+\ref{alg:my-alg}
+\end{verbatim}
 
-\begin{figure}
+
+\section*{Figures}
+You can define your figure by utilizing \texttt{figure} environment. Thus, the code
+\begin{verbatim}
+\begin{figure}[H]
     \caption{My awesome figure!!!}
     \label{fig:my-fig}
     \includegraphics{img.pdf}
 \end{figure}
+\end{verbatim}
+provides us
+\begin{figure}[H]
+    \caption{My awesome figure!!!}
+    \label{fig:my-fig}
+    \includegraphics[width=\textwidth]{pic.pdf}
+\end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BIBLIOGRAPHY
+Please ensure that the file \texttt{pic.pdf} is located within the \texttt{docs/tex/gfx} directory, as indicated by the path: \verb|docs/tex/gfx/pic.pdf|
+
+\section*{Referencing to figures}
+To reference to a specific figure, such as \ref{fig:my-fig}, you can use 
+\begin{verbatim}
+\ref{fig:my-fig}
+\end{verbatim}
+
+
+\section*{Citing}
+To reference a particular source within your document, use the command 
+\begin{verbatim}
+\cite{Aastroem2000Modeluncertain}
+\end{verbatim}
+which will appear as \cite{Aastroem2000Modeluncertain}.
+
+Remember to include the command \verb|\printbibliography| at the conclusion of your document; this is crucial for compiling the bibliography section.
+
 \printbibliography
-% These commands are in case of plain bibtex
-%\bibliographystyle{plain}
-%\bibliography{
-%bib/AIDA__Sep2023,
-%bib/Osinenko__Sep2023
-%}
+
 \end{document}
