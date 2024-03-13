@@ -1,16 +1,18 @@
 """Callbacks that create, display and store animation according to dynamic data."""
+
 import subprocess
 from abc import ABC, abstractmethod
 from copy import copy
 from multiprocessing import Process
 from unittest.mock import Mock
+import matplotlib
 
+matplotlib.use("Agg")
 import matplotlib.animation
 import matplotx.styles
 from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec, SubplotSpec
 from matplotlib.transforms import Affine2D
-from shared_memory_dict import SharedMemoryDict
 
 import regelum
 import os
@@ -79,6 +81,7 @@ class AnimationCallback(callback.Callback, ABC):
             self._metadata["argv"].interactive if interactive is None else interactive
         )
         if self.interactive_mode:
+            matplotlib.use("Agg")
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
 
@@ -472,7 +475,9 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
         for i in range(observation_dimension):
 
             def observationComponent(*args, component=i, **kwargs):
-                return ObservationComponentAnimation(*args, component=component, **kwargs)
+                return ObservationComponentAnimation(
+                    *args, component=component, **kwargs
+                )
 
             self._animation_classes.append(observationComponent)
         super().__deferred_init__()
@@ -525,7 +530,6 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
         super().on_launch()
 
 
-
 class PointAnimation(AnimationCallback, ABC):
     """Animation that sets the location of a planar point at each frame."""
 
@@ -576,8 +580,7 @@ class GraphAnimation(AnimationCallback):
         return self.lines
 
 
-class ScoreAnimation(GraphAnimation,
-                     callback.ScoreTracker):
+class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
     _legend = (None,)
 
     def setup(self):
@@ -650,7 +653,7 @@ class StateComponentAnimation(
         )  # these slices are there to avoid residual time bug
 
 
-class ObservationComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+class ObservationComponentAnimation(  # TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
     GraphAnimation, callback.ObservationTracker, callback.TimeTracker
 ):
     _legend = (None,)
@@ -680,7 +683,7 @@ class ObservationComponentAnimation( #TO DO: introduce an abstract class Observa
         )  # these slices are there to avoid residual time bug
 
 
-class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+class ActionComponentAnimation(  # TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
     GraphAnimation, callback.ActionTracker, callback.TimeTracker
 ):
     _legend = (None,)
@@ -710,7 +713,7 @@ class ActionComponentAnimation( #TO DO: introduce an abstract class ObservablesA
         )  # these slices are there to avoid residual time bug
 
 
-class ObjectiveComponentAnimation( #TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
+class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class ObservablesAnimation which will include its own ObservableComponentAnimation.
     GraphAnimation, callback.ObjectiveTracker, callback.TimeTracker
 ):
     _legend = (None,)
@@ -738,9 +741,6 @@ class ObjectiveComponentAnimation( #TO DO: introduce an abstract class Observabl
         self.add_frame(
             line_datas=[(self.t[1:], self.y[1:])]
         )  # these slices are there to avoid residual time bug
-
-
-
 
 
 class PlanarMotionAnimation(PointAnimation, callback.StateTracker):
@@ -836,7 +836,7 @@ class TriangleAnimation(AnimationCallback, ABC):
     def setup(self):
         self.trajectory_xs = []
         self.trajectory_ys = []
-        self.trajectory, = self.ax.plot(self.trajectory_xs, self.trajectory_ys, '--')
+        (self.trajectory,) = self.ax.plot(self.trajectory_xs, self.trajectory_ys, "--")
         if self._pic is None:
             return self.setup_points()
         else:
@@ -941,9 +941,6 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
     def lim(self, *args, **kwargs):
         self.ax.set_xlim(-1, 1)
         self.ax.set_ylim(-1, 1)
-
-
-
 
 
 class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):

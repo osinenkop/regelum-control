@@ -14,6 +14,7 @@ Callbacks can be registered by simply supplying them in the respective keyword a
         ...
 
 """
+
 import logging
 from abc import ABC, abstractmethod
 
@@ -49,6 +50,16 @@ import torch
 
 def is_in_debug_mode():
     return sys.gettrace() is not None
+
+
+def disable_in_jupyter(method):
+    def wrapper(self: Callback, *args, **kwargs):
+        if self.is_jupyter:
+            return lambda *args, **kwargs: None
+        else:
+            return method(self, *args, **kwargs)
+
+    return wrapper
 
 
 def detach(Attachee):
@@ -99,6 +110,12 @@ def trigger(CallbackClass):
     return PassdownCallback
 
 
+def is_interactive():
+    import __main__ as main
+
+    return not hasattr(main, "__file__")
+
+
 class Callback(regelum.__internal.base.RegelumBase, ABC):
     """Base class for callbacks.
 
@@ -106,6 +123,7 @@ class Callback(regelum.__internal.base.RegelumBase, ABC):
     """
 
     cooldown = None
+    is_jupyter = is_interactive()
 
     def __init__(self, log_level="info", attachee=None):
         """Initialize a callback object.
@@ -364,6 +382,7 @@ class ConfigDiagramCallback(Callback):
                 ) from err
         return repo, commit_hash
 
+    @disable_in_jupyter
     def on_launch(self):
         cfg = regelum.main.config
         metadata = regelum.main.metadata
@@ -712,6 +731,7 @@ class ObservationTracker(Callback):
         self.observation = output["observation"][0]
         self.observation_naming = obj.simulator.system.observation_naming
 
+
 @trigger
 class ObjectiveTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
@@ -734,6 +754,7 @@ class ObjectiveTracker(Callback):
         self.objective = np.array([self.value, self.running_objective])
         self.objective_naming = ["Value", "Running objective"]
 
+
 @trigger
 class ScoreTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
@@ -743,7 +764,7 @@ class ScoreTracker(Callback):
 
     def is_target_event(self, obj, method, output, triggers):
         return isinstance(obj, regelum.scenario.Scenario) and (
-                method == "reload_scenario"
+            method == "reload_scenario"
         )
 
     def is_done_collecting(self):
@@ -774,7 +795,6 @@ class ActionTracker(Callback):
         self.action_naming = obj.simulator.system._inputs_naming
 
 
-
 class HistoricalCallback(Callback, ABC):
     """Callback (base) responsible for recording various temporal data."""
 
@@ -799,6 +819,7 @@ class HistoricalCallback(Callback, ABC):
         else:
             self.data.loc[len(self.data)] = datum
 
+    @disable_in_jupyter
     def dump_data(self, identifier):
         if not self.data.empty:
             self.data.to_hdf(
@@ -827,6 +848,7 @@ class HistoricalCallback(Callback, ABC):
         if not self.data.empty:
             self.data.insert(0, column_name, values)
 
+    @disable_in_jupyter
     def dump_and_clear_data(self, identifier):
         self.dump_data(identifier)
         self.clear_recent_data()
@@ -902,13 +924,17 @@ class CalfCallback(HistoricalCallback):
         self.add_datum(
             {
                 "time": obj.data_buffer.get_latest("time"),
-                "J_hat": current_CALF[0]
-                if isinstance(current_CALF, (np.ndarray, torch.Tensor))
-                else current_CALF.full()[0],
+                "J_hat": (
+                    current_CALF[0]
+                    if isinstance(current_CALF, (np.ndarray, torch.Tensor))
+                    else current_CALF.full()[0]
+                ),
                 "is_CALF": is_calf,
-                "delta": delta_CALF[0]
-                if isinstance(delta_CALF, (np.ndarray, torch.Tensor))
-                else delta_CALF.full()[0],
+                "delta": (
+                    delta_CALF[0]
+                    if isinstance(delta_CALF, (np.ndarray, torch.Tensor))
+                    else delta_CALF.full()[0]
+                ),
             }
         )
 
@@ -1093,6 +1119,7 @@ class SaveProgressCallback(Callback):
     def on_function_call(self, obj, method, output):
         pass
 
+    @disable_in_jupyter
     def on_episode_done(
         self,
         scenario,
@@ -1214,6 +1241,7 @@ class HistoricalDataCallback(HistoricalCallback):
                 axis=1,
             )
 
+    @disable_in_jupyter
     def on_episode_done(
         self,
         scenario,
@@ -1348,6 +1376,7 @@ class ValueCallback(HistoricalCallback):
     def is_target_event(self, obj, method, output, triggers):
         return False
 
+    @disable_in_jupyter
     def on_episode_done(
         self,
         scenario,

@@ -17,7 +17,14 @@ import traceback
 import types
 import warnings
 
+import matplotlib
+
+matplotlib.use("Agg")
+
 import random
+from click import Option
+from fsspec import Callback
+from matplotlib import interactive
 import omegaconf
 import rich
 
@@ -498,18 +505,20 @@ class ComplementedConfigDict(ComplementedConfig):
         return [
             (
                 key.replace("__IGNORE__", ""),
-                value
-                if not isinstance(value, DictConfig)
-                and not isinstance(value, ListConfig)
-                else (
-                    ComplementedConfigDict
-                    if isinstance(value, DictConfig)
-                    else ComplementedConfigList
-                )(
-                    value,
-                    config_path=key
-                    if not self.config_path
-                    else f"{self.config_path}.{key}",
+                (
+                    value
+                    if not isinstance(value, DictConfig)
+                    and not isinstance(value, ListConfig)
+                    else (
+                        ComplementedConfigDict
+                        if isinstance(value, DictConfig)
+                        else ComplementedConfigList
+                    )(
+                        value,
+                        config_path=(
+                            key if not self.config_path else f"{self.config_path}.{key}"
+                        ),
+                    )
                 ),
             )
             for key, value in self._rehydra_config.items()
@@ -527,9 +536,9 @@ class ComplementedConfigDict(ComplementedConfig):
                     else ComplementedConfigList
                 )(
                     value,
-                    config_path=key
-                    if not self.config_path
-                    else f"{self.config_path}.{key}",
+                    config_path=(
+                        key if not self.config_path else f"{self.config_path}.{key}"
+                    ),
                 )
             )
             for key, value in self._rehydra_config.items()
@@ -1005,9 +1014,30 @@ array = utils.rg.array
 rg = utils.rg
 
 
-# class _FancyModule(types.ModuleType):
-#     def __call__(self, *args, **kwargs):
-#         return main(*args, **kwargs)
+def set_jupyter_env(
+    callbacks: Optional[List[Callback]] = None, interactive: bool = False
+):
+    logger = logging.getLogger("regelum")
+    logger.setLevel(logging.INFO)
+    from dataclasses import dataclass
 
+    @dataclass
+    class CallbackContainer:
+        callbacks: list
 
-# sys.modules[__name__].__class__ = _FancyModule
+    @dataclass
+    class ArgvContainer:
+        interactive: list
+
+    RegelumBase._metadata = {
+        "logger": logger,
+        "argv": ArgvContainer(interactive),
+    }
+    callbacks = [callback() for callback in callbacks]
+    RegelumBase._metadata = {
+        "logger": logger,
+        "main": CallbackContainer(callbacks),
+        "argv": ArgvContainer(interactive),
+    }
+    regelum.main.is_clear_matplotlib_cache_in_callbacks = True
+    return callbacks

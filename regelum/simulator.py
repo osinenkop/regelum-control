@@ -211,11 +211,12 @@ class CasADi(Simulator):
             """Advance the solver by one step."""
             if self.time >= self.time_final:
                 raise RuntimeError("An attempt to step with a finished solver")
-            state_new = np.squeeze(
-                self.integrator(x0=self.simulator.state, p=self.system.inputs)[
-                    "xf"
-                ].full()
+            state_new = (
+                self.integrator(x0=self.simulator.state, p=self.system.inputs)["xf"]
+                .full()
+                .T
             )
+
             self.time += self.step_size
             self.state = state_new
 
@@ -258,7 +259,7 @@ class CasADi(Simulator):
 
         # options = {"tf": max_step, "atol": self.atol, "rtol": self.rtol}
         options = {"tf": max_step}
-        integrator = casadi.integrator("intg", "rk", DAE, options)
+        integrator = casadi.integrator("intg", "rk", DAE, 0, max_step)
 
         # integrator = casadi.integrator("intg", "rk", DAE, 0, max_step)
 

@@ -26,6 +26,6 @@ class Event(Enum):
     """
 
     reset_iteration = auto()
-    reset_episode = auto
+    reset_episode = auto()
     compute_action = auto()
     reset_simulation = auto()
