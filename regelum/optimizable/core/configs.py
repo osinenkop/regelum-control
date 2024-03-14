@@ -1,4 +1,5 @@
 """Contains blueprint of config for all optimizable objects."""
+
 from typing import Optional, Any, Type, Dict
 import torch
 import casadi
@@ -122,3 +123,15 @@ class CasadiOptimizerConfig(OptimizerConfig):
                 },
             },
         )
+
+
+class ScipyOptimizerConfig(OptimizerConfig):
+    def __init__(
+        self,
+        kind: str = "numeric",
+        opt_method: Any | None = "SLSQP",
+        opt_options: Dict | None = None,
+        log_options: Dict | None = None,
+        config_options: Dict | None = None,
+    ) -> None:
+        super().__init__(kind, opt_method, opt_options, config_options)
