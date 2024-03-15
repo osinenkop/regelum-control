@@ -17,59 +17,59 @@
    <a id="x5-4003"></a>
 </figure><div class="algorithmic">
 <a id="x5-4004r1"></a>
-<span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;"> 
-      </span><span class="cmbx-12">Input:</span>
-      \(\theta _1\)
-      (initial
-      policy
-      weights)
-      <a id="x5-4005r2"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">for</span> learning iteration \(i := 1 \dots \mathcal I\) <span class="cmbx-12">do</span><span class="for-body">
+<span class="ALCitem">1:</span><span class="ALIndent" style="width:5.87494pt;"> 
+       </span><span class="cmbx-12">Input:</span>
+       \(\theta _1\)
+       (initial
+       policy
+       weights)
+       <a id="x5-4005r2"></a>
+<br/><span class="ALCitem">2:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">for</span> learning iteration \(i := 1 \dots \mathcal I\) <span class="cmbx-12">do</span><span class="for-body">
 <a id="x5-4006r3"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">for</span> episode \(j := 1 \dots M\) <span class="cmbx-12">do</span><span class="for-body">
+<br/><span class="ALCitem">3:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">for</span> episode \(j := 1 \dots M\) <span class="cmbx-12">do</span><span class="for-body">
 <a id="x5-4007r4"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:29.3747pt;"> </span>
-          obtain
-          initial
-          state
-          \(\State _0^{j}\)
-          <a id="x5-4008r5"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:29.3747pt;">       </span><span class="cmbx-12">for</span> step \(t := 0 \dots T - 1\) <span class="cmbx-12">do</span><span class="for-body">
-<a id="x5-4009r6"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:41.12457pt;"> </span>
-            derive
-            action
-            \(\Action _t^j = \policy ^{\theta }( \State _t^{j})\)
-            <a id="x5-4010r7"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:41.12457pt;"> </span>
-            (optional)
-            add
-            exploration
-            noise
-            \(\Action _t^j:= \Action _t^j + \varepsilon \),
-            where
-            \(\varepsilon \sim \mathcal {N}(0, \sigma ^2)\)
-            <a id="x5-4011r8"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:41.12457pt;"> </span>
+<br/><span class="ALCitem">4:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
             obtain
+            initial
             state
-            from
-            transition
-            function
-            \(\State _{t+1}^j \sim \transit (\bullet \mid \State _t^j, \Action _t^j)\)
-          </span><a id="x5-4012r9"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:29.3747pt;">       </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span>
+            \(\State _0^{j}\)
+            <a id="x5-4008r5"></a>
+<br/><span class="ALCitem">5:</span><span class="ALIndent" style="width:29.3747pt;">       </span><span class="cmbx-12">for</span> step \(t := 0 \dots T - 1\) <span class="cmbx-12">do</span><span class="for-body">
+<a id="x5-4009r6"></a>
+<br/><span class="ALCitem">6:</span><span class="ALIndent" style="width:41.12457pt;"> </span>
+              derive
+              action
+              \(\Action _t^j = \policy ^{\theta }( \State _t^{j})\)
+              <a id="x5-4010r7"></a>
+<br/><span class="ALCitem">7:</span><span class="ALIndent" style="width:41.12457pt;"> </span>
+              (optional)
+              add
+              exploration
+              noise
+              \(\Action _t^j:= \Action _t^j + \varepsilon \),
+              where
+              \(\varepsilon \sim \mathcal {N}(0, \sigma ^2)\)
+              <a id="x5-4011r8"></a>
+<br/><span class="ALCitem">8:</span><span class="ALIndent" style="width:41.12457pt;"> </span>
+              obtain
+              state
+              from
+              transition
+              function
+              \(\State _{t+1}^j \sim \transit (\bullet \mid \State _t^j, \Action _t^j)\)
+            </span><a id="x5-4012r9"></a>
+<br/><span class="ALCitem">9:</span><span class="ALIndent" style="width:29.3747pt;">       </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span>
 </span><a id="x5-4013r10"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span><a id="x5-4014r11"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>   Optimize critic \(\hat Q^{w}\) using gradient descent to minimize the temporal difference loss \eqref{eqn_td_loss}
-        <a id="x5-4015r12"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:17.62482pt;"> </span>   Perform a policy gradient step:
-                                               \[ \theta _{i+1} \la \theta _i - \frac {1}{M} \sum _{j = 1}^M \sum _{t=0}^{T-1} \gamma ^ t \nabla _{\theta }\policy ^{\theta }(\State _t^j)\nabla _{\action } \hat Q^{w}(\State _t, \action )\big \rvert _{\action = \Action _t^j}. \]
-      </span><a id="x5-4016r13"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span><a id="x5-4017r14"></a>
+<br/><span class="ALCitem">10:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span><a id="x5-4014r11"></a>
+<br/><span class="ALCitem">11:</span><span class="ALIndent" style="width:17.62482pt;"> </span>   Optimize critic \(\hat Q^{w}\) using gradient descent to minimize the temporal difference loss \eqref{eqn_td_loss}
+         <a id="x5-4015r12"></a>
+<br/><span class="ALCitem">12:</span><span class="ALIndent" style="width:17.62482pt;"> </span>   Perform a policy gradient step:
+                                                \[ \theta _{i+1} \la \theta _i - \frac {1}{M} \sum _{j = 1}^M \sum _{t=0}^{T-1} \gamma ^ t \nabla _{\theta }\policy ^{\theta }(\State _t^j)\nabla _{\action } \hat Q^{w}(\State _t, \action )\big \rvert _{\action = \Action _t^j}. \]
+       </span><a id="x5-4016r13"></a>
+<br/><span class="ALCitem">13:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span><a id="x5-4017r14"></a>
 <a id="x5-4018r15"></a>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;"> </span>
-<br/><span class="ALCitem"></span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">return </span> Optimal policy \(\policy ^{\theta _{\mathcal I}}\)
+<br/><span class="ALCitem">14:</span><span class="ALIndent" style="width:5.87494pt;"> </span>
+<br/><span class="ALCitem">15:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">return </span> Optimal policy \(\policy ^{\theta _{\mathcal I}}\)
    </div>
 <!-- l. 104 -->
 <!-- l. 104 --><p class="indent"> <a id="tailddpgli4.html"></a> </p>

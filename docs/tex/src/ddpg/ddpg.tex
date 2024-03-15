@@ -43,7 +43,7 @@ The notations used throughout this document are defined as follows:
 \end{enumerate}
 
 \section*{Description}
-The underlying theory of the VPG algorithm is captured by the relationship between the gradient of the expected total cost and the policy parameters $\theta$. 
+The underlying theory of the DDPG algorithm is captured by the relationship between the gradient of the expected total cost and the policy parameters $\theta$. 
 This relationship is formally stated by the policy gradient theorem, which is mathematically represented as
 \begin{equation}
     \label{eqn_ddpg_grad}
@@ -79,7 +79,7 @@ We come up with the final version of DDPG algorithm in the subsequent section.
 \begin{algorithm}
     \caption{Deep Deterministic Policy Gradient (DDPG)}
     \label{alg:my-alg}
-    \begin{algorithmic}
+    \begin{algorithmic}[1]
     \STATE {\bfseries Input:} $\theta_1$ (initial policy weights)
     \FOR {learning iteration $i := 1 \dots \mathcal I$}
         \FOR {episode $j := 1 \dots M$}

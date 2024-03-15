@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 <meta id="description" link="x4-3000" md-heading="Description" name="md-heading" type="h3"/></head><body>
 <!-- l. 45 -->
-<!-- l. 46 --><p class="noindent">The underlying theory of the VPG algorithm is captured by the relationship between the
+<!-- l. 46 --><p class="noindent">The underlying theory of the DDPG algorithm is captured by the relationship between the
 gradient of the expected total cost and the policy parameters \(\theta \). This relationship is formally
 stated by the policy gradient theorem, which is mathematically represented as
 \begin {equation}  \label {eqn_ddpg_grad} \nabla _{\theta } \E [\transit , \policy ^{\theta }]{\sum _{t = 0}^{\infty } \gamma ^ t \Cost (\State _{t}, \Action _{t})} = \E [\transit , \policy ^{\theta }]{\sum _{t=0}^{\infty }\gamma ^t\nabla _{\theta }\policy ^{\theta }(\State _t)\nabla _{\action } Q^{\policy ^{\theta }}(\State _t, \action )\big \rvert _{\action = \Action _t}}  \end {equation}<a id="x4-3001r2"></a>
