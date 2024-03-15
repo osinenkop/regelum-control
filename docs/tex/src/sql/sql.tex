@@ -1,0 +1,80 @@
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+
+\begin{document}
+\section*{Problem statement}
+Consider the following optimal control problem:
+\begin{equation}
+    \label{eqn_ddpg_problem}
+    \sum_{t = 0}^{T-1} \gamma ^ t \cost(\state_{t}, \action_{t}) \ra \min_{\policy},
+\end{equation}
+where:
+\begin{enumerate}
+    \item $\gamma \in (0, 1]$  represents the \textit{discount factor} of the algorithm, which serves as a hyperparameter.
+    \item It is assumed that all states $s_t$ are elements of a predefined set of possible states $\states$, and all actions $a_t$ are elements of a set of possible actions $\actions$
+    \item The function $c(\state, \action)$ represents the cost associated with the current state $\state$ and action $\action$:
+    $$
+        \cost : \states \times \actions \to \R,
+    $$
+    \item  The policy $\policy$ is a strategy for selecting the appropriate action based on the current state. Specifically, it is a mapping $\policy: \states \rightarrow \actions$, and
+    $$
+        \action_{t} = \policy(\state_{t}), \text{ for all } t \in \{1, \ldots, T-1\}
+    $$
+    \item The state at each time step $t \in \{1, ..., T-1\}$ evolves according to a transition function $\transit: \states \times \actions \to \states$:
+    $$
+        \state_{t} = \transit(\state_{t-1}, \action_{t-1}),
+    $$ 
+    with the initial state $\state_0 \in \states$ given.
+    
+\end{enumerate}
+
+\section*{Stacked Q-Learning algorithm}
+\begin{algorithm}
+    \caption{Stacked Q-Learning (SQL)}
+    \label{alg:my-alg}
+    \begin{algorithmic}[1]
+    \STATE {\bfseries Input:} 
+    \begin{equation*}
+        \small
+        \begin{aligned}
+            \hat{Q}^w : \states \times \actions \to \R &- \text{critic model parameterized by weights $w$} \\
+            w_0^1 & - \text{initial critic weights} \\
+            N \in \N_{>0} & - \text{window for TD(N) critic loss \eqref{eqn_critic_update}} \\
+            \alpha \in \R_{>0}& - \text{learning rate for the critic update \eqref{eqn_critic_update}} \\
+            B \in \N & - \text{batch size for the critic update \eqref{eqn_critic_update}} \\
+            H \in \Z_{\geq 0} & - \text{prediction horizon} \\
+            \varepsilon \in [0, 1] & - \text{exploration parameter, typically set to 0.01 or 0.05} \\
+            \mathcal I \in \N & - \text{number of learning iterations}
+        \end{aligned}
+    \end{equation*}
+    \FOR {Learning iteration $i := 1 \dots \mathcal I$}
+        \STATE Obtain initial state $\state_0$
+        \FOR {Time step $t := 0 \dots T - 1$}
+            \STATE Determine $\action_t$ from the solution of the optimization problem:
+            $$
+                \begin{aligned}
+                &\sum_{t'=t}^{t+H} \hat Q^{w_t^i}(\hat\state_{t'}, \action_{t'}) \ra \min_{\action_t, \dots, \action_{t+H}} \\
+                &\text{ where } \hat{\state}_t = \state_t \text{ and } \hat{\state}_{t' + 1} = \transit(\hat{\state}_{t'}, \action_{t'}) \text{ for } t' \in \{t, \ldots, t+H-1\}
+            \end{aligned}
+            $$
+            \STATE (Optional) Exploration: With probability $\varepsilon$, redefine $\action_t$ with a random action:
+            $$
+                \action_t := \operatorname{Uniform}(\actions) 
+            $$
+            \STATE Update the Critic with one gradient step:
+            \begin{equation}
+                \label{eqn_critic_update}
+                \begin{aligned}
+                &w_{t+1}^i \gets w^i_{t} - \alpha \nabla_w\loss_{\crit}(w)\bigg\rvert_{w = w^i_{t}}, \\
+                &\text{ where } \loss_{\crit}(w) \text{ is the temporal difference TD(N) loss}: \\
+                &\scriptstyle {\loss_{\crit}(w) = \sum\limits_{t'=t-B-N+1}^{t - N}\left(\hat Q^w(\state_{t'}, \action_{t'}) - \sum\limits_{\tau=t'}^{t + N - 1} \gamma^{\tau-t'}\cost(\state_{\tau}, \action_{\tau}) - \gamma^{N}\hat Q^w(\state_{t' + N}, \action_{t' + N})\right)^2}
+                \end{aligned}
+            \end{equation}
+            \STATE Obtain next state from transition function $\state_{t+1} = \transit(\state_t, \action_t)$
+        \ENDFOR
+    \ENDFOR
+    \end{algorithmic}
+\end{algorithm}
+
+
+\end{document}
