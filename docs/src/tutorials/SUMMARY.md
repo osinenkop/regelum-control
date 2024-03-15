@@ -4,7 +4,7 @@
 * [Run your system in simulator](simulator.md)
 * [Run the scenario with a custom policy](../notebooks/policy.md)
 * [Model Predictive Control](../notebooks/mpc.md)
-* [Model Predictive Control with constraint parser](contraint_parser.md)
+* [Optimizable](../notebooks/optimizable.md)
 * [REINFORCE](reinforce.md)
 * [Critic for ACPG](acpg.md)
 * [Configuring your experiment](config.md)
