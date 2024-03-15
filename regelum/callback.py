@@ -1080,7 +1080,7 @@ def method_callback(method_name, class_name=None, log_level="debug"):
 
 
 class ScenarioStepLogger(Callback):
-    """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
+    """A callback which allows to log every step of simulation in a scenario."""
 
     cooldown = 1.0
 
@@ -1153,7 +1153,7 @@ class HistoricalDataCallback(HistoricalCallback):
     """A callback which allows to store desired data collected among different runs inside multirun execution runtime."""
 
     def __init__(self, *args, **kwargs):
-        """Initialize an instance of HistoricalDataSaverCallback."""
+        """Initialize an instance of HistoricalDataCallback."""
         super().__init__(*args, **kwargs)
         self.cooldown = 0.0
 

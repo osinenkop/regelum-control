@@ -5,6 +5,7 @@ These can be used in system dynamics fitting, critic and other tasks.
 Updates to come.
 
 """
+
 from copy import deepcopy
 from scipy.stats import truncnorm
 import regelum
@@ -359,7 +360,7 @@ class ModelQuadLin(Model):
 
 
 class ModelWeightContainer(Model):
-    """Trivial model, which is typically used in actor in which actions are being optimized directly."""
+    """Trivial model, which is typically used in policy in which actions are being optimized directly."""
 
     def __init__(self, dim_output: int, weights_init: Optional[np.array] = None):
         """Initialize an instance of a model returns weights on call independent of input.
