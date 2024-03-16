@@ -1014,7 +1014,7 @@ array = utils.rg.array
 rg = utils.rg
 
 
-def set_jupyter_env(
+def set_ipython_env(
     callbacks: Optional[List[Callback]] = None, interactive: bool = False
 ):
     logger = logging.getLogger("regelum")

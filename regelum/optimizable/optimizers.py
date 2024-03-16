@@ -2,6 +2,7 @@
 
 `Optimizable` class is to be used normally as a parent class for all objects that need to be optimized.
 """
+
 import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from enum import Enum, auto
@@ -69,9 +70,11 @@ class source_metadata_hook:
 
     def __call__(self, whatever):
         kwargs = {
-            kwarg: var(with_metadata=True)
-            if isinstance(var, OptimizationVariable)
-            else var
+            kwarg: (
+                var(with_metadata=True)
+                if isinstance(var, OptimizationVariable)
+                else var
+            )
             for kwarg, var in self.source_kwargs.items()
         }
         if self.source is None:
@@ -275,6 +278,7 @@ class Optimizable(regelum.RegelumBase):
             metadata_dict (dict): Dictionary mapping variable names to
                 their corresponding metadata.
         """
+        self.optimizer = None
         self.__variables.fix(variables_to_fix, hook=Hook(detach, act_on="data"))
 
     def __fix_variables_symbolic(self, variables_to_fix, data_dict, metadata_dict):
@@ -337,6 +341,7 @@ class Optimizable(regelum.RegelumBase):
             variables_to_unfix (List[str]): List of variable names to be
                 unfixed.
         """
+        self.optimizer = None
         self.__variables.unfix(
             variables_to_unfix, hook=Hook(requires_grad, act_on="data")
         )
@@ -490,8 +495,8 @@ class Optimizable(regelum.RegelumBase):
         if self.kind == "tensor" or self.kind == "numeric":
             if like is not None:
                 new_variable = new_variable.with_data(like).with_metadata(like)
-
         self.__variables = self.__variables + new_variable
+
         return new_variable
 
     def __infer_and_register_symbolic_prototype(
