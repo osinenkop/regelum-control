@@ -59,9 +59,18 @@ $$
 
 Where:
 
-- $\left(\begin{array}{c}x \\ y\end{array}\right)$ is the position of the kinematic point.
-
-- $\left(\begin{array}{c}v_x \\ v_y \end{array}\right)$ is the control action.
+- $\left(
+    \begin{array}{c}
+        x \\
+        y
+    \end{array}
+    \right)$ is the position of the kinematic point.
+- $\left(
+    \begin{array}{c}
+        v_x \\
+        v_y
+    \end{array}
+    \right)$ is the control action.
 
 Our goal is to design an MPC controller that will bring the point from any initial position to the origin (the point $x=0$) and keep it there.
 
@@ -108,8 +117,6 @@ By inheriting from `Optimizable`, a class explicitly indicates that it:
 - Can integrate seamlessly with the optimization tools and algorithms offered by Regelum, allowing for methods like `.optimize(...)` to be called to adjust its parameters towards a defined objective.
 
 In the MPC setting, a policy or controller would inherit from `Optimizable` to allow for the ongoing adjustment of control actions to minimize the defined cost function while respecting system constraints.
-
-
 
 In Regelum, the components necessary for setting up this optimization problem—such as the definition of the cost function, system dynamics, predictive model, and constraints—need to be implemented leveraging the framework's structures like `Model` and `Optimizable`. Once defined, Regelum will handle the repeated optimization efficiently, integrating with compatible optimization libraries.
 
