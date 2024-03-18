@@ -1,3 +1,12 @@
+
+!!! tip annotate "Run This Tutorial in Google Colab"
+
+    This document is automatically generated from a Jupyter notebook. You have the option to open it in Google Colab to interactively run and explore the code in each cell.
+
+
+    <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/release-dev/docs/notebooks/collabs/optimizable.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+    </a>
 ```python
 from regelum.utils import rg
 from regelum.optimizable import Optimizable

@@ -1,3 +1,12 @@
+
+!!! tip annotate "Run This Tutorial in Google Colab"
+
+    This document is automatically generated from a Jupyter notebook. You have the option to open it in Google Colab to interactively run and explore the code in each cell.
+
+
+    <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/release-dev/docs/notebooks/collabs/mpc.ipynb">
+    <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+    </a>
 ```python
 from regelum.policy import Policy
 from regelum.system import KinematicPoint
@@ -35,7 +44,7 @@ Model Predictive Control (MPC) is a type of control algorithm that uses an optim
 In this tutorial, we will learn how to implement an MPC algorithm to stabilize a kinematic point to the origin using the Regelum framework. We will focus on a simple dynamic system where a point mass moves along a line, and the control input directly influences its velocity. The system is governed by the equation:
 
 $$
-d \left(
+\mathrm{d} \left(
     \begin{array}{c}
         x \\
         y
@@ -45,23 +54,14 @@ d \left(
         v_x \\
         v_y
     \end{array}
-    \right)  dt
+    \right)  \mathrm{d}t
 $$
 
 Where:
 
-- $\left(
-    \begin{array}{c}
-        x \\
-        y
-    \end{array}
-    \right)$ is the position of the kinematic point.
-- $\left(
-    \begin{array}{c}
-        v_x \\
-        v_y
-    \end{array}
-    \right)$ is the control action.
+- $\left(\begin{array}{c}x \\ y\end{array}\right)$ is the position of the kinematic point.
+
+- $\left(\begin{array}{c}v_x \\ v_y \end{array}\right)$ is the control action.
 
 Our goal is to design an MPC controller that will bring the point from any initial position to the origin (the point $x=0$) and keep it there.
 
@@ -108,6 +108,8 @@ By inheriting from `Optimizable`, a class explicitly indicates that it:
 - Can integrate seamlessly with the optimization tools and algorithms offered by Regelum, allowing for methods like `.optimize(...)` to be called to adjust its parameters towards a defined objective.
 
 In the MPC setting, a policy or controller would inherit from `Optimizable` to allow for the ongoing adjustment of control actions to minimize the defined cost function while respecting system constraints.
+
+
 
 In Regelum, the components necessary for setting up this optimization problem—such as the definition of the cost function, system dynamics, predictive model, and constraints—need to be implemented leveraging the framework's structures like `Model` and `Optimizable`. Once defined, Regelum will handle the repeated optimization efficiently, integrating with compatible optimization libraries.
 
