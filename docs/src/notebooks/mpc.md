@@ -9,7 +9,7 @@ from regelum.callback import (
 )
 from regelum.model import ModelWeightContainer
 from regelum.optimizable.core.configs import CasadiOptimizerConfig
-from regelum import set_jupyter_env
+from regelum import set_ipython_env
 from numpy import ndarray
 from regelum.model import Model, ModelNN, ModelQuadLin
 from regelum.optimizable.core.configs import OptimizerConfig
@@ -25,7 +25,7 @@ from regelum.data_buffers import DataBuffer
 ```python
 callbacks = [ScenarioStepLogger, HistoricalDataCallback]
 ScenarioStepLogger.cooldown = 0.1
-callbacks = set_jupyter_env(callbacks=callbacks, interactive=True)
+callbacks = set_ipython_env(callbacks=callbacks, interactive=True)
 ```
 
 ## Introduction to Model Predictive Control with Regelum
