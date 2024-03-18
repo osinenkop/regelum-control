@@ -5,7 +5,7 @@
 * [Run the scenario with a custom policy](../notebooks/policy.md)
 * [Model Predictive Control](../notebooks/mpc.md)
 * [Optimizable](../notebooks/optimizable.md)
-* [REINFORCE](reinforce.md)
+* [Policy gradient](../notebooks/policy_gradient.md)
 * [Critic for ACPG](acpg.md)
 * [Configuring your experiment](config.md)
 * [MLflow](mlflow.md)
