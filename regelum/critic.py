@@ -56,7 +56,7 @@ class Critic(Optimizable, ABC):
         """Initialize a critic object.
 
         Args:
-            system (Union[System, ComposedSystem]): system environmen
+            system (Union[System, ComposedSystem]): system environment
                 that is used in RL problem. The system is mainly used
                 for extraction of `dim_observation` and `dim_action`
             model (Union[Model, ModelNN]): Model to use for the critic
