@@ -1395,38 +1395,42 @@ class ValueCallback(HistoricalCallback):
         self.log(
             f"Final value of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
-        self.dump_data(
-            f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
-        )
-        mlflow.log_metric(
-            f"C. values in iteration {str(iteration_number).zfill(5)}",
-            scenario.recent_value,
-            step=len(self.values),
-        )
+        if not self.is_jupyter:
+            self.dump_data(
+                f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
+            )
+            mlflow.log_metric(
+                f"C. values in iteration {str(iteration_number).zfill(5)}",
+                scenario.recent_value,
+                step=len(self.values),
+            )
 
-        self.save_plot(
-            f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
-        )
+            self.save_plot(
+                f"Total_Objectives_in_iteration_{str(iteration_number).zfill(5)}"
+            )
 
         if episode_number == episodes_total:
-            mlflow.log_metric(
-                "A. Avg value",
-                np.mean(self.values),
-                step=iteration_number,
-            )
-            self.mean_iteration_values.append(np.mean(self.values))
-            self.values = []
+            if not self.is_jupyter:
+                mlflow.log_metric(
+                    "A. Avg value",
+                    np.mean(self.values),
+                    step=iteration_number,
+                )
+                self.mean_iteration_values.append(np.mean(self.values))
+                self.values = []
 
-            mlflow.log_metric(
-                "A. Cum max value",
-                np.max(self.mean_iteration_values),
-                step=iteration_number,
-            )
-            mlflow.log_metric(
-                "A. Cum min value",
-                np.min(self.mean_iteration_values),
-                step=iteration_number,
-            )
+                mlflow.log_metric(
+                    "A. Cum max value",
+                    np.max(self.mean_iteration_values),
+                    step=iteration_number,
+                )
+                mlflow.log_metric(
+                    "A. Cum min value",
+                    np.min(self.mean_iteration_values),
+                    step=iteration_number,
+                )
+            else:
+                self.log(f"Avg value: {np.mean(self.values)}")
 
             self.clear_recent_data()
 
