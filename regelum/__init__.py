@@ -57,6 +57,7 @@ import json
 
 import tempfile
 
+from pathlib import Path
 
 import numpy
 
@@ -766,6 +767,8 @@ class main:
 
         self.parser.add_argument("--cooldown-factor", default=1.0)
 
+        self.parser.add_argument("--save-animation", action="store_true")
+
         def single_thread(flag):
             if not flag:
                 sys.argv.append("rehydra/launcher=joblib")
@@ -998,10 +1001,13 @@ class main:
                     if argv.sweep:
                         return res
                     else:
-                        if argv.show_plots:
-                            for filename in glob.iglob('.callbacks/**/*.html'):
-                                start(filename)
                         if argv.playback:
+                            filenames = glob.glob('.callbacks/**/*.html')
+                            n_animations = len(set([Path(filename).parent for filename in filenames]))
+                            latest_files = sorted(filenames, key=os.path.getctime)
+                            for filename in latest_files[-n_animations:]:
+                                start(filename)
+                        if argv.show_plots:
                             start("SUMMARY.html")
                         return {
                             "result": res,

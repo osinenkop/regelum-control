@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="594.97186pt"
+   height="519.19214pt"
+   viewBox="0 0 594.97186 519.19214"
+   version="1.1"
+   id="svg1486"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <metadata
+     id="metadata18">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:date>2023-05-05T18:57:52.586454</dc:date>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Matplotlib v3.6.2, https://matplotlib.org/</dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs22">
+    <rect
+       x="452.23352"
+       y="209.21246"
+       width="40.044361"
+       height="22.045155"
+       id="rect7136" />
+    <style
+       type="text/css"
+       id="style20">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+  </defs>
+  <g
+     id="axes_1"
+     transform="matrix(28.96876,0,0,31.806014,-5368.1948,-619.402)">
+    <g
+       id="g2727">
+      <g
+         id="PathCollection_1"
+         transform="matrix(0.77321266,-0.71471257,0.78021365,0.70020048,-136.27807,184.1027)"
+         style="stroke-width:1.00001;stroke-dasharray:none">
+        <defs
+           id="defs31" />
+      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       transform="matrix(0.75,0,0,0.75,-72.821722,-18.610708)"
+       id="text7134"
+       style="white-space:pre;shape-inside:url(#rect7136);display:inline;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:0.6;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <g
+       transform="matrix(1.1423894,0,0,1.0404826,91.196321,-115.98867)"
+       id="g4">
+      <path
+         transform="translate(17.479,13.875)"
+         d="m 72.926,116.4 v 3.6654 l -4.8002,8.3137 -3.1393,1.8128 0.99994,1.7317 3.1652,-1.849 h 9.4837 l 3.1652,1.849 0.99942,-1.7317 -3.1388,-1.8128 -4.7679,-8.3137 0.0323,-3.6654 z"
+         stroke="#ff0000"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         stroke-width="0.165"
+         id="path2" />
+    </g>
+  </g>
+  <defs
+     id="defs1484" />
+</svg>

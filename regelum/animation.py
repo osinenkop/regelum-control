@@ -1,6 +1,8 @@
 """Callbacks that create, display and store animation according to dynamic data."""
 import subprocess
+import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from copy import copy
 from multiprocessing import Process
 from unittest.mock import Mock
@@ -88,6 +90,7 @@ class AnimationCallback(callback.Callback, ABC):
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
 
+
             self.ax = canvas.figure.add_subplot(111)
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
             self.setup()
@@ -131,6 +134,8 @@ class AnimationCallback(callback.Callback, ABC):
             self.construct_frame(**frame_datum)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
+            while self.fig.paused:
+                self.fig.canvas.flush_events()
 
     def __getstate__(self):
         state = copy(self.__dict__)
@@ -206,6 +211,8 @@ class AnimationCallback(callback.Callback, ABC):
         os.mkdir(self.get_save_directory())
 
     def animate_and_save(self, frames=None, name=None):
+        if not self._metadata['argv'].playback and not self._metadata['argv'].save_animation:
+            return
         if name is None:
             name = str(self.saved_counter)
             self.saved_counter += 1
@@ -266,6 +273,17 @@ class AnimationCallback(callback.Callback, ABC):
         self.reset()
 
 
+class PausableFigure(Figure):
+    def __init__(self, *args, log=print, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.paused = False
+        def on_press(event):
+            if event.key == ' ':
+                self.paused = not self.paused
+            log("Paused." if self.paused else "Resumed.")
+        self.canvas.mpl_connect('key_press_event', on_press)
+
+
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
 
@@ -281,8 +299,10 @@ class ComposedAnimationCallback(AnimationCallback):
         """
         callback.Callback.__init__(self, **kwargs)
 
+        self.paused = False
+
         if fig is None:
-            self.fig = Figure(figsize=(10, 10))
+            self.fig = PausableFigure(log=self.log, figsize=(10, 10))
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
         else:
             self.fig = fig
@@ -745,27 +765,41 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
     _rotations = 0
 
     def setup(self):
-        if self._pics is None:
-            return self.setup_points()
+        self.trajectory_xs = []
+        self.trajectory_ys = []
+        (self.trajectory,) = self.ax.plot(self.trajectory_xs, self.trajectory_ys, "--")
+        self.paths = [regelum.__file__.replace("__init__.py", f"img/{pic}") for pic in self._pics]
+        self.markers = []
+        self.sprites = []
+        self.pic_datas = []
+        self.attributes = []
+        self.original_transforms = []
+        if not isinstance(self._rotations, Iterable):
+            rotations = [self._rotations] * len(self.paths)
         else:
-            return self.setup_pic()
+            rotations = self._rotations
+        if not isinstance(self._marker_sizes, Iterable):
+            sizes = [self._marker_sizes] * len(self.paths)
+        else:
+            sizes = self._marker_sizes
+        for path, rotation, size in zip(self.paths, rotations, sizes):
+            pic_data, attribute = svg2paths(path)
+            parsed = parse_path(attribute[0]["d"])
+            parsed.vertices[:, 0] -= parsed.vertices[:, 0].mean(axis=0)
+            marker = matplotlib.markers.MarkerStyle(marker=parsed)
+            marker._transform = marker.get_transform().rotate_deg(rotation)
+            sprite, = self.ax.plot(0, 1, marker=marker, ms=size)
+            original_transform = marker.get_transform()
+            self.markers.append(marker)
+            self.sprites.append(sprite)
+            self.pic_datas.append(pic_data)
+            self.attributes.append(attribute)
+            self.original_transforms.append(original_transform)
 
-    def setup_points(self):
-        (point1,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        (point2,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        (point3,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        self.points = (point1, point2, point3)
-        self.ax.grid()
-
-    def setup_pic(self):
-        self.path = regelum.__file__.replace("__init__.py", f"img/{self._pic}")
-        self.pic_data, self.attributes = svg2paths(self.path)
-        parsed = parse_path(self.attributes[0]["d"])
-        parsed.vertices[:, 0] -= parsed.vertices[:, 0].mean(axis=0)
-        self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
-        self.marker._transform = self.marker.get_transform().rotate_deg(self._rot)
-        (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=self._ms)
-        self.original_transform = self.marker.get_transform()
+    def increment_trajectory(self, x0, y0, **kwargs):
+        self.trajectory_xs.append(x0)
+        self.trajectory_ys.append(y0)
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
         x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
@@ -773,38 +807,62 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
-    def construct_frame(self, x, y, theta):
-        if self._pic is None:
-            return self.construct_frame_points(x, y, theta)
-        else:
-            return self.construct_frame_pic(x, y, theta)
-
-    def construct_frame_points(self, x, y, theta):
-        offsets = (
-            np.array(
-                [
-                    [
-                        np.cos(theta + i * 2 * np.pi / 3),
-                        np.sin(theta + i * 2 * np.pi / 3),
-                    ]
-                    for i in range(3)
-                ]
+    def construct_frame(self, **kwargs):
+        self.increment_trajectory(**kwargs)
+        for i in range(len(self.paths)):
+            x, y, theta = kwargs[f"x{i}"], kwargs[f"y{i}"], kwargs[f"theta{i}"]
+            self.sprites[i].set_data([x], [y])
+            self.markers[i]._transform = Affine2D(self.original_transforms[i]._mtx.copy())
+            self.markers[i]._transform = self.markers[i].get_transform().rotate_deg(
+                180 * theta / np.pi
             )
-            / 10
-        )
-        location = np.array([x, y])
-        for point, offset in zip(self.points, offsets):
-            x, y = location + offset
-            point.set_data([x], [y])
-        return self.points
+        return self.sprites
 
-    def construct_frame_pic(self, x, y, theta):
-        self.triangle.set_data([x], [y])
-        self.marker._transform = Affine2D(self.original_transform._mtx.copy())
-        self.marker._transform = self.marker.get_transform().rotate_deg(
-            180 * theta / np.pi
+class PlanarBodiesAnimation(MultiSpriteAnimation, callback.StateTracker):
+    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("x")
+        self.ax.set_ylabel("y")
+        self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
+
+    def on_trigger(self, _):
+        self.add_frame(
+            x0=self.system_state[0], y0=self.system_state[1], theta0=self.system_state[2]
         )
-        return (self.triangle,)
+
+class CartpoleAnimation(PlanarBodiesAnimation):
+    """Animates dynamics of Lunar Lander that can be viewed as a triangle moving on a plane."""
+    _pics = ["cart.svg", "pendulum.svg"]
+    _marker_sizes = [60, 100]
+
+    def lim(self, *args, extra_margin=0.11, **kwargs):
+        x = self.frame_data[-1]["x0"]
+        left, right, bottom, top = self.lim_from_reference(np.array([x - 2, x + 2]), np.array([-1, 3]), extra_margin, equal=True)
+        self.ax.set_xlim(left, right)
+        self.ax.set_ylim(bottom, top)
+
+    def increment_trajectory(self, x0, theta1, **kwargs):
+        self.trajectory_xs.append(x0 + np.cos(theta1 + np.pi / 2))
+        self.trajectory_ys.append(np.sin(theta1 + np.pi / 2))
+        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+
+    def setup(self):
+        super().setup()
+        self.ax.set_xlabel("x [m]")
+        self.ax.set_ylabel("")
+        self.ax.get_yaxis().set_visible(False)
+        self.ax.set_aspect('equal', adjustable='box')
+        self.ground, = self.ax.plot([-100000, 100000], [0, 0], 'r', ms=10, zorder=-1)
+        self.target, = self.ax.plot([0], [0], 'g', ms=35, marker='o', zorder=-1)
+        self.target_text = self.ax.text(0, 0, "Target", horizontalalignment='center', verticalalignment='center', zorder=-1)
+
+
+    def on_trigger(self, _):
+        self.add_frame(
+            x0=self.system_state[1], y0=0, theta0=0, x1=self.system_state[1], y1=0, theta1=self.system_state[0]
+        )
 
 
 class TriangleAnimation(AnimationCallback, ABC):
@@ -956,6 +1014,9 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
 
     def setup(self):
         super().setup()
+        self.ax.get_yaxis().set_visible(False)
+        self.ax.get_xaxis().set_visible(False)
+        self.ax.set_aspect('equal', adjustable='box')
         (self.trajectory,) = self.ax.plot(
             self.trajectory_xs, self.trajectory_ys, "--", alpha=0.6
         )
