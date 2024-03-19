@@ -511,7 +511,7 @@ class RLScenario(Scenario):
             if self.sim_status == "simulation_ended":
                 break
 
-    @apply_callbacks()
+
     def reset_iteration(self):
         super().reset_iteration()
         if self.stopping_criterion is not None:
@@ -767,7 +767,7 @@ class CALFScenario(RLScenario):
 
         return self.get_action_from_policy()
 
-    @apply_callbacks()
+
     def reset_iteration(self):
         super().reset_iteration()
         if self.stored_weights is not None and self.store_weights_thr > 0.0:

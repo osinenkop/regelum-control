@@ -91,8 +91,8 @@ def trigger(CallbackClass):
                 True
             ):  # self.ready(t):   # Currently, cooldowns don't work for PassdownCallbacks
                 try:
-                    if PassdownCallback.is_target_event(self, obj, method, output, []):
-                        PassdownCallback.on_function_call(self, obj, method, output)
+                    if CallbackClass.is_target_event(self, obj, method, output, []):
+                        CallbackClass.on_function_call(self, obj, method, output)
                         return True
                     return False
                     # self.on_trigger(PassdownCallback)
@@ -105,6 +105,9 @@ def trigger(CallbackClass):
                     )
                     self.exception(e)
                     return False
+
+        def on_function_call(self, *args, **kwargs):
+            pass
 
     PassdownCallback.__name__ = CallbackClass.__name__
     return PassdownCallback
@@ -688,6 +691,7 @@ class StateTracker(Callback):
 
     def on_function_call(self, obj, method, output):
         self.system_state = obj.state
+        self.system_state = self.system_state.reshape(self.system_state.size)
         self.state_naming = obj.simulator.system.state_naming
 
 
@@ -755,12 +759,17 @@ class ObjectiveTracker(Callback):
         self.objective_naming = ["Value", "Running objective"]
 
 
+
 @trigger
 class ScoreTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
 
     Useful for animations that visualize motion of dynamical systems.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.counter = None
 
     def is_target_event(self, obj, method, output, triggers):
         return isinstance(obj, regelum.scenario.Scenario) and (

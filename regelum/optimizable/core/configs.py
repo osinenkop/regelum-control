@@ -129,9 +129,9 @@ class ScipyOptimizerConfig(OptimizerConfig):
     def __init__(
         self,
         kind: str = "numeric",
-        opt_method: Any | None = "SLSQP",
-        opt_options: Dict | None = None,
-        log_options: Dict | None = None,
-        config_options: Dict | None = None,
+        opt_method: Optional[Any] = "SLSQP",
+        opt_options: Optional[Dict] = None,
+        log_options: Optional[Dict] = None,
+        config_options: Optional[Dict] = None,
     ) -> None:
         super().__init__(kind, opt_method, opt_options, config_options)
