@@ -178,7 +178,6 @@ class AnimationCallback(callback.Callback, ABC):
         self.fig = Figure(figsize=(10, 10))
         canvas = FigureCanvas(self.fig)
         self.ax = canvas.figure.add_subplot(111)
-        self.setup()
         if frames is None:
             frames = self.__class__._frames
         if frames == "all":
@@ -197,12 +196,15 @@ class AnimationCallback(callback.Callback, ABC):
                 self.lim(frame_idx=j)
                 return self.construct_frame(**self.frame_data[j])
         else:
+            trajectory_xs = self.trajectory_xs
+            trajectory_ys = self.trajectory_ys
             def animation_update(i):
                 j = int((i / frames) * len(self.frame_data) + 0.5)
                 self.lim(frame_idx=j)
-                return self.construct_frame(trajectory_xs=self.trajectory_xs[:j],
-                                            trajectory_ys=self.trajectory_ys[:j],
+                return self.construct_frame(trajectory_xs=trajectory_xs[:j],
+                                            trajectory_ys=trajectory_ys[:j],
                                             **self.frame_data[j])
+        self.setup()
 
         anim = matplotlib.animation.FuncAnimation(
             self.fig,
