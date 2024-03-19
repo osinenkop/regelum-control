@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html lang="en-US" xml:lang="en-US">
+<head><title>Problem statement</title>
+<meta charset="utf-8"/>
+<meta content="TeX4ht (https://tug.org/tex4ht/)" name="generator"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="rql.tex" name="src"/>
+<script>window.MathJax = { tex: { tags: "ams", }, }; </script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<meta id="problem-statement" link="x2-1000" md-heading="Problem statement" name="md-heading" type="h3"/></head><body>
+<!-- l. 5 -->
+<!-- l. 6 --><p class="noindent">Consider the following optimal control problem: \begin {equation}  \label {eqn_ddpg_problem} \sum _{t = 0}^{T-1} \gamma ^ t \cost (\state _{t}, \action _{t}) \ra \min _{\policy },  \end {equation}<a id="x2-1001r1"></a> where:
+      </p><ol>
+<li><p>\(\gamma \in (0, 1]\)   represents   the    <span class="cmti-12">discount  factor   </span> of   the   algorithm,   which   serves   as   a
+      hyperparameter.
+      </p></li><li><p>It is assumed that all states \(s_t\) are elements of a predefined set of possible states
+      \(\states \), and all actions \(a_t\) are elements of a set of possible actions \(\actions \)
+      </p></li><li><p>The function \(c(\state , \action )\) represents the cost associated with the current state \(\state \) and action
+      \(\action \):
+                                            \[ \cost : \states \times \actions \to \R , \]
+                                                                                   
+                                                                                   
+      </p></li><li><p>The policy \(\policy \) is a strategy for selecting the appropriate action based on the current
+      state. Specifically, it is a mapping \(\policy : \states \rightarrow \actions \), and
+                                            \[ \action _{t} = \policy (\state _{t}), \text { for all } t \in \{1, \ldots , T-1\} \]
+      </p></li><li><p>The state at each time step \(t \in \{1, ..., T-1\}\) evolves according to a transition function \(\transit : \states \times \actions \to \states \):
+                                            \[ \state _{t} = \transit (\state _{t-1}, \action _{t-1}), \]
+      with the initial state \(\state _0 \in \states \) given.
+      </p></li>
+</ol>
+<!-- l. 31 -->
+<!-- l. 31 --><p class="indent"> <a id="tailrqlli1.html"></a> </p>
+</body>
+</html>

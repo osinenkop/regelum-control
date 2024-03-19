@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+
+<html lang="en-US" xml:lang="en-US">
+<head><title>General idea of the algorithm</title>
+<meta charset="utf-8"/>
+<meta content="TeX4ht (https://tug.org/tex4ht/)" name="generator"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="reinforce.tex" name="src"/>
+<script>window.MathJax = { tex: { tags: "ams", }, }; </script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<meta id="general-idea-of-the-algorithm" link="x4-3000" md-heading="General idea of the algorithm" name="md-heading" type="h4"/></head><body>
+<!-- l. 41 -->
+<!-- l. 42 --><p class="noindent">The right-hand side of \eqref{eqn_reinforce_log_lh_trick} can be estimated using Monte Carlo sampling. Thus, to
+optimize the policy’s performance, we can apply gradient descent on the policy
+parameters. Starting with an initial set of weights \(\theta _1\), we iteratively update the weights
+for \(i = 1, 2, \ldots , \mathcal {I}\) learning iterations. Here, \(\mathcal {I}\) is a predefined hyperparameter that denotes the
+total number of learning iterations. The update rule at each iteration is given
+by:
+                                                                                   
+                                                                                   
+                                         \[ \theta _{i + 1} = \theta _i - \alpha \E [\transit , \policy ^{\theta }]{ \sum _{t = 0}^{T-1}\left (\sum _{t' = 0}^{T-1} \gamma ^ {t'} \Cost (\State _{t'}, \Action _{t'})\right ) \nabla _{\theta }\log \policy ^{\theta }(\Action _t \mid \State _t)}, \]
+ where \(\alpha \) is the learning rate, and the term
+                                         \[ \E [\transit , \policy ^{\theta }]{ \sum _{t = 0}^{T-1}\left (\sum _{t' = 0}^{T-1} \gamma ^ {t'} \Cost (\State _{t'}, \Action _{t'})\right ) \nabla _{\theta }\log \policy ^{\theta }(\Action _t \mid \State _t)} \]
+ is estimated by Monte Carlo sampling: \begin {multline*}  \E [\transit , \policy ^{\theta }]{ \sum _{t = 0}^{T-1}\left (\sum _{t' = 0}^{T-1} \gamma ^ {t'} \Cost (\State _{t'}, \Action _{t'})\right ) \nabla _{\theta }\log \policy ^{\theta }(\Action _t \mid \State _t)}\approx \\ \frac {1}{M}\sum _{j = 1}^M \sum _{t = 0}^{T-1} \left (\sum _{t' = 0}^{T-1} \gamma ^ {t'} \Cost (\State ^j_{t'}, \Action ^j_{t'})\right ) \nabla _{\theta }\log \policy ^{\theta }(\Action ^j_t \mid \State ^j_t),  \end {multline*} where
+      </p><ol>
+<li><p>\(M\) is a predefined hyperparameter that denotes the total number of Monte Carlo
+      simulations (which we call  <span class="cmti-12">episodes</span> ) in each learning iteration.
+      </p></li><li><p>\(\Action ^j_t\) is the action taken in episode \(j\) at step \(t\).
+      </p></li><li><p>\(\State ^j_t\) is the state in episode \(j\) at step \(t\).</p></li>
+</ol>
+<!-- l. 65 -->
+<!-- l. 65 --><p class="indent"> <a id="tailreinforceli3.html"></a> </p>
+</body>
+</html>

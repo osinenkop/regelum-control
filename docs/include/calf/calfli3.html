@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html lang="en-US" xml:lang="en-US">
+<head><title>CALF algorithm</title>
+<meta charset="utf-8"/>
+<meta content="TeX4ht (https://tug.org/tex4ht/)" name="generator"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="calf.tex" name="src"/>
+<script>window.MathJax = { tex: { tags: "ams", }, }; </script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<meta id="calf-algorithm" link="x4-3000" md-heading="CALF algorithm" name="md-heading" type="h3"/></head><body>
+<!-- l. 47 -->
+<p><a id="x4-3001r1"></a>
+</p><!-- l. 49 --><p class="indent"> </p><figure class="float" id="x4-3002r1"><span id="critic-as-lyapunov-function-calf-algorithm-greedy-actor-statevalued-critic"></span><span></span>
+<span class="cmbx-12">Algorithm 1:</span> Critic as Lyapunov function (CALF) algorithm (greedy actor,
+  state-valued critic).
+   
+   <a id="x4-3003"></a>
+</figure><div class="algorithmic">
+<a id="x4-3004r1"></a>
+<span class="ALCitem">1:</span><span class="ALIndent" style="width:5.87494pt;"> 
+       </span><span class="cmbx-12">Input:</span>
+       \(\overline {\nu } &gt; 0, \alpha _{\crit } &gt; 0, \policy _0(\cdot )\)
+       is
+       stabilizing
+       <a id="x4-3005r2"></a>
+<br/><span class="ALCitem">2:</span><span class="ALIndent" style="width:5.87494pt;"> </span>
+       \(\state _0 \gets \)
+       <span class="cmbx-12">observe</span>;
+       <a id="x4-3006r3"></a>
+<br/><span class="ALCitem">3:</span><span class="ALIndent" style="width:5.87494pt;"> </span>
+       \(w_{0} \gets \)
+       arbitrary
+       in
+       \(\W \);
+       <a id="x4-3007r4"></a>
+<br/><span class="ALCitem">4:</span><span class="ALIndent" style="width:5.87494pt;"> </span>
+       \(\action _0 \gets \policy _0(\state _0)\);
+       <a id="x4-3008r5"></a>
+<br/><span class="ALCitem">5:</span><span class="ALIndent" style="width:5.87494pt;"> </span>
+       \(w^\dagger \gets w_{0}\);
+       <a id="x4-3009r6"></a>
+<br/><span class="ALCitem">6:</span><span class="ALIndent" style="width:5.87494pt;"> </span>
+       \(\state ^\dagger \gets \state _0\);
+       <a id="x4-3010r7"></a>
+<br/><span class="ALCitem">7:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">for</span> \(t := 1, \dots \infty \) <span class="cmbx-12">do</span><span class="for-body">
+<a id="x4-3011r8"></a>
+<br/><span class="ALCitem">8:</span><span class="ALIndent" style="width:17.62482pt;"> 
+         </span><span class="cmbx-12">perform</span>
+         \(\action _{t -1}\);
+         <a id="x4-3012r9"></a>
+<br/><span class="ALCitem">9:</span><span class="ALIndent" style="width:17.62482pt;"> </span>
+         \(\state _t \gets \)
+         <span class="cmbx-12">observe</span>;
+         <a id="x4-3013r10"></a>
+<br/><span class="ALCitem">10:</span><span class="ALIndent" style="width:17.62482pt;"> </span>
+         Try
+         critic
+         update:
+         \[ \begin {array}{lrl} &amp; w^* \gets &amp; {\scriptstyle \argmin \limits _{w \in \mathbb W} \sum _{t' = 1}^N \big (\Value ^w(\state _{t - t'}) - \cost (\state _{t - t'}, \action _{t - t'}) - \Value ^{w^\dagger }(s_{t - t' + 1})\big )^2 + \alpha _{\crit }^{-2}\nrm {w - w^\dagger }^2.} \\ \\ &amp; \sut &amp; {\scriptstyle \hat \Value ^w(\state _t) - \hat \Value ^{w^\dagger }(\state ^\dagger ) \leq -{\bar \nu } \deltau ,} \\ &amp; &amp; {\scriptstyle \hat \kappa _\low (\nrm {\state _t}) \leq \hat \Value ^{w}(\state _t) \leq \hat \kappa _\up (\nrm {\state _t}); } \end {array} \]
+         <a id="x4-3014r11"></a>
+<br/><span class="ALCitem">11:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">if</span>  solution \(w^*\) found <span class="cmbx-12">then</span><span class="if-body">
+<a id="x4-3015r12"></a>
+<br/><span class="ALCitem">12:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
+            \(\state ^\dagger \gets \state _t\);
+            <a id="x4-3016r13"></a>
+<br/><span class="ALCitem">13:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
+            \(w^\dagger \gets w^*\);
+            <a id="x4-3017r14"></a>
+<br/><span class="ALCitem">14:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
+            Update
+            action:
+            \[ \action _t \la \argmin \limits _{\action \in \actions } \left (\cost (\state ^\dagger , \action ) + \hat \Value ^{w^\dagger }_+\right ) \]
+            Here,
+            \(\hat \Value ^{w^\dagger }_+\)
+            is,
+            e. g.,
+            the
+            state
+            valued
+            critic
+            or
+            a
+            statistic
+            thereof,
+            e. g.,
+            expectation,
+            at
+            the
+            next
+            state
+            under
+            the
+            action
+            \(\action \).
+         </span><a id="x4-3018r15"></a>
+<br/><span class="ALCitem">15:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">else</span><span class="else-body">
+<a id="x4-3019r16"></a>
+<br/><span class="ALCitem">16:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
+            \(\action _t \la \policy _0(\state _t)\);
+         </span><a id="x4-3020r17"></a>
+<br/><span class="ALCitem">17:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">end</span> <span class="cmbx-12">if</span>
+</span><a id="x4-3021r18"></a>
+<br/><span class="ALCitem">18:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span>
+</div>
+<!-- l. 84 -->
+<!-- l. 84 --><p class="indent"> <a id="tailcalfli3.html"></a> </p>
+</body>
+</html>

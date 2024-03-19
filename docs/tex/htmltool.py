@@ -384,8 +384,13 @@ def fix_enumerations(
 ):
     bs = read(html)
 
-    for ol in bs.find_all("dd"):
-        ol.attrs["start"] = str(int(ol.attrs["start"]) + 1)
+    for enumerated_list in bs.find_all("dl", {"class": "enumerate-enumitem"}):
+        enum_list = "<ol>\n"
+        for b in enumerated_list.find_all("dd", {"class": "enumerate-enumitem"}):
+            enum_list += f"<li><p>{' '.join([str(c) for c in b.contents])}</p></li>"
+        enum_list += "\n</ol>"
+
+        enumerated_list.replace_with(bs4.BeautifulSoup(enum_list, "html.parser"))
 
     save(bs, html, out, help="  - Fixed enumerations src.")
 
@@ -416,6 +421,7 @@ def process(
         fix_mathjax_script(path, out)
         fix_algorithmic(path, out)
         fix_img(path, out)
+        fix_enumerations(path, out)
 
 
 md_app = typer.Typer()

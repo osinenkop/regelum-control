@@ -53,7 +53,8 @@ def data_closure(gen_method):
         if callable(gen_method):
             gen_tmp = gen_method()
             for x in gen_tmp:
-                yield x[1]
+                if x[1].requires_grad:
+                    yield x[1]
         else:
             yield gen_method
 

@@ -1,4 +1,5 @@
 """Callbacks that create, display and store animation according to dynamic data."""
+
 import subprocess
 import time
 from abc import ABC, abstractmethod
@@ -6,13 +7,14 @@ from collections.abc import Iterable
 from copy import copy
 from multiprocessing import Process
 from unittest.mock import Mock
+import matplotlib
 
+matplotlib.use("Agg")
 import matplotlib.animation
 import matplotx.styles
 from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec, SubplotSpec
 from matplotlib.transforms import Affine2D
-from shared_memory_dict import SharedMemoryDict
 
 import regelum
 import os
@@ -87,6 +89,7 @@ class AnimationCallback(callback.Callback, ABC):
             self._metadata["argv"].interactive if interactive is None else interactive
         )
         if self.interactive_mode:
+            matplotlib.use("Agg")
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
 

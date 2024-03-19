@@ -139,7 +139,7 @@ def circle_constraint(coefs, radius, center, state):
     )
 
 
-class ThreeWheeledRobotKinematicConstantContstraintsParser(ConstraintParser):
+class CylindricalHalfPlaneConstraintParser(ConstraintParser):
     """Constraint parser for ThreeWheeledRobotKinematic that consist of several circles and lines."""
 
     def __init__(
@@ -150,7 +150,7 @@ class ThreeWheeledRobotKinematicConstantContstraintsParser(ConstraintParser):
         weights: Optional[np.ndarray] = None,
         biases: Optional[np.ndarray] = None,
     ) -> None:
-        """Instantiate ThreeWheeledRobotKinematicConstantContstraintsParser.
+        """Instantiate CylindricalHalfPlaneConstraintParser.
 
         Args:
             centers (Optional[np.ndarray], optional): centers of

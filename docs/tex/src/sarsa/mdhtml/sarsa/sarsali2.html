@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html lang="en-US" xml:lang="en-US">
+<head><title>SARSA algorithm</title>
+<meta charset="utf-8"/>
+<meta content="TeX4ht (https://tug.org/tex4ht/)" name="generator"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="sarsa.tex" name="src"/>
+<script>window.MathJax = { tex: { tags: "ams", }, }; </script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<meta id="sarsa-algorithm" link="x3-2000" md-heading="SARSA algorithm" name="md-heading" type="h3"/></head><body>
+<!-- l. 31 -->
+<p><a id="x3-2001r1"></a>
+</p><!-- l. 33 --><p class="indent"> </p><figure class="float" id="x3-2002r1"><span id="stateactionrewardstateaction-sarsa"></span><span></span>
+<span class="cmbx-12">Algorithm 1:</span> State-Action-Reward-State-Action (SARSA)
+   
+   <a id="x3-2003"></a>
+</figure><div class="algorithmic">
+<a id="x3-2004r1"></a>
+<span class="ALCitem">1:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">Input: </span>\begin {equation*}  \small \begin {aligned} \hat {Q}^w : \states \times \actions \to \R &amp;- \text {critic model parameterized by weights $w$} \\ w_0^1 &amp; - \text {initial critic weights} \\ N \in \N _{&gt;0} &amp; - \text {window for TD(N) critic loss \eqref {eqn_q_td_n}} \\ \alpha \in \R _{&gt;0}&amp; - \text {learning rate for the critic update \eqref {eqn_critic_update}} \\ B \in \N &amp; - \text {batch size for the critic update \eqref {eqn_critic_update}} \\ \varepsilon \in [0, 1] &amp; - \text {exploration parameter, typically set to 0.01 or 0.05} \\ \mathcal I \in \N &amp; - \text {number of learning iterations} \end {aligned}  \end {equation*} <a id="x3-2005r2"></a>
+<br/><span class="ALCitem">2:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">for</span> Learning iteration \(i := 1 \dots \mathcal I\) <span class="cmbx-12">do</span><span class="for-body">
+<a id="x3-2006r3"></a>
+<br/><span class="ALCitem">3:</span><span class="ALIndent" style="width:17.62482pt;"> </span>
+         Obtain
+         initial
+         state
+         \(\state _0\)
+         <a id="x3-2007r4"></a>
+<br/><span class="ALCitem">4:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">for</span> Time step \(t := 0 \dots T - 1\) <span class="cmbx-12">do</span><span class="for-body">
+<a id="x3-2008r5"></a>
+<br/><span class="ALCitem">5:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
+            Determine
+            \(\action _t\)
+            from
+            the
+            solution
+            of
+            the
+            optimization
+            problem:
+                                                 \[ \action _t \gets \argmin _{a \in \actions } \hat Q^{w_t^i}(\state _{t}, a_{t}) \]
+            <a id="x3-2009r6"></a>
+<br/><span class="ALCitem">6:</span><span class="ALIndent" style="width:29.3747pt;"> </span>
+            (Optional)
+            Exploration:
+            With
+            probability
+            \(\varepsilon \),
+            redefine
+            \(\action _t\)
+            with
+            a
+            random
+            action:
+                                                 \[ \action _t := \operatorname {Uniform}(\actions ) \]
+            <a id="x3-2010r7"></a>
+<br/><span class="ALCitem">7:</span><span class="ALIndent" style="width:29.3747pt;"> </span>      Update the Critic with one gradient step: \begin {equation}  \label {eqn_critic_update} \begin {aligned} &amp;w_{t+1}^i \gets w^i_{t} - \alpha \nabla _w\loss _{\crit }(w)\bigg \rvert _{w = w^i_{t}}, \\ &amp;\text { where } \loss _{\crit }(w) \text { is the temporal difference TD(N) loss}: \\ &amp;\scriptstyle {\loss _{\crit }(w) = \sum \limits _{t'=t-B-N+1}^{t - N}\left (\hat Q^w(\state _t, \action _t) - \sum \limits _{\tau =t'}^{t + N - 1} \gamma ^{\tau -t'}\cost (\state _{\tau }, \action _{\tau }) - \gamma ^{N}\hat Q^w(\state _{t + N}, \action _{t + N})\right )^2} \end {aligned}  \end {equation}<a id="x3-2011r2"></a> <a id="x3-2012r8"></a>
+<br/><span class="ALCitem">8:</span><span class="ALIndent" style="width:29.3747pt;"> </span>      Obtain next state from transition function \(\state _{t+1} = \transit (\state _t, \action _t)\)
+         </span><a id="x3-2013r9"></a>
+<br/><span class="ALCitem">9:</span><span class="ALIndent" style="width:17.62482pt;">    </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span>
+</span><a id="x3-2014r10"></a>
+<br/><span class="ALCitem">10:</span><span class="ALIndent" style="width:5.87494pt;">  </span><span class="cmbx-12">end</span> <span class="cmbx-12">for</span>
+</div>
+<!-- l. 76 -->
+<!-- l. 76 --><p class="indent"> <a id="tailsarsali2.html"></a> </p>
+</body>
+</html>

@@ -398,27 +398,29 @@ class ComposedSystem(SystemInterface):
                 outputs, and the second one contains indices of the right system's inputs.
         """
         io_mapping_extended = []
+        if len(io_mapping) > 0:
+            for i, outputs in enumerate(io_mapping):
+                assert type(outputs) in [
+                    tuple,
+                    int,
+                    np.int32,
+                    np.int64,
+                    None,
+                ], (
+                    "io_mapping must be a list of ints or tuples or Nones. "
+                    + f"However a value of type {type(outputs)} was provided."
+                )
+                if not isinstance(outputs, tuple):
+                    outputs = (outputs,)
+                elif outputs is None:
+                    continue
+                for output in outputs:
+                    io_mapping_extended.append([i, output])
 
-        for i, outputs in enumerate(io_mapping):
-            assert type(outputs) in [
-                tuple,
-                int,
-                np.int32,
-                np.int64,
-                None,
-            ], (
-                "io_mapping must be a list of ints or tuples or Nones. "
-                + f"However a value of type {type(outputs)} was provided."
-            )
-            if not isinstance(outputs, tuple):
-                outputs = (outputs,)
-            elif outputs is None:
-                continue
-            for output in outputs:
-                io_mapping_extended.append([i, output])
-
-        io_mapping_extended = sorted(io_mapping_extended, key=lambda x: x[1])
-        rout_idx, occupied_idx = rg.array(io_mapping_extended).astype(int).T
+            io_mapping_extended = sorted(io_mapping_extended, key=lambda x: x[1])
+            rout_idx, occupied_idx = rg.array(io_mapping_extended).astype(int).T
+        else:
+            rout_idx, occupied_idx = rg.array([]), rg.array([])
         return rout_idx, occupied_idx
 
     def _compute_state_dynamics(
@@ -474,7 +476,8 @@ class ComposedSystem(SystemInterface):
             self.sys_right.dim_inputs,
             prototype=(state, inputs),
         )
-        inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
+        if len(self.occupied_idx) > 0:
+            inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
         inputs_for_right[self.free_right_input_indices] = rg.reshape(
             inputs[self.sys_left.dim_inputs :],
             rg.shape(inputs_for_right[self.free_right_input_indices]),
@@ -545,7 +548,8 @@ class ComposedSystem(SystemInterface):
             self.sys_right.dim_inputs,
             prototype=(state, inputs),
         )
-        inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
+        if len(self.occupied_idx) > 0:
+            inputs_for_right[self.occupied_idx] = outputs_of_left[self.rout_idx]
         inputs_for_right[self.free_right_input_indices] = rg.reshape(
             inputs[self.sys_left.dim_inputs :],
             rg.shape(inputs_for_right[self.free_right_input_indices]),
