@@ -1,7 +1,7 @@
 * [Introduction](introduction.md)
 * [Basic concepts](basic_concepts.md)
 * [Implementing your own dynamical system](system.md)
-* [Run your system in simulator](simulator.md)
+* [Run your system in simulator](../notebooks/simulator.md)
 * [Run the scenario with a custom policy](../notebooks/policy.md)
 * [Model Predictive Control](../notebooks/mpc.md)
 * [Optimizable](../notebooks/optimizable.md)

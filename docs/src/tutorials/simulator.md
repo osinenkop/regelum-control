@@ -1,10 +1,9 @@
 ## Regelum Framework Tutorial: Implementing and Simulating a Kinematic Point System
-TODO: OBSERVATION AND STABILIZE to (1, 1) AND ADD NOISE TO OBSERVATION AND STABILZIE IT WITH KALMAN FILTER VIA NEW OBSERVER
 
 This tutorial will walk you through the process of implementing a simple kinematic point system within the Regelum framework, defining a basic stabilizing control action, instantiating a CasADi simulator, running a simulation loop, and finally plotting the trajectory of the system using matplotlib.
 
 
-### [Kinematic Point System](../systems/kin_point.md) 
+### Kinematic Point System (todo add link) 
 
 A kinematic point is a basic model that represents the motion of a point mass in a 2D space influenced by velocity inputs. In this system, the state typically comprises the point's position coordinates, while the inputs control the point's velocity along respective axes.
 

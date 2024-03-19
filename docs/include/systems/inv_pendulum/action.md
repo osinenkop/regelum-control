@@ -1,9 +1,9 @@
 {% raw %} 
 
 $$
-\action = M
+\action = \tau
 $$
 
-- $M$ - torque [Nm]
+- $\tau$ - torque [Nm]
 
 {% endraw %}
