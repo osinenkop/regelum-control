@@ -9,7 +9,7 @@ $$
     \right) = \left(
     \begin{array}{c}
         \omega \\
-        \frac{g}{l} \sin(\vartheta) + \frac{M}{m l^2}
+        \frac{g}{l} \sin(\vartheta) + \frac{\tau}{m l^2}
     \end{array}
     \right) \diff t
 $$

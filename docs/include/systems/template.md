@@ -1,23 +1,22 @@
 
-
-
 {% set description_path = 'systems/' ~ system ~ '/description.md' %}
 {% set state_dynamics_path = 'systems/' ~ system ~ '/state_dynamics.md' %}
 {% set state_and_observation_path = 'systems/' ~ system ~ '/state_and_observation.md' %}
 {% set action_path = 'systems/' ~ system ~ '/action.md' %}
 {% set action_bounds_path = 'systems/' ~ system ~ '/action_bounds.md' %}
-
+{% set pic_path = 'systems/' ~ system ~ '/pic.md' %}
 
 ## Description
 
 {% include description_path %}
 
+{% include pic_path %}
 
 ## System dynamics
 
+
+
 The dynamics are captured by the following differential equations, with the physical meaning of each entity described in the subsequent sections:
-
-
 
 {% include state_dynamics_path %}
 
@@ -62,12 +61,6 @@ The components of the action are subject to the following constraints:
     the corresponding integration scheme. Commonly, we use a simulator [`CasADi`][regelum.simulator.CasADi] that formulates a 
     Runge-Kutta integration scheme on the flow. An example of employing the simulator is provided [below](#usage-example).
 
-
-::: regelum.system.{{ api_reference }}
-    options:
-      heading_level: 3
-      show_root_full_path: true
-      show_root_members_full_path: true
 
 ### Usage example
 
