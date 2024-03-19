@@ -691,6 +691,7 @@ class StateTracker(Callback):
 
     def on_function_call(self, obj, method, output):
         self.system_state = obj.state
+        self.system_state = self.system_state.reshape(self.system_state.size)
         self.state_naming = obj.simulator.system.state_naming
 
 

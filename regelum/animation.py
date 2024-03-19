@@ -133,7 +133,7 @@ class AnimationCallback(callback.Callback, ABC):
             self.interactive_status["frame"] = frame_datum
 
         if self.interactive_mode:
-            self.lim()
+            self.lim(frame_idx=len(self.frame_data) - 1)
             self.construct_frame(**frame_datum)
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
@@ -191,12 +191,19 @@ class AnimationCallback(callback.Callback, ABC):
             raise ValueError(
                 'animate accepts an int, a float or "all", but instead a different value was provided.'
             )
+        if not hasattr(self, "trajectory"):
+            def animation_update(i):
+                j = int((i / frames) * len(self.frame_data) + 0.5)
+                self.lim(frame_idx=j)
+                return self.construct_frame(**self.frame_data[j])
+        else:
+            def animation_update(i):
+                j = int((i / frames) * len(self.frame_data) + 0.5)
+                self.lim(frame_idx=j)
+                return self.construct_frame(trajectory_xs=self.trajectory_xs[:j],
+                                            trajectory_ys=self.trajectory_ys[:j],
+                                            **self.frame_data[j])
 
-        def animation_update(i):
-            j = int((i / frames) * len(self.frame_data) + 0.5)
-            return self.construct_frame(**self.frame_data[j])
-
-        self.lim()
         anim = matplotlib.animation.FuncAnimation(
             self.fig,
             animation_update,
@@ -216,6 +223,7 @@ class AnimationCallback(callback.Callback, ABC):
     def animate_and_save(self, frames=None, name=None):
         if not self._metadata['argv'].playback and not self._metadata['argv'].save_animation:
             return
+
         if name is None:
             name = str(self.saved_counter)
             self.saved_counter += 1
@@ -799,10 +807,10 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
             self.attributes.append(attribute)
             self.original_transforms.append(original_transform)
 
-    def increment_trajectory(self, x0, y0, **kwargs):
-        self.trajectory_xs.append(x0)
-        self.trajectory_ys.append(y0)
-        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+    def increment_trajectory(self, x0, y0, trajectory_xs, trajectory_ys, **kwargs):
+        trajectory_xs.append(x0)
+        trajectory_ys.append(y0)
+        self.trajectory.set_data(trajectory_xs, trajectory_ys)
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
         x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
@@ -811,6 +819,9 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
         self.ax.set_ylim(bottom, top)
 
     def construct_frame(self, **kwargs):
+        if "trajectory_xs" not in kwargs:
+            kwargs["trajectory_xs"] = self.trajectory_xs
+            kwargs["trajectory_ys"] = self.trajectory_ys
         self.increment_trajectory(**kwargs)
         for i in range(len(self.paths)):
             x, y, theta = kwargs[f"x{i}"], kwargs[f"y{i}"], kwargs[f"theta{i}"]
@@ -840,16 +851,16 @@ class CartpoleAnimation(PlanarBodiesAnimation):
     _pics = ["cart.svg", "pendulum.svg"]
     _marker_sizes = [60, 100]
 
-    def lim(self, *args, extra_margin=0.11, **kwargs):
-        x = self.frame_data[-1]["x0"]
+    def lim(self, *args, frame_idx=None, extra_margin=0.11, **kwargs):
+        x = self.frame_data[frame_idx]["x0"]
         left, right, bottom, top = self.lim_from_reference(np.array([x - 2, x + 2]), np.array([-1, 3]), extra_margin, equal=True)
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
-    def increment_trajectory(self, x0, theta1, **kwargs):
-        self.trajectory_xs.append(x0 + np.cos(theta1 + np.pi / 2))
-        self.trajectory_ys.append(np.sin(theta1 + np.pi / 2))
-        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+    def increment_trajectory(self, x0, theta1, trajectory_xs, trajectory_ys, **kwargs):
+        trajectory_xs.append(x0 + np.cos(theta1 + np.pi / 2))
+        trajectory_ys.append(np.sin(theta1 + np.pi / 2))
+        self.trajectory.set_data(trajectory_xs, trajectory_ys)
 
     def setup(self):
         super().setup()
@@ -971,10 +982,9 @@ class LunarLanderAnimation(DirectionalPlanarMotionAnimation):
     _ms = 30
     _center_vert = True
 
-    def lim(self, *args, extra_margin=0.11, **kwargs):
-        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
-        x = np.append(x, 0)
-        left, right, bottom, top = self.lim_from_reference(x, np.array([0, 5]), extra_margin, equal=False)
+    def lim(self, *args, frame_idx=None, extra_margin=0.11, **kwargs):
+        x = self.frame_data[frame_idx]["x"]
+        left, right, bottom, top = self.lim_from_reference(np.array([x - 2, x + 2]), np.array([0, 5]), extra_margin, equal=False)
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
