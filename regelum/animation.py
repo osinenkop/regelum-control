@@ -135,10 +135,10 @@ class AnimationCallback(callback.Callback, ABC):
         if self.interactive_mode:
             self.lim(frame_idx=len(self.frame_data) - 1)
             self.construct_frame(**frame_datum)
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            while self.fig.paused:
-                self.fig.canvas.flush_events()
+            #self.fig.canvas.draw()
+            #self.fig.canvas.flush_events()
+            #while self.fig.paused:
+            #    self.fig.canvas.flush_events()
 
     def __getstate__(self):
         state = copy(self.__dict__)
@@ -299,7 +299,7 @@ class PausableFigure(Figure):
 
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
-
+    cooldown = 0.1
     def __init__(
         self, *animations, fig=None, ax=None, mng=None, mode="square", **kwargs
     ):
@@ -356,7 +356,10 @@ class ComposedAnimationCallback(AnimationCallback):
         # plt.show(block=True)
 
     def on_function_call(self, obj, method, output):
-        pass
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        while self.fig.paused:
+           self.fig.canvas.flush_events()
 
     def construct_frame(self, **frame_datum):
         raise AssertionError(
@@ -367,7 +370,7 @@ class ComposedAnimationCallback(AnimationCallback):
         pass
 
     def is_target_event(self, obj, method, output, triggers):
-        return False
+        return True
 
     def on_launch(self):
         for animation in self.animations:
@@ -386,11 +389,13 @@ class ComposedAnimationCallback(AnimationCallback):
             del animation
 
     def __call__(self, *args, **kwargs):
+        super().__call__(*args, **kwargs)
         for animation in self.animations:
             animation(*args, **kwargs)
 
 
 class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
+    cooldown = None
     def __init__(
         self, *animations, fig=None, ax=None, mode="vstack", mng=None, **kwargs
     ):
@@ -423,6 +428,9 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
     def on_launch(self):
         if self.initialized:
             super().on_launch()
+
+    def on_function_call(self, obj, method, output):
+        pass
 
     def __deferred_init__(self):
         """
@@ -484,7 +492,8 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
     def __call__(self, *args, **kwargs):
         if self.initialized:
-            super().__call__(*args, **kwargs)
+            for animation in self.animations:
+                animation(*args, **kwargs)
         else:
             callback.Callback.__call__(self, *args, **kwargs)
 
