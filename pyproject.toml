@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "regelum-control"
+package-mode = true
+version = "0.3.0"
+description = "Regelum is a flexibly configurable framework for agent-environment simulation with a menu of predictive and reinforcement learning pipelines."
+authors = ["Georgiy Malaniya <pwlsd.gm@gmail.com> Anton Bolychev <bolychev.anton@gmail.com> Grigoriy Yaremenko <yaremenko8@gmail.com> Pavel Osinenko <p.osinenko@yandex.ru>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "regelum" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+torch = ">=1.13.1"
+numpy = "^1.26.4"
+scipy = "^1.12.0"
+svgpath2mpl = "^1.0.0"
+tabulate = "^0.9.0"
+omegaconf = "^2.3.0"
+gitpython = "^3.1.42"
+mlflow = "^2.11.1"
+pandas = "^2.2.1"
+tables = "^3.9.2"
+pyqt5 = "^5.15.10"
+casadi = "^3.6.5"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest-xdist = "=2.5.0"
+pytest-lazy-fixture = "=0.6.3"
+black = ">=23.1.0"
+pre-commit = ">=3.2.1"
+ruff = ">=0.0.269"
+mkdocs-material = ">=9.5.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

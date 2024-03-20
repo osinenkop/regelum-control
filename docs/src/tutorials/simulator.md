@@ -35,7 +35,7 @@ Here's a brief description of the attributes within the Kinematic Point System i
 
 ### Implementing Kinematic Point System
 
-Here's an example of how a [kinematic point](../systems/kin_point.md) system can be defined:
+Here's an example of how a kinematic point system can be defined:
 ``` python
 from regelum.system import System
 import numpy as np
