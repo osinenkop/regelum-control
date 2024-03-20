@@ -1279,6 +1279,26 @@ pyparsing = ">=2.3.1"
 python-dateutil = ">=2.7"
 
 [[package]]
+name = "matplotx"
+version = "0.3.10"
+description = "Useful styles and extensions for Matplotlib"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "matplotx-0.3.10-py3-none-any.whl", hash = "sha256:4d7adafdb001c771d66d9362bb8ca99fcaed15319259223a714f36793dfabbb8"},
+    {file = "matplotx-0.3.10.tar.gz", hash = "sha256:b6926ce5274cf5da966cb46b90a8c7fefb761478c6c85c8f7ed3ee8ec90e86e5"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+numpy = ">=1.20.0"
+
+[package.extras]
+all = ["networkx", "pypng", "scipy"]
+contour = ["networkx"]
+spy = ["pypng", "scipy"]
+
+[[package]]
 name = "mdurl"
 version = "0.1.2"
 description = "Markdown URL utilities"
@@ -3456,4 +3476,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "42c35d6a718f94888d3809a6d21366bb7783a9eba43c52a81001cf66293483a8"
+content-hash = "011d4d8762efb81f31001a3ee8596b9706b4449fb7e71814f8bdb9d6d99396f4"
