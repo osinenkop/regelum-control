@@ -1049,9 +1049,7 @@ class CartPole(System):
         theta_acc = (
             (
                 g * sin_theta
-                - cos_theta
-                * (Force + m_p * l * theta_dot**2 * sin_theta)
-                / (m_c + m_p)
+                - cos_theta * (Force + m_p * l * theta_dot**2 * sin_theta) / (m_c + m_p)
             )
             / l
             / (4 / 3 - m_p * (cos_theta**2) / (m_c + m_p))

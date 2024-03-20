@@ -114,13 +114,17 @@ class CalfCallback(HistoricalCallback):
         self.add_datum(
             {
                 "time": regelum.main.metadata["time"],
-                "J_hat": current_CALF[0]
-                if isinstance(current_CALF, (np.ndarray, torch.Tensor))
-                else current_CALF.full()[0],
+                "J_hat": (
+                    current_CALF[0]
+                    if isinstance(current_CALF, (np.ndarray, torch.Tensor))
+                    else current_CALF.full()[0]
+                ),
                 "is_CALF": is_calf,
-                "delta": delta_CALF[0]
-                if isinstance(delta_CALF, (np.ndarray, torch.Tensor))
-                else delta_CALF.full()[0],
+                "delta": (
+                    delta_CALF[0]
+                    if isinstance(delta_CALF, (np.ndarray, torch.Tensor))
+                    else delta_CALF.full()[0]
+                ),
             }
         )
 
@@ -182,9 +186,11 @@ class CriticCallback(CalfCallback):
             self.add_datum(
                 {
                     "time": regelum.main.metadata["time"],
-                    "J": critic_val[0]
-                    if isinstance(critic_val, (np.ndarray, torch.Tensor))
-                    else critic_val.full()[0],
+                    "J": (
+                        critic_val[0]
+                        if isinstance(critic_val, (np.ndarray, torch.Tensor))
+                        else critic_val.full()[0]
+                    ),
                 }
             )
 

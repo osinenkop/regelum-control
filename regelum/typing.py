@@ -10,7 +10,6 @@ and CasADi matrix types, making it easier to develop reinforcement learning and 
 algorithms that can leverage the strengths of each of these libraries.
 """
 
-
 import torch
 import numpy as np
 import casadi as cs

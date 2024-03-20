@@ -11,6 +11,7 @@ This module contains the following key classes:
 - `ChainedHook`: A class representing a chain of hooks that can be applied to an `OptimizationVariable` one-by-one in a specific order.
 These entities are designed to work together to define and manipulate the variables and functions that form the basis of an optimization problem or change it at runtime.
 """
+
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Tuple, Union, Optional, Dict

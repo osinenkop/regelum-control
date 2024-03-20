@@ -99,9 +99,11 @@ class DataBuffer:
 
         return pd.DataFrame(
             {
-                k: np.array(self.data[k], dtype=_keys[k]).reshape(-1)
-                if self.data[k][0].size == 1
-                else self.data[k]
+                k: (
+                    np.array(self.data[k], dtype=_keys[k]).reshape(-1)
+                    if self.data[k][0].size == 1
+                    else self.data[k]
+                )
                 for k in _keys
             }
         )

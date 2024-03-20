@@ -11,8 +11,7 @@ class Observer(regelum.RegelumBase, ABC):
     """A class implementing observer."""
 
     @abstractmethod
-    def get_state_estimation(self):
-        ...
+    def get_state_estimation(self): ...
 
 
 class ObserverTrivial(Observer):

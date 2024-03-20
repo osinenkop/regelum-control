@@ -51,10 +51,10 @@ def CALF_decay_constraint_predicted_safe_policy(self, weights=None):
     self.safe_action = action = self.safe_scenario.compute_action(
         self.current_observation
     )
-    self.predicted_observation = (
-        predicted_observation
-    ) = self.predictor.system.get_observation(
-        time=None, state=self.predictor.predict(self.state, action), inputs=action
+    self.predicted_observation = predicted_observation = (
+        self.predictor.system.get_observation(
+            time=None, state=self.predictor.predict(self.state, action), inputs=action
+        )
     )
 
     self.critic_next = self.model(predicted_observation, weights=weights)

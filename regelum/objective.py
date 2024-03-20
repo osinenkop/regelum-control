@@ -359,9 +359,9 @@ def temporal_difference_objective_full(
                 td_n=td_n,
                 discount_factor=discount_factor,
                 sampling_time=sampling_time,
-                critic_targets=critic_targets[mask]
-                if critic_targets is not None
-                else None,
+                critic_targets=(
+                    critic_targets[mask] if critic_targets is not None else None
+                ),
             )
             / n_iterations
         )
