@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: black
         name: Auto-formatting (black)
-        entry: black --version & exit 1
+        entry: black ./regelum --check
         language: python
         types: [ python ]
         additional_dependencies: [ 'black' ]
