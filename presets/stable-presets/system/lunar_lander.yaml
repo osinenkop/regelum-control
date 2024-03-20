@@ -1,6 +1,7 @@
 _target_: regelum.system.LunarLanderReferenced
 
 
-# animations%%:
-#   - DirectionalPlanarMotionAnimation
+animations%%:
+  - LunarLanderAnimation
+  - ActionAnimation
 

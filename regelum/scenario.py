@@ -1057,7 +1057,7 @@ class MPC(RLScenario):
         system = simulator.system
         super().__init__(
             N_episodes=1,
-            N_iterations=5,
+            N_iterations=1,
             simulator=simulator,
             policy_optimization_event=Event.compute_action,
             critic=CriticTrivial(),

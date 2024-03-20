@@ -1,5 +1,7 @@
 _target_: $ system_specific.target
 
-# animations%%:
+animations%%:
 #   - BarAnimation
-#   - PendulumAnimation
+  - OmnirobotAnimation
+#  - ActionAnimation
+#  - StateAnimation

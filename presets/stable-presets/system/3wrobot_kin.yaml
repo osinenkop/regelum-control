@@ -1,6 +1,10 @@
 _target_: $ system_specific.target
 
 
-# animations%%:
-#  - BarAnimation
-#  - ThreeWheeledRobotAnimation
+animations%%:
+  #- BarAnimation
+  - ThreeWheeledRobotAnimation
+  - ActionAnimation
+  - StateAnimation
+  - ObjectiveAnimation
+

@@ -759,6 +759,8 @@ class main:
         self.parser.add_argument("--show-plots", action="store_true")
         self.parser.add_argument("--playback", action="store_true")
 
+        self.parser.add_argument("--fps", default=2.5)
+
         self.parser.add_argument("--cooldown-factor", default=1.0)
 
         self.parser.add_argument("--save-animation", action="store_true")
