@@ -72,6 +72,7 @@ from unittest.mock import MagicMock
 
 
 from rehydra import main as rehydramain
+from . import __internal
 from . import callback
 from regelum.__internal.base import RegelumBase
 from .__internal.metadata import Metadata
