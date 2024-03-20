@@ -130,9 +130,9 @@ else:
     os.environ["REGELUM_DATA_DIR"] = os.path.abspath(os.environ["REGELUM_DATA_DIR"])
 
 if "MLFLOW_TRACKING_URI" not in os.environ:
-    os.environ[
-        "MLFLOW_TRACKING_URI"
-    ] = f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
+    os.environ["MLFLOW_TRACKING_URI"] = (
+        f"file://{os.environ['REGELUM_DATA_DIR']}/mlruns"
+    )
 
 
 def hash_string(s):
@@ -149,14 +149,6 @@ def start(filepath):
         os.startfile(filepath)
     else:  # linux variants
         subprocess.run(["xdg-open", filepath], check=True)
-
-
-"""TODO:
-NEED COMMENT SECTION
-DOES THIS METHOD DO?
-"""
-
-from copy import deepcopy
 
 
 def __memorize_instance(resolver):
@@ -184,13 +176,6 @@ def __sub_map(pattern, f, s):
         return f(match.group())
 
     return re.sub(pattern, map_match, s)
-
-
-"""TODO:
-WHAT IS THIS?
-DESCRIBE WHAT IT IS AND WHAT IT DOES
-NEED COMMENT SECTION
-"""
 
 
 def obtain(obj_repr):

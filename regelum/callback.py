@@ -115,8 +115,13 @@ def trigger(CallbackClass):
 
 def is_interactive():
     import __main__ as main
+    import sys
 
-    return not hasattr(main, "__file__")
+    return (
+        (not hasattr(main, "__file__"))
+        and (not is_in_debug_mode())
+        and (not ("pytest" in sys.modules))
+    )
 
 
 class Callback(regelum.__internal.base.RegelumBase, ABC):
