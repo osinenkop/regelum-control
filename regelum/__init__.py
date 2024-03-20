@@ -141,15 +141,14 @@ def hash_string(s):
 
 import subprocess, os, platform
 
+
 def start(filepath):
-    if platform.system() == 'Darwin':       # macOS
-        subprocess.run(['open', filepath], check=True)
-    elif platform.system() == 'Windows':    # Windows
+    if platform.system() == "Darwin":  # macOS
+        subprocess.run(["open", filepath], check=True)
+    elif platform.system() == "Windows":  # Windows
         os.startfile(filepath)
-    else:                                   # linux variants
-        subprocess.run(['xdg-open', filepath], check=True)
-
-
+    else:  # linux variants
+        subprocess.run(["xdg-open", filepath], check=True)
 
 
 """TODO:
@@ -1011,8 +1010,10 @@ class main:
                         return res
                     else:
                         if argv.playback:
-                            filenames = glob.glob('.callbacks/**/*.html')
-                            n_animations = len(set([Path(filename).parent for filename in filenames]))
+                            filenames = glob.glob(".callbacks/**/*.html")
+                            n_animations = len(
+                                set([Path(filename).parent for filename in filenames])
+                            )
                             latest_files = sorted(filenames, key=os.path.getctime)
                             for filename in latest_files[-n_animations:]:
                                 start(filename)

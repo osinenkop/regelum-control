@@ -2,8 +2,7 @@
 
 # About
 
-`regelum` is a flexibly configurable framework for agent-enviroment simulation with a menu of predictive and safe
-reinforcement learning pipelines. It is made for researchers and engineers in reinforcement learning and control theory.
+`regelum` is a flexibly configurable framework for agent-enviroment simulation with a menu of implemented reinforcement learning and classic control methods. It is made for researchers and engineers in reinforcement learning and control theory.
 A detailed documentation is available [here](https://aidynamicaction.github.io/rcognita/).
 
 ## Example run with a mobile robot simulation

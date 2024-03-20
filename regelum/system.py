@@ -1007,7 +1007,12 @@ class CartPole(System):
     _dim_inputs = 1
     _dim_observation = 5
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
-    _observation_naming = _state_naming = ["angle [rad]", "x [m]", "angle_dot [rad/s]", "x_dot [m/s]"]
+    _observation_naming = _state_naming = [
+        "angle [rad]",
+        "x [m]",
+        "angle_dot [rad/s]",
+        "x_dot [m/s]",
+    ]
     _inputs_naming = ["force [kg*m/s^2]"]
     _action_bounds = [[-50.0, 50.0]]
 
@@ -1088,7 +1093,12 @@ class CartPolePG(CartPole):
     _dim_inputs = 1
     _dim_observation = 5
     _parameters = {"m_c": 0.1, "m_p": 2.0, "g": 9.81, "l": 0.5}
-    _observation_naming = _state_naming = ["angle [rad]", "x [m]", "angle_dot [rad/s]", "x_dot [m/s]"]
+    _observation_naming = _state_naming = [
+        "angle [rad]",
+        "x [m]",
+        "angle_dot [rad/s]",
+        "x_dot [m/s]",
+    ]
     _inputs_naming = ["force [kg*m/s^2]"]
     _action_bounds = [[-50.0, 50.0]]
     _dim_observation = 4
@@ -1133,7 +1143,10 @@ class TwoTank(System):
     _dim_inputs = 1
     _dim_observation = 2
     _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
-    _observation_naming = _state_naming = ["Top Tank Level [m]", "Bottom Tank Level [m]"]
+    _observation_naming = _state_naming = [
+        "Top Tank Level [m]",
+        "Bottom Tank Level [m]",
+    ]
     _inputs_naming = ["Pressure [Pa]"]
     _action_bounds = [[0.0, 1.0]]
 

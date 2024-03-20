@@ -759,7 +759,6 @@ class ObjectiveTracker(Callback):
         self.objective_naming = ["Value", "Running objective"]
 
 
-
 @trigger
 class ScoreTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
