@@ -511,7 +511,6 @@ class RLScenario(Scenario):
             if self.sim_status == "simulation_ended":
                 break
 
-
     def reset_iteration(self):
         super().reset_iteration()
         if self.stopping_criterion is not None:
@@ -766,7 +765,6 @@ class CALFScenario(RLScenario):
             ) / step_id
 
         return self.get_action_from_policy()
-
 
     def reset_iteration(self):
         super().reset_iteration()

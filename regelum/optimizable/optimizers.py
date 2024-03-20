@@ -86,7 +86,7 @@ class source_metadata_hook:
 class Optimizable(regelum.RegelumBase):
     """Base class for all optimizable objects.
 
-    This class is to be used normally as a parent class for all objects that need to be optimized.
+    This class is to be used normally as a parent class for all objects that incapsulate optimization routines.
     However, you can also use it as a separate instance and use all methods outside of the `Optimizable` class.
 
     Args:
@@ -1076,7 +1076,9 @@ class Optimizable(regelum.RegelumBase):
         """Instantiate the optimizer configuration for the optimization process.
 
         This method prepares the optimizer based on the decision variables and the optimization method specified.
-        It also validates the configuration and ensures that a single decision variable and a single objective are present (In the current verion we consider optimization problem ambiguous if there are multiple decision variables or multiple objectives).
+        It also validates the configuration and ensures that a single decision variable and a single objective are present
+        (In the current verion we consider optimization problem ambiguous if there are multiple decision variables or multiple objectives.
+        If you want to optimize on several variables alternately, use `fix_variables` and `unfix_variables` explicitly).
 
         Returns:
             A tuple containing the number of epochs to run and the
@@ -1274,6 +1276,9 @@ class Optimizable(regelum.RegelumBase):
         self.post_optimize()
 
     def define_problem(self):
+        """Implement this method if you want to separate an optimization problem definition
+        from the rest of your code. Needs only for readability.
+        """
         self.__is_problem_defined = True
 
     def get_data_buffer_batch_size(self):
