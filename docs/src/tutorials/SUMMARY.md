@@ -6,10 +6,8 @@
 * [Model Predictive Control](../notebooks/mpc.md)
 * [Optimizable](../notebooks/optimizable.md)
 * [Policy gradient](../notebooks/policy_gradient.md)
-* [Critic for ACPG](acpg.md)
-* [Animations](animations.md)
+* [Callbacks](../notebooks/callbacks.md)
 * [Configuring your experiment](config.md)
+* [Animations](animations.md)
 * [MLflow](mlflow.md)
-* [Best practices](best_practices.md)
-* [Something](../notebooks/a.md)
-* [Something2](../tex/template.md)
+
