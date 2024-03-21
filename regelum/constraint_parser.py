@@ -91,16 +91,13 @@ class ConstraintParser(RegelumBase, ABC):
         yield from self.constraint_parameters()
 
     @abstractmethod
-    def _parse_constraints(self, simulation_metadata):
-        ...
+    def _parse_constraints(self, simulation_metadata): ...
 
     @abstractmethod
-    def constraint_parameters(self):
-        ...
+    def constraint_parameters(self): ...
 
     @abstractmethod
-    def constraint_function(self, **kwargs):
-        ...
+    def constraint_function(self, **kwargs): ...
 
 
 class ConstraintParserTrivial(ConstraintParser):

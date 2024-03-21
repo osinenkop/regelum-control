@@ -72,6 +72,7 @@ from unittest.mock import MagicMock
 
 
 from rehydra import main as rehydramain
+from . import __internal
 from . import callback
 from regelum.__internal.base import RegelumBase
 from .__internal.metadata import Metadata
@@ -745,6 +746,8 @@ class main:
         self.parser.add_argument("--interactive", action="store_true")
         self.parser.add_argument("--show-plots", action="store_true")
         self.parser.add_argument("--playback", action="store_true")
+
+        self.parser.add_argument("--fps", default=2.5)
 
         self.parser.add_argument("--cooldown-factor", default=1.0)
 

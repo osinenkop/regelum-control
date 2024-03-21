@@ -105,7 +105,8 @@ class RegelumType(abc.ABCMeta):
                     for callback in non_animations:
                         callback.register(attachee=x, launch=True)
                     if animations:
-                        sum(animations).register(attachee=x, launch=True)
+                        composed = sum(animations) + None
+                        composed.register(attachee=x, launch=True)
                 self._callbacks_registered = True
                 return original_init(self, *args, **kwargs)
 

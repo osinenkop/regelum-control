@@ -43,10 +43,10 @@ plt.rcParams["animation.frame_format"] = "svg"  # VERY important
 import matplotlib.style as mplstyle
 
 plt.style.use(matplotx.styles.dracula)
-# plt.style.use('fast')
-# plt.rcParams['path.simplify'] = True
+#plt.style.use('fast')
+#plt.rcParams['path.simplify'] = True
 
-# plt.rcParams['path.simplify_threshold'] = 1.0
+#plt.rcParams['path.simplify_threshold'] = 1.0
 
 
 class AnimationCallback(callback.Callback, ABC):
@@ -58,6 +58,8 @@ class AnimationCallback(callback.Callback, ABC):
     def _compose(cls_left, cls_right):
         animations = []
         for cls in [cls_left, cls_right]:
+            if cls is None:
+                continue
             if issubclass(cls, ComposedAnimationCallback) and not issubclass(
                 cls, DeferredComposedAnimation
             ):
@@ -65,8 +67,10 @@ class AnimationCallback(callback.Callback, ABC):
                     cls is not ComposedAnimationCallback
                 ), "Adding a composed animation in this way is ambiguous."
                 animations += cls._animations
-            else:
+            elif issubclass(cls, AnimationCallback):
                 animations.append(cls)
+            else:
+                raise TypeError("An animation class can only be added with another animation class or None.")
 
         class Composed(ComposedAnimationCallback):
             _animations = animations
@@ -92,6 +96,7 @@ class AnimationCallback(callback.Callback, ABC):
             matplotlib.use("Agg")
             self.fig = Figure(figsize=(10, 10))
             canvas = FigureCanvas(self.fig)
+
 
             self.ax = canvas.figure.add_subplot(111)
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
@@ -134,9 +139,9 @@ class AnimationCallback(callback.Callback, ABC):
         if self.interactive_mode:
             self.lim(frame_idx=len(self.frame_data) - 1)
             self.construct_frame(**frame_datum)
-            # self.fig.canvas.draw()
-            # self.fig.canvas.flush_events()
-            # while self.fig.paused:
+            #self.fig.canvas.draw()
+            #self.fig.canvas.flush_events()
+            #while self.fig.paused:
             #    self.fig.canvas.flush_events()
 
     def __getstate__(self):
@@ -190,25 +195,19 @@ class AnimationCallback(callback.Callback, ABC):
                 'animate accepts an int, a float or "all", but instead a different value was provided.'
             )
         if not hasattr(self, "trajectory"):
-
             def animation_update(i):
                 j = int((i / frames) * len(self.frame_data) + 0.5)
                 self.lim(frame_idx=j)
                 return self.construct_frame(**self.frame_data[j])
-
         else:
             trajectory_xs = self.trajectory_xs
             trajectory_ys = self.trajectory_ys
-
             def animation_update(i):
                 j = int((i / frames) * len(self.frame_data) + 0.5)
                 self.lim(frame_idx=j)
-                return self.construct_frame(
-                    trajectory_xs=trajectory_xs[:j],
-                    trajectory_ys=trajectory_ys[:j],
-                    **self.frame_data[j],
-                )
-
+                return self.construct_frame(trajectory_xs=trajectory_xs[:j],
+                                            trajectory_ys=trajectory_ys[:j],
+                                            **self.frame_data[j])
         self.setup()
 
         anim = matplotlib.animation.FuncAnimation(
@@ -228,12 +227,6 @@ class AnimationCallback(callback.Callback, ABC):
         os.mkdir(self.get_save_directory())
 
     def animate_and_save(self, frames=None, name=None):
-        if (
-            not self._metadata["argv"].playback
-            and not self._metadata["argv"].save_animation
-        ):
-            return
-
         if name is None:
             name = str(self.saved_counter)
             self.saved_counter += 1
@@ -262,7 +255,7 @@ class AnimationCallback(callback.Callback, ABC):
         top = y_min + height + extra_margin
         return left, right, bottom, top
 
-    def lim(self, width=None, height=None, center=None, extra_margin=0.0):
+    def lim(self, width=None, height=None, center=None, extra_margin=0.0, **kwargs):
         if width is not None or height is not None:
             if center is None:
                 center = [0.0, 0.0]
@@ -290,28 +283,53 @@ class AnimationCallback(callback.Callback, ABC):
         iterations_total,
     ):
         self.counter = 0
-        self.animate_and_save(name=str(episode_number))
+        #self.animate_and_save(name=str(episode_number))
         self.reset()
+
+    def install_temp_axis(self, fig, ax, interactive=None):
+        self._old_ax = self.ax
+        self._old_fig = self.fig
+        self._old_interactive_mode = self.interactive_mode
+        self.fig = fig
+        self.ax = ax
+        if isinstance(self.ax, SubplotSpec):
+            self.ax = fig.add_subplot(self.ax)
+        if interactive is not None:
+            self.interactive_mode = interactive
+
+    def pop_axis(self):
+        self.fig = self._old_fig
+        self.ax = self._old_ax
+        self.interactive_mode = self._old_interactive_mode
+        del self._old_fig
+        del self._old_ax
+        del self._old_interactive_mode
+
+    @property
+    def latest_frame(self):
+        return self.frame_data[-1]
+
+    @property
+    def latest_frame_idx(self):
+        return len(self.frame_data) - 1
+
+
 
 
 class PausableFigure(Figure):
     def __init__(self, *args, log=print, **kwargs):
         super().__init__(*args, **kwargs)
         self.paused = False
-
         def on_press(event):
-            if event.key == " ":
+            if event.key == ' ':
                 self.paused = not self.paused
             log("Paused." if self.paused else "Resumed.")
-
-        self.canvas.mpl_connect("key_press_event", on_press)
+        self.canvas.mpl_connect('key_press_event', on_press)
 
 
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
-
-    cooldown = 0.1
-
+    cooldown = 0.4
     def __init__(
         self, *animations, fig=None, ax=None, mng=None, mode="square", **kwargs
     ):
@@ -324,32 +342,47 @@ class ComposedAnimationCallback(AnimationCallback):
         """
         callback.Callback.__init__(self, **kwargs)
 
+        self.cooldown = 1 / float(self._metadata["argv"].fps)
+
+        self.frame_data = []
+        self.frame_indices = []
+
+        self.interactive_mode = self._metadata["argv"].interactive
+
         self.paused = False
 
-        if fig is None:
-            self.fig = PausableFigure(log=self.log, figsize=(10, 10))
+
+        # canvas = FigureCanvas(self.fig)
+        if mode == "square":
+            self.width = int(len(animations) ** 0.5 + 0.5)
+            self.height = self.width - (self.width**2 - len(animations)) // self.width
+        if mode == "vstack":
+            self.width = 1
+            self.height = len(animations)
+        elif mode == "hstack":
+            self.height = 1
+            self.width = len(animations)
+        else:
+            assert mode in ["square", "vstack", "hstack"]
+
+
+        self.figsize = (self.height * 5, self.width * 5)
+
+        if fig is None and self.interactive_mode:
+            self.fig = PausableFigure(log=self.log, figsize=self.figsize)
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+        elif fig is None:
+            self.fig = Figure(figsize=self.figsize)
+            self.mng = None
         else:
             self.fig = fig
             self.mng = mng
 
-        # canvas = FigureCanvas(self.fig)
-        if mode == "square":
-            width = int(len(animations) ** 0.5 + 0.5)
-            height = width - (width**2 - len(animations)) // width
-        if mode == "vstack":
-            width = 1
-            height = len(animations)
-        elif mode == "hstack":
-            height = 1
-            width = len(animations)
-        else:
-            assert mode in ["square", "vstack", "hstack"]
 
         if ax is None:
-            gs = GridSpec(width, height, figure=self.fig)
+            gs = GridSpec(self.width, self.height, figure=self.fig)
         else:
-            gs = GridSpecFromSubplotSpec(width, height, subplot_spec=ax)
+            gs = GridSpecFromSubplotSpec(self.width, self.height, subplot_spec=ax)
 
         self.animations = []
         for i, animation in enumerate(animations):
@@ -361,36 +394,75 @@ class ComposedAnimationCallback(AnimationCallback):
 
         # self.animations = [Animation(interactive=False, fig=self.fig, ax=gs, **kwargs) for Animation in animations]
 
+        self.save_directory = Path(
+            f".callbacks/{self.__class__.__name__}"
+            + (f"@{self.attachee.__name__}" if self.attachee is not None else "")
+        ).resolve()
+
         for animation in self.animations:
             animation.interactive_mode = self._metadata["argv"].interactive
             animation.setup()
-        self.fig.show()
+        if self.interactive_mode:
+            self.fig.show()
+
+        self.ax = None
         # plt.show(block=True)
 
-    def on_function_call(self, obj, method, output):
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        while self.fig.paused:
-            self.fig.canvas.flush_events()
 
-    def construct_frame(self, **frame_datum):
-        raise AssertionError(
-            f"A {self.__class__.__name__} object is not meant to have its `construct_frame` method called."
-        )
+    @property
+    def latest_frame(self):
+        return [animation.latest_frame for animation in self.animations]
+
+    @property
+    def latest_frame_idx(self):
+        return [animation.latest_frame_idx for animation in self.animations]
+
+    def on_function_call(self, obj, method, output):
+        try:
+            self.frame_data.append(self.latest_frame)
+            self.frame_indices.append(self.latest_frame_idx)
+        except (IndexError, PrematureResolutionError):
+            pass
+        if self.interactive_mode:
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            while self.fig.paused:
+               self.fig.canvas.flush_events()
+
+    def construct_frame(self, *frame_data_of_animations):
+        actor_bundles = []
+        for animation, datum in zip(self.animations, frame_data_of_animations):
+            actor_bundle = animation.construct_frame(**datum) if not isinstance(animation, ComposedAnimationCallback) else animation.construct_frame(*datum)
+            actor_bundles.append(actor_bundle)
+        return [actor for actors in actor_bundles for actor in actors]
 
     def setup(self):
-        pass
+        for animation in self.animations:
+            animation.setup()
 
     def is_target_event(self, obj, method, output, triggers):
         return True
 
     def on_launch(self):
+        os.mkdir(self.get_save_directory())
         for animation in self.animations:
             animation.on_launch()
 
-    def on_episode_done(self, *args, **kwargs):
+    def on_episode_done(
+        self,
+        scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total,
+    ):
+        playback = self._metadata['argv'].playback and iteration_number == iterations_total and episode_number == episodes_total
+        save_animation = self._metadata['argv'].save_animation
+        if playback or save_animation:
+            self.animate_and_save(name=f"ep{episode_number}|{episodes_total},it{iteration_number}|{iterations_total}")
         for animation in self.animations:
-            animation.on_episode_done(*args, **kwargs)
+            animation.on_episode_done(scenario, episode_number, episodes_total, iteration_number, iterations_total)
+        self.frame_data = []
 
     def on_iteration_done(self, *args, **kwargs):
         for animation in self.animations:
@@ -405,10 +477,79 @@ class ComposedAnimationCallback(AnimationCallback):
         for animation in self.animations:
             animation(*args, **kwargs)
 
+    def lim(self, *args, frame_idx=None, **kwargs):
+        for animation, idx in zip(self.animations, frame_idx):
+            animation.lim(*args, frame_idx=idx, **kwargs)
+
+    def animate(self, frames=None):
+        plt.ioff()
+        fig = Figure(figsize=self.figsize)
+        canvas = FigureCanvas(fig)
+        gs = GridSpec(self.width, self.height, figure=self.fig)
+        self.install_temp_axis(fig, gs, interactive=False)
+        if frames is None:
+            frames = self.__class__._frames
+        if frames == "all":
+            frames = len(self.frame_data)
+        elif isinstance(frames, int):
+            frames = max(min(frames, len(self.frame_data)), 0)
+        elif isinstance(frames, float) and 0 <= frames <= 1:
+            frames = int(frames * len(self.frame_data))
+        else:
+            raise ValueError(
+                'animate accepts an int, a float or "all", but instead a different value was provided.'
+            )
+        if not hasattr(self, "trajectory"):
+            def animation_update(i):
+                j = int((i / frames) * len(self.frame_data) + 0.5)
+                self.lim(frame_idx=self.frame_indices[j])
+                return self.construct_frame(*self.frame_data[j])
+        else:
+            trajectory_xs = self.trajectory_xs
+            trajectory_ys = self.trajectory_ys
+            def animation_update(i):
+                j = int((i / frames) * len(self.frame_data) + 0.5)
+                self.lim(frame_idx=j)
+                return self.construct_frame(trajectory_xs=trajectory_xs[:j],
+                                            trajectory_ys=trajectory_ys[:j],
+                                            *self.frame_data[j])
+        self.setup()
+
+        anim = matplotlib.animation.FuncAnimation(
+            self.fig,
+            animation_update,
+            frames=frames,
+            interval=30,
+            blit=True,
+            repeat=False,
+        )
+        res = anim.to_jshtml()
+        plt.close(self.fig)
+
+        self.pop_axis()
+
+        return res
+
+    def install_temp_axis(self, fig, gs, interactive=None):
+        if self.ax is not None:
+            gs = GridSpecFromSubplotSpec(self.height, self.width, subplot_spec=gs)
+        self._old_fig = self.fig
+        self.fig = fig
+        for i, animation in enumerate(self.animations):
+            animation.install_temp_axis(fig, gs[i], interactive=interactive)
+
+    def pop_axis(self):
+        self.fig = self._old_fig
+        del self._old_fig
+        for animation in self.animations:
+            animation.pop_axis()
+
+
+class PrematureResolutionError(Exception):
+    pass
 
 class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
     cooldown = None
-
     def __init__(
         self, *animations, fig=None, ax=None, mode="vstack", mng=None, **kwargs
     ):
@@ -438,9 +579,22 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
         self._kwargs = kwargs
 
+        self.save_directory = Path(
+            f".callbacks/{self.__class__.__name__}"
+            + (f"@{self.attachee.__name__}" if self.attachee is not None else "")
+        ).resolve()
+
     def on_launch(self):
         if self.initialized:
             super().on_launch()
+
+    @property
+    def animations(self):
+        if self.initialized:
+            return self._animations
+        else:
+            raise PrematureResolutionError(f"Tried to access attribute 'animation' of class {self.__class__.__name__} before the instance initialized.")
+
 
     def on_function_call(self, obj, method, output):
         pass
@@ -464,25 +618,25 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
         """
 
         if self.mode == "square":
-            width = int(len(self._animation_classes) ** 0.5 + 0.5)
-            height = width - (width**2 - len(self._animation_classes)) // width
+            self.width = int(len(self._animation_classes) ** 0.5 + 0.5)
+            self.height = self.width - (self.width**2 - len(self._animation_classes)) // self.width
         if self.mode == "vstack":
-            width = 1
-            height = len(self._animation_classes)
+            self.width = 1
+            self.height = len(self._animation_classes)
         elif self.mode == "hstack":
-            height = 1
-            width = len(self._animation_classes)
+            self.height = 1
+            self.width = len(self._animation_classes)
         else:
             assert self.mode in ["square", "vstack", "hstack"]
 
         if self.ax is None:
-            self.gs = GridSpec(height, width, figure=self.fig)
+            self.gs = GridSpec(self.height, self.width, figure=self.fig)
         else:
-            self.gs = GridSpecFromSubplotSpec(height, width, subplot_spec=self.ax)
+            self.gs = GridSpecFromSubplotSpec(self.height, self.width, subplot_spec=self.ax)
 
-        self.animations = []
+        self._animations = []
         for i, animation in enumerate(self._animation_classes):
-            self.animations.append(
+            self._animations.append(
                 animation(
                     interactive=False,
                     fig=self.fig,
@@ -494,10 +648,10 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
         # self.animations = [Animation(interactive=False, fig=self.fig, ax=gs, **kwargs) for Animation in animations]
 
-        for animation in self.animations:
+        for animation in self._animations:
             animation.interactive_mode = self._metadata["argv"].interactive
             animation.setup()
-        self.fig.show()
+        #self.fig.show()
 
         self.initialized = True
         del self._animation_classes
@@ -509,6 +663,15 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
                 animation(*args, **kwargs)
         else:
             callback.Callback.__call__(self, *args, **kwargs)
+
+    def setup(self):
+        if self.initialized:
+            for animation in self.animations:
+                animation.setup()
+
+    def on_episode_done(self, *args, **kwargs):
+        for animation in self.animations:
+            animation.on_episode_done(*args, **kwargs)
 
 
 class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
@@ -596,7 +759,7 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
 class GraphAnimation(AnimationCallback):
     _legend = (None,)
     _vertices = 100
-    _line = "-"
+    _line = '-'
 
     def setup(self):
         self.lines = []
@@ -631,11 +794,16 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
     _legend = (None,)
 
     def setup(self):
+        if hasattr(self, "scores"):
+            return
         super().setup()
         self.ax.set_xlabel("Iteration")
         self.t = []
         self.y = []
         self.scores = []
+        self.add_frame(
+            line_datas=[(self.t, self.y)]
+        )
 
     def is_target_event(self, obj, method, output, triggers):
         return callback.ScoreTracker in triggers
@@ -652,11 +820,12 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
         iterations_total,
     ):
         self.ax.set_ylabel("Score")
-        self.t.append(len(self.t))
-        self.y.append(np.mean(self.scores))
-        self.add_frame(
-            line_datas=[(self.t, self.y)]
-        )  # these slices are there to avoid residual time bug
+        if self.scores:
+            self.t.append(iteration_number)
+            self.y.append(np.mean(self.scores))
+            self.add_frame(
+                line_datas=[(self.t, self.y)]
+            )  # these slices are there to avoid residual time bug
         self.scores = []
 
     def on_episode_done(
@@ -668,6 +837,7 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
         iterations_total,
     ):
         pass
+
 
 
 class StateComponentAnimation(
@@ -734,7 +904,7 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
     GraphAnimation, callback.ActionTracker, callback.TimeTracker
 ):
     _legend = (None,)
-    _line = "g-"
+    _line = 'g-'
 
     def __init__(self, *args, component=0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -765,7 +935,7 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
     GraphAnimation, callback.ObjectiveTracker, callback.TimeTracker
 ):
     _legend = (None,)
-    _line = "r-"
+    _line = 'r-'
 
     def __init__(self, *args, component=0, **kwargs):
         super().__init__(*args, **kwargs)
@@ -798,14 +968,13 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
     _pics = None  # must be svgs located in regelum/img
     _marker_sizes = 30
     _rotations = 0
+    _center_vert = False
 
     def setup(self):
         self.trajectory_xs = []
         self.trajectory_ys = []
         (self.trajectory,) = self.ax.plot(self.trajectory_xs, self.trajectory_ys, "--")
-        self.paths = [
-            regelum.__file__.replace("__init__.py", f"img/{pic}") for pic in self._pics
-        ]
+        self.paths = [regelum.__file__.replace("__init__.py", f"img/{pic}") for pic in self._pics]
         self.markers = []
         self.sprites = []
         self.pic_datas = []
@@ -823,9 +992,11 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
             pic_data, attribute = svg2paths(path)
             parsed = parse_path(attribute[0]["d"])
             parsed.vertices[:, 0] -= parsed.vertices[:, 0].mean(axis=0)
+            if self._center_vert:
+                parsed.vertices[:, 1] -= parsed.vertices[:, 1].mean(axis=0)
             marker = matplotlib.markers.MarkerStyle(marker=parsed)
             marker._transform = marker.get_transform().rotate_deg(rotation)
-            (sprite,) = self.ax.plot(0, 1, marker=marker, ms=size)
+            sprite, = self.ax.plot(0, 1, marker=marker, ms=size)
             original_transform = marker.get_transform()
             self.markers.append(marker)
             self.sprites.append(sprite)
@@ -833,10 +1004,8 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
             self.attributes.append(attribute)
             self.original_transforms.append(original_transform)
 
-    def increment_trajectory(self, x0, y0, trajectory_xs, trajectory_ys, **kwargs):
-        trajectory_xs.append(x0)
-        trajectory_ys.append(y0)
-        self.trajectory.set_data(trajectory_xs, trajectory_ys)
+    def increment_trajectory(self, x0=None, y0=None, **frame_datum):
+        return x0, y0
 
     def lim(self, *args, extra_margin=0.11, **kwargs):
         x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
@@ -844,22 +1013,23 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
-    def construct_frame(self, **kwargs):
-        if "trajectory_xs" not in kwargs:
-            kwargs["trajectory_xs"] = self.trajectory_xs
-            kwargs["trajectory_ys"] = self.trajectory_ys
-        self.increment_trajectory(**kwargs)
+    def add_frame(self, **frame_datum):
+        traj_x, traj_y = self.increment_trajectory(**frame_datum)
+        self.trajectory_xs.append(traj_x)
+        self.trajectory_ys.append(traj_y)
+        frame_datum["trajectory_data"] = (list(self.trajectory_xs), list(self.trajectory_ys))
+        return super().add_frame(**frame_datum)
+
+    def construct_frame(self, trajectory_data=None, **kwargs):
+        self.trajectory.set_data(*trajectory_data)
         for i in range(len(self.paths)):
             x, y, theta = kwargs[f"x{i}"], kwargs[f"y{i}"], kwargs[f"theta{i}"]
             self.sprites[i].set_data([x], [y])
-            self.markers[i]._transform = Affine2D(
-                self.original_transforms[i]._mtx.copy()
-            )
-            self.markers[i]._transform = (
-                self.markers[i].get_transform().rotate_deg(180 * theta / np.pi)
+            self.markers[i]._transform = Affine2D(self.original_transforms[i]._mtx.copy())
+            self.markers[i]._transform = self.markers[i].get_transform().rotate_deg(
+                180 * theta / np.pi
             )
         return self.sprites
-
 
 class PlanarBodiesAnimation(MultiSpriteAnimation, callback.StateTracker):
     """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
@@ -868,182 +1038,85 @@ class PlanarBodiesAnimation(MultiSpriteAnimation, callback.StateTracker):
         super().setup()
         self.ax.set_xlabel("x")
         self.ax.set_ylabel("y")
-        self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
+        #self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
 
     def on_trigger(self, _):
         self.add_frame(
-            x0=self.system_state[0],
-            y0=self.system_state[1],
-            theta0=self.system_state[2],
+            x0=self.system_state[0], y0=self.system_state[1], theta0=self.system_state[2]
         )
-
 
 class CartpoleAnimation(PlanarBodiesAnimation):
     """Animates dynamics of Lunar Lander that can be viewed as a triangle moving on a plane."""
-
     _pics = ["cart.svg", "pendulum.svg"]
     _marker_sizes = [60, 100]
 
     def lim(self, *args, frame_idx=None, extra_margin=0.11, **kwargs):
         x = self.frame_data[frame_idx]["x0"]
-        left, right, bottom, top = self.lim_from_reference(
-            np.array([x - 2, x + 2]), np.array([-1, 3]), extra_margin, equal=True
-        )
+        left, right, bottom, top = self.lim_from_reference(np.array([x - 2, x + 2]), np.array([-1, 3]), extra_margin, equal=True)
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
-    def increment_trajectory(self, x0, theta1, trajectory_xs, trajectory_ys, **kwargs):
-        trajectory_xs.append(x0 + np.cos(theta1 + np.pi / 2))
-        trajectory_ys.append(np.sin(theta1 + np.pi / 2))
-        self.trajectory.set_data(trajectory_xs, trajectory_ys)
+    def increment_trajectory(self, x0, theta1, **kwargs):
+        return x0 + np.cos(theta1 + np.pi / 2), np.sin(theta1 + np.pi / 2)
 
     def setup(self):
         super().setup()
         self.ax.set_xlabel("x [m]")
         self.ax.set_ylabel("")
         self.ax.get_yaxis().set_visible(False)
-        self.ax.set_aspect("equal", adjustable="box")
-        (self.ground,) = self.ax.plot([-100000, 100000], [0, 0], "r", ms=10, zorder=-1)
-        (self.target,) = self.ax.plot([0], [0], "g", ms=35, marker="o", zorder=-1)
-        self.target_text = self.ax.text(
-            0,
-            0,
-            "Target",
-            horizontalalignment="center",
-            verticalalignment="center",
-            zorder=-1,
-        )
+        self.ax.set_aspect('equal', adjustable='box')
+        self.ground, = self.ax.plot([-100000, 100000], [0, 0], 'r', ms=10, zorder=-1)
+        self.target, = self.ax.plot([0], [0], 'g', ms=35, marker='o', zorder=-1)
+        self.target_text = self.ax.text(0, 0, "Target", horizontalalignment='center', verticalalignment='center', zorder=-1)
+
 
     def on_trigger(self, _):
         self.add_frame(
-            x0=self.system_state[1],
-            y0=0,
-            theta0=0,
-            x1=self.system_state[1],
-            y1=0,
-            theta1=self.system_state[0],
+            x0=self.system_state[1], y0=0, theta0=0, x1=self.system_state[1], y1=0, theta1=self.system_state[0]
         )
 
-
-class TriangleAnimation(AnimationCallback, ABC):
-    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
-
-    _pic = None  # must be an svg located in regelum/img
-    _ms = 30
-    _rot = 0
-    _center_vert = False
-
-    def setup(self):
-        self.trajectory_xs = []
-        self.trajectory_ys = []
-        (self.trajectory,) = self.ax.plot(self.trajectory_xs, self.trajectory_ys, "--")
-        if self._pic is None:
-            return self.setup_points()
-        else:
-            return self.setup_pic()
-
-    def setup_points(self):
-        (point1,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        (point2,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        (point3,) = self.ax.plot(0, 1, marker="o", label="location", ms=30)
-        self.points = (point1, point2, point3)
-        self.ax.grid()
-
-    def setup_pic(self):
-        self.path = regelum.__file__.replace("__init__.py", f"img/{self._pic}")
-        self.pic_data, self.attributes = svg2paths(self.path)
-        parsed = parse_path(self.attributes[0]["d"])
-        parsed.vertices[:, 0] -= parsed.vertices[:, 0].mean(axis=0)
-        if self._center_vert:
-            parsed.vertices[:, 1] -= parsed.vertices[:, 1].mean(axis=0)
-        self.marker = matplotlib.markers.MarkerStyle(marker=parsed)
-        self.marker._transform = self.marker.get_transform().rotate_deg(self._rot)
-        (self.triangle,) = self.ax.plot(0, 1, marker=self.marker, ms=self._ms)
-        self.original_transform = self.marker.get_transform()
-
-    def lim(self, *args, extra_margin=0.11, **kwargs):
-        x, y = np.array([list(datum.values()) for datum in self.frame_data]).T[:2]
-        left, right, bottom, top = self.lim_from_reference(x, y, extra_margin)
-        self.ax.set_xlim(left, right)
-        self.ax.set_ylim(bottom, top)
-
-    def increment_trajectory(self, x, y, theta):
-        self.trajectory_xs.append(x)
-        self.trajectory_ys.append(y)
-        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
-
-    def construct_frame(self, x, y, theta):
-        self.increment_trajectory(x, y, theta)
-        if self._pic is None:
-            return self.construct_frame_points(x, y, theta), self.trajectory
-        else:
-            return self.construct_frame_pic(x, y, theta), self.trajectory
-
-    def construct_frame_points(self, x, y, theta):
-        offsets = (
-            np.array(
-                [
-                    [
-                        np.cos(theta + i * 2 * np.pi / 3),
-                        np.sin(theta + i * 2 * np.pi / 3),
-                    ]
-                    for i in range(3)
-                ]
-            )
-            / 10
-        )
-        location = np.array([x, y])
-        for point, offset in zip(self.points, offsets):
-            x, y = location + offset
-            point.set_data([x], [y])
-        return self.points
-
-    def construct_frame_pic(self, x, y, theta):
-        self.triangle.set_data([x], [y])
-        self.marker._transform = Affine2D(self.original_transform._mtx.copy())
-        self.marker._transform = self.marker.get_transform().rotate_deg(
-            180 * theta / np.pi
-        )
-        return self.triangle
-
-
-class DirectionalPlanarMotionAnimation(TriangleAnimation, callback.StateTracker):
+class SingleBodyAnimation(PlanarBodiesAnimation):
     """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+    _pic = "default.svg"
+    _marker_size = None
+    _rotation = None
 
     def setup(self):
+        self._pics = [self._pic]
+        if self._marker_size is not None:
+            self._marker_sizes = [self._marker_size]
+        if self._rotation is not None:
+            self._rotations = [self._rotation]
         super().setup()
-        self.ax.set_xlabel("x")
-        self.ax.set_ylabel("y")
-        self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
 
-    def on_trigger(self, _):
-        self.add_frame(
-            x=self.system_state[0], y=self.system_state[1], theta=self.system_state[2]
-        )
+    def add_frame(self, **frame_datum):
+        if "x" in frame_datum:
+            frame_datum["x0"] = frame_datum["x"]
+        if "y" in frame_datum:
+            frame_datum["y0"] = frame_datum["y"]
+        if "theta" in frame_datum:
+            frame_datum["theta0"] = frame_datum["theta"]
+        super().add_frame(**frame_datum)
 
 
-class LunarLanderAnimation(DirectionalPlanarMotionAnimation):
+
+class LunarLanderAnimation(SingleBodyAnimation):
     """Animates dynamics of Lunar Lander that can be viewed as a triangle moving on a plane."""
-
     _pic = "lunar_lander.svg"
-    _ms = 30
+    _marker_size = 30
     _center_vert = True
 
     def lim(self, *args, frame_idx=None, extra_margin=0.11, **kwargs):
         x = self.frame_data[frame_idx]["x"]
-        left, right, bottom, top = self.lim_from_reference(
-            np.array([x - 2, x + 2]), np.array([0, 5]), extra_margin, equal=False
-        )
+        left, right, bottom, top = self.lim_from_reference(np.array([x - 2, x + 2]), np.array([0, 5]), extra_margin, equal=False)
         self.ax.set_xlim(left, right)
         self.ax.set_ylim(bottom, top)
 
     def setup(self):
         super().setup()
-        (self.ground,) = self.ax.plot([-100000, 100000], [0, 0], "r", ms=10)
-        (self.target,) = self.ax.plot([0], [0], "g", ms=35, marker="o")
-        self.target_text = self.ax.text(
-            0, 0, "Target", horizontalalignment="center", verticalalignment="center"
-        )
+        self.ground, = self.ax.plot([-100000, 100000], [0, 0], 'r', ms=10)
+        self.target, = self.ax.plot([0], [0], 'g', ms=35, marker='o')
+        self.target_text = self.ax.text(0, 0, "Target", horizontalalignment='center', verticalalignment='center')
 
     def on_trigger(self, _):
         self.add_frame(
@@ -1051,33 +1124,36 @@ class LunarLanderAnimation(DirectionalPlanarMotionAnimation):
         )
 
 
-class OmnirobotAnimation(DirectionalPlanarMotionAnimation):
+class OmnirobotAnimation(SingleBodyAnimation):
     _pic = "omnirobot.svg"
-    _ms = 30
+    _marker_size = 30
     _center_vert = True
 
     def on_trigger(self, _):
-        self.add_frame(x=self.system_state[0], y=self.system_state[1], theta=0)
+        self.add_frame(
+            x=self.system_state[0], y=self.system_state[1], theta=0
+        )
 
     def lim(self, *args, **kwargs):
         self.ax.set_xlim(-15, 15)
         self.ax.set_ylim(-15, 15)
 
 
-class PendulumAnimation(DirectionalPlanarMotionAnimation):
+class PendulumAnimation(SingleBodyAnimation):
     """Animates the head of a swinging pendulum.
 
     Interprets the first state coordinate as the angle of the pendulum with respect to the topmost position.
     """
 
     _pic = "pendulum.svg"
-    _ms = 250
+    _marker_size = 250
+
 
     def setup(self):
         super().setup()
         self.ax.get_yaxis().set_visible(False)
         self.ax.get_xaxis().set_visible(False)
-        self.ax.set_aspect("equal", adjustable="box")
+        self.ax.set_aspect('equal', adjustable='box')
         (self.trajectory,) = self.ax.plot(
             self.trajectory_xs, self.trajectory_ys, "--", alpha=0.6
         )
@@ -1085,22 +1161,20 @@ class PendulumAnimation(DirectionalPlanarMotionAnimation):
     def on_trigger(self, _):
         self.add_frame(x=0, y=0, theta=self.system_state[0])
 
-    def increment_trajectory(self, x, y, theta):
-        self.trajectory_xs.append(np.cos(theta + np.pi / 2) * 0.9)
-        self.trajectory_ys.append(np.sin(theta + np.pi / 2) * 0.9)
-        self.trajectory.set_data(self.trajectory_xs, self.trajectory_ys)
+    def increment_trajectory(self, x, y, theta, **kwargs):
+        return np.cos(theta + np.pi / 2) * 0.9, np.sin(theta + np.pi / 2) * 0.9
 
     def lim(self, *args, **kwargs):
         self.ax.set_xlim(-1, 1)
         self.ax.set_ylim(-1, 1)
 
 
-class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):
+class ThreeWheeledRobotAnimation(SingleBodyAnimation):
     """Animates the position of a differential platform."""
 
     _pic = "3wrobot.svg"
-    _rot = 225
-    # _ms = 250
+    _rotation = 225
+    # _marker_size = 250
     # _frames = 500
 
     def lim(self, *args, **kwargs):
@@ -1110,7 +1184,6 @@ class ThreeWheeledRobotAnimation(DirectionalPlanarMotionAnimation):
 
 class BarAnimation(AnimationCallback, callback.StateTracker):
     """Animates the state of a system as a collection of vertical bars."""
-
     _naming = None
 
     def setup(self):
@@ -1127,5 +1200,10 @@ class BarAnimation(AnimationCallback, callback.StateTracker):
     def on_trigger(self, _):
         self.add_frame(state=self.system_state)
 
-    def lim(self):
+    def lim(self, *args, **kwargs):
         pass
+
+
+DefaultAnimation = StateAnimation + ActionAnimation + ScoreAnimation
+
+

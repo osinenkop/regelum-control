@@ -128,8 +128,7 @@ class Simulator(regelum.RegelumBase, ABC):
     def get_sim_step_data(self):
         return self.time, self.state, self.observation, self.get_simulation_metadata()
 
-    def get_simulation_metadata(self):
-        ...
+    def get_simulation_metadata(self): ...
 
     def reset(self):
         if self.system.system_type == "diff_eqn":

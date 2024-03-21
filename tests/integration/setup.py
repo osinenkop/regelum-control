@@ -46,9 +46,9 @@ class TestSetup:
         for param in self.params:
             sys.argv.insert(1, f"{param}={self.params[param]}")
         self._pre_setup()
-        os.environ[
-            "REGELUM_RECENT_TEST_INFO"
-        ] = f"Command line arguments: {' '.join(sys.argv[1:])}\nConfig: {os.path.abspath(self.config_path)}/{self.config_name}.yaml"
+        os.environ["REGELUM_RECENT_TEST_INFO"] = (
+            f"Command line arguments: {' '.join(sys.argv[1:])}\nConfig: {os.path.abspath(self.config_path)}/{self.config_name}.yaml"
+        )
         return {"config_path": self.config_path, "config_name": self.config_name}
 
     def __str__(self):

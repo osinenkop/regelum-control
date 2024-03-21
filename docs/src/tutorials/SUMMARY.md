@@ -7,6 +7,7 @@
 * [Optimizable](../notebooks/optimizable.md)
 * [Policy gradient](../notebooks/policy_gradient.md)
 * [Critic for ACPG](acpg.md)
+* [Animations](animations.md)
 * [Configuring your experiment](config.md)
 * [MLflow](mlflow.md)
 * [Best practices](best_practices.md)

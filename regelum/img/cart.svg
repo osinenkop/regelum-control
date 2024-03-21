@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:export-filename="pendulum.svg"
+   inkscape:export-xdpi="104.17188"
+   inkscape:export-ydpi="104.17188"
+   sodipodi:docname="cart.svg"
+   inkscape:version="1.2.2 (1:1.2.2+202212051550+b0a8486541)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="0.77949635"
+     inkscape:cx="69.916941"
+     inkscape:cy="254.01017"
+     inkscape:window-width="1080"
+     inkscape:window-height="1883"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid555" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="rect480"
+       style="opacity:1;fill:#80e5ff;stroke-width:11.313"
+       d="m 74.006088,-19.971956 h 54.309882 c 4.97512,0 8.98036,2.897219 8.98036,6.496006 v 27.267731 c 0,3.598783 -4.00524,6.495998 -8.98036,6.495998 H 74.006088 c -4.975123,0 -8.980366,-2.897215 -8.980366,-6.495998 V -13.47595 c 0,-3.598787 4.005243,-6.496006 8.980366,-6.496006 z" />
+  </g>
+</svg>
