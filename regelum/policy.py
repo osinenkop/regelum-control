@@ -16,7 +16,6 @@ Remarks:
 
 """
 
-
 import numpy as np
 from abc import ABC, abstractmethod
 from typing import Union, Optional
@@ -575,6 +574,7 @@ class PolicySDPG(PolicyGradient):
             discount_factor: Discount factor used to compute the present value of future running objectives.
             device: The computation device ('cpu' or 'cuda') to execute the optimization process.
             is_normalize_advantages: Whether to normalize the advantages.
+            gae_lambda: Factor for trade-off of bias vs variance for Generalized Advantage Estimator
         """
         PolicyGradient.__init__(
             self,

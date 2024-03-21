@@ -46,6 +46,16 @@ def force_positive_def(func):
 
 
 def unversal_model_call(obj, *argin, weights=None, use_stored_weights=False):
+    """_summary_
+
+    Args:
+        obj: an object from which the function is called
+        weights: if passed, the model will try to perform forward with passed weights. Defaults to None.
+        use_stored_weights: If True, computes forward using cached model (for Torch always with detached weights). Defaults to False.
+
+    Returns:
+        An array or scalar, depends on the model definition
+    """
     if len(argin) == 2:
         left, right = argin
         if len(left.shape) != len(right.shape):
@@ -503,7 +513,7 @@ class ModelPerceptron(ModelNN):
                 function for the output layer. (Optional, defaults to
                 None)
             force_positive_def (bool): Whether to force perceptron to be
-                positive definite (if True softabs is used). (Optional,
+                positive definite (if True rg.softabs is applied to output). (Optional,
                 defaults to False)
             is_force_infinitesimal (bool): Whether to force perceptron
                 to be equal to 0 with zero input. (Optional, defaults to
@@ -627,7 +637,7 @@ class ModelWeightContainerTorch(ModelNN):
 
     When using output bounds, the `output_bounding_type` parameter determines how the output is bounded:
     - If `output_bounding_type` is set to "clip", the output is clipped to the specified bounds.
-    - If `output_bounding_type` is set to "tanh", the output is scaled using the hyperbolic tangent function to fit within the specified bounds.
+    - If `output_bounding_type` is set to "tanh", the output is scaled using the hyperbolic tangent function to fit within the specified bounds. (same as squash_output in stable baselines)
     """
 
     def __init__(

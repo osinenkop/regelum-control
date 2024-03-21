@@ -76,6 +76,8 @@ class Critic(Optimizable, ABC):
                 or off policy optimized, defaults to False
             optimizer_config (Optional[OptimizerConfig], optional):
                 optimizer configuration, defaults to None
+            regularization_param (bool): L2 penalty for weights displacement
+            when symbolic optimization engine is used.
             action_bounds (Optional[Union[List, np.array]], optional):
                 action bounds. Needed for DQN algorithm for constraint
                 optimization problem, defaults to None
