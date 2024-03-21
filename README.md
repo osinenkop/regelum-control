@@ -2,7 +2,7 @@
 
 # About
 
-Regelum stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory.
+`Regelum-control` stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory.
 
 A detailed documentation is available [here](https://regelum.aidynamic.io/).
 
@@ -32,10 +32,10 @@ making the configuration of your RL and Optimal Control tasks more accessible an
 -  __Fine-tune your models to perfection__ and achieve peak performance with minimal effort. 
 By integrating with Hydra, regelum inherently adopts Hydra's powerful hyperparameter tuning capability.
 
-# Run in terminal:
+# Install regelum-control with pip
 
-```
-pip3 install regelum-control
+```bash
+pip install regelum-control
 ```
 
 # Licence
