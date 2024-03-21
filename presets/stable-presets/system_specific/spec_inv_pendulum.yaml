@@ -1,8 +1,8 @@
 name: inv_pendulum
 target: regelum.system.InvertedPendulum
 observer: = regelum.observer.ObserverTrivial()
-dim_observation: = ${.target}().dim_observation
-dim_action: = ${.target}().dim_inputs
+dim_observation: = ${.target}._dim_observation
+dim_action: = ${.target}._dim_inputs
 
 time_final: 10.
 sampling_time: 0.01

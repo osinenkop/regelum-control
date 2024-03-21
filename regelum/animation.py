@@ -424,7 +424,7 @@ class ComposedAnimationCallback(AnimationCallback):
         try:
             self.frame_data.append(self.latest_frame)
             self.frame_indices.append(self.latest_frame_idx)
-        except IndexError:
+        except (IndexError, PrematureResolutionError):
             pass
         if self.interactive_mode:
             self.fig.canvas.draw()
@@ -545,6 +545,9 @@ class ComposedAnimationCallback(AnimationCallback):
             animation.pop_axis()
 
 
+class PrematureResolutionError(Exception):
+    pass
+
 class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
     cooldown = None
     def __init__(
@@ -585,6 +588,14 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
         if self.initialized:
             super().on_launch()
 
+    @property
+    def animations(self):
+        if self.initialized:
+            return self._animations
+        else:
+            raise PrematureResolutionError(f"Tried to access attribute 'animation' of class {self.__class__.__name__} before the instance initialized.")
+
+
     def on_function_call(self, obj, method, output):
         pass
 
@@ -623,9 +634,9 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
         else:
             self.gs = GridSpecFromSubplotSpec(self.height, self.width, subplot_spec=self.ax)
 
-        self.animations = []
+        self._animations = []
         for i, animation in enumerate(self._animation_classes):
-            self.animations.append(
+            self._animations.append(
                 animation(
                     interactive=False,
                     fig=self.fig,
@@ -637,7 +648,7 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
         # self.animations = [Animation(interactive=False, fig=self.fig, ax=gs, **kwargs) for Animation in animations]
 
-        for animation in self.animations:
+        for animation in self._animations:
             animation.interactive_mode = self._metadata["argv"].interactive
             animation.setup()
         #self.fig.show()
@@ -1188,4 +1199,8 @@ class BarAnimation(AnimationCallback, callback.StateTracker):
 
     def lim(self, *args, **kwargs):
         pass
+
+
+DefaultAnimation = StateAnimation + ActionAnimation + ScoreAnimation
+
 

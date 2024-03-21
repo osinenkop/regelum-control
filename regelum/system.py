@@ -13,6 +13,7 @@ import torch
 import regelum
 from abc import ABC, abstractmethod
 
+from . import callback
 # from . import animation
 from .utils import rg
 from typing import Any, Optional, Union, List, Dict, Tuple
@@ -675,6 +676,7 @@ class ComposedSystem(SystemInterface):
 
 
 # @animation.StateAnimation.attach
+@callback.DefaultAnimation.attach
 class System(SystemInterface):
     """Class representing a controllable system with predefined dynamics and observations.
 
@@ -803,7 +805,7 @@ class System(SystemInterface):
         """
         return self.compose(sys_right)
 
-
+@callback.OmnirobotAnimation.attach
 class KinematicPoint(System):
     """System representing a simple 2D kinematic point (see [here](../systems/kin_point.md) for details)."""
 
@@ -840,7 +842,7 @@ class KinematicPoint(System):
 
         return Dstate
 
-
+@callback.PendulumAnimation.attach
 class InvertedPendulum(System):
     """System representing an [inverted pendulum](../systems/inv_pendulum.md), with state representing angle and angular velocity."""
 
@@ -875,7 +877,7 @@ class InvertedPendulum(System):
 
         return Dstate
 
-
+@callback.ThreeWheeledRobotAnimation.attach
 class ThreeWheeledRobotKinematic(System):
     r"""Implements the [kinematic three-wheeled robot](../systems/3wrobot_kin.md) (a.k.a. Brockett integrator)."""
 
@@ -909,7 +911,7 @@ class ThreeWheeledRobotKinematic(System):
 
         return Dstate
 
-
+@callback.ThreeWheeledRobotAnimation.attach
 class ThreeWheeledRobotDynamic(System):
     r"""Implements [dynamic three-wheeled robot](../systems/3wrobot_dyn.md)."""
 
@@ -997,7 +999,7 @@ class Integrator(System):
 
         return Dstate
 
-
+@callback.CartpoleAnimation.attach
 class CartPole(System):
     """[Cart pole system](../systems/cartpole.md) without friction."""
 
@@ -1119,6 +1121,7 @@ class CartPolePG(CartPole):
         # return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), x, theta_dot, x_dot])
 
 
+@callback.BarAnimation.attach
 class TwoTank(System):
     """This module simulates a [Two-Tank System](../systems/2tank.md).
 
@@ -1190,7 +1193,7 @@ class TwoTank(System):
 
         return Dstate
 
-
+@callback.LunarLanderAnimation.attach
 class LunarLander(System):
     """[Lunar lander system](../systems/lunar_lander.md).
 

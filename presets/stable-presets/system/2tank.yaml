@@ -1,7 +1,2 @@
 _target_: regelum.system.TwoTankReferenced
 
-animations%%:
-  - BarAnimation
-  - ActionAnimation
-  - ScoreAnimation
-  - StateAnimation

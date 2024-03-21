@@ -1,7 +1,3 @@
 _target_: regelum.system.LunarLanderReferenced
 
 
-animations%%:
-  - LunarLanderAnimation
-  - ActionAnimation
-

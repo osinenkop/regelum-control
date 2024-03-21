@@ -69,7 +69,7 @@ def detach(Attachee):
 
     class Detachee(Attachee):
         _attached = []
-        _real_name = Attachee._real_name
+        _real_name = Attachee.__name__
 
     return Detachee
 
