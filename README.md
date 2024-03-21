@@ -2,21 +2,40 @@
 
 # About
 
-`regelum` is a flexibly configurable framework for agent-enviroment simulation with a menu of implemented reinforcement learning and classic control methods. It is made for researchers and engineers in reinforcement learning and control theory.
-A detailed documentation is available [here](https://aidynamicaction.github.io/rcognita/).
+Regelum stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory.
 
-## Example run with a mobile robot simulation
+A detailed documentation is available [here](https://regelum.aidynamic.io/).
 
-![image](https://raw.githubusercontent.com/AIDynamicAction/rcognita/d0c7d1173b51e0ed5df044cf1fb1c92eca53d819/gfx/demo/3wheel_robot_exm_run.gif)
+# Features
 
-# Installation
+:octicons-cpu-16: __Run pre-configured regelum algorithms with ease__. Regelum offers a set of implemented, [ready-to-use algorithms](#) in the domain of RL and Optimal Control. 
+It provides flexibility through multiple optimization backends, including CasADi and PyTorch, to accommodate various computational needs.
 
-## Basic
+:material-robot-industrial: __Stabilize your dynamical system with Regelum__. Regelum stands as a framework 
+designed to address optimal control and reinforcement learning (RL) 
+tasks within continuous-time dynamical systems. 
+It comes equipped with an array of default systems accessible [here](#), 
+alongside a detailed tutorial that provides clear instructions 
+for users to instantiate their own environments.
 
-Run in terminal:
+:simple-mlflow: __Manage your experiment data__. Regelum seamlessly captures
+every detail of your experiment with little to no configuration required. 
+From parameters to performance metrics, every datum is recorded. Through integration with [MLflow](https://mlflow.org/), 
+Regelum streamlines tracking, comparison and real-time monitoring of metrics.
+
+:fontawesome-solid-repeat: __Reproduce your experiments with ease__. Commit hashes and diffs for every experiment are also stored in Regelum, 
+offering the ability to reproduce your experiments at any time with simple terminal commands.
+
+:material-wrench-outline: __Configure your experiments efficiently__. Our [Hydra](https://hydra.cc/) fork within Regelum introduces enhanced functionaly, 
+making the configuration of your RL and Optimal Control tasks more accessible and user-friendly.
+
+:material-bullseye-arrow: __Fine-tune your models to perfection__ and achieve peak performance with minimal effort. 
+By integrating with Hydra, regelum inherently adopts Hydra's powerful hyperparameter tuning capability.
+
+# Run in terminal:
 
 ```
-pip3 install regelum
+pip3 install regelum-control
 ```
 
 Alternatively, one can install the package direcly form the master
@@ -26,7 +45,7 @@ terminal and Python3 interpreter.
 ```
 git clone https://gitflic.ru/project/aidynamicaction/rcognita.git
 cd regelum
-pip3 install .
+pip3 install -e .
 ```
 
 Notice that your Python 3 interpreter might be called something else,

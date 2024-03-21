@@ -1,7 +1,7 @@
 site_name: Regelum
 site_url: https://regelum.aidynamic.io/
 repo_name: Regelum
-repo_url: https://github.com/AIDynamicAction/rcognita
+repo_url: https://github.com/osinenkop/regelum-control
 docs_dir: ./docs/src
 theme:
   name: material
