@@ -38,6 +38,9 @@ By integrating with Hydra, regelum inherently adopts Hydra's powerful hyperparam
 pip3 install regelum-control
 ```
 
+# Licence
+
+This project is licensed under the terms of the [MIT license](./LICENSE).
 
 ## Bibtex reference
 
