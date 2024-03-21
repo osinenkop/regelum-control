@@ -1425,6 +1425,7 @@ class LunarLander(System):
         return xi_2_new, xi_3_new
 
 
+@callback.detach
 class ConstantReference(System):
     """Subtracts reference from system."""
 

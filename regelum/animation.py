@@ -227,9 +227,6 @@ class AnimationCallback(callback.Callback, ABC):
         os.mkdir(self.get_save_directory())
 
     def animate_and_save(self, frames=None, name=None):
-        if not self._metadata['argv'].playback and not self._metadata['argv'].save_animation:
-            return
-
         if name is None:
             name = str(self.saved_counter)
             self.saved_counter += 1
@@ -459,7 +456,10 @@ class ComposedAnimationCallback(AnimationCallback):
         iteration_number,
         iterations_total,
     ):
-        self.animate_and_save(name=str(episode_number))
+        playback = self._metadata['argv'].playback and iteration_number == iterations_total and episode_number == episodes_total
+        save_animation = self._metadata['argv'].save_animation
+        if playback or save_animation:
+            self.animate_and_save(name=f"ep{episode_number}|{episodes_total},it{iteration_number}|{iterations_total}")
         for animation in self.animations:
             animation.on_episode_done(scenario, episode_number, episodes_total, iteration_number, iterations_total)
         self.frame_data = []
@@ -794,6 +794,8 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
     _legend = (None,)
 
     def setup(self):
+        if hasattr(self, "scores"):
+            return
         super().setup()
         self.ax.set_xlabel("Iteration")
         self.t = []
@@ -818,11 +820,12 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
         iterations_total,
     ):
         self.ax.set_ylabel("Score")
-        self.t.append(len(self.t))
-        self.y.append(np.mean(self.scores))
-        self.add_frame(
-            line_datas=[(self.t, self.y)]
-        )  # these slices are there to avoid residual time bug
+        if self.scores:
+            self.t.append(iteration_number)
+            self.y.append(np.mean(self.scores))
+            self.add_frame(
+                line_datas=[(self.t, self.y)]
+            )  # these slices are there to avoid residual time bug
         self.scores = []
 
     def on_episode_done(
