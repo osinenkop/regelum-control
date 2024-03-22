@@ -4,10 +4,13 @@ import subprocess
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from contextlib import contextmanager
 from copy import copy
 from multiprocessing import Process
 from unittest.mock import Mock
 import matplotlib
+from matplotlib.patches import Rectangle
+from matplotlib.ticker import MaxNLocator
 
 matplotlib.use("Agg")
 import matplotlib.animation
@@ -336,10 +339,13 @@ class PausableFigure(Figure):
         self.canvas.mpl_connect("key_press_event", on_press)
 
 
+def title_except_units(s):
+    words = s[:s.find('[')]
+    units = s[s.find('['):]
+    return words.title() + units
+
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
-
-    cooldown = 0.4
 
     def __init__(
         self, *animations, fig=None, ax=None, mng=None, mode="square", **kwargs
@@ -353,7 +359,7 @@ class ComposedAnimationCallback(AnimationCallback):
         """
         callback.Callback.__init__(self, **kwargs)
 
-        self.cooldown = 1 / float(self._metadata["argv"].fps)
+        self.show_cooldown = 1 / float(self._metadata["argv"].fps)
 
         self.frame_data = []
         self.frame_indices = []
@@ -380,6 +386,8 @@ class ComposedAnimationCallback(AnimationCallback):
         if fig is None and self.interactive_mode:
             self.fig = PausableFigure(log=self.log, figsize=self.figsize)
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
+            win = self.fig.canvas.window()
+            win.setFixedSize(win.size())
         elif fig is None:
             self.fig = Figure(figsize=self.figsize)
             self.mng = None
@@ -414,6 +422,7 @@ class ComposedAnimationCallback(AnimationCallback):
             self.fig.show()
 
         self.ax = None
+        self.last_show = time.time()
         # plt.show(block=True)
 
     @property
@@ -431,7 +440,10 @@ class ComposedAnimationCallback(AnimationCallback):
         except (IndexError, PrematureResolutionError):
             pass
         if self.interactive_mode:
-            self.fig.canvas.draw()
+            present_show = time.time()
+            if present_show - self.last_show > self.show_cooldown:
+                self.fig.canvas.draw()
+                self.last_show = present_show
             self.fig.canvas.flush_events()
             while self.fig.paused:
                 self.fig.canvas.flush_events()
@@ -712,6 +724,7 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
 
 class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
+    """A graph animation that plots values of state variables vs. time."""
     def __deferred_init__(self):
         state_dimension = len(self.system_state)
         self._animation_classes = []
@@ -732,6 +745,7 @@ class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
 
 
 class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracker):
+    """A graph animation that plots observables vs. time."""
     def __deferred_init__(self):
         observation_dimension = len(self.observation)
         self._animation_classes = []
@@ -754,6 +768,7 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
 
 
 class ActionAnimation(DeferredComposedAnimation, callback.ActionTracker):
+    """A graph animation that plots control inputs vs. time."""
     def __deferred_init__(self):
         action_dimension = len(self.action)
         self._animation_classes = []
@@ -794,8 +809,9 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
 
 
 class GraphAnimation(AnimationCallback):
+    """Animation of graphs that adds more data to curves over time."""
     _legend = (None,)
-    _vertices = 100
+    _vertices = 4000
     _line = "-"
 
     def setup(self):
@@ -828,21 +844,25 @@ class GraphAnimation(AnimationCallback):
         return self.lines
 
 
-class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
+class ValueAnimation(GraphAnimation, callback.ValueTracker):
+    """A graph animation that displays that plots episode-mean value over iterations."""
     _legend = (None,)
 
     def setup(self):
         if hasattr(self, "scores"):
             return
         super().setup()
-        self.ax.set_xlabel("Iteration")
+        self.ax.set_xlabel("Learning Iteration")
         self.t = []
         self.y = []
         self.scores = []
+        self.ax.set_ylabel("Value")
+        self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        self.ax.set_axis_off()
         self.add_frame(line_datas=[(self.t, self.y)])
 
     def is_target_event(self, obj, method, output, triggers):
-        return callback.ScoreTracker in triggers
+        return callback.ValueTracker in triggers
 
     def on_trigger(self, _):
         self.scores.append(self.score)
@@ -855,7 +875,8 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
         iteration_number,
         iterations_total,
     ):
-        self.ax.set_ylabel("Score")
+        if iteration_number >= 2:
+            self.ax.set_axis_on()
         if self.scores:
             self.t.append(iteration_number)
             self.y.append(np.mean(self.scores))
@@ -889,7 +910,7 @@ class StateComponentAnimation(
 
     def setup(self):
         super().setup()
-        self.ax.set_xlabel("Time")
+        self.ax.set_xlabel("Time [s]")
         self.t = []
         self.y = []
 
@@ -897,7 +918,7 @@ class StateComponentAnimation(
         return callback.StateTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.state_naming[self.component].title())
+        self.ax.set_ylabel(title_except_units(self.state_naming[self.component]))
         self.t.append(self.time)
         self.y.append(self.system_state[self.component])
         self.add_frame(
@@ -919,7 +940,7 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
 
     def setup(self):
         super().setup()
-        self.ax.set_xlabel("Time")
+        self.ax.set_xlabel("Time [s]")
         self.t = []
         self.y = []
 
@@ -927,7 +948,7 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
         return callback.ObservationTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.observation_naming[self.component].title())
+        self.ax.set_ylabel(title_except_units(self.observation_naming[self.component]))
         self.t.append(self.time)
         self.y.append(self.observation[self.component])
         self.add_frame(
@@ -950,7 +971,7 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
 
     def setup(self):
         super().setup()
-        self.ax.set_xlabel("Time")
+        self.ax.set_xlabel("Time [s]")
         self.t = []
         self.y = []
 
@@ -958,7 +979,7 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
         return callback.ActionTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.action_naming[self.component].title())
+        self.ax.set_ylabel(title_except_units(self.action_naming[self.component]))
         self.t.append(self.time)
         self.y.append(self.action[self.component])
         self.add_frame(
@@ -981,7 +1002,7 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
 
     def setup(self):
         super().setup()
-        self.ax.set_xlabel("Time")
+        self.ax.set_xlabel("Time [s]")
         self.t = []
         self.y = []
 
@@ -989,7 +1010,7 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
         return callback.ObjectiveTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(self.objective_naming[self.component].title())
+        self.ax.set_ylabel(title_except_units(self.objective_naming[self.component]))
         self.t.append(self.time)
         self.y.append(self.objective[self.component])
         self.add_frame(
@@ -998,7 +1019,7 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
 
 
 class MultiSpriteAnimation(AnimationCallback, ABC):
-    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
+    """Animation that sets the location and rotation of a planar shape at each frame."""
 
     _pics = None  # must be svgs located in regelum/img
     _marker_sizes = 30
@@ -1075,12 +1096,12 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
 
 
 class PlanarBodiesAnimation(MultiSpriteAnimation, callback.StateTracker):
-    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+    """Animates dynamics of systems that can be viewed as a set of bodies moving on a plane."""
 
     def setup(self):
         super().setup()
-        self.ax.set_xlabel("x")
-        self.ax.set_ylabel("y")
+        self.ax.set_xlabel("X [m]")
+        self.ax.set_ylabel("Y [m]")
         # self.ax.set_title(f"Planar motion of {self.attachee.__name__}")
 
     def on_trigger(self, _):
@@ -1110,7 +1131,7 @@ class CartpoleAnimation(PlanarBodiesAnimation):
 
     def setup(self):
         super().setup()
-        self.ax.set_xlabel("x [m]")
+        self.ax.set_xlabel("X [m]")
         self.ax.set_ylabel("")
         self.ax.get_yaxis().set_visible(False)
         self.ax.set_aspect("equal", adjustable="box")
@@ -1123,7 +1144,7 @@ class CartpoleAnimation(PlanarBodiesAnimation):
             horizontalalignment="center",
             verticalalignment="center",
             zorder=-1,
-        )
+        ).set_clip_on(True)
 
     def on_trigger(self, _):
         self.add_frame(
@@ -1137,7 +1158,7 @@ class CartpoleAnimation(PlanarBodiesAnimation):
 
 
 class SingleBodyAnimation(PlanarBodiesAnimation):
-    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+    """Animates dynamics of systems that can be viewed as a body moving on a plane."""
 
     _pic = "default.svg"
     _marker_size = None
@@ -1169,6 +1190,8 @@ class LunarLanderAnimation(SingleBodyAnimation):
     _center_vert = True
 
     def lim(self, *args, frame_idx=None, extra_margin=0.11, **kwargs):
+        self.sprites[0].set_visible(True)
+
         x = self.frame_data[frame_idx]["x"]
         left, right, bottom, top = self.lim_from_reference(
             np.array([x - 2, x + 2]), np.array([0, 5]), extra_margin, equal=False
@@ -1178,11 +1201,16 @@ class LunarLanderAnimation(SingleBodyAnimation):
 
     def setup(self):
         super().setup()
-        (self.ground,) = self.ax.plot([-100000, 100000], [0, 0], "r", ms=10)
+        #(self.ground,) = self.ax.plot([-100000, 100000], [0, 0], "r", ms=10)
+        self.ax.set_ylim(0 - 0.11, 5 + 0.11)
+        self.ax.set_xlim(-2 - 0.11, 2 + 0.11)
+        self.sprites[0].set_visible(False)
+        rect = Rectangle((-10000, -1), 20000, 1, linewidth=1, edgecolor='grey', facecolor='grey')
+        self.ground = self.ax.add_patch(rect)
         (self.target,) = self.ax.plot([0], [0], "g", ms=35, marker="o")
         self.target_text = self.ax.text(
             0, 0, "Target", horizontalalignment="center", verticalalignment="center"
-        )
+        ).set_clip_on(True)
 
     def on_trigger(self, _):
         self.add_frame(
@@ -1268,4 +1296,37 @@ class BarAnimation(AnimationCallback, callback.StateTracker):
         pass
 
 
-DefaultAnimation = StateAnimation + ActionAnimation + ScoreAnimation
+@contextmanager
+def preserve_limits(ax=None):
+    """ Plot without modifying axis limits """
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+
+    try:
+        yield ax
+    finally:
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+class TwoTankAnimation(BarAnimation):
+    def setup(self):
+        super().setup()
+        self.level = self.ax.plot([-10000, 10000], [0.44, 0.44], 'r--')
+        pump = Rectangle((0.4, 0), 0.2, 0.1, zorder=-1, facecolor="grey")
+        self.ax.add_patch(pump)
+        self.ax.text(0.4, 0.01, "Pump", fontsize=8, zorder=11)
+
+        sink = Rectangle((1.2, 0), 0.4, 0.1, zorder=10, facecolor="grey")
+        self.ax.add_patch(sink)
+        self.ax.text(1.2, 0.01, "Sink", fontsize=8, zorder=11)
+
+        intake = Rectangle((-0.5, 1.8), 0.2, 0.1, zorder=10, facecolor="grey")
+        self.ax.add_patch(intake)
+        self.ax.text(-0.5, 1.81, "Intake", fontsize=8, zorder=11)
+
+        self.ax.set_xlim(-0.5, 1.5)
+
+
+
+DefaultAnimation = StateAnimation + ActionAnimation + ValueAnimation

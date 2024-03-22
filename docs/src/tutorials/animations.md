@@ -1,19 +1,23 @@
 ### Animations are callbacks
 
-Animations in regelum are [callbacks](callbacks.md) that collect and plot data.
+Animations in regelum are [callbacks](../../notebooks/callbacks) that collect and plot data.
 To make some animation activate when a particular [system](system.md) is used, you need 
 to simply "attach" it:
-```
+```python
 @MyAnimation.attach
 class MySystem(System):
     ...
 ```
+
 or equivalently:
-```
+
+```python
 MySystem = MyAnimation.attach(MySystem)
 ```
+
 There are two ways to attach multiple animations:
-```
+
+```python
 MyComposedAnimations = MyFirstAnimation + MySecondAnimation
 
 @MyComposedAnimations.attach # The first way is to add
@@ -29,8 +33,9 @@ class MyOtherSystem(System):
 
 
 Most built-in systems that come with regelum already have some animations attached to them.
-If you want to detach them use ``callback.detach``. For example:
-```
+If you want to detach them use [``callback.detach``][regelum.callback.detach]. For example:
+
+```python
 from regelum import callback
 
 class MyNonAnimatedSystem(System): # This system is not animated
@@ -48,7 +53,7 @@ MyOtherNonAnimatedSystem = callback.detach(MyAnimatedSystem)
 
 Detaching is especially useful when deriving from built-in systems:
 
-```
+```python
 from regelum import callback
 from regelum import system
 
@@ -64,7 +69,8 @@ class MyCustomRobot(system.ThreeWheeledRobotKinematic):
 Regelum lets you easilly animate a shape moving on a plane. Let's say we
 want to animate the motion of three-wheeled robot moving on a plane.
 Here's how this can be implemented with regelum, assuming that you are aware of your state variables:
-```
+
+```python
 from regelum.system import System
 from regelum.animation import SingleBodyAnimation
 
@@ -98,6 +104,7 @@ ThreeWheeledRobot = ThreeWheeledRobotAnimation.attach(ThreeWheeledRobot)
 ```
 
 Take note of the following things:
+
  * `on_trigger` is being called whenever the system's state is updated
  * `self.system_state` will thus contain the most recent values of state variables
  * `self.add_frame(x, y, theta)` will produce a frame for the animation. Arguments `x`, `y`, and `theta` specify the position of the marker.
@@ -106,14 +113,14 @@ Take note of the following things:
 It is important to point out that the code  for `on_trigger` used in this snippet is exactly the same
 as in `SingleBodyAnimation.on_trigger`, thus overriding it was not actually necessary. This means
 that this snippet could be simplified to only two lines:
-```
+```python
 class ThreeWheeledRobotAnimation(SingleBodyAnimation): 
     _pic = "/path/to/ThreeWheeledRobot.svg"
 ```
 
 There are other class attributes beside ``_pic`` that you can use to tune the appearance
 of the marker:
-```
+```python
 class ThreeWheeledRobotAnimation(SingleBodyAnimation): 
     _pic = "/path/to/ThreeWheeledRobot.svg"
     _rotation = 180     # This will rotate the marker 180 degrees.
@@ -121,7 +128,7 @@ class ThreeWheeledRobotAnimation(SingleBodyAnimation):
 ```
 If you do not yet have an image for your animation, you can simply omit ``_pic``.
 In this case the default image will be used for your system, an acute triangle.
-```
+```python
 # This one will work exactly like ThreeWheeledRobotAnimation,
 # but you'll see a trianlge rolling on a plane, rather than a robot.
 class MyTriangleAnimation(SingleBodyAnimation):
@@ -138,7 +145,7 @@ class MyOtherTriangleAnimation(SingleBodyAnimation):
 
 Making an animation for multiple shapes is a very similar procedure:
 
-```
+```python
 from regelum.system import System
 from regelum.animation import PlanarBodiesAnimation
 
@@ -184,7 +191,7 @@ To summarize, ``x0``, ``y0``, ``theta0`` represent the coordinates of the first 
 ``x1``, ``y1``, ``theta1`` represent the coordinates of the second marker. 
 Naturally, you can have more than two shapes. For instance if ``len(_pics) == 3``, then
 you could add a frame that has three shapes on it:
-```
+```python
 class ThreeTrianglesAnimation(PlanarBodiesAnimation):
     _pics = ['default.svg'] * 3
     
@@ -198,7 +205,7 @@ class ThreeTrianglesAnimation(PlanarBodiesAnimation):
 
 Let's say you want to name you axes before starting the animation. Here's how you could go
 about it:
-```
+```python
 class MovingTriangleAnimation(SingleBodyAnimation):
     def setup(self):
         super().setup()
@@ -213,7 +220,7 @@ Indeed, ``__init__`` will only run once, but ``setup`` is run before each start/
 Thus, you need to use ``setup`` if you'd like the effects to persist between restarts.
 
 Naturally, you can use ``setup`` to do all sorts of other things:
-```
+```python
 target_coordinates = [0, 0]
 
 class MovingTriangleAnimation(SingleBodyAnimation):
@@ -246,7 +253,7 @@ The reason why axes limits are not covered by ``setup`` is because
 when you're animating something, you often **want the axes to be dynamic**, i.e.
 changing with time as the shapes are moving. 
 Here's how this can be accomplished with regelum:
-```
+```python
 class MovingTriangleAnimation(SingleBodyAnimation):
     def on_trigger(self, _):
         self.add_frame(x=1, y=2, theta=3)
@@ -282,15 +289,16 @@ of all frames (dicts of parameters for plotting) that we added with
 
 If you want to have an animated graph that grows as new data comes in, first
 check out the graph animations that are already available in regelum:
- * ``animation.StateAnimation`` will plot the state variables over time
- * ``animation.ObservationAnimation`` will plot observables over time
- * ``animation.ActionAnimation`` will plot control inputs over time
- * ``animation.ValueAnimation`` will plot episode-average reward/cost attained over iterations
+
+ * [``animation.StateAnimation``][regelum.animation.StateAnimation] will plot the state variables over time
+ * [``animation.ObservationAnimation``][regelum.animation.ObservationAnimation] will plot observables over time
+ * [``animation.ActionAnimation``][regelum.animation.ActionAnimation] will plot control inputs over time
+ * [``animation.ValueAnimation``][regelum.animation.ValueAnimation] will plot episode-average reward/cost attained over iterations
 
 Now, if you found yourself in a situation when you need to plot 
 something that isn't on this list, here's an example of how you could do it.
 Let's say you want to plot the azimuth of your three wheeled robot:
-```
+```python
 from regelum import callback
 from regelum.animation import GraphAnimation
 import numpy as np
@@ -325,16 +333,18 @@ class AzimuthAnimation(GraphAnimation,         # functionality for animating gra
 ```
 
 Making graph animations involves explicitly interacting with trackers. This example
-makes use of ``StateTracker`` that collects the current state in stores it in ``self.system_state``,
+makes use of [``StateTracker``][regelum.callback.StateTracker] that collects the current state in stores it in ``self.system_state``,
 but regelum also has several other trackers:
- * ``TimeTracker`` stores most recent simulation time in ``self.time`` (also used in the example)
- * ``ActionTracker`` stores most recent control input in ``self.action``
- * ``ObservationTracker`` stores most recent observation in ``self.observation``
- * ``ValueTracker`` stores most recent total reward/cost over an episode in ``self.value``
+
+ * [``TimeTracker``][regelum.callback.TimeTracker] stores most recent simulation time in ``self.time`` (also used in the example)
+ * [``ActionTracker``][regelum.callback.ActionTracker] stores most recent control input in ``self.action``
+ * [``ObservationTracker``][regelum.callback.ObservationTracker] stores most recent observation in ``self.observation``
+ * [``ValueTracker``][regelum.callback.ValueTracker] stores most recent total reward/cost over an episode in ``self.value``
 
 
 ### Command line arguments
 Here's a list of useful command line arguments for working with animations:
+
  * `--interactive` will open a window that displays the animations in real time.
  * `--save-animations` will save the animations to the hard drive on every epoch
  * `--playback` will save the animations on the very last epoch and then automatically open them in you default browser
@@ -345,10 +355,11 @@ Here's a list of useful command line arguments for working with animations:
 
 #### Trajectory plotting
 
-You may notice that when using animations derived from ```PlanarBodiesAnimation```
-and ```SingleBodyAnimation``` a blue trail is displayed behind the moving object.
+You may notice that when using animations derived from [`PlanarBodiesAnimation`][regelum.animation.PlanarBodiesAnimation]
+and [`SingleBodyAnimation`][regelum.animation.SingleBodyAnimation] a blue trail is displayed behind the moving object.
 You can control this behavior by overriding ``increment_trajectory``:
-```
+
+```python
 # default behaviour
 class MyAnimation(PlanarBodiesAnimation):
     ...
@@ -378,10 +389,20 @@ If the number of points exceeds this limit, the curve will be downsampled.
 The color and appearance of the curves can be set with `_line`.
 For instance the code below will create an animation that plots two
 dashed curves downsampled to 1000 points and labeled as "reference" and "observed":
-```
+```python
 class MyGraphAnimation(GraphAnimation, ...):
     _legend = ("reference", "observed")
     _vertices = 1000
     _line = '--'
    ...
 ```
+
+#### Default animations
+
+Systems derived from [`system.System`][regelum.system.System] will have several animations attached to them by default:
+
+ * [`StateAnimation`][regelum.animation.StateAnimation]
+ * [`ValueAnimation`][regelum.animation.ValueAnimation]
+ * [`ActionAnimation`][regelum.animation.ActionAnimation]
+
+If you don't want them, use [`callback.detach`][regelum.callback.detach].
