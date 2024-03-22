@@ -814,6 +814,13 @@ class GraphAnimation(AnimationCallback):
     _vertices = 4000
     _line = "-"
 
+    def add_frame(self, line_datas):
+        line_datas = list(line_datas)
+        for i in range(len(line_datas)):
+            t, y = line_datas[i]
+            line_datas[i] = (list(t), list(y))
+        super().add_frame(line_datas=line_datas)
+
     def setup(self):
         self.lines = []
         for name in self._legend:
