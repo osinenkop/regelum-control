@@ -1,0 +1,21 @@
+# This is the main preset file for the project
+# Here we define the presets we want to use
+
+defaults:
+  - system: kin_point 
+  - policy: simple_policy
+  - simulator: casadi
+  - scenario: scenario
+  - common: common
+
+# below we can define our callbacks we want to use in 
+# our agent environment loop
+callbacks:
+  - regelum.callback.ScenarioStepLogger
+  - regelum.callback.HistoricalDataCallback
+
+
+# let us define the outputs folder for our runs
+rehydra:
+  sweep:
+    dir: ${oc.env:REGELUM_DATA_DIR}/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
