@@ -347,8 +347,6 @@ def title_except_units(s):
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
 
-    cooldown = 0.4
-
     def __init__(
         self, *animations, fig=None, ax=None, mng=None, mode="square", **kwargs
     ):
@@ -361,7 +359,7 @@ class ComposedAnimationCallback(AnimationCallback):
         """
         callback.Callback.__init__(self, **kwargs)
 
-        self.cooldown = 1 / float(self._metadata["argv"].fps)
+        self.show_cooldown = 1 / float(self._metadata["argv"].fps)
 
         self.frame_data = []
         self.frame_indices = []
@@ -424,6 +422,7 @@ class ComposedAnimationCallback(AnimationCallback):
             self.fig.show()
 
         self.ax = None
+        self.last_show = time.time()
         # plt.show(block=True)
 
     @property
@@ -441,7 +440,10 @@ class ComposedAnimationCallback(AnimationCallback):
         except (IndexError, PrematureResolutionError):
             pass
         if self.interactive_mode:
-            self.fig.canvas.draw()
+            present_show = time.time()
+            if present_show - self.last_show > self.show_cooldown:
+                self.fig.canvas.draw()
+                self.last_show = present_show
             self.fig.canvas.flush_events()
             while self.fig.paused:
                 self.fig.canvas.flush_events()
