@@ -1,5 +1,5 @@
 python run_stable.py \
-+seed=range(10) \
++seed=range\(10\) \
 scenario=calf \
 scenario.N_iterations=30 \
 system=3wrobot_kin \

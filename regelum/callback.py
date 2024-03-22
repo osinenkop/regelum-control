@@ -63,9 +63,8 @@ def disable_in_jupyter(method):
 
 
 def detach(Attachee):
-    assert hasattr(
-        Attachee, "_attached"
-    ), f"Could not detach callbacks from {Attachee}, because no callbacks were attached."
+    if not hasattr(Attachee, "_attached"):
+        return Attachee
 
     class Detachee(Attachee):
         _attached = []
