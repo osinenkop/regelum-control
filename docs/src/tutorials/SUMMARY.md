@@ -7,7 +7,8 @@
 * [Model Predictive Control](../notebooks/mpc.md)
 * [Policy gradient](../notebooks/policy_gradient.md)
 * [Callbacks](../notebooks/callbacks.md)
-* [Configuring your experiment](config.md)
+* [Configuring your experiment](configs.md)
+* [Integration with MLFlow](mlflow.md)
+* [Stable presets](stable-presets.md)
 * [Animations](animations.md)
-* [MLflow](mlflow.md)
 
