@@ -227,6 +227,7 @@ class AnimationCallback(callback.Callback, ABC):
             interval=30,
             blit=True,
             repeat=False,
+            #init_func=self.setup
         )
         res = anim.to_jshtml()
         plt.close(self.fig)
@@ -731,7 +732,7 @@ class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
         for i in range(state_dimension):
 
             def stateComponent(*args, component=i, **kwargs):
-                return StateComponentAnimation(*args, component=component, **kwargs)
+                return StateComponentAnimation(*args, component=component, fontsize=min(10.0, 15.0/state_dimension**0.50), **kwargs)
 
             self._animation_classes.append(stateComponent)
         super().__deferred_init__()
@@ -753,7 +754,7 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
 
             def observationComponent(*args, component=i, **kwargs):
                 return ObservationComponentAnimation(
-                    *args, component=component, **kwargs
+                    *args, component=component, fontsize=min(10.0, 15.0/observation_dimension**0.5), **kwargs
                 )
 
             self._animation_classes.append(observationComponent)
@@ -775,7 +776,7 @@ class ActionAnimation(DeferredComposedAnimation, callback.ActionTracker):
         for i in range(action_dimension):
 
             def actionComponent(*args, component=i, **kwargs):
-                return ActionComponentAnimation(*args, component=component, **kwargs)
+                return ActionComponentAnimation(*args, component=component, fontsize=min(10.0, 15.0/action_dimension**0.5), **kwargs)
 
             self._animation_classes.append(actionComponent)
         super().__deferred_init__()
@@ -795,7 +796,7 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
         for i in range(objective_dimension):
 
             def objectiveComponent(*args, component=i, **kwargs):
-                return ObjectiveComponentAnimation(*args, component=component, **kwargs)
+                return ObjectiveComponentAnimation(*args, component=component, fontsize=min(10.0, 15.0/objective_dimension**0.5), **kwargs)
 
             self._animation_classes.append(objectiveComponent)
         super().__deferred_init__()
@@ -908,9 +909,10 @@ class StateComponentAnimation(
 ):
     _legend = (None,)
 
-    def __init__(self, *args, component=0, **kwargs):
+    def __init__(self, *args, component=0, fontsize=10.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.component = component
+        self.fontsize = fontsize
 
     def get_save_directory(self):
         return super().get_save_directory() + str(self.component)
@@ -918,6 +920,8 @@ class StateComponentAnimation(
     def setup(self):
         super().setup()
         self.ax.set_xlabel("Time [s]")
+        if hasattr(self, "label_of_y"):
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t = []
         self.y = []
 
@@ -925,7 +929,9 @@ class StateComponentAnimation(
         return callback.StateTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(title_except_units(self.state_naming[self.component]))
+        if not hasattr(self, "label_of_y"):
+            self.label_of_y = title_except_units(self.state_naming[self.component])
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t.append(self.time)
         self.y.append(self.system_state[self.component])
         self.add_frame(
@@ -938,9 +944,10 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
 ):
     _legend = (None,)
 
-    def __init__(self, *args, component=0, **kwargs):
+    def __init__(self, *args, component=0, fontsize=10.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.component = component
+        self.fontsize = fontsize
 
     def get_save_directory(self):
         return super().get_save_directory() + str(self.component)
@@ -948,6 +955,8 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
     def setup(self):
         super().setup()
         self.ax.set_xlabel("Time [s]")
+        if hasattr(self, "label_of_y"):
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t = []
         self.y = []
 
@@ -955,7 +964,9 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
         return callback.ObservationTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(title_except_units(self.observation_naming[self.component]))
+        if not hasattr(self, "label_of_y"):
+            self.label_of_y = title_except_units(self.observation_naming[self.component])
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t.append(self.time)
         self.y.append(self.observation[self.component])
         self.add_frame(
@@ -969,9 +980,10 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
     _legend = (None,)
     _line = "g-"
 
-    def __init__(self, *args, component=0, **kwargs):
+    def __init__(self, *args, component=0, fontsize=10.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.component = component
+        self.fontsize = fontsize
 
     def get_save_directory(self):
         return super().get_save_directory() + str(self.component)
@@ -979,6 +991,8 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
     def setup(self):
         super().setup()
         self.ax.set_xlabel("Time [s]")
+        if hasattr(self, "label_of_y"):
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t = []
         self.y = []
 
@@ -986,7 +1000,9 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
         return callback.ActionTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(title_except_units(self.action_naming[self.component]))
+        if not hasattr(self, "label_of_y"):
+            self.label_of_y = title_except_units(self.action_naming[self.component])
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t.append(self.time)
         self.y.append(self.action[self.component])
         self.add_frame(
@@ -1000,9 +1016,10 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
     _legend = (None,)
     _line = "r-"
 
-    def __init__(self, *args, component=0, **kwargs):
+    def __init__(self, *args, component=0, fontsize=10.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.component = component
+        self.fontsize = fontsize
 
     def get_save_directory(self):
         return super().get_save_directory() + str(self.component)
@@ -1010,6 +1027,8 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
     def setup(self):
         super().setup()
         self.ax.set_xlabel("Time [s]")
+        if hasattr(self, "label_of_y"):
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t = []
         self.y = []
 
@@ -1017,7 +1036,9 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
         return callback.ObjectiveTracker in triggers
 
     def on_trigger(self, _):
-        self.ax.set_ylabel(title_except_units(self.objective_naming[self.component]))
+        if not hasattr(self, "label_of_y"):
+            self.label_of_y = title_except_units(self.objective_naming[self.component])
+            self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t.append(self.time)
         self.y.append(self.objective[self.component])
         self.add_frame(
