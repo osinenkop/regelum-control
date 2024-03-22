@@ -46,6 +46,7 @@ In the context of a controlled system, a policy is defined as a function that ma
 $$
 \policy : \states \rightarrow \actions
 $$
+
 At each time step $t$, given the current state $\state_t \in \states$, the policy yields an action $\action_t = \pi(\state_t)$ to be taken by the controlled system. 
 
 For stochastic policies, the mapping is usually to a probability distribution over actions, and is defined as:
@@ -79,6 +80,17 @@ system = KinematicPoint()
 Let's do not forget about the rest of necessary parts of our feedback loop!
 
 
+!!! note
+    
+     The `Scenario` entity is akin to a conductor in an orchestra. It orchestrates the entire feedback loop of an experiment or simulation. It's responsible for managing how different components of the system interact with each other over the course of time or iterations. Within `Scenario`, the state of the system is updated, actions are decided based on current policies, and the learning or control algorithms are given the opportunity to adapt based on the outcomes. 
+    
+     Here's an outline of typical responsibilities for `Scenario`:
+    
+     - Initiating and maintaining the simulation environment or experiment setup.
+     - Orchestrating interactions between different components such as policies, models, agents, or environments.
+     - Collecting data, such as states and rewards, to facilitate learning or control adjustments.
+
+
 ```python
 simulator = CasADi(
     system=system,
@@ -98,13 +110,14 @@ scenario = Scenario(
 
 
 ```python
+# output is omitted for this code cell
 scenario.run()
 ```
 
 ### Historical data
 
 As we defined a callback for saving historical data, let's get it and see what is in there.
-(Kindly refer here our reader to callbacks) (ToDo: link). 
+(Kindly refer here our reader to [callbacks](https://regelum.aidynamic.io/notebooks/callbacks/))
 
 
 ```python

@@ -7,6 +7,9 @@
     <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/release-dev/docs/notebooks/collabs/optimizable.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
+In this tutorial we will discuss the main optimization core of Regelum called Optimizable.
+
+
 ```python
 from regelum.utils import rg
 from regelum.optimizable import Optimizable
@@ -26,8 +29,6 @@ import torch
 import matplotlib.pyplot as plt
 %matplotlib inline
 ```
-
-Now we are gonna discuss the main optimization core of Regelum called Optimizable.
 
 ### What is Optimizable?
 

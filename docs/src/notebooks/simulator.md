@@ -109,11 +109,13 @@ and $y(t) \ra 0$ by the similar reasons.
 
 ### Instantiating CasADi Simulator
 
-A [`Simulator`](https://regelum.aidynamic.io/reference/simulator) in Regelum integrates the right-hand side of a system, providing iterative steps for the simulation. [CasADi](https://web.casadi.org/) is the primary backend for simulation. The simulator is an integral component that takes the model of the system's dynamics and approximates its behavior over time.
-
 Next, we'll instantiate a CasADi simulator, providing the kinematic point system and the initial conditions.
 
-Simulator 
+!!! note
+    
+     A [`Simulator`](https://regelum.aidynamic.io/reference/simulator) in Regelum integrates the right-hand side of a system, providing iterative steps for the simulation. 
+     [CasADi](https://web.casadi.org/) is the primary backend for simulation. 
+     The simulator is an integral component that takes the model of the system's dynamics and approximates its behavior over time.
 
 
 ```python

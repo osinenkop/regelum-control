@@ -11,6 +11,7 @@ root = Path(__file__).parent.parent.parent
 preamble_file = root / "docs" / "tex" / "preambleAIDA_ML__Nov2023.tex"
 notebooks = root / "docs" / "notebooks"
 out = root / "docs" / "src" / "notebooks"
+
 prelude = """
 !!! tip annotate "Run This Tutorial in Google Colab"
 
@@ -43,6 +44,23 @@ def remove_preamble_from_md_text(md_text: str):
             return md_text.replace(md_text[pos_first : pos_second + 2], "")
 
     return md_text
+
+
+def transform_notes(content):
+    final_lines = []
+    is_previous_line_a_note = False
+    for line in content.split("\n"):
+        if line.replace(" ", "").startswith(">__Note__"):
+            final_lines.append("!!! note")
+            is_previous_line_a_note = True
+        elif line.replace(" ", "").startswith(">") and is_previous_line_a_note:
+            final_lines.append(line.replace(">", "    "))
+            is_previous_line_a_note = True
+        else:
+            final_lines.append(line)
+            is_previous_line_a_note = False
+
+    return "\n".join(final_lines)
 
 
 for nb_path in notebooks.iterdir():
@@ -101,6 +119,6 @@ for nb_path in notebooks.iterdir():
         body = (
             prelude
             + generate_colab_tag(nb_name=nb_path.name)
-            + remove_preamble_from_md_text(body)
+            + transform_notes(remove_preamble_from_md_text(body))
         )
         fp.write(body)
