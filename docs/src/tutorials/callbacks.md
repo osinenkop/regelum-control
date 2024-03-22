@@ -9,7 +9,7 @@ To illustrate how you can implement and use a custom callback in the Regelum fra
 #### Step 1: Derive from the `Callback` Base Class
 
 Your custom callback must inherit from the `Callback` class provided by Regelum. This involves implementing specific methods such as `is_target_event` and `perform`.
-
+```
 from regelum import Callback
 
 class MyCustomCallback(Callback):
@@ -18,11 +18,11 @@ class MyCustomCallback(Callback):
         # For example, log when a specific method ('my_method') is called
         return method == 'my_method'
 
-    def perform(self, obj, method, output):
+    def on_function_call(self, obj, method, output):
         # Perform your custom logic here
         # For example, log information to the console
-        print(f'MyCustomCallback triggered on method {method}')
-
+        self.log(f'MyCustomCallback triggered on method {method.__name__} of {obj.__class__.__name__}')
+```
 
 #### Step 2: Register Your Callback
 
