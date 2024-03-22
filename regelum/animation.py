@@ -246,6 +246,8 @@ class AnimationCallback(callback.Callback, ABC):
 
     @classmethod
     def lim_from_reference(cls, x, y, extra_margin=0, equal=True):
+        x = np.array(x)
+        y = np.array(y)
         if x.size == 0:
             x = np.zeros(1)
         if y.size == 0:
@@ -821,7 +823,8 @@ class GraphAnimation(AnimationCallback):
         for line, data in zip(self.lines, line_datas):
             t, y = data
             skip = 1 + len(t) // self._vertices
-            line.set_data(t[::skip], y[::skip])
+            downsampling = slice(1, None, skip) if isinstance(self, callback.TimeTracker) else slice(None, None, skip)
+            line.set_data(t[downsampling], y[downsampling]) # these slices are to avoid residual time bug
         return self.lines
 
 
@@ -898,7 +901,7 @@ class StateComponentAnimation(
         self.t.append(self.time)
         self.y.append(self.system_state[self.component])
         self.add_frame(
-            line_datas=[(self.t[1:], self.y[1:])]
+            line_datas=[(self.t, self.y)]
         )  # these slices are there to avoid residual time bug
 
 
@@ -928,7 +931,7 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
         self.t.append(self.time)
         self.y.append(self.observation[self.component])
         self.add_frame(
-            line_datas=[(self.t[1:], self.y[1:])]
+            line_datas=[(self.t, self.y)]
         )  # these slices are there to avoid residual time bug
 
 
@@ -959,7 +962,7 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
         self.t.append(self.time)
         self.y.append(self.action[self.component])
         self.add_frame(
-            line_datas=[(self.t[1:], self.y[1:])]
+            line_datas=[(self.t, self.y)]
         )  # these slices are there to avoid residual time bug
 
 
@@ -990,7 +993,7 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
         self.t.append(self.time)
         self.y.append(self.objective[self.component])
         self.add_frame(
-            line_datas=[(self.t[1:], self.y[1:])]
+            line_datas=[(self.t, self.y)]
         )  # these slices are there to avoid residual time bug
 
 
