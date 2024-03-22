@@ -63,6 +63,8 @@ def disable_in_jupyter(method):
 
 
 def detach(Attachee):
+    """Create a duplicate of the provided regelum type with all callbacks detached from it."""
+
     assert hasattr(
         Attachee, "_attached"
     ), f"Could not detach callbacks from {Attachee}, because no callbacks were attached."
@@ -765,7 +767,7 @@ class ObjectiveTracker(Callback):
 
 
 @trigger
-class ScoreTracker(Callback):
+class ValueTracker(Callback):
     """Records the state of the simulated system into `self.system_state`.
 
     Useful for animations that visualize motion of dynamical systems.

@@ -677,6 +677,7 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
 
 
 class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
+    """A graph animation that plots values of state variables vs. time."""
     def __deferred_init__(self):
         state_dimension = len(self.system_state)
         self._animation_classes = []
@@ -697,6 +698,7 @@ class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
 
 
 class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracker):
+    """A graph animation that plots observables vs. time."""
     def __deferred_init__(self):
         observation_dimension = len(self.observation)
         self._animation_classes = []
@@ -719,6 +721,7 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
 
 
 class ActionAnimation(DeferredComposedAnimation, callback.ActionTracker):
+    """A graph animation that plots control inputs vs. time."""
     def __deferred_init__(self):
         action_dimension = len(self.action)
         self._animation_classes = []
@@ -759,6 +762,7 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
 
 
 class GraphAnimation(AnimationCallback):
+    """Animation of graphs that adds more data to curves over time."""
     _legend = (None,)
     _vertices = 100
     _line = '-'
@@ -793,7 +797,8 @@ class GraphAnimation(AnimationCallback):
         return self.lines
 
 
-class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
+class ValueAnimation(GraphAnimation, callback.ValueTracker):
+    """A graph animation that displays that plots episode-mean value over iterations."""
     _legend = (None,)
 
     def setup(self):
@@ -809,7 +814,7 @@ class ScoreAnimation(GraphAnimation, callback.ScoreTracker):
         )
 
     def is_target_event(self, obj, method, output, triggers):
-        return callback.ScoreTracker in triggers
+        return callback.ValueTracker in triggers
 
     def on_trigger(self, _):
         self.scores.append(self.score)
@@ -966,7 +971,7 @@ class ObjectiveComponentAnimation(  # TO DO: introduce an abstract class Observa
 
 
 class MultiSpriteAnimation(AnimationCallback, ABC):
-    """Animation that sets the location and rotation of a planar equilateral triangle at each frame."""
+    """Animation that sets the location and rotation of a planar shape at each frame."""
 
     _pics = None  # must be svgs located in regelum/img
     _marker_sizes = 30
@@ -1035,7 +1040,7 @@ class MultiSpriteAnimation(AnimationCallback, ABC):
         return self.sprites
 
 class PlanarBodiesAnimation(MultiSpriteAnimation, callback.StateTracker):
-    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+    """Animates dynamics of systems that can be viewed as a set of bodies moving on a plane."""
 
     def setup(self):
         super().setup()
@@ -1079,7 +1084,7 @@ class CartpoleAnimation(PlanarBodiesAnimation):
         )
 
 class SingleBodyAnimation(PlanarBodiesAnimation):
-    """Animates dynamics of systems that can be viewed as a triangle moving on a plane."""
+    """Animates dynamics of systems that can be viewed as a body moving on a plane."""
     _pic = "default.svg"
     _marker_size = None
     _rotation = None
@@ -1207,6 +1212,6 @@ class BarAnimation(AnimationCallback, callback.StateTracker):
         pass
 
 
-DefaultAnimation = StateAnimation + ActionAnimation + ScoreAnimation
+DefaultAnimation = StateAnimation + ActionAnimation + ValueAnimation
 
 
