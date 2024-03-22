@@ -11,7 +11,7 @@ The system can be of three types:
 
 Remarks:
 
-- All vectors are treated as of type [n,]
+- All vectors are treated as of type [1, n]
 - All buffers are treated as of type [L, n] where each row is a vector
 - Buffers are updated from bottom to top
 
