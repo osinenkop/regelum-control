@@ -95,7 +95,10 @@ class RegelumType(abc.ABCMeta):
                     animations = [
                         callback
                         for callback in callbacks
-                        if issubclass(callback, cb.AnimationCallback)
+                        if (
+                            issubclass(callback, cb.AnimationCallback)
+                            and (not callback.is_jupyter)
+                        )
                     ]
                     non_animations = [
                         callback
