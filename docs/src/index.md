@@ -3,14 +3,13 @@
 hide:
 #   - title
   - navigation
-  - toc
+#   - toc
 ---
-# Regelum
+# Regelum control
 
 ## Overview
-Regelum stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory. 
+Regelum-control stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory. 
 
---8<-- "scenarios/Osinenko2023habil.html"
 
 <!-- <style>
 .md-content .md-typeset h1 { display: none; }
@@ -49,30 +48,22 @@ Regelum stands as a framework designed to address optimal control and reinforcem
 
 <div class="grid cards" markdown>
 
--   :octicons-light-bulb-16:{ .lg .middle } __Get to know Regelum__
+<!-- -   :octicons-light-bulb-16:{ .lg .middle } __Get to know Regelum__
 
     ---
 
     Dive into the introduction for an overview of its principal concepts and features.
 
-    [:octicons-arrow-right-24: Introduction](introduction.md)
+    [:octicons-arrow-right-24: Introduction](introduction.md) -->
 
--   :octicons-rocket-16:{ .lg .middle } __Try it out__
-
-    ---
-
-    Experience Regelum in action: launch our interactive colab demo. 
-
-    [:octicons-arrow-right-24: Try it in colab](#)
-
--   :octicons-rocket-16:{ .lg .middle } __Set it up__
+<!-- -   :octicons-rocket-16:{ .lg .middle } __Set it up__
 
     ---
 
     Install Regelum using pip and easily dive into your first simulation experience.
 
 
-    [:octicons-arrow-right-24: Quick start](#)
+    [:octicons-arrow-right-24: Quick start][] -->
 
 -   :octicons-book-16:{ .lg .middle } __Master Regelum__
 
@@ -80,7 +71,15 @@ Regelum stands as a framework designed to address optimal control and reinforcem
 
     Take a tutorial on the fundamentals of Regelum and delve into its core concepts.
 
-    [:octicons-arrow-right-24: Tutorial](#)
+    [:octicons-arrow-right-24: Tutorial](tutorials/introduction)
+
+-   :octicons-rocket-16:{ .lg .middle } __Try it out__
+
+    ---
+
+    Experience Regelum in action: implement the policy gradient method from scratch. 
+
+    [:octicons-arrow-right-24: Try it out](notebooks/policy_gradient)
 
 <!-- -   :octicons-light-bulb-16:{ .lg .middle } __Get to know Regelum__
 
@@ -126,19 +125,13 @@ making the configuration of your RL and Optimal Control tasks more accessible an
 :material-bullseye-arrow: __Fine-tune your models to perfection__ and achieve peak performance with minimal effort. 
 By integrating with Hydra, regelum inherently adopts Hydra's powerful hyperparameter tuning capability.
 
-## Example
+## Install with pip
 <!-- termynal -->
 
 ```
-$ pip install regelum
+$ pip install regelum-control
 ---> 100%
 Installed
-$ git pull https://github.com/regelum-presets
-$ cd regelum-presets
-$ regelum preset.yaml scenario=ppo
-INFO: runn. objective: 98.70, state est.: [3.14 0.  ], observation: [3.14 0.  ], action: [-1.1], value: 0.9870, time: 0.0000 (0.0%), episode: 1/2, iteration: 1/100  
-INFO: runn. objective: 98.70, state est.: [3.14 0.  ], observation: [3.14 0.  ], action: [-1.1], value: 0.9870, time: 0.0000 (0.0%), episode: 1/2, iteration: 1/100  
-INFO: runn. objective: 98.70, state est.: [3.14 0.  ], observation: [3.14 0.  ], action: [-1.1], value: 0.9870, time: 0.0000 (0.0%), episode: 1/2, iteration: 1/100  
 ```
 
 ## Licence

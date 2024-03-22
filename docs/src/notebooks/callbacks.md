@@ -93,7 +93,7 @@ set_jupyter_env(callbacks=[SimpleLoggerCallback])
 
 
 
-### Test it out!
+## Test it out!
 
 
 ```python
@@ -115,19 +115,13 @@ time.sleep(1)
 
 
 
-### More on callbacks
+## More on callbacks
 
-#### Ready-to-use callbacks
+### Ready-to-use callbacks
 
-There are plenty of implemented callbacks providing a lot of functionality out-of-the-box. Namely:
+There are plenty of implemented callbacks providing a lot of functionality out-of-the-box. More information can be found [here](https://regelum.aidynamic.io/reference/callback/).
 
-- `ScenarioStepLogger` - the simplest callback, it just prints out a message with the current step information: running objective, current state, observation, action, episode number, iteration number, value and time of the step at each step
-- `OnEpisodeDoneCallback` - responsible for logging and recording relevant data when an episode ends
-- `OnIterationDoneCallback` - responsible for logging and recording relevant data when an iteration ends
-- `HistoricalCallback`  - base callback class responsible for recording various temporal data.
-- `HistoricalDataCallback` - (inherited from `HistoricalCallback`) The most comprehensive example of how to use historical callbacks. It records all the data that is used in the plots and the text logs.
-
-#### Cooldown
+### Cooldown
 
 Excessively verbose logging may slow down the program. To avoid this, we can use `cooldown` class property to limit the period of time between two consecutive messages. Measurement is done in seconds. So adjusting it to 0.5 will make sure that no more than one message per half a second will be printed out. Feel free to play around with this value. 
 

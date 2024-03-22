@@ -7,6 +7,9 @@
     <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/release-dev/docs/notebooks/collabs/optimizable.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
+In this tutorial we will discuss the main optimization core of Regelum called Optimizable.
+
+
 ```python
 from regelum.utils import rg
 from regelum.optimizable import Optimizable
@@ -27,11 +30,9 @@ import matplotlib.pyplot as plt
 %matplotlib inline
 ```
 
-Now we are gonna discuss the main optimization core of Regelum called Optimizable.
-
 ### What is Optimizable?
 
-Optimizable is a class, which is used in cases when you need to incapsulate a defined optimization procedure into an object. 
+[Optimizable](https://regelum.aidynamic.io/reference/optimizable/optimizers/#regelum.optimizable.optimizers.Optimizable) is a class, which is used in cases when you need to incapsulate a defined optimization procedure into an object. 
 
 This appears to be helpful in case of Reinforcement learning scenarios when we have multiple objectives to be optimized. Moreover, this allows user to use a uniform API to construct and recycle multiple optimization procedures in runtime combining different optimization frameworks at the same time. For example if one need to solve a constrained problem, he may prefer a CasADi IPOPT solver in one place and then reuse those results in another optimization problem requiring gradient descent optimization.
 
@@ -247,13 +248,13 @@ In machine learning we often use complicated parametric representations of objec
 
 This is what `Model` object was designed for. The main purpose of a `Model` is to provide an interface to store and retrieve the parameters of a given parametric representation as well as to perform inference on them. There are already some existing models implemented for the most often use cases:
 
-- ModelQuadLin (a quadratic linear model that can be used for polynomial representations)
-- ModelWeightContainer (a trivial model that stores weights. It's typically used in policy in which actions are being optimized directly)
-- ModelNN (base class for neural network models)
-- ModelWeightContainerTorch (a weight container based on PyTorch tensors)
-- PerceptronWithTruncatedNormalNoise (a perceptron with truncated normal noise, which is often used in stochastic policies)
+- [`ModelQuadLin`](https://regelum.aidynamic.io/reference/model/#regelum.model.ModelQuadLin) (a quadratic linear model that can be used for polynomial representations)
+- [`ModelWeightContainer`](https://regelum.aidynamic.io/reference/model/#regelum.model.ModelWeightContainer) (a trivial model that stores weights. It's typically used in policy in which actions are being optimized directly)
+- [`ModelNN`](https://regelum.aidynamic.io/reference/model/#regelum.model.ModelNN) (base class for neural network models)
+- [`ModelWeightContainerTorch`](https://regelum.aidynamic.io/reference/model/#regelum.model.ModelWeightContainerTorch) (a weight container based on PyTorch tensors)
+- [`PerceptronWithTruncatedNormalNoise`](https://regelum.aidynamic.io/reference/model/#regelum.model.PerceptronWithTruncatedNormalNoise) (a perceptron with truncated normal noise, which is often used in stochastic policies)
 
-For additional details you may refer to `model.py` module of Regelum
+For additional details you may refer to [`model.py`](https://regelum.aidynamic.io/reference/model/) module of Regelum
 
 ### Basic model api
 
@@ -264,7 +265,7 @@ There are four main facts you likely have to know about models in Regelum
 - Model may perform an inference with both stored and externally passed weights
 - Models are callable objects (they resemble torch.nn.Module at this point)
 
-There are many cases when we perform an optimization of objective depending on model's output, which can be a bit more complicated than the basic optimization routine. Let's go step-by-step towards integration of Models into `Optimizable`.
+There are many cases when we perform an optimization of objective depending on model's output, which can be a bit more complicated than the basic optimization routine. Let's go step-by-step towards integration of Models into [`Optimizable`]((https://regelum.aidynamic.io/reference/optimizable/optimizers/#regelum.optimizable.optimizers.Optimizable)).
 
 ### Usage example
 
