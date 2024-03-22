@@ -65,9 +65,8 @@ def disable_in_jupyter(method):
 def detach(Attachee):
     """Create a duplicate of the provided regelum type with all callbacks detached from it."""
 
-    assert hasattr(
-        Attachee, "_attached"
-    ), f"Could not detach callbacks from {Attachee}, because no callbacks were attached."
+    if not hasattr(Attachee, "_attached"):
+        return Attachee
 
     class Detachee(Attachee):
         _attached = []

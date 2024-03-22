@@ -3,7 +3,7 @@
 It is made for researchers and engineers in reinforcement learning and control theory.
 """
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 import argparse
 import datetime

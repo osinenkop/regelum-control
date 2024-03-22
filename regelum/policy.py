@@ -1861,7 +1861,7 @@ class TwoTankPIDPolicy(Policy):
         from regelum.system import TwoTank
 
         super().__init__()
-        params = TwoTank().parameters
+        params = TwoTank._parameters
 
         self.K1 = params["K1"]
         self.K2 = params["K2"]

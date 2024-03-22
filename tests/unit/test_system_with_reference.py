@@ -5,11 +5,12 @@ from regelum.system import (
 )
 from regelum.observer import ObserverReference
 import numpy as np
+from regelum.callback import detach
 
 
 def test_constant_reference():
-    for system in (TwoTank(), ThreeWheeledRobotKinematic()):
-        system_with_reference = SystemWithConstantReference(
+    for system in (detach(TwoTank)(), detach(ThreeWheeledRobotKinematic)()):
+        system_with_reference = detach(SystemWithConstantReference)(
             system, state_reference=np.arange(system.dim_state)
         )
         reference = system_with_reference.parameters["reference"]
