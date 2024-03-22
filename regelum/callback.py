@@ -835,7 +835,7 @@ class HistoricalCallback(Callback, ABC):
     def dump_data(self, identifier):
         if not self.data.empty:
             self.data.to_hdf(
-                f".callbacks/{self.__class__.__name__}/{identifier}.h5", "data"
+                f".callbacks/{self.__class__.__name__}/{identifier}.h5", key="data"
             )
 
     def load_data(self, idx=None):
