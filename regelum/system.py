@@ -1121,7 +1121,7 @@ class CartPolePG(CartPole):
         # return rg.hstack([rg.sin(theta), 1 - rg.cos(theta), x, theta_dot, x_dot])
 
 
-@callback.BarAnimation.attach
+@callback.TwoTankAnimation.attach
 class TwoTank(System):
     """This module simulates a [Two-Tank System](../systems/2tank.md).
 
@@ -1145,8 +1145,8 @@ class TwoTank(System):
     _dim_observation = 2
     _parameters = {"tau1": 18.4, "tau2": 24.4, "K1": 1.3, "K2": 1.0, "K3": 0.2}
     _observation_naming = _state_naming = [
-        "Top Tank Level [m]",
-        "Bottom Tank Level [m]",
+        "Intake Tank Level [m]",
+        "Sink Tank Level [m]",
     ]
     _inputs_naming = ["Pressure [Pa]"]
     _action_bounds = [[0.0, 1.0]]
