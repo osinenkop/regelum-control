@@ -695,8 +695,12 @@ class main:
         """
         print(
             Panel.fit(
-                logo_ascii, subtitle=f"v{__version__}", title="AIDA Solutions, 2024", style='magenta'
-            ))
+                logo_ascii,
+                subtitle=f"v{__version__}",
+                title="AIDA Solutions, 2024",
+                style="magenta",
+            )
+        )
         if logger is None:
             logger = logging.getLogger("regelum")
             # logger.info("Try")
@@ -1024,16 +1028,17 @@ def set_ipython_env(
     @dataclass
     class ArgvContainer:
         interactive: list
+        parallel: bool
 
     RegelumBase._metadata = {
         "logger": logger,
-        "argv": ArgvContainer(interactive),
+        "argv": ArgvContainer(interactive, False),
     }
     callbacks = [callback() for callback in callbacks]
     RegelumBase._metadata = {
         "logger": logger,
         "main": CallbackContainer(callbacks),
-        "argv": ArgvContainer(interactive),
+    "argv": ArgvContainer(interactive, False),
     }
     regelum.main.is_clear_matplotlib_cache_in_callbacks = True
     return callbacks

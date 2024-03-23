@@ -5,8 +5,7 @@ python run_stable.py \
     system=inv_pendulum \
     --experiment=sdpg_inv_pendulum \
     scenario.N_episodes=3 \
-    scenario.is_parallel=False \
-    scenario.N_iterations=100 \
+        scenario.N_iterations=100 \
     scenario.policy_opt_method_kwargs.lr=0.01 \
     scenario.policy_model.n_hidden_layers=2 \
     scenario.policy_model.dim_hidden=15 \

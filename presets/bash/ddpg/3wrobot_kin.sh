@@ -5,7 +5,7 @@ python run_stable.py \
     system=3wrobot_kin \
     --experiment=ddpg_3wrobot_kin \
     scenario.N_episodes=8 \
-    scenario.is_parallel=True \
+    --parallel \
     scenario.N_iterations=100 \
     scenario.critic_opt_method_kwargs.lr=0.03 \
     scenario.critic_n_epochs=30 \

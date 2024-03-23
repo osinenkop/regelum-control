@@ -7,7 +7,7 @@ run_experiment_with_seed() {
     system=3wrobot_kin \
     --experiment=ppo_3wrobot_kin \
     scenario.N_episodes=10 \
-    scenario.is_parallel=True \
+    --parallel \
     scenario.N_iterations=180 \
     scenario.policy_n_epochs=30 \
     scenario.critic_n_epochs=30 \

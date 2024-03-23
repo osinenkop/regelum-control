@@ -44,7 +44,10 @@ class TestSetup:
     def __call__(self):
         sys.argv = [sys.argv[0]]
         for param in self.params:
-            sys.argv.insert(1, f"{param}={self.params[param]}")
+            if self.params[param] is not None:
+                sys.argv.insert(1, f"{param}={self.params[param]}")
+            else:
+                sys.argv.insert(1, f"{param}")
         self._pre_setup()
         os.environ["REGELUM_RECENT_TEST_INFO"] = (
             f"Command line arguments: {' '.join(sys.argv[1:])}\nConfig: {os.path.abspath(self.config_path)}/{self.config_name}.yaml"
@@ -97,7 +100,7 @@ scenarios_overrides = {
         "scenario.policy_model.n_hidden_layers": 1,
         "scenario.N_episodes": 2,
         "scenario.N_iterations": 1,
-        "scenario.is_parallel": True,
+        "--parallel": None,
     },
     "ddpg": {
         "scenario.critic_model.dim_hidden": 2,
@@ -115,7 +118,7 @@ scenarios_overrides = {
         "scenario.policy_n_epochs": 1,
         "scenario.N_episodes": 2,
         "scenario.N_iterations": 1,
-        "scenario.is_parallel": True,
+        "--parallel": None,
     },
     "sql": {
         "scenario.prediction_horizon": 2,

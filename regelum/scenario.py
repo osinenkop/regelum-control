@@ -337,7 +337,6 @@ class RLScenario(Scenario):
         N_iterations: int = 1,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
-        is_parallel: bool = None,
     ):
         """Instantiate a RLScenario object.
 
@@ -1948,7 +1947,6 @@ def get_policy_gradient_kwargs(
     scenario_kwargs: Dict[str, Any] = None,
     is_use_critic_as_policy_kwarg: bool = True,
     stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
-    is_parallel: bool = False,
     device: str = "cpu",
 ):
     system = simulator.system
@@ -1991,7 +1989,6 @@ def get_policy_gradient_kwargs(
         critic = CriticTrivial()
 
     return dict(
-        is_parallel=is_parallel,
         stopping_criterion=stopping_criterion,
         simulator=simulator,
         discount_factor=discount_factor,
@@ -2062,7 +2059,6 @@ class PPO(RLScenario):
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
         gae_lambda: float = 0.0,
         is_normalize_advantages: bool = True,
-        is_parallel: bool = False,
         device: str = "cpu",
         entropy_coeff: float = 0.0,
     ):
@@ -2154,7 +2150,6 @@ class PPO(RLScenario):
                 critic_is_value_function=True,
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
-                is_parallel=is_parallel,
                 device=device,
             )
         )
@@ -2193,7 +2188,6 @@ class SDPG(RLScenario):
         N_iterations: int = 100,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
-        is_parallel: bool = False,
         is_normalize_advantages=True,
         gae_lambda=0.0,
     ):
@@ -2267,9 +2261,9 @@ class SDPG(RLScenario):
                 policy_kwargs=dict(
                     sampling_time=sampling_time,
                     is_normalize_advantages=is_normalize_advantages,
+                    gae_lambda=gae_lambda,
                 ),
                 stopping_criterion=stopping_criterion,
-                is_parallel=is_parallel,
             )
         )
 
@@ -2294,7 +2288,6 @@ class REINFORCE(RLScenario):
         is_with_baseline: bool = True,
         is_do_not_let_the_past_distract_you: bool = True,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
-        is_parallel: bool = False,
     ):
         """Initialize an REINFORCE object.
 
@@ -2351,7 +2344,6 @@ class REINFORCE(RLScenario):
                 ),
                 is_use_critic_as_policy_kwarg=False,
                 stopping_criterion=stopping_criterion,
-                is_parallel=is_parallel,
             ),
         )
 
@@ -2379,7 +2371,6 @@ class DDPG(RLScenario):
         N_iterations: int = 100,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
-        is_parallel: bool = False,
     ):
         """Instantiate DDPG Scenario.
 
@@ -2449,7 +2440,6 @@ class DDPG(RLScenario):
                 critic_is_value_function=False,
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
-                is_parallel=is_parallel,
             )
         )
 

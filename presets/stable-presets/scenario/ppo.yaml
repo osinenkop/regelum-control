@@ -17,7 +17,6 @@ stopping_criterion: ~ stopping_criterion
 critic_td_n: 1
 gae_lambda: 0.0
 cliprange: 0.2 
-is_parallel: False
 is_normalize_advantages: True
 
 critic_n_epochs: 50

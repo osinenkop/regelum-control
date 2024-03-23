@@ -355,7 +355,6 @@ class GameScenario(RLScenario):
             sampling_time=0.1,
             N_episodes=10,
             N_iterations=200,
-            is_parallel=False,
         )
         self.policy: JointPolicy
 

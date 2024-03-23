@@ -5,8 +5,7 @@ python run_stable.py \
     system=cartpole_pg \
     --experiment=reinforce_cartpole \
     scenario.N_episodes=3 \
-    scenario.is_parallel=False \
-    scenario.N_iterations=500 \
+        scenario.N_iterations=500 \
     scenario.policy_opt_method_kwargs.lr=0.05 \
     scenario.policy_model.n_hidden_layers=2 \
     scenario.policy_model.dim_hidden=[32,32] \

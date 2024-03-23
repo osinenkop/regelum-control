@@ -4,7 +4,6 @@ scenario=ddpg \
 system=2tank \
 --experiment=ddpg_2tank \
 scenario.N_episodes=6 \
-scenario.is_parallel=False \
 scenario.N_iterations=50 \
 scenario.critic_opt_method_kwargs.lr=0.01 \
 scenario.critic_n_epochs=1 \

@@ -7,7 +7,7 @@ run_experiment_with_seed() {
     system=lunar_lander \
     --experiment=ppo_lunar_lander \
     scenario.N_episodes=10 \
-    scenario.is_parallel=True \
+    --parallel \
     scenario.N_iterations=100 \
     scenario.policy_n_epochs=30 \
     scenario.critic_n_epochs=30 \

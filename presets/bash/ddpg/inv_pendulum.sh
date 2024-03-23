@@ -5,7 +5,6 @@ python run_stable.py \
     system=inv_pendulum \
     --experiment=ddpg_inv_pendulum \
     scenario.N_episodes=8 \
-    scenario.is_parallel=False \
     scenario.N_iterations=100 \
     scenario.critic_opt_method_kwargs.lr=0.03 \
     scenario.critic_n_epochs=30 \

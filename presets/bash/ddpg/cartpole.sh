@@ -5,7 +5,6 @@ python run_stable.py \
     system=cartpole_pg \
     --experiment=ddpg_cartpole \
     scenario.N_episodes=3 \
-    scenario.is_parallel=False \
     scenario.N_iterations=500 \
     scenario.policy_n_epochs=1 \
     scenario.critic_n_epochs=30 \

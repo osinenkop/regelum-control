@@ -16,7 +16,6 @@ discount_factor: 0.7
 N_iterations: 100
 N_episodes: 2
 stopping_criterion: ~ stopping_criterion
-is_parallel: False
 gae_lambda: 0.0
 is_normalize_advantages: True
 
