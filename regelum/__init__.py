@@ -3,7 +3,7 @@
 It is made for researchers and engineers in reinforcement learning and control theory.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 import argparse
 import datetime
@@ -1038,7 +1038,7 @@ def set_ipython_env(
     RegelumBase._metadata = {
         "logger": logger,
         "main": CallbackContainer(callbacks),
-    "argv": ArgvContainer(interactive, False),
+        "argv": ArgvContainer(interactive, False),
     }
     regelum.main.is_clear_matplotlib_cache_in_callbacks = True
     return callbacks
