@@ -56,6 +56,7 @@ class AnimationCallback(callback.Callback, ABC):
     """Callback (base) responsible for rendering animated visualizations of the experiment."""
 
     _frames = 100
+    _is_global = False
 
     @classmethod
     def _compose(cls_left, cls_right):
@@ -465,7 +466,7 @@ class ComposedAnimationCallback(AnimationCallback):
             animation.setup()
 
     def is_target_event(self, obj, method, output, triggers):
-        return True
+        return True # This is too much
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
@@ -855,19 +856,28 @@ class GraphAnimation(AnimationCallback):
 class ValueAnimation(GraphAnimation, callback.ValueTracker):
     """A graph animation that displays that plots episode-mean value over iterations."""
     _legend = (None,)
+    _is_global = True
 
     def setup(self):
-        if hasattr(self, "scores"):
-            return
         super().setup()
+        if not hasattr(self, "scores"):
+            self.t = []
+            self.y = []
+            self.scores = []
+            self.ax.set_axis_off()
         self.ax.set_xlabel("Learning Iteration")
-        self.t = []
-        self.y = []
-        self.scores = []
         self.ax.set_ylabel("Value")
         self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-        self.ax.set_axis_off()
         self.add_frame(line_datas=[(self.t, self.y)])
+
+    def install_temp_axis(self, *args, **kwargs):
+        super().install_temp_axis(*args, **kwargs)
+        self.lines_old = self.lines
+
+    def pop_axis(self):
+        super().pop_axis()
+        self.lines = self.lines_old
+        del self.lines_old
 
     def is_target_event(self, obj, method, output, triggers):
         return callback.ValueTracker in triggers
@@ -901,7 +911,7 @@ class ValueAnimation(GraphAnimation, callback.ValueTracker):
         iteration_number,
         iterations_total,
     ):
-        pass
+        pass #self.setup()
 
 
 class StateComponentAnimation(
