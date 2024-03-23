@@ -1,5 +1,3 @@
-We are excited to announce that we have a collection of pre-configured experiments available for you to use with Regelum. These configurations are meticulously crafted and ready for immediate use, making it incredibly simple for you to get started with your own experiments and simulations.
-
 Access and experiment with our pre-configurations with the following steps:
 
 1. **Explore the Presets**: Visit our Github repository at [Regelum - Preconfigured Presets](https://github.com/osinenkop/regelum-control/tree/master/presets) to discover the range of available presets tailored for various agents and systems.
