@@ -1,4 +1,4 @@
-![image](./docs/src/gfx/regelum_full_logo.png)
+![image](https://github.com/osinenkop/regelum-control/blob/master/docs/src/gfx/regelum_full_logo.png)
 
 # About
 
@@ -45,10 +45,10 @@ This project is licensed under the terms of the [MIT license](./LICENSE).
 ## Bibtex reference
 
 ```
-@misc{regelum2023,
+@misc{regelum2024,
 author =   {Pavel Osinenko, Grigory Yaremenko, Georgiy Malaniya, Anton Bolychev},
 title =    {Regelum: a framework for hybrid agent-enviroment simulation},
 howpublished = {\url{https://github.com/osinekop/regelum-control}},
-year = {2020}
+year = {2024}
 }
 ```
