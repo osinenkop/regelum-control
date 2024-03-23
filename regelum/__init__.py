@@ -752,6 +752,7 @@ class main:
         self.parser.add_argument("--cooldown-factor", default=1.0)
 
         self.parser.add_argument("--save-animation", action="store_true")
+        self.parser.add_argument("--parallel", action="store_true")
 
         def single_thread(flag):
             if not flag:

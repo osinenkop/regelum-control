@@ -337,7 +337,7 @@ class RLScenario(Scenario):
         N_iterations: int = 1,
         value_threshold: float = np.inf,
         stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
-        is_parallel: bool = False,
+        is_parallel: bool = None,
     ):
         """Instantiate a RLScenario object.
 
@@ -383,6 +383,7 @@ class RLScenario(Scenario):
             value_threshold=value_threshold,
             discount_factor=discount_factor,
         )
+        is_parallel = self._metadata["argv"].parallel
 
         self.critic_optimization_event = critic_optimization_event
         self.policy_optimization_event = policy_optimization_event
