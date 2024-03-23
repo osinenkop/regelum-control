@@ -1,8 +1,0 @@
-defaults:
-  - policy_rl
-
-critic: ~ pipeline.critic
-algorithm: rpo
-
-model:
-  weights_init: = numpy.zeros((${pipeline.policy.prediction_horizon}, ${.dim_output}))

@@ -1,5 +1,0 @@
-defaults:
-  - policy_rl_torch
-
-critic: ~ pipeline.critic
-algorithm: rql

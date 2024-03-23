@@ -1,0 +1,4 @@
+_target_: src.policy.SimplePolicy
+
+# Define below the constructor kwargs
+gain: 0.2

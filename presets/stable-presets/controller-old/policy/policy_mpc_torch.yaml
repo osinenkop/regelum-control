@@ -1,4 +1,0 @@
-defaults:
-  - policy_rl_torch
-
-algorithm: mpc 

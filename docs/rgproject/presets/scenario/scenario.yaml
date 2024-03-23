@@ -1,0 +1,10 @@
+_target_: regelum.scenario.Scenario
+
+# Define below the constructor kwargs
+sampling_time: $ common.sampling_time
+N_episodes: 1
+N_iterations: 1
+# Here we pass the instance of our policy and simulator
+# "~"" is our syntax sugar feature that does the thing
+policy: ~ policy 
+simulator: ~ simulator

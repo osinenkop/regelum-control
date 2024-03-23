@@ -12,10 +12,7 @@ theme:
     - navigation.footer
     - content.code.annotate
     - navigation.tabs
-    # - navigation.expand
     - toc.follow
-    # - navigation.sections
-    # - toc.integrate
     - navigation.top
     - search.suggest
     - search.highlight
@@ -28,8 +25,6 @@ theme:
     scheme: regelum
   
 plugins:
-  # - bibtex:
-  #     bib_file: docs/include/refs.bib
   - termynal
   - search
   - autorefs
@@ -63,17 +58,7 @@ plugins:
             show_symbol_type_toc: true
             signature_crossrefs: true
             summary: true
-            # signature_crossrefs: true
-            # show_symbol_type_toc: true
-            # show_symbol_type_heading: true
-            # docstring_section_style: list
             docstring_style: google
-            # show_submodules: true
-            # show_source: true
-            # heading_level: 3
-            # docstring_options:
-            #   ignore_init_summary: true
-            # merge_init_into_class: true
           paths: [regelum]
   - section-index
 nav:
@@ -85,32 +70,16 @@ nav:
   # - Authors: authors.md
 
 
-  # - Code Reference 2: references.md
-
 extra_javascript:
   - _internal/javascripts/mathjax.js
-  # - _internal/javascripts/pseudocode.min.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
-  # - https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.js
-  # - _internal/javascripts/render.pseudocode.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
 
 extra_css:
-  # - _internal/javascripts/pseudocode.min.js
   - _internal/stylesheets/texhtml.css
   - _internal/stylesheets/colors.css
-  # - _internal/stylesheets/f.css
-  # - _internal/stylesheets/pseudocode.min.css
 
-# extra:
-#   social:
-#     - icon: fontawesome/brands/github-alt
-#       link: https://github.com/james-willett
-#     - icon: fontawesome/brands/twitter
-#       link: https://twitter.com/TheJamesWillett
-#     - icon: fontawesome/brands/linkedin
-#       link: https://www.linkedin.com/in/willettjames/
 
 markdown_extensions:
   - tables
@@ -143,5 +112,3 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-# copyright: |
-#   &copy; 2023 <a href="https://github.com/james-willett"  target="_blank" rel="noopener">James Willett</a>

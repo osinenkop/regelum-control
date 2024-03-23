@@ -1,6 +1,0 @@
-defaults:
-  - optimizer_config: symbolic
-
-_target_: regelum.policy.ThreeWheeledRobotDisassembledCLFPolicy
-
-pipeline_gain: 10

@@ -1,5 +1,0 @@
-defaults:
-  - policy_rl
-
-critic: ~ pipeline.critic
-algorithm: rql

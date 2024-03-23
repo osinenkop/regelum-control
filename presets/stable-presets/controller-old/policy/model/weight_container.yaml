@@ -1,4 +1,0 @@
-_target_: regelum.model.ModelWeightContainer
-
-dim_output: $ system_specific.dim_action
-# weights_init: = numpy.zeros((${pipeline.policy.prediction_horizon}, ${.dim_output}))
