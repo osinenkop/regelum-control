@@ -1,10 +1,8 @@
-We are excited to announce that we have a collection of pre-configured experiments available for you to use with Regelum. These configurations are meticulously crafted and ready for immediate use, making it incredibly simple for you to get started with your own experiments and simulations.
-
 Access and experiment with our pre-configurations with the following steps:
 
 1. **Explore the Presets**: Visit our Github repository at [Regelum - Preconfigured Presets](https://github.com/osinenkop/regelum-control/tree/master/presets) to discover the range of available presets tailored for various agents and systems.
 
-2. **Download and Run**: Seamlessly download the desired preset folder to your local machine. To initiate an experiment, navigate to the appropriate directory and execute a predefined bash script in the format:
+2. **Download and Run**: To initiate an experiment, navigate to the [presets](https://github.com/osinenkop/regelum-control/tree/master/presets) directory and execute a predefined bash script in the format:
 
     ```shell
     bash bash/{AGENT}/{SYSTEM}
