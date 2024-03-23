@@ -537,6 +537,7 @@ class GameScenario(RLScenario):
         discount_factor: float = DISCOUNT_FACTOR,
         sampling_time: float = SAMPLING_TIME,
         N_iterations: int = 200,
+        is_parallel: bool = True,
         iters_to_switch_opt_agent: int = 1,
     ):
         self.pedestrian_running_objective = RunningObjective(
@@ -651,6 +652,7 @@ scenario = GameScenario(
     chauffeur_running_objective_model=ChauffeurRunningObjectiveModel(),
     discount_factor=DISCOUNT_FACTOR,
     sampling_time=SAMPLING_TIME,
+    is_parallel=False,  # Logging is not working in parallel mode while in jupyter, so we disable it for now.
     N_iterations=N_ITERATIONS,
     iters_to_switch_opt_agent=ITERS_AGENT_SWITCH,
 )
