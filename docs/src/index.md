@@ -101,13 +101,13 @@ Regelum-control stands as a framework designed to address optimal control and re
 
 ## Features
 
-:octicons-cpu-16: __Run pre-configured regelum algorithms with ease__. Regelum offers a set of implemented, [ready-to-use algorithms](#) in the domain of RL and Optimal Control. 
+:octicons-cpu-16: __Run pre-configured regelum algorithms with ease__. Regelum offers a set of implemented, [ready-to-use algorithms](tutorials/stable-presets.md) in the domain of RL and Optimal Control. 
 It provides flexibility through multiple optimization backends, including CasADi and PyTorch, to accommodate various computational needs.
 
 :material-robot-industrial: __Stabilize your dynamical system with Regelum__. Regelum stands as a framework 
 designed to address optimal control and reinforcement learning (RL) 
 tasks within continuous-time dynamical systems. 
-It comes equipped with an array of default systems accessible [here](#), 
+It comes equipped with an array of default systems accessible [here](systems/kin_point/), 
 alongside a detailed tutorial that provides clear instructions 
 for users to instantiate their own environments.
 

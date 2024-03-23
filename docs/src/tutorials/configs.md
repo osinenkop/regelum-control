@@ -86,6 +86,7 @@ project
 │   └── policy.py
 └── run.py
 ```
+The final source code for this tutorial is avaliable [here](https://github.com/osinenkop/regelum-control/tree/master/docs/rgproject)
 
 ## Configuring policy
 
