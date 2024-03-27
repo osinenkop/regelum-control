@@ -1,0 +1,4 @@
+state_init: = numpy.array([numpy.pi, 0.]) + numpy.array([${.x1}, 0.])
+action_init: = numpy.ones(${system.dim_action})
+
+x1: = numpy.random.normal(0., 0.05)

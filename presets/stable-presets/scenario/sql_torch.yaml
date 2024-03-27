@@ -1,0 +1,29 @@
+_target_: regelum.scenario.SQLTorch
+
+name%%: sql_torch
+
+defaults:
+  - critic_model: perceptron
+
+running_objective: ~ running_objective
+simulator: ~ simulator
+prediction_horizon: 2
+critic_td_n: 1
+critic_batch_size: 10 
+policy_n_epochs: 20
+critic_n_epochs: 1
+policy_opt_method_kwargs: 
+  lr: 0.1
+critic_opt_method_kwargs:
+  lr: 0.1
+sampling_time: $ system_specific.sampling_time
+observer: $ system_specific.observer
+constraint_parser: ~ constraint_parser
+discount_factor: 1.0
+N_iterations: 20
+stopping_criterion: ~ stopping_criterion
+
+
+
+critic_model:
+  dim_input: = ${system_specific.dim_observation} + ${system_specific.dim_action} 

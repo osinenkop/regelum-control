@@ -1,0 +1,198 @@
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+
+\begin{document}
+
+\section*{Introduction}
+
+This document serves as a template for the creation of standalone documents, which are designed to be compiled and seamlessly integrated into the documentation webpage.
+
+Adherence to specific guidelines is essential to ensure that the end product presents well and that all embedded hyperlinks function correctly.
+
+\section*{Structure}
+First, make sure that your TeX file is organized as follows:
+\begin{verbatim}
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+\begin{document}
+YOUR CONTENT GOES HERE
+\end{document}
+\end{verbatim}
+
+\section*{Sections and subsections}
+
+Sections and subsections can be delineated using the following commands: 
+\begin{verbatim}
+\section*{...} \subsection*{...}
+\end{verbatim}
+For example, this section was initiated with:
+\begin{verbatim}
+\section*{Sections and subsections}
+\end{verbatim}
+And the subsequent \hyperlink{links-sections-and-subsections}{subsection} was generated with 
+\begin{verbatim}
+\section*{Links. Sections and subsections}
+\end{verbatim}
+It is important to use the asterisk \texttt{*} with these commands, such as \verb|\section*{...}| or \verb|\subsection*{...}|, to prevent the automatic numbering of sections.
+
+\subsection*{Links. Sections and subsections}
+
+When creating hyperlinks, it is advisable to use the \verb|\hyperlink|  command to ensure optimal functionality on the website. For instance, to create a hyperlink to \hyperlink{links-sections-and-subsections}{current subsection}, one would use:
+\begin{verbatim}
+\hyperlink{links-sections-and-subsections}{current subsection}
+\end{verbatim}
+Similarly, to link to the \hyperlink{sections-and-subsections}{previous subsection}:
+\begin{verbatim}
+\hyperlink{sections-and-subsections}{previous subsection}
+\end{verbatim}
+Although these links will not be functional within a PDF, they will operate correctly on the website. For accurate linking, follow these steps:
+\begin{itemize}
+    \item Identify the name of the section or subsection to which you wish to link, such as
+    \begin{center} \texttt{Links. Sections and subsections} \end{center}
+    \item Strip all punctuation from it to yield \begin{center}\texttt{Links Sections and subsections}\end{center}
+    \item Convert the text to lowercase: \begin{center}\texttt{links sections and subsections}\end{center}
+    \item Replace spaces with hyphens to form the link identifier: \begin{center} \texttt{links-sections-and-subsections}\end{center}
+    \item Insert this identifier into the first argument of the \texttt{\textbackslash hyperlink} command:
+\begin{verbatim}
+\hyperlink{links-sections-and-subsections}{a hyperlinked text}
+\end{verbatim}
+\end{itemize}
+
+\section*{Tables}
+
+You can define your table by utilizing \texttt{table} environment:
+\begin{verbatim}
+\begin{table}[H]
+    \caption{Table caption}
+    \label{table:my-table}
+    \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| }  
+        \hline
+        $Q$ & Quality function \\ 
+        $r$ & Running objective \\
+        \hline
+    \end{tabularx}
+\end{table}
+\end{verbatim}
+\begin{table}[H]
+    \caption{Table caption}
+    \label{table:my-table}
+    \begin{tabularx}{0.97\textwidth}{ |p{0.3\textwidth}|p{0.6\textwidth}| } 
+        \hline
+        $Q$ & Quality function \\ 
+        $r$ & Running objective \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\subsection*{Referencing to tables.}
+To reference a specific table, such as Table \ref{table:my-table}, simply use the command 
+\begin{verbatim}
+\ref{table:my-table}
+\end{verbatim}
+
+\section*{Equations}
+You can define your equation by utilizing \texttt{equation} environment. Thus, the code
+\begin{verbatim}
+\begin{equation}
+    \label{eqn_sysmarkov}
+    \begin{aligned}
+        & \State_{t+1} \sim \transit(\bullet \vert \state_t, \action_t)
+    \end{aligned}
+\end{equation}
+\end{verbatim}
+provides us
+\begin{equation}
+    \label{eqn_sysmarkov}
+    \begin{aligned}
+        & \State_{t+1} \sim \transit(\bullet \vert \state_t, \action_t)
+    \end{aligned}
+\end{equation}
+
+The dollar sign symbol \verb|$| is also supported for denoting equations. For instance, writing \verb|$x ^ 2$| will yield the mathematical expression $x ^ 2$.
+
+\subsection*{Referencing to equations}
+To reference to a specific equation, such as \eqref{eqn_sysmarkov}, you can use 
+\begin{verbatim}
+\eqref{eqn_sysmarkov}
+\end{verbatim}
+\textbf{Please note that it is imperative to prefix your label with \texttt{eqn} for equation references!}
+
+\section*{Algorithms}
+You can define your algorithm by utilizing \texttt{algorithm} environment. Thus, the code
+\begin{verbatim}
+\begin{algorithm}
+\caption{My awesome algorithm}
+\label{alg:my-alg}
+\begin{algorithmic}
+\STATE {\bfseries Input:} $\theta_0$
+\FOR {Learning iteration $i := 0 \dots \mathcal I$}
+    \STATE Policy weight update
+    \STATE $\theta_{i+1} \la $ long equation
+    \STATE $\alpha_i > 0$, learning rate
+\ENDFOR
+\STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
+\end{algorithmic}
+\end{algorithm}
+\end{verbatim}
+provides us 
+\begin{algorithm}
+    \caption{My awesome algorithm}
+    \label{alg:my-alg}
+    \begin{algorithmic}
+    \STATE {\bfseries Input:} $\theta_0$
+    \FOR {Learning iteration $i := 0 \dots \mathcal I$}
+        \STATE Policy weight update
+        \STATE $\theta_{i+1} \la $ long equation
+        \STATE $\alpha_i > 0$, learning rate
+    \ENDFOR
+    \STATE \RETURN Optimal policy $\policy^{\theta_{\mathcal I}}$
+    \end{algorithmic}
+\end{algorithm}
+\subsection*{Referencing to algorithms}
+To reference to a specific algorithm, such as \ref{alg:my-alg}, you can use 
+\begin{verbatim}
+\ref{alg:my-alg}
+\end{verbatim}
+
+
+\section*{Figures}
+You can define your figure by utilizing \texttt{figure} environment. Thus, the code
+\begin{verbatim}
+\begin{figure}[H]
+    \caption{My awesome figure!!!}
+    \label{fig:my-fig}
+    \includegraphics{img.pdf}
+\end{figure}
+\end{verbatim}
+provides us
+\begin{figure}[H]
+    \caption{My awesome figure!!!}
+    \label{fig:my-fig}
+    \includegraphics[width=\textwidth]{pic.pdf}
+\end{figure}
+
+Please ensure that the file \texttt{pic.pdf} is located within the \texttt{docs/tex/gfx} directory, as indicated by the path: \verb|docs/tex/gfx/pic.pdf|
+
+\section*{Referencing to figures}
+To reference to a specific figure, such as \ref{fig:my-fig}, you can use 
+\begin{verbatim}
+\ref{fig:my-fig}
+\end{verbatim}
+
+
+\section*{Citing}
+To reference a particular source within your document, use the command 
+\begin{verbatim}
+\cite{Aastroem2000Modeluncertain}
+\end{verbatim}
+which will appear as \cite{Aastroem2000Modeluncertain}.
+
+Remember to include the command \verb|\printbibliography| at the conclusion of your document; this is crucial for compiling the bibliography section.
+
+\printbibliography
+
+\end{document}

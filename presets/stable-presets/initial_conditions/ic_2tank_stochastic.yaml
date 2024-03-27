@@ -1,0 +1,4 @@
+state_init: = numpy.array([2, -2]) + numpy.array([${.x1}, ${.x2}])
+
+x1: = numpy.random.normal(0., 0.05)
+x2: = numpy.random.normal(0., 0.05)

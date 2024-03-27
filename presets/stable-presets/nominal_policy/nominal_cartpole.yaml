@@ -1,0 +1,7 @@
+_target_: regelum.policy.CartPoleEnergyBasedPolicy
+
+swingup_gain: 10
+upright_gain: = numpy.array([70, 2., 20., 0.])
+pid_loc_thr: 0.35
+pid_scale_thr: 10.0
+clip_bounds: = numpy.array([-1., 1.])

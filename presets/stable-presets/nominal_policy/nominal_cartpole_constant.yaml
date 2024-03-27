@@ -1,0 +1,3 @@
+_target_: regelum.policy.ConstantPolicy
+
+value: 200

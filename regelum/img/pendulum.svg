@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:export-filename="pendulum.svg"
+   inkscape:export-xdpi="104.17188"
+   inkscape:export-ydpi="104.17188"
+   sodipodi:docname="pendulum.svg"
+   inkscape:version="1.2.2 (1:1.2.2+202212051550+b0a8486541)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     showgrid="true"
+     inkscape:zoom="0.77949635"
+     inkscape:cx="294.42088"
+     inkscape:cy="560.6184"
+     inkscape:window-width="1080"
+     inkscape:window-height="1883"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid555" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="rect111-3"
+       style="fill:#8bc670;stroke-width:0.277863"
+       d="m 105.88676,116.77062 c 7.89808,0 14.25646,0.70785 14.25646,1.5871 v 26.55713 c 0,0.87925 -6.35838,1.5871 -14.25646,1.5871 -7.898091,0 -14.256478,-0.70785 -14.256478,-1.5871 v -26.55713 c 0,-0.87925 6.358387,-1.5871 14.256478,-1.5871 z M 105.72617,1.5435287 c 3.34098,0 6.03065,3.4505532 6.03065,7.7366668 V 138.73909 c 0,4.28611 -2.68967,7.73669 -6.03065,7.73669 -3.34099,0 -6.030678,-3.45058 -6.030678,-7.73669 V 9.2801955 c 0,-4.2861136 2.689688,-7.7366668 6.030678,-7.7366668 z" />
+  </g>
+</svg>

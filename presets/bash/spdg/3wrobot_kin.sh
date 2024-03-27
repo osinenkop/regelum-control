@@ -1,0 +1,19 @@
+python run_stable.py \
++seed=1,2,3,4,5,6,7,8,9,10 \
+--jobs=-1 \
+scenario=sdpg \
+system=3wrobot_kin \
+--experiment=sdpg_3wrobot_kin \
+scenario.N_episodes=10 \
+scenario.N_iterations=180 \
+scenario.policy_n_epochs=1 \
+scenario.critic_n_epochs=30 \
+scenario.policy_opt_method_kwargs.lr=0.02 \
+scenario.policy_model.n_hidden_layers=2 \
+scenario.policy_model.dim_hidden=15 \
+scenario.policy_model.std=0.1 \
+scenario.normalize_output_coef=0.05 \
+scenario.critic_model.n_hidden_layers=2 \
+scenario.critic_model.dim_hidden=15 \
+scenario.critic_opt_method_kwargs.lr=0.1 \
+scenario.gae_lambda=0.96

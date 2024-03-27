@@ -1,0 +1,6 @@
+state_init: = numpy.array([5., 5., ${.phi}, 0., 0.]) +  numpy.array([${.x1}, ${.x2}, 0., 0., 0.])
+action_init: = numpy.ones(${system.dim_action})
+
+phi: = numpy.random.uniform(-numpy.pi, numpy.pi) 
+x1: = numpy.random.normal(0., 0.02)
+x2: = numpy.random.normal(0., 0.02)

@@ -1,0 +1,20 @@
+python run_stable.py \
++seed=range\(10,20\) \
+scenario=calf \
+system=cartpole_pg \
+scenario.critic_model.quad_matrix_type=symmetric \
+--experiment=calf_cartpole \
+scenario.N_iterations=6 \
++scenario.critic_safe_decay_param=0.01 \
++scenario.critic_lb_parameter=1.0E-4 \
++scenario.critic_regularization_param=3000 \
++scenario.critic_learning_norm_threshold=0.3 \
+scenario.critic_td_n=2 \
+scenario.critic_batch_size=3 \
++scenario.critic_model.add_random_init_noise=True \
++scenario.store_weights_thr=0.5 \
++scenario.weighted_norm_coeffs=[1,1,1,0] \
++scenario.weights_disturbance_std_after_iteration=15 \
++scenario.critic_model.weight_max=500.0 \
++scenario.is_mean_weighted=True \
+--jobs=-1

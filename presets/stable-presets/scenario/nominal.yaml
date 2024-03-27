@@ -1,0 +1,10 @@
+_target_: regelum.scenario.Scenario
+
+name%%: nominal
+
+policy: ~ nominal_policy
+sampling_time: $ system_specific.sampling_time
+running_objective: ~ running_objective
+discount_factor: 1.0 
+simulator: ~ simulator
+observer: $ system_specific.observer

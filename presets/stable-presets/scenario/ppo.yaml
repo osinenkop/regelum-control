@@ -1,0 +1,30 @@
+_target_: regelum.scenario.PPO
+
+name%%: ppo
+defaults:
+  - policy_model: perceptron_with_truncated_normal_noise
+  - critic_model: perceptron
+
+sampling_time: $ system_specific.sampling_time
+running_objective: ~ running_objective
+simulator: ~ simulator
+observer: $ system_specific.observer
+running_objective_type: cost
+discount_factor: 0.7
+N_iterations: 100
+N_episodes: 2
+stopping_criterion: ~ stopping_criterion
+critic_td_n: 1
+gae_lambda: 0.0
+cliprange: 0.2 
+is_normalize_advantages: True
+
+critic_n_epochs: 50
+critic_opt_method: = torch.optim.Adam
+critic_opt_method_kwargs: 
+  lr: 0.001
+
+policy_n_epochs: 100
+policy_opt_method: = torch.optim.Adam
+policy_opt_method_kwargs: 
+  lr: 0.005

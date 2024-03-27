@@ -1,0 +1,114 @@
+site_name: Regelum
+site_url: https://regelum.aidynamic.io/
+repo_name: Regelum
+repo_url: https://github.com/osinenkop/regelum-control
+docs_dir: ./docs/src
+theme:
+  name: material
+  custom_dir: ./docs/overrides
+  favicon: gfx/favicon_copy.svg
+  logo: gfx/logo.svg
+  features:
+    - navigation.footer
+    - content.code.annotate
+    - navigation.tabs
+    - toc.follow
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+    - content.footnote.tooltips
+  language: en
+  palette:
+    scheme: regelum
+  
+plugins:
+  - termynal
+  - search
+  - autorefs
+  - macros:
+      include_dir: docs/include
+  - gen-files:
+      scripts:
+      - docs/scripts/gen_ref_pages.py
+      - docs/scripts/add_preamble_to_mkdocs_template.py
+      - docs/scripts/include_tex_htmls.py
+      - docs/scripts/include_notebooks.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_options:
+              ignore_init_summary: true
+            members_order: source
+            docstring_section_style: list
+            filters: [""]
+            heading_level: 1
+            inherited_members: false
+            merge_init_into_class: true
+            separate_signature: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            summary: true
+            docstring_style: google
+          paths: [regelum]
+  - section-index
+nav:
+  - Home: index.md
+  - Tutorials: tutorials/
+  - Scenarios: scenarios/
+  - Systems: systems/
+  - Reference API: reference/
+  # - Authors: authors.md
+
+
+extra_javascript:
+  - _internal/javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+
+extra_css:
+  - _internal/stylesheets/texhtml.css
+  - _internal/stylesheets/colors.css
+
+
+markdown_extensions:
+  - tables
+  - md_in_html
+  - toc:
+      toc_depth: 3
+      permalink: ⚓︎
+      title: On this page
+  - pymdownx.magiclink
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      # base_path: ["."]  
+      base_path: ["./docs/include"]
+  - admonition
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.mark
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

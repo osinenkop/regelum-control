@@ -1,0 +1,7 @@
+x1: = numpy.random.normal(0., 0.015)
+
+state_init: = numpy.array([numpy.pi, 0., 0., 0.]) + numpy.array([${.x1}, 0., 0., 0.])
+action_init: = numpy.ones(1)
+
+# x1: = numpy.random.normal(0., 0.01)
+# x1: 0.016905257038003562

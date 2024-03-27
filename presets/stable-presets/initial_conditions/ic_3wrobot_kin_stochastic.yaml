@@ -1,0 +1,7 @@
+state_init: = numpy.array([${x1}, ${x2}, ${.phi})
+action_init: = numpy.ones(${system.dim_action})
+
+
+phi: = numpy.random.uniform(0, 2 * numpy.pi)
+x1: = 3 * numpy.cos(${.phi})
+x2: = 3 * numpy.sin(${.phi})

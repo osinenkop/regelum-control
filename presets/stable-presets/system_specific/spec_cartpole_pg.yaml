@@ -1,0 +1,12 @@
+name: cartpole_pg
+target: regelum.system.CartPolePG
+observer: = regelum.observer.CartPoleObserverPG()
+dim_observation: = ${.target}._dim_observation
+dim_action: = ${.target}._dim_inputs
+
+time_final: 15.
+sampling_time: 0.01
+
+F_min: -50.
+F_max: 50.
+action_bounds: = [[${.F_min}, ${.F_max}]]

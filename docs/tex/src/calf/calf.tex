@@ -1,0 +1,84 @@
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+
+\begin{document}
+\section*{Problem statement}
+Let us consider the following optimal control problem
+
+\begin{equation}
+    \label{eqn_ddpg_problem}
+    \E[\transit, \policy]{\sum_{t = 0}^{T-1} \gamma ^ t \Cost(\State_{t}, \Action_{t})} \ra \min_{\policy},
+\end{equation}
+where:
+\begin{enumerate}
+    \item $\gamma \in (0, 1)$ is the \textit{discount factor} of the algorithm. 
+    \item  $\transit : \states \times \actions \times \states \ \rightarrow \ \R_{\geq 0}$ is the \textit{transition probability density function} of the environment. Precicely,  $\transit(\bullet \mid \state, \action)$ is the probability density of the next state conditioned on the current state $\state$ and the current action $\action$:
+    $$
+        \State_{t+1} \sim \transit(\bullet \mid \State_t, \Action_t), \quad \text{for all timesteps } t \in \{0, 1, \dots, T-1\} 
+    $$
+    It is also assumed that the initial state $\State_0$ for $t = 0$ is sampled from some distribution with an unconditional density $\transit_0 : \states \ \rightarrow \ \R_{\geq 0}$:
+    $$
+        \State_0 \sim \transit_0(\bullet)
+    $$
+    \item $\policy:  \states \rightarrow \R_{\geq 0}$ is the \textit{deterministic policy} of the agent. Precicely,
+    $$
+        \Action_t  = \policy(\State_t)
+    $$
+    for all $t \in \{0, 1, 2, \dots\}$
+    \item $\Cost(\state, \action)$ denotes the cost associated with the current state $\state$ and action $\action$
+\end{enumerate}
+
+\section*{Notation}
+The notations used throughout this document are defined as follows:
+\begin{enumerate}
+    \item $\policy_0$ is stabilzing policy \ie the policy if $\action_t = \policy_0(\state_t)$  implies that the
+    distance between $\state_t$ and $\G$ vanishes over time, where $\G$ is some given neighbourhood of the origin
+    \item $\hat \kappa_\low$, $\hat \kappa_\up$ is a pair of $\Kinf$ functions.
+    In other words, $\hat \kappa_\low$, $\hat \kappa_\up$ satisfy:
+    \begin{align*}
+         & \hat \kappa_\low(0) = \hat \kappa_\up(0) = 0,                                                            \\
+         & \lim\limits_{\state \ra \infty} \hat \kappa_\low(\state) = \lim\limits_{\state \ra \infty} \hat \kappa_\up(\state) = \infty.
+    \end{align*}
+    \item $\hat \Value^w$ is a state-valued critic model ($w \in \W$, where $\W$ is compact and $0 \notin \W$)
+    \item $\overline{\nu} \in \R_{>0}$ a desirable Lyapunov decay rate 
+\end{enumerate}
+
+
+\section*{CALF algorithm}
+\begin{algorithm}
+    \caption{Critic as Lyapunov function (CALF) algorithm (greedy actor, state-valued critic).}
+    \begin{algorithmic}[1]
+        \STATE {\bfseries Input:} $\overline{\nu}  > 0, \alpha_{\crit} > 0, \policy_0(\cdot)$ is stabilizing
+        \STATE $\state_0 \gets$ \textbf{observe};
+        \STATE $w_{0} \gets $ arbitrary in $\W$;
+        \STATE $\action_0 \gets  \policy_0(\state_0)$;
+        \STATE $w^\dagger \gets w_{0}$;
+        \STATE $\state^\dagger \gets \state_0$;
+        \FOR {$t := 1, \dots \infty$}
+        \STATE    \textbf{perform} $\action_{t -1}$;
+        \STATE $\state_t \gets$ \textbf{observe};
+        \STATE Try critic update: 
+        \[
+            \begin{array}{lrl}
+                & w^* \gets & {\scriptstyle \argmin \limits_{w \in \mathbb W} \sum_{t' = 1}^N \big(\Value^w(\state_{t - t'}) - \cost(\state_{t - t'}, \action_{t - t'}) - \Value^{w^\dagger}(s_{t - t' + 1})\big)^2 + \alpha_{\crit}^{-2}\nrm{w - w^\dagger}^2.} \\                                                                \\
+                          & \sut                              & {\scriptstyle \hat \Value^w(\state_t) - \hat \Value^{w^\dagger}(\state^\dagger) \leq -{\bar \nu} \deltau,}     \\
+                          &                                   & {\scriptstyle \hat \kappa_\low(\nrm{\state_t}) \leq \hat \Value^{w}(\state_t) \leq \hat \kappa_\up(\nrm{\state_t}); }
+            \end{array}
+        \]
+        \IF{ solution $w^*$ found}
+        \STATE $\state^\dagger \gets \state_t$;
+        \STATE $w^\dagger \gets w^*$;
+        \STATE    Update action:
+        \[
+            \action_t \la \argmin\limits_{\action \in \actions}  \left(\cost(\state^\dagger, \action) + \hat \Value^{w^\dagger}_+\right)
+        \]
+        Here, $\hat \Value^{w^\dagger}_+$ is \eg the state valued critic or a statistic thereof \eg expectation, at the next state under the action $\action$.
+        \ELSE
+        \STATE $\action_t \la \policy_0(\state_t)$;
+        \ENDIF
+        \ENDFOR
+    \end{algorithmic}
+    \label{alg_calfstate}
+\end{algorithm}
+
+\end{document}

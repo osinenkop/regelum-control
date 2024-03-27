@@ -1,0 +1,15 @@
+pytest-xdist==2.5.0
+pytest-lazy-fixture==0.6.3
+black==23.1.0
+pre-commit==3.2.1
+ruff==0.0.269
+mkdocs-material==9.5.9
+mkdocs-autorefs==0.5.0
+mkdocs-macros-plugin==1.0.5
+mkdocs-gen-files==0.5.0
+mkdocs-literate-nav==0.6.1
+mkdocstrings-python==1.7.5
+mkdocs-section-index==0.3.8
+termynal==0.12.1
+typer==0.9.0
+pdf2image==1.17.0

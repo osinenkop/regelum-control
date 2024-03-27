@@ -1,0 +1,43 @@
+% !TeX document-id = {fb298762-8474-4a7b-90a0-a0c749091c0f}
+%!BIB program = biber
+
+\documentclass[12pt,twoside]{../../mitthesis}
+\input{../../packages.tex}
+
+\begin{document}
+\section*{Problem statement}
+Consider the following optimal control problem:
+$$
+    \sum_{t = 0}^{T-1}\cost(\state_{t}, \action_{t}) \ra \min_{a_0, \ldots, a_{T-1}},
+$$
+where
+\begin{enumerate}
+    \item The state at each time step $t \in \{1, \ldots, T-1\}$ is derived by applying the transition function $\transit: \states \times \actions \to \states$: 
+    $$
+        \state_{t} = \transit(\state_{t-1}, \action_{t-1}),
+    $$ 
+    with the initial state $\state_0$ given.
+    \item The function $c(\state, \action)$ represents the cost associated with the current state $\state$ and action $\action$
+\end{enumerate}
+
+\section*{Model-predictive control algorithm}
+\begin{algorithm}
+    \caption{Model-Predictive Control (MPC)}
+    \label{alg:my-alg}
+    \begin{algorithmic}[1]
+        \STATE {\bfseries Input:} horizon $N \in \N$
+        \STATE Obtain initial state $\state_0$    
+        \FOR {Time step $t := 0 \dots T-1$}
+            \STATE Determine $\action_t$ from the solution of the optimization problem:
+            $$
+            \begin{aligned}
+                &\sum_{t'=t}^{t+H} \cost(\hat{\state}_{t'}, \action_{t'}) \ra \min_{\action_t, \dots, \action_{t+H}}, \\
+                &\text{ where } \hat{\state}_t = \state_t \text{ and } \hat{\state}_{t' + 1} = \transit(\hat{\state}_{t'}, \action_{t'}) \text{ for } t' \in \{t, \ldots, t+H-1\}
+            \end{aligned}
+            $$
+            \STATE Apply $\action_t$, the first action from the solution sequence: $\state_{t+1} = \transit(\state_t, \action_t)$
+        \ENDFOR
+    \end{algorithmic}  
+\end{algorithm}
+
+\end{document}

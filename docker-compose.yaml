@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  mlflow-postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MLFLOW_POSTGRES_DB:-mlflowdb}
+      POSTGRES_USER: ${MLFLOW_POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${MLFLOW_POSTGRES_PASSWORD:-password}
+    ports:
+      - "${MLFLOW_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ${MLFLOW_POSTGRES_DATA:-${HOME}/.regelum/mlflowdb}:/var/lib/postgresql/data
+
+  mlflow-server:
+    restart: unless-stopped
+    build: ./docker/mlflow
+    ports:
+      - "${MLFLOW_SERVER_PORT:-5000}:5000"
+    depends_on:
+      - mlflow-postgres
+    command:
+      - python
+      - -m
+      - mlflow
+      - server
+      - --host=0.0.0.0
+      - --port=5000
+      - --backend-store-uri=postgresql+psycopg2://${MLFLOW_POSTGRES_USER:-user}:${MLFLOW_POSTGRES_PASSWORD:-password}@mlflow-postgres:5432/${MLFLOW_POSTGRES_DB:-mlflowdb}
+      - --default-artifact-root=${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-${HOME}/.regelum/mlflow-artifacts}
+    volumes:
+      - ${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-${HOME}/.regelum/mlflow-artifacts}:${MLFLOW_SERVER_DEFAULT_ARTIFACT_ROOT:-${HOME}/.regelum/mlflow-artifacts}

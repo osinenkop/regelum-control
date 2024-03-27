@@ -1,0 +1,4 @@
+- $\tau_1$ : base area of the first tank [$\text{m}^2$]
+- $\tau_2$ : base area of the second tank [$\text{m}^2$]
+- $Q_1$ : outbound flow in the first tank [$\text{m}^3$ / s]
+- $Q_2$ : inbound flow in the second tank [$\text{m}^3$ / s]

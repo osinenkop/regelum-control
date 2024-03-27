@@ -1,0 +1,15 @@
+_target_: regelum.simulator.CasADi
+
+# Define below the constructor kwargs
+
+# %% is used to define a variable that is not a constructor kwarg
+x%%: 10 
+y%%: 10
+
+# You can pass here numpy arrays!
+state_init: = numpy.array([${.x%%}, ${.y%%}]) 
+
+# Here we pass the instance of our system
+# "~"" is our syntax sugar feature that does the thing
+system: ~ system
+max_step: = ${common.sampling_time} / 10
