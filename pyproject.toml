@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "regelum-control"
 package-mode = true
-version = "0.3.1"
+version = "0.3.2"
 description = "Regelum is a flexibly configurable framework for agent-environment simulation with a menu of predictive and reinforcement learning pipelines."
 authors = ["Georgiy Malaniya <pwlsd.gm@gmail.com> Anton Bolychev <bolychev.anton@gmail.com> Grigoriy Yaremenko <yaremenko8@gmail.com> Pavel Osinenko <p.osinenko@yandex.ru>"]
 license = "MIT"

@@ -3,7 +3,7 @@
 It is made for researchers and engineers in reinforcement learning and control theory.
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 import argparse
 import datetime
@@ -830,7 +830,11 @@ class main:
             path_main = os.path.abspath(script_path)
             path_parent = "/".join(path_main.split("/")[:-1])
             os.chdir(path_parent)
-            path = os.path.abspath(self.kwargs["config_path"]) if self.kwargs["config_path"] is not None else None
+            path = (
+                os.path.abspath(self.kwargs["config_path"])
+                if self.kwargs["config_path"] is not None
+                else None
+            )
             self.kwargs["config_path"] = path
 
             def app(
@@ -870,7 +874,11 @@ class main:
                         "skip_frames": skip_frames,
                         "logger": logger,
                         "script_path": script_path,
-                        "config_path": path + f"/{self.kwargs['config_name']}.yaml" if self.kwargs['config_name'] is not None else None,
+                        "config_path": (
+                            path + f"/{self.kwargs['config_name']}.yaml"
+                            if self.kwargs["config_name"] is not None
+                            else None
+                        ),
                         "initial_working_directory": initial_working_directory,
                         "initial_pythonpath": initial_pythonpath,
                         "common_dir": common_dir.name,
