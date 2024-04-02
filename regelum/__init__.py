@@ -1041,12 +1041,12 @@ def set_ipython_env(
         interactive: list
         parallel: bool
 
-    RegelumBase._metadata = {
+    RegelumBase._RegelumBase__metadata = {
         "logger": logger,
         "argv": ArgvContainer(interactive, False),
     }
-    callbacks = [callback() for callback in callbacks]
-    RegelumBase._metadata = {
+    callbacks = [callback() for callback in callbacks] if callbacks is not None else []
+    RegelumBase._RegelumBase__metadata = {
         "logger": logger,
         "main": CallbackContainer(callbacks),
         "argv": ArgvContainer(interactive, False),
