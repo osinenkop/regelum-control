@@ -6,6 +6,8 @@
 
 A detailed documentation is available [here](https://regelum.aidynamic.io/).
 
+Check out a [regelum playground](https://github.com/osinenkop/regelum-playground) with some read-to-use examples.
+
 # Features
 
 - __Run pre-configured regelum algorithms with ease__. Regelum offers a set of implemented, ready-to-use algorithms in the domain of RL and Optimal Control. 

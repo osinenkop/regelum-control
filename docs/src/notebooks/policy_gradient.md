@@ -4,7 +4,7 @@
     This document is automatically generated from a Jupyter notebook. You have the option to open it in Google Colab to interactively run and explore the code in each cell.
 
 
-    <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/master/docs/notebooks/collabs/policy_gradient.ipynb">
+    <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/develop/docs/notebooks/collabs/policy_gradient.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
 # Mastering policy gradient with Regelum. 
@@ -66,6 +66,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display, clear_output
 
+set_ipython_env()
 %matplotlib inline
 ```
 
@@ -537,7 +538,6 @@ class GameScenario(RLScenario):
         discount_factor: float = DISCOUNT_FACTOR,
         sampling_time: float = SAMPLING_TIME,
         N_iterations: int = 200,
-        is_parallel: bool = True,
         iters_to_switch_opt_agent: int = 1,
     ):
         self.pedestrian_running_objective = RunningObjective(
@@ -560,7 +560,6 @@ class GameScenario(RLScenario):
             sampling_time=sampling_time,
             N_episodes=policy.N_episodes,
             N_iterations=N_iterations,
-            is_parallel=is_parallel,
             is_critic_first=True,
         )
         self.policy: JointPolicyVPG
@@ -652,7 +651,6 @@ scenario = GameScenario(
     chauffeur_running_objective_model=ChauffeurRunningObjectiveModel(),
     discount_factor=DISCOUNT_FACTOR,
     sampling_time=SAMPLING_TIME,
-    is_parallel=False,  # Logging is not working in parallel mode while in jupyter, so we disable it for now.
     N_iterations=N_ITERATIONS,
     iters_to_switch_opt_agent=ITERS_AGENT_SWITCH,
 )
@@ -736,18 +734,6 @@ callbacks = set_ipython_env(callbacks=callbacks, interactive=True)
 ```python
 scenario.run()  # Takes approximately 6-7 minutes to finish 200 iterations
 ```
-
-
-<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7fbfbf; text-decoration-color: #7fbfbf">[17:19:15] </span><span style="color: #000080; text-decoration-color: #000080">INFO    </span> Optimizing agent switched to pedestrian after iterartion: <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">200</span>                   <a href="file:///tmp/ipykernel_1441846/2327856449.py" target="_blank"><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">2327856449.py</span></a><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">:</span><a href="file:///tmp/ipykernel_1441846/2327856449.py#7" target="_blank"><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">7</span></a>
-</pre>
-
-
-
-
-<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7fbfbf; text-decoration-color: #7fbfbf">           </span><span style="color: #000080; text-decoration-color: #000080">INFO    </span> A pedestrian policy updated<span style="color: #808000; text-decoration-color: #808000">...</span>                                                 <a href="file:///tmp/ipykernel_1441846/2327856449.py" target="_blank"><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">2327856449.py</span></a><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">:</span><a href="file:///tmp/ipykernel_1441846/2327856449.py#52" target="_blank"><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">52</span></a>
-</pre>
-
-
 
 ## Analysis of historical data collected
 

@@ -67,7 +67,7 @@ nav:
   - Scenarios: scenarios/
   - Systems: systems/
   - Reference API: reference/
-  # - Authors: authors.md
+  - Authors: authors_new.md
 
 
 extra_javascript:
