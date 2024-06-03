@@ -24,6 +24,10 @@ mkdocs serve
 
 This command parses [../mkdocs.yml](../mkdocs.yml) and starts a docs development server on `localhost:8000`
 
+## Deploy to remote site
+
+Follow the steps described in [repo](https://github.com/osinenkop/regelum-control-docs-deploy) (the repo is private, make sure you have access).
+
 ## Documentation Structure 
 
 The structure of the current [docs](./) directory is as follows:
