@@ -177,4 +177,8 @@ regelum_data/
 *.envrc
 *.ruff_cache
 *.idea/*
+<<<<<<< HEAD
 docsrc/*
+=======
+upload_docs.sh
+>>>>>>> e22be8abbbf40dfdb37c70d0b87ecb39fe3b83fd

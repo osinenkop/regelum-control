@@ -9,7 +9,7 @@ hide:
 
 ![anim2](gfx/3wrobot_mpc.gif){ width=33% }
 ![anim2](gfx/cartpole_lyapunov.gif){  width=33% }
-![anim2](gfx/pendulum_ppo.gif){ width=33% }
+![anim2](gfx/pendulum_reinforce.gif){ width=33% }
 
 ## Overview
 Regelum-control stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory. 
