@@ -17,8 +17,16 @@ from regelum.data_buffers import DataBuffer
 
 from regelum.utils import Clock, AwaitedParameter, calculate_value
 from regelum import RegelumBase
-from .policy import Policy, RLPolicy, PolicyPPO, PolicyReinforce, PolicySDPG, PolicyDDPG
-from .critic import Critic, CriticCALF, CriticTrivial
+from .policy import (
+    Policy,
+    RLPolicy,
+    PolicyPPO,
+    PolicyReinforce,
+    PolicySDPG,
+    PolicyDDPG,
+    PolicySAC,
+)
+from .critic import Critic, CriticCALF, CriticSAC, CriticTrivial
 from typing import Optional, Union, Type, Dict, List, Any, Callable
 from .objective import RunningObjective
 from .data_buffers import DataBuffer
@@ -2441,6 +2449,132 @@ class DDPG(RLScenario):
                 is_reinstantiate_critic_optimizer=True,
                 stopping_criterion=stopping_criterion,
             )
+        )
+
+
+class SAC(RLScenario):
+    """Implements a scenario for interacting with an environment using the Deep Deterministic Policy Gradients (DDPG) algorithm."""
+
+    def __init__(
+        self,
+        policy_model: PerceptronWithTruncatedNormalNoise,
+        critic_model: ModelPerceptron,
+        sampling_time: float,
+        running_objective: RunningObjective,
+        simulator: Simulator,
+        critic_n_epochs: int,
+        policy_n_epochs: int,
+        critic_opt_method_kwargs: Dict[str, Any],
+        policy_opt_method_kwargs: Dict[str, Any],
+        critic_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        policy_opt_method: Type[torch.optim.Optimizer] = torch.optim.Adam,
+        discount_factor: float = 0.7,
+        observer: Optional[Observer] = None,
+        N_episodes: int = 2,
+        N_iterations: int = 100,
+        value_threshold: float = np.inf,
+        stopping_criterion: Optional[Callable[[DataBuffer], bool]] = None,
+        entropy_coef: float = 0.02,
+        device: str = "cpu",
+    ):
+        """Instantiate DDPG Scenario.
+
+        Args:
+            policy_model (PerceptronWithTruncatedNormalNoise): The
+                policy (actor) neural network model with input as state
+                and output as action.
+            critic_model (ModelPerceptron): The critic neural network
+                model with input as state-action pair and output as
+                Q-value estimate.
+            sampling_time (float): The time interval between each action
+                taken by the policy.
+            running_objective (RunningObjective): Th function
+                calculating the running cost at each time step when an
+                action is taken.
+            simulator (Simulator): The environment simulator in which
+                the agent operates.
+            critic_n_epochs (int): The number of epochs for training the
+                critic model during each optimization.
+            policy_n_epochs (int): The number of epochs for training the
+                policy model during each optimization.
+            critic_opt_method_kwargs (Dict[str, Any]): Keyword arguments
+                for the critic optimizer method.
+            policy_opt_method_kwargs (Dict[str, Any]): Keyword arguments
+                for the policy optimizer method.
+            critic_opt_method (Type[torch.optim.Optimizer]): The
+                optimizer class to be used for the critic. Defaults to
+                torch.nn.Adam.
+            policy_opt_method (Type[torch.optim.Optimizer]): The
+                optimizer class to be used for the policy. Defaults to
+                torch.nn.Adam.
+            critic_td_n (int): The n-step return for temporal-difference
+                learning for the critic estimator.
+            discount_factor (float): The discount factor that weighs
+                future costs lower compared to immediate costs.
+            observer (Optional[Observer]): An observer object used for
+                deriving state estimations from raw observations.
+            N_episodes (int): The number of episodes to be executed in
+                each training iteration.
+            N_iterations (int): The total number of training iterations
+                for the scenario.
+            value_threshold (float): The threshold for the total
+                cumulative objective value that triggers the end of an
+                episode.
+        """
+        critic = CriticSAC(
+            system=simulator.system,
+            model=critic_model,
+            policy_model=policy_model,
+            optimizer_config=TorchOptimizerConfig(
+                opt_method=critic_opt_method,
+                opt_method_kwargs=critic_opt_method_kwargs,
+                n_epochs=critic_n_epochs,
+                data_buffer_iter_bathes_kwargs={
+                    "batch_sampler": RollingBatchSampler,
+                    "dtype": torch.FloatTensor,
+                    "mode": "full",
+                    "n_batches": 1,
+                    "device": device,
+                },
+            ),
+            discount_factor=discount_factor,
+            sampling_time=sampling_time,
+        )
+        super().__init__(
+            stopping_criterion=stopping_criterion,
+            simulator=simulator,
+            discount_factor=discount_factor,
+            policy_optimization_event=Event.reset_iteration,
+            critic_optimization_event=Event.reset_iteration,
+            N_episodes=N_episodes,
+            N_iterations=N_iterations,
+            running_objective=running_objective,
+            observer=observer,
+            critic=critic,
+            is_critic_first=True,
+            value_threshold=value_threshold,
+            sampling_time=sampling_time,
+            policy=PolicySAC(
+                model=policy_model,
+                system=simulator.system,
+                device=device,
+                discount_factor=discount_factor,
+                optimizer_config=TorchOptimizerConfig(
+                    n_epochs=policy_n_epochs,
+                    opt_method=policy_opt_method,
+                    opt_method_kwargs=policy_opt_method_kwargs,
+                    is_reinstantiate_optimizer=False,
+                    data_buffer_iter_bathes_kwargs={
+                        "batch_sampler": RollingBatchSampler,
+                        "dtype": torch.FloatTensor,
+                        "mode": "full",
+                        "n_batches": 1,
+                        "device": device,
+                    },
+                ),
+                critic=critic,
+                entropy_coef=entropy_coef,
+            ),
         )
 
 

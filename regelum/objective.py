@@ -228,6 +228,19 @@ def sdpg_objective(
     return objective / N_episodes
 
 
+def sac_objective(
+    policy_model: PerceptronWithTruncatedNormalNoise,
+    critic_model: ModelNN,
+    observations: torch.FloatTensor,
+    actions: torch.FloatTensor,
+    entropy_coef: float,
+):
+    return (
+        critic_model(observations, policy_model.forward(observations))
+        + entropy_coef * policy_model.log_pdf(observations, actions)
+    ).mean()
+
+
 def ppo_objective(
     policy_model: PerceptronWithTruncatedNormalNoise,
     critic_model: ModelNN,

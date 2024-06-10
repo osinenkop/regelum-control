@@ -39,6 +39,7 @@ from .objective import (
     sql_objective,
     rql_objective,
     ppo_objective,
+    sac_objective,
 )
 from typing import List, Tuple
 from regelum.typing import RgArray
@@ -823,6 +824,70 @@ class PolicyDDPG(PolicyGradient):
             policy_model=self.model,
             critic_model=self.critic.model,
             observations=observation,
+        )
+
+
+class PolicySAC(PolicyGradient):
+    """Policy for Soft-Actor Critic (SAC)."""
+
+    def __init__(
+        self,
+        model: ModelNN,
+        critic: Critic,
+        system: Union[System, ComposedSystem],
+        entropy_coef: float,
+        optimizer_config: OptimizerConfig,
+        discount_factor: float = 1.0,
+        device: str = "cpu",
+    ):
+        """Instantiate SAC class.
+
+        Args:
+            model: The neural network policy model.
+            critic: The critic network used to evaluate the action value function.
+            system: The environment where the policy is deployed.
+            optimizer_config: Configuration for the optimization process.
+            discount_factor: The discount factor for future rewards, generally between 0 and 1.
+            device: The computation device, typically 'cpu' or 'cuda'.
+        """
+        PolicyGradient.__init__(
+            self,
+            model=model,
+            system=system,
+            discount_factor=discount_factor,
+            device=device,
+            critic=critic,
+            optimizer_config=optimizer_config,
+        )
+        self.entropy_coef = entropy_coef
+        self.initialize_optimization_procedure()
+
+    def data_buffer_objective_keys(self) -> List[str]:
+        """Specify the keys from the data buffer that are required for computing the objective function for DDPG optimization.
+
+        Returns:
+            A list of string keys representing the required data from the data buffer.
+        """
+        return ["observation", "action"]
+
+    def objective_function(
+        self, observation: torch.Tensor, action: torch.Tensor
+    ) -> torch.Tensor:
+        """Calculate the objective function for DDPG, using the provided observations data to optimize the policy.
+
+        Args:
+            observation: The observations received from the environment.
+
+        Returns:
+            The objective value based on the DDPG algorithm for policy optimization.
+        """
+
+        return sac_objective(
+            policy_model=self.model,
+            critic_model=self.critic.model,
+            observations=observation,
+            actions=action,
+            entropy_coef=self.entropy_coef,
         )
 
 

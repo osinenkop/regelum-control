@@ -1041,3 +1041,41 @@ class GaussianMeanStd(ModelNN):
             torch.log(math.sqrt(2 * math.pi * math.e) * stds * z)
             + (alpha * phi_alpha - beta * phi_beta) / (2 * z)
         ).sum(axis=1)
+
+
+class ModelPerceptronTanh(ModelNN):
+    def __init__(
+        self,
+        model_mean: ModelNN,
+        model_std: ModelNN,
+        output_bounds: List[Union[List[float], np.ndarray]],
+        safe_log_eps: float = 1e-6,
+    ):
+        super().__init__()
+
+        self.model_mean = model_mean
+        self.model_std = model_std
+        self.bounds_handler = BoundsHandler(output_bounds)
+        self.safe_log_eps = safe_log_eps
+
+    def forward(self, observations):
+        means, stds = (self.model_mean(observations), self.model_std(observations))
+
+        return self.bounds_handler.unscale_from_minus_one_one_to_bounds(
+            torch.tanh(torch.randn(means.size()) * stds + means)
+        )
+
+    def log_pdf(self, observations, actions):
+        means, stds = (self.model_mean(observations), self.model_std(observations))
+        scaled_actions = self.bounds_handler.scale_from_bounds_to_minus_one_one(actions)
+        unscale_bias, unscale_multiplier = (
+            self.bounds_handler.get_unscale_coefs_from_minus_one_one_to_bounds()
+        )
+        return (
+            torch.distributions.Normal(loc=0, scale=1).log_prob(
+                (torch.atanh(scaled_actions) - means) / stds
+            )
+            - torch.log(self.safe_log_eps + stds)
+            - torch.log(self.safe_log_eps + 1 - scaled_actions**2)
+            - torch.log(unscale_multiplier)
+        ).sum(axis=1)

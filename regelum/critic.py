@@ -13,7 +13,10 @@ import numpy as np
 from .utils import rg
 from abc import ABC
 from .optimizable import Optimizable
-from .objective import temporal_difference_objective, temporal_difference_objective_full
+from .objective import (
+    temporal_difference_objective,
+    temporal_difference_objective_full,
+)
 
 try:
     import torch
@@ -26,6 +29,7 @@ from .optimizable import OptimizerConfig
 from .data_buffers import DataBuffer
 from .system import System, ComposedSystem
 from regelum.typing import RgArray, Weights
+from .model import PerceptronWithTruncatedNormalNoise
 
 
 class Critic(Optimizable, ABC):
@@ -416,6 +420,144 @@ class Critic(Optimizable, ABC):
             self.delete_critic_targets(data_buffer)
 
         return weights
+
+
+class CriticSAC(Critic):
+    def __init__(
+        self,
+        system: Union[System, ComposedSystem],
+        model: Union[ModelNN],
+        policy_model: PerceptronWithTruncatedNormalNoise,
+        device: str = "cpu",
+        optimizer_config: Optional[OptimizerConfig] = None,
+        discount_factor: float = 1.0,
+        sampling_time: float = 0.01,
+        entropy_coef: float = 0.02,
+    ):
+        Optimizable.__init__(self, optimizer_config=optimizer_config)
+        self.system = system
+        self.model = model
+        self.device = device
+        self.discount_factor = discount_factor
+        self.sampling_time = sampling_time
+        self.policy_model = policy_model
+        self.entropy_coef = entropy_coef
+        self.instantiate_optimization_procedure()
+
+    def instantiate_optimization_procedure(self):
+        """Instantilize optimization procedure via Optimizable functionality."""
+        self.batch_size = self.get_data_buffer_batch_size()
+        (
+            self.running_objective_var,
+            self.observation_var,
+            self.action_var,
+            self.episode_id_var,
+            self.critic_weights_var,
+        ) = (
+            self.create_variable(
+                name="running_objective",
+                is_constant=True,
+            ),
+            self.create_variable(
+                name="observation",
+                is_constant=True,
+            ),
+            self.create_variable(
+                name="action",
+                is_constant=True,
+            ),
+            self.create_variable(
+                name="episode_id",
+                is_constant=True,
+            ),
+            self.create_variable(
+                name="critic_weights",
+                like=self.model.named_parameters,
+                is_constant=False,
+            ),
+        )
+
+        self.register_objective(
+            func=self.objective_function,
+            variables=[
+                self.running_objective_var,
+                self.observation_var,
+                self.action_var,
+                self.episode_id_var,
+            ],
+        )
+
+    def data_buffer_objective_keys(self):
+        return ["observation", "action", "running_objective", "episode_id"]
+
+    def objective_function(
+        self,
+        running_objective,
+        observation,
+        action,
+        episode_id,
+    ):
+        objective = 0.0
+        n_iterations = torch.unique(episode_id).shape[0]
+        for ep_id in torch.unique(episode_id):
+            mask = (ep_id == episode_id).reshape(-1)
+            episodic_running_objectives = running_objective[mask]
+            episodic_observations = observation[mask]
+            episodic_actions = action[mask]
+
+            batch_size = episodic_running_objectives.shape[0]
+            discount_factors = rg.array(
+                [[self.discount_factor ** (self.sampling_time * i)] for i in range(1)],
+                prototype=running_objective,
+                _force_numeric=True,
+            )
+            discounted_tdn_sum_of_running_objectives = rg.vstack(
+                [
+                    rg.sum(episodic_running_objectives[i : i + 1, :] * discount_factors)
+                    for i in range(batch_size - 1)
+                ]
+            )
+
+            critic_model_output = self.model(episodic_observations, episodic_actions)
+
+            critic_targets = (
+                critic_model_output
+                + self.entropy_coef
+                * self.policy_model.log_pdf(episodic_observations, episodic_actions)
+            )
+
+            temporal_difference = rg.mean(
+                (
+                    critic_model_output[:-1, :]
+                    - discounted_tdn_sum_of_running_objectives
+                    - self.discount_factor ** (1 * self.sampling_time)
+                    * (critic_targets[1:, :])
+                )
+                ** 2
+            )
+            objective += temporal_difference
+
+        return objective / n_iterations
+
+    def optimize(
+        self, data_buffer, is_update_and_cache_weights=True, is_constrained=True
+    ):
+
+        self.model.to(self.device)
+        self.model.cache.to(self.device)
+
+        opt_kwargs = data_buffer.get_optimization_kwargs(
+            keys=self.data_buffer_objective_keys(),
+            optimizer_config=self.optimizer_config,
+        )
+        if opt_kwargs is not None:
+            if self.kind == "tensor":
+                self.optimize_tensor(**opt_kwargs, is_constrained=is_constrained)
+                if is_update_and_cache_weights:
+                    self.model.update_and_cache_weights()
+
+            else:
+                raise ValueError("CriticSAC optimization failed")
 
 
 class CriticTrivial(Critic):
