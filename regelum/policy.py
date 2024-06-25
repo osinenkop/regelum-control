@@ -104,7 +104,7 @@ class Policy(Optimizable, ABC):
             "action", awaited_from=self.update_action.__name__
         )
 
-    def __call__(self, observation: np.array) -> np.array:
+    def __call__(self, observation: np.ndarray) -> np.ndarray:
         """Call the get_action method to calculate the action for the given observation.
 
         Args:
@@ -148,7 +148,7 @@ class Policy(Optimizable, ABC):
         """Get the weights of the policy model."""
         return self.model.weights
 
-    def receive_observation(self, observation: np.array) -> None:
+    def receive_observation(self, observation: np.ndarray) -> None:
         """Update the current observation of the policy.
 
         Args:
@@ -156,7 +156,7 @@ class Policy(Optimizable, ABC):
         """
         self.observation = observation
 
-    def receive_estimated_state(self, state: np.array) -> None:
+    def receive_estimated_state(self, state: np.ndarray) -> None:
         """Update the current observation of the policy.
 
         Args:
@@ -164,7 +164,7 @@ class Policy(Optimizable, ABC):
         """
         self.state = state
 
-    def set_action(self, action: np.array):
+    def set_action(self, action: np.ndarray):
         """Set the current action of the policy.
 
         Args:
@@ -172,7 +172,7 @@ class Policy(Optimizable, ABC):
         """
         self.action = action
 
-    def update_action(self, observation: Optional[np.array] = None) -> np.array:
+    def update_action(self, observation: Optional[np.ndarray] = None) -> np.ndarray:
         """Update the current action of the policy based on the provided observation.
 
         This method uses the current model to compute a new action,
@@ -211,7 +211,7 @@ class Policy(Optimizable, ABC):
 
         return self.action
 
-    def get_action(self, observation: np.array) -> np.array:
+    def get_action(self, observation: np.ndarray) -> np.ndarray:
         if isinstance(self.model, ModelNN):
             action = self.model(torch.FloatTensor(observation)).detach().cpu().numpy()
         else:
@@ -418,7 +418,7 @@ class PolicyReinforce(PolicyGradient):
         data_buffer.update({"tail_value": self.calculate_tail_values(data_buffer)})
         data_buffer.update({"baseline": self.calculate_baseline(data_buffer)})
 
-    def calculate_last_values(self, data_buffer: DataBuffer) -> np.array:
+    def calculate_last_values(self, data_buffer: DataBuffer) -> np.ndarray:
         """Computes the last observed value in each trajectory and maps it to all steps within the same episode.
 
         Args:
@@ -441,7 +441,7 @@ class PolicyReinforce(PolicyGradient):
     def calculate_tail_values(
         self,
         data_buffer: DataBuffer,
-    ) -> np.array:
+    ) -> np.ndarray:
         data = data_buffer.to_pandas(keys=["episode_id", "current_value"])
         data["episode_id"] = data["episode_id"].astype(int)
         data["current_value"] = data["current_value"].astype(float)
@@ -457,7 +457,7 @@ class PolicyReinforce(PolicyGradient):
 
         return last_values - current_values_shifted
 
-    def calculate_baseline(self, data_buffer: DataBuffer) -> np.array:
+    def calculate_baseline(self, data_buffer: DataBuffer) -> np.ndarray:
         r"""Computes the baseline value used for scaling the advantages during optimization.
 
         Args:
@@ -1178,7 +1178,7 @@ class InvertedPendulumStabilizingPolicy(Policy):
         super().__init__()
         self.gain = gain
 
-    def get_action(self, observation: np.array):
+    def get_action(self, observation: np.ndarray):
         return np.array(
             [[-((observation[0, 0]) + 0.1 * (observation[0, 1])) * self.gain]]
         )
@@ -1196,7 +1196,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         super().__init__()
         self.scenario_gain = scenario_gain
 
-    def _zeta(self, xNI: np.array) -> np.array:
+    def _zeta(self, xNI: np.ndarray) -> np.ndarray:
         sigma = np.sqrt(xNI[0] ** 2 + xNI[1] ** 2) + np.sqrt(abs(xNI[2]))
 
         nablaL = rg.zeros(3)
@@ -1253,7 +1253,7 @@ class ThreeWheeledWRobotNIDisassembledCLFPolicy(Policy):
         else:
             return nablaL
 
-    def _kappa(self, xNI: np.array) -> np.array:
+    def _kappa(self, xNI: np.ndarray) -> np.ndarray:
         kappa_val = rg.zeros(2)
 
         G = rg.zeros([3, 2])
@@ -1438,7 +1438,7 @@ class ThreeWheeledRobotPIDPolicy:
 
     def __init__(
         self,
-        state_init: np.array,
+        state_init: np.ndarray,
         PID_arctg_params: Tuple[float, float, float] = (10, 0.0, 3),
         PID_v_zero_params: Tuple[float, float, float] = (35, 0.0, 1.2),
         PID_x_y_origin_params: Tuple[float, float, float] = (35, 0.0, 35),
@@ -1841,7 +1841,7 @@ class TwoTankPIDPolicy(Policy):
 
     def __init__(
         self,
-        state_init: np.array = None,
+        state_init: np.ndarray = None,
         PID_2tank_parameters_x1=(1, 0, 0),
         PID_2tank_parameters_x2=(1, 0, 0),
     ):

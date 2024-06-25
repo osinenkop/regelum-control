@@ -13,11 +13,24 @@ algorithms that can leverage the strengths of each of these libraries.
 import torch
 import numpy as np
 import casadi as cs
-from typing import Union, Type, OrderedDict
+from typing import (
+    Union,
+    Type,
+    OrderedDict,
+    Callable,
+    Dict,
+    Any,
+    Optional,
+    Tuple,
+    TYPE_CHECKING,
+)
+
+# if TYPE_CHECKING:
+from .model import Model, ModelNN
 
 
 RgArrayType = Union[
-    Type[np.array],
+    Type[np.ndarray],
     Type[torch.Tensor],
     Type[cs.DM],
     Type[cs.MX],
@@ -36,7 +49,7 @@ Attributes:
 """
 
 RgArray = Union[
-    np.array,
+    np.ndarray,
     torch.Tensor,
     cs.DM,
     cs.MX,
@@ -56,3 +69,10 @@ Attributes:
 
 Weights = Union[RgArray, OrderedDict[str, torch.Tensor]]
 """Type alias for the instances of model's weights. For ModelNN weights are `OrderedDict[str, torch.Tensor]`. For Model weights are `RgArray`."""
+
+LeafStateType = Union[RgArray, Model, ModelNN, bool, float]
+StateType = Dict[str, Union[LeafStateType, "StateType"]]
+
+TransitionMapType = Callable[[StateType, StateType], StateType]
+InputsDeclarationType = Dict[str, Optional[Tuple[int, ...]]]
+StateInitType = Union[LeafStateType, StateType, Callable[..., StateType]]
