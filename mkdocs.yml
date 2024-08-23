@@ -1,6 +1,6 @@
 site_name: Regelum
-site_url: https://regelum.aidynamic.io/
-repo_name: Regelum
+site_url: https://regelum.aidynamic.group/
+repo_name: regelum-control
 repo_url: https://github.com/osinenkop/regelum-control
 docs_dir: ./docs/src
 theme:
@@ -67,7 +67,7 @@ nav:
   - Scenarios: scenarios/
   - Systems: systems/
   - Reference API: reference/
-  - Authors: authors_new.md
+  - Authors: authors.md
 
 
 extra_javascript:

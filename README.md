@@ -1,10 +1,10 @@
-![image](https://github.com/osinenkop/regelum-control/blob/master/docs/src/gfx/regelum_full_logo.png)
+![image](https://github.com/osinenkop/regelum-control/blob/develop/docs/src/gfx/regelum_full_logo.png?raw=true)
 
 # About
 
 `Regelum-control` stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory.
 
-A detailed documentation is available [here](https://regelum.aidynamic.io/).
+A detailed documentation is available [here](https://regelum.aidynamic.group/).
 
 Check out a [regelum playground](https://github.com/osinenkop/regelum-playground) with some read-to-use examples.
 
