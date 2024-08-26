@@ -4,7 +4,7 @@
     This document is automatically generated from a Jupyter notebook. You have the option to open it in Google Colab to interactively run and explore the code in each cell.
 
 
-    <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/main/docs/notebooks/collabs/policy_gradient.ipynb">
+    <a target="_blank" href="https://colab.research.google.com/github/osinenkop/regelum-control/blob/develop/docs/notebooks/collabs/policy_gradient.ipynb">
     <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
     </a>
 # Mastering policy gradient with Regelum. 
