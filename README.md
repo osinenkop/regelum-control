@@ -6,7 +6,7 @@
 
 A detailed documentation is available [here](https://regelum.aidynamic.group/).
 
-Check out a [regelum playground](https://github.com/osinenkop/regelum-playground) with some read-to-use examples.
+Explore [regelum-playground repo](https://github.com/osinenkop/regelum-playground) with ready-to-use examples.
 
 # Features
 

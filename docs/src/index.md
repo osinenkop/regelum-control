@@ -72,6 +72,7 @@ Regelum-control stands as a framework designed to address optimal control and re
 
 :octicons-cpu-16: __Run pre-configured regelum algorithms with ease__. Regelum offers a set of implemented, [ready-to-use algorithms](tutorials/stable-presets.md) in the domain of RL and Optimal Control. 
 It provides flexibility through multiple optimization backends, including CasADi and PyTorch, to accommodate various computational needs.
+Explore the [regelum-playground](https://github.com/osinenkop/regelum-playground) for ready-to-use examples.
 
 :material-robot-industrial: __Stabilize your dynamical system with Regelum__. Regelum stands as a framework 
 designed to address optimal control and reinforcement learning (RL) 
