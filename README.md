@@ -62,6 +62,7 @@ This project is licensed under the terms of the [MIT license](./LICENSE).
 author =   {Pavel Osinenko, Grigory Yaremenko, Georgiy Malaniya, Anton Bolychev},
 title =    {Regelum: a framework for simulation, control and reinforcement learning},
 howpublished = {\url{https://github.com/osinekop/regelum-control}},
-year = {2024}
+year = {2024},
+note = {Licensed under the MIT License}
 }
 ```
