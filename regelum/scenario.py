@@ -417,7 +417,7 @@ class RLScenario(Scenario):
     ):
         seed = torch.initial_seed() + episode_id
         torch.manual_seed(seed)
-        # np.random.seed(seed)
+        np.random.seed(seed)
         random.seed(seed)
         self.seed_increment += 1
 
