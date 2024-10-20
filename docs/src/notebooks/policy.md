@@ -114,7 +114,7 @@ scenario.run()
 ### Historical data
 
 As we defined a callback for saving historical data, let's get it and see what is in there.
-(Kindly refer here our reader to [callbacks](https://regelum.aidynamic.io/notebooks/callbacks/))
+(Kindly refer here our reader to [callbacks](https://regelum.aidynamic.group/notebooks/callbacks/))
 
 
 ```python

@@ -1,0 +1,3 @@
+_target_: regelum.policy.PendulumStabilizingPolicy
+
+gain: 20

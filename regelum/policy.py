@@ -1166,7 +1166,7 @@ class ThreeWheeledWRobotKinematicStabilizingPolicy(Policy):
         return rg.force_row(rg.hstack([v, omega]))
 
 
-class InvertedPendulumStabilizingPolicy(Policy):
+class PendulumStabilizingPolicy(Policy):
     """A nominal policy for inverted pendulum representing a PD controller."""
 
     def __init__(self, gain):

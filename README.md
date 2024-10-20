@@ -1,12 +1,12 @@
-![image](https://github.com/osinenkop/regelum-control/blob/master/docs/src/gfx/regelum_full_logo.png)
+![image](https://regelum.aidynamic.group/gfx/regelum_full_logo.png)
 
 # About
 
 `Regelum-control` stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory.
 
-A detailed documentation is available [here](https://regelum.aidynamic.io/).
+A detailed documentation is available [here](https://regelum.aidynamic.group/).
 
-Check out a [regelum playground](https://github.com/osinenkop/regelum-playground) with some read-to-use examples.
+Explore [regelum-playground repo](https://github.com/osinenkop/regelum-playground) with ready-to-use examples.
 
 # Features
 
@@ -16,7 +16,7 @@ It provides flexibility through multiple optimization backends, including CasADi
 -  __Stabilize your dynamical system with Regelum__. Regelum stands as a framework 
 designed to address optimal control and reinforcement learning (RL) 
 tasks within continuous-time dynamical systems. 
-It comes equipped with an array of default systems accessible [here](#), 
+It comes equipped with an array of default systems, 
 alongside a detailed tutorial that provides clear instructions 
 for users to instantiate their own environments.
 
@@ -39,6 +39,17 @@ By integrating with Hydra, regelum inherently adopts Hydra's powerful hyperparam
 ```bash
 pip install regelum-control
 ```
+
+# Developer setup
+
+1. Clone the repository.
+2. Run:
+   ```bash
+   pip install -e .
+   bash scripts/developer-setup.sh
+   ```
+3. Check `requirements-dev.txt` in the root of the repo for additional details.
+
 
 # Licence
 

@@ -2,7 +2,7 @@ from regelum.system import (
     ThreeWheeledRobotKinematic,
     ThreeWheeledRobotDynamic,
     Integrator,
-    InvertedPendulum,
+    Pendulum,
 )
 from regelum.utils import rg
 import numpy as np
@@ -11,7 +11,7 @@ robot = ThreeWheeledRobotKinematic()
 robot_big = ThreeWheeledRobotDynamic()
 robot_composed = Integrator() @ robot
 robot_composed.permute_state([3, 4, 0, 1, 2])
-pendulum = InvertedPendulum()
+pendulum = Pendulum()
 
 
 def get_sample_model_dstate(system):

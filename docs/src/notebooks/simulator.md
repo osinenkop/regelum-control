@@ -14,7 +14,7 @@
 This tutorial will walk you through the process of implementing a simple kinematic point system within the Regelum framework, defining a basic stabilizing control action, instantiating a CasADi simulator, running a simulation loop, and finally plotting the trajectory of the system using matplotlib.
 
 
-### [Kinematic Point System](https://regelum.aidynamic.io/systems/kin_point/) 
+### [Kinematic Point System](https://regelum.aidynamic.group/systems/kin_point/) 
 
 A kinematic point is a basic model that represents the motion of a point mass in a 2D space influenced by velocity inputs. In this system, the state typically comprises the point's position coordinates, while the inputs control the point's velocity along respective axes.
 
@@ -113,7 +113,7 @@ Next, we'll instantiate a CasADi simulator, providing the kinematic point system
 
 !!! note
     
-     A [`Simulator`](https://regelum.aidynamic.io/reference/simulator) in Regelum integrates the right-hand side of a system, providing iterative steps for the simulation. 
+     A [`Simulator`](https://regelum.aidynamic.group/reference/simulator) in Regelum integrates the right-hand side of a system, providing iterative steps for the simulation. 
      [CasADi](https://web.casadi.org/) is the primary backend for simulation. 
      The simulator is an integral component that takes the model of the system's dynamics and approximates its behavior over time.
 

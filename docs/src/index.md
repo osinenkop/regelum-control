@@ -7,48 +7,13 @@ hide:
 ---
 # Regelum control
 
-![anim2](gfx/3wrobot_mpc.gif){ width=33% }
-![anim2](gfx/cartpole_lyapunov.gif){  width=33% }
-![anim2](gfx/pendulum_reinforce.gif){ width=33% }
+![3wrobot_mpc](https://regelum.aidynamic.group/gfx/3wrobot_mpc.gif){ width=33% }
+![cartpole_lyapunov](https://regelum.aidynamic.group/gfx/cartpole_lyapunov.gif){  width=33% }
+![pendulum_reinforce](https://regelum.aidynamic.group/gfx/pendulum_reinforce.gif){ width=33% }
 
 ## Overview
 Regelum-control stands as a framework designed to address optimal control and reinforcement learning (RL) tasks within continuous-time dynamical systems. It is made for researchers and engineers in reinforcement learning and control theory. 
 
-
-<!-- <style>
-.md-content .md-typeset h1 { display: none; }
-</style> -->
-
-<!-- # Regelum -->
-<!-- <figure markdown>
-  ![Regelum](../gfx/regelum.svg)
-  <img src="/regelum.svg">
-  <figcaption>DQN GOVNO</figcaption>
-</figure> -->
-
-<!-- <p align="center">
-  <a href="https://sqlmodel.tiangolo.com"><img src="../gfx/regelum.svg" alt="SQLModel"></a>
-</p> -->
-<!-- <p align="center">
-    <em>SQLModel, SQL databases in Python, designed for simplicity, compatibility, and robustness.</em>
-</p> -->
-
-
-<!-- <p align="center">
-<a href="https://github.com/tiangolo/sqlmodel/actions?query=workflow%3ATest" target="_blank">
-    <img src="https://github.com/tiangolo/sqlmodel/workflows/Test/badge.svg" alt="Test">
-</a>
-<a href="https://github.com/tiangolo/sqlmodel/actions?query=workflow%3APublish" target="_blank">
-    <img src="https://github.com/tiangolo/sqlmodel/workflows/Publish/badge.svg" alt="Publish">
-</a>
-<a href="https://coverage-badge.samuelcolvin.workers.dev/redirect/tiangolo/sqlmodel" target="_blank">
-    <img src="https://coverage-badge.samuelcolvin.workers.dev/tiangolo/sqlmodel.svg" alt="Coverage">
-<a href="https://pypi.org/project/sqlmodel" target="_blank">
-    <img src="https://img.shields.io/pypi/v/sqlmodel?color=%2334D058&label=pypi%20package" alt="Package version">
-</a>
-</p> -->
-<!-- 
-## Quick start -->
 
 <div class="grid cards" markdown>
 
@@ -107,6 +72,7 @@ Regelum-control stands as a framework designed to address optimal control and re
 
 :octicons-cpu-16: __Run pre-configured regelum algorithms with ease__. Regelum offers a set of implemented, [ready-to-use algorithms](tutorials/stable-presets.md) in the domain of RL and Optimal Control. 
 It provides flexibility through multiple optimization backends, including CasADi and PyTorch, to accommodate various computational needs.
+Explore the [regelum-playground](https://github.com/osinenkop/regelum-playground) for ready-to-use examples.
 
 :material-robot-industrial: __Stabilize your dynamical system with Regelum__. Regelum stands as a framework 
 designed to address optimal control and reinforcement learning (RL) 

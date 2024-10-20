@@ -92,6 +92,7 @@ class Scenario(RegelumBase):
         self.time_old = 0
         self.delta_time = 0
         self.value: float = 0.0
+        self.undiscounted_value: float = 0.0
         self.recent_values_of_episodes = []
 
         self.sim_status = 1
@@ -206,6 +207,7 @@ class Scenario(RegelumBase):
     def reload_scenario(self):
         self.is_episode_ended = False
         self.recent_value = self.value
+        self.recent_undiscounted_value = self.undiscounted_value
         self.observation = self.simulator.observation
         self.sim_status = 1
         self.time = 0
@@ -214,7 +216,7 @@ class Scenario(RegelumBase):
         self.simulator.reset()
         self.reset()
         self.sim_status = 0
-        return self.recent_value
+        return self.recent_undiscounted_value
 
     @apply_callbacks()
     def post_compute_action(self, observation, estimated_state):
@@ -228,6 +230,7 @@ class Scenario(RegelumBase):
             "action": self.get_action_from_policy(),
             "running_objective": self.current_running_objective,
             "current_value": self.value,
+            "current_undiscounted_value": self.undiscounted_value,
         }
 
     def compute_action_sampled(self, time, estimated_state, observation):
@@ -270,6 +273,9 @@ class Scenario(RegelumBase):
             observation, self.get_action_from_policy()
         )
         self.value = self.calculate_value(self.current_running_objective, self.time)
+        self.undiscounted_value = self.calculate_undiscounted_value(
+            self.current_running_objective
+        )
         observation_action = np.concatenate(
             (observation, self.get_action_from_policy()), axis=1
         )
@@ -277,6 +283,7 @@ class Scenario(RegelumBase):
             "action": self.get_action_from_policy(),
             "running_objective": self.current_running_objective,
             "current_value": self.value,
+            "current_undiscounted_value": self.undiscounted_value,
             "observation_action": observation_action,
         }
 
@@ -301,6 +308,17 @@ class Scenario(RegelumBase):
         )
         return value
 
+    def calculate_undiscounted_value(self, running_objective: float):
+        """Calculate the undiscounted value by adding the running objective.
+
+        Args:
+            running_objective (float): The current running objective value.
+
+        Returns:
+            float: The updated undiscounted value.
+        """
+        return self.undiscounted_value + running_objective * self.sampling_time
+
     def reset(self):
         """Reset agent for use in multi-episode simulation.
 
@@ -310,6 +328,7 @@ class Scenario(RegelumBase):
         """
         self.clock.reset()
         self.value = 0.0
+        self.undiscounted_value = 0.0
         self.is_first_compute_action_call = True
 
 
@@ -417,7 +436,7 @@ class RLScenario(Scenario):
     ):
         seed = torch.initial_seed() + episode_id
         torch.manual_seed(seed)
-        # np.random.seed(seed)
+        np.random.seed(seed)
         random.seed(seed)
         self.seed_increment += 1
 

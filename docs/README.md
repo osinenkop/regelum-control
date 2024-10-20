@@ -26,7 +26,22 @@ This command parses [../mkdocs.yml](../mkdocs.yml) and starts a docs development
 
 ## Deploy to remote site
 
-Follow the steps described in [repo](https://github.com/osinenkop/regelum-control-docs-deploy) (the repo is private, make sure you have access).
+Follow the steps described in [repo](https://github.com/osinenkop/regelum-control-docs-deploy) (the repo is private, make sure you have access from [osinenkop](https://github.com/osinenkop)).
+
+[This repository](https://github.com/osinenkop/regelum-control-docs-deploy) contains the script `upload_docs.sh`, which automatically deploys the documentation. The script performs the following steps:
+
+1. **Build the documentation**: The documentation is built into the `html` folder using the `mkdocs` command.
+2. **Pull the `gfx` folder from the remote server**: The `gfx` folder (which contains images and GIFs) is pulled from the [`regelum.aidynamic.group`](https://regelum.aidynamic.group) hosting server into the local `html` folder.
+3. **Deploy the documentation to the server**: Then, the entire `html` folder (including the pulled `gfx` folder) is mirrored back to the hosting server.
+
+> **Note**: This sequence of actions was chosen to avoid storing the `gfx` folder locally in the repository, as images and GIFs are quite large. This approach helps to reduce the repository size and avoid storage limitations on GitHub. The `gfx` folder is permanently stored on the hosting server [`regelum.aidynamic.group`](https://regelum.aidynamic.group). 
+
+To upload files to the `gfx` folder on the remote server, use the `scp` command. For example, to copy a local image `local_image.png` to the remote `gfx` folder, you can use the following command:
+
+```sh
+scp path/to/local_image.png $REMOTE_USER@$HOSTING_SERVER:/var/www/$REMOTE_USER/data/www/regelum.aidynamic.group/gfx/
+```
+You must obtain credentials (`$REMOTE_USER`, `$HOSTING_SERVER`, etc.) from [osinenkop](https://github.com/osinenkop) to make this command work.
 
 ## Documentation Structure 
 

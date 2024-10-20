@@ -9,9 +9,9 @@
     </a>
 # Mastering policy gradient with Regelum. 
 
-In this tutorial we will implement a well-known policy gradient algorithm [Vanilla Policy Gradient](http://regelum.aidynamic.io/tex/vpg/) with General Advantage Estimation.
+In this tutorial we will implement a well-known policy gradient algorithm [Vanilla Policy Gradient](http://regelum.aidynamic.group/tex/vpg/) with General Advantage Estimation.
 
-Moreover, we will create a complex system composed of two different kinematic systems, namely, [three wheeled robot](https://regelum.aidynamic.io/systems/3wrobot_kin/) and a [kinematic point](https://regelum.aidynamic.io/systems/kin_point/).
+Moreover, we will create a complex system composed of two different kinematic systems, namely, [three wheeled robot](https://regelum.aidynamic.group/systems/3wrobot_kin/) and a [kinematic point](https://regelum.aidynamic.group/systems/kin_point/).
 
 Appears that this perfectly represents an environment from a well-known problem, namely, [homicidal chauffeur problem](https://en.wikipedia.org/wiki/Homicidal_chauffeur_problem).
 

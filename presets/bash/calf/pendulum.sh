@@ -1,8 +1,8 @@
 python run_stable.py \
 +seed=0,1,2,3,4,5,6,7,8,9 \
 scenario=calf \
-system=inv_pendulum \
---experiment=calf_inv_pendulum \
+system=pendulum \
+--experiment=calf_pendulum \
 --jobs=-1 \
 scenario.critic_model.quad_matrix_type=symmetric \
 +scenario.critic_safe_decay_param=0.1 \
