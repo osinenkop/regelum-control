@@ -902,7 +902,7 @@ class ValueAnimation(GraphAnimation, callback.ValueTracker):
             self.scores = []
             self.ax.set_axis_off()
         self.ax.set_xlabel("Learning Iteration")
-        self.ax.set_ylabel("Value")
+        self.ax.set_ylabel("Undiscounted value")
         self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         self.add_frame(line_datas=[(self.t, self.y)])
 
