@@ -230,6 +230,7 @@ class Scenario(RegelumBase):
             "action": self.get_action_from_policy(),
             "running_objective": self.current_running_objective,
             "current_value": self.value,
+            "current_undiscounted_value": self.undiscounted_value,
         }
 
     def compute_action_sampled(self, time, estimated_state, observation):
@@ -282,7 +283,7 @@ class Scenario(RegelumBase):
             "action": self.get_action_from_policy(),
             "running_objective": self.current_running_objective,
             "current_value": self.value,
-            "undiscounted_value": self.undiscounted_value,
+            "current_undiscounted_value": self.undiscounted_value,
             "observation_action": observation_action,
         }
 
