@@ -2,8 +2,8 @@ python run_stable.py \
     --jobs=-1 \
     +seed=0,1,2,3,4,5,6,7,8,9 \
     scenario=ddpg \
-    system=inv_pendulum \
-    --experiment=ddpg_inv_pendulum \
+    system=pendulum \
+    --experiment=ddpg_pendulum \
     scenario.N_episodes=8 \
     scenario.N_iterations=100 \
     scenario.critic_opt_method_kwargs.lr=0.03 \

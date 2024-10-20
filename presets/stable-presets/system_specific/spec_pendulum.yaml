@@ -1,5 +1,5 @@
-name: inv_pendulum
-target: regelum.system.InvertedPendulum
+name: pendulum
+target: regelum.system.Pendulum
 observer: = regelum.observer.ObserverTrivial()
 dim_observation: = ${.target}._dim_observation
 dim_action: = ${.target}._dim_inputs

@@ -32,7 +32,7 @@ basic = [MPCTest(system="2tank"),
          TestSetup(system="3wrobot_dyn", pipeline="rpo"),
          TestSetup(system="3wrobot_kin", pipeline="rpo"),
          TestSetup(system="cartpole", pipeline="rql"),
-         TestSetup(system="inv_pendulum", pipeline="rpo"),
+         TestSetup(system="pendulum", pipeline="rpo"),
          MPCTest(system="kin_point"),
          MPCTest(system="lunar_lander")]
 
