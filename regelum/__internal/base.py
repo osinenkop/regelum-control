@@ -107,7 +107,7 @@ class RegelumType(abc.ABCMeta):
                     ]
                     for callback in non_animations:
                         callback.register(attachee=x, launch=True)
-                    if animations and not self._metadata['argv'].parallel:
+                    if animations and not self._metadata["argv"].parallel:
                         if animations:
                             composed = sum(animations) + None
                             composed.register(attachee=x, launch=True)

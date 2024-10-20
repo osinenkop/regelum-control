@@ -398,7 +398,11 @@ class ConfigDiagramCallback(Callback):
         report = metadata["report"]
         start = time.time()
         os.mkdir(".summary")
-        name = metadata["config_path"].split("/")[-1].split(".")[0] if metadata["config_path"] is not None else "None"
+        name = (
+            metadata["config_path"].split("/")[-1].split(".")[0]
+            if metadata["config_path"] is not None
+            else "None"
+        )
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
             html = f.read()
@@ -785,7 +789,7 @@ class ValueTracker(Callback):
         return hasattr(self, "score")
 
     def on_function_call(self, obj, method, output):
-        self.score = obj.recent_value
+        self.score = obj.recent_undiscounted_value
 
 
 @trigger

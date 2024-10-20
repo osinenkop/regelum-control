@@ -14,6 +14,7 @@ import regelum
 from abc import ABC, abstractmethod
 
 from . import callback
+
 # from . import animation
 from .utils import rg
 from typing import Any, Optional, Union, List, Dict, Tuple
@@ -805,6 +806,7 @@ class System(SystemInterface):
         """
         return self.compose(sys_right)
 
+
 @callback.OmnirobotAnimation.attach
 class KinematicPoint(System):
     """System representing a simple 2D kinematic point (see [here](../systems/kin_point.md) for details)."""
@@ -842,6 +844,7 @@ class KinematicPoint(System):
 
         return Dstate
 
+
 @callback.PendulumAnimation.attach
 class InvertedPendulum(System):
     """System representing an [inverted pendulum](../systems/inv_pendulum.md), with state representing angle and angular velocity."""
@@ -877,6 +880,7 @@ class InvertedPendulum(System):
 
         return Dstate
 
+
 @callback.ThreeWheeledRobotAnimation.attach
 class ThreeWheeledRobotKinematic(System):
     r"""Implements the [kinematic three-wheeled robot](../systems/3wrobot_kin.md) (a.k.a. Brockett integrator)."""
@@ -910,6 +914,7 @@ class ThreeWheeledRobotKinematic(System):
         Dstate[2] = inputs[1]
 
         return Dstate
+
 
 @callback.ThreeWheeledRobotAnimation.attach
 class ThreeWheeledRobotDynamic(System):
@@ -998,6 +1003,7 @@ class Integrator(System):
         Dstate[1] = 1 / I * inputs[1]
 
         return Dstate
+
 
 @callback.CartpoleAnimation.attach
 class CartPole(System):
@@ -1192,6 +1198,7 @@ class TwoTank(System):
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 
         return Dstate
+
 
 @callback.LunarLanderAnimation.attach
 class LunarLander(System):
