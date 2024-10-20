@@ -3,8 +3,8 @@ python run_stable.py \
 scenario=reinforce \
 scenario.N_episodes=4 \
 scenario.N_iterations=500 \
-system=inv_pendulum \
---experiment=reinforce_inv_pendulum \
+system=pendulum \
+--experiment=reinforce_pendulum \
 scenario/policy_model=perceptron_simple \
 scenario.policy_n_epochs=1 \
 scenario.policy_opt_method_kwargs.lr=0.1 \

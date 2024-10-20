@@ -3,8 +3,8 @@ python run_stable.py \
 scenario=ppo \
 scenario.N_episodes=2 \
 scenario.N_iterations=100 \
-system=inv_pendulum \
---experiment=ppo_inv_pendulum \
+system=pendulum \
+--experiment=ppo_pendulum \
 scenario.discount_factor=0.7 \
 scenario.critic_td_n=1 \
 scenario/policy_model=perceptron_simple \

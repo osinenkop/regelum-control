@@ -127,7 +127,7 @@ class AnimationCallback(callback.Callback, ABC):
 
     @abstractmethod
     def setup(self):
-        pass #self.ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        pass  # self.ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 
     def get_save_directory(self):
         return str(self.save_directory)
@@ -228,7 +228,7 @@ class AnimationCallback(callback.Callback, ABC):
             interval=30,
             blit=True,
             repeat=False,
-            #init_func=self.setup
+            # init_func=self.setup
         )
         res = anim.to_jshtml()
         plt.close(self.fig)
@@ -237,6 +237,11 @@ class AnimationCallback(callback.Callback, ABC):
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
+    
+    def on_termination(self, res):
+        self.fig.paused=True
+        while self.fig.paused:
+            self.fig.canvas.flush_events()
 
     def animate_and_save(self, frames=None, name=None):
         if name is None:
@@ -296,9 +301,10 @@ class AnimationCallback(callback.Callback, ABC):
         iteration_number,
         iterations_total,
     ):
-        self.counter = 0
-        # self.animate_and_save(name=str(episode_number))
-        self.reset()
+        if not (episode_number == episodes_total and iteration_number == iterations_total):
+            self.counter = 0
+            # self.animate_and_save(name=str(episode_number))
+            self.reset()
 
     def install_temp_axis(self, fig, ax, interactive=None):
         self._old_ax = self.ax
@@ -342,9 +348,10 @@ class PausableFigure(Figure):
 
 
 def title_except_units(s):
-    words = s[:s.find('[')]
-    units = s[s.find('['):]
+    words = s[: s.find("[")]
+    units = s[s.find("[") :]
     return (words.title() + units).replace("Velocity", "Vel.")
+
 
 class ComposedAnimationCallback(AnimationCallback):
     """An animation callback capable of incoroporating several other animation callbacks in such a way that the respective plots are distributed between axes of a single figure."""
@@ -390,7 +397,7 @@ class ComposedAnimationCallback(AnimationCallback):
             self.mng = backend_qt5agg.new_figure_manager_given_figure(1, self.fig)
             win = self.fig.canvas.window()
             self.fig.subplots_adjust(hspace=0.5, wspace=0.5)
-            #win.setFixedSize(win.size())
+            # win.setFixedSize(win.size())
         elif fig is None:
             self.fig = Figure(figsize=self.figsize)
             self.mng = None
@@ -468,7 +475,7 @@ class ComposedAnimationCallback(AnimationCallback):
             animation.setup()
 
     def is_target_event(self, obj, method, output, triggers):
-        return True # This is too much
+        return True  # This is too much
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
@@ -483,25 +490,26 @@ class ComposedAnimationCallback(AnimationCallback):
         iteration_number,
         iterations_total,
     ):
-        playback = (
-            self._metadata["argv"].playback
-            and iteration_number == iterations_total
-            and episode_number == episodes_total
-        )
-        save_animation = self._metadata["argv"].save_animation
-        if playback or save_animation:
-            self.animate_and_save(
-                name=f"ep{episode_number}|{episodes_total},it{iteration_number}|{iterations_total}"
+        if not (episode_number == episodes_total and iteration_number == iterations_total):
+            playback = (
+                self._metadata["argv"].playback
+                and iteration_number == iterations_total
+                and episode_number == episodes_total
             )
-        for animation in self.animations:
-            animation.on_episode_done(
-                scenario,
-                episode_number,
-                episodes_total,
-                iteration_number,
-                iterations_total,
-            )
-        self.frame_data = []
+            save_animation = self._metadata["argv"].save_animation
+            if playback or save_animation:
+                self.animate_and_save(
+                    name=f"ep{episode_number}|{episodes_total},it{iteration_number}|{iterations_total}"
+                )
+            for animation in self.animations:
+                animation.on_episode_done(
+                    scenario,
+                    episode_number,
+                    episodes_total,
+                    iteration_number,
+                    iterations_total,
+                )
+            self.frame_data = []
 
     def on_iteration_done(self, *args, **kwargs):
         for animation in self.animations:
@@ -723,21 +731,37 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
             for animation in self.animations:
                 animation.setup()
 
-    def on_episode_done(self, *args, **kwargs):
-        for animation in self.animations:
-            animation.on_episode_done(*args, **kwargs)
+    def on_episode_done(self, scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total):
+        if not (episode_number == episodes_total and iteration_number == iterations_total):
+            for animation in self.animations:
+                animation.on_episode_done(scenario,
+                    episode_number,
+                    episodes_total,
+                    iteration_number,
+                    iterations_total,
+                )
 
 
 class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
     """A graph animation that plots values of state variables vs. time."""
+
     def __deferred_init__(self):
         state_dimension = len(self.system_state)
         self._animation_classes = []
         for i in range(state_dimension):
 
             def stateComponent(*args, component=i, **kwargs):
-                return StateComponentAnimation(*args, component=component, last_component=(component == (state_dimension - 1)),
-                                               fontsize=min(8.0, 15.0/state_dimension**0.50), **kwargs)
+                return StateComponentAnimation(
+                    *args,
+                    component=component,
+                    last_component=(component == (state_dimension - 1)),
+                    fontsize=min(8.0, 15.0 / state_dimension**0.50),
+                    **kwargs,
+                )
 
             self._animation_classes.append(stateComponent)
         super().__deferred_init__()
@@ -752,6 +776,7 @@ class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
 
 class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracker):
     """A graph animation that plots observables vs. time."""
+
     def __deferred_init__(self):
         observation_dimension = len(self.observation)
         self._animation_classes = []
@@ -759,7 +784,10 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
 
             def observationComponent(*args, component=i, **kwargs):
                 return ObservationComponentAnimation(
-                    *args, component=component, fontsize=min(10.0, 15.0/observation_dimension**0.5), **kwargs
+                    *args,
+                    component=component,
+                    fontsize=min(10.0, 15.0 / observation_dimension**0.5),
+                    **kwargs,
                 )
 
             self._animation_classes.append(observationComponent)
@@ -775,14 +803,20 @@ class ObservationAnimation(DeferredComposedAnimation, callback.ObservationTracke
 
 class ActionAnimation(DeferredComposedAnimation, callback.ActionTracker):
     """A graph animation that plots control inputs vs. time."""
+
     def __deferred_init__(self):
         action_dimension = len(self.action)
         self._animation_classes = []
         for i in range(action_dimension):
 
             def actionComponent(*args, component=i, **kwargs):
-                return ActionComponentAnimation(*args, component=component, last_component=(component == action_dimension - 1),
-                                                fontsize=min(8.0, 15.0/action_dimension**0.5), **kwargs)
+                return ActionComponentAnimation(
+                    *args,
+                    component=component,
+                    last_component=(component == action_dimension - 1),
+                    fontsize=min(8.0, 15.0 / action_dimension**0.5),
+                    **kwargs,
+                )
 
             self._animation_classes.append(actionComponent)
         super().__deferred_init__()
@@ -802,7 +836,12 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
         for i in range(objective_dimension):
 
             def objectiveComponent(*args, component=i, **kwargs):
-                return ObjectiveComponentAnimation(*args, component=component, fontsize=min(10.0, 15.0/objective_dimension**0.5), **kwargs)
+                return ObjectiveComponentAnimation(
+                    *args,
+                    component=component,
+                    fontsize=min(10.0, 15.0 / objective_dimension**0.5),
+                    **kwargs,
+                )
 
             self._animation_classes.append(objectiveComponent)
         super().__deferred_init__()
@@ -817,6 +856,7 @@ class ObjectiveAnimation(DeferredComposedAnimation, callback.ObjectiveTracker):
 
 class GraphAnimation(AnimationCallback):
     """Animation of graphs that adds more data to curves over time."""
+
     _legend = (None,)
     _vertices = 4000
     _line = "-"
@@ -854,13 +894,20 @@ class GraphAnimation(AnimationCallback):
         for line, data in zip(self.lines, line_datas):
             t, y = data
             skip = 1 + len(t) // self._vertices
-            downsampling = slice(1, None, skip) if isinstance(self, callback.TimeTracker) else slice(None, None, skip)
-            line.set_data(t[downsampling], y[downsampling]) # these slices are to avoid residual time bug
+            downsampling = (
+                slice(1, None, skip)
+                if isinstance(self, callback.TimeTracker)
+                else slice(None, None, skip)
+            )
+            line.set_data(
+                t[downsampling], y[downsampling]
+            )  # these slices are to avoid residual time bug
         return self.lines
 
 
 class ValueAnimation(GraphAnimation, callback.ValueTracker):
     """A graph animation that displays that plots episode-mean value over iterations."""
+
     _legend = (None,)
     _is_global = True
 
@@ -872,7 +919,7 @@ class ValueAnimation(GraphAnimation, callback.ValueTracker):
             self.scores = []
             self.ax.set_axis_off()
         self.ax.set_xlabel("Learning Iteration")
-        self.ax.set_ylabel("Value")
+        self.ax.set_ylabel("Undiscounted value")
         self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         self.add_frame(line_datas=[(self.t, self.y)])
 
@@ -917,7 +964,7 @@ class ValueAnimation(GraphAnimation, callback.ValueTracker):
         iteration_number,
         iterations_total,
     ):
-        pass #self.setup()
+        pass  # self.setup()
 
 
 class StateComponentAnimation(
@@ -925,7 +972,9 @@ class StateComponentAnimation(
 ):
     _legend = (None,)
 
-    def __init__(self, *args, component=0, fontsize=10.0, last_component=False, **kwargs):
+    def __init__(
+        self, *args, component=0, fontsize=10.0, last_component=False, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.component = component
         self.last_component = last_component
@@ -936,8 +985,8 @@ class StateComponentAnimation(
 
     def setup(self):
         super().setup()
-        #self.ax.tick_params(axis='y', labelrotation=45)
-        self.ax.tick_params(axis='y',  labelsize=self.fontsize)
+        # self.ax.tick_params(axis='y', labelrotation=45)
+        self.ax.tick_params(axis="y", labelsize=self.fontsize)
         if self.last_component:
             self.ax.set_xlabel("Time [s]")
         if hasattr(self, "label_of_y"):
@@ -985,7 +1034,9 @@ class ObservationComponentAnimation(  # TO DO: introduce an abstract class Obser
 
     def on_trigger(self, _):
         if not hasattr(self, "label_of_y"):
-            self.label_of_y = title_except_units(self.observation_naming[self.component])
+            self.label_of_y = title_except_units(
+                self.observation_naming[self.component]
+            )
             self.ax.set_ylabel(self.label_of_y, fontsize=self.fontsize)
         self.t.append(self.time)
         self.y.append(self.observation[self.component])
@@ -1000,7 +1051,9 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
     _legend = (None,)
     _line = "g-"
 
-    def __init__(self, *args, component=0, last_component=False, fontsize=10.0, **kwargs):
+    def __init__(
+        self, *args, component=0, last_component=False, fontsize=10.0, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.component = component
         self.fontsize = fontsize
@@ -1011,7 +1064,7 @@ class ActionComponentAnimation(  # TO DO: introduce an abstract class Observable
 
     def setup(self):
         super().setup()
-        self.ax.tick_params(axis='y', labelsize=self.fontsize)
+        self.ax.tick_params(axis="y", labelsize=self.fontsize)
         if self.last_component:
             self.ax.set_xlabel("Time [s]")
         if hasattr(self, "label_of_y"):
@@ -1253,11 +1306,13 @@ class LunarLanderAnimation(SingleBodyAnimation):
 
     def setup(self):
         super().setup()
-        #(self.ground,) = self.ax.plot([-100000, 100000], [0, 0], "r", ms=10)
+        # (self.ground,) = self.ax.plot([-100000, 100000], [0, 0], "r", ms=10)
         self.ax.set_ylim(0 - 0.11, 5 + 0.11)
         self.ax.set_xlim(-2 - 0.11, 2 + 0.11)
         self.sprites[0].set_visible(False)
-        rect = Rectangle((-10000, -1), 20000, 1, linewidth=1, edgecolor='grey', facecolor='grey')
+        rect = Rectangle(
+            (-10000, -1), 20000, 1, linewidth=1, edgecolor="grey", facecolor="grey"
+        )
         self.ground = self.ax.add_patch(rect)
         (self.target,) = self.ax.plot([0], [0], "g", ms=35, marker="o")
         self.target_text = self.ax.text(
@@ -1351,7 +1406,7 @@ class BarAnimation(AnimationCallback, callback.StateTracker):
 
 @contextmanager
 def preserve_limits(ax=None):
-    """ Plot without modifying axis limits """
+    """Plot without modifying axis limits"""
 
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
@@ -1362,10 +1417,11 @@ def preserve_limits(ax=None):
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
 
+
 class TwoTankAnimation(BarAnimation):
     def setup(self):
         super().setup()
-        self.level = self.ax.plot([-10000, 10000], [0.44, 0.44], 'r--')
+        self.level = self.ax.plot([-10000, 10000], [0.44, 0.44], "r--")
         pump = Rectangle((0.4, 0), 0.35, 0.1, zorder=10, facecolor="grey")
         self.ax.add_patch(pump)
         self.ax.text(0.4, 0.01, "Pump", fontsize=8, zorder=11)
@@ -1383,7 +1439,6 @@ class TwoTankAnimation(BarAnimation):
         self.ax.set_xlabel("Intake/Sink Level [m]")
 
         self.ax.set_xlim(-0.5, 1.5)
-
 
 
 DefaultAnimation = StateAnimation + ActionAnimation + ValueAnimation

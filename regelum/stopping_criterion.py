@@ -32,7 +32,7 @@ class CoordinateMaxAbsCriterion(StabilizationCriterion):
         return True
 
 
-class InvertedPendulumCriterion(CoordinateMaxAbsCriterion):
+class PendulumCriterion(CoordinateMaxAbsCriterion):
     def __init__(self):
         super().__init__(np.array([0.1, 0.1]), n_last_observations=10)
 

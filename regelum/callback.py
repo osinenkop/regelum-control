@@ -398,7 +398,11 @@ class ConfigDiagramCallback(Callback):
         report = metadata["report"]
         start = time.time()
         os.mkdir(".summary")
-        name = metadata["config_path"].split("/")[-1].split(".")[0] if metadata["config_path"] is not None else "None"
+        name = (
+            metadata["config_path"].split("/")[-1].split(".")[0]
+            if metadata["config_path"] is not None
+            else "None"
+        )
         cfg.treemap(root=name).write_html("SUMMARY.html")
         with open("SUMMARY.html", "r") as f:
             html = f.read()
@@ -760,7 +764,7 @@ class ObjectiveTracker(Callback):
 
     def on_function_call(self, obj, method, output):
         self.running_objective = output["running_objective"]
-        self.value = output["current_value"]
+        self.value = output["current_undiscounted_value"]
         self.objective = np.array([self.value, self.running_objective])
         self.objective_naming = ["Value", "Running objective"]
 
@@ -785,7 +789,7 @@ class ValueTracker(Callback):
         return hasattr(self, "score")
 
     def on_function_call(self, obj, method, output):
-        self.score = obj.recent_value
+        self.score = obj.recent_undiscounted_value
 
 
 @trigger
@@ -1111,7 +1115,7 @@ class ScenarioStepLogger(Callback):
                 f"state est.: {output['estimated_state'][0]}, "
                 f"observation: {output['observation'][0]}, "
                 f"action: {output['action'][0]}, "
-                f"value: {output['current_value']:.4f}, "
+                f"value: {output['current_undiscounted_value']:.4f}, "
                 f"time: {output['time']:.4f} ({100 * output['time']/obj.simulator.time_final:.1f}%), "
                 f"episode: {int(output['episode_id'])}/{obj.N_episodes}, "
                 f"iteration: {int(output['iteration_id'])}/{obj.N_iterations}"
@@ -1212,6 +1216,9 @@ class HistoricalDataCallback(HistoricalCallback):
                         "time": output["time"],
                         "running_objective": output["running_objective"],
                         "current_value": output["current_value"],
+                        "current_undiscounted_value": output[
+                            "current_undiscounted_value"
+                        ],
                         "episode_id": output["episode_id"],
                         "iteration_id": output["iteration_id"],
                     },
@@ -1233,6 +1240,7 @@ class HistoricalDataCallback(HistoricalCallback):
                             "time": float,
                             "running_objective": float,
                             "current_value": float,
+                            "current_undiscounted_value": float,
                             "episode_id": int,
                             "iteration_id": int,
                         }
@@ -1402,10 +1410,10 @@ class ValueCallback(HistoricalCallback):
         self.add_datum(
             {
                 "episode": len(self.data) + 1,
-                "objective": scenario.recent_value,
+                "objective": scenario.recent_undiscounted_value,
             }
         )
-        self.values.append(scenario.recent_value)
+        self.values.append(scenario.recent_undiscounted_value)
         self.log(
             f"Final value of episode {self.data.iloc[-1]['episode']} is {round(self.data.iloc[-1]['objective'], 2)}"
         )
@@ -1415,7 +1423,7 @@ class ValueCallback(HistoricalCallback):
             )
             mlflow.log_metric(
                 f"C. values in iteration {str(iteration_number).zfill(5)}",
-                scenario.recent_value,
+                scenario.recent_undiscounted_value,
                 step=len(self.values),
             )
 

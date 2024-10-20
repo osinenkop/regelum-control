@@ -2,8 +2,8 @@ python run_stable.py \
     +seed=range\(10\) \
     +n_jobs=-1 \
     scenario=sdpg \
-    system=inv_pendulum \
-    --experiment=sdpg_inv_pendulum \
+    system=pendulum \
+    --experiment=sdpg_pendulum \
     scenario.N_episodes=3 \
         scenario.N_iterations=100 \
     scenario.policy_opt_method_kwargs.lr=0.01 \

@@ -1,6 +1,6 @@
 python run_stable.py \
 scenario=mpc \
-system=inv_pendulum \
+system=pendulum \
 scenario.prediction_horizon=11 \
---experiment=mpc11_inv_pendulum \
+--experiment=mpc11_pendulum \
 --single-thread 

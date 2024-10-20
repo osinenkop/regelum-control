@@ -14,6 +14,7 @@ import regelum
 from abc import ABC, abstractmethod
 
 from . import callback
+
 # from . import animation
 from .utils import rg
 from typing import Any, Optional, Union, List, Dict, Tuple
@@ -805,6 +806,7 @@ class System(SystemInterface):
         """
         return self.compose(sys_right)
 
+
 @callback.OmnirobotAnimation.attach
 class KinematicPoint(System):
     """System representing a simple 2D kinematic point (see [here](../systems/kin_point.md) for details)."""
@@ -842,11 +844,12 @@ class KinematicPoint(System):
 
         return Dstate
 
-@callback.PendulumAnimation.attach
-class InvertedPendulum(System):
-    """System representing an [inverted pendulum](../systems/inv_pendulum.md), with state representing angle and angular velocity."""
 
-    _name = "inverted-pendulum"
+@callback.PendulumAnimation.attach
+class Pendulum(System):
+    """System representing a [pendulum](../systems/pendulum.md), with state representing angle and angular velocity."""
+
+    _name = "pendulum"
     _system_type = "diff_eqn"
     _dim_state = 2
     _dim_inputs = 1
@@ -859,7 +862,7 @@ class InvertedPendulum(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute [right-hand side](../systems/inv_pendulum.md#system-dynamics) of the inverted pendulum."""
+        """Compute [right-hand side](../systems/pendulum.md#system-dynamics) of the pendulum."""
 
         Dstate = rg.zeros(
             self.dim_state,
@@ -876,6 +879,7 @@ class InvertedPendulum(System):
         Dstate[1] = g / l * rg.sin(state[0]) + inputs[0] / (m * l**2)
 
         return Dstate
+
 
 @callback.ThreeWheeledRobotAnimation.attach
 class ThreeWheeledRobotKinematic(System):
@@ -910,6 +914,7 @@ class ThreeWheeledRobotKinematic(System):
         Dstate[2] = inputs[1]
 
         return Dstate
+
 
 @callback.ThreeWheeledRobotAnimation.attach
 class ThreeWheeledRobotDynamic(System):
@@ -998,6 +1003,7 @@ class Integrator(System):
         Dstate[1] = 1 / I * inputs[1]
 
         return Dstate
+
 
 @callback.CartpoleAnimation.attach
 class CartPole(System):
@@ -1192,6 +1198,7 @@ class TwoTank(System):
         Dstate[1] = 1 / (tau2) * (-state[1] + K2 * state[0] + K3 * state[1] ** 2)
 
         return Dstate
+
 
 @callback.LunarLanderAnimation.attach
 class LunarLander(System):

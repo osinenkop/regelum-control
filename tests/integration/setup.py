@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 
-# ["2tank", "3wrobot_dyn", "3wrobot_kin", "cartpole", "inv_pendulum", "kin_point", "lunar_lander"])
+# ["2tank", "3wrobot_dyn", "3wrobot_kin", "cartpole", "pendulum", "kin_point", "lunar_lander"])
 # ["ddpg", "ddqn", "dqn", "dqn", "mpc", "pg", "pid", "rpv", "rpv_deep", "rql", "sarsa", "sdpg", "sql"]
 
 
@@ -73,7 +73,7 @@ class MPCTest(TestSetup):
 systems = (
     "3wrobot_kin",
     # "cartpole",
-    "inv_pendulum",
+    "pendulum",
     "kin_point",
     "2tank",
     "lunar_lander",

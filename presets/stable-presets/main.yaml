@@ -1,5 +1,5 @@
 defaults:
-  - system: inv_pendulum 
+  - system: pendulum 
   - simulator: casadi
   - optional nominal_policy: nominal_${system}
   - stopping_criterion: never #stopping_${system}
