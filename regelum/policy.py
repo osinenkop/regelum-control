@@ -1167,7 +1167,7 @@ class ThreeWheeledWRobotKinematicStabilizingPolicy(Policy):
 
 
 class PendulumStabilizingPolicy(Policy):
-    """A nominal policy for inverted pendulum representing a PD controller."""
+    """A nominal policy for pendulum representing a PD controller."""
 
     def __init__(self, gain):
         """Initialize an instance of policy.

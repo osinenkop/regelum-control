@@ -847,9 +847,9 @@ class KinematicPoint(System):
 
 @callback.PendulumAnimation.attach
 class Pendulum(System):
-    """System representing an [inverted pendulum](../systems/pendulum.md), with state representing angle and angular velocity."""
+    """System representing a [pendulum](../systems/pendulum.md), with state representing angle and angular velocity."""
 
-    _name = "inverted-pendulum"
+    _name = "pendulum"
     _system_type = "diff_eqn"
     _dim_state = 2
     _dim_inputs = 1
@@ -862,7 +862,7 @@ class Pendulum(System):
     def _compute_state_dynamics(
         self, time: Union[float, cs.MX], state: RgArray, inputs: RgArray
     ) -> RgArray:
-        """Compute [right-hand side](../systems/pendulum.md#system-dynamics) of the inverted pendulum."""
+        """Compute [right-hand side](../systems/pendulum.md#system-dynamics) of the pendulum."""
 
         Dstate = rg.zeros(
             self.dim_state,

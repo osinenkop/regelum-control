@@ -1,7 +1,7 @@
 * [Kinematic point](kin_point.md)
 * [Kinematic three-wheeled robot](3wrobot_kin.md)
 * [Dynamic three-wheeled robot](3wrobot_dyn.md)
-* [Inverted pendulum](pendulum.md)
+* [Pendulum](pendulum.md)
 * [Two-tank](2tank.md)
 * [Lunar lander](lunar_lander.md)
 * [Cartpole](cartpole.md)

@@ -237,6 +237,11 @@ class AnimationCallback(callback.Callback, ABC):
 
     def on_launch(self):
         os.mkdir(self.get_save_directory())
+    
+    def on_termination(self, res):
+        self.fig.paused=True
+        while self.fig.paused:
+            self.fig.canvas.flush_events()
 
     def animate_and_save(self, frames=None, name=None):
         if name is None:
@@ -296,9 +301,10 @@ class AnimationCallback(callback.Callback, ABC):
         iteration_number,
         iterations_total,
     ):
-        self.counter = 0
-        # self.animate_and_save(name=str(episode_number))
-        self.reset()
+        if not (episode_number == episodes_total and iteration_number == iterations_total):
+            self.counter = 0
+            # self.animate_and_save(name=str(episode_number))
+            self.reset()
 
     def install_temp_axis(self, fig, ax, interactive=None):
         self._old_ax = self.ax
@@ -484,25 +490,26 @@ class ComposedAnimationCallback(AnimationCallback):
         iteration_number,
         iterations_total,
     ):
-        playback = (
-            self._metadata["argv"].playback
-            and iteration_number == iterations_total
-            and episode_number == episodes_total
-        )
-        save_animation = self._metadata["argv"].save_animation
-        if playback or save_animation:
-            self.animate_and_save(
-                name=f"ep{episode_number}|{episodes_total},it{iteration_number}|{iterations_total}"
+        if not (episode_number == episodes_total and iteration_number == iterations_total):
+            playback = (
+                self._metadata["argv"].playback
+                and iteration_number == iterations_total
+                and episode_number == episodes_total
             )
-        for animation in self.animations:
-            animation.on_episode_done(
-                scenario,
-                episode_number,
-                episodes_total,
-                iteration_number,
-                iterations_total,
-            )
-        self.frame_data = []
+            save_animation = self._metadata["argv"].save_animation
+            if playback or save_animation:
+                self.animate_and_save(
+                    name=f"ep{episode_number}|{episodes_total},it{iteration_number}|{iterations_total}"
+                )
+            for animation in self.animations:
+                animation.on_episode_done(
+                    scenario,
+                    episode_number,
+                    episodes_total,
+                    iteration_number,
+                    iterations_total,
+                )
+            self.frame_data = []
 
     def on_iteration_done(self, *args, **kwargs):
         for animation in self.animations:
@@ -724,9 +731,19 @@ class DeferredComposedAnimation(ComposedAnimationCallback, ABC):
             for animation in self.animations:
                 animation.setup()
 
-    def on_episode_done(self, *args, **kwargs):
-        for animation in self.animations:
-            animation.on_episode_done(*args, **kwargs)
+    def on_episode_done(self, scenario,
+        episode_number,
+        episodes_total,
+        iteration_number,
+        iterations_total):
+        if not (episode_number == episodes_total and iteration_number == iterations_total):
+            for animation in self.animations:
+                animation.on_episode_done(scenario,
+                    episode_number,
+                    episodes_total,
+                    iteration_number,
+                    iterations_total,
+                )
 
 
 class StateAnimation(DeferredComposedAnimation, callback.StateTracker):
